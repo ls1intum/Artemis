@@ -7,9 +7,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
-import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,16 +17,14 @@ import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MockComponent } from 'ng-mocks';
-import { HttpResponse } from '@angular/common/http';
-import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import type { BonusResponse } from 'app/openapi/model/bonus-response';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 describe('GradingKeyTableComponent', () => {
     let fixture: ComponentFixture<GradingKeyTableComponent>;
     let component: GradingKeyTableComponent;
     let gradingService: GradingService;
-    let bonusService: BonusService;
+    let bonusApi: BonusApi;
     let scoresStorageService: ScoresStorageService;
 
     const courseId = 123;
@@ -83,7 +81,7 @@ describe('GradingKeyTableComponent', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
                     MockProvider(GradingService),
-                    MockProvider(BonusService),
+                    MockProvider(BonusApi),
                     MockProvider(ScoresStorageService),
                 ],
             })
@@ -104,7 +102,7 @@ describe('GradingKeyTableComponent', () => {
                 .compileComponents()
                 .then(() => {
                     gradingService = TestBed.inject(GradingService);
-                    bonusService = TestBed.inject(BonusService);
+                    bonusApi = TestBed.inject(BonusApi);
                     scoresStorageService = TestBed.inject(ScoresStorageService);
 
                     vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(gradeStepsDTO));
@@ -194,7 +192,7 @@ describe('GradingKeyTableComponent', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
                     MockProvider(GradingService),
-                    MockProvider(BonusService),
+                    MockProvider(BonusApi),
                     MockProvider(ScoresStorageService),
                 ],
             })
@@ -268,20 +266,21 @@ describe('GradingKeyTableComponent', () => {
             },
         } as unknown as ActivatedRoute;
 
-        const sourceGradingScale: GradingScale = {
+        const bonusResponse: BonusResponse = {
             id: 1,
-            gradeType: GradeType.BONUS,
-            gradeSteps: [gradeStep1, gradeStep2],
-            plagiarismGrade: '0',
-            noParticipationGrade: '0',
-            exam: { title: 'Source Exam', examMaxPoints: 50 } as Exam,
-        };
-
-        const bonus: Bonus = {
-            id: 1,
-            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
+            bonusStrategy: 'GRADES_CONTINUOUS',
             weight: 1,
-            sourceGradingScale,
+            sourceGradingScale: {
+                id: 1,
+                gradeType: 'BONUS',
+                gradeSteps: [
+                    { gradeName: '1', lowerBoundPercentage: 0, lowerBoundInclusive: true, upperBoundPercentage: 50, upperBoundInclusive: false, isPassingGrade: false },
+                    { gradeName: '2', lowerBoundPercentage: 50, lowerBoundInclusive: true, upperBoundPercentage: 100, upperBoundInclusive: true, isPassingGrade: true },
+                ],
+                plagiarismGrade: '0',
+                noParticipationGrade: '0',
+                exam: { title: 'Source Exam', examMaxPoints: 50 },
+            },
         };
 
         beforeEach(() => {
@@ -291,7 +290,7 @@ describe('GradingKeyTableComponent', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
                     MockProvider(GradingService),
-                    MockProvider(BonusService),
+                    MockProvider(BonusApi),
                     MockProvider(ScoresStorageService),
                 ],
             })
@@ -312,9 +311,9 @@ describe('GradingKeyTableComponent', () => {
                 .compileComponents()
                 .then(() => {
                     gradingService = TestBed.inject(GradingService);
-                    bonusService = TestBed.inject(BonusService);
+                    bonusApi = TestBed.inject(BonusApi);
 
-                    vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of(new HttpResponse({ body: bonus })));
+                    vi.spyOn(bonusApi, 'getBonusForExam').mockReturnValue(of(bonusResponse));
                     vi.spyOn(gradingService, 'getGradingScaleTitle').mockReturnValue('Source Exam');
                     vi.spyOn(gradingService, 'getGradingScaleMaxPoints').mockReturnValue(50);
                     vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => [...steps].sort((a, b) => a.lowerBoundPercentage - b.lowerBoundPercentage));
@@ -333,7 +332,7 @@ describe('GradingKeyTableComponent', () => {
         it('should load grade steps from bonus service when forBonus is true', () => {
             fixture.detectChanges();
 
-            expect(bonusService.findBonusForExam).toHaveBeenCalledWith(courseId, examId, true);
+            expect(bonusApi.getBonusForExam).toHaveBeenCalledWith(courseId, examId, true);
             expect(component.forBonus()).toBe(true);
             expect(component.isBonus()).toBe(true);
         });
@@ -363,7 +362,7 @@ describe('GradingKeyTableComponent', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: TranslateService, useClass: MockTranslateService },
                     MockProvider(GradingService),
-                    MockProvider(BonusService),
+                    MockProvider(BonusApi),
                     MockProvider(ScoresStorageService),
                 ],
             })
