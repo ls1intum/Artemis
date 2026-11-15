@@ -93,6 +93,47 @@ describe('markdown.conversion.util', () => {
             expect(image.hasAttribute('xlink:href')).toBe(false);
         });
 
+        it('does not treat U+FEFF as the end of an address', () => {
+            const image = restricted('<img srcset="https://images.example.net\uFEFF.unlisted.example/a.png 1x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('finds the candidate that follows a malformed descriptor with nested parentheses', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png ((x), https://unlisted.example/b.png 1x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('still reads a descriptor with parentheses and a comma inside', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png (1x, 2x), https://images.example.net/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(true);
+        });
+
+        it.each([
+            ['a url function', 'background-image: url(https://unlisted.example/p.png)'],
+            ['an image-set function', 'background: image-set("https://unlisted.example/p.png" 1x)'],
+            ['an escaped function name', 'background: u\\72 l(https://unlisted.example/p.png)'],
+            ['a comment inside the value', 'background: url/**/(https://unlisted.example/p.png)'],
+            ['an import', '@import url(https://unlisted.example/s.css)'],
+        ])('removes %s from a style that is kept', (_description, style) => {
+            const container = document.createElement('div');
+            container.innerHTML = `<p style="color: red; ${style}">text</p>`;
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element, true));
+
+            const paragraph = container.querySelector('p')!;
+            expect(paragraph.getAttribute('style') ?? '').toBe('color: red');
+        });
+
+        it('keeps a style without images when image hosts are restricted', () => {
+            const container = document.createElement('div');
+            container.innerHTML = '<p style="color: red; margin: 0">text</p>';
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element, true));
+
+            expect(container.querySelector('p')!.getAttribute('style')).toBe('color: red;margin: 0');
+        });
+
         it('removes the background attribute of a table cell', () => {
             const cell = restricted('<table><tr><td background="https://unlisted.example/bg.png">x</td></tr></table>', 'td');
 

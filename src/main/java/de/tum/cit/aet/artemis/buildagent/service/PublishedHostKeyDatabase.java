@@ -105,12 +105,15 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
         }
         if (published.isEmpty()) {
             if (mode == Mode.REQUIRED) {
-                log.error("The SSH host key of {} was not accepted: its fingerprint {} could not be compared, because the core node does not publish its fingerprints. "
-                        + "Set artemis.version-control.ssh-host-key-verification to if-available to continue without the comparison.", connectAddress, presented);
+                log.error(
+                        "The SSH host key of {} was not accepted: its fingerprint {} could not be compared, because the core node does not publish its fingerprints or they cannot be read over https. "
+                                + "Set artemis.version-control.ssh-host-key-verification to if-available to continue without the comparison.",
+                        connectAddress, presented);
                 return false;
             }
             if (shouldWarnAboutMissingFingerprints()) {
-                log.warn("The SSH host key of {} with the fingerprint {} was accepted without a comparison, because the core node does not publish its fingerprints.",
+                log.warn(
+                        "The SSH host key of {} with the fingerprint {} was accepted without a comparison, because the core node does not publish its fingerprints or they cannot be read over https.",
                         connectAddress, presented);
             }
             return true;

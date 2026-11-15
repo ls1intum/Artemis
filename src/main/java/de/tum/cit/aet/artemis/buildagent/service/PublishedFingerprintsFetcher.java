@@ -13,14 +13,15 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
- * Reads the fingerprints of the SSH host keys that a core node publishes at {@code api/localvc/public/ssh-fingerprints}.
- * Answers an empty set when the core node cannot be reached or does not publish any.
+ * Reads the fingerprints of the SSH host keys that a core node publishes at {@code api/localvc/public/ssh-fingerprints}, below the path of the configured URL.
+ * Answers an empty set when the core node cannot be reached, does not publish any, or the configured URL does not use https.
  */
 class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
 
@@ -35,11 +36,26 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
     private final URI uri;
 
     PublishedFingerprintsFetcher(URI localVCBaseUri) {
-        this.uri = localVCBaseUri.resolve("/" + FINGERPRINTS_PATH);
+        // The path of the base URL stays, as an installation can serve Artemis below a path
+        this.uri = UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment(FINGERPRINTS_PATH.split("/")).replaceQuery(null).fragment(null).build().toUri();
+    }
+
+    /**
+     * The address that the fingerprints are read from.
+     *
+     * @return the address, below the path of the configured URL
+     */
+    URI uri() {
+        return uri;
     }
 
     @Override
     public Set<String> get() {
+        // The fingerprints are what the host key of the core node is compared with, so they must come over a channel that is protected itself
+        if (!"https".equalsIgnoreCase(uri.getScheme())) {
+            log.warn("Not reading the SSH fingerprints of the core node from {}: they are only read over https", uri);
+            return Set.of();
+        }
         try {
             HttpRequest request = HttpRequest.newBuilder(uri).timeout(REQUEST_TIMEOUT).GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

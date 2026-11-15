@@ -39,7 +39,19 @@ public final class AllowedDockerRegistries {
      */
     public static AllowedDockerRegistries from(Environment environment) {
         List<String> configured = Binder.get(environment).bind(PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
-        return new AllowedDockerRegistries(configured.stream().map(AllowedDockerRegistries::normalizeEntry).filter(entry -> !entry.isEmpty()).distinct().toList());
+        return new AllowedDockerRegistries(
+                configured.stream().filter(entry -> entry != null && !entry.isBlank()).map(AllowedDockerRegistries::requireValidEntry).distinct().toList());
+    }
+
+    /**
+     * Normalizes an entry and refuses one that is left with nothing, as it would otherwise disappear and could leave the list empty, which allows every registry.
+     */
+    private static String requireValidEntry(String entry) {
+        String normalized = normalizeEntry(entry);
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("The entry '" + entry + "' of " + PROPERTY + " does not name a registry");
+        }
+        return normalized;
     }
 
     /**

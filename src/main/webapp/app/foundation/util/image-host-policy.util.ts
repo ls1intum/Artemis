@@ -47,35 +47,88 @@ export function isImageSourceAllowed(src: string | null): boolean {
  */
 export function srcsetAddresses(srcset: string): string[] {
     const addresses: string[] = [];
+    const length = srcset.length;
     let position = 0;
-    while (position < srcset.length) {
-        while (position < srcset.length && /[\s,]/.test(srcset[position])) {
+    while (position < length) {
+        while (position < length && (isHtmlWhitespace(srcset[position]) || srcset[position] === ',')) {
             position++;
         }
-        if (position >= srcset.length) {
+        if (position >= length) {
             break;
         }
         const start = position;
-        while (position < srcset.length && !/\s/.test(srcset[position])) {
+        while (position < length && !isHtmlWhitespace(srcset[position])) {
             position++;
         }
         let address = srcset.substring(start, position);
         if (address.endsWith(',')) {
             address = address.replace(/,+$/, '');
         } else {
-            // skip the descriptor, which may contain a comma only inside parentheses
-            let depth = 0;
-            while (position < srcset.length && (srcset[position] !== ',' || depth > 0)) {
-                if (srcset[position] === '(') depth++;
-                if (srcset[position] === ')' && depth > 0) depth--;
-                position++;
-            }
+            position = skipDescriptors(srcset, position);
         }
         if (address) {
             addresses.push(address);
         }
     }
     return addresses;
+}
+
+/** The white space of HTML: not the white space of JavaScript, which also holds characters like U+FEFF that HTML treats as part of an address. */
+function isHtmlWhitespace(character: string): boolean {
+    return character === ' ' || character === '\t' || character === '\n' || character === '\f' || character === '\r';
+}
+
+/**
+ * Moves behind the descriptors of a candidate, with the states of the HTML standard: a comma ends the candidate except inside parentheses, and the first closing
+ * parenthesis leaves them again, whatever was opened before.
+ * @param srcset the value of a `srcset` attribute
+ * @param from the position behind the address of the candidate
+ * @returns the position behind the descriptors, which is the start of the next candidate or the end of the value
+ */
+function skipDescriptors(srcset: string, from: number): number {
+    const length = srcset.length;
+    let position = from;
+    while (position < length && isHtmlWhitespace(srcset[position])) {
+        position++;
+    }
+    let state: 'descriptor' | 'parentheses' | 'after' = 'descriptor';
+    while (position < length) {
+        const character = srcset[position];
+        if (state === 'descriptor') {
+            if (isHtmlWhitespace(character)) {
+                state = 'after';
+            } else if (character === ',') {
+                return position + 1;
+            } else if (character === '(') {
+                state = 'parentheses';
+            }
+            position++;
+        } else if (state === 'parentheses') {
+            if (character === ')') {
+                state = 'descriptor';
+            }
+            position++;
+        } else if (isHtmlWhitespace(character)) {
+            position++;
+        } else {
+            // the next descriptor starts, which is read again in the state for descriptors
+            state = 'descriptor';
+        }
+    }
+    return position;
+}
+
+/**
+ * The declarations of a `style` attribute that cannot load an image. A declaration with a function that takes an address, such as `url()` or `image-set()`, is left out,
+ * and so is every declaration with a backslash or a comment, as an escape can spell a function name in a way that a text search does not see.
+ * @param style the value of a `style` attribute
+ */
+export function styleWithoutImages(style: string): string {
+    return style
+        .split(';')
+        .map((declaration) => declaration.trim())
+        .filter((declaration) => declaration.length > 0 && !/\\|\/\*|@import|(?:url|image-set|image|element|cross-fade|paint|src)\s*\(/i.test(declaration))
+        .join(';');
 }
 
 /**

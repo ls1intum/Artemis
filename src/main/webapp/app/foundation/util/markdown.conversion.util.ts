@@ -6,7 +6,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 import TurndownService from 'turndown';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance, type RendererRule, type Token } from 'markdown-it';
 import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
-import { hasImageHostRestriction, isImageSourceAllowed, isImageSourceSetAllowed } from 'app/foundation/util/image-host-policy.util';
+import { hasImageHostRestriction, isImageSourceAllowed, isImageSourceSetAllowed, styleWithoutImages } from 'app/foundation/util/image-host-policy.util';
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
@@ -212,6 +212,15 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
         if (!isImageSourceAllowed(node.getAttribute('src'))) {
             node.removeAttribute('src');
             node.removeAttribute('srcset');
+        }
+    }
+    if (hasImageHostRestriction() && node.hasAttribute?.('style')) {
+        // also a style that the caller keeps must not load an image from a host that is not allowed
+        const safeStyle = styleWithoutImages(node.getAttribute('style') ?? '');
+        if (safeStyle) {
+            node.setAttribute('style', safeStyle);
+        } else {
+            node.removeAttribute('style');
         }
     }
     restrictImageAttributes(node);
