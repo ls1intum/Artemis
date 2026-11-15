@@ -103,7 +103,6 @@ public class FileResource {
 
     private static final int DAYS_TO_CACHE = 1;
 
-    /** Files of a conversation depend on who asks, so only the browser of the user may keep them. */
     private static final CacheControl CONVERSATION_FILE_CACHE_CONTROL = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate();
 
     private enum AttachmentCachePolicy {
@@ -822,18 +821,6 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
-     * @param path     to the file including the file name
-     * @param filename the name of the file
-     * @param cache    true if the response should contain a header that allows caching; false otherwise
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
-        return buildFileResponse(path, filename, Optional.empty(), cache);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path containing the file name
-     *
      * @param path      to the file including the file name
      * @param filename  the name of the file
      * @param cacheDays the number of days to cache the response
@@ -841,17 +828,6 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, int cacheDays) {
         return buildFileResponse(path, filename, Optional.empty(), cacheDays);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path and file name
-     *
-     * @param path            to the file
-     * @param replaceFilename replaces the downloaded file's name, if provided
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, Optional<String> replaceFilename) {
-        return buildFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, false);
     }
 
     /**
