@@ -9,10 +9,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,7 +37,7 @@ class RepositoryServiceCommitLimitsTest {
     @Test
     void commitChangesRefusesAFileAboveTheSizeLimitWithoutCommitting() throws Exception {
         Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call().close();
-        Files.write(workingTree.resolve("big.bin"), new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+        FileUtils.writeByteArrayToFile(workingTree.resolve("big.bin").toFile(), new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
         GitService gitService = mock(GitService.class);
         RepositoryService repositoryService = new RepositoryService(gitService, mock(BareGitRepositoryService.class), Optional.empty());
 

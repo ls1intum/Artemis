@@ -30,7 +30,7 @@ class CloneWithoutSymbolicLinksTest {
             FileUtils.write(source.resolve("Main.java").toFile(), "class Main {}", StandardCharsets.UTF_8);
             Files.createSymbolicLink(source.resolve("link"), Path.of("Main.java"));
             git.add().addFilepattern(".").call();
-            git.commit().setMessage("content").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").setSign(false).call();
+            GitService.commit(git).setMessage("content").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").setSign(false).call();
         }
         Path target = baseDir.resolve("target");
 

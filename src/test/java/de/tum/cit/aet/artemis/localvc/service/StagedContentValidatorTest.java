@@ -120,7 +120,7 @@ class StagedContentValidatorTest {
 
     private void commit() throws Exception {
         try (Git git = new Git(repository)) {
-            git.commit().setMessage("existing content").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").setSign(false).setAllowEmpty(true).call();
+            GitService.commit(git).setMessage("existing content").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").setSign(false).setAllowEmpty(true).call();
         }
     }
 
