@@ -7,14 +7,14 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/account/user/settings/learning/dto/learner-profile-dto.model';
-import { TumAetUiButtonComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiPanelComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/learning/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, FormsModule, TumAetUiButtonComponent, TumAetUiSelectButtonComponent, FeedbackOnboardingModalComponent],
+    imports: [TranslateDirective, FormsModule, TumAetUiButtonComponent, TumAetUiPanelComponent, TumAetUiSelectButtonComponent, FeedbackOnboardingModalComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
