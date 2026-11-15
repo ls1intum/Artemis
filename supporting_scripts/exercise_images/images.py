@@ -52,13 +52,24 @@ def read_mapping(text: str, path: tuple[str, ...]) -> dict[str, dict[str, str]]:
     position = 0
     indent = -1
     for key in path:
+        # Only a direct child of the block found before counts, and the search ends where that block ends: otherwise a missing
+        # `build.images` would be answered by the `images` of a sibling such as `continuous-integration.other`.
+        child_indent: int | None = None
+        found = False
         while position < len(lines):
             line = lines[position]
             position += 1
-            if line.strip() and not line.lstrip().startswith("#") and _indent(line) > indent and _strip_comment(line).strip() == f"{key}:":
-                indent = _indent(line)
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if _indent(line) <= indent:
                 break
-        else:
+            if child_indent is None:
+                child_indent = _indent(line)
+            if _indent(line) == child_indent and _strip_comment(line).strip() == f"{key}:":
+                indent = _indent(line)
+                found = True
+                break
+        if not found:
             raise ValueError(f"{'.'.join(path)} not found in the configuration")
 
     result: dict[str, dict[str, str]] = {}

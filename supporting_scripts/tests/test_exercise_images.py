@@ -4,6 +4,7 @@ Run: python3 -m unittest discover -s supporting_scripts/tests -p 'test_exercise_
 """
 
 import re
+import subprocess
 import sys
 import tempfile
 import textwrap
@@ -48,6 +49,25 @@ class ImagesTest(unittest.TestCase):
             },
         )
 
+    def test_a_missing_child_is_not_answered_by_a_sibling_block(self):
+        configuration = SAMPLE_CONFIGURATION.replace("            images:\n", "            no-images:\n", 1)
+        with self.assertRaises(ValueError):
+            read_mapping(configuration, ("artemis", "continuous-integration", "build", "images"))
+
+    def test_a_deeper_key_with_the_name_is_not_a_child(self):
+        configuration = textwrap.dedent(
+            """\
+            artemis:
+                build:
+                    nested:
+                        images:
+                            java:
+                                default: "wrong:1"
+            """
+        )
+        with self.assertRaises(ValueError):
+            read_mapping(configuration, ("artemis", "build", "images"))
+
     def test_missing_path_is_reported(self):
         with self.assertRaises(ValueError):
             read_mapping(SAMPLE_CONFIGURATION, ("artemis", "continuous-integration", "missing"))
@@ -88,6 +108,11 @@ class PhasesTest(unittest.TestCase):
         self.assertEqual(parsed[1].script, 'cd "structural"\nmvn -B test')
         self.assertEqual([phase.force_run for phase in parsed], [False, False, True])
 
+    def test_folded_and_kept_block_scalars_are_refused(self):
+        for style in (">", ">-", "|+"):
+            with self.subTest(style=style), self.assertRaises(ValueError):
+                phases.parse_phases(f"- name: compile\n  script: {style}\n    mvn -B\n    test\n")
+
     def test_every_variant_has_phases(self):
         for variant in assembly.VARIANTS:
             with self.subTest(variant=variant.name):
@@ -98,6 +123,42 @@ class PhasesTest(unittest.TestCase):
         self.assertIn("trap final_force_run_post_action EXIT", script)
         self.assertIn("--input \"assignment\"", script)
         self.assertNotIn("${studentParentWorkingDirectoryName}", script)
+
+
+class OfflineTest(unittest.TestCase):
+    def _run(self, *phase_definitions: phases.Phase) -> int:
+        """Runs the generated build script with bash in a temporary directory and returns its exit status."""
+        with tempfile.TemporaryDirectory() as directory:
+            script = offline.build_script(list(phase_definitions)).replace(f"cd {offline.WORKING_DIRECTORY}", f"cd {directory}")
+            path = Path(directory) / "build.sh"
+            path.write_text(script, encoding="utf-8")
+            return subprocess.run(["bash", str(path)], capture_output=True, check=False).returncode
+
+    def test_a_failing_force_run_phase_fails_the_script(self):
+        ok = phases.Phase("compile", "true", False)
+        self.assertEqual(self._run(ok, phases.Phase("static_code_analysis", "false", True)), 1)
+
+    def test_a_force_run_phase_fails_when_any_of_its_commands_fails(self):
+        ok = phases.Phase("compile", "true", False)
+        self.assertEqual(self._run(ok, phases.Phase("static_code_analysis", "false\ntrue", True)), 1)
+
+    def test_a_succeeding_force_run_phase_keeps_the_script_green(self):
+        ok = phases.Phase("compile", "true", False)
+        self.assertEqual(self._run(ok, phases.Phase("static_code_analysis", "true\ntrue", True)), 0)
+
+    def test_an_earlier_failure_keeps_its_exit_status_and_the_force_run_phase_still_runs(self):
+        failing = phases.Phase("compile", "exit 7", False)
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / "analysis-ran"
+            self.assertEqual(self._run(failing, phases.Phase("static_code_analysis", f"touch {marker}", True)), 7)
+            self.assertTrue(marker.exists())
+
+    def test_mount_sources_are_absolute_for_a_relative_work_directory(self):
+        command = offline.docker_command(Path("results/java/testing-dir"), Path("results/java/build.sh"), "image:1")
+        sources = [command[index + 1].split(":")[0] for index, argument in enumerate(command) if argument == "-v"]
+        self.assertEqual(len(sources), 2)
+        self.assertTrue(all(source.startswith("/") for source in sources), sources)
+        self.assertIn("--network", command)
 
 
 class AssemblyTest(unittest.TestCase):
@@ -190,6 +251,18 @@ class SyncCheckTest(unittest.TestCase):
         self.assertEqual(
             sync_check.gradle_versions(build, {"commons_lang3_version": "3.21.0"}),
             {"plugin:com.github.spotbugs": {"6.5.12"}, "de.tum.cit.ase:ares": {"2.2.1"}, "org.apache.commons:commons-lang3": {"3.21.0"}},
+        )
+
+    def test_gradle_tool_versions_are_compared_with_the_dependency_of_the_image(self):
+        template = "checkstyle {\n    toolVersion = '14.4.0'\n    reports {\n        xml.required = true\n    }\n}\npmd { toolVersion = '7.28.0' }\n"
+        image = 'dependencies {\n    checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"\n}\npmd {\n    toolVersion = "7.28.0"\n}\n'
+        template_versions = sync_check.gradle_versions(template)
+        self.assertEqual(template_versions, {"com.puppycrawl.tools:checkstyle": {"14.4.0"}, "net.sourceforge.pmd:pmd-java": {"7.28.0"}})
+        self.assertEqual(sync_check.compare(template_versions, sync_check.gradle_versions(image, {"checkstyle_version": "14.4.0"})), [])
+        # changing only the toolVersion of one tool must be reported
+        self.assertEqual(
+            sync_check.compare(template_versions, sync_check.gradle_versions(image, {"checkstyle_version": "14.3.0"})),
+            ["com.puppycrawl.tools:checkstyle 14.4.0 differs from the image (14.3.0)"],
         )
 
     def test_wrapper_version(self):

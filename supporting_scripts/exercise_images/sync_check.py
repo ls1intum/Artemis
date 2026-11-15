@@ -86,6 +86,23 @@ def gradle_properties(text: str) -> dict[str, str]:
     return {key.strip(): value.strip().strip("'\"") for key, _, value in (line.partition("=") for line in text.splitlines()) if value and not key.lstrip().startswith("#")}
 
 
+# The Gradle plugins of the static code analysis tools resolve the tool as a dependency of its own. The template pins it with
+# `toolVersion` in the tool's block, an image may declare the same artifact as a dependency of the tool's configuration.
+GRADLE_TOOL_COORDINATES = {"checkstyle": "com.puppycrawl.tools:checkstyle", "pmd": "net.sourceforge.pmd:pmd-java", "spotbugs": "com.github.spotbugs:spotbugs"}
+
+
+def _blocks(code: str, name: str) -> list[str]:
+    """The bodies of the top-level ``name { ... }`` blocks of a Gradle file, nested braces included."""
+    bodies = []
+    for start in re.finditer(rf"(?m)^{name}\s*\{{", code):
+        depth, position = 1, start.end()
+        while depth and position < len(code):
+            depth += {"{": 1, "}": -1}.get(code[position], 0)
+            position += 1
+        bodies.append(code[start.end() : position - 1])
+    return bodies
+
+
 def gradle_versions(text: str, properties: dict[str, str] | None = None) -> Versions:
     """Plugin and dependency versions of a Gradle build or settings file, by ``group:artifact`` or ``plugin:id``."""
     code = "\n".join(re.sub(r"(^|\s)//.*$", "", line) for line in text.splitlines())
@@ -95,6 +112,10 @@ def gradle_versions(text: str, properties: dict[str, str] | None = None) -> Vers
         versions.setdefault(f"plugin:{plugin}", set()).add(version)
     for group, artifact, version in re.findall(r"""['"]([\w.\-]+):([\w.\-]+):([^'":\s]+)['"]""", code):
         versions.setdefault(f"{group}:{artifact}", set()).add(_resolve(version, properties))
+    for tool, coordinate in GRADLE_TOOL_COORDINATES.items():
+        for body in _blocks(code, tool):
+            for version in re.findall(r"""\btoolVersion\s*=\s*['"]([^'"]+)['"]""", body):
+                versions.setdefault(coordinate, set()).add(_resolve(version, properties))
     return versions
 
 

@@ -11,7 +11,10 @@ from pathlib import Path
 
 _ITEM_START = re.compile(r"^- name:\s*(?P<name>\S+)\s*$")
 _KEY = re.compile(r"^  (?P<key>[A-Za-z]+):(?:\s+(?P<value>.*))?$")
-_BLOCK_SCALAR = re.compile(r"^[|>][-+]?$")
+_BLOCK_SCALAR_START = ("|", ">")
+# Literal block scalars only. A folded one (">") joins its lines with spaces, a kept one ("|+") keeps trailing line breaks: reading them as
+# literal blocks would run a different script than the build agent does, so they are refused instead.
+_SUPPORTED_BLOCK_SCALARS = ("|", "|-")
 
 
 @dataclass(frozen=True)
@@ -56,7 +59,9 @@ def parse_phases(text: str) -> list[Phase]:
         if key_name == "forceRun":
             force_run = value == "true"
         elif key_name == "script":
-            if _BLOCK_SCALAR.match(value):
+            if value.startswith(_BLOCK_SCALAR_START):
+                if value not in _SUPPORTED_BLOCK_SCALARS:
+                    raise ValueError(f"The script of the phase {name} uses the block scalar style {value}, only | and |- are supported")
                 block: list[str] = []
                 while index < len(lines) and (lines[index].startswith("    ") or not lines[index].strip()):
                     block.append(lines[index][4:] if lines[index].strip() else "")

@@ -28,7 +28,12 @@ class Result:
 
 
 def build_script(phases: list[Phase]) -> str:
-    """The script the build agent runs (``LocalCIBuildConfigurationService.computeBuildScript``)."""
+    """The script the build agent runs (``LocalCIBuildConfigurationService.computeBuildScript``), with one difference.
+
+    The build agent ignores a failing ``forceRun`` phase (static code analysis) and reads its reports instead. Here a failing
+    ``forceRun`` phase fails the script too: a dependency that only the static code analysis needs is as missing as any other.
+    An earlier failure of a regular phase keeps its exit status.
+    """
     force_run = [phase for phase in phases if phase.force_run]
     regular = [phase for phase in phases if not phase.force_run]
     lines = ["#!/usr/bin/env bash", "set -e", f"cd {WORKING_DIRECTORY}", "export INITIAL_WORKING_DIRECTORY=${PWD}"]
@@ -38,9 +43,17 @@ def build_script(phases: list[Phase]) -> str:
         lines += [f"  {line}" if line else "" for line in script.splitlines()]
         lines += ["}", ""]
     if force_run:
-        lines += ["final_force_run_post_action () {", "  set +e", "  echo '⚙️ executing final_force_run_post_action'"]
-        lines += [f'  cd "${{INITIAL_WORKING_DIRECTORY}}"\n  {phase.name}' for phase in force_run]
-        lines += ["}", ""]
+        # Each phase runs in its own shell, like the regular ones, so that `set -e` applies to all of its commands. A phase that is
+        # tested directly (`phase || ...`) would run without it, and a failing command followed by a succeeding one would go unnoticed.
+        lines += ["final_force_run_post_action () {", "  local _exit_status=$?", "  local _phase_status", "  set +e", "  echo '⚙️ executing final_force_run_post_action'"]
+        for phase in force_run:
+            lines += [
+                '  cd "${INITIAL_WORKING_DIRECTORY}"',
+                "  _phase_status=0",
+                f'  bash -c "source ${{0}} script_sourcing; {phase.name}" || _phase_status=$?',
+                '  if [ "${_exit_status}" -eq 0 ]; then _exit_status=${_phase_status}; fi',
+            ]
+        lines += ['  exit "${_exit_status}"', "}", ""]
     lines += ["main () {", '  if [[ "${1}" == "script_sourcing" ]]; then', "    return 0", "  fi", "  local _script_name", "  _script_name=${BASH_SOURCE[0]:-$0}"]
     if force_run:
         lines.append("  trap final_force_run_post_action EXIT")
@@ -48,6 +61,19 @@ def build_script(phases: list[Phase]) -> str:
         lines += ['  cd "${INITIAL_WORKING_DIRECTORY}"', f'  bash -c "source ${{_script_name}} script_sourcing; {phase.name}"']
     lines += ["}", "", 'main "${@}"', ""]
     return "\n".join(lines)
+
+
+def docker_command(repository: Path, script: Path, image: str, platform: str | None = None) -> list[str]:
+    """The ``docker run`` that builds ``repository`` in ``image`` without a network.
+
+    The mount sources are made absolute: Docker reads a relative source such as ``results/java/testing-dir`` as the name of a volume.
+    """
+    command = ["docker", "run", "--rm", "--network", "none"]
+    if platform:
+        command += ["--platform", platform]
+    # The destination paths are inside the container
+    command += ["-v", f"{repository.resolve()}:{WORKING_DIRECTORY}", "-v", f"{script.resolve()}:/tmp/build.sh:ro", image, "bash", "/tmp/build.sh"]
+    return command
 
 
 def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, platform: str | None = None) -> Result:
@@ -58,12 +84,8 @@ def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, pl
     script.write_text(build_script(load_phases(templates_dir, variant.language, variant.phases_file)), encoding="utf-8")
     log = work_dir / variant.name / "build.log"
 
-    command = ["docker", "run", "--rm", "--network", "none"]
-    if platform:
-        command += ["--platform", platform]
-    command += ["-v", f"{repository}:{WORKING_DIRECTORY}", "-v", f"{script}:/tmp/build.sh:ro", image, "bash", "/tmp/build.sh"]
     with log.open("w", encoding="utf-8") as output:
-        completed = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT, check=False)
+        completed = subprocess.run(docker_command(repository, script, image, platform), stdout=output, stderr=subprocess.STDOUT, check=False)
 
     findings = MISSING_ARTIFACT.findall(log.read_text(encoding="utf-8", errors="replace"))
     missing = sorted({maven or gradle for maven, gradle in findings})
