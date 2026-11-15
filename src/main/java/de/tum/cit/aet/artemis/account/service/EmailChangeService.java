@@ -292,6 +292,9 @@ public class EmailChangeService {
 
         String newEmail = change.getNewEmail();
         try {
+            if (newEmail == null) {
+                throw invalidKey();
+            }
             // Checked again: the address can have been taken, or the allowed addresses changed, since the request was made.
             requireAddressAllowed(newEmail);
             userCreationService.validateEmailIsAvailable(newEmail, userId);
