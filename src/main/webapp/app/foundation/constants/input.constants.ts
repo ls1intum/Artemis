@@ -53,7 +53,8 @@ export const LTI_PLATFORM_FIELD_MAX_LENGTH = 255;
 export const LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH = 50;
 export const MAX_QUIZ_QUESTION_POINTS = 9999;
 export const MAX_QUIZ_QUESTION_LENGTH_THRESHOLD = 250;
-export const MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD = 500;
+/** Maximum length of the explanation of a quiz question and of an answer option. Keep in sync with Constants.MAX_QUIZ_EXPLANATION_LENGTH in Java. **/
+export const MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD = 2000;
 export const MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD = 255;
 export const ASSIGNMENT_REPO_NAME = 'assignment';
 export const TEST_REPO_NAME = 'tests';

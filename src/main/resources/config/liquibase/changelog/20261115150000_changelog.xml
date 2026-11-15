@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Widen quiz_question.explanation from 500 to 2000 characters, matching Constants.MAX_QUIZ_EXPLANATION_LENGTH.
+
+        The column is nullable, so modifyDataType needs no constraint restored afterwards.
+    -->
+    <changeSet id="20261115150000-01-widen-quiz-question-explanation" author="reyers">
+        <modifyDataType tableName="quiz_question" columnName="explanation" newDataType="varchar(2000)"/>
+    </changeSet>
+</databaseChangeLog>

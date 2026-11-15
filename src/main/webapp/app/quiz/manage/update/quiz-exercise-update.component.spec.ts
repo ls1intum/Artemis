@@ -44,6 +44,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -1064,9 +1065,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if MC question explanation has exactly 500 characters', () => {
+            it('should be valid if MC question explanation has exactly the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = 'f'.repeat(500);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1080,9 +1081,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if MC question explanation has more than 500 characters', () => {
+            it('should not be valid if MC question explanation exceeds the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = 'f'.repeat(500 + 1);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1096,9 +1097,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if MC answer option explanation has exactly 500 characters', () => {
+            it('should be valid if MC answer option explanation has exactly the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = 'f'.repeat(500);
+                question.answerOptions![0]!.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1112,9 +1113,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
+            it('should not be valid if MC answer option explanation exceeds the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = 'f'.repeat(500 + 1);
+                question.answerOptions![0]!.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1162,9 +1163,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if DnD question explanation has exactly 500 characters', () => {
+            it('should be valid if DnD question explanation has exactly the explanation limit', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = 'f'.repeat(500);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1178,9 +1179,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if DnD question explanation has more than 500 characters', () => {
+            it('should not be valid if DnD question explanation exceeds the explanation limit', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = 'f'.repeat(500 + 1);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -2099,7 +2100,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = 'f'.repeat(500 + 1);
+                    question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
@@ -2109,7 +2110,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if answer option explanation is too long', () => {
-                    answerOption1.explanation = 'f'.repeat(500 + 1);
+                    answerOption1.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerExplanationLength');
                 });
 
@@ -2119,8 +2120,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason exactly once if more than one answer option explanation is too long', () => {
-                    answerOption1.explanation = 'f'.repeat(500 + 1);
-                    answerOption2.explanation = 'f'.repeat(500 + 1);
+                    answerOption1.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                    answerOption2.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerExplanationLength');
@@ -2189,7 +2190,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = 'f'.repeat(500 + 1);
+                    question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 

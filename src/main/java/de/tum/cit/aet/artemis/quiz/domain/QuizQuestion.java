@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_EXPLANATION_LENGTH;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -56,7 +58,7 @@ public abstract class QuizQuestion extends DomainObject {
     @Column(name = "hint")
     private String hint;
 
-    @Column(name = "explanation", length = 500)
+    @Column(name = "explanation", length = MAX_QUIZ_EXPLANATION_LENGTH)
     private String explanation;
 
     @Column(name = "points")

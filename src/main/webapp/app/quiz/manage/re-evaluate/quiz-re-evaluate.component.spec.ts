@@ -26,6 +26,7 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evalu
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 describe('QuizExercise Re-evaluate Component', () => {
     let comp: QuizReEvaluateComponent;
@@ -261,8 +262,8 @@ describe('QuizExercise Re-evaluate Component', () => {
             });
 
             it('should be invalid if quiz explanation is too long', () => {
-                mcQuestion.explanation = new Array(501 + 1).join('x');
-                expect(mcQuestion.explanation).toHaveLength(501);
+                mcQuestion.explanation = 'x'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                expect(mcQuestion.explanation).toHaveLength(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
 
                 comp.onQuestionUpdated();
 
@@ -278,7 +279,7 @@ describe('QuizExercise Re-evaluate Component', () => {
             });
 
             it('should be invalid if answer option explanation is too long', () => {
-                answerOption1.explanation = new Array(501 + 1).join('x');
+                answerOption1.explanation = 'x'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
 
                 comp.onQuestionUpdated();
 
@@ -302,8 +303,8 @@ describe('QuizExercise Re-evaluate Component', () => {
             });
 
             it('should be invalid if question explanation is invalid', () => {
-                dndQuestion.explanation = new Array(501 + 1).join('x');
-                expect(dndQuestion.explanation).toHaveLength(501);
+                dndQuestion.explanation = 'x'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                expect(dndQuestion.explanation).toHaveLength(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
 
                 comp.onQuestionUpdated();
 
