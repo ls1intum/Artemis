@@ -13,23 +13,20 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
     const alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
-    let dialogClose: Subject<any>;
 
     beforeEach(() => {
-        dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
             imports: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -84,14 +81,20 @@ describe('Plagiarism Header Component', () => {
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
         vi.spyOn(comp, 'updatePlagiarismStatus');
-        const dialogSpy = vi.spyOn(TestBed.inject(DialogService), 'open');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
-        expect(dialogSpy).toHaveBeenCalledOnce();
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(confirmSpy.mock.calls[0][0]).toMatchObject({
+            header: 'artemisApp.plagiarism.denyAfterConfirmModalTitle',
+            message: 'artemisApp.plagiarism.denyAfterConfirmModalText',
+            acceptSeverity: 'danger',
+        });
         expect(comp.isLoading()).toBe(true);
     });
 
@@ -100,7 +103,7 @@ describe('Plagiarism Header Component', () => {
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
-        dialogClose.next({ confirmed: true });
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.accept();
 
         expect(updateSpy).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
     });
@@ -110,7 +113,7 @@ describe('Plagiarism Header Component', () => {
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
-        dialogClose.next(undefined);
+        fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)!.reject!();
 
         expect(updateSpy).not.toHaveBeenCalled();
         expect(comp.isLoading()).toBe(false);

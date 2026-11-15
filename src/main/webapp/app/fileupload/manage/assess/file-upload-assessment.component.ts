@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { Location, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
@@ -51,6 +51,8 @@ import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCre
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
         AssessmentLayoutComponent,
         ResizeableContainerComponent,
         ScoreDisplayComponent,

@@ -57,7 +57,7 @@ import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -90,6 +90,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
         ArtemisTranslatePipe,
         ExerciseTimelineComponent,
         TumAetUiConfirmDialogComponent,
+        TumAetUiMessageComponent,
         TumAetUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
