@@ -8,7 +8,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -849,7 +852,7 @@ public class BuildJobContainerService {
                 // Enable POSIX long file mode to support files with names > 100 characters
                 tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
-                addFileToTar(tarArchiveOutputStream, sourcePath, "");
+                addFileToTar(tarArchiveOutputStream, sourcePath.toAbsolutePath().normalize(), sourcePath, "");
                 tarArchiveOutputStream.finish();
             }
             created = true;
@@ -875,24 +878,32 @@ public class BuildJobContainerService {
      * <p>
      * For regular files: reads the file content and writes it to the archive.
      * For directories: creates a directory entry and recursively processes all children.
+     * Symbolic links are never followed: a link whose target lies inside the source root is added as a link entry, any other link is skipped.
      * <p>
      * <b>Note:</b> This method can fail with {@link java.nio.file.NoSuchFileException} if files
      * are deleted during traversal (e.g., by concurrent cleanup operations). The caller should
      * handle such failures with retry logic.
      *
      * @param tarArchiveOutputStream the tar output stream to write to
+     * @param sourceRoot             the normalized absolute root of the archived source, which links must not leave
      * @param path                   the file or directory to add
      * @param parent                 the parent path prefix for the archive entry name
      * @throws IOException if reading files or listing directories fails
      */
-    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path path, String parent) throws IOException {
+    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path sourceRoot, Path path, String parent) throws IOException {
         try {
-            TarArchiveEntry tarEntry = new TarArchiveEntry(path, parent + path.getFileName());
+            BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            String entryName = parent + path.getFileName();
+            if (attributes.isSymbolicLink()) {
+                addSymbolicLinkToTar(tarArchiveOutputStream, sourceRoot, path, entryName);
+                return;
+            }
+            TarArchiveEntry tarEntry = new TarArchiveEntry(path, entryName, LinkOption.NOFOLLOW_LINKS);
             tarArchiveOutputStream.putArchiveEntry(tarEntry);
 
-            if (Files.isRegularFile(path)) {
+            if (attributes.isRegularFile()) {
                 // For regular files: read content and write to archive
-                try (InputStream is = Files.newInputStream(path)) {
+                try (InputStream is = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
                     byte[] buffer = new byte[8192];
                     int count;
                     while ((count = is.read(buffer)) != -1) {
@@ -904,17 +915,34 @@ public class BuildJobContainerService {
             else {
                 // For directories: close the directory entry and recursively process children
                 tarArchiveOutputStream.closeArchiveEntry();
-                try (Stream<Path> children = Files.list(path)) {
-                    for (Path child : children.toList()) {
-                        addFileToTar(tarArchiveOutputStream, child, parent + path.getFileName() + "/");
+                if (attributes.isDirectory()) {
+                    try (Stream<Path> children = Files.list(path)) {
+                        for (Path child : children.toList()) {
+                            addFileToTar(tarArchiveOutputStream, sourceRoot, child, parent + path.getFileName() + "/");
+                        }
                     }
                 }
             }
         }
         catch (IOException e) {
-            String operation = Files.isRegularFile(path) ? "reading file" : "listing directory";
+            String operation = Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) ? "reading file" : "listing directory";
             throw new IOException("Failed " + operation + " while adding to tar archive: " + path.toAbsolutePath(), e);
         }
+    }
+
+    private void addSymbolicLinkToTar(TarArchiveOutputStream tarArchiveOutputStream, Path sourceRoot, Path link, String entryName) throws IOException {
+        Path linkTarget = Files.readSymbolicLink(link);
+        Path parentDirectory = link.toAbsolutePath().getParent();
+        Path resolvedTarget = (parentDirectory == null ? linkTarget.toAbsolutePath() : parentDirectory.resolve(linkTarget)).normalize();
+        if (!resolvedTarget.startsWith(sourceRoot)) {
+            log.warn("Skipping symbolic link {} because its target {} points outside the repository", link, linkTarget);
+            return;
+        }
+        TarArchiveEntry entry = new TarArchiveEntry(entryName, TarConstants.LF_SYMLINK);
+        entry.setLinkName(linkTarget.toString().replace(link.getFileSystem().getSeparator(), "/"));
+        entry.setMode(0777);
+        tarArchiveOutputStream.putArchiveEntry(entry);
+        tarArchiveOutputStream.closeArchiveEntry();
     }
 
     /**

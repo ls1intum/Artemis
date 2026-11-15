@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -272,5 +274,32 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
         assertThat(uploadedStream.get()).isNotInstanceOf(ByteArrayInputStream.class);
         assertThat(uploadedEntries.contains(repository.getFileName() + "/file.txt")).as("the archive holds the file of the repository").isTrue();
+    }
+
+    @Test
+    void testTarArchiveDoesNotFollowSymbolicLinks(@TempDir Path workDir) throws Exception {
+        Path repository = Files.createDirectories(workDir.resolve("repository"));
+        Path outsideDirectory = Files.createDirectories(workDir.resolve("outside"));
+        FileUtils.writeStringToFile(outsideDirectory.resolve("secret.txt").toFile(), "outside content", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repository.resolve("file.txt").toFile(), "content", StandardCharsets.UTF_8);
+        Files.createSymbolicLink(repository.resolve("inside-link"), Path.of("file.txt"));
+        Files.createSymbolicLink(repository.resolve("outside-file-link"), outsideDirectory.resolve("secret.txt"));
+        Files.createSymbolicLink(repository.resolve("outside-directory-link"), outsideDirectory);
+
+        Path archive = ReflectionTestUtils.invokeMethod(buildJobContainerService, "createTarArchive", repository);
+
+        List<String> names = new ArrayList<>();
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(Files.newInputStream(archive))) {
+            TarArchiveEntry entry;
+            while ((entry = tar.getNextEntry()) != null) {
+                names.add(entry.getName());
+                Assertions.assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).doesNotContain("outside content");
+            }
+        }
+        finally {
+            Files.deleteIfExists(archive);
+        }
+        Assertions.assertThat(names).contains("repository/file.txt", "repository/inside-link");
+        assertThat(names.stream().noneMatch(name -> name.contains("outside"))).as("links leaving the repository are not archived").isTrue();
     }
 }
