@@ -18,6 +18,7 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,21 @@ public class DeimosSnapshotReader {
     private static final List<String> TEXT_SCRIPT_EXTENSIONS = List.of(".sh", ".bat");
 
     /**
+     * The largest text file that is read into memory, the same bound as for reading all files of a repository elsewhere.
+     */
+    static final long MAX_FILE_BYTES = 10L * 1024 * 1024;
+
+    /**
+     * The most that the text files of one commit add up to.
+     */
+    static final long MAX_TOTAL_BYTES = 100L * 1024 * 1024;
+
+    /**
+     * The most entries of one commit that are read.
+     */
+    static final int MAX_ENTRIES = 100_000;
+
+    /**
      * The files of one commit, split into text files and everything else.
      *
      * @param textFiles  the text files, repository-relative path to UTF-8 content
@@ -61,13 +77,21 @@ public class DeimosSnapshotReader {
      * A file without a binary extension is always returned as text. For a file with such an extension only the
      * beginning is read to classify it, so an archive or image is recognised without loading it; a file whose beginning
      * is text is loaded completely, like every other text file.
+     * <p>
+     * A commit beyond {@link #MAX_FILE_BYTES}, {@link #MAX_TOTAL_BYTES} or {@link #MAX_ENTRIES} is an error rather than a
+     * smaller result. The whole snapshot is held in memory before any payload limit applies, and leaving the excess out
+     * instead would hide its content from the marker scan, which a student could use to evade it.
      *
      * @param repository the repository
      * @param commitHash the commit to read
      * @return the text files and the remaining entries of that commit, both empty if the commit cannot be resolved
-     * @throws IOException if the repository cannot be read
+     * @throws IOException if the repository cannot be read or the commit exceeds a limit
      */
     public TextSnapshot read(Repository repository, String commitHash) throws IOException {
+        return read(repository, commitHash, MAX_FILE_BYTES, MAX_TOTAL_BYTES, MAX_ENTRIES);
+    }
+
+    static TextSnapshot read(Repository repository, String commitHash, long maxFileBytes, long maxTotalBytes, int maxEntries) throws IOException {
         ObjectId commitId = repository.resolve(commitHash + "^{commit}");
         if (commitId == null) {
             return new TextSnapshot(Map.of(), Map.of());
@@ -75,9 +99,11 @@ public class DeimosSnapshotReader {
 
         Map<String, String> textFiles = new HashMap<>();
         Map<String, ObjectId> otherFiles = new HashMap<>();
+        long totalBytes = 0;
         try (RevWalk revWalk = new RevWalk(repository); TreeWalk treeWalk = new TreeWalk(repository)) {
             treeWalk.addTree(revWalk.parseCommit(commitId).getTree());
             treeWalk.setRecursive(true);
+            treeWalk.setFilter(new EntryLimit(maxEntries));
             while (treeWalk.next()) {
                 String path = treeWalk.getPathString();
                 FileMode fileMode = treeWalk.getFileMode(0);
@@ -91,6 +117,15 @@ public class DeimosSnapshotReader {
                         otherFiles.put(path, objectId);
                     }
                     else {
+                        // The path is the student's, so it stays out of a message that may reach a report.
+                        long size = blobLoader.getSize();
+                        if (size > maxFileBytes) {
+                            throw new IOException("A file of the commit is larger than " + maxFileBytes + " bytes");
+                        }
+                        if (size > maxTotalBytes - totalBytes) {
+                            throw new IOException("The text files of the commit add up to more than " + maxTotalBytes + " bytes");
+                        }
+                        totalBytes += size;
                         try (InputStream inputStream = blobLoader.openStream()) {
                             textFiles.put(path, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
                         }
@@ -99,6 +134,40 @@ public class DeimosSnapshotReader {
             }
         }
         return new TextSnapshot(textFiles, otherFiles);
+    }
+
+    /**
+     * Counts every entry the walk looks at, directories included, before it descends into them. Counting only the files
+     * the walk returns would leave a tree that references the same or empty subtrees many times unbounded.
+     */
+    private static final class EntryLimit extends TreeFilter {
+
+        private final int maxEntries;
+
+        private int visitedEntries;
+
+        private EntryLimit(int maxEntries) {
+            this.maxEntries = maxEntries;
+        }
+
+        @Override
+        public boolean include(TreeWalk walker) throws IOException {
+            visitedEntries++;
+            if (visitedEntries > maxEntries) {
+                throw new IOException("The commit has more than " + maxEntries + " entries");
+            }
+            return true;
+        }
+
+        @Override
+        public boolean shouldBeRecursive() {
+            return false;
+        }
+
+        @Override
+        public TreeFilter clone() {
+            return new EntryLimit(maxEntries);
+        }
     }
 
     private static boolean isTextScript(String path) {

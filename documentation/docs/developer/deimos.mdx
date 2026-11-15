@@ -101,7 +101,9 @@ walking the git graph. Consequences worth knowing:
   could not be examined. It is recorded as a `MISSING_COMMIT_HASH` omission.
 - Snapshots are read with `DeimosSnapshotReader`, which leaves a file out as binary
   only when both its extension and the beginning of its content say so, and reads no more than that beginning for such
-  files. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
+  files. A commit with a text file above 10 MiB, text files above 100 MiB in total or more than 100,000 entries fails
+  the read, as reading all files of a repository does elsewhere: the whole snapshot is held in memory before any payload
+  limit applies, and leaving the excess out would hide it from the marker scan. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
   part of the evidence. Scripts are never classified away by their content, and a file without a binary extension is
   always read as text, so a NUL byte cannot hide either. Every other entry (binary files, symbolic links and
   submodules) is reported with the id of the object it points to. Its path is scanned for imitated markers and is not

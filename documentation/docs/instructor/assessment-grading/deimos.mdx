@@ -176,7 +176,7 @@ model was unreachable", and those two lead to opposite conclusions.
 | Category | Meaning | What to do |
 | --- | --- | --- |
 | Nothing to analyze | The participation has no submission snapshots, or no observable change against the exercise template. Deleting a binary file or link leaves nothing to examine either. | Nothing. This is a legitimate outcome, not an error. |
-| Repository could not be read | The repository, a snapshot, or the diff could not be produced. The participation was **not** examined. | Re-run for the affected window. If it persists, report it to your administrator. |
+| Repository could not be read | The repository, a snapshot, or the diff could not be produced, for example because a snapshot is too large to read: a text file above 10 MiB, text files above 100 MiB in total, or more than 100,000 files and directories. The participation was **not** examined. | Re-run for the affected window. If it persists, report it to your administrator. |
 | Analysis model did not respond in time | The model exceeded the configured timeout, after the transport retries. | Re-run, ideally with a narrower scope or at a quieter time. |
 | Analysis model rate limit reached | The endpoint rejected the request with a rate limit, after the transport retries. | Re-run later with a narrower scope. Tell your administrator if it happens routinely. |
 | Analysis model rejected the API key (missing or wrong) | The endpoint answered with HTTP 401 or 403. The run stopped at the first such participation, and the ones it did not reach are counted here too. | Report it to your administrator; the API key is missing, wrong, or not authorised for the model. Re-run once it is fixed. |

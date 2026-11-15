@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,11 +14,13 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEditor;
 import org.eclipse.jgit.dircache.DirCacheEntry;
+import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.TreeFormatter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -85,6 +89,72 @@ class DeimosSnapshotReaderTest {
 
             assertThat(snapshot.textFiles()).isEmpty();
             assertThat(snapshot.otherFiles()).isEmpty();
+        }
+    }
+
+    @Test
+    void readFailsForAFileLargerThanTheFileLimit() throws Exception {
+        try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call()) {
+            FileUtils.writeStringToFile(workingTree.resolve("Main.java").toFile(), "x".repeat(101), StandardCharsets.UTF_8);
+            String commitHash = commitAll(git);
+
+            assertThat(DeimosSnapshotReader.read(git.getRepository(), commitHash, 101, 1_000, 10).textFiles()).containsOnlyKeys("Main.java");
+            assertThatThrownBy(() -> DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 1_000, 10)).isInstanceOf(IOException.class)
+                    .hasMessage("A file of the commit is larger than 100 bytes");
+        }
+    }
+
+    @Test
+    void readFailsWhenTheTextFilesAddUpToMoreThanTheTotalLimit() throws Exception {
+        try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call()) {
+            FileUtils.writeStringToFile(workingTree.resolve("A.java").toFile(), "a".repeat(60), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(workingTree.resolve("B.java").toFile(), "b".repeat(60), StandardCharsets.UTF_8);
+            // A binary file is never loaded, so it does not count towards the total.
+            FileUtils.writeByteArrayToFile(workingTree.resolve("logo.png").toFile(), new byte[] { (byte) 0x89, 'P', 'N', 'G', 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            String commitHash = commitAll(git);
+
+            assertThat(DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 120, 10).textFiles()).containsOnlyKeys("A.java", "B.java");
+            assertThatThrownBy(() -> DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 119, 10)).isInstanceOf(IOException.class)
+                    .hasMessage("The text files of the commit add up to more than 119 bytes");
+        }
+    }
+
+    @Test
+    void readFailsForACommitWithMoreEntriesThanTheEntryLimit() throws Exception {
+        try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call()) {
+            for (int file = 0; file < 3; file++) {
+                FileUtils.writeStringToFile(workingTree.resolve("dir/File%d.java".formatted(file)).toFile(), "", StandardCharsets.UTF_8);
+            }
+            String commitHash = commitAll(git);
+
+            // The directory counts as well: four entries in all.
+            assertThat(DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 100, 4).textFiles()).hasSize(3);
+            assertThatThrownBy(() -> DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 100, 3)).isInstanceOf(IOException.class)
+                    .hasMessage("The commit has more than 3 entries");
+        }
+    }
+
+    @Test
+    void readCountsEmptySubtreesTowardsTheEntryLimit() throws Exception {
+        try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call(); ObjectInserter inserter = git.getRepository().newObjectInserter()) {
+            // Twenty references to the empty tree hold no file, so a walk that only counts files would never stop.
+            ObjectId emptyTree = inserter.insert(new TreeFormatter());
+            var rootTree = new TreeFormatter();
+            for (int directory = 0; directory < 20; directory++) {
+                rootTree.append("dir%02d".formatted(directory), FileMode.TREE, emptyTree);
+            }
+            var commit = new CommitBuilder();
+            commit.setTreeId(inserter.insert(rootTree));
+            var author = new PersonIdent("Artemis", "artemis@example.com");
+            commit.setAuthor(author);
+            commit.setCommitter(author);
+            commit.setMessage("Empty directories");
+            String commitHash = inserter.insert(commit).getName();
+            inserter.flush();
+
+            assertThat(DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 100, 20).textFiles()).isEmpty();
+            assertThatThrownBy(() -> DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 100, 19)).isInstanceOf(IOException.class)
+                    .hasMessage("The commit has more than 19 entries");
         }
     }
 
