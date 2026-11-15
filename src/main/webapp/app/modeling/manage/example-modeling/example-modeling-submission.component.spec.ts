@@ -11,10 +11,13 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
+import type { ExampleSubmissionDetail } from 'app/openapi/model/example-submission-detail';
+import type { ExampleSubmissionRequest } from 'app/openapi/model/example-submission-request';
+import { toExampleSubmissionRequest } from 'app/assessment/shared/util/example-submission-request.util';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -82,7 +85,7 @@ class StubModelingAssessmentComponent {
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
     let fixture: ComponentFixture<ExampleModelingSubmissionComponent>;
-    let service: ExampleSubmissionService;
+    let service: ExampleSubmissionApi;
     let alertService: AlertService;
     let router: Router;
     let route: ActivatedRoute;
@@ -96,6 +99,19 @@ describe('Example Modeling Submission Component', () => {
     const exampleSubmission: ExampleSubmission = {
         submission,
     };
+
+    const toDetail = (request: ExampleSubmissionRequest): ExampleSubmissionDetail => ({
+        id: request.id,
+        usedForTutorial: request.usedForTutorial,
+        assessmentExplanation: request.assessmentExplanation,
+        submission: request.submission && {
+            id: request.submission.id,
+            submissionExerciseType: 'modeling',
+            model: request.submission.model,
+            explanationText: request.submission.explanationText,
+        },
+    });
+    const detailOf = (example: ExampleSubmission) => toDetail(toExampleSubmissionRequest(example));
 
     const exercise = {
         id: EXERCISE_ID,
@@ -174,7 +190,7 @@ describe('Example Modeling Submission Component', () => {
 
         fixture = TestBed.createComponent(ExampleModelingSubmissionComponent);
         comp = fixture.componentInstance;
-        service = TestBed.inject(ExampleSubmissionService);
+        service = TestBed.inject(ExampleSubmissionApi);
         alertService = TestBed.inject(AlertService);
         router = TestBed.inject(Router);
     });
@@ -197,7 +213,7 @@ describe('Example Modeling Submission Component', () => {
             ...(readOnly ? { readOnly: true } : {}),
             ...(complete ? { toComplete: true } : {}),
         }).snapshot;
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: { id: 35, usedForTutorial: true, submission: { id: 20, model: undefined } } })));
+        vi.spyOn(service, 'getExampleSubmission').mockReturnValue(of({ id: 35, usedForTutorial: true, submission: { id: 20, submissionExerciseType: 'modeling' } }));
         vi.spyOn(TestBed.inject(ModelingAssessmentService), 'getExampleAssessment').mockReturnValue(of(new Result()));
         comp.ngOnInit();
         const request = TestBed.inject(HttpTestingController).expectOne((r) => r.url.startsWith('api/exercise/exercises/'));
@@ -207,7 +223,7 @@ describe('Example Modeling Submission Component', () => {
 
     describe('ordered saves', () => {
         let currentModel: UMLModel;
-        let updateRequests: { payload: ExampleSubmission; response: Subject<HttpResponse<ExampleSubmission>> }[];
+        let updateRequests: { payload: ExampleSubmissionRequest; response: Subject<ExampleSubmissionDetail> }[];
         let assessmentRequests: { feedbacks: Feedback[]; response: Subject<Result> }[];
 
         beforeEach(() => {
@@ -230,8 +246,8 @@ describe('Example Modeling Submission Component', () => {
             vi.spyOn(comp, 'modelingEditor').mockReturnValue({ getCurrentModel: () => currentModel } as ModelingEditorComponent);
             updateRequests = [];
             assessmentRequests = [];
-            vi.spyOn(service, 'update').mockImplementation((payload) => {
-                const response = new Subject<HttpResponse<ExampleSubmission>>();
+            vi.spyOn(service, 'updateExampleSubmission').mockImplementation((_exerciseId, payload) => {
+                const response = new Subject<ExampleSubmissionDetail>();
                 updateRequests.push({ payload: deepClone(payload), response });
                 return response;
             });
@@ -244,7 +260,7 @@ describe('Example Modeling Submission Component', () => {
 
         function completeUpdate(index: number) {
             const request = updateRequests[index];
-            request.response.next(new HttpResponse({ body: deepClone(request.payload) }));
+            request.response.next(toDetail(request.payload));
             request.response.complete();
         }
 
@@ -268,7 +284,7 @@ describe('Example Modeling Submission Component', () => {
             expect(updateRequests).toHaveLength(1);
             completeAssessment(0);
             expect(updateRequests).toHaveLength(2);
-            expect(JSON.parse((updateRequests[1].payload.submission as ModelingSubmission).model!).title).toBe('Second model');
+            expect(JSON.parse(updateRequests[1].payload.submission!.model!).title).toBe('Second model');
             completeUpdate(1);
             expect(currentModel.title).toBe('Unsaved third model');
             // A stale model response must not replace the editor's input with the earlier saved model.
@@ -284,7 +300,7 @@ describe('Example Modeling Submission Component', () => {
             expect(updateRequests).toHaveLength(1);
             completeUpdate(0);
             expect(updateRequests).toHaveLength(2);
-            expect(JSON.parse((updateRequests[1].payload.submission as ModelingSubmission).model!).title).toBe('Second model');
+            expect(JSON.parse(updateRequests[1].payload.submission!.model!).title).toBe('Second model');
             expect(updateRequests[1].payload.assessmentExplanation).toBe('New rationale');
             completeUpdate(1);
             completeAssessment(0);
@@ -413,7 +429,7 @@ describe('Example Modeling Submission Component', () => {
             comp.showAssessment();
             expect(updateRequests).toHaveLength(outcome === 'failure' ? 2 : 1);
             if (outcome === 'failure') {
-                expect(JSON.parse((updateRequests[1].payload.submission as ModelingSubmission).model!).title).toBe('Edited model');
+                expect(JSON.parse(updateRequests[1].payload.submission!.model!).title).toBe('Edited model');
             }
         });
 
@@ -441,7 +457,7 @@ describe('Example Modeling Submission Component', () => {
             expect(updateRequests).toHaveLength(1);
             updateRequests[0].response.error(new Error('Model save failed'));
             expect(updateRequests).toHaveLength(2);
-            expect(JSON.parse((updateRequests[1].payload.submission as ModelingSubmission).model!).title).toBe('Test Model');
+            expect(JSON.parse(updateRequests[1].payload.submission!.model!).title).toBe('Test Model');
             completeUpdate(1);
             completeAssessment(0);
         });
@@ -494,20 +510,20 @@ describe('Example Modeling Submission Component', () => {
 
         it('queues repeated create clicks and updates the created submission on the second click', () => {
             comp.isNewSubmission.set(true);
-            const creation = new Subject<HttpResponse<ExampleSubmission>>();
-            const create = vi.spyOn(service, 'create').mockReturnValue(creation);
+            const creation = new Subject<ExampleSubmissionDetail>();
+            const create = vi.spyOn(service, 'createExampleSubmission').mockReturnValue(creation);
             comp.upsertExampleModelingSubmission();
             currentModel.title = 'Second model';
             comp.upsertExampleModelingSubmission();
             expect(create).toHaveBeenCalledOnce();
-            const created = deepClone(create.mock.calls[0][0]);
+            const created = deepClone(create.mock.calls[0][1]);
             created.id = 36;
             created.submission!.id = 21;
-            creation.next(new HttpResponse({ body: created }));
+            creation.next(toDetail(created));
             creation.complete();
             expect(updateRequests).toHaveLength(1);
             expect(updateRequests[0].payload.id).toBe(36);
-            expect(JSON.parse((updateRequests[0].payload.submission as ModelingSubmission).model!).title).toBe('Second model');
+            expect(JSON.parse(updateRequests[0].payload.submission!.model!).title).toBe('Second model');
         });
 
         it('continues after a failed metadata write and preserves newer metadata while an older save finishes', () => {
@@ -631,7 +647,7 @@ describe('Example Modeling Submission Component', () => {
 
     it('should upsert a new modeling submission', () => {
         const alertSpy = vi.spyOn(alertService, 'success');
-        const serviceSpy = vi.spyOn(service, 'create').mockImplementation((newExampleSubmission) => of(new HttpResponse({ body: newExampleSubmission })));
+        const serviceSpy = vi.spyOn(service, 'createExampleSubmission').mockImplementation((_exerciseId, request) => of(toDetail(request)));
         comp.isNewSubmission.set(true);
         comp.exercise.set(exercise);
         fixture.detectChanges();
@@ -645,9 +661,9 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should upsert an existing modeling submission', async () => {
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'getExampleSubmission').mockReturnValue(of(detailOf(exampleSubmission)));
         const alertSpy = vi.spyOn(alertService, 'success');
-        const serviceSpy = vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const serviceSpy = vi.spyOn(service, 'updateExampleSubmission').mockImplementation((_exerciseId, request) => of(toDetail(request)));
 
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const modelingAssessmentServiceSpy = vi.spyOn(modelingAssessmentService, 'saveExampleAssessment');
@@ -750,7 +766,7 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should not prune feedback when the model change is rejected', async () => {
-        vi.spyOn(service, 'update').mockReturnValue(throwError(() => ({ status: 500 })));
+        vi.spyOn(service, 'updateExampleSubmission').mockReturnValue(throwError(() => ({ status: 500 })));
         const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
@@ -762,7 +778,7 @@ describe('Example Modeling Submission Component', () => {
 
         comp.showAssessment();
         await fixture.whenStable();
-        expect(service.update).toHaveBeenCalledOnce();
+        expect(service.updateExampleSubmission).toHaveBeenCalledOnce();
 
         // the server kept the old model, so its feedback must survive and must not be queued for the assessment endpoint
         expect(comp.referencedFeedback()).toEqual([mockFeedbackWithReference]);
@@ -776,7 +792,7 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should persist pruned feedback when switching to the assessment after a model change', async () => {
-        vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        vi.spyOn(service, 'updateExampleSubmission').mockImplementation((_exerciseId, request) => of(toDetail(request)));
         const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
@@ -788,7 +804,7 @@ describe('Example Modeling Submission Component', () => {
 
         comp.showAssessment();
         await fixture.whenStable();
-        expect(service.update).toHaveBeenCalledOnce();
+        expect(service.updateExampleSubmission).toHaveBeenCalledOnce();
 
         expect(comp.referencedFeedback()).toEqual([]);
         expect(saveAssessmentSpy).toHaveBeenCalledOnce();
@@ -816,7 +832,7 @@ describe('Example Modeling Submission Component', () => {
 
         const result = { id: 1 } as Result;
         const alertSpy = vi.spyOn(alertService, 'success');
-        vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        vi.spyOn(service, 'updateExampleSubmission').mockImplementation((_exerciseId, request) => of(toDetail(request)));
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         vi.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
 
@@ -833,7 +849,7 @@ describe('Example Modeling Submission Component', () => {
         comp.referencedFeedback.set([mockFeedbackWithReference, mockFeedbackWithoutReference]);
 
         const alertSpy = vi.spyOn(alertService, 'error');
-        vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        vi.spyOn(service, 'updateExampleSubmission').mockImplementation((_exerciseId, request) => of(toDetail(request)));
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         vi.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
 
@@ -869,7 +885,7 @@ describe('Example Modeling Submission Component', () => {
     it('should show assessment', async () => {
         const result = { id: 1, feedbacks: [] } as Result;
 
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'getExampleSubmission').mockReturnValue(of(detailOf(exampleSubmission)));
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = vi.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 
@@ -894,7 +910,7 @@ describe('Example Modeling Submission Component', () => {
         const feedbackTwo = { id: 2, type: FeedbackType.MANUAL } as Feedback;
         result.feedbacks = [feedbackOne, feedbackTwo];
 
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'getExampleSubmission').mockReturnValue(of(detailOf(exampleSubmission)));
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = vi.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 
@@ -1003,7 +1019,7 @@ describe('Example Modeling Submission Component', () => {
         const startPracticeAssessment = async () => {
             routeQueryParam.toComplete = 1;
             const solution = { id: 1, feedbacks: [solutionUnreferenced, solutionReferenced] } as Result;
-            vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+            vi.spyOn(service, 'getExampleSubmission').mockReturnValue(of(detailOf(exampleSubmission)));
             vi.spyOn(TestBed.inject(ModelingAssessmentService), 'getExampleAssessment').mockReturnValue(of(solution));
             comp.exercise.set(exercise);
 
@@ -1124,13 +1140,13 @@ describe('Example Modeling Submission Component', () => {
         comp['exampleSubmissionId'] = 42;
         comp.selectedMode.set(ExampleSubmissionMode.ASSESS_CORRECTLY);
 
-        const update = vi.spyOn(TestBed.inject(ExampleSubmissionService), 'update').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        const update = vi.spyOn(service, 'updateExampleSubmission').mockReturnValue(of(detailOf(exampleSubmission)));
         vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
 
         comp.saveExampleAssessment();
 
         expect(update).toHaveBeenCalledOnce();
-        expect(update.mock.calls[0][0].usedForTutorial).toBe(true);
+        expect(update.mock.calls[0][1].usedForTutorial).toBe(true);
     });
 
     it('should not round-trip the example submission when the training mode is unchanged', () => {
@@ -1141,7 +1157,7 @@ describe('Example Modeling Submission Component', () => {
         comp['exampleSubmissionId'] = 42;
         comp.selectedMode.set(ExampleSubmissionMode.ASSESS_CORRECTLY);
 
-        const update = vi.spyOn(TestBed.inject(ExampleSubmissionService), 'update');
+        const update = vi.spyOn(service, 'updateExampleSubmission');
         const saveAssessment = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
 
         comp.saveExampleAssessment();

@@ -1,7 +1,7 @@
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -24,6 +25,7 @@ describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;
+    let exampleSubmissionApi: ExampleSubmissionApi;
     let dialogService: TumAetUiDialogService;
     let alertService: AlertService;
     let exercise: Exercise;
@@ -65,6 +67,7 @@ describe('Example Submission Component', () => {
         fixture = TestBed.createComponent(ExampleSubmissionsComponent);
         component = fixture.componentInstance;
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleSubmissionApi = TestBed.inject(ExampleSubmissionApi);
         dialogService = TestBed.inject(TumAetUiDialogService);
         alertService = TestBed.inject(AlertService);
     });
@@ -83,7 +86,7 @@ describe('Example Submission Component', () => {
     it('should delete an example submission', () => {
         component.exercise.set(exercise);
         component.createdExampleAssessment.set([false, false]);
-        const deleteStub = vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const deleteStub = vi.spyOn(exampleSubmissionApi, 'deleteExampleSubmission').mockReturnValue(of(undefined));
 
         component.deleteExampleSubmission(0);
 
@@ -94,7 +97,7 @@ describe('Example Submission Component', () => {
     it('should catch an error on delete', () => {
         component.exercise.set(exercise);
         component.createdExampleAssessment.set([false, false]);
-        vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
+        vi.spyOn(exampleSubmissionApi, 'deleteExampleSubmission').mockReturnValue(throwError(() => ({ status: 500 })));
 
         const alertServiceSpy = vi.spyOn(alertService, 'error');
         component.deleteExampleSubmission(0);
@@ -124,7 +127,7 @@ describe('Example Submission Component', () => {
 
     it('should not import when the import dialog closes without a submission', () => {
         component.exercise.set(exercise);
-        const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
+        const importStub = vi.spyOn(exampleSubmissionApi, 'importExampleSubmission').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
         dialogCloseSubject.next(undefined);
@@ -143,13 +146,13 @@ describe('Example Submission Component', () => {
     });
     it('should report an error when importing the selected submission fails', () => {
         component.exercise.set(exercise);
-        const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const importStub = vi.spyOn(exampleSubmissionApi, 'importExampleSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
         const errorSpy = vi.spyOn(alertService, 'error');
 
         component.openImportModal();
         dialogCloseSubject.next({ id: 42 } as Submission);
 
-        expect(importStub).toHaveBeenCalledWith(42, exercise.id);
+        expect(importStub).toHaveBeenCalledWith(exercise.id, 42);
         expect(errorSpy).toHaveBeenCalledWith('error.http.404');
     });
 });

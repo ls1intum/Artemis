@@ -44,7 +44,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
 import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
+import type { ExampleSubmissionDetail } from 'app/openapi/model/example-submission-detail';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -53,7 +54,7 @@ describe('ExampleTextSubmissionComponent', () => {
     let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;
     let exerciseService: ExerciseService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleSubmissionService: ExampleSubmissionApi;
     let assessmentsService: TextAssessmentService;
     let alertService: AlertService;
 
@@ -141,7 +142,7 @@ describe('ExampleTextSubmissionComponent', () => {
         debugElement = fixture.debugElement;
         activatedRouteSnapshot = TestBed.inject(ActivatedRoute).snapshot;
         exerciseService = TestBed.inject(ExerciseService);
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionApi);
         assessmentsService = TestBed.inject(TextAssessmentService);
         alertService = TestBed.inject(AlertService);
         exercise = new TextExercise(undefined, undefined);
@@ -178,7 +179,7 @@ describe('ExampleTextSubmissionComponent', () => {
             });
             TestBed.inject(ActivatedRoute).snapshot = activatedRouteSnapshot = knownRoute.snapshot;
             vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(instructor);
-            vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+            vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
             const getResult = vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
             await comp['initializeExampleTextSubmissionComponent']();
             const request = TestBed.inject(HttpTestingController).expectOne((r) => r.url.startsWith('api/exercise/exercises/'));
@@ -196,7 +197,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
         vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
@@ -204,7 +205,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(exampleSubmissionService.getExampleSubmission).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID, 'instructor');
         expect(comp.state.constructor.name).toBe('EditState');
     });
@@ -219,7 +220,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
         vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -261,7 +262,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { toComplete: 'true' };
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
         // @ts-ignore
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
 
@@ -278,7 +279,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
         vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
@@ -286,7 +287,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).not.toHaveBeenCalled();
+        expect(exampleSubmissionService.getExampleSubmission).not.toHaveBeenCalled();
         expect(assessmentsService.getExampleResult).not.toHaveBeenCalled();
         expect(comp.state.constructor.name).toBe('NewState');
     });
@@ -309,8 +310,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should switch state when starting assessment', async () => {
         // GIVEN
-        vi.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleSubmissionService, 'prepareExampleAssessment').mockReturnValue(of(undefined));
+        vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
 
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
@@ -429,7 +430,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
         vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleSubmissionService, 'getExampleSubmission').mockImplementation(() => of(detailOf(exampleSubmission)));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -458,7 +459,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(exampleSubmissionService.getExampleSubmission).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID, 'training');
         expect(tutorParticipationApi.assessExampleSubmissionForTutorParticipation).toHaveBeenCalledOnce();
         expect(tutorParticipationApi.assessExampleSubmissionForTutorParticipation).toHaveBeenCalledWith(
@@ -520,7 +521,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should create new example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(httpResponse(exampleSubmission));
+        const createStub = vi.spyOn(exampleSubmissionService, 'createExampleSubmission').mockReturnValue(of(detailOf(exampleSubmission)));
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
         // Mock the navigation util to avoid window.location.href regex matching issues
         vi.spyOn(comp['navigationUtilService'], 'replaceNewWithIdInUrl').mockImplementation(() => {});
@@ -535,7 +536,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should not create example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = vi.spyOn(exampleSubmissionService, 'createExampleSubmission').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         comp.createNewExampleTextSubmission();
@@ -615,8 +616,8 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should update example text submission', () => {
         // GIVEN
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
-        const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'update');
-        exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
+        const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'updateExampleSubmission');
+        exampleSubmissionServiceSpy.mockReturnValue(of(detailOf(exampleSubmission)));
         comp.unsavedSubmissionChanges.set(true);
 
         // WHEN
@@ -628,6 +629,18 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.unsavedSubmissionChanges()).toBe(false);
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
+    });
+
+    const detailOf = (example: ExampleSubmission): ExampleSubmissionDetail => ({
+        id: example.id,
+        usedForTutorial: example.usedForTutorial,
+        assessmentExplanation: example.assessmentExplanation,
+        submission: example.submission && {
+            id: example.submission.id,
+            submissionExerciseType: 'text',
+            text: (example.submission as TextSubmission).text,
+            blocks: (example.submission as TextSubmission).blocks?.map(({ id, text, startIndex, endIndex, type }) => ({ id, text, startIndex, endIndex, type })),
+        },
     });
 
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
