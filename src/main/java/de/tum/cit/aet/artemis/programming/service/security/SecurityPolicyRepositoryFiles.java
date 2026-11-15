@@ -472,12 +472,14 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment or to a quoted string; a URL
-     *         such as {@code 'https://example.org'} therefore starts no comment
+     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment, to a quoted string or to a
+     *         slashy string ({@code /.../} or {@code $/.../$}); a URL such as {@code 'https://example.org'} therefore starts no comment
      */
     private static boolean[] gradleCommentsAndStrings(String content) {
         boolean[] comment = new boolean[content.length()];
         int index = 0;
+        // The last character of code before the current one, without whitespace and comments; a string counts as an operand.
+        char previous = ';';
         while (index < content.length()) {
             char character = content.charAt(index);
             int end;
@@ -494,13 +496,57 @@ public final class SecurityPolicyRepositoryFiles {
                 String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
                 end = endOfString(content, index + delimiter.length(), delimiter);
                 Arrays.fill(comment, index, end, true);
+                previous = '"';
+            }
+            else if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous) && endOfSlashyString(content, index) > 0) {
+                end = endOfSlashyString(content, index);
+                Arrays.fill(comment, index, end, true);
+                previous = '"';
             }
             else {
                 end = index + 1;
+                if (!Character.isWhitespace(character)) {
+                    previous = character;
+                }
             }
             index = end;
         }
         return comment;
+    }
+
+    /**
+     * A {@code /} after an operand divides, as in {@code a / b} or {@code (a) / b}; elsewhere, as after {@code =}, {@code (} or {@code ,}, it opens a slashy
+     * string.
+     */
+    private static boolean slashyStringMayStartAfter(char previous) {
+        return !Character.isJavaIdentifierPart(previous) && previous != ')' && previous != ']' && previous != '}' && previous != '"';
+    }
+
+    /**
+     * @param from the offset of the opening {@code /} or {@code $/}
+     * @return the offset after the closing delimiter, or {@code -1} if the string is not closed, in which case the {@code /} is read as code
+     */
+    private static int endOfSlashyString(String content, int from) {
+        boolean dollar = content.charAt(from) == '$';
+        int index = from + (dollar ? 2 : 1);
+        while (index < content.length()) {
+            if (dollar && (content.startsWith("$$", index) || content.startsWith("$/", index))) {
+                index += 2;
+            }
+            else if (dollar && content.startsWith("/$", index)) {
+                return index + 2;
+            }
+            else if (!dollar && content.startsWith("\\/", index)) {
+                index += 2;
+            }
+            else if (!dollar && content.charAt(index) == '/') {
+                return index + 1;
+            }
+            else {
+                index++;
+            }
+        }
+        return -1;
     }
 
     /**

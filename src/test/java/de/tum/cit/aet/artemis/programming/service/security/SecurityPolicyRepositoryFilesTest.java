@@ -361,6 +361,15 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.example.MoreSortingTest");
     }
 
+    @Test
+    void aSubclassOfATestClassWithAUnicodeNameIsATestClassToo() throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingÜTest");
+        writeSource("test/de/example/MoreSortingTest.java", "package de.example;\n\nclass MoreSortingTest extends SortingÜTest {\n}\n");
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.example.MoreSortingTest");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "", "@org.junit.jupiter.api.extension.ExtendWith(de.tum.cit.ase.ares.api.jupiter.JupiterSecurityExtension.class)",
             "@de.tum.cit.ase.ares.api.jupiter.JupiterAresTest" })
@@ -568,6 +577,22 @@ class SecurityPolicyRepositoryFilesTest {
     @Test
     void ignoresAresVersionsInGradleStrings() {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("def example = \"aresVersion = '2.3.0'\"\next { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def example = /aresVersion = '2.3.0'/\n", "def example = $/aresVersion = '2.3.0'/$\n" })
+    void ignoresAresVersionsInGradleSlashyStrings(String example) throws IOException {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(example + "ext { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), example + "ext { aresVersion = '2.2.1' }\n", StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(example + "ext { aresVersion = '2.4.0' }\n");
+    }
+
+    @Test
+    void readsAnAresVersionAfterADivision() {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("def half = total / 2\next { aresVersion = '2.2.1' }\ndef third = total / 3\n", null)).contains("2.2.1");
     }
 
     @Test
