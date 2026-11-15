@@ -231,7 +231,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], segmented: true },
             {
                 labelKey: 'artemisApp.participation.filterGroup.submissions',
-                single: false,
                 items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
             },
             ...(assessmentTypeFilterable

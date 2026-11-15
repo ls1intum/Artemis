@@ -7,7 +7,6 @@ import {
     TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
     TumAetUiMultiSelectComponent,
-    TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,7 +16,6 @@ let nextFilterDropdownId = 0;
 export interface FilterGroup {
     labelKey: string;
     items: string[];
-    single?: boolean;
     segmented?: boolean;
 }
 
@@ -32,7 +30,6 @@ export interface FilterGroup {
         TumAetUiMultiSelectComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonGroupComponent,
-        TumAetUiSelectComponent,
         TumAetUiTooltipDirective,
     ],
     styleUrls: ['./filter-dropdown.component.scss'],
@@ -50,7 +47,6 @@ export class FilterDropdownComponent {
     protected readonly groups = computed(() =>
         this.groupedFilters()
             .map((group) => ({
-                single: group.single,
                 segmented: group.segmented,
                 labelKey: group.labelKey,
                 items: group.items,
@@ -61,11 +57,11 @@ export class FilterDropdownComponent {
 
     protected readonly checkboxGroups = computed(() => this.groups().filter((group) => group.items.length === 1));
 
-    protected singleOptions(group: FilterGroup): { value: string; label: string }[] {
+    protected segmentedOptions(group: FilterGroup): { value: string; label: string }[] {
         return [
             {
                 value: this.allValue,
-                label: (group.segmented ? '' : this.translateService.instant(group.labelKey) + ': ') + this.translateService.instant('artemisApp.exercise.showAll'),
+                label: this.translateService.instant('artemisApp.exercise.showAll'),
             },
             ...group.items.map((value) => ({ value, label: this.translateService.instant('artemisApp.exercise.show' + value) })),
         ];

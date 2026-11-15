@@ -665,12 +665,9 @@ describe('ParticipationComponent', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
             component.newManualResultAllowed.set(true);
             expect(component.filterGroups().filter((group) => group.items.includes(FilterProp.NO_SUBMISSIONS) || group.items.includes(FilterProp.MANUAL))).toHaveLength(2);
-            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(false);
             expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SUCCESSFUL))?.segmented).toBe(true);
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
             expect(filters()).toContain(FilterProp.SEMI_AUTOMATIC);
-            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(false);
-            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SEMI_AUTOMATIC))?.single).toBeUndefined();
         });
 
         it.each([

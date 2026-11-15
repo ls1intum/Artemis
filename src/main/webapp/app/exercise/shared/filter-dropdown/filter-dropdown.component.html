@@ -5,7 +5,7 @@
             @if (group.segmented) {
                 <span class="text-sm">{{ group.labelKey | artemisTranslate }}:</span>
                 <tumaet-ui-button-group [attr.aria-label]="group.labelKey | artemisTranslate">
-                    @for (option of singleOptions(group); track option.value) {
+                    @for (option of segmentedOptions(group); track option.value) {
                         <tumaet-ui-button
                             size="small"
                             variant="text"
@@ -16,18 +16,6 @@
                         >
                     }
                 </tumaet-ui-button-group>
-            } @else if (group.single) {
-                <tumaet-ui-select
-                    class="w-56 max-w-full shrink-0"
-                    [matchTriggerWidth]="false"
-                    [options]="singleOptions(group)"
-                    optionLabel="label"
-                    optionValue="value"
-                    [ngModel]="group.selected.length === 1 ? group.selected[0] : allValue"
-                    (ngModelChange)="updateGroup(group, [$event])"
-                    [ariaLabel]="group.labelKey | artemisTranslate"
-                    size="small"
-                />
             } @else {
                 <tumaet-ui-multi-select
                     class="w-56 max-w-full shrink-0"
