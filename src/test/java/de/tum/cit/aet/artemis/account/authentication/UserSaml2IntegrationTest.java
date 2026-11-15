@@ -256,7 +256,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         // The account is internal now, so a SAML2 login for the same login name is refused
         TestSecurityContextHolder.clearContext();
         mockSAMLAuthentication();
-        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN, null, Map.of("X-artemisApp-error", "home.errors.internalAccount"));
     }
 
     /**
@@ -281,7 +281,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         userTestRepository.saveAndFlush(existing);
 
         mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER, "ChangedFirstName", "ChangedLastName"));
-        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN, null, Map.of("X-artemisApp-error", "home.errors.internalAccount"));
 
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).as("the internal account is left untouched").isNotEqualTo("ChangedFirstName");
     }

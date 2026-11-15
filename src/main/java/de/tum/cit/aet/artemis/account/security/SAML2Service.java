@@ -70,6 +70,9 @@ public class SAML2Service {
 
     private static final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
+    /** The translation key of the message that tells a user whose login name belongs to an internal account to sign in with the Artemis password. */
+    public static final String INTERNAL_ACCOUNT_ERROR_KEY = "home.errors.internalAccount";
+
     /** A placeholder no assertion attribute filled in, removed from the result. */
     private static final Pattern UNSUBSTITUTED_PLACEHOLDER = Pattern.compile("\\{[^\\}]*?\\}");
 
@@ -137,7 +140,7 @@ public class SAML2Service {
         }
         else if (user.get().isInternal()) {
             log.warn("SAML2 login refused: the account '{}' is an internal account with its own password and cannot be used with an external login.", username);
-            throw new AccessForbiddenException("The account is not managed by the identity provider.");
+            throw new AccessForbiddenException(INTERNAL_ACCOUNT_ERROR_KEY);
         }
         else if (saml2syncUserData.isPresent() && Boolean.TRUE.equals(saml2syncUserData.get())) {
             syncUserDataFromSaml2(assertion, user.get());

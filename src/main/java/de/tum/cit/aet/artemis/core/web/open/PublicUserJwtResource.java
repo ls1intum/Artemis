@@ -182,7 +182,7 @@ public class PublicUserJwtResource {
      * @param body     the body of the request. "true" to remember the user.
      * @param response HTTP response
      * @param request  HTTP request
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated, or an account that the identity provider does not manage)
      */
     @PostMapping("saml2")
     @EnforceNothing
@@ -208,6 +208,10 @@ public class PublicUserJwtResource {
         catch (UserNotActivatedException e) {
             // If the exception is not caught, a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
+        }
+        catch (AccessForbiddenException e) {
+            // The login name belongs to an account that the identity provider does not manage. The client shows the message instead of a bare "Forbidden"
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
 
