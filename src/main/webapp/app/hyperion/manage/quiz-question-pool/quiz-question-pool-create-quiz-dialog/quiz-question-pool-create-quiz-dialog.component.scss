@@ -12,9 +12,12 @@
 
 .pool-create-quiz .pool-create-quiz-field {
     display: flex;
-    flex: 1 1 10rem;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.pool-create-quiz .pool-create-quiz-row .pool-create-quiz-field {
+    flex: 1 1 10rem;
 }
 
 .pool-create-quiz .pool-create-quiz-field label {
