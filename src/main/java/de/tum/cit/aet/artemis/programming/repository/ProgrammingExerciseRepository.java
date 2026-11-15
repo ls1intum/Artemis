@@ -307,6 +307,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(@Param("projectKey") String projectKey);
 
     /**
+     * The id of the course of an exercise, taken from the exercise group when there is one, as {@code Exercise#getCourseViaExerciseGroupOrCourseMember()} does.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the id of the course, or empty if the exercise does not exist
+     */
+    @Query("""
+            SELECT CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam e
+                LEFT JOIN e.course ec
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<Long> findCourseIdById(@Param("exerciseId") long exerciseId);
+
+    /**
      * The values the git request path needs to authorize a repository access, for one project key.
      * <p>
      * A projection rather than the exercise: this runs on every clone, fetch and push, twice per git operation, and

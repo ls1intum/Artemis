@@ -5,8 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -16,9 +19,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Issues and checks the credential a build agent uses to clone the repositories of one specific build job.
@@ -53,6 +65,22 @@ public class BuildJobCloneTokenService {
     private static final int TOKEN_BYTES = 64;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    /** The repositories of the database for a job, so that the clone requests of one job do not each read them. */
+    private static final int MAX_CACHED_JOBS = 5000;
+
+    private static final Duration CACHE_DURATION = Duration.ofMinutes(15);
+
+    private final Cache<String, Set<RepositoryIdentity>> persistedRepositoriesOfJobs = Caffeine.newBuilder().maximumSize(MAX_CACHED_JOBS).expireAfterWrite(CACHE_DURATION).build();
+
+    private final ParticipationRepository participationRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public BuildJobCloneTokenService(ParticipationRepository participationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+        this.participationRepository = participationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+    }
 
     /**
      * Creates a token for a single build job.
@@ -92,13 +120,26 @@ public class BuildJobCloneTokenService {
      * {@code artemis.version-control.url}. An installation that changed that base URL after its participations were
      * created would compare a stale string against a fresh one and silently deny every clone; the project key and slug
      * survive such a change.
+     * <p>
+     * The repositories that the job declares are also compared with the database: the participation and the exercise of the job have to
+     * match, and the project key and the slugs have to be those that the database holds for them. A declared repository that the database does not
+     * hold for the exercise and the participation of the job is left out.
      *
      * @param buildJob the build job, may be null
      * @return the repositories of that job, empty if it has none
      */
     public Set<RepositoryIdentity> getRepositoryIdentities(@Nullable BuildJobQueueItem buildJob) {
+        Set<RepositoryIdentity> declared = getDeclaredRepositoryIdentities(buildJob);
+        if (declared.isEmpty()) {
+            return declared;
+        }
+        declared.retainAll(getPersistedRepositoryIdentities(buildJob));
+        return declared;
+    }
+
+    private Set<RepositoryIdentity> getDeclaredRepositoryIdentities(@Nullable BuildJobQueueItem buildJob) {
         if (buildJob == null || buildJob.repositoryInfo() == null) {
-            return Set.of();
+            return new HashSet<>();
         }
         RepositoryInfo repositoryInfo = buildJob.repositoryInfo();
         Set<RepositoryIdentity> repositories = new HashSet<>();
@@ -111,6 +152,48 @@ public class BuildJobCloneTokenService {
             }
         }
         return repositories;
+    }
+
+    /**
+     * The repositories that the database holds for the participation and the exercise of a job: the repository of the participation, and the template, solution, test and
+     * auxiliary repositories of the exercise. Empty if the participation does not exist or does not belong to the exercise of the job.
+     */
+    private Set<RepositoryIdentity> getPersistedRepositoryIdentities(BuildJobQueueItem buildJob) {
+        String jobId = buildJob.id();
+        Set<RepositoryIdentity> cached = jobId == null ? null : persistedRepositoriesOfJobs.getIfPresent(jobId);
+        if (cached != null) {
+            return cached;
+        }
+        Set<RepositoryIdentity> persisted = loadPersistedRepositoryIdentities(buildJob);
+        if (jobId != null && !persisted.isEmpty()) {
+            persistedRepositoriesOfJobs.put(jobId, persisted);
+        }
+        return persisted;
+    }
+
+    private Set<RepositoryIdentity> loadPersistedRepositoryIdentities(BuildJobQueueItem buildJob) {
+        Optional<Participation> participation = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
+        if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+            return Set.of();
+        }
+        ProgrammingExercise participationExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+        if (participationExercise == null || !Objects.equals(participationExercise.getId(), buildJob.exerciseId())) {
+            log.warn("The participation {} of build job {} does not belong to the exercise {} of the job", buildJob.participationId(), buildJob.id(), buildJob.exerciseId());
+            return Set.of();
+        }
+        Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(buildJob.exerciseId());
+        if (exercise.isEmpty()) {
+            return Set.of();
+        }
+        Set<RepositoryIdentity> persisted = new HashSet<>();
+        addIfPresent(persisted, programmingParticipation.getRepositoryUri());
+        addIfPresent(persisted, exercise.get().getTemplateRepositoryUri());
+        addIfPresent(persisted, exercise.get().getSolutionRepositoryUri());
+        addIfPresent(persisted, exercise.get().getTestRepositoryUri());
+        for (AuxiliaryRepository auxiliaryRepository : exercise.get().getAuxiliaryRepositories()) {
+            addIfPresent(persisted, auxiliaryRepository.getRepositoryUri());
+        }
+        return persisted;
     }
 
     /**
