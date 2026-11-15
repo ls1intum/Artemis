@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
 import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -56,9 +57,23 @@ class ProgrammingExerciseReEvaluationRateLimitIntegrationTest extends AbstractPr
         properties.setReEvaluationRequestsPerMinute(1);
         var features = mock(FeatureToggleService.class);
         when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
-        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
         resource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("programmingExerciseGradingResource"));
         originalRateLimitService = ReflectionTestUtils.getField(resource, "rateLimitService");
+        var originalLimiter = (RateLimitService) originalRateLimitService;
+        // The resources are singletons that the other tests of the shared application context use as well, possibly at the same time. The limit of one request per minute
+        // therefore applies only to the users of this class, and every other user is handled by the limiter that was in place before.
+        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features) {
+
+            @Override
+            public void enforceBudget(String key, RateLimitType rpmType) {
+                if (key.startsWith(TEST_PREFIX)) {
+                    super.enforceBudget(key, rpmType);
+                }
+                else {
+                    originalLimiter.enforceBudget(key, rpmType);
+                }
+            }
+        };
         ReflectionTestUtils.setField(resource, "rateLimitService", limiter);
         updateEndpoint = "/api/programming/programming-exercises/" + exercise.getId() + "/re-evaluate";
         updateResource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("programmingExerciseReEvaluationResource"));
@@ -98,5 +113,16 @@ class ProgrammingExerciseReEvaluationRateLimitIntegrationTest extends AbstractPr
         // the update path counts against the same budget
         var update = UpdateProgrammingExerciseDTO.of(exercise, programmingExerciseUtilService.buildConfigOf(exercise));
         request.put(updateEndpoint, update, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void usersOutsideThisClassKeepTheLimiterThatWasInPlace() {
+        var limiter = (RateLimitService) ReflectionTestUtils.getField(resource, "rateLimitService");
+
+        // without the user scope, the second call would be refused by the limit of one request per minute
+        for (int i = 0; i < 3; i++) {
+            limiter.enforceBudget("someOtherClassInstructor", RateLimitType.RE_EVALUATION);
+        }
     }
 }

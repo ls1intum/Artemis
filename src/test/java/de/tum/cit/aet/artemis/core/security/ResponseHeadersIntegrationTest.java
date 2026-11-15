@@ -33,13 +33,14 @@ class ResponseHeadersIntegrationTest extends AbstractSpringIntegrationIndependen
 
     /**
      * The test application enables the LTI module, whose configuration removes {@code X-Frame-Options} so that learning management systems can embed the client.
-     * The policy must then not forbid framing either, while it restricts the document base.
+     * The policy must then not forbid framing either, while it restricts the document base. Other tests of the shared application context may have stored LTI platforms,
+     * so the policy may list their origins, but it never forbids framing.
      */
     @Test
     void shouldRestrictTheBaseUriAndKeepFramingOpenForLti() throws Exception {
         String policy = mockMvc.perform(get("/management/info")).andReturn().getResponse().getHeader("Content-Security-Policy");
 
-        assertThat(policy).contains("base-uri 'self'").doesNotContain("frame-ancestors");
+        assertThat(policy).contains("base-uri 'self'").doesNotContain("frame-ancestors 'none'");
     }
 
     /**
@@ -50,20 +51,25 @@ class ResponseHeadersIntegrationTest extends AbstractSpringIntegrationIndependen
         var platform = new LtiPlatformConfiguration();
         platform.setRegistrationId("frame-ancestors-test");
         platform.setClientId("frame-ancestors-client");
-        platform.setAuthorizationUri("https://lms.example.org/auth");
-        platform.setJwkSetUri("https://lms.example.org/jwks");
-        platform.setTokenUri("https://lms.example.org/token");
+        // an origin of its own, because the platforms of other tests may exist in the shared database
+        String origin = "https://frame-ancestors-test.example.org";
+        platform.setAuthorizationUri(origin + "/auth");
+        platform.setJwkSetUri(origin + "/jwks");
+        platform.setTokenUri(origin + "/token");
         platform = ltiPlatformConfigurationRepository.save(platform);
         ReflectionTestUtils.setField(customLti13Configurer, "platformOriginsCached", false);
         try {
             String policy = mockMvc.perform(get("/management/info")).andReturn().getResponse().getHeader("Content-Security-Policy");
 
-            assertThat(policy).contains("base-uri 'self'").endsWith("frame-ancestors 'self' https://lms.example.org");
+            assertThat(policy).contains("base-uri 'self'").contains("frame-ancestors 'self'").contains(origin);
         }
         finally {
             ltiPlatformConfigurationRepository.delete(platform);
             ReflectionTestUtils.setField(customLti13Configurer, "platformOriginsCached", false);
         }
+        String policyAfterwards = mockMvc.perform(get("/management/info")).andReturn().getResponse().getHeader("Content-Security-Policy");
+
+        assertThat(policyAfterwards).doesNotContain(origin);
     }
 
     @Test
