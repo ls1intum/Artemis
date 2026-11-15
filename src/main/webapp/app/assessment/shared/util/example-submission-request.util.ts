@@ -15,7 +15,7 @@ import type { SubmissionRequest } from 'app/openapi/model/submission-request';
 /**
  * Picks the feedback fields the server reads. The client feedback links back to its result, so sending it whole would not serialize.
  */
-function toFeedbackRequest(feedback: Feedback): FeedbackRequest {
+export function toFeedbackRequest(feedback: Feedback): FeedbackRequest {
     return {
         id: feedback.id,
         text: feedback.text,
