@@ -10,7 +10,7 @@ import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /** Error keys of the server that are shown as their own message. All other failures show a generic message. */
-const EMAIL_CHANGE_ERROR_KEYS = ['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'noPendingEmailChange'];
+const EMAIL_CHANGE_ERROR_KEYS = ['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'emailChangeDailyLimitReached', 'noPendingEmailChange'];
 const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 
 interface AccountSettingsFormModel {
@@ -116,7 +116,7 @@ export class AccountSettingsDialogComponent {
         const previousRequestTime = this.pendingEmailChange()?.requestedAt;
         this.accountService.save(userToSave).subscribe({
             next: (response) => {
-                const pendingEmailChange = response.pendingEmailChange ?? undefined;
+                const pendingEmailChange = response?.pendingEmailChange ?? undefined;
                 // Database reads round the initial Instant to milliseconds; distinct requests are at least a minute apart.
                 if (
                     pendingEmailChange !== undefined &&

@@ -157,6 +157,10 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         // The accounts keep their addresses between tests, and an address is unique, so one test taking NEW_EMAIL would refuse it to all others.
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), "emailchange"));
         waitOutTheCooldown();
+        DistributedMap<Long, Long> slots = distributedDataProvider.getExpiringMap(EmailChangeService.DAILY_REQUEST_SLOT_MAP_NAME, EmailChangeService.DAILY_WINDOW);
+        for (int slot = 0; slot < EmailChangeService.MAX_REQUESTS_PER_DAY; slot++) {
+            slots.remove(user.getId() * EmailChangeService.REQUEST_SLOT_FACTOR + slot);
+        }
     }
 
     /**
@@ -641,6 +645,22 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         putFailing(updateWithEmail("another-address@test.de"), "emailChangeRequestedTooRecently");
 
         assertThat(confirmationMails()).hasSize(2);
+    }
+
+    /**
+     * The pause of a minute alone would still allow thousands of mails a day from one account.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void theNumberOfRequestsOfOneAccountIsBoundedForADay() throws Exception {
+        for (int i = 0; i < EmailChangeService.MAX_REQUESTS_PER_DAY; i++) {
+            requestChangeTo("address-" + i + "@test.de");
+            waitOutTheCooldown();
+        }
+
+        putFailing(updateWithEmail("one-more@test.de"), "emailChangeDailyLimitReached");
+
+        assertThat(confirmationMails()).hasSize(2 * EmailChangeService.MAX_REQUESTS_PER_DAY);
     }
 
     @Test

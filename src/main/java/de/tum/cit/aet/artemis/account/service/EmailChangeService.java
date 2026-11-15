@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.PendingEmailChange;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -72,6 +74,18 @@ public class EmailChangeService {
      */
     static final Duration MIN_INTERVAL_BETWEEN_REQUESTS = Duration.ofMinutes(1);
 
+    /** How many times an account can have confirmation mails sent within {@link #DAILY_WINDOW}. */
+    public static final int MAX_REQUESTS_PER_DAY = 10;
+
+    public static final Duration DAILY_WINDOW = Duration.ofHours(24);
+
+    /**
+     * Name of the map whose entries each stand for one request of an account within {@link #DAILY_WINDOW}. The key is {@code userId * REQUEST_SLOT_FACTOR + slot}.
+     */
+    public static final String DAILY_REQUEST_SLOT_MAP_NAME = "email-change-daily-request-slots";
+
+    public static final long REQUEST_SLOT_FACTOR = 100;
+
     /**
      * Name of the map that remembers when an account last had its confirmation mails sent. Kept apart from the pending request on
      * purpose: cancelling a request deletes it, and a pause that went with it could be skipped by cancelling after every request.
@@ -95,6 +109,9 @@ public class EmailChangeService {
     /** The accounts whose confirmation mails went out within {@link #MIN_INTERVAL_BETWEEN_REQUESTS}, shared by all nodes. */
     private final DistributedMap<Long, Long> requestCooldowns;
 
+    /** The requests of the accounts within {@link #DAILY_WINDOW}, shared by all nodes. */
+    private final DistributedMap<Long, Long> dailyRequestSlots;
+
     private final SessionFreshnessService sessionFreshnessService;
 
     private final UserActivityService userActivityService;
@@ -111,6 +128,7 @@ public class EmailChangeService {
         this.accountSecurityEventService = accountSecurityEventService;
         this.allowedEmailPattern = allowedEmailPattern;
         this.requestCooldowns = distributedDataProvider.getExpiringMap(REQUEST_COOLDOWN_MAP_NAME, MIN_INTERVAL_BETWEEN_REQUESTS);
+        this.dailyRequestSlots = distributedDataProvider.getExpiringMap(DAILY_REQUEST_SLOT_MAP_NAME, DAILY_WINDOW);
         this.sessionFreshnessService = sessionFreshnessService;
         this.userActivityService = userActivityService;
     }
@@ -285,7 +303,16 @@ public class EmailChangeService {
 
         String previousEmail = user.getEmail();
         String previousLangKey = user.getLangKey();
-        if (userRepository.applyConfirmedEmailChange(userId, newEmail, change.getCurrentKeyId(), change.getNewKeyId()) == 0) {
+        int applied;
+        try {
+            applied = userRepository.applyConfirmedEmailChange(userId, newEmail, change.getCurrentKeyId(), change.getNewKeyId());
+        }
+        catch (DataIntegrityViolationException e) {
+            // Another account took the address between the check above and the update
+            userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
+            throw new EmailAlreadyUsedException();
+        }
+        if (applied == 0) {
             // Nothing was left to apply. Either the other confirmation completed the change a moment ago, which is not a failure for
             // this one, or the request was cancelled or the account recovered in the meantime, which must not apply anything. The same
             // holds if the account has another address than the one the request was made over, for example because an administrator
@@ -383,6 +410,14 @@ public class EmailChangeService {
         if (requestCooldowns.putIfAbsent(userId, System.currentTimeMillis()) != null) {
             throw new BadRequestAlertException("An e-mail change was requested a moment ago, please wait a minute", ENTITY_NAME, "emailChangeRequestedTooRecently");
         }
+        // Every request mails two addresses, so the number of requests of an account is bounded for a day as well. A slot is free again a day after it was taken.
+        for (int slot = 0; slot < MAX_REQUESTS_PER_DAY; slot++) {
+            if (dailyRequestSlots.putIfAbsent(userId * REQUEST_SLOT_FACTOR + slot, System.currentTimeMillis()) == null) {
+                return;
+            }
+        }
+        requestCooldowns.remove(userId);
+        throw new BadRequestAlertException("Too many e-mail changes were requested, please try again tomorrow", ENTITY_NAME, "emailChangeDailyLimitReached");
     }
 
     /**

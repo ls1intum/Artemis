@@ -26,6 +26,7 @@
                 "emailInvalid": "<strong>Diese E-Mail-Adresse ist nicht erlaubt.</strong> Bitte verwende eine Adresse, die zum erlaubten Muster passt.",
                 "emailChangeUnavailable": "<strong>Die E-Mail-Adresse kann hier nicht geändert werden.</strong> Diese Artemis-Instanz kann keine E-Mails versenden. Bitte wende dich an eine Administratorin oder einen Administrator.",
                 "emailChangeRequestedTooRecently": "<strong>Bitte warte einen Moment.</strong> Du hast vor weniger als einer Minute eine Änderung der E-Mail-Adresse angefordert. Versuche es in einer Minute erneut.",
+                "emailChangeDailyLimitReached": "<strong>Zu viele Anfragen.</strong> Du hast heute zu viele Änderungen der E-Mail-Adresse angefordert. Versuche es morgen erneut.",
                 "noPendingEmailChange": "<strong>Es gibt keine offene Änderung der E-Mail-Adresse.</strong> Sie ist möglicherweise abgelaufen oder wurde bereits abgebrochen."
             },
             "successEmailChangeRequested": "<strong>Einstellungen wurden gespeichert!</strong> Wir haben eine Bestätigungs-E-Mail an deine aktuelle Adresse und eine an deine neue Adresse geschickt. Deine E-Mail-Adresse ändert sich, sobald du beide bestätigt hast. Bis dahin gilt weiterhin deine aktuelle Adresse.",

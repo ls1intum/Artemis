@@ -293,6 +293,15 @@ describe('AccountSettingsDialogComponent', () => {
             expect(component.errorMessageKey()).toBe('settings.messages.error.emailChangeRequestedTooRecently');
         });
 
+        it('shows the message of the daily limit of email change requests', () => {
+            accountService.save.mockReturnValue(throwError(() => ({ status: 400, error: { errorKey: 'emailChangeDailyLimitReached' } })));
+            createComponent();
+
+            saveNewEmail();
+
+            expect(component.errorMessageKey()).toBe('settings.messages.error.emailChangeDailyLimitReached');
+        });
+
         it('shows a generic message for an unknown failure and clears it when the dialog opens again', () => {
             accountService.save.mockReturnValue(throwError(() => ({ status: 500, error: { errorKey: 'somethingElse' } })));
             createComponent();

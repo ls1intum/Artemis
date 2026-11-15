@@ -29,7 +29,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 
 /** Error keys of the server that are shown as their own message. All other failures show a generic message. */
-const EMAIL_CHANGE_ERROR_KEYS = ['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'noPendingEmailChange'];
+const EMAIL_CHANGE_ERROR_KEYS = ['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'emailChangeDailyLimitReached', 'noPendingEmailChange'];
 const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 
 @Component({
