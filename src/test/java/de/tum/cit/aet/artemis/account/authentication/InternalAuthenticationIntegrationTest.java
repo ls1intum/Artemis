@@ -313,6 +313,28 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
     }
 
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationWithToolReturnsTheToolTokenInTheBody() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        // Tools such as Scorpio sign in with the tool parameter only and read the token from the body
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?tool=" + ToolTokenType.SCORPIO, loginVM, HttpStatus.OK, httpHeaders);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        assertThat(responseBody).containsKey("access_token");
+        String token = responseBody.get("access_token").toString();
+        assertThat(tokenProvider.validateTokenForAuthority(token, null)).isTrue();
+        assertThat(tokenProvider.getClaim(token, "tools", String.class).split(",")).contains(ToolTokenType.SCORPIO.toString());
+    }
+
     /**
      * The remember-me flag has to survive the login path, because carrying it in the token is what makes a session
      * extendable. It used to be converted into a token lifetime in {@code JWTCookieService} and then dropped, so no token
