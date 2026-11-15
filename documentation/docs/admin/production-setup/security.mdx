@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-15
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -428,6 +428,19 @@ Signing in with an approved passkey restores the override for that session. Sess
 To allow users to clone their programming exercises via SSH in the integrated code lifecycle setup, SSH must be configured correctly on the server.
 
 Follow the next steps to create and manage SSH key pairs, distribute them across multiple nodes via Ansible, configure the system to use these keys, and adapt Nginx to enable SSH routing.
+
+### Connection and push limits
+
+Each LocalVC node allows up to 128 simultaneous SSH sessions per client IP address. Set
+`artemis.version-control.ssh-max-sessions-per-address` to change this limit; a value of zero or less
+disables it. Clients behind the same campus gateway share an allowance. Behind a load balancer,
+configure [trusted PROXY protocol sources](#build-agent-authentication) so the limit uses the original
+client address instead of grouping every connection under the load balancer's address.
+
+LocalVC accepts at most 100 MiB of packed data per push and 20 MiB per Git object over HTTP or SSH.
+The objects of a rejected push are discarded immediately. A server restart can leave temporary
+`incoming-*` directories inside bare repositories. On nodes with the `scheduling` and `localvc`
+profiles, the cleanup job removes directories older than one day at 04:15 server time.
 
 
 ### Generate Key Pairs
