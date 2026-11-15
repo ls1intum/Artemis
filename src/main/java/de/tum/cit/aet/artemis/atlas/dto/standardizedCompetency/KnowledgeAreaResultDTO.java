@@ -3,17 +3,30 @@ package de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency;
 import java.util.List;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * DTO containing {@link KnowledgeArea} data. It only contains the id of the knowledge area and source.
+ * Knowledge area read data with initialized descendants and competencies.
+ *
+ * @param id           persisted knowledge area identifier
+ * @param title        title, omitted when empty
+ * @param shortTitle   short title, omitted when absent or empty
+ * @param description  description, omitted when absent or empty
+ * @param parentId     parent identifier, omitted for roots
+ * @param children     children, omitted when uninitialized or empty
+ * @param competencies competencies, omitted when uninitialized or empty
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record KnowledgeAreaResultDTO(Long id, String title, String shortTitle, String description, Long parentId, List<KnowledgeAreaResultDTO> children,
-        List<StandardizedCompetencyResultDTO> competencies) {
+public record KnowledgeAreaResultDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable String title,
+        @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable String shortTitle, @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable String description,
+        @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable Long parentId,
+        @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable List<KnowledgeAreaResultDTO> children,
+        @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable List<StandardizedCompetencyResultDTO> competencies) {
 
     /**
      * Creates a KnowledgeAreaResultDTO from the given KnowledgeArea
@@ -22,11 +35,14 @@ public record KnowledgeAreaResultDTO(Long id, String title, String shortTitle, S
      * @return the created KnowledgeAreaResultDTO
      */
     public static KnowledgeAreaResultDTO of(KnowledgeArea knowledgeArea) {
+        @Nullable
         Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
+        @Nullable
         List<KnowledgeAreaResultDTO> children = null;
         if (Hibernate.isInitialized(knowledgeArea.getChildren()) && knowledgeArea.getChildren() != null) {
             children = knowledgeArea.getChildren().stream().map(KnowledgeAreaResultDTO::of).toList();
         }
+        @Nullable
         List<StandardizedCompetencyResultDTO> competencies = null;
         if (Hibernate.isInitialized(knowledgeArea.getCompetencies()) && knowledgeArea.getCompetencies() != null) {
             competencies = knowledgeArea.getCompetencies().stream().map(StandardizedCompetencyResultDTO::of).toList();
