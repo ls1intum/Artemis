@@ -35,22 +35,27 @@ import org.yaml.snakeyaml.resolver.Resolver;
  * <p>
  * There are three deliberate differences. A missing package is rejected, although the schema of Ares permits it, because Ares then fails when it builds the
  * tests. Placeholders such as <code>${PROJECT_ROOT}</code> are checked as written and not expanded, because their values depend on the build agent. The
- * patterns are possessive, which accepts the same values without recursing, and {@link #MAX_PATTERN_VALUE_LENGTH} stands in for the stack overflow in Ares.
+ * rules are checked with possessive patterns and plain code, which accept the same values without recursing, and {@link #MAX_PATTERN_VALUE_LENGTH} stands in
+ * for the stack overflow in Ares.
  */
 final class SecurityPolicySchema {
 
     /** The Ares version these rules were copied from. */
     static final String VERIFIED_ARES_VERSION = "2.2.1";
 
-    private static final String JAVA_RESERVED_WORD = "abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|false|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|true|try|void|volatile|while|_";
+    /** The words no part of a name may be, which Ares excludes from its identifier pattern. */
+    private static final Set<String> JAVA_RESERVED_WORDS = Set.of("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue",
+            "default", "do", "double", "else", "enum", "extends", "false", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int",
+            "interface", "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized",
+            "this", "throw", "throws", "transient", "true", "try", "void", "volatile", "while", "_");
 
-    private static final String JAVA_IDENTIFIER = "(?!(?:" + JAVA_RESERVED_WORD + ")(?=\\.|$))\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
+    /** The words a type may not be named, although a package may. */
+    private static final Set<String> JAVA_RESTRICTED_TYPE_NAMES = Set.of("var", "yield", "record", "sealed", "permits");
 
-    private static final String JAVA_TYPE_IDENTIFIER = "(?!(?:var|yield|record|sealed|permits)$)" + JAVA_IDENTIFIER;
+    /** The characters before which the end-of-input anchor of a pattern also matches if they end the value, just like before a final {@code \r\n}. */
+    private static final String LINE_TERMINATORS = "\n\r\u0085\u2028\u2029";
 
-    private static final String JAVA_QUALIFIED_IDENTIFIER = JAVA_IDENTIFIER + "(?:\\." + JAVA_IDENTIFIER + ")*+";
-
-    private static final String JAVA_CLASS_PATH = "(?:" + JAVA_IDENTIFIER + "\\.)*+" + JAVA_TYPE_IDENTIFIER;
+    private static final String JAVA_IDENTIFIER = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
 
     private static final String IPV4_COMPONENT = "(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)";
 
@@ -68,23 +73,25 @@ final class SecurityPolicySchema {
 
     private static final String DNS_NAME = "(?!\\d+\\.\\d+\\.\\d+\\.\\d+\\.?$)(?=.{1,253}\\.?$)" + DNS_LABEL + "(?:\\." + DNS_LABEL + ")*+\\.?";
 
-    private static final String RECOGNISED_PLACEHOLDER = "\\$\\{(?:PROJECT_ROOT|java\\.home|user\\.home|java\\.io\\.tmpdir)\\}";
+    private static final List<String> RECOGNISED_PLACEHOLDERS = List.of("${PROJECT_ROOT}", "${java.home}", "${user.home}", "${java.io.tmpdir}");
+
+    private static final String PLACEHOLDER_START = "${";
 
     private static final Pattern LANGUAGE_CONFIGURATION = Pattern.compile("^JAVA_USING_(?:MAVEN|GRADLE)_(?:ARCHUNIT|WALA)_AND_(?:ASPECTJ|INSTRUMENTATION)$");
 
-    private static final Pattern JAVA_PACKAGE = Pattern.compile("^" + JAVA_QUALIFIED_IDENTIFIER + "$");
+    /** A name of one or more identifiers separated by dots, which {@link #isJavaName(String, boolean)} checks for reserved words. */
+    private static final Pattern JAVA_QUALIFIED_IDENTIFIER = Pattern.compile("^" + JAVA_IDENTIFIER + "(?:\\." + JAVA_IDENTIFIER + ")*+$");
 
-    private static final Pattern JAVA_CLASS_NAME = Pattern.compile("^" + JAVA_TYPE_IDENTIFIER + "$");
+    private static final Pattern NON_WHITESPACE = Pattern.compile("\\S");
 
-    private static final Pattern JAVA_CLASS = Pattern.compile("^" + JAVA_CLASS_PATH + "$");
-
-    private static final Pattern FILE_PATH = Pattern
-            .compile("^(?:\\*|(?=.+$)(?=.*\\S)(?!(?:.*[\\\\/])?\\.\\.(?:[\\\\/]|$))(?:" + RECOGNISED_PLACEHOLDER + "|(?!\\$\\{)[^*\\x00])++)$", Pattern.DOTALL);
+    /** A {@code ..} part of a path: at its start or after a separator, and followed by a separator or the end. */
+    private static final Pattern PARENT_DIRECTORY = Pattern.compile("(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)");
 
     private static final Pattern HOST = Pattern.compile("^(?:\\*|localhost|" + IPV4_ADDRESS + "|" + IPV6_ADDRESS + "|" + DNS_NAME + ")$");
 
-    private static final Pattern THREAD_CLASS = Pattern
-            .compile("^(?:" + JAVA_CLASS_PATH + "|\\*|Lambda-Expression|<implicit-thread-op:(?:parallelStream|parallel|Thread\\.sleep|SubmissionPublisher\\.(?:submit|offer))>)$");
+    /** The thread classes Ares accepts besides a class name. */
+    private static final Pattern THREAD_CLASS_MARKER = Pattern
+            .compile("^(?:\\*|Lambda-Expression|<implicit-thread-op:(?:parallelStream|parallel|Thread\\.sleep|SubmissionPublisher\\.(?:submit|offer))>)$");
 
     private static final String VERSION_KEY = "thisPolicyFileCompliesToThePolicyVersion";
 
@@ -375,10 +382,10 @@ final class SecurityPolicySchema {
         if (!(value instanceof Map<?, ?> code) || !hasFields(code, SUPERVISED_CODE_FIELDS, SUPERVISED_CODE_REQUIRED_FIELDS)) {
             return false;
         }
-        boolean validMainClass = code.get(MAIN_CLASS_KEY) == null || isText(code.get(MAIN_CLASS_KEY), JAVA_CLASS_NAME);
+        boolean validMainClass = code.get(MAIN_CLASS_KEY) == null || isText(code.get(MAIN_CLASS_KEY), SecurityPolicySchema::isJavaClassName);
         boolean validTestBehavior = !code.containsKey(TEST_BEHAVIOR_KEY) || (code.get(TEST_BEHAVIOR_KEY) instanceof Map<?, ?> behavior && behavior.isEmpty());
-        return validMainClass && validTestBehavior && isText(code.get(LANGUAGE_KEY), LANGUAGE_CONFIGURATION) && isText(code.get(PACKAGE_KEY), JAVA_PACKAGE)
-                && allMatch(code.get(TEST_CLASSES_KEY), entry -> isText(entry, JAVA_CLASS)) && isResources(code.get(RESOURCES_KEY));
+        return validMainClass && validTestBehavior && isText(code.get(LANGUAGE_KEY), LANGUAGE_CONFIGURATION) && isText(code.get(PACKAGE_KEY), SecurityPolicySchema::isJavaPackage)
+                && allMatch(code.get(TEST_CLASSES_KEY), entry -> isText(entry, SecurityPolicySchema::isJavaClass)) && isResources(code.get(RESOURCES_KEY));
     }
 
     private static boolean isResources(@Nullable Object value) {
@@ -391,7 +398,7 @@ final class SecurityPolicySchema {
     }
 
     private static boolean isFilePermission(@Nullable Object value) {
-        return value instanceof Map<?, ?> permission && hasFields(permission, FILE_FIELDS, FILE_FIELDS) && isText(permission.get(FILE_PATH_KEY), FILE_PATH)
+        return value instanceof Map<?, ?> permission && hasFields(permission, FILE_FIELDS, FILE_FIELDS) && isText(permission.get(FILE_PATH_KEY), SecurityPolicySchema::isFilePath)
                 && FILE_FLAGS.stream().allMatch(flag -> permission.get(flag) instanceof Boolean);
     }
 
@@ -410,12 +417,12 @@ final class SecurityPolicySchema {
 
     private static boolean isThreadPermission(@Nullable Object value) {
         return value instanceof Map<?, ?> permission && hasFields(permission, THREAD_FIELDS, THREAD_FIELDS)
-                && isIntegerBetween(permission.get(THREAD_COUNT_KEY), BigInteger.ZERO, MAX_INT) && isText(permission.get(THREAD_CLASS_KEY), THREAD_CLASS);
+                && isIntegerBetween(permission.get(THREAD_COUNT_KEY), BigInteger.ZERO, MAX_INT) && isText(permission.get(THREAD_CLASS_KEY), SecurityPolicySchema::isThreadClass);
     }
 
     private static boolean isPackagePermission(@Nullable Object value) {
         return value instanceof Map<?, ?> permission && hasFields(permission, PACKAGE_FIELDS, PACKAGE_FIELDS)
-                && ("*".equals(permission.get(PACKAGE_IMPORT_KEY)) || isText(permission.get(PACKAGE_IMPORT_KEY), JAVA_PACKAGE));
+                && ("*".equals(permission.get(PACKAGE_IMPORT_KEY)) || isText(permission.get(PACKAGE_IMPORT_KEY), SecurityPolicySchema::isJavaPackage));
     }
 
     private static boolean isTimeoutPermission(@Nullable Object value) {
@@ -439,7 +446,93 @@ final class SecurityPolicySchema {
     }
 
     private static boolean isText(@Nullable Object value, Pattern pattern) {
-        return isNonBlankText(value) && ((String) value).length() <= MAX_PATTERN_VALUE_LENGTH && pattern.matcher((String) value).matches();
+        return isText(value, pattern.asMatchPredicate());
+    }
+
+    private static boolean isText(@Nullable Object value, Predicate<String> rule) {
+        return isNonBlankText(value) && ((String) value).length() <= MAX_PATTERN_VALUE_LENGTH && rule.test((String) value);
+    }
+
+    private static boolean isJavaPackage(String value) {
+        return isJavaName(value, false);
+    }
+
+    private static boolean isJavaClassName(String value) {
+        return value.indexOf('.') < 0 && isJavaName(value, true);
+    }
+
+    private static boolean isJavaClass(String value) {
+        return isJavaName(value, true);
+    }
+
+    private static boolean isThreadClass(String value) {
+        return isJavaClass(value) || THREAD_CLASS_MARKER.matcher(value).matches();
+    }
+
+    /**
+     * Ares checks a name with one pattern that excludes the reserved words through a lookahead, which ends a part at a dot or at the end of the value. Like
+     * its end-of-input anchor, the last part is therefore also compared without a line terminator at the very end of the value.
+     *
+     * @param value    the name to check
+     * @param typeName whether the last part names a type, so it must not be a restricted type name either
+     * @return whether the value is a name of identifiers separated by dots, none of which is a reserved word
+     */
+    private static boolean isJavaName(String value, boolean typeName) {
+        if (!JAVA_QUALIFIED_IDENTIFIER.matcher(value).matches()) {
+            return false;
+        }
+        String[] parts = value.split("\\.", -1);
+        for (int index = 0; index < parts.length - 1; index++) {
+            if (JAVA_RESERVED_WORDS.contains(parts[index])) {
+                return false;
+            }
+        }
+        String last = parts[parts.length - 1];
+        String lastWithoutTerminator = withoutFinalLineTerminator(last);
+        boolean reserved = JAVA_RESERVED_WORDS.contains(last) || JAVA_RESERVED_WORDS.contains(lastWithoutTerminator);
+        boolean restricted = typeName && (JAVA_RESTRICTED_TYPE_NAMES.contains(last) || JAVA_RESTRICTED_TYPE_NAMES.contains(lastWithoutTerminator));
+        return !reserved && !restricted;
+    }
+
+    private static String withoutFinalLineTerminator(String text) {
+        if (text.endsWith("\r\n")) {
+            return text.substring(0, text.length() - 2);
+        }
+        if (!text.isEmpty() && LINE_TERMINATORS.indexOf(text.charAt(text.length() - 1)) >= 0) {
+            return text.substring(0, text.length() - 1);
+        }
+        return text;
+    }
+
+    /**
+     * Applies the path rule of Ares: either {@code *}, or a path with a character that is no whitespace, without a {@code ..} part, without {@code *} and
+     * {@code NUL}, in which every <code>${</code> starts a recognised placeholder.
+     */
+    private static boolean isFilePath(String value) {
+        if ("*".equals(value)) {
+            return true;
+        }
+        if (value.isEmpty() || !NON_WHITESPACE.matcher(value).find() || PARENT_DIRECTORY.matcher(value).find()) {
+            return false;
+        }
+        int index = 0;
+        while (index < value.length()) {
+            if (value.startsWith(PLACEHOLDER_START, index)) {
+                int start = index;
+                Optional<String> placeholder = RECOGNISED_PLACEHOLDERS.stream().filter(candidate -> value.startsWith(candidate, start)).findFirst();
+                if (placeholder.isEmpty()) {
+                    return false;
+                }
+                index += placeholder.get().length();
+            }
+            else if (value.charAt(index) == '*' || value.charAt(index) == '\0') {
+                return false;
+            }
+            else {
+                index++;
+            }
+        }
+        return true;
     }
 
     /**

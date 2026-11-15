@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -41,10 +42,10 @@ final class SecurityPolicyYaml {
     private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
 
     /**
-     * A comment at the end of a line, which in YAML starts with a {@code #} after whitespace. The match starts where the whitespace starts, so a long run of
-     * whitespace is scanned only once.
+     * The start of a comment at the end of a line, which in YAML starts with a {@code #} after whitespace and runs to the end of the line. The match starts
+     * where the whitespace starts, so a long run of whitespace is scanned only once.
      */
-    private static final Pattern TRAILING_COMMENT = Pattern.compile("(?<![ \\t])[ \\t]++#.*$");
+    private static final Pattern TRAILING_COMMENT = Pattern.compile("(?<![ \\t])[ \\t]++#");
 
     private static final Pattern EMPTY_FLOW_LIST = Pattern.compile("^\\s*\\[\\s*]\\s*$");
 
@@ -145,16 +146,17 @@ final class SecurityPolicyYaml {
         String listValue = value.substring(0, value.length() - trailingComment.length());
         String newline = yaml.contains("\r\n") ? "\r\n" : "\n";
         if (!listValue.isBlank()) {
-            return rewriteFlowList(yaml, keyStart, keyEnd, indent, listValue, trailingComment, missing, newline);
+            return rewriteFlowList(indent, listValue, trailingComment, missing, newline).map(replacement -> yaml.substring(0, keyStart) + replacement + yaml.substring(keyEnd));
         }
         return appendToBlockList(yaml, keyEnd, indent, missing, newline);
     }
 
     /**
      * An inline list such as {@code [ ]} or {@code ["a", "b"]}: an empty one becomes a block list, a filled one gets the classes before its closing bracket.
+     *
+     * @return the replacement of the line of the key, without its line break; empty if the value is no inline list that can be extended
      */
-    private static Optional<String> rewriteFlowList(String yaml, int keyStart, int keyEnd, String indent, String value, String trailingComment, List<String> missing,
-            String newline) {
+    private static Optional<String> rewriteFlowList(String indent, String value, String trailingComment, List<String> missing, String newline) {
         String trimmed = value.strip();
         if (!trimmed.startsWith("[") || !trimmed.endsWith("]") || trimmed.indexOf(']') != trimmed.length() - 1) {
             return Optional.empty();
@@ -169,7 +171,7 @@ final class SecurityPolicyYaml {
             missing.forEach(testClass -> list.append(", ").append(quote(testClass)));
             replacement.append(' ').append(list).append(']').append(trailingComment);
         }
-        return Optional.of(yaml.substring(0, keyStart) + replacement + yaml.substring(keyEnd));
+        return Optional.of(replacement.toString());
     }
 
     /**
@@ -218,18 +220,30 @@ final class SecurityPolicyYaml {
         boolean inList = true;
         while (inList && nextLine < yaml.length()) {
             int lineEnd = yaml.indexOf('\n', nextLine);
-            String line = yaml.substring(nextLine, lineEnd < 0 ? yaml.length() : lineEnd).replace("\r", "");
+            int end = lineEnd < 0 ? yaml.length() : lineEnd;
+            String line = yaml.substring(nextLine, end).replace("\r", "");
             if (!BLANK_OR_COMMENT_LINE.matcher(line).matches()) {
                 Matcher item = BLOCK_ITEM.matcher(line);
-                inList = item.matches() && item.group(1).length() >= keyIndent.length() && (itemIndent == null || item.group(1).equals(itemIndent));
+                inList = isItemOfList(item, keyIndent, itemIndent);
                 if (inList) {
                     itemIndent = item.group(1);
-                    insertAt = lineEnd < 0 ? yaml.length() : lineEnd;
+                    insertAt = end;
                 }
             }
-            nextLine = lineEnd < 0 ? yaml.length() : lineEnd + 1;
+            // After the last line this is past the end of the content, which ends the loop.
+            nextLine = end + 1;
         }
         return insertAt < 0 ? Optional.empty() : Optional.of(new LastBlockItem(insertAt, itemIndent));
+    }
+
+    /**
+     * @param item       the matcher of {@link #BLOCK_ITEM} for a line that is neither blank nor a comment
+     * @param keyIndent  the indentation of the key of the list
+     * @param itemIndent the indentation of the items found so far; null before the first item
+     * @return whether the line is an item of the list, which leaves the matcher at that match
+     */
+    private static boolean isItemOfList(Matcher item, String keyIndent, @Nullable String itemIndent) {
+        return item.matches() && item.group(1).length() >= keyIndent.length() && (itemIndent == null || item.group(1).equals(itemIndent));
     }
 
     private static String quote(String testClass) {

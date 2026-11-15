@@ -108,7 +108,10 @@ class SecurityPolicySchemaTest {
                 replacing(TIMEOUTS_LIST, "    regardingTimeouts: [ ]\n"), replacing(VERSION, "thisPolicyFileCompliesToThePolicyVersion: !<tag:yaml.org,2002:int,foo> 1"),
                 replacing(VERSION, "thisPolicyFileCompliesToThePolicyVersion: !!int " + "0".repeat(1000) + "1"),
                 replacing(THREAD_COUNT, "createTheFollowingNumberOfThreads: !!int -_" + "0".repeat(999)), Arguments.of("explicit document start", "---\n" + VALID_POLICY),
-                Arguments.of("explicit document end", VALID_POLICY + "...\n"));
+                Arguments.of("explicit document end", VALID_POLICY + "...\n"), replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"dé.ünïcode\""),
+                replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"de.record\""), replacing("\"de.example.SortingTest\"", "\"record.SortingTest\""),
+                replacing("\"de.example.SortingTest\"", "\"de.class\\u0085.SortingTest\""), replacing("\"${PROJECT_ROOT}/data\"", "\"a\\\\..b\""),
+                replacing("\"${PROJECT_ROOT}/data\"", "\"..a/b..\""), replacing("\"${PROJECT_ROOT}/data\"", "\"${PROJECT_ROOT}${java.io.tmpdir}\""));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -151,7 +154,13 @@ class SecurityPolicySchemaTest {
                 Arguments.of("a list", "- a\n"), Arguments.of("a scalar", "a\n"), Arguments.of("null", "null\n"), Arguments.of("broken YAML", "a: [unclosed"),
                 Arguments.of("a key that is no scalar", "? [ a ]\n: 1\n"), Arguments.of("an alias as key", "&a x: 1\n*a : 2\n"),
                 Arguments.of("a very deep document", "[".repeat(100_000) + "]".repeat(100_000)),
-                Arguments.of("too large", VALID_POLICY + "#".repeat(SecurityPolicyYaml.MAX_POLICY_SIZE)));
+                Arguments.of("too large", VALID_POLICY + "#".repeat(SecurityPolicyYaml.MAX_POLICY_SIZE)), replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"de._\""),
+                replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"de..example\""), replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \".de\""),
+                replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"de.\""), replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"de.class\\u0085\""),
+                replacing(MAIN_CLASS, "theMainClassInsideThisPackageIs: \"record\\u0085\""), replacing("\"de.example.SortingTest\"", "\"de.example.record\""),
+                replacing("\"${PROJECT_ROOT}/data\"", "\"a\\\\..\\\\b\""), replacing("\"${PROJECT_ROOT}/data\"", "\"..\""), replacing("\"${PROJECT_ROOT}/data\"", "\"a/..\\n\""),
+                replacing("\"${PROJECT_ROOT}/data\"", "\"${PROJECT_ROOT\""), replacing("\"${PROJECT_ROOT}/data\"", "\"a/${java.home\""),
+                replacing("\"${PROJECT_ROOT}/data\"", "\"a\\0b\""));
     }
 
     @ParameterizedTest(name = "{0}")

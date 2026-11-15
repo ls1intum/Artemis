@@ -119,17 +119,17 @@ final class AresPolicyAnnotations {
                     && literal.indexOf('\\') < 0 && literal.indexOf('"', 1) == literal.length() - 1;
             return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
         }
-    }
 
-    /**
-     * Removes the parentheses that enclose a whole expression, like {@code ((false))}, but not those of {@code (a) + (b)}.
-     */
-    private static String withoutOuterParentheses(String expression) {
-        String result = expression.strip();
-        while (result.startsWith("(") && matchingParenthesis(mask(result), 0) == result.length() - 1) {
-            result = result.substring(1, result.length() - 1).strip();
+        /**
+         * Removes the parentheses that enclose a whole expression, like {@code ((false))}, but not those of {@code (a) + (b)}.
+         */
+        private static String withoutOuterParentheses(String expression) {
+            String result = expression.strip();
+            while (result.startsWith("(") && matchingParenthesis(mask(result), 0) == result.length() - 1) {
+                result = result.substring(1, result.length() - 1).strip();
+            }
+            return result;
         }
-        return result;
     }
 
     /**

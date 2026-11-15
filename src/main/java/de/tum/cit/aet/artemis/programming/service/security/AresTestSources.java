@@ -143,7 +143,8 @@ final class AresTestSources {
         List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, declarations, depth, problems);
         boolean[] registers = new boolean[declarations.size()];
         boolean[] tests = new boolean[declarations.size()];
-        markAresMarkers(masked, declarations, depth, registers, tests, problems);
+        markAresClassMarkers(masked, declarations, depth, registers, problems);
+        markAresMethodMarkers(masked, declarations, depth, registers, tests, problems);
         if (!aresMarkerOffsets(masked, UNSUPPORTED_ARES_MARKER).isEmpty() || registersSecurityExtensionDirectly(masked)) {
             // Ares also registers its sandbox through these, but the Security Framework only manages tests that use @Public, @Hidden, @PublicTest or @HiddenTest.
             addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES);
@@ -185,9 +186,9 @@ final class AresTestSources {
     }
 
     /**
-     * Marks the declarations that register the sandbox through an Ares class or method marker, and those whose methods are Ares tests.
+     * Marks the declarations that register the sandbox through an Ares class marker.
      */
-    private static void markAresMarkers(String masked, List<Declaration> declarations, int[] depth, boolean[] registers, boolean[] tests,
+    private static void markAresClassMarkers(String masked, List<Declaration> declarations, int[] depth, boolean[] registers,
             List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         for (String marker : ARES_CLASS_MARKERS) {
             for (int offset : aresMarkerOffsets(masked, marker)) {
@@ -200,6 +201,13 @@ final class AresTestSources {
                 }
             }
         }
+    }
+
+    /**
+     * Marks the declarations that register the sandbox through an Ares method marker, whose methods are therefore Ares tests.
+     */
+    private static void markAresMethodMarkers(String masked, List<Declaration> declarations, int[] depth, boolean[] registers, boolean[] tests,
+            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         for (String marker : ARES_METHOD_MARKERS) {
             for (int offset : aresMarkerOffsets(masked, marker)) {
                 int owner = enclosingDeclaration(declarations, offset, depth);
