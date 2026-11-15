@@ -75,15 +75,17 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     /**
      * Configures the search specifications based on the provided filter criteria.
      *
-     * @param specification     The existing specification to be configured.
-     * @param postContextFilter Filtering and sorting properties for post objects.
-     * @param userId            The id of the user for which the messages should be returned.
+     * @param specification                The existing specification to be configured.
+     * @param postContextFilter            Filtering and sorting properties for post objects.
+     * @param userId                       The id of the user for which the messages should be returned.
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return A Specification object configured with search criteria.
      */
-    private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId) {
+    private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId,
+            boolean includeUnverifiedIrisAnswers) {
         return specification
         // @formatter:off
-            .and(getSearchTextAndAuthorSpecification(postContextFilter.searchText(), postContextFilter.authorIds()))
+            .and(getSearchTextAndAuthorSpecification(postContextFilter.searchText(), postContextFilter.authorIds(), includeUnverifiedIrisAnswers))
             .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), postContextFilter.courseId()))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
@@ -96,14 +98,15 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     /**
      * Generates SQL Query via specifications to find and sort Messages
      *
-     * @param postContextFilter filtering and sorting properties for post objects
-     * @param pageable          paging object which contains the page number and number of records to fetch
-     * @param userId            the id of the user for which the messages should be returned
+     * @param postContextFilter            filtering and sorting properties for post objects
+     * @param pageable                     paging object which contains the page number and number of records to fetch
+     * @param userId                       the id of the user for which the messages should be returned
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return returns a Page of Messages
      */
-    default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
+    default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId, boolean includeUnverifiedIrisAnswers) {
         var specification = getConversationsSpecification(postContextFilter.conversationIds());
-        specification = configureSearchSpecification(specification, postContextFilter, userId);
+        specification = configureSearchSpecification(specification, postContextFilter, userId, includeUnverifiedIrisAnswers);
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         return findPostsWithSpecification(pageable, specification);
     }
