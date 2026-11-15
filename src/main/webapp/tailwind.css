@@ -94,6 +94,7 @@
 @source './app/modeling/manage/detail';
 @source './app/fileupload/manage/exercise-details';
 @source './app/iris/manage/settings';
+@source './app/iris/overview';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
 @source './app/hyperion';
@@ -190,6 +191,8 @@
 @source './app/exercise/structured-grading-criterion/grading-instructions-details';
 @source './app/exercise/unreferenced-feedback';
 @source './app/programming/shared/programming-exercise-update-timeline';
+@source './app/programming/shared/build-window-notice';
+@source './app/programming/manage/update/update-components/build-time-window';
 @source './app/course/manage/user-management-dropdown';
 @source './app/videosource/gocast';
 
