@@ -76,6 +76,7 @@ This applies to both runners, to every exercise, and to the user of the image, i
 - **What keeps working:** outbound TCP and UDP connections, raw sockets (for example `ping`), DNS, dependency downloads, web requests of the tests, file ownership and permission changes,
   starting processes as another user (`su`, `gosu`, `sudo`), and installing packages as `root`.
 - **What stops working:** creating device files with `mknod`, using `chroot`, and setting file capabilities with `setcap` fail with "Operation not permitted".
+  A package whose installation has to set file capabilities can fail to install, even as `root`, because `SETFCAP` is dropped (for example with RPM). Install such packages when you build the image.
 - **Restricting privilege gain:** by default, processes may still gain privileges through setuid programs such as `sudo`, because the build scripts of some languages (for example C and MATLAB)
   use `sudo` as the non-root user of the image. Set `artemis.continuous-integration.allow-privilege-escalation: false` on the build agents to refuse this (Docker `no-new-privileges`, Kubernetes
   `allowPrivilegeEscalation: false`). Then `AUDIT_WRITE` is dropped as well. Test every image and the build scripts of your exercises first: a script that calls `sudo` as a non-root user fails,

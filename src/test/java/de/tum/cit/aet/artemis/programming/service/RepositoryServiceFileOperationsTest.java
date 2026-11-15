@@ -212,13 +212,13 @@ class RepositoryServiceFileOperationsTest {
 
             @Override
             public int read() throws IOException {
-                Files.writeString(workingTree.resolve("src/Main.java"), "code");
+                FileUtils.writeStringToFile(workingTree.resolve("src/Main.java").toFile(), "code", StandardCharsets.UTF_8);
                 return remaining-- > 0 ? 'a' : -1;
             }
 
             @Override
             public int read(byte[] buffer, int offset, int length) throws IOException {
-                Files.writeString(workingTree.resolve("src/Main.java"), "code");
+                FileUtils.writeStringToFile(workingTree.resolve("src/Main.java").toFile(), "code", StandardCharsets.UTF_8);
                 if (remaining <= 0) {
                     return -1;
                 }

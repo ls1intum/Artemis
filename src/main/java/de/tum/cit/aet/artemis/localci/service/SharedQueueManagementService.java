@@ -233,7 +233,12 @@ public class SharedQueueManagementService {
                 .toList();
         if (!toRemove.isEmpty()) {
             distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
-            updateCancelledQueuedBuildJobsStatus(toRemove);
+            // A job that an agent took from the queue before its removal is in the processing jobs now. It is stopped below and finishes through the agent, so its status is
+            // not changed here.
+            List<BuildJobQueueItem> removed = toRemove.stream().filter(job -> distributedDataAccessService.getDistributedProcessingJobs().get(job.id()) == null).toList();
+            if (!removed.isEmpty()) {
+                updateCancelledQueuedBuildJobsStatus(removed);
+            }
         }
         // An agent may have taken the job from the queue between the look at the queue and its removal, so the processing jobs are checked after the removal as well.
         // The id of a job always belongs to the same course, so the job that is removed here is the one that has been compared

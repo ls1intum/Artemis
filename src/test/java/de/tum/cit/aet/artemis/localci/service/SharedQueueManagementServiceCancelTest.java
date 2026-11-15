@@ -84,6 +84,7 @@ class SharedQueueManagementServiceCancelTest {
         sharedQueueManagementService.cancelBuildJobOfCourse("job-1", COURSE_ID);
 
         verify(buildJobQueue).removeAll(List.of(queued));
+        verify(buildJobRepository).updateBuildJobStatus("job-1", BuildStatus.CANCELLED);
         verify(canceledBuildJobsTopic, never()).publish(any());
     }
 
@@ -97,6 +98,8 @@ class SharedQueueManagementServiceCancelTest {
         sharedQueueManagementService.cancelBuildJobOfCourse("job-1", COURSE_ID);
 
         verify(canceledBuildJobsTopic).publish("job-1");
+        // the job runs on an agent, so it is not reported as cancelled before the agent stopped it
+        verify(buildJobRepository, never()).updateBuildJobStatus(any(), any());
     }
 
     @Test

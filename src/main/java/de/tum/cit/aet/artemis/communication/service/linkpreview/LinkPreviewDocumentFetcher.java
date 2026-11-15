@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.IDN;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.regex.Matcher;
@@ -104,12 +103,16 @@ public final class LinkPreviewDocumentFetcher {
                 String port = portSeparator >= 0 ? authority.substring(portSeparator) : "";
                 String asciiHost = IDN.toASCII(host);
                 if (!asciiHost.equals(host)) {
-                    return new URI(uri.getScheme(), null, asciiHost, port.isEmpty() ? -1 : Integer.parseInt(port.substring(1)), uri.getPath(), uri.getQuery(), uri.getFragment());
+                    // Only the host is replaced: the path, query and fragment keep their escaped form, as decoding them would change what is requested
+                    String rawQuery = uri.getRawQuery();
+                    String rawFragment = uri.getRawFragment();
+                    return URI.create(uri.getScheme() + "://" + asciiHost + port + (uri.getRawPath() != null ? uri.getRawPath() : "") + (rawQuery != null ? "?" + rawQuery : "")
+                            + (rawFragment != null ? "#" + rawFragment : ""));
                 }
             }
             return uri;
         }
-        catch (IllegalArgumentException | URISyntaxException e) {
+        catch (IllegalArgumentException e) {
             throw new IOException("Invalid link preview URL", e);
         }
     }

@@ -227,6 +227,16 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumnEvenWithoutBranching() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
     void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumn() {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setAllowBranching(true);

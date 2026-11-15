@@ -337,18 +337,20 @@ public class ProgrammingExerciseValidationService {
             throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
         }
 
-        // The regex is only used, and only editable, when branching is allowed. An exercise that was saved earlier with an unusable value stays editable
-        if (buildConfig.isAllowBranching()) {
-            validateBranchRegex(buildConfig.getBranchRegex());
-        }
+        // The length is always checked, as the value is stored. The syntax is only checked when branching is allowed, as the regex is only used, and only editable, then:
+        // an exercise that was saved earlier with an unusable value stays editable
+        validateBranchRegex(buildConfig.getBranchRegex(), buildConfig.isAllowBranching());
     }
 
-    private static void validateBranchRegex(@Nullable String branchRegex) {
+    private static void validateBranchRegex(@Nullable String branchRegex, boolean checkSyntax) {
         if (branchRegex == null) {
             return;
         }
         if (branchRegex.length() > MAX_BRANCH_REGEX_LENGTH) {
             throw new BadRequestAlertException("The branch regex is too long. Max " + MAX_BRANCH_REGEX_LENGTH + " characters", "Exercise", "branchRegexTooLong");
+        }
+        if (!checkSyntax) {
+            return;
         }
         try {
             Pattern.compile(branchRegex);
