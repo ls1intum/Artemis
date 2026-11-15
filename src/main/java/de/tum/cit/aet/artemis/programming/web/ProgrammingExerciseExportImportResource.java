@@ -257,6 +257,10 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateProgrammingSettings(buildConfigToValidate);
         programmingExerciseValidationService.validatePackageName(newExercise);
         programmingExerciseValidationService.validateDockerFlags(buildConfigToValidate);
+        // a window of the source exercise is not taken over, so only a window supplied with the request has to be valid
+        if (newBuildConfig != null) {
+            programmingExerciseValidationService.validateBuildTimeWindow(newExercise, newBuildConfig);
+        }
         validateStaticCodeAnalysisSettings(newExercise, buildConfigToValidate);
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);

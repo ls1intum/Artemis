@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.anyString;
@@ -219,6 +220,7 @@ class LtiDeepLinkingServiceTest {
         lecture.setId(lectureId);
         lecture.setTitle("Test Lecture");
         when(lectureRepositoryApi.findById(lectureId)).thenReturn(Optional.of(lecture));
+        when(lectureRepositoryApi.findAllByCourseId(courseId)).thenReturn(Set.of(lecture));
 
         Set<Long> lectureIds = new HashSet<>();
         lectureIds.add(lectureId);
@@ -292,6 +294,7 @@ class LtiDeepLinkingServiceTest {
         exercises.add(exercise2);
 
         when(exerciseRepository.findAllById(exerciseIds)).thenReturn(exercises);
+        when(exerciseRepository.findExerciseIdsByCourseId(courseId)).thenReturn(Set.of(exerciseId1, exerciseId2));
 
         exerciseIds.add(exerciseId1);
         exerciseIds.add(exerciseId2);
@@ -329,11 +332,32 @@ class LtiDeepLinkingServiceTest {
         lectures.add(lecture2);
 
         when(lectureRepositoryApi.findAllById(lectureIds)).thenReturn(lectures);
+        when(lectureRepositoryApi.findAllByCourseId(courseId)).thenReturn(new HashSet<>(lectures));
 
         String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, lectureIds, DeepLinkingType.GROUPED_LECTURE);
 
         assertThat(deepLinkResponse).isNotNull();
         assertThat(deepLinkResponse).contains("test_jwt");
+    }
+
+    @Test
+    void testExerciseOfAnotherCourseIsRefused() throws MalformedURLException, URISyntaxException {
+        createMockOidcIdToken();
+        when(exerciseRepository.findExerciseIdsByCourseId(1L)).thenReturn(Set.of(2L));
+
+        assertThatThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, Set.of(3L), DeepLinkingType.EXERCISE))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("Exercise not found");
+    }
+
+    @Test
+    void testLectureOfAnotherCourseIsRefused() throws MalformedURLException, URISyntaxException {
+        createMockOidcIdToken();
+        Lecture lectureOfCourse = new Lecture();
+        lectureOfCourse.setId(2L);
+        when(lectureRepositoryApi.findAllByCourseId(1L)).thenReturn(Set.of(lectureOfCourse));
+
+        assertThatThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, Set.of(3L), DeepLinkingType.LECTURE))
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     private void createMockOidcIdToken() throws MalformedURLException, URISyntaxException {
@@ -376,6 +400,7 @@ class LtiDeepLinkingServiceTest {
         long courseId = 17;
         Exercise exercise = createMockExercise(exerciseId, courseId);
         when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(exercise));
+        when(exerciseRepository.findExerciseIdsByCourseId(courseId)).thenReturn(Set.of(exerciseId));
 
         Set<Long> exerciseSet = new HashSet<>();
         exerciseSet.add(exerciseId);

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgOptimizedImage } from '@angular/common';
 
 export enum IrisLogoSize {
@@ -19,13 +20,15 @@ export enum IrisLogoLookDirection {
     templateUrl: './iris-logo.component.html',
     styleUrls: ['./iris-logo.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgOptimizedImage],
+    imports: [NgOptimizedImage, ArtemisTranslatePipe],
 })
 export class IrisLogoComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
     size = input<IrisLogoSize | number>(IrisLogoSize.BIG);
     look = input<IrisLogoLookDirection>(IrisLogoLookDirection.RIGHT);
     spinning = input<boolean>(false);
+    /** Hide a logo from assistive technology when adjacent text already identifies Iris. */
+    readonly decorative = input(false);
 
     logoUrl = computed(() => {
         if (this.size() === IrisLogoSize.SMALL) {
@@ -42,15 +45,15 @@ export class IrisLogoComponent {
     classList = computed(() => {
         switch (this.size()) {
             case IrisLogoSize.TEXT:
-                return 'text';
+                return 'iris-logo--text';
             case IrisLogoSize.SMALL:
-                return 'small';
+                return 'iris-logo--small';
             case IrisLogoSize.MEDIUM:
-                return 'medium';
+                return 'iris-logo--medium';
             case IrisLogoSize.BIG:
-                return 'big img-fluid';
+                return 'iris-logo--big';
             case IrisLogoSize.FLUID:
-                return 'fluid';
+                return 'iris-logo--fluid';
             default:
                 return '';
         }
