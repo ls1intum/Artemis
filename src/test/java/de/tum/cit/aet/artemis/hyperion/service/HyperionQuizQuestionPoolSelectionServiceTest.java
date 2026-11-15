@@ -62,6 +62,22 @@ class HyperionQuizQuestionPoolSelectionServiceTest {
     }
 
     @Test
+    void select_movesOnToOtherCellsWhenEveryCellHoldsOneQuestion() {
+        QuizQuestionPoolItem drawnFirst = item(1L, 9L, 90L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        QuizQuestionPoolItem drawnSecond = item(2L, 10L, 100L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        QuizQuestionPoolItem otherCell = item(3L, 9L, 90L, QuizQuestionGenerationType.MULTIPLE_CHOICE);
+        QuizQuestionPoolItem otherUnit = item(4L, 10L, 101L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        stubEligible(List.of(drawnFirst, drawnSecond, otherCell, otherUnit));
+        HyperionQuizQuestionPoolSelectionService.Selection first = service.select(5L, request(List.of(9L, 10L), 2));
+        assertThat(first.items()).containsExactly(drawnFirst, drawnSecond);
+
+        stubEligible(List.of(otherCell, otherUnit, drawnFirst, drawnSecond));
+        HyperionQuizQuestionPoolSelectionService.Selection second = service.select(5L, request(List.of(9L, 10L), 2));
+
+        assertThat(second.items()).containsExactly(otherCell, otherUnit);
+    }
+
+    @Test
     void select_prefersQuestionsDrawnLeastOftenAndLongestAgo() {
         QuizQuestionPoolItem drawnTwice = item(1L, 9L, 90L, QuizQuestionGenerationType.SINGLE_CHOICE);
         drawnTwice.setSelectionCount(2);

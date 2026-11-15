@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -30,8 +31,9 @@ import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository
  * Draws approved questions from a course's quiz question pool for a new quiz.
  * <p>
  * A draw is deterministic and involves no model call. It takes questions round-robin over the requested competencies, within a
- * competency over the lecture units and within a unit over the question types and difficulties, and within each of these queues it
- * prefers the questions that were drawn least often and longest ago. Only approved, judged questions whose material has not changed
+ * competency over the lecture units and within a unit over the question types and difficulties. At every level the round-robin starts
+ * with the queue holding the question drawn least often and longest ago, and within each queue it takes those questions first, so
+ * consecutive draws move on to other questions even when every cell holds only one. Only approved, judged questions whose material has not changed
  * are eligible. Every drawn question's selection count and time are updated, so repeated draws rotate through the pool.
  */
 @Conditional(HyperionEnabled.class)
@@ -99,23 +101,21 @@ public class HyperionQuizQuestionPoolSelectionService {
     }
 
     /**
-     * Takes up to {@code count} items round-robin over the competencies in the given order, within a competency over its lecture units
-     * and within a unit over its cells of question type and difficulty, each queue in the order of {@code eligible}.
+     * Takes up to {@code count} items round-robin over the competencies, within a competency over its lecture units and within a unit
+     * over its cells of question type and difficulty. Every level visits its queues in the order in which their first item appears in
+     * {@code eligible}, and every queue holds its items in that order.
      *
      * @param eligible      the items to draw from, already in draw order
-     * @param competencyIds the competencies in the order the round-robin visits them
+     * @param competencyIds the competencies to draw from
      * @param count         how many items to take at most
      * @return the drawn items in draw order
      */
     static List<QuizQuestionPoolItem> draw(List<QuizQuestionPoolItem> eligible, List<Long> competencyIds, int count) {
+        Set<Long> requested = new HashSet<>(competencyIds);
         Map<Long, Map<Long, Map<Cell, Deque<QuizQuestionPoolItem>>>> queues = new LinkedHashMap<>();
-        for (Long competencyId : competencyIds) {
-            queues.put(competencyId, new TreeMap<>());
-        }
         for (QuizQuestionPoolItem item : eligible) {
-            Map<Long, Map<Cell, Deque<QuizQuestionPoolItem>>> units = queues.get(item.getCompetencyId());
-            if (units != null) {
-                units.computeIfAbsent(item.getLectureUnitId(), unitId -> new TreeMap<>(CELL_ORDER))
+            if (requested.contains(item.getCompetencyId())) {
+                queues.computeIfAbsent(item.getCompetencyId(), competencyId -> new LinkedHashMap<>()).computeIfAbsent(item.getLectureUnitId(), unitId -> new LinkedHashMap<>())
                         .computeIfAbsent(new Cell(item.getQuestionType(), item.getDifficulty()), cell -> new ArrayDeque<>()).add(item);
             }
         }
@@ -146,9 +146,6 @@ public class HyperionQuizQuestionPoolSelectionService {
     /** The question type and difficulty of a cell within a lecture unit. */
     private record Cell(QuizQuestionGenerationType type, QuizQuestionDifficulty difficulty) {
     }
-
-    /** Cells in the order of the type and difficulty enumerations. */
-    private static final Comparator<Cell> CELL_ORDER = Comparator.comparing(Cell::type).thenComparing(Cell::difficulty);
 
     /** A queue of items; {@link #next()} returns {@code null} once it is exhausted. */
     @FunctionalInterface
