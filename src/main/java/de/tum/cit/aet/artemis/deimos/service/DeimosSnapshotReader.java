@@ -147,13 +147,13 @@ public class DeimosSnapshotReader {
      * Counts every entry the walk looks at, directories included, before it descends into them. Counting only the files
      * the walk returns would leave a tree that references the same or empty subtrees many times unbounded.
      */
-    private static final class EntryLimit extends TreeFilter {
+    static final class EntryLimit extends TreeFilter {
 
         private final int maxEntries;
 
         private int visitedEntries;
 
-        private EntryLimit(int maxEntries) {
+        EntryLimit(int maxEntries) {
             this.maxEntries = maxEntries;
         }
 

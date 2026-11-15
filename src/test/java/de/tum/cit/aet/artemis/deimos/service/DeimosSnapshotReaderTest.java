@@ -21,6 +21,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.TreeFormatter;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -155,6 +156,22 @@ class DeimosSnapshotReaderTest {
             assertThat(DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 100, 20).textFiles()).isEmpty();
             assertThatThrownBy(() -> DeimosSnapshotReader.read(git.getRepository(), commitHash, 100, 100, 19)).isInstanceOf(IOException.class)
                     .hasMessage("The commit has more than 19 entries");
+        }
+    }
+
+    @Test
+    void entryLimitIsNotRecursiveOnItsOwnAndClonesWithAFreshCount() throws Exception {
+        var entryLimit = new DeimosSnapshotReader.EntryLimit(1);
+        try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call(); TreeWalk treeWalk = new TreeWalk(git.getRepository())) {
+            assertThat(entryLimit.include(treeWalk)).isTrue();
+            assertThatThrownBy(() -> entryLimit.include(treeWalk)).isInstanceOf(IOException.class);
+
+            // The walk decides on recursion, and a copy of the filter counts from zero with the same limit.
+            assertThat(entryLimit.shouldBeRecursive()).isFalse();
+            var copy = entryLimit.clone();
+            assertThat(copy).isNotSameAs(entryLimit).isInstanceOf(DeimosSnapshotReader.EntryLimit.class);
+            assertThat(copy.include(treeWalk)).isTrue();
+            assertThatThrownBy(() -> copy.include(treeWalk)).isInstanceOf(IOException.class);
         }
     }
 

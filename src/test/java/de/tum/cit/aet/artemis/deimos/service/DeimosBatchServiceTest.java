@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,8 @@ import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.data.domain.Pageable;
@@ -175,6 +178,32 @@ class DeimosBatchServiceTest {
             assertThat(link.url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/12/participations/201/submissions");
             assertThat(link.rationale()).isEqualTo("bad");
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "course without title", "unknown exercise", "exercise without course" })
+    void triggerBatchSendsNoNotificationWhenItsScopeCannotBeResolved(String scenario) {
+        ZonedDateTime from = FIXED_NOW.minusHours(8);
+        ZonedDateTime to = FIXED_NOW;
+        var summary = new DeimosBatchSummaryDTO("run-4", "MANUAL", "COURSE", from, to, 0, 0, 0, 0, 0, 0, 0, List.of(), List.of());
+        when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), any(), eq(from), eq(to), any())).thenReturn(summary);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of()));
+        when(deimosBatchParticipationRepository.findParticipationIdsForExerciseInRange(eq(12L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of()));
+        switch (scenario) {
+            case "course without title" -> when(courseRepository.getCourseTitle(7L)).thenReturn(null);
+            case "unknown exercise" -> when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L)).thenReturn(java.util.Optional.empty());
+            default -> when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L))
+                    .thenReturn(java.util.Optional.of(new DeimosExerciseScopeInfoDTO(12L, "Exercise 12", null, null, null)));
+        }
+
+        var request = new DeimosBatchRequestDTO(from, to);
+        var response = "course without title".equals(scenario) ? deimosBatchService.triggerCourseBatch(7L, request, createTriggerUser())
+                : deimosBatchService.triggerExerciseBatch(12L, request, createTriggerUser());
+
+        // Without a course to link to, the completion email would carry broken links, so it is not sent at all.
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        verify(deimosAnalysisService).analyze(any(), eq(DeimosTriggerType.MANUAL), any(), eq(from), eq(to), any());
+        verify(mailSendingService, never()).buildAndSendAsync(any(), any(), any(), any());
     }
 
     @Test

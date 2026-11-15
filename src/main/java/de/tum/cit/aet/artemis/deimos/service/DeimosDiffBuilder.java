@@ -286,14 +286,15 @@ final class DeimosDiffBuilder {
             return byLines;
         }
         String sample = sampleFirstChange(unifiedDiff, maxBytes);
-        if (containsAddedLine(sample) || (!containsChangedLine(byLines) && !sample.isEmpty())) {
+        // The line cut has no added line here, so a removed one is the only change it can show.
+        if (containsAddedLine(sample) || (!containsRemovedLine(byLines) && !sample.isEmpty())) {
             return sample;
         }
         return byLines;
     }
 
-    private static boolean containsChangedLine(String diff) {
-        return diffLines(diff).stream().anyMatch(line -> line.startsWith("-") || line.startsWith("+"));
+    private static boolean containsRemovedLine(String diff) {
+        return diffLines(diff).stream().anyMatch(line -> line.startsWith("-"));
     }
 
     private static boolean containsAddedLine(String diff) {

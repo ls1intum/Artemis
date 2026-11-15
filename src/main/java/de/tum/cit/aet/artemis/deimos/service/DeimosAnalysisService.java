@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -375,25 +374,19 @@ public class DeimosAnalysisService {
         private final List<DeimosManipulationFinding> reportedFindings = new ArrayList<>();
 
         /**
-         * How many distinct omissions occurred, exactly.
+         * How many omissions occurred. Each is distinct: it names its snapshot, a diff reports every path at most once
+         * with one reason, non-text entries have a reason of their own, and a dropped section replaces the omissions of
+         * its files. Only a count is kept, so a history of many snapshots, each changing many binary files, cannot
+         * exhaust the heap while every payload stays within its bound.
          */
         private long omissionCount;
 
         /**
-         * The first distinct omissions in order of occurrence, as many as the report lists.
+         * The first omissions in order of occurrence, as many as the report lists.
          */
         private final List<RecordedOmission> reportedOmissions = new ArrayList<>();
 
         private boolean textOmitted;
-
-        /**
-         * The distinct omissions of the snapshot recorded last. Every omission carries its snapshot, and the omissions of
-         * one snapshot are recorded together, so only these can repeat. Keeping all of them instead would let a history of
-         * many snapshots, each changing many binary files, exhaust the heap while every payload stays within its bound.
-         */
-        private final Set<RecordedOmission> currentSnapshotOmissions = new HashSet<>();
-
-        private @Nullable SnapshotRef currentSnapshot;
 
         private boolean sentinelSeen;
 
@@ -417,13 +410,6 @@ public class DeimosAnalysisService {
         }
 
         void addOmission(RecordedOmission omission) {
-            if (!Objects.equals(omission.snapshot(), currentSnapshot)) {
-                currentSnapshotOmissions.clear();
-                currentSnapshot = omission.snapshot();
-            }
-            if (!currentSnapshotOmissions.add(omission)) {
-                return;
-            }
             omissionCount++;
             if (omission.reason() != DeimosOmissionReason.NON_TEXT_FILE) {
                 textOmitted = true;
@@ -844,12 +830,9 @@ public class DeimosAnalysisService {
             }
         }
 
-        private Map<String, Integer> markerLinesOfTemplateFile(String path) {
-            String templateContent = template.textFiles().get(path);
+        private Map<String, Integer> markerLinesOfTemplateFile(String templateFilePath) {
             Map<String, Integer> occurrences = new HashMap<>();
-            if (templateContent != null) {
-                DeimosFenceMarkers.forEachMarkerLine(templateContent, (lineNumber, line) -> occurrences.merge(line, 1, Integer::sum));
-            }
+            DeimosFenceMarkers.forEachMarkerLine(template.textFiles().get(templateFilePath), (lineNumber, line) -> occurrences.merge(line, 1, Integer::sum));
             return occurrences;
         }
     }
