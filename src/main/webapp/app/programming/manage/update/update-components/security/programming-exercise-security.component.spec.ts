@@ -828,6 +828,33 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             expect(comp.sourceConfig()?.status).toBe(SecurityActivationStatus.INACTIVE);
         });
 
+        it('discards a late config response of an earlier selection of the same source', () => {
+            const firstLoad$ = new Subject<SecurityFrameworkConfig>();
+            service.getConfig.mockReturnValueOnce(firstLoad$.asObservable());
+            fixture.componentRef.setInput('programmingExercise', javaExercise(7));
+            fixture.componentRef.setInput('mode', 'import');
+            fixture.componentRef.setInput('sourceExerciseId', 7);
+            fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+            fixture.detectChanges();
+
+            service.getConfig.mockReturnValue(of(inactiveConfig()));
+            fixture.componentRef.setInput('programmingExercise', javaExercise(8));
+            fixture.componentRef.setInput('sourceExerciseId', 8);
+            fixture.detectChanges();
+            fixture.componentRef.setInput('programmingExercise', javaExercise(7));
+            fixture.componentRef.setInput('sourceExerciseId', 7);
+            fixture.detectChanges();
+            expect(service.getConfig).toHaveBeenLastCalledWith(7);
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+
+            firstLoad$.next(configuredConfig());
+            firstLoad$.complete();
+            fixture.detectChanges();
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+            expect(comp.sourceConfig()?.status).toBe(SecurityActivationStatus.INACTIVE);
+            expect(comp.choiceToSend()).toBeUndefined();
+        });
+
         it('shows the reasons of an UNSUPPORTED source without a switch or version select, and sends nothing', () => {
             initImportFromExercise(unsupportedConfig());
             expect(comp.showToggle()).toBe(false);

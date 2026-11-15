@@ -344,7 +344,7 @@ export class ProgrammingExerciseSecurityComponent {
      * it is for the same exercise.
      */
     private visit = 0;
-    /** Counts the loads of the config, so a late load never overwrites a newer one. */
+    /** Counts the loads of the config or of the source config of an import, so a late load never overwrites a newer one. */
     private loadCount = 0;
 
     constructor() {
@@ -484,7 +484,9 @@ export class ProgrammingExerciseSecurityComponent {
         this.importAction.set('KEEP');
         this.loadFailed.set(false);
         this.loading.set(true);
-        const isCurrent = () => this.requestedSourceId === sourceId && this.sourceExerciseId() === sourceId;
+        // The load number also discards a late response for the same source after a return to it (A, B, A).
+        const load = ++this.loadCount;
+        const isCurrent = () => load === this.loadCount && this.requestedSourceId === sourceId && this.sourceExerciseId() === sourceId;
         this.securityService.getConfig(sourceId).subscribe({
             next: (config) => {
                 if (!isCurrent()) {
