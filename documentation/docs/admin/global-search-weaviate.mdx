@@ -2,7 +2,7 @@
 id: global-search-weaviate
 title: 'Global Search & Weaviate Setup'
 sidebar_label: Global Search (Weaviate)
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-14
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -51,7 +51,7 @@ If the embedding API cannot be reached within 3 seconds or does not answer withi
 
 ## Provision Weaviate
 
-Use **Weaviate 1.37 or newer** (tested with 1.37.2 and 1.38.20). Artemis connects over REST and gRPC.
+Use **Weaviate 1.37 or newer** (tested with 1.37.2 and 1.40.5). Artemis connects over REST and gRPC.
 
 ### Docker Compose
 
@@ -61,7 +61,7 @@ The repository ships `deployment/docker/weaviate.yml`. It works for both modes. 
 docker compose --env-file .env -f deployment/docker/weaviate.yml up -d
 ```
 
-The image is pinned to **Weaviate 1.38.20**. REST is on port **8001**, gRPC on port **50051**. Data is stored in the
+The image is pinned to **Weaviate 1.40.5**. REST is on port **8001**, gRPC on port **50051**. Data is stored in the
 Docker volume `artemis-weaviate`.
 
 #### Production: disable anonymous access
