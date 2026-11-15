@@ -41,14 +41,12 @@
                 <ul class="list-disc pl-5">
                     <li data-testid="pending-email-change-current">
                         <span jhiTranslate="settings.pendingEmailChange.currentAddress"></span>
-                        <span class="font-semibold">{{ currentUser()?.email }}</span
-                        >:
+                        <span class="font-semibold">{{ currentUser()?.email }}</span>:
                         <span [jhiTranslate]="pending.currentAddressConfirmed ? 'settings.pendingEmailChange.confirmed' : 'settings.pendingEmailChange.notConfirmed'"></span>
                     </li>
                     <li data-testid="pending-email-change-new">
                         <span jhiTranslate="settings.pendingEmailChange.newAddress"></span>
-                        <span class="font-semibold" data-testid="pending-email-change-new-email">{{ pending.newEmail }}</span
-                        >:
+                        <span class="font-semibold" data-testid="pending-email-change-new-email">{{ pending.newEmail }}</span>:
                         <span [jhiTranslate]="pending.newAddressConfirmed ? 'settings.pendingEmailChange.confirmed' : 'settings.pendingEmailChange.notConfirmed'"></span>
                     </li>
                 </ul>
