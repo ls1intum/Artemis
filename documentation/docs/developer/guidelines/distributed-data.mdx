@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data
 sidebar_label: Distributed Data
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -137,7 +137,7 @@ Queue entries, set elements, topic messages, and map keys use positional Kryo en
 version. An incompatible change can therefore cause a `KryoBufferUnderflowException` or produce plausible but incorrect
 values. Issue #12137 is an example.
 
-Redis keys include `DistributedDataSchema.VERSION`, for example `artemis:v1:{buildJobQueue}`. A release reads only its
+Redis keys include `DistributedDataSchema.VERSION`, for example `artemis:v2:{buildJobQueue}`. A release reads only its
 own namespace. The version protects production only when every incompatible change is detected, reviewed, and paired
 with an explicit migration decision.
 

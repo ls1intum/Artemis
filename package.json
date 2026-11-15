@@ -38,7 +38,7 @@
         "@stomp/stompjs": "7.5.0",
         "@tumaet/apollon": "5.4.0",
         "@tumaet/ui-angular": "workspace:*",
-        "@vscode/codicons": "0.0.45",
+        "@vscode/codicons": "0.0.46-24",
         "@vscode/markdown-it-katex": "1.1.2",
         "bootstrap": "5.3.9",
         "d3-shape": "3.2.1",
@@ -115,7 +115,7 @@
         "semver": "catalog:",
         "stylelint": "catalog:",
         "stylelint-config-html": "2.0.0",
-        "stylelint-config-standard-scss": "17.0.0",
+        "stylelint-config-standard-scss": "18.0.0",
         "stylelint-scss": "7.5.0",
         "tailwindcss": "catalog:",
         "tailwindcss-primeui": "0.6.1",
@@ -128,7 +128,7 @@
         "zone.js": "catalog:"
     },
     "engines": {
-        "node": ">=24.21.0",
+        "node": ">=26.13.1",
         "pnpm": ">=12.15.0"
     },
     "scripts": {

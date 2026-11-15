@@ -138,7 +138,8 @@
         "IrisSettingsService/IrisChatService are injected by lecture views, programming participation/editor, atlas learning-path views and communication tutor-suggestion/redirect components. Conservatively select these owner workflows for Iris changes, even when the current CI profile hides chat UI.",
         "CourseOverviewComponent (course/overview/course-overview/course-overview.component.ts) unconditionally subscribes to ExamParticipationService.examIsStarted$; its template uses the emitted state for sidebar visibility and layout. courses.route.ts mounts this parent for all student /courses/:courseId children. Specs visiting those routes directly or through audited course/programming/competency pageobjects are exam consumers; management-only routes do not inherit this parent.",
         "The opt-in exam-management-client exact-file mapping replaces only the broad exam mapping for its three audited files. Its consumers include the entire quiz UI group because quiz-question-list-edit-existing.component.ts actively loads accessible exams when shown. Passive service injection in course-only assessment/grading/user-import/archive branches does not subscribe to exam state or execute exam HTTP calls; their exam-context paths are covered by the exam group. Mixed scoped and broader exam inputs union both scopes. This is a maintained runtime contract, not a general guarantee for exam/manage/.",
-        "CourseManagementTumUi creates and deletes users, manages course membership, configures grading and team forms, and creates/submits/assesses a real modeling exercise. Conservatively retain course-management server/module consumers plus core account lifecycle and modeling/assessment. It does not consume the exact exam-management client override. Shared UI/package inputs keep the existing full-suite fallback."
+        "CourseManagementTumUi creates and deletes users, manages course membership, configures grading and team forms, and creates/submits/assesses a real modeling exercise. Conservatively retain course-management server/module consumers plus core account lifecycle and modeling/assessment. It does not consume the exact exam-management client override. Shared UI/package inputs keep the existing full-suite fallback.",
+        "QuizExerciseManagement and ProgrammingExerciseManagement override management/info and render the Hyperion variant action for their responsive detail-toolbar contracts. QuizExerciseManagement also intercepts api/core/public/account to select German without changing the shared administrator. Retain core and hyperion as runtime consumers for both workflows."
     ],
     "specModules": {
         "e2e/Login.spec.ts": ["core"],
@@ -1134,7 +1135,18 @@
         "e2e/exercise/modeling/ModelingTeamCollaboration.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling"],
         "e2e/exercise/programming/CodeEditorResize.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
         "e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
-        "e2e/exercise/programming/ProgrammingExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
+        "e2e/exercise/programming/ProgrammingExerciseManagement.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exercise",
+            "hyperion",
+            "iris",
+            "programming"
+        ],
         "e2e/exercise/programming/ProgrammingExerciseParticipation.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
         "e2e/exercise/programming/ProgrammingExercisePracticeMode.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
         "e2e/exercise/programming/ProgrammingExerciseRepositoryExport.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
@@ -1155,7 +1167,18 @@
         "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseDropLocation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseLifecycle.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
-        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "core", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "hyperion",
+            "quiz"
+        ],
         "e2e/exercise/quiz-exercise/QuizExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseStatistics.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseSubmissionPaths.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
