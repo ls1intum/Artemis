@@ -45,10 +45,12 @@ api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
 api/admin-hyperion-generation-resources.ts
+api/faq-import-resources.ts
 api/quiz-exercise-batch-resources.ts
 api/quiz-assessment-resources.ts
 api/tutorial-group-resources.ts
 api/hyperion-code-generation-resources.ts
+api/faq-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts

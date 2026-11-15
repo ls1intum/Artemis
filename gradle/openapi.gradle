@@ -53,7 +53,7 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.communication.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -76,6 +76,26 @@
                 "-Dspring.jpa.hibernate.ddl-auto=create",
                 "-Dspring.main.banner-mode=off"
             ]
+
+            // The communication package is only partly DTO-based, so the application specification takes just its course FAQ
+            // paths. The agent group is selected by annotation and stays unrestricted.
+            if (!openApiGroup) {
+                def communicationFaqPaths = [
+                    "/api/communication/courses/{courseId}/faqs",
+                    "/api/communication/courses/{courseId}/faqs/{faqId}",
+                    "/api/communication/courses/{courseId}/faqs/{faqId}/for-management",
+                    "/api/communication/courses/{courseId}/faqs/for-management",
+                    "/api/communication/courses/{courseId}/faq-state/{faqState}",
+                    "/api/communication/courses/{courseId}/faq-categories",
+                    "/api/communication/courses/{courseId}/faq-categories/{faqState}",
+                    "/api/communication/courses/{courseId}/faq-categories/for-management",
+                    "/api/communication/courses/{courseId}/faqs/for-import",
+                    "/api/communication/courses/{courseId}/faqs/import",
+                ]
+                def applicationPaths = ["/api/aiworker/**", "/api/calendar/**", "/api/global-search/**", "/api/search/**", "/api/hyperion/**", "/api/quiz/**",
+                    "/api/tutorialgroup/**"] + communicationFaqPaths
+                jvmArgs.add("-Dspringdoc.paths-to-match=" + applicationPaths.join(","))
+            }
 
             // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set([

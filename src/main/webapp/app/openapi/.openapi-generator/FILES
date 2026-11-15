@@ -2,6 +2,8 @@ api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
+api/faq-api.ts
+api/faq-import-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
@@ -65,6 +67,7 @@ model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
 model/course-with-id.ts
 model/create-exercise-variant-group.ts
+model/create-faq.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
 model/difficulty-assessment.ts
@@ -118,6 +121,9 @@ model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
 model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
+model/faq-import-candidate.ts
+model/faq-import-search-result.ts
+model/faq.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
 model/generated-quiz-answer-option.ts
@@ -126,6 +132,7 @@ model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
 model/hyperion-course-settings.ts
+model/import-faqs.ts
 model/indexed-content-object.ts
 model/indexed-content-presence.ts
 model/indexed-entity-record.ts
@@ -274,6 +281,7 @@ model/tutorial-group-student.ts
 model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
+model/update-faq.ts
 model/update-quiz-exercise.ts
 model/variant-generation-request.ts
 model/variant-job-detail.ts
