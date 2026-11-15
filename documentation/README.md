@@ -5,6 +5,7 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 ## Installation
 
 ```bash
+npm install --global corepack   # one-time: Node.js 25+ no longer bundles Corepack
 corepack enable          # one-time: activate the pnpm version pinned in package.json
 pnpm install
 ```
