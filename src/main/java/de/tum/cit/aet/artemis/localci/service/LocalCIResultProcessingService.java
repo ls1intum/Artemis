@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -293,11 +294,24 @@ public class LocalCIResultProcessingService {
 
         SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
-        if (participationOptional.isPresent() && !isConsistentWithDatabase(buildJob, participationOptional.get())) {
-            // The ids of the item come from the queue, so a result is processed only for the participation, exercise and course that the database holds together
-            log.error("Dropping the result of build job {}: its participation {}, exercise {} and course {} do not belong together", buildJob.id(), buildJob.participationId(),
-                    buildJob.exerciseId(), buildJob.courseId());
-            return;
+        if (participationOptional.isPresent()) {
+            boolean consistent;
+            try {
+                consistent = isConsistentWithDatabase(buildJob, participationOptional.get());
+            }
+            catch (DataAccessException e) {
+                // The result was already polled from the queue, so it is kept for another attempt instead of being lost
+                log.warn("Could not check the result of build job {} against the database, it is processed later: {}", buildJob.id(), e.getMessage());
+                distributedDataAccessService.getDistributedDeferredBuildResultQueue().add(resultQueueItem);
+                return;
+            }
+            if (!consistent) {
+                // The ids of the item come from the queue, so a result is processed only for the participation, exercise and course that the database holds together.
+                // A job whose result is dropped here is recorded as missing and is retried by the LocalCIMissingJobService.
+                log.error("Dropping the result of build job {}: its participation {}, exercise {} and course {} do not belong together", buildJob.id(), buildJob.participationId(),
+                        buildJob.exerciseId(), buildJob.courseId());
+                return;
+            }
         }
 
         try {

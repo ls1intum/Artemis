@@ -35,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -371,6 +372,19 @@ class LocalCIResultProcessingServiceTest {
 
         verifyNoInteractions(programmingExerciseGradingService);
         verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aResultIsKeptForALaterAttemptWhenTheConsistencyCheckCannotReadTheDatabase() {
+        when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verify(deferredResultQueue).add(item);
+        verifyNoInteractions(programmingExerciseGradingService);
     }
 
     // --- lifecycle and health --------------------------------------------------------------------------------------
