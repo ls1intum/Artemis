@@ -2,7 +2,6 @@ import { HttpMethod } from 'app/admin/metrics/metrics.model';
 import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
-import { SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
 export abstract class BaseApiHttpService {
     private readonly httpClient: HttpClient = inject(HttpClient);
@@ -72,22 +71,6 @@ export abstract class BaseApiHttpService {
         } catch (error) {
             throw error as HttpErrorResponse;
         }
-    }
-
-    /**
-     * Creates a `HttpParams` object from the given `SearchTermPageableSearch` object.
-     * @param pageable The pageable object to create the `HttpParams` object from.
-     * @protected
-     *
-     * @return The `HttpParams` object.
-     */
-    protected createHttpSearchParams(pageable: SearchTermPageableSearch): HttpParams {
-        return new HttpParams()
-            .set('pageSize', String(pageable.pageSize))
-            .set('page', String(pageable.page))
-            .set('sortingOrder', pageable.sortingOrder)
-            .set('searchTerm', pageable.searchTerm)
-            .set('sortedColumn', pageable.sortedColumn);
     }
 
     /**
