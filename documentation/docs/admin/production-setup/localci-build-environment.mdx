@@ -86,6 +86,15 @@ This applies to both runners, to every exercise, and to the user of the image, i
 Check an image with `docker run --rm --cap-drop MKNOD --cap-drop SYS_CHROOT --cap-drop SETFCAP <image> <command>`, and add `--cap-drop AUDIT_WRITE --security-opt no-new-privileges` to test the restricted
 setting, before you rely on it for an exercise that uses tools like these.
 
+### Limiting the storage of a build
+
+By default, the writable layer of a build container has no size limit of its own, so a build can fill the disk of the build agent host up to the free space of the Docker data directory.
+Set `artemis.continuous-integration.container-storage-limit` on the build agents to limit it, for example `10g`. The value is a number with an optional unit `k`, `m` or `g`; a plain number is read as bytes.
+Artemis passes it to Docker as the `size` storage option of the container. Leave it blank (the default) to keep the behavior without a limit.
+
+Docker applies this option only on storage drivers and file systems that support quotas, for example `overlay2` on an `xfs` file system mounted with `pquota`. On other setups Docker
+refuses to create the container, and every build on that agent fails, so test the setting on one agent first. The option applies to Docker only, not to Kubernetes.
+
 ## Network access
 
 Cloning the repositories and delivering the results happen on the build agent, outside the container. The network setting of the container
@@ -280,6 +289,7 @@ Set agent settings on the build agents and core settings on the core nodes, see 
 | Networks an instructor may select | `container-flags-limit.allowed-custom-networks` | `none` | Core and build agent |
 | Variables of every build container | `container-defaults.env` (a list of `KEY=value`) | none | Core |
 | Network of the builds that select none | `container-defaults.network` | blank, the default network of the runtime | Core |
+| Size limit of the writable layer of a build container | `container-storage-limit`, for example `10g` | blank, no limit | Build agent |
 | Default Docker image per language and project type | `build.images.<language>.default` and `build.images.<language>.<project type>` | Artemis images, see `application.yml` | Core |
 | Architecture of the images to pull | `image-architecture` | `amd64` | Build agent |
 | Build timeout | `build-timeout-seconds.min`, `default`, `max` | 10, 120, 240 | Core and build agent |

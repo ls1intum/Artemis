@@ -4,12 +4,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
@@ -60,6 +63,8 @@ public class BuildAgentConfiguration {
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     /** Everything that is not a digit, removed to read the number out of a Docker flag value such as {@code 2g}. */
+    private static final Pattern STORAGE_LIMIT = Pattern.compile("(\\d{1,12})([kKmMgG]?)");
+
     private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
@@ -76,6 +81,13 @@ public class BuildAgentConfiguration {
 
     @Value("${artemis.continuous-integration.allow-privilege-escalation:true}")
     boolean allowPrivilegeEscalation = true;
+
+    /**
+     * The size that the writable layer of a build container may reach, for example {@code 10g}, or blank for no limit. Docker applies it only on storage drivers and file systems
+     * that support quotas, such as overlay2 on xfs mounted with {@code pquota}, and refuses to create the container on others.
+     */
+    @Value("${artemis.continuous-integration.container-storage-limit:}")
+    String containerStorageLimit = "";
 
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
     int pauseAfterConsecutiveFailedJobs;
@@ -156,8 +168,34 @@ public class BuildAgentConfiguration {
         log.info("Using build job container docker host config with CPU(s): {}, memory: {}, memory swap: {}, pids limit: {}.", cpuCount, formatMemory(memory),
                 formatMemory(memorySwap), pidsLimit);
 
-        return restrictPrivileges(HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
-                .withPidsLimit(pidsLimit).withAutoRemove(true), allowPrivilegeEscalation);
+        return applyStorageLimit(restrictPrivileges(HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory)
+                .withMemorySwap(memorySwap).withPidsLimit(pidsLimit).withAutoRemove(true), allowPrivilegeEscalation));
+    }
+
+    /**
+     * Limits the writable layer of a container to the configured size, see {@code artemis.continuous-integration.container-storage-limit}. Nothing changes if no limit is
+     * configured.
+     *
+     * @param hostConfig the configuration of the container
+     * @return the same configuration
+     * @throws LocalCIException if the configured limit is not a size such as {@code 10g}
+     */
+    public HostConfig applyStorageLimit(HostConfig hostConfig) {
+        if (containerStorageLimit == null || containerStorageLimit.isBlank()) {
+            return hostConfig;
+        }
+        Matcher matcher = STORAGE_LIMIT.matcher(containerStorageLimit.trim());
+        if (!matcher.matches()) {
+            throw new LocalCIException("The container storage limit '" + containerStorageLimit + "' is not a size such as 10g");
+        }
+        String unit = matcher.group(2).toLowerCase(Locale.ROOT);
+        long factor = switch (unit) {
+            case "k" -> 1024L;
+            case "m" -> 1024L * 1024L;
+            case "g" -> 1024L * 1024L * 1024L;
+            default -> 1L;
+        };
+        return hostConfig.withStorageOpt(Map.of("size", Long.toString(Long.parseLong(matcher.group(1)) * factor)));
     }
 
     /**
