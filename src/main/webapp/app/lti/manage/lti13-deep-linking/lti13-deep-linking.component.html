@@ -17,7 +17,7 @@
                 </button>
 
                 <tumaet-ui-popover #exercisesPopover [ariaLabel]="'artemisApp.lti.contentSelectionTable.exercises' | artemisTranslate">
-                    <div class="overflow-x-auto">
+                    <div class="max-h-[min(28rem,60dvh)] overflow-auto">
                         <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                             <thead>
                                 <tr>
@@ -73,7 +73,7 @@
                 </button>
 
                 <tumaet-ui-popover #lecturesPopover [ariaLabel]="'artemisApp.lti.contentSelectionTable.lectures' | artemisTranslate">
-                    <div class="overflow-x-auto">
+                    <div class="max-h-[min(28rem,60dvh)] overflow-auto">
                         <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                             <thead>
                                 <tr>
