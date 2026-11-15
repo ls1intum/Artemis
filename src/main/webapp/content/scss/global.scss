@@ -1704,17 +1704,6 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
     }
 }
 
-// Global search modal sizing
-.global-search-dialog {
-    width: 100%;
-    max-width: 800px;
-    height: 75vh;
-    max-height: 750px;
-    overflow: hidden;
-    background: var(--module-bg);
-    transition: max-width 250ms ease-out;
-}
-
 // Global search result description: reset styles for markdown rendered via innerHTML (outside component scope)
 .result-description {
     p,
@@ -1740,7 +1729,7 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
     code {
         font-size: 0.85em;
         padding: 0.1em 0.3em;
-        background-color: var(--bs-tertiary-bg);
+        background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
         border-radius: 0.2em;
     }
 

@@ -36,7 +36,7 @@ function recordRequests(page: Page, pattern: RegExp): string[] {
  * @param waitFor how long to give the modal to appear; 0 to only dismiss one that is already up.
  */
 async function dismissLlmSelectionIfAsked(page: Page, waitFor: number): Promise<void> {
-    const cloudOption = page.locator('jhi-llm-selection-modal .option-card.cloud-card');
+    const cloudOption = page.getByTestId('llm-selection-cloud-option');
     if (waitFor > 0) {
         await cloudOption.waitFor({ state: 'visible', timeout: waitFor }).catch(() => undefined);
     }

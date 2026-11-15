@@ -60,7 +60,7 @@ describe('Alert Overlay Component Tests', () => {
 
         fixture.detectChanges();
 
-        const btn = fixture.debugElement.query(By.css('button[pButton]'));
+        const btn = fixture.debugElement.query(By.css('[data-testid="alert-action"]'));
         expect(btn).not.toBeNull();
 
         btn.nativeElement.click();

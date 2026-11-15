@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
@@ -34,10 +32,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentFormDialogComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentFormDialogComponent);

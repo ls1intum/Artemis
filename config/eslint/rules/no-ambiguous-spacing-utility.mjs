@@ -47,6 +47,19 @@ import { classTokens, classTokensInBindingExpression, classTokensInInterpolatedL
 
 const AMBIGUOUS = /^(m|mt|mb|ms|me|mx|my|p|pt|pb|ps|pe|px|py|gap)-([345])$/;
 
+// A shorthand and the sides it sets. Bootstrap defines the shorthand before the sides, so a side utility beats the shorthand
+// whatever their order in the class list. An important Tailwind shorthand (`p-4!`) beats a side that is not important, so
+// `p-4! pt-0` pads the top where Bootstrap's `p-3 pt-0` did not: the side has to be important too.
+const SIDES_OF_SHORTHAND = {
+    p: ['pt', 'pb', 'ps', 'pe', 'px', 'py'],
+    px: ['ps', 'pe'],
+    py: ['pt', 'pb'],
+    m: ['mt', 'mb', 'ms', 'me', 'mx', 'my'],
+    mx: ['ms', 'me'],
+    my: ['mt', 'mb'],
+};
+const SPACING_TOKEN = /^(m|mt|mb|ms|me|mx|my|p|pt|pb|ps|pe|px|py)-(\d+(?:\.\d+)?|auto|px)(!?)$/;
+
 // What the bare token renders (Bootstrap) and what it would render without Bootstrap (Tailwind), plus the important
 // Tailwind step that has the Bootstrap value (`pinned`) and the one that has the Tailwind value (`tailwindStep`).
 const SCALE = {
@@ -65,8 +78,11 @@ export default {
         messages: {
             ambiguousSpacing:
                 "'{{cls}}' is a Bootstrap and a Tailwind class with different values. While Bootstrap is loaded its !important rule wins and renders {{bootstrap}}, but Tailwind alone renders {{tailwind}}, so the spacing changes when Bootstrap is removed. Write '{{pinned}}' to keep {{bootstrap}}, or '{{twValue}}' for the Tailwind value {{tailwind}}. Keep the !: it is a class Bootstrap does not define and it wins over Bootstrap's element styles. See client-development.mdx (### Styling).",
+            shadowedByShorthand:
+                "'{{cls}}' loses to the important shorthand '{{shorthand}}' in the same class list, while Bootstrap let a side beat its shorthand. Write '{{cls}}!' so the side keeps winning.",
             pinCurrentValue: "Keep the rendered {{bootstrap}}: write '{{replacement}}'.",
             useTailwindValue: "Use the Tailwind value {{tailwind}}: write '{{replacement}}'.",
+            makeSideImportant: "Make the side important: write '{{replacement}}'.",
         },
         schema: [],
     },
@@ -107,6 +123,28 @@ export default {
             }
         }
 
+        // Only a static class list is judged: its tokens are all on the element and together decide the cascade.
+        function checkShadowedSides(tokens, base) {
+            const parsed = tokens.map(({ token, index }) => ({ token, index, match: SPACING_TOKEN.exec(token) }));
+            const importantShorthands = parsed.filter(({ match }) => match?.[3] === '!' && SIDES_OF_SHORTHAND[match[1]]).map(({ token, match }) => ({ token, prefix: match[1] }));
+            for (const { token, index, match } of parsed) {
+                if (!match || match[3] === '!') {
+                    continue;
+                }
+                const shadowing = importantShorthands.find(({ prefix }) => SIDES_OF_SHORTHAND[prefix].includes(match[1]));
+                if (shadowing) {
+                    const start = base + index;
+                    const end = start + token.length;
+                    context.report({
+                        loc: { start: sourceCode.getLocFromIndex(start), end: sourceCode.getLocFromIndex(end) },
+                        messageId: 'shadowedByShorthand',
+                        data: { cls: token, shorthand: shadowing.token },
+                        suggest: [{ messageId: 'makeSideImportant', data: { replacement: `${token}!` }, fix: (fixer) => fixer.insertTextAfterRange([start, end], '!') }],
+                    });
+                }
+            }
+        }
+
         // The raw text of an attribute value, which the offsets of the tokens refer to; the parsed `node.value` may
         // have decoded HTML entities and so be shorter.
         const valueText = (node) => (node.valueSpan ? text.slice(node.valueSpan.start.offset, node.valueSpan.end.offset) : undefined);
@@ -114,7 +152,9 @@ export default {
         return {
             TextAttribute(node) {
                 if (isClassListAttribute(node.name) && node.valueSpan) {
-                    checkAll(classTokens(valueText(node)), node.valueSpan.start.offset);
+                    const tokens = classTokens(valueText(node));
+                    checkAll(tokens, node.valueSpan.start.offset);
+                    checkShadowedSides(tokens, node.valueSpan.start.offset);
                 }
             },
             BoundAttribute(node) {
