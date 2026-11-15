@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +51,11 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing the current user's account.
@@ -104,6 +110,13 @@ public class AccountResource {
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
+    @Operation(summary = "Update the current user's basic information")
+    @ApiResponse(responseCode = "200", description = "Basic information updated", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid user information or email address already in use", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(type = "object"), schemaProperties = {
+            @SchemaProperty(name = "type", schema = @Schema(type = "string", format = "uri")), @SchemaProperty(name = "title", schema = @Schema(type = "string")),
+            @SchemaProperty(name = "status", schema = @Schema(type = "integer")), @SchemaProperty(name = "detail", schema = @Schema(type = "string")),
+            @SchemaProperty(name = "instance", schema = @Schema(type = "string", format = "uri")) }))
+    @ApiResponse(responseCode = "403", description = "External users cannot update basic information when registration is disabled", content = @Content)
     @PutMapping("basic-information")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> saveAccount(@Valid @RequestBody UserDTO userDTO) {
@@ -248,9 +261,12 @@ public class AccountResource {
      * @param file the image file that is being uploaded
      * @return the ResponseEntity with status 200 (OK) and with body of current user
      */
+    @Operation(summary = "Upload a profile picture for the current user", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(type = "object", requiredProperties = "file"), schemaProperties = @SchemaProperty(name = "file", schema = @Schema(type = "string", format = "binary")))))
+    @ApiResponse(responseCode = "200", description = "Current user with the updated image URL", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Missing or invalid image file. The file must contain a PNG or JPEG signature, have type image/png, image/jpeg or image/jpg, and be at most 104857 bytes.", content = @Content)
     @PutMapping("profile-picture")
     @EnforceAtLeastStudent
-    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) {
+    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart("file") MultipartFile file) {
         log.debug("REST request to update profile picture for logged-in user");
         String contentType = file.getContentType();
 
@@ -285,6 +301,8 @@ public class AccountResource {
      *
      * @return the ResponseEntity with status 200 (OK)
      */
+    @Operation(summary = "Remove the current user's profile picture")
+    @ApiResponse(responseCode = "200", description = "Profile picture removed or already absent", content = @Content)
     @DeleteMapping("profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> removeProfilePicture() {

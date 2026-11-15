@@ -1,7 +1,7 @@
 import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Observable, lastValueFrom, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
@@ -17,6 +17,8 @@ import dayjs from 'dayjs/esm';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountApi } from 'app/openapi/api/account-api';
+import { User as ApiUser } from 'app/openapi/model/user';
 
 type CourseRole = 'STUDENT' | 'TEACHING_ASSISTANT' | 'EDITOR' | 'INSTRUCTOR';
 
@@ -34,7 +36,7 @@ function isAtLeastCourseRole(role: string, minimum: CourseRole): boolean {
 }
 
 export interface IAccountService {
-    save: (account: User) => Observable<HttpResponse<User>>;
+    save: (account: User) => Observable<void>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
@@ -65,6 +67,7 @@ export class AccountService implements IAccountService {
     private readonly websocketService = inject(WebsocketService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountApi = inject(AccountApi);
 
     // cached value of the user to avoid unnecessary requests to the server
     userIdentity = signal<User | undefined>(undefined);
@@ -111,8 +114,21 @@ export class AccountService implements IAccountService {
         return this.http.get<User>('api/core/public/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<User>> {
-        return this.http.put<User>('api/account/basic-information', user, { observe: 'response' });
+    save(user: User): Observable<void> {
+        if (user.login === undefined) {
+            return throwError(() => new Error('Cannot save account information without a login'));
+        }
+
+        const profile: ApiUser = {
+            login: user.login,
+            name: user.name,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            langKey: user.langKey,
+            imageUrl: user.imageUrl,
+        };
+        return this.accountApi.saveAccount(profile);
     }
 
     authenticate(identity?: User) {

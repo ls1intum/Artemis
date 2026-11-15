@@ -6,7 +6,7 @@ import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.co
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -118,8 +118,7 @@ export class AccountInformationComponent {
             .updateProfilePicture(file)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response: HttpResponse<User>) => {
-                    const user = response.body;
+                next: (user) => {
                     if (user?.imageUrl !== undefined) {
                         this.imageLoadFailed.set(false);
                         this.accountService.setImageUrl(user.imageUrl);

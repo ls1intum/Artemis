@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { User as ApiUser } from 'app/openapi/model/user';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -106,7 +107,7 @@ describe('AccountInformationComponent', () => {
     });
 
     it('should only remove the profile picture after deletion is confirmed', () => {
-        userSettingsServiceMock.removeProfilePicture.mockReturnValue(of(new HttpResponse({ status: 200 })));
+        userSettingsServiceMock.removeProfilePicture.mockReturnValue(of(undefined));
 
         comp.confirmDeleteUserImage();
 
@@ -121,13 +122,9 @@ describe('AccountInformationComponent', () => {
     });
 
     it('should update user image on successful upload via setUserImage flow', () => {
-        const userResponse = new HttpResponse<User>({
-            body: {
-                imageUrl: 'new-image-url',
-                internal: false,
-            },
-        });
+        const userResponse: ApiUser = { login: 'testuser', imageUrl: 'new-image-url' };
         userSettingsServiceMock.updateProfilePicture.mockReturnValue(of(userResponse));
+        comp.imageLoadFailed.set(true);
 
         const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
         const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
@@ -137,8 +134,21 @@ describe('AccountInformationComponent', () => {
         comp.onImageCropped('data:image/jpeg;base64,dGVzdA==');
         expect(comp.imageToCrop()).toBeUndefined();
 
-        expect(userSettingsServiceMock.updateProfilePicture).toHaveBeenCalled();
+        expect(userSettingsServiceMock.updateProfilePicture).toHaveBeenCalledExactlyOnceWith(expect.any(Blob));
+        expect(userSettingsServiceMock.updateProfilePicture.mock.calls[0][0].type).toBe('image/jpeg');
+        expect(comp.imageLoadFailed()).toBe(false);
         expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith('new-image-url');
+    });
+
+    it('keeps the image and load failure state when the upload returns no image URL', () => {
+        const userResponse: ApiUser = { login: 'testuser' };
+        userSettingsServiceMock.updateProfilePicture.mockReturnValue(of(userResponse));
+        comp.imageLoadFailed.set(true);
+
+        comp.onImageCropped('data:image/jpeg;base64,dGVzdA==');
+
+        expect(accountServiceMock.setImageUrl).not.toHaveBeenCalled();
+        expect(comp.imageLoadFailed()).toBe(true);
     });
 
     it('should show error alert when image upload fails', () => {
@@ -154,15 +164,17 @@ describe('AccountInformationComponent', () => {
         comp.onImageCropped('data:image/jpeg;base64,dGVzdA==');
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Upload failed' }));
+        expect(accountServiceMock.setImageUrl).not.toHaveBeenCalled();
     });
 
     it('should show error alert when profile picture removal fails', () => {
-        const errorResponse = new HttpErrorResponse({ error: { title: 'Removal failed' }, status: 400 });
+        const errorResponse = new HttpErrorResponse({ headers: new HttpHeaders({ 'x-artemisapp-alert': 'Removal failed' }), status: 400 });
         userSettingsServiceMock.removeProfilePicture.mockReturnValue(throwError(() => errorResponse));
 
         comp.confirmDeleteUserImage();
         confirmationService.request('deleteProfilePictureConfirmation')!.accept();
 
+        expect(accountServiceMock.setImageUrl).not.toHaveBeenCalled();
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: expect.anything(),

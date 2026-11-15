@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -18,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
@@ -117,9 +119,6 @@ public class UserTestService {
 
     @Autowired
     private ScienceEventTestRepository scienceEventRepository;
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @Autowired
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
@@ -655,39 +654,46 @@ public class UserTestService {
         assertThat(userDTO.getLogin()).isEqualTo(userLogin);
     }
 
-    // Test
     public void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getImageUrl()).isNull();
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getImageUrl()).isNull();
 
-        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
+        var result = request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/account/profile-picture").file(profilePicture())).andExpect(status().isOk());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
-            request.setMethod("PUT");
-            return request;
-        })).andExpect(status().isOk());
-
-        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getImageUrl()).isNotNull();
+        String imageUrl = userUtilService.getUserByLogin(user.getLogin()).getImageUrl();
+        assertThat(imageUrl).isNotBlank();
+        result.andExpect(jsonPath("$.imageUrl").value(imageUrl));
+        request.restoreSecurityContext();
     }
 
-    // Test
     public void updateAndDeleteUserProfilePicture_asStudent_isSuccessful() throws Exception {
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getImageUrl()).isNull();
+        updateUserProfilePicture_asStudent_isSuccessful();
 
-        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
+        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/account/profile-picture")).andExpect(status().isOk()).andExpect(content().string(""));
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).isNull();
+        request.restoreSecurityContext();
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
-            request.setMethod("PUT");
-            return request;
-        })).andExpect(status().isOk());
-        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getImageUrl()).isNotNull();
+        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/account/profile-picture")).andExpect(status().isOk()).andExpect(content().string(""));
+    }
 
-        request.delete("/api/account/profile-picture", HttpStatus.OK);
-        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getImageUrl()).isNull();
+    public void rejectedProfilePictureReplacementPreservesImage() throws Exception {
+        updateUserProfilePicture_asStudent_isSuccessful();
+        String imageUrl = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl();
+        byte[] jpegSignature = profilePicture().getBytes();
+        byte[] oversizedImage = new byte[104858];
+        System.arraycopy(jpegSignature, 0, oversizedImage, 0, jpegSignature.length);
+
+        var unsupportedType = new MockMultipartFile("file", "placeholderName.jpeg", "application/octet-stream", jpegSignature);
+        var oversized = new MockMultipartFile("file", "placeholderName.jpeg", "image/jpeg", oversizedImage);
+        for (MockMultipartFile invalidImage : List.of(unsupportedType, oversized)) {
+            request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/account/profile-picture").file(invalidImage)).andExpect(status().isBadRequest());
+            assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).isEqualTo(imageUrl);
+            request.restoreSecurityContext();
+        }
+    }
+
+    private static MockMultipartFile profilePicture() {
+        return new MockMultipartFile("file", "placeholderName.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
     }
 
     // Test

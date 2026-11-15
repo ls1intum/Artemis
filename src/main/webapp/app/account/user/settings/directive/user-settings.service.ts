@@ -1,21 +1,17 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { User } from 'app/account/user/user.model';
+import { Observable } from 'rxjs';
+import { AccountApi } from 'app/openapi/api/account-api';
+import { User as ApiUser } from 'app/openapi/model/user';
 
 @Service()
 export class UserSettingsService {
-    private http = inject(HttpClient);
+    private readonly accountApi = inject(AccountApi);
 
-    public profilePictureResourceUrl = 'api/account/profile-picture';
-
-    public updateProfilePicture(file: Blob) {
-        const formData = new FormData();
-        formData.append('file', file, 'placeholderName.jpeg');
-
-        return this.http.put<User>(`${this.profilePictureResourceUrl}`, formData, { observe: 'response' });
+    public updateProfilePicture(file: Blob): Observable<ApiUser> {
+        return this.accountApi.updateProfilePicture(new File([file], 'placeholderName.jpeg', { type: file.type }));
     }
 
-    public removeProfilePicture() {
-        return this.http.delete<User>(`${this.profilePictureResourceUrl}`, { observe: 'response' });
+    public removeProfilePicture(): Observable<void> {
+        return this.accountApi.removeProfilePicture();
     }
 }

@@ -425,6 +425,81 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/account/users/select-llm-usage:
+    put:
+      tags: [user]
+      summary: Record the current user's AI usage decision
+      operationId: setSelectedLLMUsageToTimestampAndEnum
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SelectedLLMUsage'}
+        required: true
+      responses:
+        '200':
+          description: AI usage decision recorded
+          headers:
+            Cache-Control:
+              description: Cache directives for the authenticated response
+              style: simple
+              schema: {type: string}
+        '400': {description: Missing request body or unreadable selection value}
+        '500': {description: The selection property is missing or null}
+  /api/account/profile-picture:
+    put:
+      tags: [account]
+      summary: Upload a profile picture for the current user
+      operationId: updateProfilePicture
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: {type: string, format: binary}
+              required: [file]
+        required: true
+      responses:
+        '200':
+          description: Current user with the updated image URL
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
+        '400': {description: 'Missing or invalid image file. The file must contain
+            a PNG or JPEG signature, have type image/png, image/jpeg or image/jpg,
+            and be at most 104857 bytes.'}
+    delete:
+      tags: [account]
+      summary: Remove the current user's profile picture
+      operationId: removeProfilePicture
+      responses:
+        '200': {description: Profile picture removed or already absent}
+  /api/account/basic-information:
+    put:
+      tags: [account]
+      summary: Update the current user's basic information
+      operationId: saveAccount
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/User'}
+        required: true
+      responses:
+        '200': {description: Basic information updated}
+        '400':
+          description: Invalid user information or email address already in use
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type: {type: string, format: uri}
+                  title: {type: string}
+                  status: {type: integer}
+                  detail: {type: string}
+                  instance: {type: string, format: uri}
+        '403': {description: External users cannot update basic information when registration
+            is disabled}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -3811,6 +3886,16 @@ components:
           items: {$ref: '#/components/schemas/AuthoringRun'}
         nextBeforeId: {type: integer, format: int64}
       required: [runs]
+    CourseAccessRights:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [STUDENT, TEACHING_ASSISTANT, EDITOR, INSTRUCTOR]
+          uniqueItems: true
     QuizSearchCourse:
       type: object
       properties:
@@ -4589,6 +4674,13 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    SelectedLLMUsage:
+      type: object
+      properties:
+        selection:
+          type: string
+          enum: [NO_AI, LOCAL_AI, CLOUD_AI]
+      required: [selection]
     Student:
       type: object
       properties:
@@ -4750,6 +4842,18 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    Organization:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        url: {type: string}
+        description: {type: string}
+        emailPattern: {type: string}
+        logoUrl: {type: string}
+        numberOfUsers: {type: integer, format: int64}
+        numberOfCourses: {type: integer, format: int64}
     QuizExerciseWithQuestions:
       type: object
       properties:
@@ -5610,6 +5714,47 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    User:
+      type: object
+      properties:
+        activated: {type: boolean}
+        askToSetupPasskey: {type: boolean}
+        authorities:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        courseRoles:
+          type: array
+          items: {$ref: '#/components/schemas/CourseAccessRights'}
+        createdBy: {type: string}
+        createdDate: {type: string, format: date-time}
+        email: {type: string, format: email, maxLength: 100, minLength: 5}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        id: {type: integer, format: int64}
+        imageUrl: {type: string, maxLength: 256, minLength: 0}
+        internal: {type: boolean}
+        isTestUser: {type: boolean}
+        langKey: {type: string, maxLength: 6, minLength: 2}
+        lastModifiedBy: {type: string}
+        lastModifiedDate: {type: string, format: date-time}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        loggedInWithPasskey: {type: boolean}
+        login: {type: string, maxLength: 50, minLength: 4, pattern: '^[_''.@A-Za-z0-9-]*$'}
+        name: {type: string, maxLength: 101, minLength: 0}
+        organizations:
+          type: array
+          items: {$ref: '#/components/schemas/Organization'}
+          uniqueItems: true
+        passkeySuperAdminApproved: {type: boolean}
+        selectedLLMUsage:
+          type: string
+          enum: [NO_AI, LOCAL_AI, CLOUD_AI]
+        selectedLLMUsageTimestamp: {type: string, format: date-time}
+        testUser: {type: boolean}
+        vcsAccessToken: {type: string}
+        vcsAccessTokenExpiryDate: {type: string, format: date-time}
+        visibleRegistrationNumber: {type: string}
+      required: [login]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
