@@ -32,8 +32,6 @@ public class InternalAccessConfiguration {
 
     private static final String PROPERTY = "artemis.security.internal.allowed-cidrs";
 
-    private static final List<String> OPEN_RANGES = List.of("0.0.0.0/0", "::/0");
-
     /**
      * List of CIDR blocks (IPv4/IPv6) allowed to access @Internal endpoints.
      * <p>
@@ -74,9 +72,25 @@ public class InternalAccessConfiguration {
             return;
         }
         List<String> ranges = Binder.get(environment).bind(PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
-        if (ranges.stream().anyMatch(range -> OPEN_RANGES.contains(range.trim()))) {
+        if (ranges.stream().anyMatch(InternalAccessConfiguration::admitsEveryAddress)) {
             log.warn("The property {} admits every address, so internal endpoints are reachable from any network. "
                     + "Restrict it to the addresses of the components that call Artemis, for example {}=10.0.0.0/24.", PROPERTY, PROPERTY + "[0]");
         }
+    }
+
+    /**
+     * Whether a range has a prefix length of 0, which matches every address of its family however the network part is written, e.g. {@code 10.0.0.0/0} or
+     * {@code 0:0:0:0:0:0:0:0/0}.
+     *
+     * @param range a CIDR block as configured
+     * @return true if the prefix length is 0
+     */
+    private static boolean admitsEveryAddress(String range) {
+        int separator = range.lastIndexOf('/');
+        if (separator < 0) {
+            return false;
+        }
+        String prefixLength = range.substring(separator + 1).trim();
+        return !prefixLength.isEmpty() && prefixLength.chars().allMatch(Character::isDigit) && Integer.parseInt(prefixLength) == 0;
     }
 }
