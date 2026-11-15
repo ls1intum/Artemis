@@ -7,7 +7,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
-import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_URL, EmailAllowedResponse, emailAllowedRequestContext } from 'app/account/shared/email-allowed';
+import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_TIMEOUT_MS, EMAIL_ALLOWED_URL, EmailAllowedResponse, emailAllowedRequestContext } from 'app/account/shared/email-allowed';
 import { EMAIL_NOT_ALLOWED_ERROR_KEY } from 'app/foundation/constants/error.constants';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
@@ -73,7 +73,13 @@ export class AccountSettingsDialogComponent {
             // form, because the decision is made again when the settings are saved. The address the account already has is not asked about: the server only checks an
             // address that changes, so a person whose address predates the restriction can still save the name.
             validateHttp<string, EmailAllowedResponse>(path.email, {
-                request: ({ value }) => ({ url: EMAIL_ALLOWED_URL, method: 'POST', body: { email: value() }, context: emailAllowedRequestContext() }),
+                request: ({ value }) => ({
+                    url: EMAIL_ALLOWED_URL,
+                    method: 'POST',
+                    body: { email: value() },
+                    context: emailAllowedRequestContext(),
+                    timeout: EMAIL_ALLOWED_TIMEOUT_MS,
+                }),
                 debounce: EMAIL_ALLOWED_DEBOUNCE_MS,
                 when: ({ value }) => value().toLowerCase() !== (this.accountService.userIdentity()?.email ?? '').toLowerCase(),
                 onSuccess: (response) => (response.allowed ? undefined : { kind: 'emailNotAllowed' }),

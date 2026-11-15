@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -110,10 +111,12 @@ public class PublicAccountResource {
 
     private final EmailChangeService emailChangeService;
 
+    private final Validator validator;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
             UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService, AccountSecurityEventService accountSecurityEventService,
-            EmailChangeService emailChangeService) {
+            EmailChangeService emailChangeService, Validator validator) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -125,10 +128,11 @@ public class PublicAccountResource {
         this.userAiPreferenceService = userAiPreferenceService;
         this.accountSecurityEventService = accountSecurityEventService;
         this.emailChangeService = emailChangeService;
+        this.validator = validator;
     }
 
     /**
-     * {@code POST /email-allowed} : tells a form whether an email address is allowed by the configured restriction, so that it can say so while the address is typed.
+     * {@code POST /email-allowed} : tells a form whether an email address has valid syntax and is allowed by the configured restriction while the address is typed.
      * <p>
      * The answer is the one that registration and the change of the address give, because all of them ask {@link EmailChangeService#isAddressAllowed}. The forms ask after a
      * short pause in typing and treat a failed request as allowed, since the decision is made again when the form is sent.
@@ -142,7 +146,9 @@ public class PublicAccountResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.EMAIL_ADDRESS_CHECK)
     public ResponseEntity<EmailAllowedDTO> checkEmailAllowed(@Valid @RequestBody EmailAllowedRequestDTO request) {
-        return ResponseEntity.ok(new EmailAllowedDTO(emailChangeService.isAddressAllowed(request.email())));
+        // Use the same syntax constraints as the account-save DTO. A 200 response with allowed=false keeps malformed addresses on the field-validation path.
+        boolean validEmail = validator.validateValue(UserDTO.class, "email", request.email()).isEmpty();
+        return ResponseEntity.ok(new EmailAllowedDTO(validEmail && emailChangeService.isAddressAllowed(request.email())));
     }
 
     /**

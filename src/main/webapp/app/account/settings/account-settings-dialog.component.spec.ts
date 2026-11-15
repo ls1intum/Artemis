@@ -12,7 +12,7 @@ import { User } from 'app/account/user/user.model';
 import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_URL } from 'app/account/shared/email-allowed';
+import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_TIMEOUT_MS, EMAIL_ALLOWED_URL } from 'app/account/shared/email-allowed';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -211,6 +211,15 @@ describe('AccountSettingsDialogComponent', () => {
 
             expect(component.settingsForm.email().valid()).toBe(false);
             expect(component.settingsForm.email().getError('emailNotAllowed')).toBeTruthy();
+        });
+
+        it('bounds the email check so an unresponsive server cannot keep saving disabled', async () => {
+            restrictedTo();
+            await typeEmail('grace@example.com');
+
+            const request = http.expectOne(EMAIL_ALLOWED_URL);
+            expect(request.request.timeout).toBe(EMAIL_ALLOWED_TIMEOUT_MS);
+            request.flush({ allowed: true });
         });
 
         it('accepts an address that the server allows, whatever the pattern looks like', async () => {

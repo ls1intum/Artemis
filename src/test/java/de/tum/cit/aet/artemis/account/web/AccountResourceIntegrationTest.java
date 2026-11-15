@@ -154,6 +154,16 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithAnonymousUser
+    void checkEmailAllowedRejectsMalformedAddressesEvenWhenTheRestrictionMatches() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile(".*@example\\.com")), () -> {
+            var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO("ada@@example.com"), EmailAllowedDTO.class, HttpStatus.OK);
+
+            assertThat(result.allowed()).isFalse();
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
     void checkEmailAllowedAcceptsEveryAddressWithoutRestriction() throws Throwable {
         ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.empty(), () -> {
             var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO("anyone@anywhere.org"), EmailAllowedDTO.class, HttpStatus.OK);
@@ -178,8 +188,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithAnonymousUser
     void checkEmailAllowedAcceptsAnAddressOfExactlyTheLongestStorableLength() throws Throwable {
-        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("[a-z]+@example\\.com")), () -> {
-            String longestAddress = "a".repeat(100 - "@example.com".length()) + "@example.com";
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile(".*@.*")), () -> {
+            String longestAddress = "a".repeat(64) + "@" + "b".repeat(31) + ".com";
             assertThat(longestAddress).hasSize(100);
 
             var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO(longestAddress), EmailAllowedDTO.class, HttpStatus.OK);
