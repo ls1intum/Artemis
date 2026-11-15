@@ -6,12 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -26,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
@@ -96,6 +99,140 @@ class RepositoryServiceFileOperationsTest {
 
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "Main.java", content("the replacement")));
         assertThat(workingTree.resolve("Main.java")).content(StandardCharsets.UTF_8).isEqualTo("the original");
+    }
+
+    @Test
+    void createFile_aboveTheSizeLimitOfAFile_isRejectedAndNothingIsLeftBehind() {
+        InputStream tooLarge = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) {
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "Large.txt", tooLarge))
+                .withMessageContaining("size limit");
+        assertThat(workingTree.resolve("Large.txt")).doesNotExist();
+    }
+
+    @Test
+    void createFile_throughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "link/created.txt", content("owned")))
+                .withMessageContaining("symbolic link");
+        assertThat(outside.resolve("created.txt")).doesNotExist();
+    }
+
+    @Test
+    void createFile_onADanglingSymbolicLink_isRejected() throws Exception {
+        Path target = baseDir.resolve("not-yet-there.txt");
+        Files.createSymbolicLink(workingTree.resolve("dangling.txt"), target);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "dangling.txt", content("owned")))
+                .withMessageContaining("symbolic link");
+        assertThat(target).doesNotExist();
+    }
+
+    @Test
+    void createFolder_throughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "link/folder", content("")))
+                .withMessageContaining("symbolic link");
+        assertThat(outside.resolve("folder")).doesNotExist();
+    }
+
+    @Test
+    void checkNoSymbolicLink_forAnAbsolutePathThroughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> repositoryService.checkNoSymbolicLinkOnPathElseThrow(repository, workingTree.resolve("link/new.txt"))).withMessageContaining("symbolic link");
+    }
+
+    @Test
+    void checkNoSymbolicLink_forAnAbsolutePathOutsideTheRepository_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> repositoryService.checkNoSymbolicLinkOnPathElseThrow(repository, baseDir.resolve("outside/new.txt").toAbsolutePath()));
+    }
+
+    @Test
+    void createFolder_aboveTheSizeLimit_leavesNoFolderBehindSoThatARetryWorks() throws Exception {
+        InputStream tooLarge = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) {
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "src", tooLarge)).withMessageContaining("size limit");
+        assertThat(workingTree.resolve("src")).doesNotExist();
+
+        repositoryService.createFolder(repository, "src", content(""));
+        assertThat(workingTree.resolve("src/.keep")).isRegularFile();
+    }
+
+    @Test
+    void createFolder_aboveTheSizeLimit_keepsFilesThatAnotherRequestAddedMeanwhile() throws Exception {
+        InputStream addsAFileThenFails = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() throws IOException {
+                FileUtils.writeStringToFile(workingTree.resolve("src/Main.java").toFile(), "code", StandardCharsets.UTF_8);
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) throws IOException {
+                FileUtils.writeStringToFile(workingTree.resolve("src/Main.java").toFile(), "code", StandardCharsets.UTF_8);
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "src", addsAFileThenFails));
+
+        assertThat(workingTree.resolve("src/Main.java")).exists();
+        assertThat(workingTree.resolve("src/.keep")).doesNotExist();
     }
 
     @Test
