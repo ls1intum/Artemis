@@ -14,6 +14,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -163,6 +164,13 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
+    /**
+     * The networks that a build on this agent may use, as configured on the agent. Empty if the agent does not configure the list, in which case the agent does not check the
+     * network and relies on the check of the core node.
+     */
+    @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:}")
+    private List<String> allowedCustomNetworks = List.of();
+
     public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap, TempFileUtilService tempFileUtilService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildLogsMap = buildLogsMap;
@@ -201,6 +209,9 @@ public class BuildJobContainerService {
         // that do not give the build a network of its own.
         if (DockerRunConfig.sharesNetworkNamespace(network)) {
             throw new LocalCIException("The container network '" + network + "' is not allowed");
+        }
+        if (!isNetworkAllowedOnThisAgent(network)) {
+            throw new LocalCIException("The container network '" + network + "' is not allowed on this build agent");
         }
 
         List<String> envVars = new ArrayList<>();
@@ -247,6 +258,19 @@ public class BuildJobContainerService {
                     // "docker exec -it <container-id> /bin/bash".
                     .exec();
         }
+    }
+
+    /**
+     * Whether a requested network is in the list of allowed networks of this agent. Nothing is refused if the agent does not configure the list, and a build without a network
+     * (none) is always allowed.
+     */
+    private boolean isNetworkAllowedOnThisAgent(String network) {
+        if (network == null || network.isBlank() || allowedCustomNetworks == null) {
+            return true;
+        }
+        List<String> configured = allowedCustomNetworks.stream().filter(Objects::nonNull).map(String::trim).filter(entry -> !entry.isEmpty()).toList();
+        String requested = network.trim();
+        return configured.isEmpty() || "none".equals(requested) || configured.contains(requested);
     }
 
     private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {

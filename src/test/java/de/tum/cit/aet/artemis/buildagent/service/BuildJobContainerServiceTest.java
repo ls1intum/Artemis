@@ -173,6 +173,21 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testNetworkOutsideTheAllowedListOfTheAgentIsRejected() {
+        ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of("mirror-only"));
+        try {
+            var notListed = new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1);
+            assertThatThrownBy(() -> buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, notListed)).isInstanceOf(LocalCIException.class);
+
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "mirror-only", 1, 1, 1));
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 1, 1, 1));
+        }
+        finally {
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of());
+        }
+    }
+
+    @Test
     void testNonEmptyNetworkIsTaken() {
         var runConfig = new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
