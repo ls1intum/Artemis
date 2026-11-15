@@ -18,6 +18,9 @@ public final class LocalVCReceivePackLimits {
      */
     public static final long MAX_OBJECT_SIZE_BYTES = 50L * 1024 * 1024;
 
+    /** The largest file that is accepted in the latest commit of a push and that can be written through the online editor. */
+    public static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024;
+
     /** The largest list of commands of a push. A push updates exactly one branch. */
     public static final int MAX_COMMAND_BYTES = 16 * 1024;
 
