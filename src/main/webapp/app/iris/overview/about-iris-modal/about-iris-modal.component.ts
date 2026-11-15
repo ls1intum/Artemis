@@ -1,13 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ChangeDetectionStrategy, Component, Injector, computed, inject, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
@@ -21,21 +20,20 @@ interface FeatureCard {
     selector: 'jhi-about-iris-modal',
     templateUrl: './about-iris-modal.component.html',
     styleUrl: './about-iris-modal.component.scss',
-    imports: [IrisLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ButtonDirective],
+    imports: [IrisLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutIrisModalComponent {
-    // Opened through PrimeNG's DynamicDialog (DialogService) from every Iris host
-    // (sidebar chat, lecture sidebar, and the exercise/lecture chat widget).
-    private readonly dynamicDialogRef = inject(DynamicDialogRef, { optional: true });
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
-    private readonly chatService = inject(IrisChatService);
+    // Resolved on demand: the course settings pages render this dialog without a chat, so they must not create the chat services.
+    private readonly injector = inject(Injector);
     private readonly accountService = inject(AccountService);
 
-    readonly hideTryButton = this.dialogConfig?.data?.hideTryButton === true;
+    /** Two-way visibility, driven by the host: the Iris chat and the course settings pages. */
+    readonly visible = model(false);
+    /** Hides the "Try Iris" action on pages that have no chat to start a session in. */
+    readonly hideTryButton = input(false);
 
     protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly faXmark = faXmark;
     protected readonly faShield = faShieldHalved;
 
     readonly privacyDescKey = computed(() => {
@@ -83,11 +81,11 @@ export class AboutIrisModalComponent {
     ];
 
     close(): void {
-        this.dynamicDialogRef?.close();
+        this.visible.set(false);
     }
 
     tryIris(): void {
-        this.chatService.startFreshChat();
-        this.dynamicDialogRef?.close();
+        this.injector.get(IrisChatService).startFreshChat();
+        this.close();
     }
 }

@@ -21,7 +21,7 @@
                     [attr.role]="historyClickable ? 'button' : undefined"
                     [attr.tabindex]="historyClickable ? 0 : undefined"
                     [attr.aria-disabled]="!historyClickable"
-                    [class.pe-auto]="historyClickable"
+                    [class.pointer-events-auto]="historyClickable"
                     [tumAetUiTooltip]="historyClickable ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
                     (click)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                     (keydown.enter)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
@@ -79,7 +79,7 @@
                             />
                         }
                         @case ('timeAgo') {
-                            <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
+                            <span [ngClass]="timeAgoColorClass(informationBoxItem.contentColor)" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
                         }
                         @case ('dateTime') {
                             <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>

@@ -238,6 +238,26 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getTextSubmissionForStaff_studentHiddenForTutor() throws Exception {
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+
+        var submission = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-staff", HttpStatus.OK, TextSubmissionResponseDTO.class);
+
+        assertThat(submission.participation().student()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getTextSubmissionForStaff_studentVisibleForInstructor() throws Exception {
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+
+        var submission = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-staff", HttpStatus.OK, TextSubmissionResponseDTO.class);
+
+        assertThat(submission.participation().student()).isNotNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAllTextSubmissions_studentVisibleForInstructor() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");

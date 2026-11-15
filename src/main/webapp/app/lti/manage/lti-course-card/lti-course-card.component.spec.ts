@@ -76,7 +76,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-body').textContent).toContain('ID: 123');
+        expect(compiled.querySelector('[data-testid="lti-course-card-body"]').textContent).toContain('ID: 123');
     });
 
     it('should display number of students', () => {
@@ -91,7 +91,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-body').textContent).toContain('42');
+        expect(compiled.querySelector('[data-testid="lti-course-card-body"]').textContent).toContain('42');
     });
 
     it('should only use translation keys that exist in the English and German course translations', () => {
@@ -130,7 +130,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-body').textContent).toContain(testDescription);
+        expect(compiled.querySelector('[data-testid="lti-course-card-body"]').textContent).toContain(testDescription);
     });
 
     it('should compute contrasting text color for dark background', () => {
@@ -162,7 +162,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-header').textContent).toContain('My Test Course Title');
+        expect(compiled.querySelector('[data-testid="lti-course-card-header"]').textContent).toContain('My Test Course Title');
     });
 
     it('should handle course with dates', () => {

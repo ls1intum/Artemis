@@ -12,8 +12,7 @@ import { By } from '@angular/platform-browser';
 import { ComponentRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AboutAthenaModalComponent } from 'app/course/manage/control-center/about-athena-modal/about-athena-modal.component';
 
 describe('ControlCenterComponent', () => {
@@ -26,7 +25,7 @@ describe('ControlCenterComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [ControlCenterComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DialogService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(ControlCenterComponent, {
                 set: {
@@ -36,6 +35,7 @@ describe('ControlCenterComponent', () => {
                         MockComponent(IrisEnabledComponent),
                         MockComponent(AthenaLogoComponent),
                         MockComponent(AthenaEnabledComponent),
+                        MockComponent(AboutIrisModalComponent),
                         MockComponent(AboutAthenaModalComponent),
                     ],
                 },
@@ -99,6 +99,17 @@ describe('ControlCenterComponent', () => {
         componentRef.setInput('irisEnabled', false);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.directive(IrisLogoComponent))).toBeFalsy();
+    });
+
+    it('should open the about Iris modal without its try button', () => {
+        const aboutIrisModal = fixture.debugElement.query(By.directive(AboutIrisModalComponent));
+        expect(aboutIrisModal.componentInstance.visible()).toBe(false);
+        expect(aboutIrisModal.componentInstance.hideTryButton()).toBe(true);
+
+        fixture.componentInstance.openAboutIrisModal();
+        fixture.detectChanges();
+
+        expect(aboutIrisModal.componentInstance.visible()).toBe(true);
     });
 
     it('should open the about Athena modal', () => {
