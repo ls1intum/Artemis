@@ -21,7 +21,6 @@ import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'a
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -163,16 +162,6 @@ describe('CourseScoresComponent', () => {
         submissions: [{ results: [{ score: 200 } as Result] }],
         presentationScore: 100,
     } as StudentParticipation;
-    const courseScoreStudent1 = new ScoresDTO();
-    courseScoreStudent1.studentId = user1.id;
-    courseScoreStudent1.pointsAchieved = 50;
-    courseScoreStudent1.studentLogin = user1.login;
-    courseScoreStudent1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(50 / 40, course);
-    const courseScoreStudent2 = new ScoresDTO();
-    courseScoreStudent2.studentId = user2.id;
-    courseScoreStudent2.pointsAchieved = 15;
-    courseScoreStudent2.studentLogin = user2.login;
-    courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 40, course);
 
     const createGradeScore = (participationId: number, userId: number, exerciseId: number, score: number, presentationScore = 0) => ({
         participationId,
@@ -274,7 +263,6 @@ describe('CourseScoresComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
-                MockProvider(ParticipantScoresService),
                 MockProvider(GradingService, {
                     findGradingScaleForCourse: () => {
                         return of(

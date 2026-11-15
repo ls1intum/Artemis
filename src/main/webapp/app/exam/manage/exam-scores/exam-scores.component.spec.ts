@@ -1,5 +1,5 @@
 import * as XLSX from '@e965/xlsx';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpRequest, HttpResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import {
@@ -14,7 +14,7 @@ import {
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
+import { Score } from 'app/openapi/model/score';
 import { EMPTY, of } from 'rxjs';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -245,19 +245,20 @@ describe('ExamScoresComponent', () => {
         },
     ];
 
-    let findExamScoresSpy: ReturnType<typeof vi.spyOn>;
+    let examScoresOfParticipantScoreTable: Score[];
+    let examScoresRequests: HttpRequest<unknown>[];
 
-    const examScoreStudent1 = new ScoresDTO();
+    const examScoreStudent1: Score = {};
     examScoreStudent1.studentId = studentResult1.userId;
     examScoreStudent1.pointsAchieved = studentResult1.overallPointsAchieved;
     examScoreStudent1.studentLogin = studentResult1.login;
     examScoreStudent1.scoreAchieved = studentResult1.overallScoreAchieved;
-    const examScoreStudent2 = new ScoresDTO();
+    const examScoreStudent2: Score = {};
     examScoreStudent2.studentId = studentResult2.userId;
     examScoreStudent2.pointsAchieved = studentResult2.overallPointsAchieved;
     examScoreStudent2.studentLogin = studentResult2.login;
     examScoreStudent2.scoreAchieved = studentResult2.overallScoreAchieved;
-    const examScoreStudent3 = new ScoresDTO();
+    const examScoreStudent3: Score = {};
     examScoreStudent3.studentId = studentResult3.userId;
     examScoreStudent3.pointsAchieved = studentResult3.overallPointsAchieved;
     examScoreStudent3.studentLogin = studentResult3.login;
@@ -295,8 +296,18 @@ describe('ExamScoresComponent', () => {
                     },
                 }),
                 MockProvider(JhiLanguageHelper, { language: EMPTY }),
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
-                provideHttpClient(),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123, examId: 1 }) },
+                provideHttpClient(
+                    withInterceptors([
+                        (request, next) => {
+                            if (!request.url.endsWith('/exam-scores')) {
+                                return next(request);
+                            }
+                            examScoresRequests.push(request);
+                            return of(new HttpResponse({ body: examScoresOfParticipantScoreTable }));
+                        },
+                    ]),
+                ),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
@@ -311,10 +322,8 @@ describe('ExamScoresComponent', () => {
         comp = fixture.componentInstance;
         examService = TestBed.inject(ExamManagementService);
         gradingService = TestBed.inject(GradingService);
-        const participationScoreService = TestBed.inject(ParticipantScoresService);
-        findExamScoresSpy = vi
-            .spyOn(participationScoreService, 'findExamScores')
-            .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
+        examScoresOfParticipantScoreTable = [examScoreStudent1, examScoreStudent2, examScoreStudent3];
+        examScoresRequests = [];
     });
 
     afterEach(() => {
@@ -323,16 +332,16 @@ describe('ExamScoresComponent', () => {
 
     it('should not report an error when correct participant score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        fixture.detectChanges();
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).not.toHaveBeenCalled();
+        expect(examScoresRequests.map((request) => `${request.method} ${request.url}`)).toEqual(['GET /api/assessment/exams/1/exam-scores']);
     });
 
     it('should report an error when missing participant score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
+        examScoresOfParticipantScoreTable = [];
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
@@ -345,8 +354,8 @@ describe('ExamScoresComponent', () => {
         cs2.pointsAchieved = 99;
         const cs3 = deepClone(examScoreStudent3);
         cs3.pointsAchieved = 99;
-        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
+        examScoresOfParticipantScoreTable = [cs1, cs2, cs3];
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
@@ -359,8 +368,8 @@ describe('ExamScoresComponent', () => {
         cs2.scoreAchieved = 99;
         const cs3 = deepClone(examScoreStudent3);
         cs3.scoreAchieved = 99;
-        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
+        examScoresOfParticipantScoreTable = [cs1, cs2, cs3];
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
@@ -370,9 +379,9 @@ describe('ExamScoresComponent', () => {
         const wrongStudent1 = deepClone(examScoreStudent1);
         wrongStudent1.pointsAchieved = 99;
         wrongStudent1.scoreAchieved = 99;
-        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [wrongStudent1, examScoreStudent2] })));
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
 
+        examScoresOfParticipantScoreTable = [wrongStudent1, examScoreStudent2];
         fixture.detectChanges();
 
         const messages = errorSpy.mock.calls.map(([message]) => message);
