@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,6 +19,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -146,6 +149,23 @@ class BuildJobCloneTokenServiceTest {
         }
 
         verify(participationRepository, times(1)).findWithProgrammingExerciseById(BuildJobCloneTokenServiceFixture.PARTICIPATION_ID);
+    }
+
+    @Test
+    void shouldNotReadTheDatabaseForARepositoryTheJobDoesNotDeclare() {
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), null), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student2")))).isFalse();
+
+        verify(participationRepository, never()).findWithProgrammingExerciseById(anyLong());
+    }
+
+    @Test
+    void shouldCoverNothingWhenTheDatabaseCannotBeRead() {
+        when(participationRepository.findWithProgrammingExerciseById(anyLong())).thenThrow(new DataAccessResourceFailureException("no connection"));
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), null), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student1")))).isFalse();
     }
 
     private static ProgrammingExercise exerciseWithId(long id) {

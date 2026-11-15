@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -160,15 +161,21 @@ public class BuildJobCloneTokenService {
      */
     private Set<RepositoryIdentity> getPersistedRepositoryIdentities(BuildJobQueueItem buildJob) {
         String jobId = buildJob.id();
-        Set<RepositoryIdentity> cached = jobId == null ? null : persistedRepositoriesOfJobs.getIfPresent(jobId);
-        if (cached != null) {
-            return cached;
+        try {
+            if (jobId == null) {
+                return loadPersistedRepositoryIdentities(buildJob);
+            }
+            Set<RepositoryIdentity> persisted = persistedRepositoriesOfJobs.get(jobId, _ -> loadPersistedRepositoryIdentities(buildJob));
+            if (persisted.isEmpty()) {
+                // Nothing is remembered for a job that the database does not know, so that a later request reads it again
+                persistedRepositoriesOfJobs.invalidate(jobId);
+            }
+            return persisted;
         }
-        Set<RepositoryIdentity> persisted = loadPersistedRepositoryIdentities(buildJob);
-        if (jobId != null && !persisted.isEmpty()) {
-            persistedRepositoriesOfJobs.put(jobId, persisted);
+        catch (DataAccessException e) {
+            log.warn("Could not read the repositories of build job {} from the database, no repository is covered: {}", jobId, e.getMessage());
+            return Set.of();
         }
-        return persisted;
     }
 
     private Set<RepositoryIdentity> loadPersistedRepositoryIdentities(BuildJobQueueItem buildJob) {
@@ -204,7 +211,12 @@ public class BuildJobCloneTokenService {
      * @return whether that repository is one of the job's own
      */
     public boolean coversRepository(@Nullable BuildJobQueueItem buildJob, LocalVCRepositoryUri localVCRepositoryUri) {
-        return getRepositoryIdentities(buildJob).contains(RepositoryIdentity.of(localVCRepositoryUri));
+        RepositoryIdentity requested = RepositoryIdentity.of(localVCRepositoryUri);
+        // The declaration is compared first, so that a repository that the job does not declare costs no database access
+        if (!getDeclaredRepositoryIdentities(buildJob).contains(requested)) {
+            return false;
+        }
+        return getPersistedRepositoryIdentities(buildJob).contains(requested);
     }
 
     private static void addIfPresent(Set<RepositoryIdentity> repositories, @Nullable String repositoryUri) {
