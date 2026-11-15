@@ -46,6 +46,20 @@ class HyperionQuizQuestionChecksTest {
     }
 
     @Test
+    void defectOf_rejectsAnExplanationOrTitleLongerThanAQuizStores() {
+        GeneratedQuizQuestionDTO longExplanation = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method is idempotent?",
+                options("PUT", "POST", "PATCH", "GET"), null, "e".repeat(2_001));
+        GeneratedQuizQuestionDTO longTitle = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "t".repeat(250), "Which method is idempotent?",
+                options("PUT", "POST", "PATCH", "GET"), null, null);
+        GeneratedQuizQuestionDTO fitting = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "t".repeat(249), "Which method is idempotent?",
+                options("PUT", "POST", "PATCH", "GET"), null, "e".repeat(2_000));
+
+        assertThat(defectOf(longExplanation)).contains(Defect.TEXT_TOO_LONG);
+        assertThat(defectOf(longTitle)).contains(Defect.TEXT_TOO_LONG);
+        assertThat(defectOf(fitting)).isEmpty();
+    }
+
+    @Test
     void defectOf_rejectsAReferenceToMaterialTheQuestionDoesNotContain() {
         assertThat(defectOf(question("Which variable leaves the basis in the following tableau?", "x1", "x2", "x3", "x4"))).contains(Defect.DANGLING_REFERENCE);
     }

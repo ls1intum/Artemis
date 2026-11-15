@@ -44,6 +44,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -2363,6 +2364,50 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.aiGenerationModalVisible).toBe(true);
         });
 
+        it('should append questions handed over from another page when a new quiz is initialised', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+            const handoffService = TestBed.inject(QuizQuestionHandoffService);
+            const handedOver: GeneratedQuestion[] = [
+                {
+                    id: 'pool-1',
+                    type: 'single-choice',
+                    title: 'Pooled question',
+                    questionText: 'From the pool',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ];
+            handoffService.offer(handedOver);
+            const newQuiz = new QuizExercise(course, undefined);
+            newQuiz.title = '';
+            newQuiz.duration = 600;
+            newQuiz.quizQuestions = [];
+            newQuiz.isEditable = true;
+            comp.quizExercise.set(newQuiz);
+            comp.course = course;
+
+            comp.init();
+
+            expect(comp.quizExercise().quizQuestions).toHaveLength(1);
+            expect((comp.quizExercise().quizQuestions?.[0] as MultipleChoiceQuestion).title).toBe('Pooled question');
+            expect(handoffService.take()).toEqual([]);
+        });
+
+        it('should leave handed-over questions alone when an existing quiz is initialised', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+            const handoffService = TestBed.inject(QuizQuestionHandoffService);
+            handoffService.offer([{ id: 'pool-1', type: 'single-choice', title: 'Pooled question', questionText: 'From the pool', options: [{ text: 'A', correct: true }] }]);
+            comp.quizExercise().quizQuestions = [];
+            comp.course = course;
+
+            comp.init();
+
+            expect(comp.quizExercise().quizQuestions).toHaveLength(0);
+            expect(handoffService.take()).toHaveLength(1);
+        });
+
         it('should append generated questions to existing quiz questions', () => {
             vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
 
@@ -2417,6 +2462,33 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
             expect((comp.quizExercise().quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
+        });
+
+        it('should keep the quiz serializable so that a titled quiz with generated questions becomes valid', () => {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.title = 'Generated quiz';
+            quiz.duration = 600;
+            quiz.quizQuestions = [];
+            comp.quizExercise.set(quiz);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            comp.appendAiGeneratedQuestions([
+                {
+                    id: 'q1',
+                    type: 'single-choice',
+                    title: 'Generated Title',
+                    questionText: 'Generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ]);
+
+            expect(() => JSON.stringify(comp.quizExercise())).not.toThrow();
+            expect(comp.pendingChangesCache()).toBe(true);
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.noQuestion');
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.quizTitle');
         });
     });
     describe('save tooltip', () => {

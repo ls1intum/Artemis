@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 
 /**
@@ -164,6 +166,26 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             ORDER BY item.competencyId
             """)
     List<Long> findCompetencyIdsForCourse(@Param("courseId") long courseId);
+
+    /**
+     * Finds the items of the given competencies that a quiz may draw from: in the given state and review state and not flagged for changed
+     * material, least often drawn first.
+     *
+     * @param courseId      the course
+     * @param competencyIds the competencies to draw from
+     * @param state         the lifecycle state the items must have
+     * @param reviewState   the review state the items must have
+     * @return the items ordered by selection count, then id
+     */
+    @Query("""
+            SELECT item
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.competencyId IN :competencyIds AND item.state = :state AND item.reviewState = :reviewState
+                AND item.materialChanged = FALSE
+            ORDER BY item.selectionCount, item.id
+            """)
+    List<QuizQuestionPoolItem> findAllForSelection(@Param("courseId") long courseId, @Param("competencyIds") Collection<Long> competencyIds,
+            @Param("state") QuizQuestionPoolItemState state, @Param("reviewState") QuizQuestionReviewState reviewState);
 
     /**
      * Counts the items of a course per cell whose material is unchanged, together with the highest index any item of the cell uses.
@@ -332,6 +354,24 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             WHERE item.course.id = :courseId AND item.lectureUnitId = :lectureUnitId AND item.materialChanged = FALSE
             """)
     int markMaterialChangedByLectureUnit(@Param("courseId") long courseId, @Param("lectureUnitId") long lectureUnitId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Counts, per cell, the items a draw may take: those in the given state and review state whose material has not changed.
+     *
+     * @param courseId    the course
+     * @param state       the lifecycle state the items must have
+     * @param reviewState the review state the items must have
+     * @return one count per cell that holds such items
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO(item.competencyId, item.lectureUnitId, item.questionType, item.difficulty,
+                COUNT(item))
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.state = :state AND item.reviewState = :reviewState AND item.materialChanged = FALSE AND item.question IS NOT NULL
+            GROUP BY item.competencyId, item.lectureUnitId, item.questionType, item.difficulty
+            """)
+    List<QuizQuestionPoolSelectionCandidateDTO> countSelectionCandidates(@Param("courseId") long courseId, @Param("state") QuizQuestionPoolItemState state,
+            @Param("reviewState") QuizQuestionReviewState reviewState);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO(item.lectureUnitId, COUNT(item),

@@ -130,7 +130,6 @@ export class QuizAiGenerationService {
             answerOption.isCorrect = opt.correct;
             answerOption.hint = opt.hint;
             answerOption.explanation = opt.explanation;
-            answerOption.question = original;
             return answerOption;
         });
         original.hasCorrectOption = original.answerOptions.some((opt) => !!opt.isCorrect);

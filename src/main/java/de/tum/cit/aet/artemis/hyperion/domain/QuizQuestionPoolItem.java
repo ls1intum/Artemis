@@ -31,7 +31,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
  * and difficulty, and each cell holds a fixed number of items numbered by {@code itemIndex}. An item is created in state {@link QuizQuestionPoolItemState#PENDING} and
  * carries its generated question once generated and the filter's decision once judged.
  * When the lecture unit's material changes after generation, unreviewed items are deleted and approved ones are kept with
- * {@code materialChanged} set, so they no longer count towards the cell's target.
+ * {@code materialChanged} set, so they no longer count towards the cell's target. Drawing an approved question into a quiz increments
+ * {@code selectionCount} and sets {@code lastSelectedAt}.
  */
 @Entity
 @Table(name = "quiz_question_pool_item")
@@ -73,6 +74,14 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     @Column(name = "material_changed", nullable = false)
     private boolean materialChanged;
+
+    /** How often the question was drawn into a quiz; draws prefer the lowest count. */
+    @Column(name = "selection_count", nullable = false)
+    private int selectionCount;
+
+    @Column(name = "last_selected_at")
+    @Nullable
+    private ZonedDateTime lastSelectedAt;
 
     @Column(name = "generation_attempts", nullable = false)
     private int generationAttempts;
@@ -205,6 +214,23 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     public void setMaterialChanged(boolean materialChanged) {
         this.materialChanged = materialChanged;
+    }
+
+    public int getSelectionCount() {
+        return selectionCount;
+    }
+
+    public void setSelectionCount(int selectionCount) {
+        this.selectionCount = selectionCount;
+    }
+
+    @Nullable
+    public ZonedDateTime getLastSelectedAt() {
+        return lastSelectedAt;
+    }
+
+    public void setLastSelectedAt(@Nullable ZonedDateTime lastSelectedAt) {
+        this.lastSelectedAt = lastSelectedAt;
     }
 
     public int getGenerationAttempts() {
