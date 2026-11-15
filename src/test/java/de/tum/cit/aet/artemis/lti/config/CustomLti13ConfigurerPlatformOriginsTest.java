@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -27,6 +28,7 @@ import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 
+@Isolated("Logback configuration and appenders must not be reset by concurrent Spring context startup")
 class CustomLti13ConfigurerPlatformOriginsTest {
 
     private LtiPlatformConfigurationTestRepository repository;

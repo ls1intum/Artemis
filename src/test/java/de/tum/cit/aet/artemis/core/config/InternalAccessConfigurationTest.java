@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
@@ -16,15 +17,20 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.ArtemisApp;
 
+@Isolated("Logback configuration and appenders must not be reset by concurrent Spring context startup")
 class InternalAccessConfigurationTest {
 
     private Logger logger;
+
+    private Level previousLevel;
 
     private ListAppender<ILoggingEvent> appender;
 
     @BeforeEach
     void attachAppender() {
         logger = (Logger) LoggerFactory.getLogger(InternalAccessConfiguration.class);
+        previousLevel = logger.getLevel();
+        logger.setLevel(Level.WARN);
         appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
@@ -33,6 +39,7 @@ class InternalAccessConfigurationTest {
     @AfterEach
     void detachAppender() {
         logger.detachAppender(appender);
+        logger.setLevel(previousLevel);
     }
 
     @Test

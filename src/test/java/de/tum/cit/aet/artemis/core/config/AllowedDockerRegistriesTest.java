@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.LoggerFactory;
 import org.springframework.mock.env.MockEnvironment;
 
@@ -15,6 +16,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.ArtemisApp;
 
+@Isolated("Logback configuration and appenders must not be reset by concurrent Spring context startup")
 class AllowedDockerRegistriesTest {
 
     private Logger logger;
