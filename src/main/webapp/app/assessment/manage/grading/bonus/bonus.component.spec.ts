@@ -683,7 +683,7 @@ describe('BonusComponent', () => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                     { provide: ActivatedRoute, useValue: route },
-                    MockProvider(GradingService, { findGradeSteps: () => of(examGradeSteps), sortGradeSteps: () => {}, setGradePoints: () => {} }),
+                    MockProvider(GradingService, { findGradeSteps: () => of(examGradeSteps), sortGradeSteps: (gradeSteps) => gradeSteps, setGradePoints: () => {} }),
                     MockProvider(BonusService, { generateBonusExamples: () => bonusExamples }),
                     MockProvider(BonusApi, { getBonusForExam: () => throwError(() => ({ status: 404 })) }),
                     MockProvider(AlertService),
