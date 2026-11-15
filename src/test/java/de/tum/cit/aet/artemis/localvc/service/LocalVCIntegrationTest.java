@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -490,7 +491,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ObjectId commit = assignmentRepository.workingCopy().getRepository().resolve("HEAD");
         String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, "wrong-" + USER_PASSWORD, projectKey1, assignmentRepositorySlug);
 
-        assertThatExceptionOfType(GitAPIException.class).isThrownBy(() -> assignmentRepository.workingCopy().push().setRemote(repositoryUri).call());
+        assertThatExceptionOfType(GitAPIException.class).isThrownBy(
+                () -> assignmentRepository.workingCopy().push().setRemote(repositoryUri).setCredentialsProvider(LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI).call());
 
         assertNothingOfThePushIsStored(commit);
     }
