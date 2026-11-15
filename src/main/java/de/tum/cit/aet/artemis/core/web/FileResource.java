@@ -272,14 +272,18 @@ public class FileResource {
      *
      * @param question the drag and drop question the picture belongs to
      * @param course   the course of the quiz
-     * @throws AccessForbiddenException if the quiz of a course is not released yet and the user is a student
+     * @param user     the current user, loaded with its course roles
+     * @throws AccessForbiddenException if the pictures are not available yet for the user
      */
-    private void checkQuizReleasedForStudentsElseThrow(DragAndDropQuestion question, Course course) {
+    private void checkQuizPicturesAvailableElseThrow(DragAndDropQuestion question, Course course, User user) {
         var exercise = question.getExercise();
         if (exercise.isExamExercise()) {
-            examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class)).checkExamContentAvailableForStudentElseThrow(exercise);
+            examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class)).checkExamContentAvailableForStudentElseThrow(exercise, user);
         }
-        else if (!exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        else if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this quiz");
+        }
+        else if (!exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("The quiz is not released yet");
         }
     }
@@ -298,8 +302,7 @@ public class FileResource {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        checkQuizReleasedForStudentsElseThrow(question, course);
+        checkQuizPicturesAvailableElseThrow(question, course, userRepository.getUserWithCourseRolesAndAuthorities());
         String backgroundFilePath = question.getBackgroundFilePath();
         if (backgroundFilePath == null) {
             throw new EntityNotFoundException("Drag and drop question " + questionId + " has no background file");
@@ -328,8 +331,7 @@ public class FileResource {
         log.debug("REST request to get file for drag item {} of question {}", dragItemId, questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        checkQuizReleasedForStudentsElseThrow(question, course);
+        checkQuizPicturesAvailableElseThrow(question, course, userRepository.getUserWithCourseRolesAndAuthorities());
         DragItem dragItem = question.findDragItemById(dragItemId);
         String pictureFilePath = dragItem == null ? null : dragItem.getPictureFilePath();
         if (pictureFilePath == null) {

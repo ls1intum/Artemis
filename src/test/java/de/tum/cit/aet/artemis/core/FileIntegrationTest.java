@@ -52,6 +52,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.util.ResourceUtils;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -80,6 +81,7 @@ import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -122,6 +124,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -1488,9 +1493,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get(backgroundUrl, HttpStatus.NOT_FOUND, byte[].class);
     }
 
-    private DragAndDropQuestion createExamDragAndDropQuestion(ZonedDateTime examStart, ZonedDateTime examEnd) {
+    private DragAndDropQuestion createExamDragAndDropQuestion(ZonedDateTime examStart, ZonedDateTime examEnd) throws IOException {
         var quiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, examStart, examEnd);
-        return quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst().orElseThrow();
+        var question = quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst().orElseThrow();
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
+                FilePathConverter.getDragAndDropBackgroundFilePath().resolve("exam-background.jpg").toFile());
+        question.setBackgroundFilePath("exam-background.jpg");
+        quizExerciseTestRepository.save(quiz);
+        return question;
     }
 
     @Test
@@ -1504,9 +1514,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get(backgroundUrl, HttpStatus.FORBIDDEN, byte[].class);
         request.get(dragItemUrl, HttpStatus.FORBIDDEN, byte[].class);
 
-        // teaching assistants pass the check; the question has no background, so the file is missing
+        // teaching assistants can read the picture
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        request.get(backgroundUrl, HttpStatus.NOT_FOUND, byte[].class);
+        assertThat(request.get(backgroundUrl, HttpStatus.OK, byte[].class)).isNotEmpty();
     }
 
     @Test
@@ -1524,7 +1534,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
         examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
 
-        // the check passes; the question has no background, so the file is missing
-        request.get("/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png", HttpStatus.NOT_FOUND, byte[].class);
+        assertThat(request.get("/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/exam-background.jpg", HttpStatus.OK, byte[].class)).isNotEmpty();
     }
 }
