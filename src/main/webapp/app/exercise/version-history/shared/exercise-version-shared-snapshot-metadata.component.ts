@@ -180,7 +180,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     }
 
     /** Maps an {@link IncludedInOverallScore} enum to a translated display label. */
-    private getIncludedInScoreLabel(value?: IncludedInOverallScore): string | undefined {
+    private getIncludedInScoreLabel(value?: ExerciseSnapshotDTO['includedInOverallScore']): string | undefined {
         if (!value) {
             return undefined;
         }

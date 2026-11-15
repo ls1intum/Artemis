@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
@@ -34,6 +37,12 @@ class ExerciseVersionSnapshotCompatibilityTest extends AbstractSpringIntegration
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionTestRepository;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
     private TextExercise textExercise;
 
@@ -68,9 +77,37 @@ class ExerciseVersionSnapshotCompatibilityTest extends AbstractSpringIntegration
         storeLegacySnapshot(version.getId());
 
         // The request that answered with 500 while the snapshot could not be read.
-        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/exercises/" + textExercise.getId() + "/versions/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
+        var snapshot = readSnapshot(version.getId());
 
-        assertThat(snapshot.title()).isEqualTo("Legacy title");
+        assertThat(snapshot.path("title").asString()).isEqualTo("Legacy title");
+        assertThat(snapshot.path("competencyLinks").size()).isEqualTo(2);
+        snapshot.path("competencyLinks").forEach(link -> {
+            assertThat(link.path("competencyId").isObject()).isTrue();
+            assertThat(link.path("competencyId").isEmpty()).isTrue();
+        });
+        assertThat(snapshot.has("textData")).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void preservesTheEmptyCompetencyKeyWhenReadingANewStoredSnapshot() throws Exception {
+        var competency = competencyUtilService.createCompetency(textExercise.getCourseViaExerciseGroupOrCourseMember(), "Snapshot competency");
+        competencyExerciseLinkRepository.save(new CompetencyExerciseLink(competency, textExercise, 0.5));
+        Long versionId = exerciseVersionService.createExerciseVersionOrThrow(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        assertThat(versionId).isNotNull();
+
+        var snapshot = readSnapshot(versionId);
+        assertThat(snapshot.path("textData").isObject()).isTrue();
+        assertThat(snapshot.path("competencyLinks").size()).isEqualTo(1);
+        var link = snapshot.path("competencyLinks").get(0);
+        assertThat(link.path("weight").asDouble()).isEqualTo(0.5);
+        assertThat(link.path("competencyId").isObject()).isTrue();
+        assertThat(link.path("competencyId").isEmpty()).isTrue();
+    }
+
+    private tools.jackson.databind.JsonNode readSnapshot(long versionId) throws Exception {
+        String json = request.get("/api/exercise/exercises/" + textExercise.getId() + "/versions/" + versionId, HttpStatus.OK, String.class);
+        return request.getObjectMapper().readTree(json);
     }
 
     /**
@@ -87,7 +124,8 @@ class ExerciseVersionSnapshotCompatibilityTest extends AbstractSpringIntegration
                   "id": %d,
                   "title": "Legacy title",
                   "allowFeedbackRequests": true,
-                  "teamAssignmentConfig": {"id": 1, "minTeamSize": 2, "maxTeamSize": 3, "assignmentStrategy": "RANDOM"}
+                  "teamAssignmentConfig": {"id": 1, "minTeamSize": 2, "maxTeamSize": 3, "assignmentStrategy": "RANDOM"},
+                  "competencyLinks": [{"competencyId": {}, "weight": 0}, {"competencyId": {"competencyId": 23}, "weight": 0.5}]
                 }
                 """.formatted(textExercise.getId()));
     }

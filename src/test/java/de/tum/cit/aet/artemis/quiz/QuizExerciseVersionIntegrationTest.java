@@ -60,7 +60,26 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
 
         assertThat(createdExercise).isNotNull();
 
-        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);
+        String json = request.get("/api/exercise/exercises/" + createdExercise.getId() + "/versions/" + version.getId(), OK, String.class);
+        var questions = request.getObjectMapper().readTree(json).path("quizData").path("quizQuestions");
+        assertThat(questions.size()).isEqualTo(3);
+
+        var multipleChoice = questions.get(0).path("multipleChoiceQuestionWithSolutionDTO");
+        assertThat(multipleChoice.path("answerOptions").isArray()).isTrue();
+        assertThat(multipleChoice.path("singleChoice").isBoolean()).isTrue();
+
+        var dragAndDrop = questions.get(1).path("dragAndDropQuestionWithSolutionDTO");
+        assertThat(dragAndDrop.path("dragItems").isArray()).isTrue();
+        assertThat(dragAndDrop.path("dropLocations").isArray()).isTrue();
+        assertThat(dragAndDrop.path("correctMappings").isArray()).isTrue();
+        assertThat(dragAndDrop.has("dragAndDropQuestionWithoutSolutionDTO")).isFalse();
+
+        var shortAnswer = questions.get(2).path("shortAnswerQuestionWithMappingDTO");
+        assertThat(shortAnswer.path("spots").isArray()).isTrue();
+        assertThat(shortAnswer.path("solutions").isArray()).isTrue();
+        assertThat(shortAnswer.path("correctMappings").isArray()).isTrue();
+        assertThat(shortAnswer.has("shortAnswerQuestionWithoutMappingDTO")).isFalse();
     }
 
     @Test

@@ -532,23 +532,28 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_includesPaginationHeaders() throws Exception {
+        ExerciseVersion oldest = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         request.putWithResponseBody("/api/programming/programming-exercises",
                 de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
-        exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        ExerciseVersion newest = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        String path = "/api/exercise/exercises/" + programmingExercise.getId() + "/versions";
 
-        MvcResult mvcResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "1"))
-                .andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(MockMvcRequestBuilders.get(path).param("page", "0").param("size", "1")).andExpect(status().isOk()).andReturn();
 
         var response = mvcResult.getResponse();
-        assertThat(response.getHeader("X-Total-Count")).isNotBlank();
-        assertThat(response.getHeader(HttpHeaders.LINK)).isNotBlank();
+        assertThat(response.getHeader("X-Total-Count")).isEqualTo("2");
+        assertThat(response.getHeader(HttpHeaders.LINK)).contains(path + "?page=1&size=1>; rel=\"next\"");
 
         List<ExerciseVersionMetadataDTO> versions = request.getObjectMapper().readValue(response.getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
-        assertThat(versions).hasSize(1);
+        assertThat(versions).extracting(ExerciseVersionMetadataDTO::id).containsExactly(newest.getId());
+
+        var lastPage = request.performMvcRequest(MockMvcRequestBuilders.get(path).param("page", "1").param("size", "1")).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(lastPage.getHeader("X-Total-Count")).isEqualTo("2");
+        assertThat(lastPage.getHeader(HttpHeaders.LINK)).contains(path + "?page=0&size=1>; rel=\"prev\"").doesNotContain("rel=\"next\"");
+        assertThat(request.getObjectMapper().readTree(lastPage.getContentAsString()).get(0).path("id").asLong()).isEqualTo(oldest.getId());
     }
 
     @Test
@@ -582,11 +587,15 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_returnsCompleteSnapshotData() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
-        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + version.getId(), HttpStatus.OK,
-                ExerciseSnapshotDTO.class);
+        String json = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + version.getId(), HttpStatus.OK, String.class);
+        ExerciseSnapshotDTO snapshot = request.getObjectMapper().readValue(json, ExerciseSnapshotDTO.class);
 
         assertThat(snapshot).isNotNull();
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(version.getExerciseSnapshot());
+        var body = request.getObjectMapper().readTree(json);
+        assertThat(body.path("id").asLong()).isEqualTo(programmingExercise.getId());
+        assertThat(body.path("programmingData").isObject()).isTrue();
+        assertThat(List.of("textData", "modelingData", "quizData", "fileUploadData")).noneMatch(body::has);
     }
 
     @Test
@@ -651,7 +660,11 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                 CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
         // attempt to get snapshot with wrong exercise id
-        request.get("/api/exercise/exercises/" + newExercise.getId() + "/versions/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);
+        var response = request.performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/exercises/" + newExercise.getId() + "/versions/" + versionId))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+        assertThat(response.getContentAsString()).isEmpty();
+        assertThat(response.getHeader("X-artemisApp-error")).isEqualTo("error.exerciseVersionIdMismatch");
+        assertThat(response.getHeader("X-artemisApp-params")).isEqualTo("exerciseVersion");
     }
 
     @Autowired

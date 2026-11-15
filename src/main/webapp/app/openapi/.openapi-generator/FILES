@@ -2,6 +2,7 @@ api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
+api/exercise-version-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
@@ -42,6 +43,7 @@ model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
 model/authoring-run-page.ts
 model/authoring-run.ts
+model/auxiliary-repository-snapshot.ts
 model/bloom-radar.ts
 model/calendar-event.ts
 model/channel-sub-type-reference-dates.ts
@@ -52,6 +54,7 @@ model/checklist-analysis-request.ts
 model/checklist-analysis-response.ts
 model/code-generation-job-start.ts
 model/code-generation-request.ts
+model/competency-exercise-link-snapshot.ts
 model/competency-exercise-link.ts
 model/competency-link.ts
 model/competency.ts
@@ -78,6 +81,7 @@ model/drag-and-drop-question-create.ts
 model/drag-and-drop-question-from-editor.ts
 model/drag-and-drop-question-re-evaluate.ts
 model/drag-and-drop-question-statistic.ts
+model/drag-and-drop-question-with-solution.ts
 model/drag-and-drop-quiz-question-with-solution.ts
 model/drag-and-drop-quiz-question-without-solution.ts
 model/drag-and-drop-submitted-answer-after-evaluation.ts
@@ -117,7 +121,10 @@ model/exercise-generation-usage.ts
 model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
 model/exercise-group-with-id-and-exam.ts
+model/exercise-snapshot.ts
 model/exercise-variant-group-reference.ts
+model/exercise-version-metadata.ts
+model/file-upload-exercise-snapshot.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
 model/generated-quiz-answer-option.ts
@@ -137,16 +144,20 @@ model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
 model/missing-content.ts
 model/missing-entity.ts
+model/modeling-exercise-snapshot.ts
 model/multiple-choice-question-create.ts
 model/multiple-choice-question-from-editor.ts
 model/multiple-choice-question-re-evaluate.ts
 model/multiple-choice-question-statistic.ts
+model/multiple-choice-question-with-solution.ts
 model/multiple-choice-quiz-question-with-solution.ts
 model/multiple-choice-quiz-question-without-solution.ts
 model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-before-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
+model/participation-snapshot.ts
+model/plagiarism-detection-config-snapshot.ts
 model/point-counter.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
@@ -155,6 +166,10 @@ model/problem-statement-refinement-response.ts
 model/problem-statement-rewrite-request.ts
 model/problem-statement-rewrite-response.ts
 model/problem-statement-targeted-refinement-request.ts
+model/programming-exercise-build-config-snapshot.ts
+model/programming-exercise-snapshot.ts
+model/programming-exercise-task-snapshot.ts
+model/programming-exercise-test-case-snapshot.ts
 model/quality-issue-location.ts
 model/quality-issue.ts
 model/question-statistics.ts
@@ -171,6 +186,7 @@ model/quiz-exercise-for-course.ts
 model/quiz-exercise-for-search.ts
 model/quiz-exercise-for-student-response.ts
 model/quiz-exercise-re-evaluate.ts
+model/quiz-exercise-snapshot.ts
 model/quiz-exercise-with-questions-for-student.ts
 model/quiz-exercise-with-questions.ts
 model/quiz-exercise-with-solution-for-student.ts
@@ -200,6 +216,7 @@ model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts
 model/quiz-question-refinement-response.ts
 model/quiz-question-refinement-success.ts
+model/quiz-question-snapshot.ts
 model/quiz-question-statistic-response.ts
 model/quiz-question-statistic.ts
 model/quiz-question-training.ts
@@ -227,6 +244,7 @@ model/short-answer-question-create.ts
 model/short-answer-question-from-editor.ts
 model/short-answer-question-re-evaluate.ts
 model/short-answer-question-statistic.ts
+model/short-answer-question-with-mapping.ts
 model/short-answer-quiz-question-with-solution.ts
 model/short-answer-quiz-question-without-solution.ts
 model/short-answer-solution-create.ts
@@ -245,6 +263,7 @@ model/short-answer-submitted-answer-from-student.ts
 model/short-answer-submitted-text-from-live-client.ts
 model/short-answer-submitted-text-from-student.ts
 model/short-answer-submitted-text.ts
+model/static-code-analysis-category-snapshot.ts
 model/step-output.ts
 model/student-export.ts
 model/student-quiz-participation-with-questions.ts
@@ -252,10 +271,13 @@ model/student-quiz-participation-with-solutions.ts
 model/student-quiz-participation-without-questions.ts
 model/student-quiz-participation.ts
 model/student.ts
+model/submission-policy-snapshot.ts
 model/submitted-answer-after-evaluation.ts
 model/submitted-answer-before-evaluation.ts
 model/submitted-answer-from-live-client.ts
 model/submitted-answer-from-student.ts
+model/team-assignment-config-snapshot.ts
+model/text-exercise-snapshot.ts
 model/timing.ts
 model/tokens.ts
 model/tutorial-group-configuration-free-period.ts
@@ -275,6 +297,7 @@ model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
 model/update-quiz-exercise.ts
+model/user-public-info.ts
 model/variant-generation-request.ts
 model/variant-job-detail.ts
 model/variant-job-start.ts

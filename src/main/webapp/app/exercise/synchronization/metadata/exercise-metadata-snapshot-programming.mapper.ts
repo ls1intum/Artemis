@@ -1,7 +1,7 @@
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { OnlineIdeExperienceLevel, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 import {
     AuxiliaryRepositorySnapshotDTO,
@@ -41,7 +41,7 @@ export const toBuildConfig = (snapshot?: ProgrammingExerciseBuildConfigSnapshotD
     buildConfig.timeoutSeconds = snapshot.timeoutSeconds;
     buildConfig.dockerFlags = snapshot.dockerFlags;
     buildConfig.theiaImage = snapshot.theiaImage;
-    buildConfig.onlineIdeExperienceLevel = snapshot.onlineIdeExperienceLevel;
+    buildConfig.onlineIdeExperienceLevel = Object.values(OnlineIdeExperienceLevel).find((level) => level === snapshot.onlineIdeExperienceLevel);
     buildConfig.allowBranching = snapshot.allowBranching ?? false;
     buildConfig.branchRegex = snapshot.branchRegex ?? buildConfig.branchRegex;
     return buildConfig;

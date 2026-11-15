@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +31,10 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionMetadataDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing ExerciseVersion.
@@ -61,7 +67,12 @@ public class ExerciseVersionResource {
      */
     @GetMapping("exercises/{exerciseId}/versions")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
-    public ResponseEntity<List<ExerciseVersionMetadataDTO>> getExerciseVersions(@PathVariable Long exerciseId, Pageable pageable) {
+    @ApiResponse(responseCode = "200", description = "A page of exercise versions, newest first", useReturnTypeSchema = true, headers = {
+            @Header(name = HttpHeaders.LINK, description = "Pagination links for the current page", schema = @Schema(type = "string")),
+            @Header(name = "X-Total-Count", description = "Total number of versions across all pages", schema = @Schema(type = "integer", format = "int64")) })
+    @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Exercise is inaccessible", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(type = "object")))
+    public ResponseEntity<List<ExerciseVersionMetadataDTO>> getExerciseVersions(@PathVariable Long exerciseId, @ParameterObject Pageable pageable) {
         log.debug("REST request to get versions for Exercise : {}", exerciseId);
         Page<ExerciseVersionMetadataDTO> versions = exerciseVersionRepository.findAllByExerciseIdOrderByCreatedDateDesc(exerciseId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), versions);
@@ -77,6 +88,11 @@ public class ExerciseVersionResource {
      */
     @GetMapping("exercises/{exerciseId}/versions/{versionId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
+    @ApiResponse(responseCode = "200", description = "The stored exercise snapshot", useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "400", description = "Version belongs to another exercise. The empty response includes Artemis failure-alert headers.", content = @Content)
+    @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Exercise is inaccessible", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Version was not found", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(type = "object")))
     public ResponseEntity<ExerciseSnapshotDTO> getExerciseSnapshot(@PathVariable Long exerciseId, @PathVariable Long versionId) {
         log.debug("REST request to get snapshot for ExerciseVersion : {}", versionId);
         ExerciseVersion version = exerciseVersionRepository.findByIdElseThrow(versionId);

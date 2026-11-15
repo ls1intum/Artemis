@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseVersionHistoryComponent } from 'app/programming/manage/version-history/programming-exercise-version-history.component';
 import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shared/exercise-version-history.service';
 import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 describe('ProgrammingExerciseVersionHistoryComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseVersionHistoryComponent>;
@@ -73,6 +74,24 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         fixture.detectChanges();
 
         expect(component.snapshotError()).toBe('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
+    });
+
+    it('should cancel the previous snapshot when another version is selected', () => {
+        const cancelPrevious = vi.fn();
+        const currentSnapshot = new Subject<ExerciseSnapshotDTO>();
+        serviceMock.getSnapshot.mockReturnValueOnce(new Observable(() => cancelPrevious)).mockReturnValueOnce(currentSnapshot);
+        fixture.detectChanges();
+        expect(component.isLoadingSnapshot()).toBe(true);
+
+        component.onSelectVersion(8);
+
+        expect(cancelPrevious).toHaveBeenCalledOnce();
+        expect(serviceMock.getSnapshot).toHaveBeenCalledWith(42, 8);
+        expect(component.isLoadingSnapshot()).toBe(true);
+        currentSnapshot.next({ id: 42, title: 'Older snapshot' });
+        currentSnapshot.complete();
+        expect(component.selectedSnapshot()?.title).toBe('Older snapshot');
+        expect(component.isLoadingSnapshot()).toBe(false);
     });
 
     it('should allow retrying the same version after a failed snapshot fetch', () => {
