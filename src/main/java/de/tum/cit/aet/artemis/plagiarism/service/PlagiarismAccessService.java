@@ -35,13 +35,14 @@ public class PlagiarismAccessService {
     /**
      * A student should not see both answers from both students for the comparison before the due date
      *
+     * @param exerciseId    the id of the exercise the submission belongs to, only comparisons of this exercise are considered.
      * @param submissionId  the id of the submission to check.
      * @param userLogin     the user login of the student asking to see their plagiarism comparison.
      * @param participation the participation of the student asking to see their plagiarism comparison.
      * @return true is the user has access to the submission
      */
-    public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
-        var comparisonOptional = plagiarismComparisonRepository.findBySubmissions_SubmissionId(submissionId);
+    public boolean hasAccessToSubmission(Long exerciseId, Long submissionId, String userLogin, Participation participation) {
+        var comparisonOptional = plagiarismComparisonRepository.findByPlagiarismResultExerciseIdAndSubmissions_SubmissionId(exerciseId, submissionId);
         return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), participation)
                 && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
@@ -55,13 +56,14 @@ public class PlagiarismAccessService {
     /**
      * Checks whether the student with the given user login is involved in a plagiarism case which contains the given submissionId and the student is notified by the instructor.
      *
+     * @param exerciseId the id of the exercise the submission belongs to, only comparisons of this exercise are considered
      * @param submission the submission to check
      * @param userLogin  the user login of the student
-     * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
-     *         otherwise false
+     * @return true if the student with user login owns one of the submissions in a PlagiarismComparison of the exercise which contains the given submissionId and is notified by
+     *         the instructor, otherwise false
      */
-    public boolean wasUserNotifiedByInstructor(Submission submission, String userLogin) {
-        var comparisonOptional = plagiarismComparisonRepository.findBySubmissions_SubmissionId(submission.getId());
+    public boolean wasUserNotifiedByInstructor(Long exerciseId, Submission submission, String userLogin) {
+        var comparisonOptional = plagiarismComparisonRepository.findByPlagiarismResultExerciseIdAndSubmissions_SubmissionId(exerciseId, submission.getId());
         return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
 

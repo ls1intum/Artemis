@@ -24,23 +24,25 @@ public class PlagiarismAccessApi extends AbstractPlagiarismApi {
      * Check if the user has access to the submission.
      * This method also checks if the submission is before due date.
      *
+     * @param exerciseId    the id of the exercise the submission belongs to
      * @param submissionId  the id of the submission
      * @param userLogin     the login of the user
      * @param participation the participation of the user
      * @return true if the user has access to the submission, false otherwise
      */
-    public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
-        return plagiarismAccessService.hasAccessToSubmission(submissionId, userLogin, participation);
+    public boolean hasAccessToSubmission(Long exerciseId, Long submissionId, String userLogin, Participation participation) {
+        return plagiarismAccessService.hasAccessToSubmission(exerciseId, submissionId, userLogin, participation);
     }
 
     /**
      * Check if the user is involved in a plagiarism case and was notified by the instructor about the plagiarism result.
      *
+     * @param exerciseId the id of the exercise the submission belongs to
      * @param submission the submission
      * @param userLogin  the login of the user
      * @return true if the user is involved in a plagiarism case and was notified by the instructor, false otherwise
      */
-    public boolean wasUserNotifiedByInstructor(Submission submission, String userLogin) {
-        return plagiarismAccessService.wasUserNotifiedByInstructor(submission, userLogin);
+    public boolean wasUserNotifiedByInstructor(Long exerciseId, Submission submission, String userLogin) {
+        return plagiarismAccessService.wasUserNotifiedByInstructor(exerciseId, submission, userLogin);
     }
 }
