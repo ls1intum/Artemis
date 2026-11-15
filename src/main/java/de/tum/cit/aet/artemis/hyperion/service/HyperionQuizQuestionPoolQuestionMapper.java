@@ -192,7 +192,7 @@ final class HyperionQuizQuestionPoolQuestionMapper {
     record PoolQuestionOutput(@JsonPropertyDescription("the requested question type, exactly as given") String type, String title, String questionText,
             @JsonPropertyDescription("how many options the task requires this question to mark correct; decide it before writing the options") Integer correctOptionCount,
             List<PoolOptionOutput> options,
-            @JsonPropertyDescription("why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer") String explanation) {
+            @JsonPropertyDescription("at most 400 characters: why the correct option is correct and what work the reader must do to reach the answer") String explanation) {
     }
 
     record PoolOptionOutput(String text, Boolean correct) {
