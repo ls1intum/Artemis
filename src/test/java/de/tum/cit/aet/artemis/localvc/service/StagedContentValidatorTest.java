@@ -21,6 +21,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+
 /**
  * Unit tests for the checks of the staged content before a commit of the online editor is created.
  */
@@ -48,7 +50,9 @@ class StagedContentValidatorTest {
             DirCache dirCache = repository.lockDirCache();
             DirCacheBuilder builder = dirCache.builder();
             for (int i = 0; i < dirCache.getEntryCount(); i++) {
-                builder.add(dirCache.getEntry(i));
+                if (!dirCache.getEntry(i).getPathString().equals(path)) {
+                    builder.add(dirCache.getEntry(i));
+                }
             }
             DirCacheEntry entry = new DirCacheEntry(path);
             entry.setFileMode(mode);
@@ -68,32 +72,32 @@ class StagedContentValidatorTest {
     @Test
     void rejectsSymbolicLink() throws Exception {
         stage("link", FileMode.SYMLINK, "../outside".getBytes(StandardCharsets.UTF_8));
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsSubmodule() throws Exception {
         stage("module", FileMode.GITLINK, new byte[0]);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsTooDeepPath() throws Exception {
         stage("d/".repeat(LocalVCPrePushHook.MAX_TREE_DEPTH + 1) + "file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsTooLongPath() throws Exception {
         stage("a".repeat(StagedContentValidator.MAX_PATH_LENGTH + 1), FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsTooLargeFile() throws Exception {
         byte[] content = new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1];
         stage("big.bin", FileMode.REGULAR_FILE, content);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -111,6 +115,51 @@ class StagedContentValidatorTest {
             }
             builder.commit();
         }
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    private void commit() throws Exception {
+        try (Git git = new Git(repository)) {
+            git.commit().setMessage("existing content").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").setSign(false).setAllowEmpty(true).call();
+        }
+    }
+
+    @Test
+    void existingProblematicEntriesDoNotBlockACommitOfAnUnrelatedFile() throws Exception {
+        stage("link", FileMode.SYMLINK, "target".getBytes(StandardCharsets.UTF_8));
+        stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+        commit();
+
+        stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
+
+        assertThatCode(() -> StagedContentValidator.validate(repository)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void aChangeToAnExistingOversizedFileIsRefused() throws Exception {
+        stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+        commit();
+
+        stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 2]);
+
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void aNewlyAddedOversizedFileIsRefusedAlthoughTheRepositoryHasContent() throws Exception {
+        stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
+        commit();
+
+        stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("big.bin");
+    }
+
+    @Test
+    void anEmptyCommitIsAccepted() throws Exception {
+        stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+        commit();
+
+        assertThatCode(() -> StagedContentValidator.validate(repository)).doesNotThrowAnyException();
     }
 }
