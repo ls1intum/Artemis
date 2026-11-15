@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Lazy;
@@ -40,14 +41,14 @@ public class PublicSshFingerprintsResource {
     }
 
     /**
-     * GET ssh-fingerprints : the SHA-256 fingerprints of the SSH host keys of this node.
+     * GET ssh-fingerprints : the SHA-256 fingerprints of the SSH host keys of this node. The key files are read once and the result is kept until the server restarts.
      *
-     * @return the fingerprints by the algorithm of the host key
+     * @return the fingerprints by the algorithm of the host key, a list per algorithm because the server may hold more than one key of it
      */
     @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(value = "ssh-fingerprints", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceNothing
-    public ResponseEntity<Map<String, String>> getSshFingerprints() {
-        return ResponseEntity.ok(sshFingerprintsProviderService.getSshFingerPrints());
+    public ResponseEntity<Map<String, List<String>>> getSshFingerprints() {
+        return ResponseEntity.ok(sshFingerprintsProviderService.getAllSshFingerprints());
     }
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,6 @@ class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLo
     @WithAnonymousUser
     void shouldPublishTheFingerprintsWithoutALogin() throws Exception {
         var response = request.get("/api/localvc/public/ssh-fingerprints", HttpStatus.OK, Map.class);
-        assertThat(response.get("EC")).isNotNull();
+        assertThat(response.get("EC")).isInstanceOfSatisfying(List.class, fingerprints -> assertThat(fingerprints).isNotEmpty());
     }
 }
