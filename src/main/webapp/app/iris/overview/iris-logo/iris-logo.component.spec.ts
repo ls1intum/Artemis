@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentRef } from '@angular/core';
 import { IrisLogoComponent, IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
@@ -9,6 +11,7 @@ describe('IrisLogoComponent', () => {
     let componentRef: ComponentRef<IrisLogoComponent>;
 
     beforeEach(async () => {
+        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] });
         fixture = TestBed.createComponent(IrisLogoComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
@@ -46,16 +49,26 @@ describe('IrisLogoComponent', () => {
     });
 
     Object.entries({
-        [IrisLogoSize.TEXT]: 'text',
-        [IrisLogoSize.SMALL]: 'small',
-        [IrisLogoSize.MEDIUM]: 'medium',
-        [IrisLogoSize.BIG]: 'big img-fluid',
-        [IrisLogoSize.FLUID]: 'fluid',
+        [IrisLogoSize.TEXT]: 'iris-logo--text',
+        [IrisLogoSize.SMALL]: 'iris-logo--small',
+        [IrisLogoSize.MEDIUM]: 'iris-logo--medium',
+        [IrisLogoSize.BIG]: 'iris-logo--big',
+        [IrisLogoSize.FLUID]: 'iris-logo--fluid',
     }).forEach(([size, expectedClass]) => {
         it(`should return correct class list for size ${size}`, () => {
             componentRef.setInput('size', size as IrisLogoSize);
             expect(component.classList()).toBe(expectedClass);
         });
+    });
+
+    it('should provide a translated alternative for a standalone logo', () => {
+        expect(fixture.nativeElement.querySelector('img').alt).toBe('artemisApp.iris.logoAlt');
+    });
+
+    it('should hide a decorative logo from assistive technology', async () => {
+        componentRef.setInput('decorative', true);
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('img').alt).toBe('');
     });
 
     it('should return empty string for custom numeric size', () => {

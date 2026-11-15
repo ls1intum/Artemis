@@ -442,8 +442,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             }
         }
 
+        // Tutors must not see the student behind a submission of somebody else (double-blind); instructors and the owner may.
+        boolean includeParticipant = !staffView || isOwner || accessRights.isAtLeastInstructor();
         return ResponseEntity.ok(FileUploadSubmissionDTO.ofForEditor(fileUploadSubmission, isOwner, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(),
-                accessRights.isAtLeastInstructor()));
+                accessRights.isAtLeastInstructor(), includeParticipant));
     }
 
     /**
