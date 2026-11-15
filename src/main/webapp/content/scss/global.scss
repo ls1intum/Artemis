@@ -768,8 +768,9 @@ code.password:hover {
 // Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
 // Stacking order of the layers an Artemis page can show, lowest first:
 //   1000       Bootstrap dropdowns, PrimeNG overlays and menus
+//   1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
 //   1050/1055  Bootstrap modal backdrop / NgbModal
-//   1060-1090  Iris onboarding overlay, Bootstrap popover, tooltip and toast
+//   1060-1090  Bootstrap popover, tooltip and toast; also the context picker's PrimeNG panel while tour step 1 is active (1060)
 //   1102+      PrimeNG dialogs (PrimeNG modal base 1100, +2 per stacked layer)
 //   1200       this container: kit dialogs and everything the kit opens above them
 //   1402+      PrimeNG confirmation dialogs (DeleteDialogService, baseZIndex CONFIRMATION_DIALOG_BASE_Z_INDEX 300 on top of 1100)
@@ -1770,14 +1771,6 @@ ngb-typeahead-window.dropdown-menu.show {
     a.iris-chip:hover,
     a.iris-chip:focus-visible {
         text-decoration: none !important;
-    }
-
-    /* Strip the default dashed bubble styling when shown inside the card */
-    .thinking-bubble {
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
     }
 }
 
