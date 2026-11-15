@@ -78,17 +78,24 @@
 @source './app/programming/manage/vcs-repository-access-log-view';
 @source './app/programming/manage/status';
 @source './app/programming/shared/instructions-render/step-wizard';
-@source './app/localvc/repository-view';
 @source './app/quiz/manage/detail';
 @source './app/quiz/manage/manage-buttons';
 @source './app/quiz/manage/lifecyle-buttons';
 @source './app/text/manage/detail';
-@source './app/modeling/manage/detail';
-@source './app/fileupload/manage/exercise-details';
 @source './app/iris/manage/settings';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
 @source './app/hyperion';
+
+/* The modules below are fully migrated: Tailwind scans every template and component in them. */
+@source './app/localci';
+@source './app/foundation';
+@source './app/modeling';
+@source './app/lti';
+@source './app/logos';
+@source './app/localvc';
+@source './app/fileupload';
+@source './app/plagiarism';
 @source './app/editor/markdown-editor';
 @source './app/communication/message-editor';
 @source './app/communication/posting-markdown-editor';
@@ -96,7 +103,6 @@
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
 @source './app/exercise/example-solution';
-@source './app/localci/build-queue';
 @source './app/course/request';
 @source './app/course/overview/course-statistics';
 @source './app/shared-ui/user-import';
@@ -128,7 +134,6 @@
 @source './app/course/manage/course-lti-configuration';
 @source './app/course/manage/course-material-import';
 @source './app/course/manage/course-scores';
-@source './app/lti/manage/lti13-deep-linking';
 @source './app/programming/manage/assess/repo-export/export-dialog';
 @source './app/programming/manage/consistency-check';
 @source './app/programming/manage/edit-selected';
@@ -155,16 +160,12 @@
 @source './app/communication/posting-create-edit-modal/post-create-edit-modal';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
-@source './app/localci/build-agent-summary';
-@source './app/localci/build-agent-details';
-@source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/shared-ui/components/buttons/code-button';
 @source './app/quiz/manage/apollon-diagrams';
 @source './app/exercise/participation/programming-exercise-participation-actions';
 @source './app/quiz/manage/question-reevaluation-actions';
 @source './app/exercise/statistics/statistics-span-selector';
-@source './app/plagiarism/shared/case-header';
 @source './app/communication/saved-posting-banner';
 @source './app/quiz/manage/statistics/question-statistics-chart';
 @source './app/account';
@@ -174,7 +175,6 @@
 @source './app/assessment/manage/complaints-for-tutor';
 @source './app/assessment/manage/complaint-response';
 @source './app/text/overview/text-editor';
-@source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/dashboards/tutor-participation-graph';
 @source './app/exercise/exercise-action-bar';
@@ -302,8 +302,6 @@
 @source './app/course/manage/course-material-import/course-material-import-dialog.component.html';
 @source './app/course/manage/course-scores/course-scores.component.html';
 @source './app/course/manage/exercises/course-management-exercises.component.html';
-@source './app/fileupload/manage/assess/file-upload-assessment.component.html';
-@source './app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.html';
 @source './app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component.html';
 @source './app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component.html';
 @source './app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component.html';

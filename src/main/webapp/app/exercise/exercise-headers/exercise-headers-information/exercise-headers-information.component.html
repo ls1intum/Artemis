@@ -79,7 +79,7 @@
                             />
                         }
                         @case ('timeAgo') {
-                            <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
+                            <span [ngClass]="timeAgoColorClass(informationBoxItem.contentColor)" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
                         }
                         @case ('dateTime') {
                             <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>

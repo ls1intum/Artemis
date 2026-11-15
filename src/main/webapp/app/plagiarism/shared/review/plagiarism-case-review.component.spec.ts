@@ -3,8 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from './plagiarism-case-review.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { MockComponent, MockModule } from 'ng-mocks';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent } from 'ng-mocks';
 import { provideTranslateService } from '@ngx-translate/core';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -22,7 +21,7 @@ describe('PlagiarismCaseReviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PlagiarismCaseReviewComponent, MockModule(NgbNavModule), MockComponent(PlagiarismSplitViewComponent)],
+            imports: [PlagiarismCaseReviewComponent, MockComponent(PlagiarismSplitViewComponent)],
             providers: [provideTranslateService()],
         }).compileComponents();
 
@@ -56,6 +55,36 @@ describe('PlagiarismCaseReviewComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelectorAll('jhi-plagiarism-split-view')).toHaveLength(0);
+    });
+
+    it('should render one tab per comparison and load only the selected comparison', async () => {
+        const plagiarismCase = {
+            id: 1,
+            exercise: { id: 1 } as Exercise,
+            student: { login: 'student' },
+            plagiarismSubmissions: [
+                { id: 1, plagiarismComparison: { id: 11, similarity: 91.25 } },
+                { id: 2, plagiarismComparison: { id: 12, similarity: 80 } },
+            ] as PlagiarismSubmission[],
+        } as PlagiarismCase;
+        fixture.componentRef.setInput('plagiarismCase', plagiarismCase);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const tabs = fixture.nativeElement.querySelectorAll('[role="tab"]');
+        expect(tabs).toHaveLength(2);
+        expect(fixture.nativeElement.querySelector('[data-testid="plagiarism-comparison-tab-0"]').textContent).toContain('1');
+        expect(fixture.nativeElement.querySelectorAll('jhi-plagiarism-split-view')).toHaveLength(1);
+        expect(fixture.nativeElement.textContent).toContain('91.3%');
+
+        component.selectComparison(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.selectedComparison()).toBe(1);
+        // the first comparison stays rendered so that its selected file and scroll position survive a switch
+        expect(fixture.nativeElement.querySelectorAll('jhi-plagiarism-split-view')).toHaveLength(2);
     });
 
     it('should set forStudent input to false', () => {

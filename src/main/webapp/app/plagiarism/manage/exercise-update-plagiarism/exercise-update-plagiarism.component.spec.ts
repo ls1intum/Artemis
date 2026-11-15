@@ -415,4 +415,62 @@ describe('Exercise Update Plagiarism Component', () => {
             expect(result2).toBeNull();
         });
     });
+    describe('template', () => {
+        beforeEach(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('should label the checkboxes and number inputs through their labels', () => {
+            const element = fixture.nativeElement as HTMLElement;
+
+            for (const id of ['continuous_plagiarism_control_enabled', 'continuous_plagiarism_control_post_due_date_checks_enabled']) {
+                expect((element.querySelector(`input#${id}`) as HTMLInputElement).type).toBe('checkbox');
+                expect(element.querySelector(`label[for="${id}"]`)).not.toBeNull();
+            }
+            for (const id of ['plagiarism-similarity-threshold', 'plagiarism-minimum-score', 'plagiarism-minimum-size', 'plagiarism-case-response-period']) {
+                expect((element.querySelector(`input#${id}`) as HTMLInputElement).type).toBe('number');
+                expect(element.querySelector(`label[for="${id}"]`)).not.toBeNull();
+            }
+        });
+
+        it('should keep the hooks and limits of the response period field', () => {
+            const element = fixture.nativeElement as HTMLElement;
+            const field = element.querySelector('[data-testid="plagiarism-response-period-field"]')!;
+            const input = field.querySelector('input') as HTMLInputElement;
+
+            expect(input.min).toBe('7');
+            expect(input.max).toBe('31');
+            expect(field.querySelector('[data-testid="plagiarism-response-period-label-row"] [data-testid="plagiarism-response-period-label"]')).not.toBeNull();
+            expect(field.querySelector('[data-testid="plagiarism-response-period-label-row"] [data-testid="plagiarism-response-period-help"]')).not.toBeNull();
+        });
+
+        it('should mark an invalid number input only after the user touched it', () => {
+            // the limits only apply while the continuous plagiarism control is enabled
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+            const input = (fixture.nativeElement as HTMLElement).querySelector('input#plagiarism-similarity-threshold') as HTMLInputElement;
+
+            input.value = '150';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(input.getAttribute('aria-invalid')).toBeNull();
+
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('should show the integer hint for a fraction once the input was touched', () => {
+            const element = fixture.nativeElement as HTMLElement;
+            comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+            const input = element.querySelector('input#plagiarism-minimum-score') as HTMLInputElement;
+
+            input.value = '1.5';
+            input.dispatchEvent(new Event('input'));
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(element.querySelector('small.text-state-danger')?.getAttribute('jhiTranslate')).toBe('artemisApp.plagiarism.validation.mustBeInteger');
+        });
+    });
 });

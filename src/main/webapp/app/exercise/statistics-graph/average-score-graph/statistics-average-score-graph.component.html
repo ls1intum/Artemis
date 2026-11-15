@@ -1,9 +1,9 @@
-<div class="grid grid-cols-12 gap-4 mb-3 justify-center">
+<div class="grid grid-cols-12 gap-6! mb-4! justify-center">
     <div class="col-span-12 xl:col-span-1 flex flex-col">
         <h3 jhiTranslate="artemisApp.course.averageScore"></h3>
         <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage() }}%</h4>
     </div>
-    <div class="col-span-12 grid grid-cols-12 gap-4 xl:col-span-11 chart-row">
+    <div class="col-span-12 grid grid-cols-12 gap-6! xl:col-span-11 chart-row">
         <fa-icon
             [icon]="faArrowLeft"
             size="2x"
@@ -35,7 +35,7 @@
         </ng-template>
         <div class="col-span-12 lg:col-span-2 flex flex-col items-center justify-center">
             @if (exerciseTypeFilter.typeSet.size > 0) {
-                <div class="filter my-3" aria-label="Filter Dropdown">
+                <div class="filter my-4!" aria-label="Filter Dropdown">
                     <button
                         tumAetUiButton
                         type="button"

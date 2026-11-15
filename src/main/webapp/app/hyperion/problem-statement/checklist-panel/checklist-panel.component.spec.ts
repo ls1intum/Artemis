@@ -146,7 +146,7 @@ describe('ChecklistPanelComponent', () => {
         component.analysisResult.set(mockResponse);
         fixture.detectChanges();
 
-        const goalsSection = fixture.debugElement.query(By.css('.checklist-section'));
+        const goalsSection = fixture.debugElement.query(By.css('[data-testid="checklist-section-quality"]'));
         expect(goalsSection).toBeTruthy();
         expect(component.analysisResult()).toBeDefined();
     });

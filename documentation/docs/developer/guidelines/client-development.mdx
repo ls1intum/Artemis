@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-15
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -1079,11 +1079,14 @@ or `space-x-3`. It judges the class names that are in the template text: a name 
 (`[class]="spacing"`), a literal inside an interpolation of a class list, a plain `ngClass="..."` attribute, the case
 body of an ICU expression and the inline `template:` of a component are not looked at.
 
-It is enabled as an error for the Tailwind-laid-out templates of the student exam mode and the pages it shows: the
-templates under `app/exam/overview`, `app/exam/shared`, `app/assessment/overview`,
-`app/assessment/manage/complaints-for-tutor`, `app/assessment/manage/complaint-response`, `app/exercise/feedback`,
-`app/text/overview/text-editor` and `app/fileupload/overview/file-upload-submission`. Student-reachable folders that are
-still laid out with Bootstrap, such as the code editor and the modeling submission, join the list with their migration. To adopt it
+It is enabled as an error for the templates that are fully laid out with Tailwind: the whole of `app/exam`, `app/exercise`,
+`app/lecture`, `app/localci`, `app/foundation`, `app/modeling`, `app/hyperion`, `app/lti`, `app/logos`, `app/localvc`,
+`app/fileupload` and `app/plagiarism`, plus the templates under `app/assessment/overview`,
+`app/assessment/manage/complaints-for-tutor`, `app/assessment/manage/complaint-response`,
+`app/text/overview/text-editor`, `app/course/overview/course-statistics`, `app/course/manage/athena-settings-update` and
+`app/course/manage/control-center/about-athena-modal`. Student-reachable folders that are
+still laid out with Bootstrap, such as the code editor, join the list with their migration. Those twelve modules are also covered by the Bootstrap class lock, the SCSS
+lock and the ban on importing PrimeNG or ng-bootstrap in `eslint.config.mjs`. To adopt it
 for another folder,
 add `<folder>/**/*.html` to the block that enables it in `eslint.config.mjs`, and fix the findings with the first
 suggestion, which changes nothing on screen. The folder must be listed in the `@source` allowlist of `tailwind.css`,
