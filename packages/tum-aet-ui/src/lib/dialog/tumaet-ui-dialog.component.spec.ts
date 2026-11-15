@@ -252,6 +252,28 @@ describe('TumAetUiDialogComponent', () => {
         expect(panel()).toBeNull();
     });
 
+    it('marks the Escape it closes on as handled, so a listener further up (such as a fullscreen layout) does not act on it too', () => {
+        host.closeOnEscape.set(true);
+        host.open.set(true);
+        fixture.detectChanges();
+        const closing = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        document.body.dispatchEvent(closing);
+        fixture.detectChanges();
+        expect(panel()).toBeNull();
+        expect(closing.defaultPrevented).toBe(true);
+
+        host.open.set(false);
+        fixture.detectChanges();
+        host.closeOnEscape.set(false);
+        host.open.set(true);
+        fixture.detectChanges();
+        const ignored = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        document.body.dispatchEvent(ignored);
+        fixture.detectChanges();
+        expect(panel()).not.toBeNull();
+        expect(ignored.defaultPrevented).toBe(false);
+    });
+
     it('renders in the overlay container, not the top layer, so nested overlays can stack above it', () => {
         host.open.set(true);
         fixture.detectChanges();

@@ -166,6 +166,9 @@ export class TumAetUiDialogComponent implements OnDestroy {
         });
         ref.keydownEvents.subscribe((event) => {
             if (event.key === 'Escape' && this.closeOnEscape()) {
+                // Mark it as handled, like a native dialog does, so a document-level Escape listener of the page behind
+                // (a fullscreen layout, for instance) does not close itself on the same key press.
+                event.preventDefault();
                 this.close();
             }
         });
