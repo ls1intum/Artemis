@@ -77,7 +77,8 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
             try {
                 response = exchange.get(deadline.toMillis(), TimeUnit.MILLISECONDS);
             }
-            catch (TimeoutException e) {
+            catch (TimeoutException | InterruptedException e) {
+                // an interrupted wait must not leave the exchange reading a body that does not end
                 exchange.cancel(true);
                 throw e;
             }

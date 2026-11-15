@@ -240,7 +240,12 @@ function areFunctionAddressesAllowed(value: string | null): boolean {
     if (/\\|\/\*|(?:image-set|image|element|cross-fade|paint|src)\s*\(/i.test(value)) {
         return false;
     }
-    return [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi)].every((match) => {
+    const matches = [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi)];
+    // a `url(` without its closing parenthesis is read to the end of the value, so it must not pass unchecked
+    if (matches.length !== (value.match(/url\s*\(/gi) ?? []).length) {
+        return false;
+    }
+    return matches.every((match) => {
         const address = (match[1] ?? match[2] ?? match[3] ?? '').trim();
         return address.startsWith('#') || isImageSourceAllowed(address);
     });

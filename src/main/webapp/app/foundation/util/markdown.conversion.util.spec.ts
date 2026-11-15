@@ -104,6 +104,12 @@ describe('markdown.conversion.util', () => {
             expect(rect.hasAttribute('filter')).toBe(false);
         });
 
+        it('removes a mask whose url function is not closed', () => {
+            const rect = restricted('<svg><rect width="1" height="1" mask="url(https://unlisted.example/m.png"></rect></svg>', 'rect');
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+        });
+
         it('keeps a reference to an element of the same document and an allowed address', () => {
             const rect = restricted('<svg><rect width="1" height="1" mask="url(#m)" fill="url(https://images.example.net/f.png)" stroke="red"></rect></svg>', 'rect');
 
