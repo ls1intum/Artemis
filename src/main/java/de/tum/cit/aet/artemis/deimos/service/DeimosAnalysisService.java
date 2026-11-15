@@ -779,7 +779,8 @@ public class DeimosAnalysisService {
         private final ParticipationEvidence evidence;
 
         /**
-         * How often each marker line occurs per template file, computed once per file.
+         * How often each marker line occurs per template file, computed once per file. Only template files are kept, so
+         * the map is bounded by the template rather than by the paths a student history introduces.
          */
         private final Map<String, Map<String, Integer>> templateMarkerLines = new HashMap<>();
 
@@ -822,7 +823,10 @@ public class DeimosAnalysisService {
 
         private void scanTextFile(String path, String content, String snapshotLabel) {
             scanPath(path, snapshotLabel);
-            Map<String, Integer> markerLinesInTemplate = templateMarkerLines.computeIfAbsent(path, this::markerLinesOfTemplateFile);
+            // A file the template does not have inherits no marker line. Caching that empty lookup would keep every path of
+            // the history alive, and empty files with new paths add nothing to the payload that would bound them.
+            Map<String, Integer> markerLinesInTemplate = template.textFiles().containsKey(path) ? templateMarkerLines.computeIfAbsent(path, this::markerLinesOfTemplateFile)
+                    : Map.of();
             // Counted only for the lines the template contains, so this map never holds more than the template's lines.
             Map<String, Integer> inheritedOccurrences = new HashMap<>();
             DeimosFenceMarkers.forEachMarkerLine(content, (lineNumber, line) -> {
