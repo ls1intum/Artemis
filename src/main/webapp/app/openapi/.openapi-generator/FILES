@@ -172,6 +172,7 @@ model/grading-criterion.ts
 model/grading-instruction.ts
 model/grading-scale-for-bonus.ts
 model/grading-scale-id.ts
+model/grading-scale-update-grade-step.ts
 model/grading-scale-update.ts
 model/grading-scale.ts
 model/hyperion-course-settings.ts

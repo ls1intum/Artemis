@@ -73,16 +73,18 @@ export class GradingScaleApi {
      *
      *
      * @param searchTerm
+     * @param sortedColumn The column to sort by
      * @param page
      * @param pageSize
      * @param sortingOrder
      */
-    getAllGradingScalesInInstructorGroupOnPage(searchTerm: string, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING'): Observable<SearchResultPageDTOGradingScale> {
+    getAllGradingScalesInInstructorGroupOnPage(searchTerm: string, sortedColumn: string, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING'): Observable<SearchResultPageDTOGradingScale> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'searchTerm', searchTerm);
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'pageSize', pageSize);
         appendQueryParam(queryParams, 'sortingOrder', sortingOrder);
+        appendQueryParam(queryParams, 'sortedColumn', sortedColumn);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/grading-scales${queryString ? `?${queryString}` : ''}`;
         return this.http.get<SearchResultPageDTOGradingScale>(url);

@@ -3090,6 +3090,11 @@ paths:
         schema:
           type: string
           enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        description: The column to sort by
+        required: true
+        schema: {type: string}
       responses:
         '200':
           description: OK
@@ -5158,6 +5163,16 @@ components:
           enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
         sourceGradingScale: {$ref: '#/components/schemas/GradingScaleForBonus'}
         bonusToGradingScale: {$ref: '#/components/schemas/GradingScaleForBonus'}
+    GradingScaleUpdateGradeStep:
+      type: object
+      properties:
+        lowerBoundPercentage: {type: number, format: double}
+        lowerBoundInclusive: {type: boolean}
+        upperBoundPercentage: {type: number, format: double}
+        upperBoundInclusive: {type: boolean}
+        gradeName: {type: string}
+        isPassingGrade: {type: boolean}
+      required: [gradeName]
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -7696,7 +7711,7 @@ components:
         presentationsWeight: {type: number, format: double}
         gradeSteps:
           type: array
-          items: {$ref: '#/components/schemas/GradeStep'}
+          items: {$ref: '#/components/schemas/GradingScaleUpdateGradeStep'}
           uniqueItems: true
         courseMaxPoints: {type: integer, format: int32, maximum: 9999, minimum: 1}
         coursePresentationScore: {type: integer, format: int32, maximum: 100, minimum: 0}
@@ -8054,6 +8069,7 @@ components:
     GradeStep:
       type: object
       properties:
+        id: {type: integer, format: int64}
         lowerBoundPercentage: {type: number, format: double}
         lowerBoundInclusive: {type: boolean}
         upperBoundPercentage: {type: number, format: double}

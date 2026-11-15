@@ -8,7 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { GradeStep } from './grade-step';
+import type { GradingScaleUpdateGradeStep } from './grading-scale-update-grade-step';
 
 export interface GradingScaleUpdate {
     gradeType: GradingScaleUpdateGradeTypeEnum;
@@ -17,7 +17,7 @@ export interface GradingScaleUpdate {
     noParticipationGrade?: string;
     presentationsNumber?: number;
     presentationsWeight?: number;
-    gradeSteps?: Array<GradeStep>;
+    gradeSteps?: Array<GradingScaleUpdateGradeStep>;
     courseMaxPoints?: number;
     coursePresentationScore?: number;
     examMaxPoints?: number;

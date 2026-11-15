@@ -10,6 +10,7 @@
 
 
 export interface GradeStep {
+    id?: number;
     lowerBoundPercentage?: number;
     lowerBoundInclusive?: boolean;
     upperBoundPercentage?: number;
