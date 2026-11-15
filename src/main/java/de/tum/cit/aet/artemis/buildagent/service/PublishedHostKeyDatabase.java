@@ -130,7 +130,7 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
         return true;
     }
 
-    private Set<String> publishedFingerprints(boolean forceRefresh) {
+    private synchronized Set<String> publishedFingerprints(boolean forceRefresh) {
         long now = nanoClock.getAsLong();
         if (!forceRefresh && !cachedFingerprints.isEmpty() && now - cachedAtNanos < CACHE_DURATION.toNanos()) {
             return cachedFingerprints;

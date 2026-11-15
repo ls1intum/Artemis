@@ -86,6 +86,13 @@ describe('markdown.conversion.util', () => {
             expect(video.hasAttribute('poster')).toBe(false);
         });
 
+        it('removes the address of an image inside an svg', () => {
+            const image = restricted('<svg><image href="https://unlisted.example/i.png" xlink:href="https://unlisted.example/j.png"></image></svg>', 'image');
+
+            expect(image.hasAttribute('href')).toBe(false);
+            expect(image.hasAttribute('xlink:href')).toBe(false);
+        });
+
         it('removes the background attribute of a table cell', () => {
             const cell = restricted('<table><tr><td background="https://unlisted.example/bg.png">x</td></tr></table>', 'td');
 

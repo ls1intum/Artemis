@@ -219,7 +219,7 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
 
 /**
  * While the server lists the allowed image hosts, every attribute that loads an image is checked, not only the `src` of an `img`: all candidates of a `srcset`
- * (of an `img` or a `source` in a `picture`), the `poster` of a `video` and the legacy `background` attribute. An attribute with an address that is not allowed is removed.
+ * (of an `img` or a `source` in a `picture`), the `poster` of a `video`, the legacy `background` attribute and the `href` of an image inside an SVG. An attribute with an address that is not allowed is removed.
  */
 function restrictImageAttributes(node: Element): void {
     if (!hasImageHostRestriction()) {
@@ -233,6 +233,14 @@ function restrictImageAttributes(node: Element): void {
     }
     if (node.hasAttribute?.('background') && !isImageSourceAllowed(node.getAttribute('background'))) {
         node.removeAttribute('background');
+    }
+    // An image inside an SVG names its address in `href`, an `feImage` filter primitive in the same way
+    if (['image', 'feimage'].includes(node.tagName?.toLowerCase())) {
+        for (const attribute of ['href', 'xlink:href']) {
+            if (node.hasAttribute?.(attribute) && !isImageSourceAllowed(node.getAttribute(attribute))) {
+                node.removeAttribute(attribute);
+            }
+        }
     }
 }
 
