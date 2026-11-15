@@ -312,6 +312,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        checkCourseMembershipForRealExamElseThrow(studentExam, currentUser);
         studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
@@ -338,6 +339,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        checkCourseMembershipForRealExamElseThrow(studentExam, currentUser);
         return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUser.getId(), examId, studentExam.isTestRun()));
     }
 
@@ -354,6 +356,18 @@ public class StudentExamResource {
     private void checkCourseAccessForTestRunElseThrow(StudentExam studentExam, Long examId, Long courseId, User currentUser) {
         if (studentExam.isTestRun()) {
             studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
+    }
+
+    /**
+     * Ensures that the owner of a real (non test run) student exam is still a student of the course.
+     *
+     * @param studentExam the student exam the request targets
+     * @param currentUser the current user
+     */
+    private void checkCourseMembershipForRealExamElseThrow(StudentExam studentExam, User currentUser) {
+        if (!studentExam.isTestRun()) {
+            studentExamAccessService.checkCourseAccessForStudentElseThrow(studentExam.getExam().getCourse(), currentUser);
         }
     }
 
