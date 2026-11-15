@@ -101,7 +101,7 @@ describe('KnowledgeAreaTreeComponent', () => {
     it('should support the arrow, home and end keys on the knowledge area titles', () => {
         host.dataSource = { data: [ka({ id: 1, children: [ka({ id: 11, level: 1 })] }), ka({ id: 2 })] };
         hostFixture.detectChanges();
-        const titles = () => Array.from(hostFixture.nativeElement.querySelectorAll<HTMLElement>('[data-tree-title]'));
+        const titles = () => Array.from((hostFixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-tree-title]'));
         const press = (element: HTMLElement, key: string) => {
             const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
             element.dispatchEvent(event);
@@ -131,6 +131,12 @@ describe('KnowledgeAreaTreeComponent', () => {
 
         // Other keys keep their default behaviour
         expect(press(titles()[0], 'a').defaultPrevented).toBe(false);
+
+        // Keys pressed in an element inside of the title belong to that element
+        const inner = document.createElement('span');
+        titles()[0].appendChild(inner);
+        expect(press(inner, 'ArrowRight').defaultPrevented).toBe(false);
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should render an empty-state node for a knowledge area without children or competencies', () => {

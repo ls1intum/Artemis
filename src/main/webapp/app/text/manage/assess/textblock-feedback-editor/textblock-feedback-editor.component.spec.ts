@@ -270,5 +270,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(component.getInstrColour({ credits: 1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
         expect(component.getInstrColour({ credits: 0 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
         expect(component.getInstrColour({ credits: -1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+        // an instruction without a usable credit value keeps the default colour
+        expect(component.getInstrColour({ credits: undefined } as unknown as GradingInstruction)).toBeUndefined();
     });
 });

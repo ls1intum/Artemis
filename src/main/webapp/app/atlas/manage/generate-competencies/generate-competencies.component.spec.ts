@@ -166,6 +166,11 @@ describe('GenerateCompetenciesComponent', () => {
         await fixture.whenStable();
         expect(openSpy).toHaveBeenCalledOnce();
         expect(saveSpy).not.toHaveBeenCalled();
+
+        // saving only happens once the confirmation is accepted
+        saveSpy.mockImplementation(() => undefined);
+        openSpy.mock.calls[0][0].accept?.();
+        expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('should submit', async () => {
