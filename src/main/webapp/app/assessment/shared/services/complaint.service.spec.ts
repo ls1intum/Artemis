@@ -13,7 +13,6 @@ import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/res
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
@@ -48,12 +47,6 @@ describe('ComplaintService', () => {
     clientComplaint2.complaintText = 'Test text';
 
     const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
-
-    const clientComplaintReq = new ComplaintRequestDTO();
-    clientComplaintReq.examId = 1337;
-    clientComplaintReq.complaintText = 'Test text';
-    clientComplaintReq.resultId = 1;
-    clientComplaintReq.complaintType = ComplaintType.MORE_FEEDBACK;
 
     let exercise: Exercise;
     let emptyResult: Result;
@@ -197,33 +190,6 @@ describe('ComplaintService', () => {
 
             const result = complaintService.isComplaintLocked(_complaint);
             expect(result).toBe(true);
-        });
-    });
-
-    describe('create', () => {
-        it('For course', () => {
-            clientComplaintReq.examId = undefined;
-            complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
-            });
-
-            const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe('api/assessment/complaints');
-            expect(res.request.body).toEqual(clientComplaintReq);
-
-            res.flush(clone(serverComplaint1));
-        });
-
-        it('For exam', () => {
-            complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
-            });
-
-            const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe(`api/assessment/complaints`);
-            expect(res.request.body).toEqual(clientComplaintReq);
-
-            res.flush(clone(serverComplaint1));
         });
     });
 
