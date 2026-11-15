@@ -2,15 +2,16 @@
 id: security-framework
 title: Security Framework (Ares 2 Sandbox)
 sidebar_label: Security Framework
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-15
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 
 The Java test templates run the student code inside the [Ares 2](https://ls1intum.github.io/Ares2/) sandbox. This
-page explains what the sandbox restricts, how to read its state on the **Security** card of the exercise form, and
-what Artemis changes in the tests repository when you activate or deactivate it.
+page explains what the sandbox restricts, how to read its state on the **Security** card of the exercise form, what
+Artemis changes in the tests repository when you activate or deactivate it, and how to edit the security policies in
+advanced mode.
 
 ## What the Sandbox Restricts
 
@@ -46,6 +47,11 @@ DejaGnu (black-box) project type, whose tests run without Ares.
 
 The card has two controls: the **Activate Security Framework** toggle and the **Framework version** selector. Only
 instructors see the card and can change it.
+
+When you edit an existing exercise in advanced mode and its sandbox is **Configured** or **Inactive**, the card is
+replaced by the advanced view, which also lets you edit the security policies. See
+[Manage Security Policies in Advanced Mode](#manage-security-policies-in-advanced-mode). The other states keep the card,
+because they need its repair and retry actions.
 
 ## States of the Card
 
@@ -96,7 +102,7 @@ lists the reasons, which can be:
 - The tests use Ares 1, whose own sandbox Artemis does not control.
 - No test class uses Ares 2.
 - The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
-- A `@Policy` annotation is on a method, a field or a nested class, or on an annotation type.
+- A `@Policy` annotation is on a field or a nested class, on an annotation type, or on two methods of the same name.
 - Tests or Ares annotations are inside a nested class.
 - A file declares several top-level types that are test classes or carry a `@Policy` annotation.
 - A test class registers Ares but has no `@Policy` annotation of its own.
@@ -221,6 +227,73 @@ and activate it after importing the file, Artemis generates a policy as describe
 [Activate the Sandbox](#activate-the-sandbox). Permissions you added yourself are lost, and test classes you had
 switched off are switched on again. Add them back in the tests repository.
 
+## Manage Security Policies in Advanced Mode
+
+The advanced view shows the state of the sandbox and every security policy of the tests repository. Nothing you change
+in it reaches the repository until you commit, and one commit carries all your changes.
+
+### Turn the Sandbox On or Off
+
+The **Ares 2** card at the top has the same toggle as the **Security** card. Before anything changes, a dialog lists
+what the commit will do, as described in [Activate the Sandbox](#activate-the-sandbox) and
+[Deactivate the Sandbox](#deactivate-the-sandbox). When you turn the sandbox on, you choose the framework version in
+the dialog. Turning the sandbox off discards your unsaved changes.
+
+The card also shows the commit of the tests repository that the view was read from, with its author and date, and the
+**Framework version**. A version you choose here is pinned with your next commit, and the review shows the change of
+the build file.
+
+### Scan the Dependencies
+
+**Scan dependencies** makes Ares also check the libraries that the student code uses, so that a forbidden access
+through a library is caught too. Artemis switches the programming language configuration of every policy, for example
+from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, in one commit. Every
+test runs considerably slower, so check your strict timeouts afterwards. The option is available only when the build
+file of the tests repository attaches the Ares agent, as the Java templates do.
+
+### Edit a Policy
+
+Each policy is one YAML file in the tests repository. **Add security policy** creates a new one; its **Name** determines
+the file name, and renaming a committed policy renames its file with the next commit. Each policy has three parts:
+
+- **Allow resource access** lists, in one tab per category, the paths, network endpoints, commands, thread classes and
+  packages the student code may use. **Browse…** picks paths or scripts from the template repository. Each row shows
+  whether it is committed, new, changed or removed.
+- **Configure test behaviour** replaces the exception of a failed test with your own message, hides the feedback of
+  tests between two dates, enforces a strict timeout per test and mirrors the output of the student code into the
+  results. The security feedback tab shows what students see for a violation; its level cannot be chosen yet, so
+  students see the full Ares message.
+- **Assign test cases** chooses the tests that run under the policy: a whole test class, which also covers test cases
+  added later, or single test cases. Artemis writes the assignment as the `@Policy` annotation of the class or of the
+  test method. A test can use only one policy, so tests that another policy covers are locked, and so are the tests of
+  a class whose sandbox you switched off. **Declared test classes** lists the classes Ares treats as test code; the
+  classes of the assigned tests are always included, and you can add helper classes without tests.
+
+Every policy needs at least one test case: Artemis finds a policy through the tests that use it. A test that no policy
+covers runs under the most restrictive default policy of Ares. **View YAML** shows the committed file and the file with
+your unsaved changes, and lets you copy, export or import a policy file. An import replaces the policy with the file as
+unsaved changes. A policy that Artemis cannot read without changing it, for example because of a YAML error, is shown
+read-only; fix it in the tests repository.
+
+### Review and Commit
+
+The bar below the policies counts your unsaved changes. **Discard…** drops all of them. **Commit** opens the review,
+which shows a side-by-side diff of every changed file and the test case assignments that change. The review also checks
+the files against the pinned Ares version: if the version does not accept a field, for example a test behaviour that
+Ares 2.2.1 does not support yet, the review lists it and you cannot commit until you remove it or choose a newer
+version.
+
+Committing creates one commit in the tests repository and runs the template and solution builds again. If someone
+committed to the tests repository after you opened the view, the commit is refused and you can reload: your unsaved
+changes stay and are applied to the newer commit.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Only the next build shows whether Ares accepts the committed policies. The card shows **Configured** after a commit,
+  not a confirmation from Ares, so check the template and solution results after each commit.
+
+</Callout>
+
 ## Edit the Policy by Hand
 
 You can still edit `SecurityPolicy.yaml`, the `@Policy` annotations and the build file yourself, in the online
@@ -240,7 +313,9 @@ inside the repository; a path that leaves it, points into `.git` or to a directo
 
 ## Limitations
 
-- Nested test classes are not added to the policy automatically.
+- Nested test classes are not added to the policy automatically, and their test cases cannot be assigned in the
+  advanced view.
+- No released Ares version offers presets for a policy yet, so the **Presets** field of the advanced view stays empty.
 - Renamed test classes are not tracked. After a rename, activating treats the class as new.
 - Exercises that use Ares 1 are not migrated automatically. They show as **Not supported**.
 - Artemis adds a test class only to the policy file its own `@Policy` names. If a test calls a helper method of another

@@ -1,0 +1,72 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.browse.';
+<tumaet-ui-dialog
+    [header]="(mode() === 'paths' ? prefix + 'pathsTitle' : prefix + 'scriptsTitle') | artemisTranslate"
+    [(visible)]="visible"
+    size="small"
+    data-testid="security-browse-dialog"
+>
+    <div class="sp-stack-3">
+        <tumaet-ui-search-field
+            [(value)]="search"
+            [placeholder]="mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts'"
+            [ariaLabel]="(mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts') | artemisTranslate"
+            data-testid="security-browse-search"
+        />
+        <div class="sp-tree" role="group" [attr.aria-label]="(mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate') | artemisTranslate">
+            <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate'"></div>
+            @if (files() === undefined) {
+                <div class="sp-row p-2" data-testid="security-browse-loading">
+                    <tumaet-ui-progress-spinner />
+                    <span jhiTranslate="artemisApp.programmingExercise.security.advanced.loading"></span>
+                </div>
+            } @else if (!visibleNodes().length) {
+                <p class="sp-mut m-0 p-2 text-sm">{{ prefix + 'empty' | artemisTranslate: { query: search() } }}</p>
+            }
+            @for (entry of visibleNodes(); track entry.node.path) {
+                <div class="sp-tree-row" [class]="'sp-level-' + (entry.depth > 2 ? 2 : entry.depth)" [class.sp-selected]="isSelected(entry.node)" data-testid="security-browse-row">
+                    <tumaet-ui-checkbox
+                        [checked]="isSelected(entry.node)"
+                        [indeterminate]="isPartlySelected(entry.node)"
+                        [ariaLabel]="(prefix + 'selectPath' | artemisTranslate) + ' ' + entry.node.path"
+                        (changed)="toggleSelected(entry.node, $event.checked)"
+                    />
+                    @if (entry.node.folder) {
+                        <button
+                            type="button"
+                            class="sp-twisty"
+                            [attr.aria-expanded]="entry.expanded"
+                            [attr.aria-label]="((entry.expanded ? prefix + 'collapse' : prefix + 'expand') | artemisTranslate) + ' ' + entry.node.path"
+                            (click)="toggleExpanded(entry.node)"
+                        >
+                            <fa-icon [icon]="entry.expanded ? faChevronDown : faChevronRight" />
+                        </button>
+                    } @else {
+                        <span class="sp-twisty-spacer"></span>
+                    }
+                    <span class="sp-mono">{{ entry.node.name }}{{ entry.node.folder ? '/' : '' }}</span>
+                    @if (badges().get(entry.node.path); as badge) {
+                        <tumaet-ui-tag class="sp-push" severity="secondary" size="sm" [value]="badge" />
+                    }
+                </div>
+            }
+        </div>
+        <p class="sp-mut m-0 text-xs" [jhiTranslate]="mode() === 'paths' ? prefix + 'pathsHint' : prefix + 'scriptsHint'"></p>
+        @if (truncated()) {
+            <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'truncated'"></p>
+        }
+    </div>
+    <ng-template #footer>
+        <span class="me-auto self-center text-sm" data-testid="security-browse-summary">
+            @if (selectedPaths().length) {
+                {{ prefix + 'selected' | artemisTranslate: { count: selectedPaths().length } }}
+                <span class="sp-mono">{{ selectedPaths().join(', ') }}</span>
+            } @else {
+                <span [jhiTranslate]="prefix + 'nothingSelected'"></span>
+            }
+        </span>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton [disabled]="!selectedPaths().length" (click)="confirm()" data-testid="security-browse-confirm">
+            {{ prefix + 'select' | artemisTranslate: { count: selectedPaths().length } }}
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

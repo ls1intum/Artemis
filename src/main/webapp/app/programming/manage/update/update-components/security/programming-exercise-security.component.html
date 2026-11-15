@@ -3,7 +3,22 @@
         <h4 class="mb-1 text-lg font-semibold">{{ 'artemisApp.programmingExercise.security.title' | artemisTranslate }}</h4>
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
-        @if (loadFailed()) {
+        @if (showAdvancedView()) {
+            <jhi-programming-exercise-security-policies
+                [exerciseId]="programmingExercise().id!"
+                [config]="config()"
+                [versionOptions]="frameworkVersions()"
+                [latestVersion]="latestVersion()"
+                [activationVersion]="activationVersion()"
+                [aresApiUses]="config().aresApiUses ?? []"
+                [canCommit]="true"
+                [locked]="isSaving()"
+                [repositoryLink]="testsRepositoryLink()"
+                (activateRequested)="onAdvancedActivate($event)"
+                (deactivateRequested)="onAdvancedDeactivate()"
+                (configChange)="onAdvancedCommitted($event)"
+            />
+        } @else if (loadFailed()) {
             <tumaet-ui-message severity="error" class="sf-warning block" data-testid="security-load-error">
                 <span jhiTranslate="artemisApp.programmingExercise.security.loadError"></span>
                 <button type="button" class="sf-retry" (click)="retryLoadConfig()" data-testid="security-load-retry">

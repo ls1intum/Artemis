@@ -1,0 +1,31 @@
+<tumaet-ui-dialog [header]="header().key | artemisTranslate: header().params" [(visible)]="visible" size="small" data-testid="security-confirm-dialog">
+    <div class="sp-stack-3">
+        <p class="m-0">{{ question().key | artemisTranslate: question().params }}</p>
+        @if (details().length) {
+            <dl class="sp-kv" data-testid="security-confirm-details">
+                @for (detail of details(); track detail.labelKey) {
+                    <dt [jhiTranslate]="detail.labelKey"></dt>
+                    <dd class="sp-mono">{{ detail.value }}</dd>
+                }
+            </dl>
+        }
+        @if (entry(); as affected) {
+            <div class="sp-mono sp-boxed" data-testid="security-confirm-entry">{{ affected }}</div>
+        }
+        @if (warning(); as warningText) {
+            <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" data-testid="security-confirm-warning">
+                <span class="text-sm">{{ warningText.key | artemisTranslate: warningText.params }}</span>
+            </tumaet-ui-message>
+        }
+        @if (note(); as noteText) {
+            <p class="sp-mut m-0 text-xs">{{ noteText.key | artemisTranslate: noteText.params }}</p>
+        }
+    </div>
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton severity="danger" (click)="confirm()" data-testid="security-confirm-button">
+            <fa-icon [icon]="faTrashCan" />
+            <span>{{ confirmLabel() | artemisTranslate }}</span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

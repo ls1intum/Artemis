@@ -72,6 +72,7 @@
                     [stagedChoice]="stagedSecurityChoice()"
                     (stagedChoiceChange)="stagedSecurityChoice.set($event)"
                     [isSaving]="isSaving()"
+                    [advancedMode]="!isSimpleMode()"
                 />
                 <hr class="mb-5" />
             }

@@ -39,6 +39,8 @@ import {
     securityFrameworkProblemMessages,
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 
 /** The three-way choice of an import whose Security Framework state is not known: keep it, or activate or deactivate the sandbox. */
 export type SecurityImportAction = 'KEEP' | SecurityFrameworkAction;
@@ -75,6 +77,7 @@ const DEACTIVATE_CONFIRMATION_KEY = 'securityDeactivateConfirmation';
         TumAetUiButtonDirective,
         TumAetUiConfirmDialogComponent,
         FaIconComponent,
+        ProgrammingExerciseSecurityPoliciesComponent,
     ],
 })
 export class ProgrammingExerciseSecurityComponent {
@@ -118,6 +121,11 @@ export class ProgrammingExerciseSecurityComponent {
     readonly stagedChoiceChange = output<SecurityFrameworkChoice | undefined>();
     /** True while the parent form is saving the exercise, so this card's controls stay locked - a staged change made mid-save would disagree with what gets persisted. */
     readonly isSaving = input<boolean>(false);
+    /**
+     * Whether the form is in Advanced mode. There, an existing exercise whose sandbox is on or off shows the Advanced view of Objective 2: the activation card
+     * with dependency scanning and the Manage Security Policies section. Creating, importing and every state that needs a repair keep this card.
+     */
+    readonly advancedMode = input<boolean>(false);
 
     readonly isEditMode = computed(() => this.mode() === 'edit');
     readonly isCreateMode = computed(() => this.mode() === 'create');
@@ -224,6 +232,36 @@ export class ProgrammingExerciseSecurityComponent {
     readonly isActive = computed(() => isSecurityConfigured(this.config()));
     /** In progress - loading the config, or activating/deactivating: spinner on, controls locked to prevent a double-submit or acting on not-yet-loaded state. */
     readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()));
+
+    /** The states the Advanced view manages; the others need the repair and retry actions of this card. */
+    private static readonly ADVANCED_VIEW_STATUSES: ReadonlySet<SecurityActivationStatus> = new Set([
+        SecurityActivationStatus.INACTIVE,
+        SecurityActivationStatus.GENERATING,
+        SecurityActivationStatus.CONFIGURED,
+        SecurityActivationStatus.DELETING,
+    ]);
+
+    readonly showAdvancedView = computed(
+        () =>
+            this.advancedMode() &&
+            this.isEditMode() &&
+            this.programmingExercise().id !== undefined &&
+            !this.loading() &&
+            !this.loadFailed() &&
+            ProgrammingExerciseSecurityComponent.ADVANCED_VIEW_STATUSES.has(this.status()),
+    );
+
+    /** The route to the tests repository of a course exercise; exam exercises have none here. */
+    readonly testsRepositoryLink = computed<(string | number)[] | undefined>(() => {
+        const exercise = this.programmingExercise();
+        const courseId = exercise.course?.id;
+        return courseId !== undefined && exercise.id !== undefined
+            ? ['/course-management', courseId, 'programming-exercises', exercise.id, 'repository', RepositoryType.TESTS]
+            : undefined;
+    });
+
+    /** The version the activation dialog of the Advanced view preselects. */
+    readonly activationVersion = computed(() => this.versionToActivate());
     /** Import from a file or the sharing platform: the state is only known after the import, and a MISCONFIGURED source can only be kept, repaired or deactivated. */
     readonly usesImportActionChoice = computed(
         () => this.isImportMode() && (this.sourceExerciseId() === undefined || this.sourceConfig()?.status === SecurityActivationStatus.MISCONFIGURED),
@@ -598,6 +636,27 @@ export class ProgrammingExerciseSecurityComponent {
         const current = this.config().frameworkVersion;
         const versionsKnown = this.versions() !== undefined;
         return current && (!versionsKnown || this.selectableVersions().includes(current)) ? current : this.stagedDefaultVersion();
+    }
+
+    /** The Advanced view confirmed turning the sandbox on with a version. */
+    protected onAdvancedActivate(version: string): void {
+        const exerciseId = this.editExerciseId();
+        if (exerciseId !== undefined) {
+            this.runOperation({ status: SecurityActivationStatus.GENERATING, frameworkVersion: version }, () => this.securityService.activate(exerciseId, version));
+        }
+    }
+
+    /** The Advanced view confirmed turning the sandbox off. */
+    protected onAdvancedDeactivate(): void {
+        const exerciseId = this.editExerciseId();
+        if (exerciseId !== undefined) {
+            this.runOperation({ status: SecurityActivationStatus.DELETING }, () => this.securityService.deactivate(exerciseId));
+        }
+    }
+
+    /** A commit of the Advanced view changed the tests repository; the returned state is the new truth. */
+    protected onAdvancedCommitted(next: SecurityFrameworkConfig): void {
+        this.settle(next);
     }
 
     private activate(exerciseId: number): void {

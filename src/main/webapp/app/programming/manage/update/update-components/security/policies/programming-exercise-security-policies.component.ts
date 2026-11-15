@@ -1,0 +1,853 @@
+import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    faArrowUpRightFromSquare,
+    faCircleCheck,
+    faCircleInfo,
+    faCircleXmark,
+    faLock,
+    faPlus,
+    faRotateRight,
+    faSpinner,
+    faTrashCan,
+    faTriangleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiEmptyStateComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTagComponent,
+} from '@tumaet/ui-angular';
+import { Subscription } from 'rxjs';
+
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import {
+    SecurityActivationStatus,
+    SecurityAresApiUse,
+    SecurityFrameworkConfig,
+    SecurityFrameworkVersionOption,
+    SecurityVersionCompatibilityVerdict,
+} from 'app/programming/shared/entities/security-framework-config.model';
+import {
+    SecurityPolicyChange,
+    SecurityPolicyChangeEntry,
+    SecurityPolicyEditor,
+    SecurityPolicyPreview,
+    SecurityPolicyReadOnlyReason,
+    SecurityTestStructure,
+} from 'app/programming/shared/entities/security-policy.model';
+import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { SecurityActivationCardComponent, SecurityCardState } from 'app/programming/manage/update/update-components/security/policies/security-activation-card.component';
+import { SecurityActivationDialogComponent, SecurityActivationMode } from 'app/programming/manage/update/update-components/security/policies/security-activation-dialog.component';
+import { SecurityConfirmDialogComponent, SecurityTranslatable } from 'app/programming/manage/update/update-components/security/policies/security-confirm-dialog.component';
+import { SecurityPolicyPanelComponent } from 'app/programming/manage/update/update-components/security/policies/security-policy-panel.component';
+import { AssignmentChange, SecurityReviewDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-review-dialog.component';
+import { SecurityImportNotice, SecurityYamlDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-yaml-dialog.component';
+import {
+    EditorPolicy,
+    PolicyChangeSummary,
+    classesOfTests,
+    committedName,
+    editorPolicyOf,
+    fileNameOf,
+    isNewPolicy,
+    listChanges,
+    newPolicyDocument,
+    parseAresDate,
+    policyPathFor,
+    rebasePolicy,
+    summarizeChanges,
+    withAssignment,
+} from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+
+const PREFIX = 'artemisApp.programmingExercise.security.advanced';
+
+/** How long the editor waits after the last change before it checks the policies against the pinned Ares version. */
+const VERSION_CHECK_DELAY_MS = 600;
+
+/** The language configuration that also scans the libraries of the student code, and the one that does not. */
+const SCANNING = '_WALA_AND_INSTRUMENTATION';
+const NOT_SCANNING = '_ARCHUNIT_AND_ASPECTJ';
+const ANALYSIS_AND_WEAVING = /_(ARCHUNIT|WALA)_AND_(ASPECTJ|INSTRUMENTATION)$/;
+
+/** The message below the section (screens "Follow the Saving Progress"). */
+type Banner =
+    | { kind: 'committing' }
+    | { kind: 'committed'; titleKey: string; textKey: string; hash: string }
+    | { kind: 'conflict'; authorName?: string; hash?: string }
+    | { kind: 'failed'; message: string; commitMessage: string }
+    | { kind: 'info'; text: string };
+
+/** The unsaved changes of all policies, by kind, as the commit bar lists them. */
+interface ChangeParts {
+    restrictions: number;
+    behaviours: number;
+    testCases: number;
+    testClasses: number;
+    settings: number;
+    build: number;
+    total: number;
+}
+
+const CHANGE_KINDS: readonly (keyof ChangeParts)[] = ['restrictions', 'behaviours', 'testCases', 'testClasses', 'settings', 'build'];
+
+/**
+ * The Security section of an existing exercise in Advanced mode (Objective 2): the activation card, the Manage Security Policies section and the messages
+ * below it. It loads the policies from the tests repository, keeps every change as an unsaved change of a working copy, and commits all of them, a staged
+ * framework version included, at once after a review of the diff. Turning the sandbox or dependency scanning on or off is committed at once after a
+ * confirmation. A commit is refused if the policies changed in the repository meanwhile; a reload then keeps the unsaved changes on top of the new commit.
+ */
+@Component({
+    selector: 'jhi-programming-exercise-security-policies',
+    templateUrl: './programming-exercise-security-policies.component.html',
+    styleUrl: './security-policies.scss',
+    imports: [
+        NgTemplateOutlet,
+        RouterLink,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiPanelComponent,
+        TumAetUiEmptyStateComponent,
+        TumAetUiProgressSpinnerComponent,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        SecurityActivationCardComponent,
+        SecurityActivationDialogComponent,
+        SecurityPolicyPanelComponent,
+        SecurityReviewDialogComponent,
+        SecurityYamlDialogComponent,
+        SecurityConfirmDialogComponent,
+    ],
+})
+export class ProgrammingExerciseSecurityPoliciesComponent {
+    private readonly securityService = inject(SecurityFrameworkService);
+    private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    protected readonly faCircleCheck = faCircleCheck;
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faCircleXmark = faCircleXmark;
+    protected readonly faLock = faLock;
+    protected readonly faPlus = faPlus;
+    protected readonly faRotateRight = faRotateRight;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faTrashCan = faTrashCan;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+
+    readonly exerciseId = input.required<number>();
+    /** The state of the Security Framework, as the activation card of Objective 1 loads and changes it. */
+    readonly config = input.required<SecurityFrameworkConfig>();
+    readonly versionOptions = input<SecurityFrameworkVersionOption[]>([]);
+    readonly latestVersion = input<string | undefined>(undefined);
+    /** The version the activation dialog preselects. */
+    readonly activationVersion = input<string | undefined>(undefined);
+    readonly aresApiUses = input<SecurityAresApiUse[]>([]);
+    /** Whether the user may commit; editors who are not instructors see the policies read-only. */
+    readonly canCommit = input(false);
+    /** Whether the exercise is being saved, which locks every control. */
+    readonly locked = input(false);
+    /** The route to the tests repository; undefined where there is none. */
+    readonly repositoryLink = input<(string | number)[] | undefined>(undefined);
+
+    /** Asks to turn the sandbox on with the version. */
+    readonly activateRequested = output<string>();
+    /** Asks to turn the sandbox off. */
+    readonly deactivateRequested = output<void>();
+    /** Emits the Security Framework state after a commit of this view. */
+    readonly configChange = output<SecurityFrameworkConfig>();
+
+    readonly sectionCollapsed = signal(true);
+    readonly loading = signal(false);
+    readonly loadFailed = signal(false);
+    readonly editor = signal<SecurityPolicyEditor | undefined>(undefined);
+    readonly policies = signal<EditorPolicy[]>([]);
+    /** Committed policies deleted since the commit; the commit removes their files. */
+    readonly deletedPolicies = signal<EditorPolicy[]>([]);
+    /** The version the next commit pins; undefined to keep the pinned one. */
+    readonly stagedVersion = signal<string | undefined>(undefined);
+    readonly structure = signal<SecurityTestStructure | undefined>(undefined);
+    readonly templateFiles = signal<string[] | undefined>(undefined);
+    readonly templateFilesTruncated = signal(false);
+    readonly banner = signal<Banner | undefined>(undefined);
+    /** The verdict of the version the changes are committed with, checked a moment after each change. */
+    readonly versionCheck = signal<SecurityPolicyPreview | undefined>(undefined);
+
+    readonly dialogMode = signal<SecurityActivationMode>('activate');
+    readonly dialogOpen = signal(false);
+    /** The toggle position a confirmation shows until the instructor decides. */
+    readonly pendingToggle = signal<boolean | undefined>(undefined);
+    readonly reviewOpen = signal(false);
+    readonly reviewPreview = signal<SecurityPolicyPreview | undefined>(undefined);
+    readonly discardOpen = signal(false);
+    readonly deleteOpen = signal(false);
+    readonly deletingPolicyId = signal<string | undefined>(undefined);
+    readonly yamlOpen = signal(false);
+    readonly yamlPolicyId = signal<string | undefined>(undefined);
+    readonly yamlUnsaved = signal<string | undefined>(undefined);
+    readonly importNotice = signal<SecurityImportNotice | undefined>(undefined);
+
+    private newPolicyCounter = 0;
+    private structureRequested = false;
+    private templateFilesRequested = false;
+    private versionCheckTimer?: ReturnType<typeof setTimeout>;
+    private versionCheckSubscription?: Subscription;
+    private lastStatus?: SecurityActivationStatus;
+
+    readonly status = computed(() => this.config().status);
+    readonly isCommitting = computed(() => this.banner()?.kind === 'committing');
+    readonly cardState = computed<SecurityCardState>(() => {
+        switch (this.status()) {
+            case SecurityActivationStatus.GENERATING:
+                return 'turningOn';
+            case SecurityActivationStatus.DELETING:
+                return 'turningOff';
+            case SecurityActivationStatus.CONFIGURED:
+                return this.isCommitting() ? 'committing' : 'configured';
+            default:
+                return 'inactive';
+        }
+    });
+    readonly isConfigured = computed(() => this.status() === SecurityActivationStatus.CONFIGURED);
+    readonly toggleOn = computed(() => this.pendingToggle() ?? (this.isConfigured() || this.status() === SecurityActivationStatus.GENERATING));
+    /** Editing is paused while a commit is processed or the exercise is saved, and for users who may not commit. */
+    readonly editingDisabled = computed(() => this.isCommitting() || this.locked() || !this.canCommit() || !this.isConfigured());
+
+    readonly presets = computed(() => this.editor()?.presets ?? []);
+    readonly pinnedVersion = computed(() => this.editor()?.frameworkVersion ?? this.config().frameworkVersion);
+    readonly shownVersion = computed(() => this.stagedVersion() ?? this.pinnedVersion());
+    readonly shortBaseCommit = computed(() => this.editor()?.baseCommitHash?.substring(0, 7));
+
+    /** Whether every committed policy scans dependencies: it uses WALA and the instrumentation of Ares. */
+    readonly scanDependencies = computed(() => {
+        const documents = this.policies()
+            .map((policy) => policy.base)
+            .filter((document) => document !== undefined);
+        return documents.length > 0 && documents.every((document) => (document.languageConfiguration ?? '').endsWith(SCANNING));
+    });
+    readonly scanAvailable = computed(() => !!this.editor()?.scanDependenciesAvailable && this.policies().some((policy) => !!policy.base));
+    readonly strictTimeouts = computed(() => this.policies().some((policy) => !!policy.working?.testBehavior?.strictTimeout));
+
+    /** The path each policy is saved to, by its id. */
+    readonly paths = computed(() => {
+        const existingPaths = this.policies()
+            .map((policy) => policy.file?.policyPath)
+            .filter((path) => path !== undefined);
+        return new Map(this.policies().map((policy) => [policy.id, policyPathFor(policy.name, policy.file?.policyPath, existingPaths)]));
+    });
+
+    readonly summaries = computed(() => new Map(this.policies().map((policy) => [policy.id, summarizeChanges(policy)])));
+
+    protected summaryOf(policyId: string): PolicyChangeSummary {
+        const policy = this.policies().find((candidate) => candidate.id === policyId);
+        return this.summaries().get(policyId) ?? summarizeChanges(policy ?? editorPolicyOf({ policyPath: policyId }));
+    }
+
+    readonly changeParts = computed<ChangeParts>(() => {
+        const parts: ChangeParts = { restrictions: 0, behaviours: 0, testCases: 0, testClasses: 0, settings: 0, build: 0, total: 0 };
+        this.summaries().forEach((summary: PolicyChangeSummary) => {
+            parts.restrictions += summary.restrictions;
+            parts.behaviours += summary.behaviours;
+            parts.testCases += summary.testCases;
+            parts.testClasses += summary.testClasses;
+            parts.settings += summary.settings + (summary.isNew ? 1 : 0);
+            parts.total += summary.total;
+        });
+        parts.settings += this.deletedPolicies().length;
+        parts.total += this.deletedPolicies().length;
+        if (this.stagedVersion()) {
+            parts.build = 1;
+            parts.total++;
+        }
+        return parts;
+    });
+
+    readonly totalChanges = computed(() => this.changeParts().total);
+
+    /** The unsaved changes as the commit bar lists them, e.g. "2 allowed resource accesses · 1 set test behaviour". */
+    readonly changeText = computed(() => {
+        const parts = this.changeParts();
+        return CHANGE_KINDS.filter((kind) => parts[kind] > 0)
+            .map((kind) => this.translateService.instant(`${PREFIX}.commitBar.${kind}`, { count: parts[kind] }) as string)
+            .join(' · ');
+    });
+
+    /** The tests of each policy with its label, so the other policies lock them. */
+    readonly testsByPolicy = computed(() =>
+        this.policies().map((policy) => ({ id: policy.id, tests: policy.tests, label: policy.name || fileNameOf(this.paths().get(policy.id) ?? '') })),
+    );
+
+    readonly yamlPolicy = computed(() => this.policies().find((policy) => policy.id === this.yamlPolicyId()));
+    readonly deletingPolicy = computed(() => this.policies().find((policy) => policy.id === this.deletingPolicyId()));
+    readonly readOnlyPolicies = computed(() => this.policies().filter((policy) => !policy.working));
+    /** The files the policies are saved to, for the dialog that deletes them. */
+    readonly policyPaths = computed(() => [...this.paths().values()].filter((path) => path.length > 0));
+
+    /** What keeps the changes from being committed, translated; empty if they can be committed. */
+    readonly problems = computed(() => {
+        const problems: string[] = [];
+        const paths = new Map<string, number>();
+        for (const policy of this.policies()) {
+            const path = this.paths().get(policy.id) ?? '';
+            paths.set(path, (paths.get(path) ?? 0) + 1);
+            if (!policy.working) {
+                continue;
+            }
+            if (!policy.name.trim() || !path) {
+                problems.push(this.translateService.instant(`${PREFIX}.problem.nameRequired`));
+                continue;
+            }
+            const hidden = policy.working.testBehavior?.hiddenTests;
+            const from = parseAresDate(hidden?.hiddenFrom);
+            const until = parseAresDate(hidden?.hiddenUntil);
+            if (from && until && !until.isAfter(from)) {
+                problems.push(this.translateService.instant(`${PREFIX}.problem.hiddenPeriod`, { policy: policy.name }));
+            }
+            if (!policy.tests.length) {
+                problems.push(this.translateService.instant(`${PREFIX}.problem.noTests`, { policy: policy.name }));
+            }
+        }
+        if ([...paths.entries()].some(([path, count]) => path && count > 1)) {
+            problems.push(this.translateService.instant(`${PREFIX}.problem.sameFile`));
+        }
+        return problems;
+    });
+
+    /** What each changed file of the review is. */
+    readonly reviewDescriptions = computed(() => {
+        const descriptions = new Map<string, string>();
+        for (const policy of this.policies()) {
+            const path = this.paths().get(policy.id) ?? '';
+            let description = policy.name;
+            if (isNewPolicy(policy)) {
+                description += ` · ${this.translateService.instant(`${PREFIX}.review.newFile`)}`;
+            } else if (policy.file?.policyPath !== path) {
+                description += ` · ${this.translateService.instant(`${PREFIX}.review.renamedFrom`, { file: fileNameOf(policy.file?.policyPath ?? '') })}`;
+            }
+            descriptions.set(path, description);
+        }
+        this.deletedPolicies().forEach((policy) =>
+            descriptions.set(policy.file?.policyPath ?? '', `${committedName(policy)} · ${this.translateService.instant(`${PREFIX}.review.deleted`)}`),
+        );
+        const buildSettings = this.translateService.instant(`${PREFIX}.review.buildSettings`);
+        descriptions.set('build.gradle', buildSettings);
+        descriptions.set('pom.xml', buildSettings);
+        return descriptions;
+    });
+
+    /** The test case assignments the commit changes. */
+    readonly reviewAssignments = computed<AssignmentChange[]>(() => {
+        const changes: AssignmentChange[] = [];
+        for (const policy of this.policies()) {
+            const file = fileNameOf(this.paths().get(policy.id) ?? '');
+            const { added, removed } = listChanges(policy.baseTests, policy.tests);
+            added.forEach((entry) => changes.push({ sign: '+', entry, file }));
+            removed.forEach((entry) => changes.push({ sign: '−', entry, file }));
+        }
+        this.deletedPolicies().forEach((policy) => policy.baseTests.forEach((entry) => changes.push({ sign: '−', entry, file: fileNameOf(policy.file?.policyPath ?? '') })));
+        return changes;
+    });
+
+    readonly reviewSummary = computed(() => {
+        const parts = this.changeParts();
+        const texts = CHANGE_KINDS.filter((kind) => parts[kind] > 0).map(
+            (kind) => this.translateService.instant(`${PREFIX}.review.changed.${kind}`, { count: parts[kind] }) as string,
+        );
+        texts.push(this.translateService.instant(`${PREFIX}.review.basedOn`, { commit: this.shortBaseCommit() ?? '' }));
+        return texts.join(' · ');
+    });
+
+    /** The proposed commit message, e.g. "Update Stress Tests (3 changes)". */
+    readonly defaultCommitMessage = computed(() => {
+        const changed = this.policies()
+            .filter((policy) => (this.summaries().get(policy.id)?.total ?? 0) > 0)
+            .map((policy) => policy.name);
+        const subject = changed.length ? changed.join(', ') : this.translateService.instant(`${PREFIX}.review.securitySettings`);
+        return this.translateService.instant(`${PREFIX}.review.defaultMessage`, { subject, count: this.totalChanges() });
+    });
+
+    readonly versionTooOld = computed(() => this.versionCheck()?.verdict === SecurityVersionCompatibilityVerdict.INCOMPATIBLE);
+
+    constructor() {
+        // The editor follows the state of the sandbox: it loads the policies when the sandbox settles, and drops the unsaved changes when it is turned off.
+        effect(() => {
+            const exerciseId = this.exerciseId();
+            const status = this.status();
+            untracked(() => this.onStatus(exerciseId, status));
+        });
+        // Check the unsaved changes against the version they are committed with a moment after the last change, so the banner warns before the review.
+        effect(() => {
+            const change = this.buildChange();
+            const valid = this.problems().length === 0;
+            untracked(() => this.scheduleVersionCheck(change, valid));
+        });
+        this.destroyRef.onDestroy(() => {
+            clearTimeout(this.versionCheckTimer);
+            this.versionCheckSubscription?.unsubscribe();
+        });
+    }
+
+    /** The changes a commit makes. */
+    private buildChange(commitMessage?: string): SecurityPolicyChange {
+        const entries: SecurityPolicyChangeEntry[] = this.policies().flatMap((policy) =>
+            policy.working && (this.summaries().get(policy.id)?.total ?? 0) > 0
+                ? [
+                      {
+                          previousPolicyPath: policy.file?.policyPath,
+                          document: cloneWith(policy.working, { policyPath: this.paths().get(policy.id) ?? '' }),
+                          assignedTests: [...policy.tests],
+                      },
+                  ]
+                : [],
+        );
+        return {
+            baseCommitHash: this.editor()?.baseCommitHash,
+            commitMessage,
+            frameworkVersion: this.stagedVersion(),
+            policies: entries,
+            removedPolicyPaths: this.deletedPolicies().map((policy) => policy.file?.policyPath ?? ''),
+        };
+    }
+
+    private onStatus(exerciseId: number, status: SecurityActivationStatus): void {
+        const previous = this.lastStatus;
+        this.lastStatus = status;
+        if (status !== SecurityActivationStatus.CONFIGURED && status !== SecurityActivationStatus.INACTIVE) {
+            return;
+        }
+        if (status === SecurityActivationStatus.INACTIVE) {
+            this.deletedPolicies.set([]);
+            this.stagedVersion.set(undefined);
+        }
+        if (previous !== status) {
+            if (status === SecurityActivationStatus.CONFIGURED && this.editor() && this.totalChanges() > 0) {
+                this.reload();
+            } else {
+                this.load(exerciseId);
+            }
+        }
+    }
+
+    /** Loads the policies and replaces every unsaved change. */
+    private load(exerciseId: number): void {
+        this.loading.set(true);
+        this.loadFailed.set(false);
+        this.securityService.getPolicies(exerciseId).subscribe({
+            next: (editor) => {
+                this.applyEditor(editor);
+                this.loading.set(false);
+            },
+            error: () => {
+                this.loading.set(false);
+                this.loadFailed.set(true);
+            },
+        });
+    }
+
+    protected retryLoad(): void {
+        this.load(this.exerciseId());
+    }
+
+    private applyEditor(editor: SecurityPolicyEditor): void {
+        this.editor.set(editor);
+        this.policies.set((editor.policies ?? []).map(editorPolicyOf));
+        this.deletedPolicies.set([]);
+        this.stagedVersion.set(undefined);
+    }
+
+    /** Loads the policies again and keeps the unsaved changes: each changed policy is rebased onto its new committed version; new policies stay. */
+    protected reload(announce = false): void {
+        const previous = this.policies();
+        const deleted = this.deletedPolicies();
+        this.loading.set(true);
+        this.securityService.getPolicies(this.exerciseId()).subscribe({
+            next: (editor) => {
+                this.editor.set(editor);
+                const files = editor.policies ?? [];
+                const reloaded = files
+                    .filter((file) => !deleted.some((policy) => policy.file?.policyPath === file.policyPath))
+                    .map((file) => {
+                        const old = previous.find((candidate) => candidate.file?.policyPath === file.policyPath);
+                        return old && (this.summaries().get(old.id)?.total ?? 0) > 0 ? rebasePolicy(old, file) : editorPolicyOf(file);
+                    });
+                const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
+                const added = previous
+                    .filter((policy) => isNewPolicy(policy))
+                    .map((policy) => (policy.working ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) }) : policy));
+                this.policies.set([...reloaded, ...added]);
+                this.deletedPolicies.set(deleted.filter((policy) => files.some((file) => file.policyPath === policy.file?.policyPath)));
+                if (this.stagedVersion() === editor.frameworkVersion) {
+                    this.stagedVersion.set(undefined);
+                }
+                if (announce) {
+                    this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.reloaded`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
+                }
+                this.loading.set(false);
+            },
+            error: () => this.loading.set(false),
+        });
+    }
+
+    protected onToggleRequested(on: boolean): void {
+        this.pendingToggle.set(on);
+        this.dialogMode.set(on ? 'activate' : 'deactivate');
+        this.dialogOpen.set(true);
+    }
+
+    protected onScanRequested(on: boolean): void {
+        this.dialogMode.set(on ? 'scanOn' : 'scanOff');
+        this.dialogOpen.set(true);
+    }
+
+    protected onDialogConfirmed(version: string | undefined): void {
+        this.pendingToggle.set(undefined);
+        switch (this.dialogMode()) {
+            case 'activate':
+                if (version) {
+                    this.activateRequested.emit(version);
+                }
+                break;
+            case 'deactivate':
+                this.discard(false);
+                this.deactivateRequested.emit();
+                break;
+            case 'scanOn':
+                this.commitScanning(true);
+                break;
+            case 'scanOff':
+                this.commitScanning(false);
+                break;
+            default:
+                break;
+        }
+    }
+
+    protected onDialogCancelled(): void {
+        this.pendingToggle.set(undefined);
+    }
+
+    protected onVersionChange(version: string): void {
+        this.stagedVersion.set(version === this.pinnedVersion() ? undefined : version);
+    }
+
+    /** Commits only the language configuration of the committed policies, so the unsaved changes stay unsaved. */
+    private commitScanning(on: boolean): void {
+        const policies: SecurityPolicyChangeEntry[] = this.policies().flatMap((policy) =>
+            policy.base && policy.file
+                ? [
+                      {
+                          previousPolicyPath: policy.file.policyPath,
+                          document: cloneWith(policy.base, {
+                              languageConfiguration: (policy.base.languageConfiguration ?? '').replace(ANALYSIS_AND_WEAVING, on ? SCANNING : NOT_SCANNING),
+                          }),
+                          assignedTests: [...policy.baseTests],
+                      },
+                  ]
+                : [],
+        );
+        const commitMessage = this.translateService.instant(`${PREFIX}.${on ? 'scanOn' : 'scanOff'}.commitMessage`);
+        this.runCommit({ baseCommitHash: this.editor()?.baseCommitHash, commitMessage, policies, removedPolicyPaths: [] }, true, on ? 'scanOn' : 'scanOff');
+    }
+
+    protected onPolicyChange(updated: EditorPolicy): void {
+        this.policies.update((policies) => policies.map((existing) => (existing.id === updated.id ? updated : existing)));
+        this.clearSettledBanner();
+    }
+
+    protected addPolicy(): void {
+        const template = this.policies().find((policy) => policy.base)?.base;
+        let number = this.policies().length + 1;
+        while (this.policies().some((policy) => policy.name === this.policyName(number))) {
+            number++;
+        }
+        this.newPolicyCounter++;
+        const policy: EditorPolicy = {
+            id: `new-${this.newPolicyCounter}`,
+            name: this.policyName(number),
+            working: newPolicyDocument(template, ''),
+            baseTests: [],
+            tests: [],
+            baseExtraClasses: [],
+            extraClasses: [],
+        };
+        this.policies.update((policies) => [...policies, policy]);
+        this.sectionCollapsed.set(false);
+    }
+
+    private policyName(number: number): string {
+        return this.translateService.instant(`${PREFIX}.policy.defaultName`, { number });
+    }
+
+    protected askDeletePolicy(policy: EditorPolicy): void {
+        this.deletingPolicyId.set(policy.id);
+        this.deleteOpen.set(true);
+    }
+
+    protected deletePolicy(): void {
+        const policy = this.deletingPolicy();
+        if (!policy) {
+            return;
+        }
+        this.policies.update((policies) => policies.filter((candidate) => candidate.id !== policy.id));
+        if (!isNewPolicy(policy)) {
+            this.deletedPolicies.update((deleted) => [...deleted, policy]);
+        }
+        this.deletingPolicyId.set(undefined);
+    }
+
+    readonly deleteHeader: SecurityTranslatable = { key: `${PREFIX}.deletePolicy.title` };
+    readonly deleteQuestion = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.deletePolicy.question`, params: { policy: this.deletingPolicy()?.name ?? '' } }));
+    readonly deleteWarning = computed<SecurityTranslatable>(() => {
+        const policy = this.deletingPolicy();
+        if (!policy || isNewPolicy(policy)) {
+            return { key: `${PREFIX}.deletePolicy.neverCommitted` };
+        }
+        return { key: `${PREFIX}.deletePolicy.committed`, params: { file: fileNameOf(policy.file?.policyPath ?? ''), count: policy.baseTests.length } };
+    });
+
+    /** The label of the policy capturing each test of the other policies. */
+    protected otherTests(policyId: string): Map<string, string> {
+        const tests = new Map<string, string>();
+        this.testsByPolicy()
+            .filter((policy) => policy.id !== policyId)
+            .forEach((policy) => policy.tests.forEach((entry) => tests.set(entry, policy.label)));
+        return tests;
+    }
+
+    protected requestStructure(): void {
+        if (this.structureRequested) {
+            return;
+        }
+        this.structureRequested = true;
+        this.securityService.getTestStructure(this.exerciseId()).subscribe({
+            next: (structure) => this.structure.set(structure),
+            error: () => {
+                this.structureRequested = false;
+                this.structure.set({ testClasses: [] });
+            },
+        });
+    }
+
+    protected requestTemplateFiles(): void {
+        if (this.templateFilesRequested) {
+            return;
+        }
+        this.templateFilesRequested = true;
+        this.securityService.getTemplateFiles(this.exerciseId()).subscribe({
+            next: (files) => {
+                this.templateFiles.set(files.paths ?? []);
+                this.templateFilesTruncated.set(!!files.truncated);
+            },
+            error: () => {
+                this.templateFilesRequested = false;
+                this.templateFiles.set([]);
+            },
+        });
+    }
+
+    private scheduleVersionCheck(change: SecurityPolicyChange, valid: boolean): void {
+        clearTimeout(this.versionCheckTimer);
+        this.versionCheckSubscription?.unsubscribe();
+        if ((!change.policies.length && !change.frameworkVersion) || !valid) {
+            this.versionCheck.set(undefined);
+            return;
+        }
+        this.versionCheckTimer = setTimeout(() => {
+            this.versionCheckSubscription = this.securityService.previewPolicies(this.exerciseId(), change).subscribe({
+                next: (preview) => this.versionCheck.set(preview),
+                // A rejected preview, e.g. a value Ares never accepts, shows in the review; the banner only reports the version.
+                error: () => this.versionCheck.set(undefined),
+            });
+        }, VERSION_CHECK_DELAY_MS);
+    }
+
+    protected openReview(): void {
+        if (!this.totalChanges()) {
+            return;
+        }
+        this.reviewPreview.set(undefined);
+        this.reviewOpen.set(true);
+        if (this.problems().length) {
+            // The problems show in the review; the server would refuse the preview of an incomplete change anyway.
+            this.reviewPreview.set({ verdict: SecurityVersionCompatibilityVerdict.UNVERIFIED, files: [], frameworkVersion: this.shownVersion() });
+            return;
+        }
+        this.securityService.previewPolicies(this.exerciseId(), this.buildChange()).subscribe({
+            next: (preview) => this.reviewPreview.set(preview),
+            error: (error: HttpErrorResponse) => {
+                this.reviewOpen.set(false);
+                this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: this.defaultCommitMessage() });
+            },
+        });
+    }
+
+    protected commit(commitMessage: string): void {
+        this.runCommit(this.buildChange(commitMessage), false, undefined);
+    }
+
+    /** Commits a change. A commit of the unsaved changes replaces them with the new commit; a commit of dependency scanning keeps them on top of it. */
+    private runCommit(change: SecurityPolicyChange, keepUnsaved: boolean, scan: 'scanOn' | 'scanOff' | undefined): void {
+        if (this.isCommitting()) {
+            return;
+        }
+        this.banner.set({ kind: 'committing' });
+        this.securityService.commitPolicies(this.exerciseId(), change).subscribe({
+            next: (result) => {
+                this.reviewOpen.set(false);
+                const hash = (result.editor.lastCommit?.hash ?? result.editor.baseCommitHash ?? '').substring(0, 7);
+                this.configChange.emit(result.config);
+                this.versionCheck.set(undefined);
+                if (keepUnsaved) {
+                    this.reload();
+                } else {
+                    this.applyEditor(result.editor);
+                }
+                this.banner.set({
+                    kind: 'committed',
+                    titleKey: scan ? `${PREFIX}.${scan}.committedTitle` : `${PREFIX}.banner.committed`,
+                    textKey: scan ? `${PREFIX}.${scan}.committedText` : `${PREFIX}.banner.committedText`,
+                    hash,
+                });
+            },
+            error: (error: HttpErrorResponse) => {
+                this.reviewOpen.set(false);
+                if (error.status === 409) {
+                    this.banner.set({ kind: 'conflict' });
+                    // Name who changed the policies; the unsaved changes stay until the instructor reloads.
+                    this.securityService.getPolicies(this.exerciseId()).subscribe({
+                        next: (latest) => this.banner.set({ kind: 'conflict', authorName: latest.lastCommit?.authorName, hash: latest.lastCommit?.hash.substring(0, 7) }),
+                        error: () => undefined,
+                    });
+                } else {
+                    this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: change.commitMessage ?? this.defaultCommitMessage() });
+                }
+            },
+        });
+    }
+
+    protected retryCommit(): void {
+        const banner = this.banner();
+        if (banner?.kind === 'failed') {
+            this.commit(banner.commitMessage);
+        }
+    }
+
+    /** Drops every unsaved change and returns to the committed state. */
+    protected discard(announce = true): void {
+        const editor = this.editor();
+        if (editor) {
+            this.policies.set((editor.policies ?? []).map(editorPolicyOf));
+        }
+        this.deletedPolicies.set([]);
+        this.stagedVersion.set(undefined);
+        this.banner.set(announce ? { kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.discarded`) } : undefined);
+    }
+
+    readonly discardHeader: SecurityTranslatable = { key: `${PREFIX}.discard.title` };
+    readonly discardQuestion = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.discard.question`, params: { count: this.totalChanges() } }));
+    readonly discardWarning = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.discard.warning`, params: { commit: this.shortBaseCommit() ?? '' } }));
+
+    protected openYaml(policy: EditorPolicy): void {
+        this.yamlPolicyId.set(policy.id);
+        this.yamlUnsaved.set(undefined);
+        this.importNotice.set(undefined);
+        this.yamlOpen.set(true);
+    }
+
+    /** Renders the YAML of the policy shown in the YAML dialog with its unsaved changes. */
+    protected renderYamlUnsaved(): void {
+        const policy = this.yamlPolicy();
+        if (!policy?.working) {
+            this.yamlUnsaved.set(policy?.file?.content);
+            return;
+        }
+        const path = this.paths().get(policy.id);
+        if (!path) {
+            this.importNotice.set({ severity: 'error', text: this.translateService.instant(`${PREFIX}.problem.nameRequired`) });
+            return;
+        }
+        const entry: SecurityPolicyChangeEntry = {
+            previousPolicyPath: policy.file?.policyPath,
+            document: cloneWith(policy.working, { policyPath: path }),
+            assignedTests: policy.tests,
+        };
+        this.securityService.previewPolicies(this.exerciseId(), { baseCommitHash: this.editor()?.baseCommitHash, policies: [entry], removedPolicyPaths: [] }).subscribe({
+            next: (preview) => this.yamlUnsaved.set(preview.files?.[0]?.after),
+            error: (error: HttpErrorResponse) => this.importNotice.set({ severity: 'error', text: this.errorMessage(error) }),
+        });
+    }
+
+    /** Replaces the policy shown in the YAML dialog with an imported file, as unsaved changes; the test cases stay assigned. */
+    protected importYaml(content: string): void {
+        const policy = this.yamlPolicy();
+        const path = policy ? this.paths().get(policy.id) : undefined;
+        const working = policy?.working;
+        if (!policy || !working || !path) {
+            return;
+        }
+        this.securityService.importPolicy(this.exerciseId(), path, content).subscribe({
+            next: (imported) => {
+                if (imported.document) {
+                    const document = cloneWith(imported.document, { policyPath: working.policyPath });
+                    const classes = classesOfTests(policy.tests);
+                    const extraClasses = (document.testClasses ?? []).filter((testClass) => !testClass.includes('#') && !classes.includes(testClass));
+                    this.onPolicyChange(withAssignment(cloneWith(policy, { working: document }), policy.tests, extraClasses));
+                    this.yamlUnsaved.set(undefined);
+                    this.renderYamlUnsaved();
+                    const changes = this.summaries().get(policy.id)?.total ?? 0;
+                    this.importNotice.set({ severity: 'success', text: this.translateService.instant(`${PREFIX}.yaml.imported`, { count: changes, policy: policy.name }) });
+                } else {
+                    this.importNotice.set({
+                        severity: 'error',
+                        text: this.translateService.instant(`${PREFIX}.policy.readOnlyReason.${imported.readOnlyReason ?? SecurityPolicyReadOnlyReason.UNSUPPORTED_CONTENT}`, {
+                            path,
+                            line: imported.errorLine ?? '',
+                        }),
+                    });
+                }
+            },
+            error: (error: HttpErrorResponse) => this.importNotice.set({ severity: 'error', text: this.errorMessage(error) }),
+        });
+    }
+
+    protected focusVersion(): void {
+        const select = document.getElementById('securityAdvancedVersion');
+        select?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (select?.querySelector('button, input, [tabindex]') as HTMLElement | null)?.focus();
+    }
+
+    protected dismissBanner(): void {
+        this.banner.set(undefined);
+    }
+
+    private clearSettledBanner(): void {
+        const kind = this.banner()?.kind;
+        if (kind === 'committed' || kind === 'failed' || kind === 'info') {
+            this.banner.set(undefined);
+        }
+    }
+
+    /** The message of a refused request: the server's translated explanation, or a generic one. */
+    private errorMessage(error: HttpErrorResponse): string {
+        const body = error.error as { title?: string; detail?: string; message?: string; params?: Record<string, unknown> } | undefined;
+        if (typeof body?.message === 'string' && body.message.startsWith('error.')) {
+            const params = typeof body.params === 'object' && body.params !== null ? body.params : undefined;
+            const translated: string = this.translateService.instant(body.message, params);
+            if (!translated.startsWith(translationNotFoundMessage)) {
+                return translated;
+            }
+        }
+        return body?.title ?? body?.detail ?? this.translateService.instant(`${PREFIX}.banner.failedGeneric`);
+    }
+}

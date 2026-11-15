@@ -1,0 +1,105 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+import { SecurityTestBehavior } from 'app/programming/shared/entities/security-policy.model';
+import { SecurityTestBehaviourComponent } from 'app/programming/manage/update/update-components/security/policies/security-test-behaviour.component';
+
+type Handlers = {
+    onTabChange(value: string): void;
+    setReplaceExceptions(enabled: boolean): void;
+    setFailureMessage(message: string): void;
+    setHideTests(hidden: boolean): void;
+    onHiddenDateChange(field: 'hiddenFrom' | 'hiddenUntil', event: Event): void;
+    setStrictTimeout(enabled: boolean): void;
+    setTimeoutField(field: 'timeout' | 'terminationGrace', value: string | number): void;
+    setTimeoutUnit(field: 'timeUnit' | 'terminationGraceUnit', unit: unknown): void;
+    setMirrorOutput(mirrored: boolean): void;
+    setMaximumCharacters(value: string | number): void;
+};
+
+describe('SecurityTestBehaviourComponent', () => {
+    let fixture: ComponentFixture<SecurityTestBehaviourComponent>;
+    let comp: SecurityTestBehaviourComponent;
+    let handlers: Handlers;
+    let emitted: (SecurityTestBehavior | undefined)[];
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] });
+        fixture = TestBed.createComponent(SecurityTestBehaviourComponent);
+        comp = fixture.componentInstance;
+        handlers = comp as unknown as Handlers;
+        emitted = [];
+        comp.behaviorChange.subscribe((behavior) => {
+            emitted.push(behavior);
+            fixture.componentRef.setInput('behavior', behavior);
+        });
+        fixture.detectChanges();
+    });
+
+    it('renders every tab', () => {
+        for (const tab of ['securityFeedback', 'standardFeedback', 'visibility', 'timeout', 'output']) {
+            handlers.onTabChange(tab);
+            fixture.detectChanges();
+            expect(comp.activeTab()).toBe(tab);
+        }
+        expect(fixture.nativeElement.querySelector('[data-testid="security-behaviour-mirror"]')).not.toBeNull();
+    });
+
+    it('replaces exceptions with a message and drops the section when switched off again', () => {
+        handlers.setReplaceExceptions(true);
+        handlers.setFailureMessage('Test failed.');
+        expect(emitted.at(-1)).toEqual({ privilegedExceptions: { enabled: true, failureMessage: 'Test failed.' } });
+
+        handlers.setReplaceExceptions(false);
+        expect(emitted.at(-1)).toBeUndefined();
+    });
+
+    it('restores a section the committed policy switches off, so switching on and off is no change', () => {
+        const base: SecurityTestBehavior = { outputMirroring: { mirrored: false } };
+        fixture.componentRef.setInput('baseBehavior', base);
+        fixture.componentRef.setInput('behavior', base);
+
+        handlers.setMirrorOutput(true);
+        expect(emitted.at(-1)).toEqual({ outputMirroring: { mirrored: true, maximumCharacters: 100_000_000 } });
+        expect(comp.isUncommitted('output')).toBe(true);
+        handlers.setMaximumCharacters('1_000');
+        expect(emitted.at(-1)?.outputMirroring?.maximumCharacters).toBe(1000);
+        handlers.setMaximumCharacters('-5');
+        expect(emitted.at(-1)?.outputMirroring?.maximumCharacters).toBe(1000);
+
+        handlers.setMirrorOutput(false);
+        expect(emitted.at(-1)).toEqual(base);
+        expect(comp.isUncommitted('output')).toBe(false);
+    });
+
+    it('edits a strict timeout and ignores invalid values', () => {
+        handlers.setStrictTimeout(true);
+        expect(emitted.at(-1)?.strictTimeout).toEqual({ timeout: 5, timeUnit: 'SECONDS', terminationGrace: 1, terminationGraceUnit: 'SECONDS' });
+
+        handlers.setTimeoutField('timeout', '0');
+        handlers.setTimeoutField('timeout', 3);
+        handlers.setTimeoutField('terminationGrace', '');
+        handlers.setTimeoutUnit('timeUnit', 'MINUTES');
+
+        expect(emitted.at(-1)?.strictTimeout).toEqual({ timeout: 3, timeUnit: 'MINUTES', terminationGraceUnit: 'SECONDS' });
+        handlers.setStrictTimeout(false);
+        expect(emitted.at(-1)).toBeUndefined();
+    });
+
+    it('hides tests for a period and flags a period that ends before it starts', () => {
+        handlers.setHideTests(true);
+        expect(emitted.at(-1)?.hiddenTests?.hiddenFrom).toBeDefined();
+        expect(emitted.at(-1)?.hiddenTests?.hiddenUntil).toBeDefined();
+        expect(comp.hiddenPeriodInvalid()).toBe(false);
+
+        handlers.onHiddenDateChange('hiddenFrom', { target: { value: '2026-12-24T10:00' } } as unknown as Event);
+        handlers.onHiddenDateChange('hiddenUntil', { target: { value: '2026-12-24T09:00' } } as unknown as Event);
+
+        expect(comp.hiddenFromInput()).toBe('2026-12-24T10:00');
+        expect(comp.hiddenPeriodInvalid()).toBe(true);
+        handlers.setHideTests(false);
+        expect(emitted.at(-1)).toBeUndefined();
+    });
+});

@@ -389,6 +389,66 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.showStagedDeactivationHint()).toBe(true);
     });
 
+    describe('Advanced mode', () => {
+        type AdvancedHandlers = { onAdvancedActivate(version: string): void; onAdvancedDeactivate(): void; onAdvancedCommitted(config: SecurityFrameworkConfig): void };
+
+        function initAdvanced(initial: SecurityFrameworkConfig): AdvancedHandlers {
+            fixture.componentRef.setInput('advancedMode', true);
+            initEdit(initial);
+            return comp as unknown as AdvancedHandlers;
+        }
+
+        it('shows the Advanced view for an exercise whose sandbox is on or off', () => {
+            initAdvanced(configuredConfig());
+            expect(comp.showAdvancedView()).toBe(true);
+
+            fixture.componentRef.setInput('advancedMode', false);
+            expect(comp.showAdvancedView()).toBe(false);
+        });
+
+        it('keeps this card for the states that need a repair, and when creating an exercise', () => {
+            initAdvanced(misconfiguredConfig());
+            expect(comp.showAdvancedView()).toBe(false);
+
+            createComponent();
+            fixture.componentRef.setInput('advancedMode', true);
+            initCreate();
+            expect(comp.showAdvancedView()).toBe(false);
+        });
+
+        it('turns the sandbox on with the version of the Advanced view and off again', () => {
+            const handlers = initAdvanced(inactiveConfig());
+            service.activate.mockReturnValue(of(configuredConfig('3.3.0')));
+            service.deactivate.mockReturnValue(of(inactiveConfig()));
+
+            handlers.onAdvancedActivate('3.3.0');
+            expect(service.activate).toHaveBeenCalledWith(42, '3.3.0');
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+            handlers.onAdvancedDeactivate();
+            expect(service.deactivate).toHaveBeenCalledWith(42);
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        });
+
+        it('takes the state a commit of the Advanced view returns', () => {
+            const handlers = initAdvanced(configuredConfig());
+
+            handlers.onAdvancedCommitted(configuredConfig('3.3.0'));
+
+            expect(comp.config().frameworkVersion).toBe('3.3.0');
+        });
+
+        it('links the tests repository of a course exercise only', () => {
+            initAdvanced(configuredConfig());
+            expect(comp.testsRepositoryLink()).toBeUndefined();
+
+            const exercise = javaExercise(42);
+            exercise.course = { id: 7 };
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            expect(comp.testsRepositoryLink()).toEqual(['/course-management', 7, 'programming-exercises', 42, 'repository', 'TESTS']);
+        });
+    });
+
     it('edit mode activation goes GENERATING then CONFIGURED', () => {
         initEdit(inactiveConfig());
         const activate$ = new Subject<SecurityFrameworkConfig>();
