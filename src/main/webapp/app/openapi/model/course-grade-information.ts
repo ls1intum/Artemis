@@ -8,10 +8,10 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { CourseGradeInformationStudent } from './course-grade-information-student';
 import type { CourseGradeScore } from './course-grade-score';
-import type { Student } from './student';
 
 export interface CourseGradeInformation {
     gradeScores?: Array<CourseGradeScore>;
-    students?: Array<Student>;
+    students?: Array<CourseGradeInformationStudent>;
 }

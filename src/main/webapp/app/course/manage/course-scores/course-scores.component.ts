@@ -54,7 +54,10 @@ import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
-import { CourseManagementService, GradeScoreDTO, StudentGradeDTO } from 'app/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ParticipantScoreApi } from 'app/openapi/api/participant-score-api';
+import type { CourseGradeInformationStudent } from 'app/openapi/model/course-grade-information-student';
+import type { CourseGradeScore } from 'app/openapi/model/course-grade-score';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -99,6 +102,7 @@ export class CourseScoresComponent implements OnInit {
     private readonly localeConversionService = inject(LocaleConversionService);
     private readonly gradingService = inject(GradingService);
     private readonly gradingScaleApi = inject(GradingScaleApi);
+    private readonly participantScoreApi = inject(ParticipantScoreApi);
     private readonly plagiarismCasesService = inject(PlagiarismCasesService);
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
@@ -106,8 +110,8 @@ export class CourseScoresComponent implements OnInit {
     // State signals
     readonly plagiarismEnabled = signal(false);
     readonly course = signal<Course | undefined>(undefined);
-    readonly gradeScores = signal<GradeScoreDTO[]>([]);
-    readonly students = signal<StudentGradeDTO[]>([]);
+    readonly gradeScores = signal<CourseGradeScore[]>([]);
+    readonly students = signal<CourseGradeInformationStudent[]>([]);
     readonly includedExercises = signal<Exercise[]>([]);
     readonly studentStatistics = signal<CourseScoresStudentStatistics[]>([]);
     readonly exportReady = signal(false);
@@ -282,7 +286,7 @@ export class CourseScoresComponent implements OnInit {
      * @param courseId Id of the course
      */
     private async calculateCourseStatistics(courseId: number) {
-        const findGradeScoresObservable = this.courseManagementService.findGradeScores(courseId);
+        const findGradeScoresObservable = this.participantScoreApi.getGradeScoresForCourse(courseId);
         // alternative course scores calculation using participant scores table
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingScaleApi.getGradingScaleForCourse(courseId).pipe(catchError(() => of(undefined)));

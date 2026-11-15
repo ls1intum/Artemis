@@ -89,6 +89,7 @@ model/course-competency.ts
 model/course-for-bonus.ts
 model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
+model/course-grade-information-student.ts
 model/course-grade-information.ts
 model/course-grade-score.ts
 model/course-with-id.ts

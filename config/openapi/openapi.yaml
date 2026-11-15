@@ -5616,7 +5616,7 @@ components:
         type:
           type: string
           enum: [text, programming, modeling, file-upload, quiz]
-      required: [type]
+      required: [exerciseId, participationId, score, type, userId]
     InferredCompetency:
       type: object
       properties:
@@ -5665,7 +5665,7 @@ components:
           items: {$ref: '#/components/schemas/CourseGradeScore'}
         students:
           type: array
-          items: {$ref: '#/components/schemas/Student'}
+          items: {$ref: '#/components/schemas/CourseGradeInformationStudent'}
     PointCounter:
       type: object
       properties:
@@ -7306,6 +7306,17 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    CourseGradeInformationStudent:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        name: {type: string}
+        registrationNumber: {type: string}
+        email: {type: string}
+      required: [id, name]
     CodeGenerationJobStart:
       type: object
       properties:

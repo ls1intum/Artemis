@@ -4,7 +4,6 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared-ui/export/modal/export-modal.component';
-import { StudentGradeDTO } from 'app/course/manage/services/course-management.service';
 
 describe('The CsvExportRowBuilder', () => {
     let csvRow: ExportRowBuilder;
@@ -98,11 +97,7 @@ describe('The CsvExportRowBuilder', () => {
     });
 
     it('should trim all user values when storing them', () => {
-        const user = new StudentGradeDTO();
-        user.name = 'Testuser ';
-        user.login = ' login ';
-        user.email = 'mail@example.com ';
-        user.registrationNumber = ' 123456789  ';
+        const user = { id: 1, name: 'Testuser ', login: ' login ', email: 'mail@example.com ', registrationNumber: ' 123456789  ' };
         const student = new CourseScoresStudentStatistics(user);
 
         csvRow.setUserInformation(student.student.name, student.student.login, student.student.email, student.student.registrationNumber);
@@ -115,7 +110,7 @@ describe('The CsvExportRowBuilder', () => {
     });
 
     it('should allow for empty student information', () => {
-        const user = new StudentGradeDTO();
+        const user = { id: 1, name: '' };
         const student = new CourseScoresStudentStatistics(user);
 
         csvRow.setUserInformation(student.student.name, student.student.login, student.student.email, student.student.registrationNumber);

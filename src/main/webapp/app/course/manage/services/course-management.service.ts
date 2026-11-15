@@ -66,32 +66,6 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class CourseGradeInformationDTO {
-    gradeScores!: GradeScoreDTO[];
-    students!: StudentGradeDTO[];
-}
-
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class StudentGradeDTO {
-    id!: number;
-    login!: string;
-    firstName!: string;
-    lastName!: string;
-    name!: string;
-    registrationNumber?: string;
-    email!: string;
-}
-
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class GradeScoreDTO {
-    participationId!: number;
-    userId!: number;
-    exerciseId!: number;
-    score!: number;
-    presentationScore!: number;
-}
-
 @Service()
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
@@ -432,14 +406,6 @@ export class CourseManagementService implements OnDestroy {
 
         // Save the per-variant-group achieved points (server-computed: capped and plagiarism-adjusted).
         this.scoresStorageService.setStoredAchievedPointsPerVariantGroup(courseId, scores.achievedPointsPerVariantGroup);
-    }
-
-    /**
-     * finds all participants of the course corresponding to the given unique identifier
-     * @param courseId - the id of the course
-     */
-    findGradeScores(courseId: number): Observable<CourseGradeInformationDTO> {
-        return this.http.get<CourseGradeInformationDTO>(`api/assessment/courses/${courseId}/grade-scores`);
     }
 
     /**

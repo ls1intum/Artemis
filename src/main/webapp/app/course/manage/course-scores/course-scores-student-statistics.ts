@@ -1,11 +1,12 @@
-import { GradeScoreDTO, StudentGradeDTO } from 'app/course/manage/services/course-management.service';
+import type { CourseGradeInformationStudent } from 'app/openapi/model/course-grade-information-student';
+import type { CourseGradeScore } from 'app/openapi/model/course-grade-score';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
 
 export class CourseScoresStudentStatistics {
-    student: StudentGradeDTO;
-    gradeScores: GradeScoreDTO[] = [];
+    student: CourseGradeInformationStudent;
+    gradeScores: CourseGradeScore[] = [];
     presentationScore = 0;
     presentationPoints = 0;
     numberOfParticipatedExercises = 0;
@@ -28,7 +29,7 @@ export class CourseScoresStudentStatistics {
     pointsPerExerciseType = new ExerciseTypeStatisticsMap();
     gradeStep?: GradeStep;
 
-    constructor(student: StudentGradeDTO) {
+    constructor(student: CourseGradeInformationStudent) {
         this.student = student;
         // initialize with 0 or empty string
         for (const exerciseType of Object.values(ExerciseType)) {

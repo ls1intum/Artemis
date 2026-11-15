@@ -10,10 +10,10 @@
 
 
 export interface CourseGradeScore {
-    participationId?: number;
-    userId?: number;
-    exerciseId?: number;
-    score?: number;
+    participationId: number;
+    userId: number;
+    exerciseId: number;
+    score: number;
     rated?: boolean;
     presentationScore?: number;
     type: CourseGradeScoreTypeEnum;
