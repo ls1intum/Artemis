@@ -33,7 +33,8 @@ import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import { toExampleSubmissionRequest } from 'app/assessment/shared/util/example-submission-request.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 type ExampleSubmissionResponseType = EntityResponseType;
@@ -60,7 +61,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private exampleSubmissionService = inject(ExampleSubmissionService);
-    private tutorParticipationService = inject(TutorParticipationService);
+    private tutorParticipationApi = inject(TutorParticipationApi);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private exerciseService = inject(ExerciseService);
 
@@ -380,7 +381,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             return;
         }
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationApi, this.alertService, this);
         command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
     }
 
@@ -444,7 +445,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
      */
     readAndUnderstood(): void {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
+        this.tutorParticipationApi.assessExampleSubmissionForTutorParticipation(this.exerciseId, toExampleSubmissionRequest(this.exampleSubmission)).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             void this.back();
         });

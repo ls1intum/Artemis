@@ -3,7 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import { toExampleSubmissionRequest } from 'app/assessment/shared/util/example-submission-request.util';
 
 export interface FeedbackMarker {
     markWrongFeedback(errors: FeedbackCorrectionError[]): void;
@@ -12,13 +13,13 @@ export interface FeedbackMarker {
 
 export class ExampleSubmissionAssessCommand {
     constructor(
-        private tutorParticipationService: TutorParticipationService,
+        private tutorParticipationApi: TutorParticipationApi,
         private alertService: AlertService,
         private feedbackMarker: FeedbackMarker,
     ) {}
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, exerciseId).subscribe({
+        this.tutorParticipationApi.assessExampleSubmissionForTutorParticipation(exerciseId, toExampleSubmissionRequest(exampleSubmission)).subscribe({
             next: () => this.onSuccess(),
             error: (error: HttpErrorResponse) => this.onFailure(error),
         });

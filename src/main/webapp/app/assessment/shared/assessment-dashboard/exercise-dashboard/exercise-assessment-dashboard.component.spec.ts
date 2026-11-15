@@ -16,7 +16,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
@@ -62,7 +62,8 @@ import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboa
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/language-table-cell/language-table-cell.component';
@@ -97,7 +98,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseServiceGetForTutorsStub: MockInstance;
     let exerciseServiceGetStatsForTutorsStub: MockInstance;
 
-    let tutorParticipationService: TutorParticipationService;
+    let tutorParticipationApi: TutorParticipationApi;
 
     let accountService: AccountService;
 
@@ -248,7 +249,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: ProfileService, useClass: MockProfileService },
         MockProvider(ExerciseService),
         MockProvider(AlertService),
-        MockProvider(TutorParticipationService),
+        MockProvider(TutorParticipationApi),
         MockProvider(ArtemisMarkdownService),
         MockProvider(ComplaintService),
         MockProvider(ArtemisDatePipe),
@@ -280,7 +281,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         vi.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
         const router = fixture.debugElement.injector.get(Router);
         navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-        tutorParticipationService = TestBed.inject(TutorParticipationService);
+        tutorParticipationApi = TestBed.inject(TutorParticipationApi);
         exerciseServiceGetForTutorsStub = vi.spyOn(exerciseService, 'getForTutors');
         exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
@@ -564,17 +565,18 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
-        const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
-        const dto: TutorParticipationDTO = {
+        const initStub = vi.spyOn(tutorParticipationApi, 'initTutorParticipation');
+        const dto: TutorParticipation = {
             id: 1,
             exerciseId: comp.exerciseId(),
             tutorId: 2,
-            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            status: 'REVIEWED_INSTRUCTIONS',
+            trainedExampleSubmissions: [{ id: 5, usedForTutorial: false }],
         };
 
-        tutorParticipationServiceCreateStub.mockImplementation(() => {
+        initStub.mockImplementation(() => {
             expect(comp.isLoading()).toBe(true);
-            return of(new HttpResponse({ body: dto, headers: new HttpHeaders() }));
+            return of(dto);
         });
 
         expect(comp.tutorParticipation()).toBeUndefined();
@@ -582,12 +584,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.readInstruction();
 
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId());
+        expect(initStub).toHaveBeenCalledTimes(1);
+        expect(initStub).toHaveBeenCalledWith(comp.exerciseId());
 
         expect(comp.isLoading()).toBe(false);
 
-        expect(comp.tutorParticipation()).toEqual(dto);
+        expect(comp.tutorParticipation()).toEqual({
+            id: 1,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            trainedExampleSubmissions: [{ id: 5, usedForTutorial: false, assessmentExplanation: undefined }],
+        });
         expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
     });
 

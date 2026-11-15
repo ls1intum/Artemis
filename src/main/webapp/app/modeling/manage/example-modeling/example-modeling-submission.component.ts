@@ -33,7 +33,8 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import { toExampleSubmissionRequest } from 'app/assessment/shared/util/example-submission-request.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
@@ -81,7 +82,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private exerciseService = inject(ExerciseService);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
-    private tutorParticipationService = inject(TutorParticipationService);
+    private tutorParticipationApi = inject(TutorParticipationApi);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
@@ -472,7 +473,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.assessments();
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationApi, this.alertService, this);
         command.assessExampleSubmission(exampleSubmission, this.exerciseId);
     }
 
@@ -525,7 +526,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission(), this.exerciseId).subscribe(() => {
+        this.tutorParticipationApi.assessExampleSubmissionForTutorParticipation(this.exerciseId, toExampleSubmissionRequest(this.exampleSubmission())).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             void this.back();
         });

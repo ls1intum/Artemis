@@ -31,8 +31,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -669,8 +669,8 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should check assessment', () => {
-        const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        const assessExampleSubmissionSpy = vi.spyOn(tutorParticipationService, 'assessExampleSubmission');
+        const tutorParticipationApi = TestBed.inject(TutorParticipationApi);
+        const assessExampleSubmissionSpy = vi.spyOn(tutorParticipationApi, 'assessExampleSubmissionForTutorParticipation');
         const exerciseId = 5;
         comp.exampleSubmission.set(exampleSubmission);
         comp.exerciseId = exerciseId;
@@ -679,10 +679,10 @@ describe('Example Modeling Submission Component', () => {
 
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
-        const [sentExampleSubmission, sentExerciseId] = assessExampleSubmissionSpy.mock.calls[0];
+        const [sentExerciseId, sentExampleSubmission] = assessExampleSubmissionSpy.mock.calls[0];
         expect(sentExerciseId).toBe(exerciseId);
         expect(sentExampleSubmission.submission!.id).toBe(exampleSubmission.submission!.id);
-        expect(sentExampleSubmission.submission!.latestResult).toBeDefined();
+        expect(sentExampleSubmission.submission!.results).toHaveLength(1);
         expect(exampleSubmission.submission!.latestResult).toBeUndefined();
     });
 
@@ -698,14 +698,9 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should read and understood', () => {
-        const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        const dto: TutorParticipationDTO = {
-            id: 1,
-            exerciseId: EXERCISE_ID,
-            tutorId: 3,
-            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
-        };
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const tutorParticipationApi = TestBed.inject(TutorParticipationApi);
+        const dto: TutorParticipation = { id: 1, exerciseId: EXERCISE_ID, tutorId: 3, status: 'REVIEWED_INSTRUCTIONS', trainedExampleSubmissions: [] };
+        vi.spyOn(tutorParticipationApi, 'assessExampleSubmissionForTutorParticipation').mockReturnValue(of(dto));
         const alertSpy = vi.spyOn(alertService, 'success');
         const routerSpy = vi.spyOn(router, 'navigate');
         comp.exercise.set(exercise);
@@ -1059,14 +1054,14 @@ describe('Example Modeling Submission Component', () => {
             generalEditor.updateFeedback(feedback);
             expect(comp.totalScore()).toBe(4);
             expect(comp.assessmentsAreValid()).toBe(true);
-            const assessSpy = vi.spyOn(TestBed.inject(TutorParticipationService), 'assessExampleSubmission');
+            const assessSpy = vi.spyOn(TestBed.inject(TutorParticipationApi), 'assessExampleSubmissionForTutorParticipation');
             comp.checkAssessment();
-            expect(assessSpy.mock.calls[0][0].submission!.results!.at(-1)!.feedbacks).toEqual([feedback]);
+            expect(assessSpy.mock.calls[0][1].submission!.results!.at(-1)!.feedbacks).toEqual([expect.objectContaining({ credits: 4 })]);
         });
 
         it('should count unreferenced feedback towards the score and the submitted assessment', async () => {
-            const tutorParticipationService = TestBed.inject(TutorParticipationService);
-            const assessSpy = vi.spyOn(tutorParticipationService, 'assessExampleSubmission');
+            const tutorParticipationApi = TestBed.inject(TutorParticipationApi);
+            const assessSpy = vi.spyOn(tutorParticipationApi, 'assessExampleSubmissionForTutorParticipation');
             await startPracticeAssessment();
 
             const tutorFeedback = { text: 'Missing association', credits: 4, type: FeedbackType.MANUAL_UNREFERENCED, reference: '1' } as Feedback;
@@ -1078,8 +1073,8 @@ describe('Example Modeling Submission Component', () => {
             comp.checkAssessment();
 
             expect(assessSpy).toHaveBeenCalledOnce();
-            const [submitted] = assessSpy.mock.calls[0];
-            expect(submitted.submission!.results!.at(-1)!.feedbacks).toEqual([tutorFeedback]);
+            const [, submitted] = assessSpy.mock.calls[0];
+            expect(submitted.submission!.results!.at(-1)!.feedbacks).toEqual([expect.objectContaining({ text: 'Missing association', credits: 4 })]);
         });
 
         it('should disable submitting while a feedback has no score', async () => {

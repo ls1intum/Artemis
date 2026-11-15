@@ -42,8 +42,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -447,8 +447,10 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
         comp.validateFeedback();
-        const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(httpResponse(null));
+        const tutorParticipationApi = TestBed.inject(TutorParticipationApi);
+        vi.spyOn(tutorParticipationApi, 'assessExampleSubmissionForTutorParticipation').mockReturnValue(
+            of({ id: 1, exerciseId: EXERCISE_ID, tutorId: 3, status: 'TRAINED', trainedExampleSubmissions: [] }),
+        );
 
         // WHEN
         fixture.detectChanges();
@@ -458,7 +460,11 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID, 'training');
-        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalledOnce();
+        expect(tutorParticipationApi.assessExampleSubmissionForTutorParticipation).toHaveBeenCalledOnce();
+        expect(tutorParticipationApi.assessExampleSubmissionForTutorParticipation).toHaveBeenCalledWith(
+            EXERCISE_ID,
+            expect.objectContaining({ id: EXAMPLE_SUBMISSION_ID, submission: expect.objectContaining({ id: SUBMISSION_ID }) }),
+        );
     });
 
     it('should not check the assessment when it is invalid', () => {
@@ -487,7 +493,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(feedbackA.correctionStatus).toBeUndefined();
         expect(feedbackB.correctionStatus).toBeUndefined();
 
-        const tutorParticipationService = TestBed.inject(TutorParticipationService);
+        const tutorParticipationApi = TestBed.inject(TutorParticipationApi);
         const feedbackError = {
             reference: feedbackA.reference,
             type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
@@ -497,7 +503,7 @@ describe('ExampleTextSubmissionComponent', () => {
             status: 400,
         });
 
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
+        vi.spyOn(tutorParticipationApi, 'assessExampleSubmissionForTutorParticipation').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
         await comp['initializeExampleTextSubmissionComponent']();
@@ -541,14 +547,9 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should read and understood', () => {
         // GIVEN
-        const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        const dto: TutorParticipationDTO = {
-            id: 1,
-            exerciseId: EXERCISE_ID,
-            tutorId: 3,
-            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
-        };
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const tutorParticipationApi = TestBed.inject(TutorParticipationApi);
+        const dto: TutorParticipation = { id: 1, exerciseId: EXERCISE_ID, tutorId: 3, status: 'REVIEWED_INSTRUCTIONS', trainedExampleSubmissions: [] };
+        vi.spyOn(tutorParticipationApi, 'assessExampleSubmissionForTutorParticipation').mockReturnValue(of(dto));
         const alertSpy = vi.spyOn(alertService, 'success');
 
         const router = TestBed.inject(Router);
