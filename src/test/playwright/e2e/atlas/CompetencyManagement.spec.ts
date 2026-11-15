@@ -52,7 +52,8 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         await competencyManagement.goto(course!.id!);
 
         // Create competency via UI
-        await page.locator('a[href*="/competency-management/create"]').click();
+        // An empty table shows a second create link next to the one in its title bar.
+        await page.locator('a[href*="/competency-management/create"]').first().click();
         await page.getByRole('textbox', { name: 'Title' }).fill(competencyData.title);
         await setMarkdownDescription(page, competencyData.description);
 
@@ -159,7 +160,8 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await competencyManagement.goto(course!.id!);
 
         // Create prerequisite
-        await page.locator('a[href*="/prerequisite-management/create"]').click();
+        // An empty table shows a second create link next to the one in its title bar.
+        await page.locator('a[href*="/prerequisite-management/create"]').first().click();
         await page.getByRole('textbox', { name: 'Prerequisites', exact: true }).fill(prerequisiteData.title);
         await setMarkdownDescription(page, prerequisiteData.description);
 
