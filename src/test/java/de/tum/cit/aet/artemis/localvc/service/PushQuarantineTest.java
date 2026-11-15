@@ -5,6 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -198,6 +203,56 @@ class PushQuarantineTest {
     void aRepositoryThatKeepsItsObjectsElsewhereHasNoPlace() throws Exception {
         try (var inMemory = new InMemoryRepository(new DfsRepositoryDescription("memory"))) {
             assertThat(PushQuarantine.open(inMemory)).isNull();
+        }
+    }
+
+    @Test
+    void twoPushesThatSendTheSameObjectAtTheSameTimeAreBothMoved() throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try (Repository repository = createRepository()) {
+            for (int round = 0; round < 50; round++) {
+                String content = "shared blob of round " + round;
+                try (PushQuarantine first = PushQuarantine.open(repository); PushQuarantine second = PushQuarantine.open(repository)) {
+                    ObjectId id = insert(first.repository(), content);
+                    assertThat(insert(second.repository(), content)).isEqualTo(id);
+                    CountDownLatch start = new CountDownLatch(1);
+                    Future<Void> firstMove = executor.submit(() -> {
+                        start.await();
+                        first.migrate();
+                        return null;
+                    });
+                    Future<Void> secondMove = executor.submit(() -> {
+                        start.await();
+                        second.migrate();
+                        return null;
+                    });
+                    start.countDown();
+
+                    firstMove.get(30, TimeUnit.SECONDS);
+                    secondMove.get(30, TimeUnit.SECONDS);
+
+                    assertThat(repository.getObjectDatabase().has(id)).as("round %d", round).isTrue();
+                }
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void anObjectThatAppearsInTheRepositoryWhileTheMoveIsRunningIsNotAnError() throws Exception {
+        try (Repository repository = createRepository(); PushQuarantine quarantine = PushQuarantine.open(repository)) {
+            ObjectId id = insert(quarantine.repository(), "published meanwhile");
+            // the other push published the same object before this one moved it
+            String name = id.name();
+            Path target = objectsDirectory(repository).resolve(name.substring(0, 2)).resolve(name.substring(2));
+            Files.createDirectories(target.getParent());
+            FileUtils.copyFile(objectsDirectory(quarantine.repository()).resolve(name.substring(0, 2)).resolve(name.substring(2)).toFile(), target.toFile());
+
+            quarantine.migrate();
+
+            assertThat(repository.getObjectDatabase().has(id)).isTrue();
         }
     }
 }

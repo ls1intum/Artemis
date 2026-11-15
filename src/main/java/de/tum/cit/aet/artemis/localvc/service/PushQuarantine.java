@@ -119,12 +119,17 @@ public final class PushQuarantine implements AutoCloseable {
     }
 
     private static void move(Path source, Path target) throws IOException {
-        if (Files.exists(target)) {
-            // The same object or pack is stored already, which is the case when a client sends an object that the repository has
-            FileUtils.deleteQuietly(source.toFile());
-            return;
+        try {
+            FileUtils.moveFile(source.toFile(), new File(target.toString()));
         }
-        FileUtils.moveFile(source.toFile(), new File(target.toString()));
+        catch (IOException e) {
+            // The same object or pack is stored already: the repository had it, or another push published it a moment ago. Objects and packs are named by their content,
+            // so the stored one is the same. Anything else that went wrong is passed on.
+            if (!Files.exists(target)) {
+                throw e;
+            }
+            FileUtils.deleteQuietly(source.toFile());
+        }
     }
 
     /** Removes what is left of the place, which is everything if the push was rejected and nothing if it was accepted. */

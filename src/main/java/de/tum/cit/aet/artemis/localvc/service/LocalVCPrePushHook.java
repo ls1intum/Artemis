@@ -67,8 +67,10 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         examine(receivePack, commands);
-        if (receivePack instanceof QuarantinedReceivePack quarantinedReceivePack
-                && commands.stream().allMatch(command -> command.getResult() == ReceiveCommand.Result.NOT_ATTEMPTED)) {
+        // JGit passes only the commands that it did not reject itself, so these alone cannot tell: a push whose only command JGit rejected passes none. The objects are stored
+        // only for a push that has commands, all of which, also those that JGit rejected on its own, are still to be applied.
+        if (receivePack instanceof QuarantinedReceivePack quarantinedReceivePack && !commands.isEmpty()
+                && receivePack.getAllCommands().stream().allMatch(command -> command.getResult() == ReceiveCommand.Result.NOT_ATTEMPTED)) {
             try {
                 quarantinedReceivePack.storeObjects();
             }

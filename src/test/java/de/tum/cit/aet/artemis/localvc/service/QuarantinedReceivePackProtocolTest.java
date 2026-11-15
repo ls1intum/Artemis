@@ -875,6 +875,55 @@ class QuarantinedReceivePackProtocolTest {
         assertNoPlaceOfAPush();
     }
 
+    @Test
+    void twoPushesWithTheSameFileToDifferentBranchesAtTheSameTimeAreBothAccepted() throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            for (int round = 0; round < 15; round++) {
+                // both commits hold the same file, so both pushes carry the same blob
+                ObjectId first = commit(null, Entry.file("a-shared.txt", "shared content of round " + round), Entry.file("b-first.txt", "first " + round));
+                ObjectId second = commit(null, Entry.file("a-shared.txt", "shared content of round " + round), Entry.file("b-second.txt", "second " + round));
+                byte[] firstRequest = pushOf(ObjectId.zeroId(), first, Constants.R_HEADS + "first" + round, Set.of());
+                byte[] secondRequest = pushOf(ObjectId.zeroId(), second, Constants.R_HEADS + "second" + round, Set.of());
+                CountDownLatch start = new CountDownLatch(1);
+                Future<Outcome> firstPush = executor.submit(() -> {
+                    start.await();
+                    return receive(firstRequest);
+                });
+                Future<Outcome> secondPush = executor.submit(() -> {
+                    start.await();
+                    return receive(secondRequest);
+                });
+                start.countDown();
+
+                assertThat(firstPush.get(60, TimeUnit.SECONDS).accepted()).as("round %d: first push", round).isTrue();
+                assertThat(secondPush.get(60, TimeUnit.SECONDS).accepted()).as("round %d: second push", round).isTrue();
+                readEverythingReachableFrom(first);
+                readEverythingReachableFrom(second);
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+        assertNoPlaceOfAPush();
+    }
+
+    @Test
+    void aPushWhoseOldIdDoesNotMatchTheReferenceStoresNothing() throws Exception {
+        ObjectId first = commit(null, Entry.file("Main.java", "class Main {}"));
+        assertAccepted(receive(pushOf(ObjectId.zeroId(), first, DEFAULT_REF, Set.of())), first, DEFAULT_REF);
+        ObjectId second = commit(first, Entry.file("Main.java", "class Main { }"), Entry.file("New.java", "class New {}"));
+        // the client believes that the branch is at a commit that it is not at, so JGit refuses the update itself
+        ObjectId wrongOld = commit(null, Entry.file("Other.java", "class Other {}"));
+        Set<String> before = serverObjectFiles();
+
+        Outcome outcome = receive(pushOf(wrongOld, second, DEFAULT_REF, Set.of(first)));
+
+        assertThat(outcome.accepted()).isFalse();
+        assertThat(serverHas(second)).as("the objects of a push that JGit refused are not stored").isFalse();
+        assertUntouched(before, first, DEFAULT_REF);
+    }
+
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Repositories without a directory of objects
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------
