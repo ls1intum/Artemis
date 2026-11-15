@@ -92,9 +92,9 @@ GRADLE_TOOL_COORDINATES = {"checkstyle": "com.puppycrawl.tools:checkstyle", "pmd
 
 
 def _blocks(code: str, name: str) -> list[str]:
-    """The bodies of the top-level ``name { ... }`` blocks of a Gradle file, nested braces included."""
+    """The bodies of the named ``name { ... }`` blocks of a Gradle file, nested braces included."""
     bodies = []
-    for start in re.finditer(rf"(?m)^{name}\s*\{{", code):
+    for start in re.finditer(rf"(?m)^[ \t]*{name}\s*\{{", code):
         depth, position = 1, start.end()
         while depth and position < len(code):
             depth += {"{": 1, "}": -1}.get(code[position], 0)

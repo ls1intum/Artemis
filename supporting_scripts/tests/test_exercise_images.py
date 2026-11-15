@@ -265,6 +265,17 @@ class SyncCheckTest(unittest.TestCase):
             ["com.puppycrawl.tools:checkstyle 14.4.0 differs from the image (14.3.0)"],
         )
 
+    def test_indented_gradle_tool_blocks_report_version_mismatches(self):
+        for tool, coordinate in sync_check.GRADLE_TOOL_COORDINATES.items():
+            for indentation in ("    ", "\t"):
+                with self.subTest(tool=tool, indentation=indentation):
+                    template = f"{indentation}{tool} {{\n{indentation}    reports {{ xml.required = true }}\n{indentation}    toolVersion = '2.0'\n{indentation}}}\n"
+                    image = f"{tool} {{ toolVersion = '1.0' }}\n"
+                    self.assertEqual(
+                        sync_check.compare(sync_check.gradle_versions(template), sync_check.gradle_versions(image)),
+                        [f"{coordinate} 2.0 differs from the image (1.0)"],
+                    )
+
     def test_wrapper_version(self):
         self.assertEqual(sync_check.wrapper_versions("distributionUrl=https\\://services.gradle.org/distributions/gradle-9.8.0-bin.zip"), {"gradle-wrapper": {"9.8.0"}})
 
