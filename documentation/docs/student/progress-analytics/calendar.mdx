@@ -13,6 +13,7 @@ import mobileDayPresentationImage from '../assets/calendar/mobile-day-presentati
 import eventDetailsImage from '../assets/calendar/event-details.png';
 import desktopSubscriptionComponent from '../assets/calendar/desktop-subscription-component.png';
 import mobileSubscriptionComponent from '../assets/calendar/mobile-subscription-component.png';
+import subscriptionNewLinkConfirmation from '../assets/calendar/subscription-new-link-confirmation.png';
 import desktopFilterComponent from '../assets/calendar/desktop-filter-component.png';
 import mobileFilterComponent from '../assets/calendar/mobile-filter-component.png';
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -69,6 +70,8 @@ Users can subscribe external calendar applications to the Artemis calendar by cl
 This link can then be pasted into the settings of third-party calendar applications (e.g., Apple Calendar, Google Calendar, etc.) to subscribe them to the Artemis calendar.
 
 The link contains a personal token that identifies you, so share it with nobody. The token does not expire. If you want to stop a link from working, for example because you shared it by mistake, click **Create new link** in the same popover. Artemis then replaces your token, and every link you created before stops working. Subscribe again with the new link in your calendar applications.
+
+<Image src={subscriptionNewLinkConfirmation} alt="Subscription popover that asks for confirmation before it creates a new link" size={ImageSize.medium} caption="Creating a new link asks for confirmation first" />
 
 <div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
     <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Popover for Large Devices"} caption={"iCalendar Subscription Popover for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
