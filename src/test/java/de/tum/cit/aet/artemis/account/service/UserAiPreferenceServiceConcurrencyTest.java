@@ -36,6 +36,7 @@ class UserAiPreferenceServiceConcurrencyTest {
     void aDecisionIsReappliedToTheRowAnotherRequestInsertedFirst() {
         UserAiPreferenceRepository repository = mock(UserAiPreferenceRepository.class);
         UserAiPreference competingRow = new UserAiPreference(USER_ID);
+        competingRow.setSelectionDecision(AiSelectionDecision.CLOUD_AI);
         // Nothing on the first lookup, so the service builds its own row; the competing row appears once the insert fails.
         when(repository.findByUserId(USER_ID)).thenReturn(Optional.empty(), Optional.of(competingRow));
         when(repository.save(any(UserAiPreference.class))).thenThrow(new DataIntegrityViolationException("duplicate key")).thenAnswer(i -> i.getArgument(0));
@@ -62,6 +63,7 @@ class UserAiPreferenceServiceConcurrencyTest {
 
         UserAiPreferenceService service = new UserAiPreferenceService(repository);
 
-        org.assertj.core.api.Assertions.assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> service.setMemirisEnabled(USER_ID, false));
+        org.assertj.core.api.Assertions.assertThatExceptionOfType(DataIntegrityViolationException.class)
+                .isThrownBy(() -> service.recordDecision(USER_ID, AiSelectionDecision.CLOUD_AI, ZonedDateTime.now()));
     }
 }

@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -50,7 +50,7 @@ describe('CourseCompetenciesDetails', () => {
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
     // example route looks like: /courses/1/competencies/10
-    const route = { params: of({ competencyId: 10 }), parent: parentRoute } as any as ActivatedRoute;
+    const route = { params: of({ competencyId: 10 }), snapshot: { paramMap: convertToParamMap({ competencyId: '10' }) }, parent: parentRoute } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

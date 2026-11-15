@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.quiz.dto;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record DragAndDropMappingDTO(Long id, Integer dragItemIndex, Integer dropLocationIndex, Boolean invalid, DragItemDTO dragItem, DropLocationDTO dropLocation) {
 
     /**

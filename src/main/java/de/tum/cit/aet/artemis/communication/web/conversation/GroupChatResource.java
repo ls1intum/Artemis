@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatA
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
@@ -43,7 +44,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conversations/group-chats")
+@FeatureUsage(UserFeature.DIRECT_MESSAGES)
 @RestController
 @RequestMapping("api/communication/courses/")
 public class GroupChatResource extends ConversationManagementResource {
@@ -96,7 +97,7 @@ public class GroupChatResource extends ConversationManagementResource {
 
         var loginsToSearchFor = new HashSet<>(otherChatParticipantsLogins);
         loginsToSearchFor.add(requestingUser.getLogin());
-        var chatMembers = conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList());
+        var chatMembers = conversationService.findCourseUsersInDatabase(course, loginsToSearchFor.stream().toList());
 
         if (chatMembers.size() < 2 || chatMembers.size() > MAX_GROUP_CHAT_PARTICIPANTS) {
             throw new BadRequestAlertException("The number of participants in a group chat must be between 2 and " + MAX_GROUP_CHAT_PARTICIPANTS, GROUP_CHAT_ENTITY_NAME,
@@ -111,7 +112,7 @@ public class GroupChatResource extends ConversationManagementResource {
         courseNotificationService.sendCourseNotification(addedToChannelNotification,
                 chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
 
-        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
+        conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, groupChat, chatMembers);
 
         return ResponseEntity.created(new URI("/api/group-chats/" + groupChat.getId())).body(conversationDTOService.convertGroupChatToDto(requestingUser, groupChat));
     }
@@ -161,7 +162,7 @@ public class GroupChatResource extends ConversationManagementResource {
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithAuthorities();
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
-        var usersToRegister = conversationService.findUsersInDatabase(userLogins);
+        var usersToRegister = conversationService.findCourseUsersInDatabase(course, userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
 
         var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
@@ -189,6 +190,10 @@ public class GroupChatResource extends ConversationManagementResource {
         if (userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
+        // a group chat has a limited number of participants, so a longer list can only contain logins that are no participants
+        if (userLogins.size() > MAX_GROUP_CHAT_PARTICIPANTS) {
+            throw new BadRequestAlertException("At most " + MAX_GROUP_CHAT_PARTICIPANTS + " user logins can be provided", GROUP_CHAT_ENTITY_NAME, "userLoginsTooMany");
+        }
 
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
@@ -196,13 +201,14 @@ public class GroupChatResource extends ConversationManagementResource {
 
         groupChatAuthorizationService.isAllowedToRemoveUsersFromGroupChat(groupChatFromDatabase, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
-        conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
+        // only the users that were participants and have been removed are notified, the other logins are ignored
+        var removedUsers = conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
 
         var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
 
-        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification, removedUsers.stream().toList());
 
         return ResponseEntity.ok().build();
     }

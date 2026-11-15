@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -77,10 +77,16 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     // - monacoEditor is always in the DOM but is read defensively (`?.`) everywhere, so optional keeps
     //   pre-view-init access from throwing.
     readonly fileBrowser = viewChild(CodeEditorFileBrowserComponent);
+    readonly repositoryLoading = computed(() => this.fileBrowser()?.isLoadingFiles() ?? true);
     readonly actions = viewChild(CodeEditorActionsComponent);
     readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
     readonly monacoEditor = viewChild(CodeEditorMonacoComponent);
     readonly instructions = viewChild(CodeEditorInstructionsComponent);
+    /**
+     * The toolbar above the editor: the title actions, the submission policy, the toolbar and the editor actions. A page that has room for it elsewhere
+     * (the exam shows it in its title row) can move this element out of the bar that holds it; the bar then collapses (see the grid).
+     */
+    readonly navbar = viewChild<ElementRef<HTMLElement>>('navbar');
 
     editable = input<boolean>(true);
     forRepositoryView = input<boolean>(false);
@@ -88,9 +94,23 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     buildable = input<boolean>(true);
     showEditorInstructions = input<boolean>(true);
     isTutorAssessment = input<boolean>(false);
+    /**
+     * The full hash of the commit to show, read-only and independent of the working copy on the server. Set it where a specific submission is shown, e.g. in the manual
+     * assessment; leave it unset to show the repository as it currently is, e.g. in the online editor.
+     */
+    commitId = input<string | undefined>(undefined);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
-    feedbackSuggestions = input<Feedback[]>([]);
+    /**
+     * Manual feedback attached to code locations (in-line feedback and auto-accepted Athena suggestions), used to
+     * (re)compute file badges. Passed as its own signal input rather than derived only from `participation()`:
+     * the parent updates it via `.set()` with a fresh array reference on every change, including merges that
+     * mutate the existing participation object in place and would therefore not otherwise be picked up by the
+     * badge-update effect below. Left `undefined` (not just an empty array, which is a legitimate "no feedback"
+     * value) for every consumer besides the tutor assessment container, which is the only one that needs this
+     * extra reactivity; {@link collectFeedbackSuggestionBadges} falls back to {@link feedbackForSubmission} then.
+     */
+    referencedFeedback = input<Feedback[] | undefined>(undefined);
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
@@ -101,28 +121,39 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
-
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
     onFileLoad = output<string>();
-    onAcceptSuggestion = output<Feedback>();
-    onDiscardSuggestion = output<Feedback>();
+    onRepositoryFilesLoaded = output<void>();
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     onCommit = output<void>();
 
-    /** Work in Progress: temporary properties needed to get first prototype working */
-
     participation = input.required<Participation>();
 
-    /** END WIP */
-
-    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
-    unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
-    readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
+    private bypassNextUnloadWarning = false;
+    private readonly unsavedFilesValue = signal<{ [fileName: string]: string }>({});
+    private readonly commitStateValue = signal(CommitState.UNDEFINED);
+
+    /**
+     * File-browser badges for code files and the Problem Statement entry, covering feedback
+     * suggestions, graded feedbacks, and active review-comment threads.
+     */
+    readonly fileBadges = computed<{ [fileName: string]: FileBadge[] }>(() => {
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+        }
+        return fileBadges;
+    });
+
     get selectedFile(): string | undefined {
         return this.selectedFileValue();
     }
@@ -141,19 +172,19 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     /** Code Editor State Variables **/
     editorState!: EditorState; // set in constructor via initializeProperties()
-    commitState!: CommitState; // set in constructor via initializeProperties()
+    get commitState(): CommitState {
+        return this.commitStateValue();
+    }
+
+    set commitState(state: CommitState) {
+        this.commitStateValue.set(state);
+    }
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);
-
     private fileTreeChangeSubscription?: Subscription;
-
     constructor() {
         this.initializeProperties();
-
-        effect(() => {
-            this.updateFileBadges();
-        });
 
         effect(() => {
             const syncService = this.fileSyncService();
@@ -169,7 +200,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     get unsavedFiles() {
-        return this.unsavedFilesValue;
+        return this.unsavedFilesValue();
     }
 
     /**
@@ -180,7 +211,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param unsavedFiles
      */
     set unsavedFiles(unsavedFiles: { [fileName: string]: string }) {
-        this.unsavedFilesValue = unsavedFiles;
+        this.unsavedFilesValue.set(unsavedFiles);
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING) {
             this.editorState = EditorState.CLEAN;
             if (this.commitState !== CommitState.COMMITTING) {
@@ -194,27 +225,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         }
     }
 
-    /**
-     * Updates file-browser badges for code files and the Problem Statement entry
-     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
-     */
-    updateFileBadges() {
-        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
-
-        this.collectFeedbackSuggestionBadges(fileBadgesByType);
-        this.collectReviewThreadBadges(fileBadgesByType);
-
-        const fileBadges: { [fileName: string]: FileBadge[] } = {};
-        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
-            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
-        }
-        this.fileBadges.set(fileBadges);
-    }
-
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
-        // Combine feedback suggestions (ungraded) and graded feedbacks from submission
-        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
-        for (const feedback of allFeedbacks) {
+        // Every referenced feedback counts here, not only AI suggestions: the badge's own tooltip says "Number of
+        // feedback in this file/folder", and every consumer besides the tutor assessment container relies on this
+        // to reflect regular manual and automatic feedback too.
+        for (const feedback of this.referencedFeedback() ?? this.feedbackForSubmission()) {
             const filePath = Feedback.getReferenceFilePath(feedback);
             if (!filePath) {
                 continue;
@@ -266,14 +281,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /**
-     * Resets all variables of this class.
-     * When a new variable is added, it needs to be added to this method!
-     * Initializing in variable declaration is not allowed.
+     * Resets the repository-scoped editor state when the selected participation changes.
      */
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.fileBadges.set({});
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -374,11 +386,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         this.onCommit.emit();
     }
 
-    /**
-     * On successful pull during a refresh operation, we remove all unsaved files.
-     */
-    onRefreshFiles() {
+    /** Clears local editor state after a successful repository refresh. */
+    onRefreshFiles(): void {
         this.unsavedFiles = {};
+        this.commitState = CommitState.CLEAN;
+        this.onCommitStateChange.emit(this.commitState);
     }
 
     /**
@@ -455,6 +467,18 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return _isEmpty(this.unsavedFiles);
     }
 
+    allowNextUnloadWithoutConfirmation(): void {
+        this.bypassNextUnloadWarning = true;
+    }
+
+    hasCleanRepositoryState(): boolean {
+        return this.commitState === CommitState.CLEAN;
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.monacoEditor()?.hasReviewCommentDrafts() ?? false;
+    }
+
     /**
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
@@ -481,6 +505,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
+        if (this.bypassNextUnloadWarning) {
+            this.bypassNextUnloadWarning = false;
+            return true;
+        }
         if (!this.canDeactivate()) {
             event.preventDefault();
             return this.translateService.instant('pendingChanges');

@@ -164,4 +164,21 @@ class FileDownloadServiceTest {
         assertThatExceptionOfType(InternalServerErrorException.class)
                 .isThrownBy(() -> fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), List.of(), 200_000));
     }
+
+    @Test
+    void payloadEqualsHashCodeAndToString() {
+        var headers = new HttpHeaders();
+        var base = new FileDownloadService.FileDownloadPayload(HttpStatus.OK, new byte[] { 1, 2 }, headers, MediaType.APPLICATION_PDF, Optional.of("r"));
+        var same = new FileDownloadService.FileDownloadPayload(HttpStatus.OK, new byte[] { 1, 2 }, headers, MediaType.APPLICATION_PDF, Optional.of("r"));
+        assertThat(base).isEqualTo(base).isEqualTo(same).hasSameHashCodeAs(same).isNotEqualTo(null).isNotEqualTo("other");
+        assertThat(base)
+                .isNotEqualTo(new FileDownloadService.FileDownloadPayload(HttpStatus.PARTIAL_CONTENT, new byte[] { 1, 2 }, headers, MediaType.APPLICATION_PDF, Optional.of("r")));
+        assertThat(base).isNotEqualTo(new FileDownloadService.FileDownloadPayload(HttpStatus.OK, new byte[] { 1, 3 }, headers, MediaType.APPLICATION_PDF, Optional.of("r")));
+        var otherHeaders = new HttpHeaders();
+        otherHeaders.add("X", "y");
+        assertThat(base).isNotEqualTo(new FileDownloadService.FileDownloadPayload(HttpStatus.OK, new byte[] { 1, 2 }, otherHeaders, MediaType.APPLICATION_PDF, Optional.of("r")));
+        assertThat(base).isNotEqualTo(new FileDownloadService.FileDownloadPayload(HttpStatus.OK, new byte[] { 1, 2 }, headers, MediaType.TEXT_PLAIN, Optional.of("r")));
+        assertThat(base).isNotEqualTo(new FileDownloadService.FileDownloadPayload(HttpStatus.OK, new byte[] { 1, 2 }, headers, MediaType.APPLICATION_PDF, Optional.empty()));
+        assertThat(base.toString()).contains("content=2 bytes").doesNotContain("[1, 2]");
+    }
 }

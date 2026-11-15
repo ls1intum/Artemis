@@ -10,7 +10,7 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
-import { TumUiChartDatumContext } from '@tumaet/ui-angular';
+import { TumAetUiChartDatumContext } from '@tumaet/ui-angular';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export const redColor = '#d9534f';
@@ -82,7 +82,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             )
             .subscribe(({ response, questionId, refresh }) => {
                 this.questionIdParam = questionId;
-                this.loadQuiz(response.body!, refresh);
+                this.loadQuiz(response, refresh);
             });
     }
 
@@ -150,13 +150,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         // Use the page-specific question response instead of loading every question in the quiz.
         this.quizExercise.set(quiz);
         const updatedQuestion = quiz.quizQuestion;
+        const questionStatistic = quiz.quizQuestionStatistic;
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
-        if (this.questionIdParam !== updatedQuestion.id) {
+        if (!updatedQuestion || !questionStatistic || this.questionIdParam !== updatedQuestion.id) {
             void this.router.navigateByUrl('courses');
             return undefined;
         }
         this.question = updatedQuestion;
-        this.questionStatistic = quiz.quizQuestionStatistic;
+        this.questionStatistic = questionStatistic;
         return updatedQuestion;
     }
 
@@ -218,7 +219,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
     }
 
-    protected override formatTooltipLabel(item: TumUiChartDatumContext): string {
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
         // The extra "correct solutions" bar (participants who answered the whole question correctly) is only
         // appended to the data in the show-solution view (see loadDataInDiagram). In the default view the last
         // bar is just the last answer option/element, so only treat it as the summary bar while the solution is shown.

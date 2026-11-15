@@ -57,7 +57,18 @@
             <jhi-button id="submitFilterButton" [btnType]="ButtonType.PRIMARY" [title]="'entity.action.search'" (click)="performSearch()" />
         </div>
         <div class="d-flex flex-row justify-content-center">
-            <div id="toggleAdvancedSearch" class="clickable" (click)="toggleAdvancedSearch()">
+            <div
+                id="toggleAdvancedSearch"
+                class="clickable"
+                (click)="toggleAdvancedSearch()"
+                [attr.aria-expanded]="advancedSearchEnabled()"
+                #keyboardAction60
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+            >
                 <fa-icon [icon]="advancedSearchEnabled() ? faChevronUp : faChevronDown" />
                 <span
                     jhiTranslate="{{

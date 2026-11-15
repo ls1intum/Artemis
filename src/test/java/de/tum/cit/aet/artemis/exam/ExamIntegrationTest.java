@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -23,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -126,6 +128,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -158,6 +161,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "examint";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -258,7 +264,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @BeforeAll
     void setup() {
         // setup users
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 1, 1);
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -320,7 +326,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "USER")
     void testGetAllActiveExams_Instructor() throws Exception {
         var now = ZonedDateTime.now();
         // add additional active exam
@@ -335,7 +341,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAllActiveExams_Tutor() throws Exception {
         var now = ZonedDateTime.now();
         // Use course1 where tutor1 is enrolled; tutor1 is NOT enrolled in course10, so using course10
@@ -355,7 +361,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExams() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
 
@@ -365,7 +371,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExamsForSimulationExam() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
         exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
@@ -376,7 +382,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateMissingStudentExams() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
 
@@ -391,7 +397,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateMissingStudentExamsForSimulationExam() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
@@ -477,7 +483,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExamsNoExerciseGroups_badRequest() throws Exception {
         Exam exam = examUtilService.addExam(course1, now().minusMinutes(5), now(), now().plusHours(2));
 
@@ -487,7 +493,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExamsNoExerciseNumber_badRequest() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setNumberOfExercisesInExam(null);
@@ -499,7 +505,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExamsNotEnoughExerciseGroups_badRequest() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 2);
@@ -511,7 +517,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExamsTooManyMandatoryExerciseGroups_badRequest() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
         exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() - 2);
@@ -520,6 +526,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // invoke generate student exams
         request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGenerateStudentExams_asTutor_forbiddenBeforeTheExamIsLoaded() throws Exception {
+        // a missing exam would answer 404, so the 403 shows that the course role is checked before the exam is loaded
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/-1/generate-student-exams", Optional.empty(), StudentExam.class, HttpStatus.FORBIDDEN);
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/-1/generate-missing-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -552,7 +567,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor_shouldNotBeAuthorized() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
@@ -561,7 +576,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "USER")
     void testCreateExam_checkCourseAccess_instructorNotInCourse_failsWithForbidden() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
 
@@ -569,7 +584,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_asInstructor_returnsLocationHeader() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examE");
         exam.setTitle("          Exam 123              ");
@@ -578,11 +593,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam savedExam = request.get(String.valueOf(savedExamUri), HttpStatus.OK, Exam.class);
 
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
-        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_asInstructor_returnsBody() throws Exception {
         final Exam exam = validExamWithCustomFieldValues();
 
@@ -593,7 +607,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_asInstructor_createsCourseMessagingChannel() throws Exception {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
         // In the UCR-based authorization model, instructor1 must be explicitly enrolled in the
@@ -608,7 +622,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithId() throws Exception {
         // Test for bad request when exam id is already set.
         Exam examA = ExamFactory.generateExam(course1, "examA");
@@ -619,7 +633,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_usesCourseFromPath() throws Exception {
         // With the DTO approach, the course is always taken from the path, not from the exam.
         // So creating an exam with a different course in the DTO should work,
@@ -666,13 +680,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @ParameterizedTest
     @MethodSource("provideExamsWithInvalidDates")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithInvalidDates(Exam exam) throws Exception {
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_withValidExamSummaryPublicationDate() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examSummaryDate");
         exam.setPublishResultsDate(exam.getEndDate().plusHours(2));
@@ -690,8 +704,118 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(updatedExam.getExamSummaryPublicationDate()).isCloseTo(savedExam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
     }
 
+    private static Stream<Arguments> invalidWorkingTimeChanges() {
+        return Stream.of(false, true)
+                .flatMap(testExam -> Stream.of(-3000, -3001, 2_589_001, 5_000_000, Integer.MAX_VALUE, Integer.MIN_VALUE).map(delta -> Arguments.of(testExam, delta)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidWorkingTimeChanges")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_rejectsInvalidWorkingTime(boolean testExam, int delta) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3600);
+        ZonedDateTime originalEndDate = exam.getEndDate();
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+
+        request.patch(examUrl + "/working-time", delta, HttpStatus.BAD_REQUEST);
+
+        ExamDTO unchangedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(unchangedExam.workingTime()).isEqualTo(3000);
+        assertThat(unchangedExam.endDate().toInstant()).isEqualTo(originalEndDate.toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(unchangedStudentExam -> assertThat(unchangedStudentExam.workingTime()).isEqualTo(3600));
+    }
+
+    private static Stream<Arguments> validWorkingTimeBounds() {
+        return Stream.of(false, true).flatMap(testExam -> Stream.of(Arguments.of(testExam, 1, 1), Arguments.of(testExam, 2_592_000, 3_110_400)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("validWorkingTimeBounds")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_acceptsWorkingTimeBounds(boolean testExam, int workingTime, int extendedWorkingTime) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3600);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+
+        ExamDTO updatedExam = request.patchWithResponseBody(examUrl + "/working-time", workingTime - 3000, ExamDTO.class, HttpStatus.OK);
+
+        assertThat(updatedExam.workingTime()).isEqualTo(workingTime);
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(workingTime);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(savedExam.startDate().plusSeconds(workingTime + (testExam ? 3600 : 0)).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(updatedStudentExam -> assertThat(updatedStudentExam.workingTime()).isEqualTo(extendedWorkingTime));
+    }
+
+    private static Stream<Arguments> projectedStudentWorkingTimeBounds() {
+        return Stream.of(false, true)
+                .flatMap(testExam -> Stream.of(Arguments.of(testExam, 2_592_000, false), Arguments.of(testExam, 2_486_000, false), Arguments.of(testExam, 2_485_513, true)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("projectedStudentWorkingTimeBounds")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_validatesProjectedStudentWorkingTime(boolean testExam, int studentWorkingTime, boolean representable) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3000);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        // These individual allowances are accepted by the public endpoint before scaling the regular working time.
+        request.patch(examUrl + "/student-exams/" + studentExam.getId() + "/working-time", studentWorkingTime, HttpStatus.OK);
+
+        request.patch(examUrl + "/working-time", 2_589_000, representable ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(representable ? 2_592_000 : 3000);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(exam.getEndDate().plusSeconds(representable ? 2_589_000 : 0).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(savedStudentExam -> assertThat(savedStudentExam.workingTime()).isEqualTo(representable ? 2_147_483_232 : studentWorkingTime));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { -1, 0 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_testExamDurationIntegerBoundary(int offset) throws Exception {
+        Exam exam = examUtilService.addTestExam(course1);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(1);
+        exam.setEndDate(exam.getStartDate().plusSeconds((long) Integer.MAX_VALUE + offset));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 1);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        boolean exceedsDurationLimit = offset == 0;
+
+        request.patch(examUrl + "/working-time", 1, exceedsDurationLimit ? HttpStatus.BAD_REQUEST : HttpStatus.OK);
+
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(exceedsDurationLimit ? 1 : 2);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(exam.getStartDate().plusSeconds(Integer.MAX_VALUE).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(updatedStudentExam -> assertThat(updatedStudentExam.workingTime()).isEqualTo(exceedsDurationLimit ? 1 : 2));
+    }
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_failsIfExtendedPastSummaryPublicationDate() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examSummaryWorkingTime");
         // the submission overview becomes visible shortly after the end date
@@ -708,7 +832,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithExerciseGroups() throws Exception {
         // Note: With DTO approach, exercise groups are not passed, so this test now expects CREATED
         // since the conflict check happens after the exam is created from DTO
@@ -722,7 +846,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithoutCourse() throws Exception {
         Exam examB = ExamFactory.generateExam(course1, "examB");
 
@@ -734,7 +858,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithExamMaxPointsTooHigh() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examMaxPointsTest");
         exam.setExamMaxPoints(10000); // Max allowed is 9999
@@ -743,7 +867,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithMissingExamMode() throws Exception {
         ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examModeValidationTest")));
         examJson.remove("examMode");
@@ -752,7 +876,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithMissingExamMode() throws Exception {
         ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(exam1));
         examJson.remove("examMode");
@@ -763,7 +887,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @ParameterizedTest(name = "title=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
         // A missing (null), empty or whitespace-only title has to be rejected with a clean 400, not persisted and not failing while mapping the null title to the entity
         ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examTitleValidationTest")), title);
@@ -774,7 +898,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @ParameterizedTest(name = "title=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
         ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(exam1), title);
 
@@ -782,13 +906,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")
-    @NullSource
     @ValueSource(strings = { "", "   " })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExam_failsWithBlankTitle(String title) throws Exception {
         ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), title);
 
         request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExam_failsWithMissingTitle() throws Exception {
+        // a missing title is already refused by the bean validation of the import body, before the explicit title check runs
+        ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), null);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, null);
     }
 
     /**
@@ -810,7 +942,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithGracePeriodTooHigh() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examGracePeriodTest");
         exam.setGracePeriod(3601); // Max allowed is 3600 seconds
@@ -819,7 +951,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examNumberOfExercisesTest");
         exam.setNumberOfExercisesInExam(101); // Max allowed is 100
@@ -828,7 +960,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
         // Test with a test exam where workingTime is directly validated
         Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
@@ -840,7 +972,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithTitleTooLong() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examTitleTest");
         exam.setTitle("a".repeat(256)); // Max allowed is 255 characters
@@ -849,7 +981,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_succeedsWithTitleAtMaxLength() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examTitleTest");
         String maxLengthTitle = "a".repeat(255); // Exactly the maximum allowed
@@ -861,7 +993,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithStartTextTooLong() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examStartTextTest");
         exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
@@ -870,7 +1002,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_failsWithConfirmationEndTextTooLong() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examConfirmationTextTest");
         exam.setConfirmationEndText("a".repeat(10001)); // Max allowed is 10000 characters
@@ -879,7 +1011,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_succeedsWithTextAtMaxLength() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examMaxTextTest");
         exam.setStartText("a".repeat(10000)); // Exactly the maximum allowed
@@ -889,7 +1021,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithExamMaxPointsTooHigh() throws Exception {
         exam1.setExamMaxPoints(10000); // Max allowed is 9999
 
@@ -897,7 +1029,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_startDateChangeWithinConductionWindow_sendsScheduleUpdate() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         // Put the exam into the pre-start conduction window (start in 2 min) so a student could already be counting down.
@@ -922,7 +1054,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_startDateChangeOutsideConductionWindow_doesNotSendScheduleUpdate() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         // Far-future exam: no student can be in the pre-start conduction window yet.
@@ -941,7 +1073,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithGracePeriodTooHigh() throws Exception {
         exam1.setGracePeriod(3601); // Max allowed is 3600 seconds
 
@@ -949,7 +1081,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
         exam1.setNumberOfExercisesInExam(101); // Max allowed is 100
 
@@ -957,7 +1089,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithWorkingTimeTooHigh() throws Exception {
         // Create a test exam since testExam mode cannot be changed after creation
         Exam testExam = ExamFactory.generateTestExam(course1);
@@ -968,7 +1100,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithTitleTooLong() throws Exception {
         exam1.setTitle("a".repeat(256)); // Max allowed is 255 characters
 
@@ -976,7 +1108,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithTextTooLong() throws Exception {
         exam1.setEndText("a".repeat(10001)); // Max allowed is 10000 characters
 
@@ -984,7 +1116,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithoutId() throws Exception {
         // Update requires an ID - use entity without ID to simulate missing ID case
         Exam exam = ExamFactory.generateExam(course1, "exam1");
@@ -994,7 +1126,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithExamNotFound() throws Exception {
         // Exam with non-existent ID -> not found
         Exam exam = ExamFactory.generateExam(course1);
@@ -1003,14 +1135,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsWithExamCourseMismatch() throws Exception {
         // Exam belongs to course1 but URL has course2 -> conflict (course id mismatch)
         request.put("/api/exam/courses/" + course2.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.CONFLICT);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLockedSubmissionsForExam_failsWithExamCourseMismatch() throws Exception {
         // The locked submissions are loaded by exam id alone. Authorizing only the course would let an instructor
         // pair a course they manage with another course's exam and read that exam's submissions.
@@ -1019,7 +1151,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @ParameterizedTest
     @MethodSource("provideExamsWithInvalidDates")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsForInvalidDates(Exam exam) throws Exception {
         // Dates in the updated exam are not valid -> bad request
         Exam persistedExamWithSameMode = !exam.getExamMode().isReal() ? examRepository.save(ExamFactory.generateTestExam(course1)) : exam1;
@@ -1028,7 +1160,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_updatesExamTitle() throws Exception {
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
@@ -1037,7 +1169,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_changeTitleDuringConduction_shouldNotNotifyStudents() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setTitle("Best exam ever");
@@ -1048,7 +1180,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_changeEndDateSubSecondPrecision_shouldNotNotifyStudents() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusNanos(1));
@@ -1059,7 +1191,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_changeEndDateDuringConduction_shouldNotifyStudents() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusHours(1));
@@ -1070,7 +1202,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_changeWorkingTimeOfTestExam() throws Exception {
         Exam testExam = ExamFactory.generateTestExam(course1);
         testExam = examRepository.save(testExam);
@@ -1093,7 +1225,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_testExam() throws Exception {
         Exam testExam = ExamFactory.generateTestExam(course1);
         testExam = examRepository.save(testExam);
@@ -1109,14 +1241,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                 HttpStatus.OK);
 
         assertThat(returnedExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
-        assertThat(returnedExam.getEndDate()).isCloseTo(originalEndDate, within(1, ChronoUnit.SECONDS));
+        assertThat(returnedExam.getEndDate()).isCloseTo(originalEndDate.plusSeconds(workingTimeChange), within(1, ChronoUnit.SECONDS));
 
         StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
         assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_testExam_failsWithWorkingTimeTooLow() throws Exception {
         Exam testExam = ExamFactory.generateTestExam(course1);
         testExam = examRepository.save(testExam);
@@ -1128,19 +1260,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamWorkingTime_testExam_failsWithWorkingTimeTooHigh() throws Exception {
-        Exam testExam = ExamFactory.generateTestExam(course1);
-        testExam = examRepository.save(testExam);
-
-        // Default working time is 3000, duration is 4200 (70 mins). Adding 1500 makes working time 4500 > 4200.
-        int workingTimeChange = 1500;
-
-        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_testWithSimulation_failsWithWorkingTimeTooLow() throws Exception {
         Exam testExam = ExamFactory.generateTestExam(course1);
         testExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
@@ -1152,19 +1272,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamWorkingTime_testWithSimulation_failsWithWorkingTimeTooHigh() throws Exception {
-        Exam testExam = ExamFactory.generateTestExam(course1);
-        testExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        testExam = examRepository.save(testExam);
-
-        int workingTimeChange = 1500;
-
-        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_realExam() throws Exception {
         Exam realExam = examRepository.findByIdElseThrow(exam1.getId());
         StudentExam studentExam = examUtilService.addStudentExam(realExam);
@@ -1185,7 +1293,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
         var modelingExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
@@ -1205,7 +1313,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_datesChangedReflectedInWeaviate() throws Exception {
         var modelingExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         var exam = modelingExercise.getExerciseGroup().getExam();
@@ -1214,7 +1322,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(modelingExercise));
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
+            WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
         }
         WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
 
@@ -1231,7 +1339,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExam_asInstructor() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdElseThrow(Long.MAX_VALUE));
 
@@ -1257,7 +1365,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExam_asInstructor_WithTestRunQuizExerciseSubmissions() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
@@ -1282,7 +1390,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamWithExerciseGroups_returnsDetailsAndTransients() throws Exception {
         // Full exam with all exercise types; the programming exercise carries template + solution participations (with
         // build-plan ids), the quiz gets questions so the count is non-trivial.
@@ -1325,7 +1433,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExam_editRoundTrip_preservesChannelNameAndAllClientFields() throws Exception {
         // The plain GET is the edit round-trip source: the client loads it, reads only the ExamDTO fields, rebuilds the
         // request via toExamUpdateDTO and PUTs it back. This test drives exactly that path and asserts nothing is lost.
@@ -1364,7 +1472,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExam_returnsGroupsWithParticipationCountsButNoExerciseDetails() throws Exception {
         // reset is served with withDetails=false: groups + transients are populated, but quiz questions and programming
         // participations are NOT hydrated. The ofReset factory must therefore omit them without touching the lazy fields.
@@ -1383,7 +1491,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateTestRun_fromDetailedExamDto_createsTestRunFromExerciseIds() throws Exception {
         // Reproduces the create-test-run modal (CreateTestRunModalComponent): it loads the detailed exam from
         // GET ?withExerciseGroups=true and creates the test run from the exercises the instructor picked there.
@@ -1415,8 +1523,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         jenkinsRequestMockProvider.reset();
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         var examWithExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        // A test run names its build plan after the practice-prefixed participant, so that it cannot collide with the
+        // plan of a graded participation of the same instructor and exercise.
         mockConnectorRequestsForStartParticipation(ExerciseUtilService.getFirstExerciseWithType(examWithExercises, ProgrammingExercise.class),
-                instructor.getParticipantIdentifier(), Set.of(instructor), true);
+                "practice-" + instructor.getParticipantIdentifier(), Set.of(instructor), true);
 
         StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
                 new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
@@ -1437,7 +1547,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateOrderOfExerciseGroups_keepsDetailedExamDtoGroupsWithQuizQuestions() throws Exception {
         // Reproduces the exercise-groups page reorder: the page renders from the detailed exam DTO (each group's
         // exercises include the quiz-question stubs, and the quiz cell reads quizQuestions?.length). The reorder now
@@ -1506,7 +1616,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamWithExerciseGroups_nullStartDate_doesNotThrow() throws Exception {
         // isStarted() dereferences startDate; a not-yet-scheduled exam (null startDate) must map without NPE, and the
         // computed started flag reads false (matching what the client renders for an absent flag).
@@ -1522,10 +1632,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamsForCourse_asInstructor() throws Exception {
         var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
-        verify(examAccessService).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
 
         for (int i = 0; i < exams.size(); i++) {
             Exam exam = exams.get(i);
@@ -1535,7 +1644,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamsForUser_asInstructor() throws Exception {
         assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), course1.getId(), CourseRole.INSTRUCTOR)).isTrue();
         // Seed an exam with a quiz exercise in a course the instructor manages: the endpoint filters to exams that
@@ -1643,48 +1752,51 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCurrentAndUpcomingExamsForbiddenForInstructor() throws Exception {
         request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCurrentAndUpcomingExamsForbiddenForTutor() throws Exception {
         request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteEmptyExam_asInstructor() throws Exception {
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam1.getId());
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExamWithChannel() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel examChannel = examUtilService.addExamChannel(exam, "test");
 
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
 
         Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
         assertThat(examChannelAfterDelete).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         final TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst()));
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise));
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
+            WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
 
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam2.getId());
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
 
         WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise.getId());
@@ -1697,14 +1809,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetEmptyExam_asInstructor() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst());
         exerciseRepository.save(textExercise);
@@ -1719,7 +1831,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExamWithQuizExercise_asInstructor() throws Exception {
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam2.getExerciseGroups().getFirst());
         quizExerciseRepository.save(quizExercise);
@@ -1731,7 +1843,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamWithOptions() throws Exception {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExamWithUser(course, student1, false, now().minusHours(3), now().minusHours(2), now().minusHours(1));
@@ -1780,28 +1892,29 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForTestRunDashboard_forbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamForTestRunDashboard_badRequest() throws Exception {
         request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.BAD_REQUEST, Exam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExamWithOneTestRuns() throws Exception {
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
@@ -1813,7 +1926,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @Test
@@ -1829,14 +1943,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         assertThat(courseRepository.findById(course.getId())).isEmpty();
         assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamForTestRunDashboard_ok() throws Exception {
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
@@ -1937,7 +2053,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     @ValueSource(ints = { 0, 1, 2 })
     void testGetExamForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         // we need an exam from the past, otherwise the tutor won't have access
@@ -1969,7 +2085,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_trainedTutorWithUnreviewedExample_bothCollectionsOnWire() throws Exception {
         // Reproduces the tutor-participation-graph's TRAINED-step colour decision (calculateClasses): it compares
         // exercise.exampleSubmissions against tutorParticipation.trainedExampleSubmissions (both filtered by
@@ -2021,7 +2137,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_beforeDueDate() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setEndDate(now().plusWeeks(1));
@@ -2031,25 +2147,32 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_asStudent_forbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_badRequest() throws Exception {
         request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.BAD_REQUEST, Course.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForExamAssessmentDashboard_notFound() throws Exception {
-        request.get("/api/exam/courses/-1/exams/-1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/-1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamForExamAssessmentDashboard_asStudent_forbiddenBeforeTheExamIsLoaded() throws Exception {
+        // a missing exam would answer 404, so the 403 shows that the course role is checked before the exam is loaded
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/-1/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "USER")
     void testGetExamForExamDashboard_NotTAOfCourse_forbidden() throws Exception {
         Exam exam = ExamFactory.generateExam(course10);
         examRepository.save(exam);
@@ -2058,23 +2181,23 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "USER")
     void testGetExamScore_tutorNotInCourse_forbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/scores", HttpStatus.FORBIDDEN, ExamScoresDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamScore_tutor_forbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/scores", HttpStatus.FORBIDDEN, ExamScoresDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStatistics() throws Exception {
         ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
-        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
-                ExamChecklistDTO.class);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics/for-instructor",
+                HttpStatus.OK, ExamChecklistDTO.class);
         assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
         assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
         assertThat(returnedStatistics.numberOfAllComplaints()).isEqualTo(actualStatistics.numberOfAllComplaints());
@@ -2090,7 +2213,53 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorStatisticsDoNotExecuteInstructorCountQueries() throws Exception {
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/statistics";
+        ExerciseGroup group = exam2.getExerciseGroups().getFirst();
+        textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(group));
+        queryInterceptor.startQueryCount();
+        request.get(path, HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(queryInterceptor.getStatements()).noneMatch(sql -> sql.contains("count(") && sql.contains("initialization_state"));
+        assertThat(queryInterceptor.getStatements()).noneMatch(sql -> sql.contains("count(") && sql.contains(" from student_exam "));
+        queryInterceptor.startQueryCount();
+        request.get(path + "/for-instructor", HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(queryInterceptor.getStatements()).anyMatch(sql -> sql.contains("count(") && sql.contains("initialization_state"));
+        assertThat(queryInterceptor.getStatements()).anyMatch(sql -> sql.contains("count(") && sql.contains(" from student_exam "));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorStatisticsRemainLimitedForInstructorCaller() throws Exception {
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics";
+        var tutor = request.get(path, HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(tutor.numberOfGeneratedStudentExams()).isNull();
+        assertThat(tutor.numberOfTestRuns()).isNull();
+        assertThat(tutor.numberOfExamsStarted()).isNull();
+        assertThat(tutor.numberOfExamsSubmitted()).isNull();
+        assertThat(tutor.allExamExercisesAllStudentsPrepared()).isFalse();
+        var instructor = request.get(path + "/for-instructor", HttpStatus.OK, ExamChecklistDTO.class);
+        assertThat(instructor.numberOfGeneratedStudentExams()).isNotNull();
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(path + "/for-instructor", HttpStatus.FORBIDDEN, ExamChecklistDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamStatistics_tutorReceivesComplaintCounts() throws Exception {
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, false);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+        // without the complaint counts the exam status of a tutor would claim that 100% of the complaints are done
+        assertThat(returnedStatistics.numberOfAllComplaints()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        // the remaining instructor-only values stay hidden from tutors
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isNull();
+        assertThat(returnedStatistics.numberOfExamsStarted()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStatistics_considersOnlyInitializedParticipationsForPreparedExercises() throws Exception {
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().getFirst();
         TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
@@ -2108,15 +2277,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(textExercise.getId(), false)).isOne();
         assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(textExercise.getId(), exam2.getId())).isZero();
 
-        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK,
-                ExamChecklistDTO.class);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics/for-instructor",
+                HttpStatus.OK, ExamChecklistDTO.class);
 
         assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isOne();
         assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isFalse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLatestExamEndDate() throws Exception {
         // Setup exam and user
 
@@ -2147,7 +2316,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "USER")
     void testCourseAndExamAccessForInstructors_notInstructorInCourse_forbidden() throws Exception {
         // Instructor10 is not instructor for the course
         // Update exam
@@ -2173,7 +2342,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLatestIndividualEndDate_noStudentExams() {
         final var now = now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
@@ -2184,7 +2353,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllIndividualExamEndDates() {
         final var now = now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
@@ -2217,7 +2386,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIsExamOver_GracePeriod() {
         final var now = now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
@@ -2229,7 +2398,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testArchiveCourseWithExam() throws Exception {
         Course course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         course.setEndDate(now().minusMinutes(5));
@@ -2245,7 +2414,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testArchiveExamAsInstructor() throws Exception {
         archiveExamAsInstructor();
     }
@@ -2273,7 +2442,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testArchiveExamBeforeEndDate_badRequest() throws Exception {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setEndDate(now().plusMinutes(5));
@@ -2292,13 +2461,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDownloadExamArchiveAsTutor_forbidden() throws Exception {
         request.get("/api/exam/courses/" + 1 + "/exams/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDownloadExamArchiveAsInstructor_not_found() throws Exception {
         // Return not found if the exam doesn't exist
         var downloadedArchive = request.get("/api/exam/courses/" + course1.getId() + "/exams/-1/download-archive", HttpStatus.NOT_FOUND, String.class);
@@ -2310,7 +2479,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDownloadExamArchiveAsInstructorNotInCourse_forbidden() throws Exception {
         // Create an exam with no archive
         Course course = courseUtilService.createCourse();
@@ -2320,7 +2489,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDownloadExamArchiveAsInstructor() throws Exception {
         var course = archiveExamAsInstructor();
 
@@ -2365,21 +2534,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExamTitle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExamTitle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExamTitle();
@@ -2408,6 +2577,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final var title = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
 
         assertThat(title).isEqualTo("Test Exam title");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetExamTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        Exam exam = ExamFactory.generateExam(course1);
+        exam = examRepository.save(exam);
+
+        request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -2476,7 +2655,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateAndGetExam_asInstructor_returnsBody() throws Exception {
         Exam exam = validExamWithCustomFieldValues();
 
@@ -2489,7 +2668,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamExaminer() throws Exception {
         final var examinerName = "Prof. Dr. Stephan Krusche";
         Exam exam = ExamFactory.generateExam(course1);
@@ -2502,13 +2681,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateAndGetExamWithNullCorrectionRounds() throws Exception {
         testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(false, null, 1, HttpStatus.CREATED);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateAndGetExamWithValidCorrectionRounds() throws Exception {
         // Real exams must have either 1 or 2 correction rounds; test exams must have exactly 0 correction rounds
         // Real exam - correction rounds = 1
@@ -2523,7 +2702,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @ParameterizedTest
     @ValueSource(ints = { Integer.MIN_VALUE, -3, -2, -1, 0, 3, 4, 5, 1 << 20, Integer.MAX_VALUE })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateRealExamWithInvalidCorrectionRounds(Integer plannedCorrectionRounds) throws Exception {
         // Real exams must have either 1 or 2 correction rounds
         testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(false, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
@@ -2531,7 +2710,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @ParameterizedTest
     @ValueSource(ints = { Integer.MIN_VALUE, -3, -2, -1, 1, 2, 3, 4, 5, 1 << 20, Integer.MAX_VALUE })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateTestExamWithInvalidCorrectionRounds(Integer plannedCorrectionRounds) throws Exception {
         // Test exams must have exactly 0 correction rounds
         testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(true, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
@@ -2552,7 +2731,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseNameNullName() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setCourseName(null);
@@ -2565,7 +2744,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @ParameterizedTest
     @ValueSource(ints = { 1, 2, 60, 5 * 60, 5 * 24 * 60 * 60 })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIsVisibleToStudents(int beforeSeconds) throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setVisibleDate(ZonedDateTime.now().minusSeconds(beforeSeconds));
@@ -2580,7 +2759,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @ParameterizedTest
     @ValueSource(ints = { 15, 60, 5 * 60, 3 * 60 * 60, 5 * 24 * 60 * 60 })
     /* We don't want to test with too small values, or else the test might become flaky */
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIsNotVisibleToStudents(int afterSeconds) throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         final var visibleDate = ZonedDateTime.now().plusSeconds(afterSeconds);
@@ -2684,19 +2863,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testHasExamArchivePathBranchesAsInstructor() throws Exception {
         testHasExamArchivePathExpectStatus(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testHasExamArchivePathBranchesAsTeachingAssistant() throws Exception {
         testHasExamArchivePathExpectStatus(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testHasExamArchivePathBranchesAsStudent() throws Exception {
         testHasExamArchivePathExpectStatus(HttpStatus.FORBIDDEN);
     }
@@ -2756,13 +2935,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRetrieveOwnStudentExam_instructor() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamForImportWithExercises_successful() throws Exception {
         ExerciseGroup quizGroup = exam2.getExerciseGroups().getFirst();
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
@@ -2797,7 +2976,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseGroup_echoesQuizConfigScalars_survivesImport() throws Exception {
         // Reproduces the exercise-group import modal end to end: the client loads the source exam, converts its exercise
         // groups to the slim import DTO shape (exam-management.service.ts#convertExerciseGroupsToImportDTOs) and posts that.
@@ -2847,7 +3026,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseGroup_keepsCallerOwnedSettingsOfSourceExercise() throws Exception {
         // The import body is a slim DTO (id, type, title, short name, points). Every setting that copyExerciseBasis leaves
         // "as the caller set it" (non-null defaults) must be taken from the persisted source exercise, otherwise the import
@@ -2876,26 +3055,93 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExerciseGroup_rejectsExerciseWithoutSourceIdAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+
+        // an exercise that names no source exercise cannot be imported, so the whole request has to be refused
+        List<ExerciseGroupImportDTO> body = List.of(new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null))));
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", body, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExerciseGroup_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group";
+
+        // a null group or a null exercise is a malformed request, not a server error
+        request.postWithoutLocation(path, Arrays.asList((ExerciseGroupImportDTO) null), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(path, List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))), HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExam_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
+                List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
+            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                    importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                    importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
+                    importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
+                    importDTO.examiner(), importDTO.moduleNumber(), importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(),
+                    importDTO.channelName(), importDTO.courseId(), malformedGroups);
+            request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+        }
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExam_rejectsExerciseWithoutSourceIdAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        ExerciseGroupImportDTO malformedGroup = new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null)));
+        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(), importDTO.examMaxPoints(),
+                importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(), importDTO.examiner(), importDTO.moduleNumber(),
+                importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(), importDTO.channelName(), importDTO.courseId(),
+                List.of(malformedGroup));
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "USER")
     void testGetExamForImportWithExercises_noInstructorAccess() throws Exception {
         request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExamForImportWithExercises_noTutorAccess() throws Exception {
         request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExamForImportWithExercises_noEditorAccess() throws Exception {
         request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
 
     // <editor-fold desc="Get All On Page">
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllExamsOnPage_withoutExercises_asInstructor_returnsExams() throws Exception {
         var title = "My fancy search title for the exam which is not used somewhere else";
         var exam = ExamFactory.generateExam(course1);
@@ -2913,7 +3159,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllExamsOnPage_withExercises_asInstructor_returnsExams() throws Exception {
         var newExam = examUtilService.addTestExamWithExerciseGroup(course1, true);
         var searchTerm = "A very distinct title that should only ever exist once in the database";
@@ -2926,7 +3172,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asInstructor_returnsNoExams() throws Exception {
         var title = "Another fancy exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
@@ -2952,26 +3198,31 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAllExamsOnPage_asEditor_failsWithForbidden() throws Exception {
-        // Creating and importing exams is instructor-only, and this import-source endpoint is scoped to instructor
-        // courses, so editors must not be able to call it (otherwise they would always get an empty result).
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testGetAllExamsOnPage_asEditor_returnsNoExams() throws Exception {
+        // Import sources are filtered to courses in which the caller is an instructor.
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getNumberOfPages()).isZero();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
-    void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetAllExamsOnPage_asTutor_returnsNoExams() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getNumberOfPages()).isZero();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
+    void testGetAllExamsOnPage_asStudent_returnsNoExams() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getNumberOfPages()).isZero();
     }
     // </editor-fold>
 
@@ -2983,13 +3234,60 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testImportExamWithExercises_asTutor_failsWithForbidden() throws Exception {
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(exam1, course1.getId()), HttpStatus.FORBIDDEN, null);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExamWithExercises_sourceExerciseOfForeignCourse_failsWithForbidden() throws Exception {
+        // the instructor teaches the target course, but not the course of the source exercise
+        Course foreignCourse = courseUtilService.addEmptyCourse();
+        Exam foreignExam = examUtilService.addExamWithExerciseGroup(foreignCourse, true);
+        ExerciseGroup foreignGroup = foreignExam.getExerciseGroups().getFirst();
+        TextExercise foreignText = TextExerciseFactory.generateTextExerciseForExam(foreignGroup);
+        textExerciseRepository.save(foreignText);
+
+        foreignGroup.addExercise(foreignText);
+        ExamImportDTO importDTO = ExamImportDTO.of(foreignExam, course1.getId());
+
+        long examsBefore = examRepository.count();
+        long exercisesBefore = exerciseRepository.count();
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.FORBIDDEN, null);
+        assertThat(examRepository.count()).isEqualTo(examsBefore);
+        assertThat(exerciseRepository.count()).isEqualTo(exercisesBefore);
+        assertThat(textExerciseRepository.findByIdElseThrow(foreignText.getId()).getExerciseGroup().getId()).isEqualTo(foreignGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportExerciseGroup_sourceExerciseOfForeignCourse_failsWithForbidden() throws Exception {
+        Course foreignCourse = courseUtilService.addEmptyCourse();
+        Exam foreignExam = examUtilService.addExamWithExerciseGroup(foreignCourse, true);
+        ExerciseGroup foreignGroup = foreignExam.getExerciseGroups().getFirst();
+        TextExercise foreignText = TextExerciseFactory.generateTextExerciseForExam(foreignGroup);
+        textExerciseRepository.save(foreignText);
+        Exam targetExam = examUtilService.addExam(course1);
+
+        long exercisesBefore = exerciseRepository.count();
+        long groupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group";
+        var body = List.of(new ExerciseGroupImportDTO(foreignGroup.getTitle(), true, List.of(ExerciseImportDTO.of(foreignText))));
+        request.post(url, body, HttpStatus.FORBIDDEN);
+        assertThat(exerciseRepository.count()).isEqualTo(exercisesBefore);
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size()).isEqualTo(groupsBefore);
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), foreignCourse, CourseRole.EDITOR);
+        var imported = request.postWithResponseBody(url, body, ExerciseGroupImportResultDTO.class, HttpStatus.OK);
+        long importedId = imported.exerciseGroups().getFirst().exercises().getFirst().id();
+        assertThat(importedId).isNotEqualTo(foreignText.getId());
+        assertThat(textExerciseRepository.findByIdElseThrow(importedId).getTitle()).isEqualTo(foreignText.getTitle());
+        assertThat(textExerciseRepository.findByIdElseThrow(importedId).getExampleSolution()).isEqualTo(foreignText.getExampleSolution());
+        assertThat(textExerciseRepository.findByIdElseThrow(foreignText.getId()).getExerciseGroup().getId()).isEqualTo(foreignGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithDateConflict() throws Exception {
         // Visible Date after Started Date
         final Exam examA = ExamFactory.generateExam(course1);
@@ -3003,7 +3301,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithTitleTooLong() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("a".repeat(256)); // Max allowed is 255 characters
@@ -3011,7 +3309,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithDecimalMaxPoints() throws Exception {
         // A fractional examMaxPoints must be rejected instead of being silently truncated on the import write path.
         final Exam exam = ExamFactory.generateExam(course1);
@@ -3021,7 +3319,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithTextTooLong() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
@@ -3029,7 +3327,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithDateConflictTestExam() throws Exception {
         // Working Time larger than Working window
         final Exam examA = ExamFactory.generateTestExam(course1);
@@ -3043,7 +3341,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithPointConflict() throws Exception {
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setExamMaxPoints(-5);
@@ -3051,7 +3349,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_failsWithCorrectionRoundConflict() throws Exception {
         // Correction round <= 0
         final Exam examA = ExamFactory.generateExam(course1);
@@ -3070,7 +3368,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_successfulWithoutExercises() throws Exception {
         Exam exam = examUtilService.addExam(course1);
 
@@ -3106,7 +3404,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_successfulWithExercises() throws Exception {
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("testchannelname-imported");
@@ -3181,7 +3479,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseGroupsToExistingExam_preservesAllContent() throws Exception {
         // Regression guard for the import-exercise-group path, where a quiz previously
         // failed to import because of a detached QuizPointStatistic. Verify every exercise type preserves its content here.
@@ -3220,7 +3518,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_skipsFailedExerciseAndImportsTheRest() throws Exception {
         // Source exam has non-empty groups modelling, text, file upload, quiz (plus one empty group that is filtered out).
         // We make the quiz import fail; the other three exercises are imported. The import must still succeed overall
@@ -3264,7 +3562,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_retainsEmptiedMiddleExerciseGroup() throws Exception {
         // When a NON-LAST exercise group's exercises all fail to import, the (now empty) group is RETAINED in place rather
         // than deleted. The import must not mutate the ordered exercise-group list: all four imported groups stay, in order,
@@ -3293,7 +3591,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_reportsProgressOverWebsocket() throws Exception {
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("ws-progress-channel");
@@ -3303,11 +3601,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // When a client supplies an importId, the importing user receives live progress on an import-specific websocket channel.
         request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import?importId=" + importId, importDTO, ExamImportResultDTO.class, CREATED);
 
-        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), eq("/topic/exam-import/" + importId), any());
+        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), userTopic("/topic/exam-import/" + importId), any());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithQuizExercise_successfulWithQuestions() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
         ExerciseGroup quizGroup = exam.getExerciseGroups().getFirst();
@@ -3335,7 +3633,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @Disabled("Test requires actual LocalCI implementation since we converted LocalVC from mock to a real service.")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_successfulWithImportToOtherCourse() throws Exception {
         setupMocks();
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course2);
@@ -3356,8 +3654,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
         Exercise importedProgrammingExercise = received.getExerciseGroups().get(4).getExercises().iterator().next();
         ProgrammingExercise importedExerciseWithAllData = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
-                        importedProgrammingExercise.getId())
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(importedProgrammingExercise.getId())
                 .orElseThrow();
         assertThat(importedExerciseWithAllData.getGradingCriteria()).hasSize(2);
     }
@@ -3375,13 +3672,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     // <editor-fold desc="Plagiarism">
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetExercisesWithPotentialPlagiarismAsTutor_forbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetSuspiciousSessionsAsTutor_forbidden() throws Exception {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("differentStudentExamsSameIPAddress", "true");
@@ -3393,7 +3690,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExercisesWithPotentialPlagiarismAsInstructorNotInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
@@ -3402,7 +3699,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
@@ -3418,7 +3715,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExercisesWithPotentialPlagiarismAsInstructor() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         List<ExerciseForPlagiarismCasesOverviewDTO> expectedExercises = new ArrayList<>();
@@ -3441,7 +3738,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("provideAnalysisOptions")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetSuspiciousSessionsDifferentAsInstructor(boolean sameIpDifferentExams, boolean sameFingerprintDifferentExams, boolean differentIpSameExam,
             boolean differentFingerprintSameExam) throws Exception {
         prepareExamSessionsForTestCase(sameIpDifferentExams, sameFingerprintDifferentExams, differentIpSameExam, differentFingerprintSameExam);
@@ -3535,7 +3832,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetSuspiciousSessionsIpOutsideOfRangeNoSubnetGivenBadRequest() throws Exception {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("differentStudentExamsSameIPAddress", "false");
@@ -3548,7 +3845,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @MethodSource("provideIpAddressesAndSubnets")
     void testGetSuspiciousSessionsIpOutsideOfRange(String ipAddress1, String ipAddress2, String subnetIncludingFirstAddress, String subnetIncludingNeitherAddress,
             String subnetIncludingBothAddresses) throws Exception {
@@ -3600,7 +3897,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @MethodSource("provideMixedIpAddressesAndSubnets")
     void testIpOutsideOfRangeMixedIPv4AndIPv6(String ipAddress1, String ipAddress2, String subnet) throws Exception {
         var studentExam1 = examUtilService.addStudentExamWithUser(exam1, student1);
@@ -3627,7 +3924,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @MethodSource("provideAnalysisOptions")
     void testComparingForOtherCriterionThanGivenNoFalsePositives(boolean sameIpDifferentExams, boolean sameFingerprintDifferentExams, boolean differentIpSameExam,
             boolean differentFingerprintSameExam) throws Exception {
@@ -3662,7 +3959,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSuspiciousSessionsAllOptionsCombined() throws Exception {
         prepareExamSessionsForTestCase(true, true, true, true);
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();

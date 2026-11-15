@@ -61,10 +61,11 @@ public record CourseUpdateDTO(
 
         // UI settings
         @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
-        boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
+        boolean unenrollmentEnabled, @Nullable @Size(max = 10000) String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
         @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
@@ -78,7 +79,7 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -90,48 +91,13 @@ public record CourseUpdateDTO(
      * @return the updated course entity
      */
     public Course applyTo(Course course) {
-        // Basic info
-        course.setTitle(title);
-        course.setShortName(shortName);
-        course.setDescription(description);
-        course.setSemester(semester);
-
-        // Dates
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
-        course.setEnrollmentStartDate(enrollmentStartDate);
-        course.setEnrollmentEndDate(enrollmentEndDate);
-        course.setUnenrollmentEndDate(unenrollmentEndDate);
-
-        // Configuration flags
-        course.setTestCourse(testCourse);
-        course.setOnlineCourse(onlineCourse != null && onlineCourse);
-        course.setLanguage(language);
-        course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
-
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-
-        // UI settings
-        course.setColor(color);
+        applyBasicSettingsTo(course);
         course.setCourseIcon(courseIcon);
-        course.setEnrollmentEnabled(enrollmentEnabled);
-        course.setEnrollmentConfirmationMessage(enrollmentConfirmationMessage);
-        course.setUnenrollmentEnabled(unenrollmentEnabled);
+        applyEnrollmentSettingsTo(course);
         course.setCourseInformationSharingMessagingCodeOfConduct(courseInformationSharingMessagingCodeOfConduct);
 
         // Course features
-        course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationScore(presentationScore);
-        course.setMaxPoints(maxPoints);
-        course.setAccuracyOfScores(accuracyOfScores);
-        course.setTimeZone(timeZone);
-        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        applyFeatureSettingsTo(course);
 
         // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
         // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
@@ -145,24 +111,21 @@ public record CourseUpdateDTO(
             course.setOnboardingDone(true);
         }
 
-        // Update the course's configuration (data-retention flags plus the Atlas auto-orchestration settings), creating
-        // it if absent. The course must be loaded with its (lazy) configuration for this to update in place instead of
-        // creating a duplicate.
+        // Update the permanent settings row loaded through its own repository by the caller.
         CourseConfiguration configuration = course.getCourseConfiguration();
-        if (configuration == null) {
-            configuration = new CourseConfiguration();
-            configuration.setCourse(course);
-            course.setCourseConfiguration(configuration);
-        }
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
         // the cleanup again.
         configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+        if (presentationAssessmentsEnabled != null) {
+            configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        }
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
 
         return course;
     }
+
 }

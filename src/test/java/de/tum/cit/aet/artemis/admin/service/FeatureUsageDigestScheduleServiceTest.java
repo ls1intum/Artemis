@@ -210,6 +210,6 @@ class FeatureUsageDigestScheduleServiceTest {
 
     private static FeatureUsageDigestDTO digest() {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        return new FeatureUsageDigestDTO(7, today.minusDays(6), today, 10, 5, 3, 2, 1, 0, Instant.now(), List.of(), List.of());
+        return new FeatureUsageDigestDTO(7, today.minusDays(6), today, 10, 5, 3, 2, 1, 0, 0, Instant.now(), List.of(), List.of());
     }
 }

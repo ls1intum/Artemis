@@ -10,7 +10,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 
 /**
  * Service for rendering prompt templates for Atlas AI functionality.
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
  */
 @Service
 @Lazy
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AtlasPromptTemplateService {
 
     /**

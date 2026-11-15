@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,6 +9,7 @@ import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tut
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -24,11 +25,15 @@ export class TutorialEditContainerComponent {
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);
+    private entityTitleService = inject(EntityTitleService);
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
     tutors = this.tutorialGroupTutorService.tutors;
-    tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
+    tutorialGroup = computed(() => {
+        const group = this.tutorialGroupCourseAndGroupService.tutorialGroup();
+        return group?.id === this.tutorialGroupId() ? group : undefined;
+    });
     schedule = signal<TutorialGroupSchedule | undefined>(undefined);
     isTutorsLoading = this.tutorialGroupTutorService.isLoading;
     isTutorialGroupLoading = this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading;
@@ -42,12 +47,13 @@ export class TutorialEditContainerComponent {
                 this.tutorialGroupTutorService.loadTutors(courseId);
             }
         });
-        effect(() => {
+        effect((onCleanup) => {
             const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
             if (courseId && tutorialGroupId) {
                 this.loadGroupIfNecessary(courseId, tutorialGroupId);
-                this.loadSchedule(courseId, tutorialGroupId);
+                const scheduleRequest = this.loadSchedule(courseId, tutorialGroupId);
+                onCleanup(() => scheduleRequest.unsubscribe());
             }
         });
     }
@@ -62,9 +68,10 @@ export class TutorialEditContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
+                    this.entityTitleService.setTitle(EntityType.TUTORIAL_GROUP, [tutorialGroupId], updateTutorialGroupDTO.title);
                     this.isTutorialGroupLoading.set(false);
                     this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
-                    void this.router.navigate(['..'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['/course-management', courseId, 'tutorial-groups']);
                 },
                 error: () => {
                     this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.updateGroup');
@@ -74,8 +81,9 @@ export class TutorialEditContainerComponent {
     }
 
     private loadSchedule(courseId: number, tutorialGroupId: number) {
+        this.schedule.set(undefined);
         this.isScheduleLoading.set(true);
-        this.tutorialGroupApiService.getTutorialGroupSchedule(courseId, tutorialGroupId).subscribe({
+        return this.tutorialGroupApiService.getTutorialGroupSchedule(courseId, tutorialGroupId).subscribe({
             next: (schedule) => {
                 this.schedule.set(schedule);
                 this.isScheduleLoading.set(false);
@@ -88,8 +96,8 @@ export class TutorialEditContainerComponent {
     }
 
     private loadGroupIfNecessary(courseId: number, tutorialGroupId: number) {
-        const tutorialGroup = this.tutorialGroup();
-        if (!tutorialGroup) {
+        const tutorialGroup = untracked(this.tutorialGroup);
+        if (tutorialGroup?.id !== tutorialGroupId) {
             this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
         }
     }

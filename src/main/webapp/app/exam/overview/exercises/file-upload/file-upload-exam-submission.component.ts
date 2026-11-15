@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, input, model, signal, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, input, model, signal } from '@angular/core';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -8,24 +8,26 @@ import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { FileService } from 'app/foundation/service/file.service';
+import { faCloudArrowUp, faFile, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -33,12 +35,14 @@ import { FileService } from 'app/foundation/service/file.service';
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
     imports: [
         TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         ResizeableContainerComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
@@ -51,25 +55,43 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     exerciseType = ExerciseType.FILE_UPLOAD;
 
-    fileInput = viewChild<ElementRef>('fileInput');
-
     studentSubmission = model.required<FileUploadSubmission>();
     exercise = input.required<FileUploadExercise>();
     readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
+    readonly uploading = signal(false);
+    readonly uploadFailed = signal(false);
+    readonly isImage = computed(() => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'].includes(this.submittedFileExtension()?.toLowerCase() ?? ''));
+    readonly acceptedFileTypes = computed(() =>
+        this.exercise()
+            .filePattern?.split(',')
+            .map((extension) => '.' + extension.trim().replace(/^\./, ''))
+            .join(','),
+    );
+
     readonly submittedFileName = signal<string | undefined>(undefined);
     readonly submittedFileExtension = signal<string | undefined>(undefined);
+    readonly submittedFileUrl = signal<string | undefined>(undefined);
+    /** Bumped after every successful upload, because a replacement with the same filename keeps the same submission URL. */
+    private readonly previewRevision = signal(0);
+    readonly previewUrl = computed(() => {
+        const url = this.submittedFileUrl();
+        const revision = this.previewRevision();
+        if (!url || revision <= 0) {
+            return url;
+        }
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}rev=${revision}`;
+    });
     participation?: StudentParticipation;
     result?: Result;
     submissionFile?: File;
 
-    readonly ButtonType = ButtonType;
-
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    filePath?: string;
-
     // Icons
     farListAlt = faListAlt;
+    readonly faCloudArrowUp = faCloudArrowUp;
+    readonly faFile = faFile;
+    readonly faSpinner = faSpinner;
 
     /**
      * Initializes data for file upload editor
@@ -94,21 +116,35 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * @param event {object} Event object which contains the uploaded file
      */
     setFileSubmissionForExercise(event: Event): void {
-        const fileList = (event.target as HTMLInputElement).files;
-        if (fileList && fileList.length) {
-            const submissionFile = fileList[0];
-            const allowedFileExtensions = this.exercise().filePattern!.split(',');
-            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
-            } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
-            } else {
-                this.submissionFile = submissionFile;
-                this.studentSubmission().isSynced = false;
-                // isSynced is mutated in place; notify sync-state-dependent UI (exam navigation sidebar, exercise
-                // overview, save button) so it re-evaluates under zoneless change detection.
-                this.examParticipationService.notifySubmissionSyncStateChanged();
-            }
+        const input = event.target as HTMLInputElement;
+        this.selectFile(input.files?.[0]);
+        // Allow selecting the same file again after a failed upload.
+        input.value = '';
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        this.selectFile(event.dataTransfer?.files[0]);
+    }
+
+    private selectFile(submissionFile?: File): void {
+        if (!submissionFile || this.uploading() || this.readonly() || this.examTimeline() || !this.isActive || this.result) {
+            return;
+        }
+        const allowedFileExtensions =
+            this.exercise()
+                .filePattern?.split(',')
+                .map((extension) => extension.trim().replace(/^\./, '').toLowerCase()) ?? [];
+        const extension = submissionFile.name.split('.').pop()?.toLowerCase();
+        if (!extension || !allowedFileExtensions.includes(extension)) {
+            this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
+        } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
+            this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
+        } else {
+            this.submissionFile = submissionFile;
+            this.studentSubmission().isSynced = false;
+            this.examParticipationService.notifySubmissionSyncStateChanged();
+            this.saveUploadedFile();
         }
     }
 
@@ -149,6 +185,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
+            // submissions loaded from the server (e.g. in the exam timeline) only contain the file path, the download url is derived from it
+            this.submittedFileUrl.set(this.studentSubmission().filePathUrl ?? addPublicFilePrefix(this.studentSubmission().filePath));
             const filePath = this.studentSubmission().filePath!.split('/');
             const submittedFileName = filePath.last()!;
             this.submittedFileName.set(submittedFileName);
@@ -162,27 +200,44 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  set it in the submission.
      */
     saveUploadedFile() {
-        if (!this.submissionFile) {
+        if (!this.submissionFile || this.uploading() || this.readonly() || this.examTimeline() || !this.isActive || this.result) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission(), this.exercise().id!, this.submissionFile).subscribe({
-            next: (res) => {
-                const submissionFromServer = res.body!;
-                this.studentSubmission().filePath = submissionFromServer.filePath;
-                this.studentSubmission().filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
-                this.studentSubmission().isSynced = true;
-                this.studentSubmission().submitted = true;
-                this.examParticipationService.notifySubmissionSyncStateChanged();
-                this.updateViewFromSubmission();
-            },
-            error: () => this.onError(),
-        });
+        const submission = this.studentSubmission();
+        this.uploadFailed.set(false);
+        this.uploading.set(true);
+        this.examParticipationService.setSubmissionSaving(submission, true);
+        this.fileUploadSubmissionService
+            .update(submission, this.exercise().id!, this.submissionFile)
+            .pipe(
+                finalize(() => {
+                    this.uploading.set(false);
+                    this.examParticipationService.setSubmissionSaving(submission, false);
+                }),
+            )
+            .subscribe({
+                next: (res) => {
+                    const submissionFromServer = res.body!;
+                    submission.filePath = submissionFromServer.filePath;
+                    submission.filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
+                    submission.isSynced = true;
+                    submission.submitted = true;
+                    this.examParticipationService.notifySubmissionSyncStateChanged();
+                    this.submissionFile = undefined;
+                    this.previewRevision.update((revision) => revision + 1);
+                    if (this.studentSubmission() === submission) {
+                        this.updateViewFromSubmission();
+                    }
+                },
+                error: () => this.onError(),
+            });
     }
 
     /**
      * Pass on an error to the browser console and the alertService.
      */
     private onError() {
+        this.uploadFailed.set(true);
         this.alertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
 

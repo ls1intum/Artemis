@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -14,7 +15,7 @@ import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { NgClass } from '@angular/common';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +30,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
     imports: [
-        NgClass,
+        NgTemplateOutlet,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
         ExamLiveEventsButtonComponent,
         ExamStartInformationComponent,
         FormsModule,
@@ -67,7 +72,14 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     course?: Course;
     readonly startEnabled = signal(false);
     readonly endEnabled = signal(false);
-    confirmed = false;
+    private readonly confirmedState = signal(false);
+    /** Whether the student ticked the confirmation checkbox. Backed by a signal, so that changes made outside of a template event reach the view. */
+    get confirmed(): boolean {
+        return this.confirmedState();
+    }
+    set confirmed(value: boolean) {
+        this.confirmedState.set(value);
+    }
     readonly isAttendanceChecked = signal(false);
 
     readonly testRun = computed(() => this.studentExam()?.testRun);
@@ -172,7 +184,12 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         } else {
             this.isFetching.set(true);
             this.loadExamSubscription = this.examParticipationService
-                .loadStudentExamWithExercisesForConduction(this.exam().course!.id!, this.exam().id!, this.studentExam().id!)
+                .loadStudentExamWithExercisesForConduction(
+                    this.exam().course!.id!,
+                    this.exam().id!,
+                    this.studentExam().id!,
+                    this.accountService.isAtLeastInstructorInCourse(this.exam().course) ? 'instructor-owner' : 'student',
+                )
                 .subscribe((studentExam: StudentExam | undefined) => {
                     // Always clear the loading state so the start action recovers even when the load falls back to
                     // local storage and yields no exam — otherwise `isFetching` would stay true and the button spins.

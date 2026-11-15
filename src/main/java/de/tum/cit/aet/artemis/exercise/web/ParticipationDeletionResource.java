@@ -23,11 +23,13 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
@@ -42,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationDeletionResource {
@@ -83,7 +85,8 @@ public class ParticipationDeletionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("participations/{participationId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
@@ -121,7 +124,8 @@ public class ParticipationDeletionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("participations/{participationId}/cleanup-build-plan")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<StudentParticipationDTO> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);

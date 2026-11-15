@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
@@ -218,6 +218,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
+            List<BuildLogEntry> failedBuildLogs = null;
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -249,10 +250,10 @@ public class ProgrammingExerciseGradingService {
                     var buildLogMessages = buildLogs.stream().map(BuildLogEntry::getLog).toList();
                     mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(exercise.getId(), programmingLanguage, buildLogMessages);
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                    var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
-
-                    // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                    latestSubmission.setBuildLogEntries(new LinkedHashSet<>(savedBuildLogs));
+                    // Keep the logs until the result has been persisted below. Its database id is part of the file name, so multiple failed results of this submission can
+                    // remain available independently. The entries are deliberately not put back onto the submission: they are no longer rows, so attaching them would ask
+                    // the cascade on this association to persist entities that have no submission of their own.
+                    failedBuildLogs = buildLogs;
                 }
             }
 
@@ -261,7 +262,16 @@ public class ProgrammingExerciseGradingService {
             newResult.setExerciseId(participation.getExercise().getId());
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult);
+            Result processedResult = processNewProgrammingExerciseResult(participation, newResult);
+            if (failedBuildLogs != null) {
+                buildLogService.saveBuildLogs(failedBuildLogs, latestSubmission, processedResult);
+            }
+            else if (!buildFailed) {
+                // A semi-automatic result is updated in place and keeps its id, so a build that succeeds where an earlier one failed has to take that earlier build's logs
+                // with it. Left behind, they would be read back under a result that now stands for a build that did not fail.
+                buildLogService.deleteBuildLogsOfSucceededResult(latestSubmission, processedResult);
+            }
+            return processedResult;
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
@@ -546,6 +556,9 @@ public class ProgrammingExerciseGradingService {
      */
     public List<Result> updateParticipationResults(@NonNull final ProgrammingExerciseStudentParticipation participation) {
         final ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            throw new IllegalStateException("Participation " + participation.getId() + " is not linked to a programming exercise");
+        }
         final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
@@ -1022,8 +1035,8 @@ public class ProgrammingExerciseGradingService {
                 continue;
             }
 
-            // get all feedback in this category
-            List<ScaFeedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
+            // Keep overlapping Checkstyle diagnostics, but charge each occurrence only once within its category.
+            List<ScaFeedback> categoryFeedback = getScaFeedbackToPenalize(feedbackByCategory.getOrDefault(category.getName(), List.of()));
 
             // calculate the sum of all per-feedback penalties
             double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
@@ -1050,6 +1063,41 @@ public class ProgrammingExerciseGradingService {
         }
 
         return overallPenaltyPoints;
+    }
+
+    /**
+     * Checkstyle checks can report the same problem at the same token (e.g. WhitespaceAfterCheck and
+     * WhitespaceAroundCheck). Keep all diagnostics, but only charge once for an identical message and
+     * source position within a grading category. Incomplete positions cannot reliably identify an occurrence.
+     */
+    private static List<ScaFeedback> getScaFeedbackToPenalize(List<ScaFeedback> categoryFeedback) {
+        Set<CheckstyleIssueOccurrence> occurrences = new HashSet<>();
+        List<ScaFeedback> feedbackToPenalize = new ArrayList<>();
+        for (var feedback : categoryFeedback) {
+            // Ingestion replaces absent paths and truncates long ones, so neither reliably identifies a source file.
+            if (feedback.getTool() != StaticCodeAnalysisTool.CHECKSTYLE || StringUtils.isBlank(feedback.getFilePath()) || "notAvailable".equals(feedback.getFilePath())
+                    || feedback.getFilePath().length() >= ScaFeedback.MAX_FILE_PATH_LENGTH || feedback.getStartLine() == null || feedback.getStartLine() <= 0
+                    || feedback.getEndLine() == null || feedback.getEndLine() <= 0 || feedback.getEndLine() < feedback.getStartLine() || feedback.getStartColumn() == null
+                    || feedback.getStartColumn() <= 0 || feedback.getEndColumn() == null || feedback.getEndColumn() <= 0
+                    || (feedback.getEndLine().equals(feedback.getStartLine()) && feedback.getEndColumn() < feedback.getStartColumn())) {
+                feedbackToPenalize.add(feedback);
+                continue;
+            }
+            // Messages are content-addressed. Their ids identify the text without initializing detached lazy references.
+            Long messageId = feedback.getMessage() == null ? null : feedback.getMessage().getId();
+            String messageText = messageId == null ? feedback.getMessageText() : null;
+            if ((messageId == null && StringUtils.isBlank(messageText)) || occurrences.add(new CheckstyleIssueOccurrence(feedback.getFilePath(), feedback.getStartLine(),
+                    feedback.getEndLine(), feedback.getStartColumn(), feedback.getEndColumn(), messageId, messageText))) {
+                feedbackToPenalize.add(feedback);
+            }
+            else {
+                feedback.setPenalty(0.0);
+            }
+        }
+        return feedbackToPenalize;
+    }
+
+    private record CheckstyleIssueOccurrence(String filePath, Integer startLine, Integer endLine, Integer startColumn, Integer endColumn, Long messageId, String message) {
     }
 
     /**

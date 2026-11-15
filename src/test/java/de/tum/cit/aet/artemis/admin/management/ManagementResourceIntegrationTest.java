@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.admin.management;
 
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -44,6 +47,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "managementresource";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
@@ -135,14 +141,14 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
                 HttpStatus.OK);
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
-        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise2.getId());
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
         request.put("/api/admin/feature-toggle", features, HttpStatus.OK);
-        verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
+        verify(this.websocketMessagingService).sendMessage(topic("/topic/management/feature-toggles"), eq(featureToggleService.enabledFeatures()));
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled

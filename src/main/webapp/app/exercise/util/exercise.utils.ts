@@ -1,15 +1,13 @@
-import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Observable, from, of } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
-import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
@@ -41,7 +39,7 @@ function isStrictlyBeforeIfBothDefined(previousDate: dayjs.Dayjs | undefined, la
 
 export class SaveExerciseCommand<T extends Exercise> {
     constructor(
-        private modalService: NgbModal,
+        private modalService: TumAetUiDialogService,
         private popupService: ExerciseUpdateWarningService,
         private exerciseService: ExerciseServicable<T>,
         private backupExercise: T,
@@ -80,18 +78,12 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise, isExamMode));
 
-        if (this.modalService.hasOpenModals()) {
-            const confirmedCase = popupRefObs.pipe(
-                mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map((): SaveStep => [false, prepareRequestOptions()]))),
-            );
+        if (this.modalService.hasOpenDialogs()) {
+            const confirmedCase = popupRefObs.pipe(mergeMap((ref) => ref.componentInstance.confirmed.pipe(map((): SaveStep => [false, prepareRequestOptions()]))));
             const reEvaluatedCase = popupRefObs.pipe(
-                mergeMap((ref) =>
-                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(
-                        map((): SaveStep => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }]),
-                    ),
-                ),
+                mergeMap((ref) => ref.componentInstance.reEvaluated.pipe(map((): SaveStep => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }]))),
             );
-            const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
+            const canceledCase = popupRefObs.pipe(mergeMap((ref) => ref.componentInstance.canceled));
 
             saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
         }
@@ -102,18 +94,6 @@ export class SaveExerciseCommand<T extends Exercise> {
         );
     }
 }
-
-export const hasExerciseChanged = (changes: SimpleChanges) => {
-    return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
-};
-
-export const problemStatementHasChanged = (changes: SimpleChanges) => {
-    return (
-        changes.exercise &&
-        changes.exercise.currentValue &&
-        (!changes.exercise.previousValue || changes.exercise.previousValue.problemStatement !== changes.exercise.currentValue.problemStatement)
-    );
-};
 
 /**
  * Checks if the due date of a given exercise lies in the past. If there is no due date it evaluates to false.
@@ -178,24 +158,49 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 };
 
 /**
+ * Whether the work period for practicing is over, the same condition as the server checks before it starts the practice mode: the exercise due date has passed and, if the
+ * graded participation has an individual due date (an extension), that due date has passed as well. There is no practice without a due date.
+ * @param exercise the exercise that the student wants to practice
+ * @param deadlineParticipation the graded participation of the student or the team, which may carry an individual due date
+ */
+const isPracticeDeadlineOver = (exercise: Exercise, deadlineParticipation?: StudentParticipation): boolean => {
+    const dueDate = getExerciseDueDate(exercise, deadlineParticipation);
+    return exercise.dueDate != undefined && dueDate != undefined && dayjs().isAfter(exercise.dueDate) && dayjs().isAfter(dueDate);
+};
+
+/**
  * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming, text, and modeling exercises when it's after the due date
+ * - For programming, text, and modeling exercises when it's after the due date, also for a team exercise, which is practiced individually by each student.
+ *   While the graded participation has an individual due date (an extension), practicing is only possible after that one, the server answers 403 before.
  * @param exercise the exercise that the student wants to practice
- * @param participation the potentially existing participation
+ * @param participation the potentially existing practice participation
+ * @param deadlineParticipation the graded participation of the student (or of the team for a team exercise), which defines the individual due date.
  */
-export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
+export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation, deadlineParticipation?: StudentParticipation): boolean => {
     switch (exercise.type) {
         case ExerciseType.QUIZ:
             return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
+            return isPracticeDeadlineOver(exercise, deadlineParticipation) && (!participation || programmingSetupNotFinished(participation));
         case ExerciseType.TEXT:
         case ExerciseType.MODELING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !isPracticeMode(participation);
+            return isPracticeDeadlineOver(exercise, deadlineParticipation) && !isPracticeMode(participation);
         default:
             return false;
     }
+};
+
+/**
+ * The participations of a team exercise after the team assignment of the student changed.
+ * The assignment delivers the participations of the team only. The practice participation of the student is individual, it belongs to the student rather than to the team,
+ * so it has to survive the replacement.
+ * @param current the participations the exercise currently has
+ * @param delivered the participations that the team assignment delivers
+ */
+export const withPracticeParticipations = (current: StudentParticipation[] | undefined, delivered: StudentParticipation[]): StudentParticipation[] => {
+    const practiceParticipations = (current ?? []).filter((participation) => isPracticeMode(participation) && !delivered.some((other) => other.id === participation.id));
+    return [...delivered, ...practiceParticipations];
 };
 
 /**

@@ -1,3 +1,6 @@
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, computed, inject, input, model, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, tap } from 'rxjs/operators';
@@ -8,27 +11,40 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from '../submission-export.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FaIconComponent],
+    imports: [
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        TumAetUiDatePickerComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class SubmissionExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private submissionExportService = inject(SubmissionExportService);
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject(TumAetUiDialogRef);
     private alertService = inject(AlertService);
 
     readonly exerciseId = input.required<number>();
     readonly exerciseType = input.required<ExerciseType>();
+    readonly examExercise = input(false);
 
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly exportInProgress = signal(false);
@@ -38,6 +54,10 @@ export class SubmissionExportDialogComponent implements OnInit {
     readonly filterLateSubmissions = model(false);
     readonly filterLateSubmissionsDate = model<SubmissionExportOptions['filterLateSubmissionsDate']>(null);
     readonly participantIdentifierList = model('');
+    /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
+    readonly isFilterDateTextValid = signal(true);
+    /** The export must not run with a date the picker shows as invalid; while the date is not used (filter off), it cannot matter. */
+    readonly hasInvalidFilterDate = computed(() => this.filterLateSubmissions() && !this.isFilterDateTextValid());
 
     readonly submissionExportOptions = computed<SubmissionExportOptions>(() => ({
         exportAllParticipants: this.exportAllParticipants(),
@@ -52,8 +72,7 @@ export class SubmissionExportDialogComponent implements OnInit {
     ngOnInit() {
         this.isLoading.set(true);
         this.exportInProgress.set(false);
-        this.exerciseService
-            .find(this.exerciseId())
+        (this.examExercise() ? this.exerciseService.findForExamManagement(this.exerciseId()) : this.exerciseService.findForStaff(this.exerciseId()))
             .pipe(
                 tap(({ body: exercise }) => {
                     this.exercise.set(exercise!);
@@ -69,8 +88,13 @@ export class SubmissionExportDialogComponent implements OnInit {
             });
     }
 
+    /** The export options hold no date as `null`, whereas the picker reports it as `undefined`. */
+    onFilterLateSubmissionsDateChange(date: dayjs.Dayjs | undefined) {
+        this.filterLateSubmissionsDate.set(date ?? null);
+    }
+
     clear() {
-        this.dialogRef.close('cancel');
+        this.dialogRef.dismiss('cancel');
     }
 
     exportSubmissions(exerciseId: number) {

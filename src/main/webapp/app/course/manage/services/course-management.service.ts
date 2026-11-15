@@ -1,12 +1,15 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { onUserChange } from 'app/core/auth/user-change.util';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
+import { PageableResult, SearchTermPageableSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -30,6 +33,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
     CourseForEnrollmentDTO,
@@ -88,7 +92,7 @@ export class GradeScoreDTO {
     presentationScore!: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
     private courseStorageService = inject(CourseStorageService);
@@ -105,17 +109,10 @@ export class CourseManagementService implements OnDestroy {
     private fetchingCoursesForNotifications = false;
 
     private stateGeneration = 0;
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {
@@ -162,6 +159,14 @@ export class CourseManagementService implements OnDestroy {
         return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
+    /**
+     * Gets the time zones a course may use, sorted. The server interprets the course's time zone, and browsers list
+     * different names, some without ones such as `UTC` or `Europe/Kyiv`, so the course form uses the server's list.
+     */
+    getSupportedTimeZones(): Observable<string[]> {
+        return this.http.get<string[]>('api/course/time-zones');
+    }
+
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
         const params = new HttpParams().set('clientId', '' + clientId);
         return this.http.get<OnlineCourseDtoModel[]>('api/lti/courses/for-lti-dashboard', { params });
@@ -172,7 +177,26 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course to be found
      */
     find(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(
+        return this.findWithProjection(courseId);
+    }
+
+    findForTutor(courseId: number): Observable<EntityResponseType> {
+        return this.findWithProjection(courseId, '/for-tutor');
+    }
+
+    findForInstructor(courseId: number): Observable<EntityResponseType> {
+        return this.findWithProjection(courseId, '/for-instructor');
+    }
+
+    /** Chooses the management audience from the persisted account context before requesting course data. */
+    findForManagement(courseId: number): Observable<EntityResponseType> {
+        // Angular route parameters may carry the numeric identifier as a string at runtime.
+        const id = Number(courseId);
+        return this.accountService.isAtLeastInstructorInCourseWithId(id) ? this.findForInstructor(id) : this.findForTutor(id);
+    }
+
+    private findWithProjection(courseId: number, suffix = ''): Observable<EntityResponseType> {
+        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}${suffix}`, { observe: 'response' }).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
             map((res) => this.applyCourseResponseSideEffects(res)),
         );
@@ -544,6 +568,36 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
+     * Returns a page of course members for the given role, filtered and sorted by the search parameters.
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param search         pagination, search term, and sort info
+     */
+    getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<CourseRoleMember>> {
+        return this.http
+            .get<CourseRoleMember[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params: createRequestOption(search), observe: 'response' })
+            .pipe(map(toPageableResult));
+    }
+
+    /**
+     * Searches Artemis users by login, full name, email, or registration number for registration in the given course role.
+     * Users already in the role are marked with {@code isRegistered = true}.
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param searchTerm     the text entered by the instructor
+     * @param page           zero-based page index
+     * @param size           number of results per page
+     */
+    searchUsersForCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, searchTerm: string, page: number, size: number): Observable<UserSearchResult> {
+        return this.http
+            .get<UserForRegistration[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/users/search`, {
+                params: { searchTerm, page, size },
+                observe: 'response',
+            })
+            .pipe(map(toPageableResult));
+    }
+
+    /**
      * finds users of the course corresponding to the name
      * @param courseId  the id of the course
      * @param name      the term to search users
@@ -575,10 +629,12 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId The id of the course to search in.
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.
      */
-    searchStudents(courseId: number, loginOrName: string): Observable<HttpResponse<User[]>> {
+    searchStudents(courseId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
         // create loginOrName HTTP Param
         let httpParams = new HttpParams();
         httpParams = httpParams.append('loginOrName', loginOrName);
+        httpParams = httpParams.append('page', page);
+        httpParams = httpParams.append('size', size);
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
     }
     /**
@@ -612,16 +668,6 @@ export class CourseManagementService implements OnDestroy {
             map((res): HttpResponse<Submission[]> => res.clone({ body: res.body?.map(lockedCourseSubmissionFromDTO) ?? null })),
             filter((res) => !!res.body),
         );
-    }
-
-    /**
-     * Adds a single user to the course with the given role.
-     * @param courseId - the id of the course
-     * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
-     * @param login - login of the user to be added
-     */
-    addUserToCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, {}, { observe: 'response' });
     }
 
     /**

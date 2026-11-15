@@ -1,13 +1,58 @@
 import { Routes } from '@angular/router';
+import type { Route, UrlMatchResult, UrlMatcher } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
+import { HyperionGuard } from 'app/hyperion/shared/hyperion-guard.service';
+import { AthenaGuard } from 'app/course/manage/services/athena-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
+import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
+
+/** Preloading uses the least-privileged child authority; each child still checks access during navigation. */
+function preloadTutorRoutes(loadChildren: NonNullable<Route['loadChildren']>): Route {
+    return { path: '', loadChildren, data: { authorities: IS_AT_LEAST_TUTOR } };
+}
+
+/**
+ * Matches `presentations`, `presentations/:presentationId` and `presentations/:presentationId/exercises/:exerciseId`.
+ * One route config for all three shapes lets Angular reuse the management component and its sidebar when the selected presentation
+ * changes. With one config per shape, moving between the overview, a presentation and an exercise-linked presentation would destroy
+ * and recreate the component, reload everything and reset the search, filters and paging.
+ */
+export const presentationAssessmentUrlMatcher: UrlMatcher = (segments): UrlMatchResult | null => {
+    if (segments[0]?.path !== 'presentations') {
+        return null;
+    }
+    switch (segments.length) {
+        case 1:
+            return { consumed: segments };
+        case 2:
+            return { consumed: segments, posParams: { presentationId: segments[1] } };
+        case 4:
+            return segments[2].path === 'exercises' ? { consumed: segments, posParams: { presentationId: segments[1], exerciseId: segments[3] } } : null;
+        default:
+            return null;
+    }
+};
+
+function presentationAssessmentManagementRoute(): Route {
+    return {
+        matcher: presentationAssessmentUrlMatcher,
+        loadComponent: () => import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_TUTOR,
+            pageTitle: 'artemisApp.presentationAssessment.home.title',
+            transparentCourseBody: true,
+        },
+        canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
+    };
+}
 
 export const courseManagementRoutes: Routes = [
     {
@@ -16,6 +61,9 @@ export const courseManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
+            // The page renders its own shell (title bar above a scrolling card), like the course management container
+            // below, so it must not be wrapped in the app-level card as well.
+            usesModuleBackground: false,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
     },
@@ -80,6 +128,24 @@ export const courseManagementRoutes: Routes = [
                 },
                 canActivate: [UserRouteAccessService, IrisGuard],
                 canDeactivate: [PendingChangesGuard],
+            },
+            {
+                path: ':courseId/smart-quizzes',
+                loadComponent: () => import('app/hyperion/manage/quiz-question-pool/quiz-question-pool.component').then((m) => m.QuizQuestionPoolComponent),
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                    pageTitle: 'artemisApp.hyperion.quizQuestionPool.title',
+                },
+                canActivate: [UserRouteAccessService, HyperionGuard],
+            },
+            {
+                path: ':courseId/athena-settings',
+                loadComponent: () => import('app/course/manage/athena-settings-update/athena-settings-update.component').then((m) => m.AthenaSettingsUpdateComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.course.athenaConfig.settingsPage.title',
+                },
+                canActivate: [UserRouteAccessService, AthenaGuard],
             },
             {
                 path: ':courseId/lectures',
@@ -187,6 +253,15 @@ export const courseManagementRoutes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
+                path: ':courseId/gocast-binding',
+                loadComponent: () => import('app/videosource/gocast/gocast-course-binding-page.component').then((m) => m.GocastCourseBindingPageComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.gocast.title',
+                },
+                canActivate: [UserRouteAccessService, GocastGuard],
+            },
+            {
                 path: ':courseId/lti-configuration/edit',
                 loadComponent: () =>
                     import('app/course/manage/course-lti-configuration/edit-course-lti-configuration.component').then((m) => m.EditCourseLtiConfigurationComponent),
@@ -270,6 +345,7 @@ export const courseManagementRoutes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                     },
+                    presentationAssessmentManagementRoute(),
                     {
                         path: 'competency-management',
                         loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
@@ -279,22 +355,8 @@ export const courseManagementRoutes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                     },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/assessment/manage/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/assessment/manage/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
+                    preloadTutorRoutes(() => import('app/assessment/manage/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute)),
+                    preloadTutorRoutes(() => import('app/assessment/manage/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute)),
                     // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work.
                     {
                         path: 'text-exercises',
@@ -321,62 +383,12 @@ export const courseManagementRoutes: Routes = [
                         pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/modeling/manage/modeling-exercise.route').then((m) => m.routes),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/exercise/exercise-scores/exercise-scores.route').then((m) => m.routes),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
-                    {
-                        path: '',
-                        loadChildren: () => import('app/exercise/participation/participation.route').then((m) => m.routes),
-                        // Preload-only authorities (no canActivate): least-privileged authority these routes require, so eligible staff warm this lazy subtree while students stay pruned.
-                        data: {
-                            authorities: IS_AT_LEAST_TUTOR,
-                        },
-                    },
+                    preloadTutorRoutes(() => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute)),
+                    preloadTutorRoutes(() => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes)),
+                    preloadTutorRoutes(() => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute)),
+                    preloadTutorRoutes(() => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes)),
+                    preloadTutorRoutes(() => import('app/modeling/manage/modeling-exercise.route').then((m) => m.routes)),
+                    preloadTutorRoutes(() => import('app/exercise/participation/participation.route').then((m) => m.routes)),
                     {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',

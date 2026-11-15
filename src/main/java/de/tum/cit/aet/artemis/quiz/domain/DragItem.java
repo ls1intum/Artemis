@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -41,7 +43,7 @@ public class DragItem extends DomainObject {
     /**
      * @return the stored filename of the drag item picture
      */
-    public String getPictureFilePath() {
+    public @Nullable String getPictureFilePath() {
         return pictureFilePath;
     }
 

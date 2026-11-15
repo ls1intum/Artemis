@@ -68,39 +68,6 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     int countLongFeedbackTextForOrphanResult();
 
     /**
-     * Deletes {@link LongFeedbackText} linked to {@link Feedback} with a {@code null} result.
-     *
-     * @return the number of deleted {@link LongFeedbackText} entities
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("""
-            DELETE FROM LongFeedbackText lft
-            WHERE lft.feedback IN (
-                SELECT f
-                FROM Feedback f
-                WHERE f.result IS NULL
-                )
-            """)
-    int deleteLongFeedbackTextForOrphanedFeedback();
-
-    /**
-     * Counts {@link LongFeedbackText} linked to {@link Feedback} with a {@code null} result.
-     *
-     * @return the number of entities that would be deleted
-     */
-    @Query("""
-            SELECT COUNT(lft)
-            FROM LongFeedbackText lft
-            WHERE lft.feedback IN (
-                SELECT f
-                FROM Feedback f
-                WHERE f.result IS NULL
-                )
-            """)
-    int countLongFeedbackTextForOrphanedFeedback();
-
-    /**
      * Deletes {@link LongFeedbackText} entries associated with rated {@link Result} (accessed via its submission)
      * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
      * This query removes old long feedback text that is not part of the latest rated results, for courses whose

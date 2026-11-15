@@ -28,7 +28,7 @@ describe('DifficultyBadge', () => {
     it('should show an info badge if no difficulty level should be shown', () => {
         fixture.componentRef.setInput('showNoLevel', true);
 
-        expect(component.badgeClass()).toBe('bg-info');
+        expect(component.badgeClass()).toBe('bg-state-info');
     });
 
     it('should show no badge if the exercise has no difficulty level', () => {
@@ -41,20 +41,20 @@ describe('DifficultyBadge', () => {
         exercise.difficulty = DifficultyLevel.EASY;
         fixture.componentRef.setInput('exercise', exercise);
 
-        expect(component.badgeClass()).toBe('bg-success');
+        expect(component.badgeClass()).toBe('bg-state-success');
     });
 
     it('should a warning badge for medium difficulty exercises', () => {
         exercise.difficulty = DifficultyLevel.MEDIUM;
         fixture.componentRef.setInput('exercise', exercise);
 
-        expect(component.badgeClass()).toBe('bg-warning');
+        expect(component.badgeClass()).toBe('bg-state-warning');
     });
 
     it('should a danger badge for hard exercises', () => {
         exercise.difficulty = DifficultyLevel.HARD;
         fixture.componentRef.setInput('exercise', exercise);
 
-        expect(component.badgeClass()).toBe('bg-danger');
+        expect(component.badgeClass()).toBe('bg-state-danger');
     });
 });

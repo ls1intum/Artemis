@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -42,8 +43,10 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -71,7 +74,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATION)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -90,7 +93,7 @@ public class ParticipationResource {
 
     private final ParticipationAuthorizationService participationAuthorizationService;
 
-    private final Optional<StudentExamApi> studentExamApi;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -114,7 +117,7 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
+            Optional<ExamSubmissionApi> examSubmissionApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
             CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
@@ -128,7 +131,7 @@ public class ParticipationResource {
         this.submissionRepository = submissionRepository;
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationService = participationAuthorizationService;
-        this.studentExamApi = studentExamApi;
+        this.examSubmissionApi = examSubmissionApi;
         this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
     }
@@ -198,7 +201,13 @@ public class ParticipationResource {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneGradedByExerciseAndParticipant(exercise, user);
+        // A team exercise is practiced individually and always from the template: the graded participation belongs to the team, so it is neither the baseline of the practice
+        // repository nor changed by it. It is only consulted for its individual due date, so that practice does not start while an extension of the team is running.
+        boolean teamExercise = exercise.isTeamMode();
+        Optional<StudentParticipation> optionalGradedStudentParticipation = teamExercise ? Optional.empty()
+                : participationService.findOneGradedByExerciseAndParticipant(exercise, user);
+        Optional<StudentParticipation> optionalParticipationDefiningDueDate = teamExercise ? participationService.findOneByExerciseAndStudentAnyState(exercise, user)
+                : optionalGradedStudentParticipation;
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (exercise.isExamExercise()) {
@@ -206,9 +215,6 @@ public class ParticipationResource {
         }
         if (exercise instanceof FileUploadExercise) {
             throw new NotImplementedAlertException("Unsupported exercise type", "participation", "dueDateOver.unsupportedExerciseType");
-        }
-        if (exercise.isTeamMode()) {
-            throw new NotImplementedAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "dueDateOver.notSupportedForTeams");
         }
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
@@ -218,7 +224,7 @@ public class ParticipationResource {
                     "dueDateOver.athenaNotEnabled");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
-                || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
+                || (optionalParticipationDefiningDueDate.isPresent() && exerciseDateService.isBeforeDueDate(optionalParticipationDefiningDueDate.get()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
         if (useGradedParticipation && optionalGradedStudentParticipation.isEmpty()) {
@@ -246,6 +252,9 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
+        if (!participation.getExercise().getId().equals(programmingExercise.getId())) {
+            throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");
+        }
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
         var participant = participation.getParticipant();
@@ -282,6 +291,7 @@ public class ParticipationResource {
      * @param participationId of the participation for which feedback is requested
      * @return ResponseEntity with status 200 (OK) and the updated participation as body
      */
+    @FeatureUsage(UserFeature.AI_FEEDBACK_REQUEST)
     @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipationDTO> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
@@ -364,7 +374,7 @@ public class ParticipationResource {
         // 1) Don't allow student to start before the start and release date
         ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
         if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
-            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
         }
@@ -376,14 +386,25 @@ public class ParticipationResource {
         ZonedDateTime exerciseDueDate = exercise.getDueDate();
         // NOTE: course exercises can only have an individual due date when they already have started
         if (exercise.isExamExercise()) {
-            // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
+            // NOTE: participations of exam exercises are normally prepared before the exam starts. The exam client calls this endpoint whenever the participation of an
+            // exercise was not prepared in advance (e.g. for a late start or a test exam attempt), so the caller has to be the owner of an open student exam that contains the
+            // exercise.
             exerciseDueDate = exercise.getExam().getEndDate();
-            // Only the individual end date is needed here, so read the two values it is computed from instead of the
-            // whole student exam.
-            var workingTime = studentExamApi.orElseThrow().findWorkingTimeByExamIdAndUserId(exercise.getExam().getId(), user.getId());
-            ZonedDateTime individualEndDate = workingTime.map(time -> time.individualEndDate(exercise.getExam())).orElse(null);
-            if (individualEndDate != null) {
-                exerciseDueDate = individualEndDate;
+            // One projection answers all questions: whether the exercise is part of the caller's own student exam, whether that exam
+            // was handed in already and the individual end date.
+            var submissionGate = examSubmissionApi.orElseThrow().findSubmissionGateForUser(user, exercise.getExam(), exercise.getId());
+            if (submissionGate.isPresent()) {
+                var gate = submissionGate.get();
+                if (!gate.containsRequestedExercise() || gate.isHandedIn()) {
+                    throw new AccessForbiddenException("The exercise is not part of your open student exam.");
+                }
+                ZonedDateTime individualEndDate = new StudentExamWorkingTimeDTO(gate.workingTime(), gate.startedDate()).individualEndDate(exercise.getExam());
+                if (individualEndDate != null) {
+                    exerciseDueDate = individualEndDate;
+                }
+            }
+            else if (!isExamTestRunOfInstructor(exercise, user)) {
+                throw new AccessForbiddenException("The exercise is not part of your open student exam.");
             }
         }
         boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
@@ -399,6 +420,16 @@ public class ParticipationResource {
             }
         }
 
+    }
+
+    private boolean isExamTestRunOfInstructor(Exercise exercise, User user) {
+        try {
+            return examSubmissionApi.orElseThrow().isAllowedToSubmitDuringExam(exercise, user, false);
+        }
+        catch (EntityNotFoundException e) {
+            // neither a student exam nor a test run exists for this user
+            return false;
+        }
     }
 
     /**

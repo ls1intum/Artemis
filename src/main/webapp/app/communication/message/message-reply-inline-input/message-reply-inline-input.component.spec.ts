@@ -1,34 +1,38 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FormBuilder } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { directMessageUser1, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { communicationPostToCreateUser1, directMessageUser1 } from 'test/helpers/sample/communication-sample-data';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 import { throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { PostingEditType } from 'app/communication/communication.util';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
     let fixture: ComponentFixture<MessageReplyInlineInputComponent>;
-    let metisService: MetisService;
-    let metisServiceCreateStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceUpdateStub: ReturnType<typeof vi.spyOn>;
+    let communicationService: CommunicationService;
+    let communicationServiceCreateStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUpdateStub: ReturnType<typeof vi.spyOn>;
     let draftService: DraftService;
     let accountService: AccountService;
 
@@ -48,8 +52,8 @@ describe('MessageReplyInlineInputComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 FormBuilder,
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: MetisConversationService, useValue: {} },
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: CourseConversationsService, useValue: {} },
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -65,15 +69,50 @@ describe('MessageReplyInlineInputComponent', () => {
         });
         fixture = TestBed.createComponent(MessageReplyInlineInputComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         draftService = TestBed.inject(DraftService);
         accountService = TestBed.inject(AccountService);
-        metisServiceCreateStub = vi.spyOn(metisService, 'createAnswerPost');
-        metisServiceUpdateStub = vi.spyOn(metisService, 'updateAnswerPost');
+        communicationServiceCreateStub = vi.spyOn(communicationService, 'createAnswerPost');
+        communicationServiceUpdateStub = vi.spyOn(communicationService, 'updateAnswerPost');
     });
 
-    it('should invoke metis service with created message reply', () => {
-        component.posting.set({ ...metisPostToCreateUser1 });
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the actual Angular parent binding for ${modifier}+Enter`, () => {
+            component.posting.set(communicationPostToCreateUser1);
+            fixture.detectChanges();
+            const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+            const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).nativeElement as HTMLElement;
+            editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+            expect(confirm).toHaveBeenCalledOnce();
+        });
+    }
+
+    it('passes a distinct draft identity when equal-content replies change parent threads', () => {
+        component.posting.set({ post: { id: 11 }, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:new');
+
+        component.posting.set({ post: { id: 12 }, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('reply:12:new');
+    });
+
+    it('loads a different edited reply in the same thread instead of preserving the previous reply content', () => {
+        component.posting.set({ id: 21, post: { id: 11 }, content: 'First reply' });
+        fixture.detectChanges();
+        component.formGroup.get('content')!.setValue('Unsaved first reply');
+
+        component.posting.set({ id: 22, post: { id: 11 }, content: 'Second reply' });
+        fixture.detectChanges();
+
+        expect(component.formGroup.get('content')!.value).toBe('Second reply');
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:22');
+    });
+
+    it('should invoke communication service with created message reply', () => {
+        component.posting.set({ ...communicationPostToCreateUser1 });
         fixture.detectChanges();
 
         const newContent = 'new content';
@@ -82,17 +121,36 @@ describe('MessageReplyInlineInputComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith(expect.objectContaining({ content: newContent }));
+        expect(communicationServiceCreateStub).toHaveBeenCalledWith(expect.objectContaining({ content: newContent }));
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
     });
 
-    it('should stop loading when metis service throws error during replying to message', () => {
-        metisServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
+    it('should hand the conversation and the edit type to the markdown editor, which decides whether @all is offered', () => {
+        const conversation = new GroupChatDTO();
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.activeConversation()).toBe(conversation);
+        expect(editor.editType()).toBe(PostingEditType.CREATE);
+    });
+
+    it('should tell the markdown editor that an existing reply is edited, which notifies nobody', () => {
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.editType()).toBe(PostingEditType.UPDATE);
+    });
+
+    it('should stop loading when communication service throws error during replying to message', () => {
+        communicationServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
 
-        component.posting.set(metisPostToCreateUser1);
+        component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();
 
         const newContent = 'new content';
@@ -107,7 +165,7 @@ describe('MessageReplyInlineInputComponent', () => {
         expect(onCreateSpy).not.toHaveBeenCalled();
     });
 
-    it('should invoke metis service with edited message reply', () => {
+    it('should invoke communication service with edited message reply', () => {
         component.posting.set(directMessageUser1);
         fixture.detectChanges();
 
@@ -119,13 +177,13 @@ describe('MessageReplyInlineInputComponent', () => {
 
         component.confirm();
 
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith(expect.objectContaining({ content: editedContent }));
+        expect(communicationServiceUpdateStub).toHaveBeenCalledWith(expect.objectContaining({ content: editedContent }));
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
     });
 
-    it('should stop loading when metis service throws error during message replying', () => {
-        metisServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
+    it('should stop loading when communication service throws error during message replying', () => {
+        communicationServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
 
         component.posting.set(directMessageUser1);
         fixture.detectChanges();
@@ -222,6 +280,23 @@ describe('MessageReplyInlineInputComponent', () => {
             vi.advanceTimersByTime(0);
 
             expect(saveDraftSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('content length validation', () => {
+        beforeEach(() => {
+            component.posting.set({ ...communicationPostToCreateUser1 });
+            fixture.detectChanges();
+        });
+
+        it('should flag a maxlength error when the reply content exceeds MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH + 1));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(true);
+        });
+
+        it('should not flag a maxlength error when the reply content is exactly MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(false);
         });
     });
 });

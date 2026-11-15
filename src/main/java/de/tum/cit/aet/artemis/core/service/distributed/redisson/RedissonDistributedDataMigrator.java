@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.MIGRATION_LOCK_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.V1_TO_V2_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
@@ -58,6 +59,9 @@ class RedissonDistributedDataMigrator {
      * waiting is starting against a namespace that is still being filled.
      */
     private static final long LOCK_WAIT_MINUTES = 10;
+
+    /** How many set elements are read from the source before they are moved and the iteration is restarted. */
+    private static final int DRAIN_SET_BATCH_SIZE = 1000;
 
     /** What {@code RMapCache.remainTimeToLive} answers for an entry that exists but never expires. */
     private static final long NO_EXPIRY = -1;
@@ -227,7 +231,8 @@ class RedissonDistributedDataMigrator {
      * decision and a custom old-format decoder when a required representation is no longer wire-compatible.
      */
     private List<MigrationStep> migrationSteps() {
-        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)));
+        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)),
+                new MigrationStep(1, 2, () -> migrateWireCompatibleStructures(1, 2, V1_TO_V2_STRUCTURES)));
     }
 
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
@@ -341,12 +346,25 @@ class RedissonDistributedDataMigrator {
      */
     private long drainSet(RSet<byte[]> source, RSet<byte[]> target) {
         long moved = 0;
-        for (byte[] element : source) {
-            target.add(element);
-            source.remove(element);
-            moved++;
+        while (true) {
+            // Collect a bounded batch first and modify the set only after the iterator is done with it, so the
+            // iterator is never used after the collection changed underneath it.
+            List<byte[]> batch = new ArrayList<>(DRAIN_SET_BATCH_SIZE);
+            for (byte[] element : source) {
+                batch.add(element);
+                if (batch.size() >= DRAIN_SET_BATCH_SIZE) {
+                    break;
+                }
+            }
+            if (batch.isEmpty()) {
+                return moved;
+            }
+            for (byte[] element : batch) {
+                target.add(element);
+                source.remove(element);
+                moved++;
+            }
         }
-        return moved;
     }
 
     @FunctionalInterface

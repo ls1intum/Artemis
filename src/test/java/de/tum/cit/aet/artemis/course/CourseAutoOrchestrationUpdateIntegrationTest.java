@@ -78,7 +78,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setCourse(managed);
         managed.setCourseConfiguration(configuration);
-        courseRepository.save(managed);
+        courseUtilService.saveWithConfigurations(managed);
         return courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
     }
 
@@ -97,8 +97,8 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateCourse_enableAutoOrchestration_persistsConfiguration() throws Exception {
-        // A fresh course created through the test utilities has no configuration row at all.
-        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId())).isEmpty();
+        // A fresh course already owns disabled default settings.
+        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
 
         setAutoOrchestration(course, true, null, null);
         updateCourse(course);
@@ -126,10 +126,10 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_asInstructor_changingAutoOrchestration_isRejected() throws Exception {
-        // A fresh course has no configuration row; an instructor attempting to enable auto-orchestration must be rejected.
-        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId())).isEmpty();
+        // An instructor cannot enable auto-orchestration on the course's default settings.
+        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
 
         setAutoOrchestration(course, true, null, null);
 
@@ -139,18 +139,18 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
 
         // The setting is admin-only, so no configuration row may be created by the rejected instructor request.
-        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId())).isEmpty();
+        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_asInstructor_unrelatedChange_keepsExistingConfiguration() throws Exception {
         long originalConfigId = persistConfiguration(120);
 
         // Reopen the course the way the settings form does, then save an unrelated field. The configuration must round
         // trip untouched: if the update path did not load it, the submitted (stored) values would be diffed against the
         // defaults and this instructor edit would be rejected as an admin-only change.
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         CourseConfigurationResponseDTO loadedConfiguration = loaded.courseConfiguration();
         assertThat(loadedConfiguration).isNotNull();
         assertThat(loadedConfiguration.autoOrchestratorEnabled()).isTrue();

@@ -23,7 +23,7 @@ describe('FeatureUsageService', () => {
     });
 
     it('should request the overview for the given window', () => {
-        const expected: FeatureUsageOverview = { days: 7, from: '2026-07-30', trackedFeatures: 0, unusedFeatures: 0, retiredFeatures: 0, totalCalls: 0 };
+        const expected = { days: 7, from: '2026-09-18' } as FeatureUsageOverview;
         let received: FeatureUsageOverview | undefined;
 
         service.getOverview(7).subscribe((overview) => (received = overview));
@@ -31,6 +31,7 @@ describe('FeatureUsageService', () => {
         const request = httpMock.expectOne((candidate) => candidate.url === 'api/admin/feature-usage');
         expect(request.request.method).toBe('GET');
         expect(request.request.params.get('days')).toBe('7');
+        expect(request.request.params.has('callerRole')).toBe(false);
         request.flush(expected);
         expect(received).toEqual(expected);
     });
@@ -40,40 +41,39 @@ describe('FeatureUsageService', () => {
 
         const request = httpMock.expectOne((candidate) => candidate.url === 'api/admin/feature-usage');
         expect(request.request.params.get('callerRole')).toBe('STUDENT');
-        request.flush({ days: 30, from: '2026-07-07', trackedFeatures: 0, unusedFeatures: 0, retiredFeatures: 0, totalCalls: 0 });
+        request.flush({});
     });
 
-    it('should omit the role parameter when no role is selected', () => {
-        service.getOverview(30).subscribe();
-
-        const request = httpMock.expectOne((candidate) => candidate.url === 'api/admin/feature-usage');
-        expect(request.request.params.has('callerRole')).toBeFalsy();
-        request.flush({ days: 30, from: '2026-07-07', trackedFeatures: 0, unusedFeatures: 0, retiredFeatures: 0, totalCalls: 0 });
-    });
-
-    it('should request the trend of every endpoint behind a feature', () => {
-        service.getTrend([42, 43], 30).subscribe();
+    it('should chart a feature by its catalogue name', () => {
+        service.getFeatureTrend('FAQ', 90, 'EDITOR').subscribe();
 
         const request = httpMock.expectOne((candidate) => candidate.url === 'api/admin/feature-usage/trend');
-        // repeated rather than joined, so the server sees a list and can sum across the endpoints of one feature
-        expect(request.request.params.getAll('featureIds')).toEqual(['42', '43']);
-        expect(request.request.params.get('days')).toBe('30');
+        expect(request.request.params.get('feature')).toBe('FAQ');
+        expect(request.request.params.get('days')).toBe('90');
+        expect(request.request.params.get('callerRole')).toBe('EDITOR');
+        expect(request.request.params.has('featureIds')).toBe(false);
         request.flush([]);
     });
 
-    it('should post to trigger the digest email', () => {
-        service.sendDigestEmail().subscribe();
+    it('should chart endpoints by repeating their ids', () => {
+        service.getEndpointTrend([1, 2], 7).subscribe();
 
-        const request = httpMock.expectOne('api/admin/feature-usage/digest/send-email');
-        expect(request.request.method).toBe('POST');
-        request.flush(null);
+        const request = httpMock.expectOne((candidate) => candidate.url === 'api/admin/feature-usage/trend');
+        expect(request.request.params.getAll('featureIds')).toEqual(['1', '2']);
+        expect(request.request.params.has('feature')).toBe(false);
+        expect(request.request.params.has('callerRole')).toBe(false);
+        request.flush([]);
     });
 
-    it('should request the adoption counts', () => {
+    it('should request the adoption', () => {
         service.getAdoption().subscribe();
 
-        const request = httpMock.expectOne('api/admin/feature-usage/adoption');
-        expect(request.request.method).toBe('GET');
-        request.flush([]);
+        httpMock.expectOne({ method: 'GET', url: 'api/admin/feature-usage/adoption' }).flush([]);
+    });
+
+    it('should send the digest email', () => {
+        service.sendDigestEmail().subscribe();
+
+        httpMock.expectOne({ method: 'POST', url: 'api/admin/feature-usage/digest/send-email' }).flush(null);
     });
 });

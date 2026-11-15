@@ -35,8 +35,7 @@ public record SubmissionOverviewDTO(Long id, ZonedDateTime submissionDate, Boole
      * @return the projected submission
      */
     public static SubmissionOverviewDTO of(Submission submission) {
-        List<ResultOverviewDTO> results = submission.getResults() == null ? List.of()
-                : submission.getResults().stream().filter(java.util.Objects::nonNull).map(ResultOverviewDTO::of).toList();
+        List<ResultOverviewDTO> results = submission.getResults().stream().filter(java.util.Objects::nonNull).map(ResultOverviewDTO::of).toList();
         Boolean buildFailed = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.isBuildFailed() : null;
         String commitHash = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.getCommitHash() : null;
         return new SubmissionOverviewDTO(submission.getId(), submission.getSubmissionDate(), submission.isSubmitted(), submission.getType(), submission.getSubmissionExerciseType(),

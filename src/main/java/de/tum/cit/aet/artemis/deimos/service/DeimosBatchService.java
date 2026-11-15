@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
 
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
@@ -63,7 +63,7 @@ public class DeimosBatchService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final TaskExecutor deimosTaskExecutor;
+    private final Executor deimosTaskExecutor;
 
     private final URL artemisServerUrl;
 
@@ -75,7 +75,7 @@ public class DeimosBatchService {
 
     public DeimosBatchService(DeimosBatchParticipationRepository deimosBatchParticipationRepository, DeimosAnalysisService deimosAnalysisService,
             MailSendingService mailSendingService, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            @Value("${server.url}") URL artemisServerUrl, @Qualifier("deimosTaskExecutor") TaskExecutor deimosTaskExecutor) {
+            @Value("${server.url}") URL artemisServerUrl, @Qualifier("deimosTaskExecutor") Executor deimosTaskExecutor) {
         this.deimosBatchParticipationRepository = deimosBatchParticipationRepository;
         this.deimosAnalysisService = deimosAnalysisService;
         this.mailSendingService = mailSendingService;

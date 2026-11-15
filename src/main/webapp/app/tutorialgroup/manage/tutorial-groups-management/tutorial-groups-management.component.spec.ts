@@ -9,8 +9,8 @@ import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
@@ -21,11 +21,10 @@ import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-bu
 import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { TutorialGroupManagementService } from 'app/tutorialgroup/manage/service/tutorial-group-management.service';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -108,7 +107,7 @@ describe('TutorialGroupsManagementComponent', () => {
             imports: [TutorialGroupsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
-                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupManagementService, useValue: tutorialGroupApiServiceMock },
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
@@ -120,9 +119,9 @@ describe('TutorialGroupsManagementComponent', () => {
                     {},
                 ),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 // The paginator and the table's empty row translate through this adapter, as they do in the app.
-                provideArtemisTumUiTranslator(),
+                provideArtemisTumAetUiTranslator(),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -152,7 +151,8 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(component.tutorialGroups().map((tutorialGroup) => tutorialGroup.id)).toEqual([tutorialGroupOne.id, tutorialGroupTwo.id]);
+        expect(component.tutorialGroups().map((tutorialGroup) => tutorialGroup.title)).toEqual([tutorialGroupOne.title, tutorialGroupTwo.title]);
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
@@ -304,9 +304,34 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows().map((row) => row[0])).toEqual(['Group']);
     });
 
-    it('should label the tutor column with "you" for the groups the current user tutors', async () => {
-        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true })]);
-        expect(renderedRows()[0][1]).toBe('global.generic.you');
+    it('should display the full tutor name for the groups the current user tutors', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' })]);
+        expect(renderedRows()[0][1]).toBe('Ada Lovelace');
+    });
+
+    it('should highlight only the rows the current user tutors when some groups are not theirs', async () => {
+        const own = generateExampleTutorialGroup({ id: 12, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        const other = generateExampleTutorialGroup({ id: 13, title: 'Other', teachingAssistantName: 'Grace Hopper' });
+        await setUp([own, other]);
+
+        const highlighted = fixture.debugElement
+            .queryAll(By.css('tr[cdk-row]'))
+            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tumaet-ui-table-row-highlighted'));
+
+        expect(renderedRows().map((row) => row[0])).toEqual(['Other', 'Own']);
+        expect(highlighted).toEqual([false, true]);
+    });
+
+    it('should not highlight any row when the current user tutors every group', async () => {
+        const first = generateExampleTutorialGroup({ id: 12, title: 'A', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        const second = generateExampleTutorialGroup({ id: 13, title: 'B', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        await setUp([first, second]);
+
+        const highlighted = fixture.debugElement
+            .queryAll(By.css('tr[cdk-row]'))
+            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tumaet-ui-table-row-highlighted'));
+
+        expect(highlighted).toEqual([false, false]);
     });
 
     it('should filter the rows by the search term', () => {
@@ -358,10 +383,36 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows()[0][0]).toBe('Group-00');
     });
 
-    it('should show the intro message instead of the table when the course has no tutorial groups', async () => {
+    it('should show the empty state with create and import instead of the table when the course has no tutorial groups', async () => {
         await setUp([]);
         expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-table"]'))).toBeNull();
         expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-intro"]'))).not.toBeNull();
+        // Both calls to action sit in the empty state: create beside import.
+        expect(fixture.debugElement.query(By.css('[data-testid="empty-create-tutorial-group-btn"]'))).not.toBeNull();
         expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+    });
+
+    describe('as an editor', () => {
+        beforeEach(() => {
+            course.isAtLeastInstructor = false;
+        });
+
+        afterEach(() => {
+            course.isAtLeastInstructor = true;
+        });
+
+        it('should offer import and holidays but not configuration or export', async () => {
+            await setUp([tutorialGroupOne]);
+            const actions = renderTitleBarActions();
+            expect(actions.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+            expect(actions.query(By.css('[data-testid="free-periods-btn"]'))).not.toBeNull();
+            expect(actions.query(By.css('[data-testid="edit-configuration-btn"]'))).toBeNull();
+            expect(actions.query(By.directive(TutorialGroupsExportButtonComponent))).toBeNull();
+        });
+
+        it('should offer import in the empty state', async () => {
+            await setUp([]);
+            expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+        });
     });
 });

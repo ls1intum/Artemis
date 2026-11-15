@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -47,13 +50,16 @@ import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.account.service.user.ScienceIdentityRenameService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -62,9 +68,12 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
@@ -92,7 +101,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("users/user-administration")
+@FeatureUsage(UserFeature.USER_MANAGEMENT)
 @RestController
 @RequestMapping("api/account/admin/")
 public class AdminUserResource {
@@ -112,6 +121,8 @@ public class AdminUserResource {
 
     private final AuthorityRepository authorityRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final Optional<LdapUserService> ldapUserService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -120,18 +131,22 @@ public class AdminUserResource {
 
     private final PermanentUserDeletionService permanentUserDeletionService;
 
+    private final ScienceIdentityRenameService scienceIdentityRenameService;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService, UserDeletionPlanService userDeletionPlanService,
-            PermanentUserDeletionService permanentUserDeletionService,
+            UserCourseRoleRepository userCourseRoleRepository, Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+            UserDeletionPlanService userDeletionPlanService, PermanentUserDeletionService permanentUserDeletionService, ScienceIdentityRenameService scienceIdentityRenameService,
             @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.ldapUserService = ldapUserService;
         this.authorizationCheckService = authorizationCheckService;
         this.userDeletionPlanService = userDeletionPlanService;
         this.permanentUserDeletionService = permanentUserDeletionService;
+        this.scienceIdentityRenameService = scienceIdentityRenameService;
         this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
@@ -245,7 +260,11 @@ public class AdminUserResource {
         checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
+        final String previousLogin = existingUser.getLogin();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
+        // After the update has recorded and revoked everything a credential change requires: the rename can fail, and the
+        // update has committed by now, so a failure here must not be able to skip any of that.
+        scienceIdentityRenameService.renameScienceEventIdentityIfLoginChanged(previousLogin, updatedUser);
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);
@@ -303,6 +322,50 @@ public class AdminUserResource {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
         }));
+    }
+
+    /**
+     * GET users/:login/course-roles : get the course roles of the "login" user.
+     * <p>
+     * Returns one entry per course and role (a user can hold several roles in one course), ordered by course id.
+     *
+     * @param login the login of the user whose course roles should be returned
+     * @return the ResponseEntity with status 200 (OK) and the course roles of the user (empty if the user is in no course), or 404 (Not Found) if the user does not exist
+     */
+    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}/course-roles")
+    public ResponseEntity<List<UserCourseRoleDTO>> getCourseRoles(@PathVariable String login) {
+        log.debug("REST request to get the course roles of User : {}", login);
+        Long userId = userRepository.findIdByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        return ResponseEntity.ok(userCourseRoleRepository.findCourseRoleDTOsByUser_Id(userId));
+    }
+
+    /**
+     * GET users/search : search all users (administrators only) by login or name (result size is limited though on purpose, see below)
+     *
+     * @param loginOrName the login or name by which to search users
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @FeatureUsage(UserFeature.COURSE_MEMBERS)
+    @GetMapping("users/search")
+    public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {
+        log.debug("REST request to search all Users for {}", loginOrName);
+        // restrict result size by only allowing reasonable searches
+        if (loginOrName.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
+        }
+        // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
+        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        page.forEach(user -> {
+            // remove some values which are not needed in the client
+            user.setLangKey(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
+            // The decision is not part of a user search result; it lives in user_ai_preference and is not loaded here.
+        });
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
@@ -386,6 +449,7 @@ public class AdminUserResource {
         return ResponseEntity.ok(userDeletionPlanService.createImpact(target, UserDeletionMode.ADMIN_FORCED));
     }
 
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("users/deletion-impact")
     public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@Valid @RequestBody BulkUserDeletionImpactRequestDTO request) {
         List<User> targets = loadDeletionTargets(request.logins());

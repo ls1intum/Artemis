@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -39,12 +40,14 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -352,8 +355,8 @@ public class AthenaFeedbackSuggestionsService {
      * <p>
      * Failures are counted here rather than being left to the REST endpoint that asked for the suggestions. That endpoint
      * does record its own error, but it aggregates every exercise type and both graded and non-graded into one row, so it
-     * cannot say which of these features is failing. Athena being unreachable is exactly what an error rate on this
-     * feature exists to show, and recording only successes made it zero by construction.
+     * cannot say which of these features is failing. Athena being unreachable is exactly what the error rate of this
+     * row exists to show, and recording only successes made it zero by construction.
      *
      * @param exercise   the exercise the suggestions were requested for
      * @param isGraded   whether grade suggestions were requested
@@ -363,7 +366,13 @@ public class AthenaFeedbackSuggestionsService {
      */
     private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs, boolean failed) {
         String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");
-        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, Role.ANONYMOUS, failed, durationMs));
+        // Graded suggestions help a tutor assess; non-graded ones are the formative feedback a student asked for. Either way
+        // this is the server calling another system on behalf of a request that was already counted as use, the tutor
+        // opening the submission or the student asking for feedback, so it is a system call: counting it as use as well
+        // would count every such request twice.
+        UserFeature feature = isGraded ? UserFeature.ATHENA_FEEDBACK_SUGGESTIONS : UserFeature.AI_FEEDBACK_REQUEST;
+        featureUsageCollector.ifPresent(
+                collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, feature, FeatureInteraction.SYSTEM, Role.ANONYMOUS, failed, durationMs));
     }
 
     /**
@@ -378,7 +387,7 @@ public class AthenaFeedbackSuggestionsService {
         if (meta == null) {
             return;
         }
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         Long userId;
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             userId = studentParticipation.getStudent().map(User::getId).orElse(null);
@@ -414,18 +423,20 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Returns whether the submission has any Athena-generated result. Scans every result on the submission, not just
+     * Returns whether the submission has a successful or still-pending Athena-generated result. Scans every result on the submission, not just
      * the latest, to also catch the case where a later non-Athena result was added on top of an existing Athena result.
      *
      * @param submission the student's submission to inspect
      * @return {@code true} if any Athena result is present for the submission
      */
     public boolean submissionHasAthenaResult(Submission submission) {
-        return submission.getResults().stream().filter(Objects::nonNull).anyMatch(Result::isAthenaBased);
+        var now = ZonedDateTime.now();
+        return submission.getResults().stream().filter(Objects::nonNull).filter(Result::isAthenaBased).anyMatch(result -> Boolean.TRUE.equals(result.isSuccessful())
+                || (result.isSuccessful() == null && result.getCompletionDate() != null && result.getCompletionDate().isAfter(now)));
     }
 
     /**
-     * Ensures that the submission does not have any Athena-generated result. Scans every result on the submission,
+     * Ensures that the submission does not have a successful or still-pending Athena-generated result. Scans every result on the submission,
      * not just the latest, to also catch the case where a later non-Athena result was added on top of an existing
      * Athena result.
      *

@@ -1,13 +1,12 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, input, output } from '@angular/core';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-difficulty-picker',
     templateUrl: './difficulty-picker.component.html',
-    styles: ['div { cursor: pointer; }'],
-    imports: [TranslateDirective, NgClass],
+    imports: [TumAetUiButtonDirective, TranslateDirective],
 })
 export class DifficultyPickerComponent {
     readonly DifficultyLevel = DifficultyLevel;

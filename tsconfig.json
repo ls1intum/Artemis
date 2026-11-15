@@ -27,7 +27,7 @@
         "paths": {
             "app/*": ["./src/main/webapp/app/*"],
             "src/*": ["./src/*"],
-            "@tumaet/ui-angular": ["./packages/tum-ui/dist"]
+            "@tumaet/ui-angular": ["./packages/tum-aet-ui/dist"]
         },
         "importHelpers": true
     },
@@ -38,6 +38,11 @@
         "strictInputAccessModifiers": true,
         "fullTemplateTypeCheck": true,
         "strictTemplates": true,
+        // Fails the build (NG8030) on a camelCase event binding that no directive on the element emits and that is not
+        // a native DOM event, which catches a misspelled or removed output instead of letting the handler never run.
+        // Only the Angular compiler checks this (`ng build`, `ng serve`, the language service): Vitest compiles
+        // templates JIT and `tsc` ignores them.
+        "strictUnclaimedEventNames": true,
         "preserveWhitespaces": true,
         "extendedDiagnostics": {
             "checks": {

@@ -5,23 +5,23 @@ import { PostService } from 'app/communication/service/post.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { MockComponent, MockInstance } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { post } from 'test/helpers/sample/metis-sample-data';
+import { post } from 'test/helpers/sample/communication-sample-data';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { signal } from '@angular/core';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -42,9 +42,9 @@ describe('PostingThreadComponent', () => {
                 provideHttpClientTesting(),
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],

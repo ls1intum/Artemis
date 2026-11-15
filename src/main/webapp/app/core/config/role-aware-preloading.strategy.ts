@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { PreloadingStrategy, Route } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -68,7 +68,7 @@ export function preloadTierForRoute(route: Route): number | undefined {
  *
  * Wired up via `withPreloading(RoleAwarePreloadingStrategy)` in {@link file://../../app.config.ts}.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class RoleAwarePreloadingStrategy implements PreloadingStrategy {
     private readonly accountService = inject(AccountService);
     private readonly scheduler = inject(IdlePreloadScheduler);

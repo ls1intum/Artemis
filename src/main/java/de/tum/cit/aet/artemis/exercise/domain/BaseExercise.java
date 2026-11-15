@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_DISPLAY_TITLE_PATTERN;
+
 import java.time.ZonedDateTime;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.persistence.Column;
@@ -8,16 +11,14 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 
-import org.jspecify.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 @MappedSuperclass
-public abstract class BaseExercise extends DomainObject {
+public abstract class BaseExercise extends ExerciseTimeline {
 
     /** A run of whitespace inside a title, collapsed into a single space. */
     private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
@@ -37,27 +38,6 @@ public abstract class BaseExercise extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
-
-    @Column(name = "release_date")
-    @Nullable
-    private ZonedDateTime releaseDate;
-
-    // TODO: Also use for quiz exercises
-    @Column(name = "start_date")
-    @Nullable
-    private ZonedDateTime startDate;
-
-    @Column(name = "due_date")
-    @Nullable
-    private ZonedDateTime dueDate;
-
-    @Column(name = "assessment_due_date")
-    @Nullable
-    private ZonedDateTime assessmentDueDate;
-
-    @Column(name = "example_solution_publication_date")
-    @Nullable
-    private ZonedDateTime exampleSolutionPublicationDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
@@ -79,6 +59,23 @@ public abstract class BaseExercise extends DomainObject {
      */
     public void setTitle(String title) {
         this.title = title != null ? WHITESPACE_RUN.matcher(title.strip()).replaceAll(" ") : null;
+    }
+
+    /**
+     * Validate the exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     */
+    public void validateTitle() {
+        // Check if exercise title is set
+        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
+        }
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = EXERCISE_DISPLAY_TITLE_PATTERN.matcher(getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
     }
 
     public String getShortName() {
@@ -113,42 +110,6 @@ public abstract class BaseExercise extends DomainObject {
         this.assessmentType = assessmentType;
     }
 
-    @Nullable
-    public ZonedDateTime getReleaseDate() {
-        return releaseDate;
-    }
-
-    public void setReleaseDate(@Nullable ZonedDateTime releaseDate) {
-        this.releaseDate = releaseDate;
-    }
-
-    @Nullable
-    public ZonedDateTime getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(@Nullable ZonedDateTime startDate) {
-        this.startDate = startDate;
-    }
-
-    @Nullable
-    public ZonedDateTime getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(@Nullable ZonedDateTime dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    @Nullable
-    public ZonedDateTime getAssessmentDueDate() {
-        return assessmentDueDate;
-    }
-
-    public void setAssessmentDueDate(@Nullable ZonedDateTime assessmentDueDate) {
-        this.assessmentDueDate = assessmentDueDate;
-    }
-
     public DifficultyLevel getDifficulty() {
         return difficulty;
     }
@@ -169,15 +130,6 @@ public abstract class BaseExercise extends DomainObject {
         return mode == ExerciseMode.TEAM;
     }
 
-    @Nullable
-    public ZonedDateTime getExampleSolutionPublicationDate() {
-        return exampleSolutionPublicationDate;
-    }
-
-    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
-        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
-    }
-
     /**
      * Check if students are allowed to see this course exercise
      * IMPORTANT: this method won't work for exam exercises: they have a different visibility logic! We return false for exam exercises to avoid confusion!
@@ -189,6 +141,7 @@ public abstract class BaseExercise extends DomainObject {
         if (isExamExercise()) {
             return false;
         }
+        ZonedDateTime releaseDate = getReleaseDate();
         if (releaseDate == null) {  // no release date means the exercise is visible to students for course exercises
             return true;
         }

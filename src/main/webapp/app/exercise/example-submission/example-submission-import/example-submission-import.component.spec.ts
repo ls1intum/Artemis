@@ -1,9 +1,11 @@
+import { TumAetUiDialogRef, TumAetUiDialogService, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +21,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import dayjs from 'dayjs/esm';
 
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
@@ -29,25 +33,28 @@ describe('ExampleSubmissionImportComponent', () => {
     let exampleSubmissionService: ExampleSubmissionService;
     let getSubmissionSizeSpy: ReturnType<typeof vi.spyOn>;
     let exercise: Exercise;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     beforeEach(() => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<Submission | undefined>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideTemplate(ExampleSubmissionImportComponent, '')
-            .compileComponents();
+        }).compileComponents();
+
+        const translateService = TestBed.inject(TranslateService);
+        vi.spyOn(translateService, 'get').mockImplementation((key) => of(key === 'entity.action.close' ? 'Close' : key.toString()));
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => (key === 'entity.action.close' ? 'Close' : key.toString()));
 
         fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
         component = fixture.componentInstance;
@@ -106,10 +113,35 @@ describe('ExampleSubmissionImportComponent', () => {
         expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 
-    it('should close the dialog on dismiss', () => {
-        component.dismiss();
+    it('renders a visible translated Close button that closes the dialog', () => {
+        const closeButton = fixture.nativeElement.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+
+        expect(closeButton.textContent?.trim()).toBe('Close');
+        expect(closeButton.dataset.testid).toBe('example-submission-import-close');
+        closeButton.click();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
+    });
+
+    it('only makes the student name header sortable', () => {
+        component.content.set({ numberOfPages: 1, resultsOnPage: [submission] });
+        fixture.detectChanges();
+
+        const sortableHeaders = fixture.debugElement.queryAll(By.directive(TumAetUiTableSortableColumnComponent));
+        expect(sortableHeaders).toHaveLength(1);
+        expect(sortableHeaders[0].nativeElement.querySelector('button')).not.toBeNull();
+    });
+
+    it('searches with the student name column when its sortable header is clicked', async () => {
+        component.content.set({ numberOfPages: 1, resultsOnPage: [submission] });
+        fixture.detectChanges();
+        searchSpy.mockClear();
+
+        const sortButton = fixture.debugElement.query(By.directive(TumAetUiTableSortableColumnComponent)).nativeElement.querySelector('button') as HTMLButtonElement;
+        sortButton.click();
+
+        await vi.waitFor(() => expect(searchSpy).toHaveBeenCalledWith(expect.objectContaining({ sortedColumn: 'STUDENT_NAME' }), { exerciseId: 3 }));
+        expect(component.sortedColumn).toBe('STUDENT_NAME');
     });
 
     // The import table renders <jhi-result [result]="getLatestResult(submission)" ...>. This component is the only
@@ -139,5 +171,24 @@ describe('ExampleSubmissionImportComponent', () => {
 
     it('getLatestResult returns undefined when the submission has no participation', () => {
         expect(component.getLatestResult({ id: 9 } as Submission)).toBeUndefined();
+    });
+
+    it('does not offer the listed result as a link into the student exercise page', async () => {
+        // #13921: this modal is instructor-facing and lists other students' participations. For a text or modeling
+        // exercise the badge would otherwise deep-link into the student exercise page, which 403s for an exam
+        // exercise and substitutes the instructor's own participation in a course.
+        vi.useFakeTimers();
+        const ratedResult = { id: 7, score: 90, rated: true, completionDate: dayjs().subtract(1, 'hour') } as Result;
+        const sibling = { id: 5, results: [ratedResult] } as Submission;
+        const listed = { id: 5, participation: { id: 2, type: ParticipationType.STUDENT, submissions: [sibling] } as StudentParticipation } as Submission;
+        searchSpy.mockReturnValue(of({ numberOfPages: 1, resultsOnPage: [listed] }));
+
+        component.searchTerm = 'search';
+        await vi.advanceTimersByTimeAsync(300);
+        fixture.detectChanges();
+
+        const result = fixture.debugElement.query(By.directive(ResultComponent)).componentInstance as ResultComponent;
+        expect(result.isOwnParticipation()).toBe(false);
+        expect(result.canShowDetails()).toBe(false);
     });
 });

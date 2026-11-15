@@ -7,6 +7,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 // Minimum interval between UI updates to prevent flickering (in milliseconds)
 const UPDATE_BUFFER_MS = 150;
@@ -14,7 +16,7 @@ const UPDATE_BUFFER_MS = 150;
 @Component({
     selector: 'jhi-course-operation-progress',
     standalone: true,
-    imports: [CommonModule, FaIconComponent, DialogModule, ProgressBarModule],
+    imports: [CommonModule, FaIconComponent, DialogModule, ProgressBarModule, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-operation-progress.component.html',
     styleUrls: ['./course-operation-progress.component.scss'],
 })

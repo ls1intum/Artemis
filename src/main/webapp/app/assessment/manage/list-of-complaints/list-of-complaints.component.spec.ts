@@ -19,13 +19,17 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
@@ -70,6 +74,7 @@ describe('ListOfComplaintsComponent', () => {
             imports: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(SortService),
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: Router, useClass: MockRouter },
@@ -81,6 +86,7 @@ describe('ListOfComplaintsComponent', () => {
         })
             .compileComponents()
             .then(() => {
+                vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);
                 comp = fixture.componentInstance;
 
@@ -103,6 +109,24 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     describe('loadComplaints', () => {
+        it('chooses explicit tutor exercise scope and ignores another tutor in the route', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+            const tutorRequest = vi.spyOn(complaintService, 'findForTutorByExerciseId');
+            activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+            expect(tutorRequest).toHaveBeenCalledExactlyOnceWith(56, ComplaintType.MORE_FEEDBACK);
+            expect(findAllByTutorIdForExerciseIdStub).not.toHaveBeenCalled();
+        });
+
+        it('chooses explicit tutor course scope without a tutor route parameter', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+            const tutorRequest = vi.spyOn(complaintService, 'findForTutorByCourseId');
+            activatedRoute.setParameters({ courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+            expect(tutorRequest).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.MORE_FEEDBACK);
+            expect(findAllByCourseIdStub).not.toHaveBeenCalled();
+        });
+
         it('find for tutor by exercise', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
@@ -344,6 +368,160 @@ describe('ListOfComplaintsComponent', () => {
         expect(comp.complaintsToShow()).toEqual(openComplaints);
         expect(comp.filterOption()).toBeUndefined();
     });
+
+    it('assessorOptions and filter use privacy-safe assessorKey and assessorLabel for multiple foreign tutors', () => {
+        const foreignTutorA = { id: 1, assessorKey: '101', assessorLabel: 'Tutor Two' } as Complaint;
+        const foreignTutorB = { id: 2, assessorKey: '102', assessorLabel: 'Instructor One' } as Complaint;
+        const foreignTutorAAgain = { id: 3, assessorKey: '101', assessorLabel: 'Tutor Two' } as Complaint;
+        // accepted undefined so default addressed-filter keeps them visible
+        comp.complaints.set([foreignTutorA, foreignTutorB, foreignTutorAAgain]);
+
+        expect(comp.assessorOptions()).toEqual([
+            { key: '102', label: 'Instructor One' },
+            { key: '101', label: 'Tutor Two' },
+        ]);
+
+        comp.onAssessorFilterChange('101');
+
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([1, 3]);
+    });
+
+    it('clears loading when the mine request fails', () => {
+        findAllByCourseIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+
+        comp.ngOnInit();
+
+        expect(comp.loading()).toBe(false);
+    });
+
+    it('requests the exercise-scoped all list on exercise-scoped routes', () => {
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId').mockReturnValue(of(emptyComplaintResponse()));
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId');
+        activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        comp.setComplaintScope('all');
+
+        expect(findAllForExerciseStub).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.COMPLAINT);
+        verifyNotCalled(findAllForCourseStub);
+    });
+
+    it('requests the course-scoped all list on course-scoped routes', () => {
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId');
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        comp.setComplaintScope('all');
+
+        expect(findAllForCourseStub).toHaveBeenCalledExactlyOnceWith(12, ComplaintType.COMPLAINT);
+        verifyNotCalled(findAllForExerciseStub);
+    });
+
+    it('sorts the assessor column by the same value the cell renders', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+        const ownComplaint = { id: 1, result: { assessor: { name: 'Zoe Tutor' } } } as Complaint;
+        const foreignComplaint = { id: 2, assessorLabel: 'Alice Tutor' } as Complaint;
+        comp.complaintsToShow.set([ownComplaint, foreignComplaint]);
+        comp.complaintsSortingPredicate = 'assessorName';
+
+        comp.sortRows();
+
+        const sortKeyOf = sortByFunctionSpy.mock.calls[0][1] as (complaint: Complaint) => unknown;
+        expect(sortKeyOf(ownComplaint)).toBe('Zoe Tutor');
+        expect(sortKeyOf(foreignComplaint)).toBe('Alice Tutor');
+    });
+
+    it('applies the column header sort and re-sorts the complaints', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+        const first = { id: 1 } as Complaint;
+        const second = { id: 2 } as Complaint;
+        comp.complaintsToShow.set([first, second]);
+        expect(comp.complaintsSortingPredicate).toBe('id');
+        expect(comp.complaintsReverseOrder).toBe(false);
+
+        comp['onSortChange']({ field: 'accepted', order: 1 });
+
+        expect(comp.complaintsSortingPredicate).toBe('accepted');
+        expect(comp.complaintsReverseOrder).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenCalledExactlyOnceWith([first, second], 'accepted', true);
+
+        comp['onSortChange']({ field: 'lockStatus', order: -1 });
+
+        expect(comp.complaintsSortingPredicate).toBe('lockStatus');
+        expect(comp.complaintsReverseOrder).toBe(false);
+        expect(sortByFunctionSpy).toHaveBeenCalledExactlyOnceWith([first, second], expect.any(Function), false);
+    });
+
+    it('uses the more-feedback translation root when the route complaint type is MORE_FEEDBACK', () => {
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
+        comp.ngOnInit();
+
+        expect(comp.scopeTranslationKeyRoot()).toBe('artemisApp.moreFeedback.list');
+    });
+
+    it('resets mine/all caches when the route identity changes', () => {
+        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+        vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
+        comp.setComplaintScope('all');
+        expect(comp.allComplaintsForTutorLoaded()).toBe(true);
+
+        findAllByExerciseIdStub.mockReturnValue(of({ body: [complaint4] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
+
+        expect(comp.allComplaintsForTutorLoaded()).toBe(false);
+        expect(comp.assessorFilter()).toBeUndefined();
+        expect(comp.loading()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual([complaint4]);
+    });
+
+    it('switches between mine and all using the cached all list without a second request', () => {
+        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        const findAllForCourseStub = vi
+            .spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId')
+            .mockReturnValue(of({ body: [complaint3, complaint4] } as EntityResponseTypeArray));
+        comp.setComplaintScope('all');
+        expect(findAllForCourseStub).toHaveBeenCalledTimes(1);
+        expect(comp.allComplaintsForTutorLoaded()).toBe(true);
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([3, 4]);
+
+        comp.setComplaintScope('mine');
+        expect(comp.allComplaintsForTutorLoaded()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual([complaint3]);
+
+        // Same scope is a no-op; a second All uses the cache.
+        comp.setComplaintScope('mine');
+        comp.setComplaintScope('all');
+        expect(findAllForCourseStub).toHaveBeenCalledTimes(1);
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([3, 4]);
+    });
+
+    it('restores the mine list when the all request fails', () => {
+        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp.setComplaintScope('all');
+
+        expect(comp.isLoadingAllComplaints()).toBe(false);
+        expect(comp.allComplaintsForTutorLoaded()).toBe(false);
+        expect(comp.assessorFilter()).toBeUndefined();
+        expect(comp.complaintsToShow()).toEqual([complaint3]);
+    });
+
+    function emptyComplaintResponse(): EntityResponseTypeArray {
+        return new HttpResponse<ComplaintDTO[]>({ body: [] });
+    }
 
     function verifyNotCalled(...instances: MockInstance[]) {
         for (const spyInstance of instances) {

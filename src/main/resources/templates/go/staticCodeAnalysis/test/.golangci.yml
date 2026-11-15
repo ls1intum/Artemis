@@ -1,0 +1,9 @@
+# Configuration of golangci-lint for the static code analysis of the student submissions.
+version: "2"
+linters:
+  # errcheck, govet, ineffassign, staticcheck and unused
+  default: standard
+  enable:
+    - gocritic
+    - misspell
+    - revive

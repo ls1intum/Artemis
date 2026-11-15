@@ -1,6 +1,6 @@
 @if (!isExpanded()) {
     <jhi-commits-info-row
-        [ngStyle]="{ display: 'contents' }"
+        style="display: contents"
         [commit]="commits()[0]"
         [currentSubmissionHash]="currentSubmissionHash()"
         [previousSubmissionHash]="previousSubmissionHash()"
@@ -16,7 +16,7 @@
 } @else {
     @for (commit of commits(); track commit; let i = $index) {
         <jhi-commits-info-row
-            [ngStyle]="{ display: 'contents' }"
+            style="display: contents"
             [commit]="commit"
             [currentSubmissionHash]="currentSubmissionHash()"
             [previousSubmissionHash]="previousSubmissionHash()"

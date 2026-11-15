@@ -21,16 +21,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonDiagramDTO;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
-@FeatureUsage("diagrams/apollon-diagrams")
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/modeling/")
 public class ApollonDiagramResource {
@@ -55,12 +56,9 @@ public class ApollonDiagramResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final CourseRepository courseRepository;
-
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
-        this.courseRepository = courseRepository;
     }
 
     /**
@@ -72,7 +70,7 @@ public class ApollonDiagramResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/apollon-diagrams")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<ApollonDiagramDTO> createApollonDiagram(@Valid @RequestBody ApollonDiagramUpdateDTO dto, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram for course: {}", courseId);
 
@@ -83,9 +81,6 @@ public class ApollonDiagramResource {
         if (!Objects.equals(dto.courseId(), courseId)) {
             throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         ApollonDiagram apollonDiagram = dto.toEntity();
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
@@ -101,7 +96,7 @@ public class ApollonDiagramResource {
      *         or with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
      */
     @PutMapping("courses/{courseId}/apollon-diagrams")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<ApollonDiagramDTO> updateApollonDiagram(@RequestBody ApollonDiagramUpdateDTO diagramUpdateDTO, @PathVariable Long courseId) {
         log.debug("REST request to update ApollonDiagram : {}", diagramUpdateDTO);
 
@@ -112,9 +107,6 @@ public class ApollonDiagramResource {
         if (!Objects.equals(diagramUpdateDTO.courseId(), courseId)) {
             throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         // Fetch the existing diagram from the database (this is the managed entity), scoped to the path course id so a
         // caller authorized for this course cannot overwrite a diagram belonging to a different course.
@@ -133,9 +125,15 @@ public class ApollonDiagramResource {
      * @param diagramId the id of the diagram
      * @return the ResponseEntity with status 200 (OK) and with body the title of the diagram or 404 Not Found if no diagram with that id exists
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("apollon-diagrams/{diagramId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {
+        Long courseId = apollonDiagramRepository.findCourseIdById(diagramId);
+        if (courseId == null) {
+            return ResponseEntity.notFound().build();
+        }
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
@@ -147,12 +145,9 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
     @GetMapping("courses/{courseId}/apollon-diagrams")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<ApollonDiagramDTO>> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         List<ApollonDiagramDTO> diagrams = apollonDiagramRepository.findDiagramsByCourseId(courseId).stream().map(ApollonDiagramDTO::of).toList();
         return ResponseEntity.ok(diagrams);
@@ -166,12 +161,9 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/apollon-diagrams/{apollonDiagramId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<ApollonDiagramDTO> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
         // Scoped to the path course id so a caller authorized for this course cannot read a diagram belonging to a different course.
         ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
 
@@ -186,12 +178,9 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/apollon-diagrams/{apollonDiagramId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         // Scoped to the path course id so a caller authorized for this course cannot delete a diagram belonging to a different course.
         ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);

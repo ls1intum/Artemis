@@ -17,7 +17,6 @@
                 "tooltip": "Fullscreen"
             },
             "editorActions": "Editor actions",
-            "autoSubmit": "The exercise has ended. You may no longer edit your diagram.",
             "newAssessment": "A new assessment for your submission is available.",
             "error": "An error occurred. Please try again later.",
             "assessment": {

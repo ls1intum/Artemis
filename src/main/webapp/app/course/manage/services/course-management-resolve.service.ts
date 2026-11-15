@@ -1,11 +1,11 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseManagementResolve implements Resolve<Course> {
     private courseManagementService = inject(CourseManagementService);
 
@@ -16,7 +16,7 @@ export class CourseManagementResolve implements Resolve<Course> {
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
         if (route.params['courseId']) {
-            return this.courseManagementService.find(route.params['courseId']).pipe(
+            return this.courseManagementService.findForManagement(route.params['courseId']).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
                 map((course: HttpResponse<Course>) => course.body!),
             );

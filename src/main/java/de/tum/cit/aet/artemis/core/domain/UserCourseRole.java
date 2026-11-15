@@ -7,11 +7,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -20,19 +17,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 @Entity
 @Table(name = "user_course_role")
 @IdClass(UserCourseRole.UserCourseRoleId.class)
-public class UserCourseRole implements Serializable {
-
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @Parent
-    private User user;
-
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    @Parent
-    private Course course;
+public class UserCourseRole extends UserCourseAssociation {
 
     @Id
     @Enumerated(EnumType.STRING)
@@ -46,14 +31,6 @@ public class UserCourseRole implements Serializable {
         this.user = user;
         this.course = course;
         this.role = role;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public Course getCourse() {
-        return course;
     }
 
     public CourseRole getRole() {

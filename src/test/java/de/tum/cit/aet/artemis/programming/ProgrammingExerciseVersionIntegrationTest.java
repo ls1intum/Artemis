@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -97,9 +98,11 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Set valid build plan phases so that subsequent update requests pass the noBuildPhases validation
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
-        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        var newBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        newBuildConfig.setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
         // Act: Create the exercise via setup endpoint
-        this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, newBuildConfig),
+                ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(programmingExercise).isNotNull();
@@ -115,14 +118,14 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExercise_createsExerciseVersion() {
         // Assert: Verify exercise version was created
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateTests_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -145,13 +148,13 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @ParameterizedTest
     @CsvSource({ "true,false", "false,true", "true,true", "false,false" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReset_createsExerciseVersion(boolean deleteParticipationsSubmissionsAndResults, boolean recreateBuildPlans) throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
                 ExerciseType.PROGRAMMING);
         ProgrammingExerciseSnapshotDTO originalSnapshot = originalVersion.getExerciseSnapshot().programmingData();
-        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/reset";
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + (deleteParticipationsSubmissionsAndResults ? "/reset-participations" : "/reset");
         ProgrammingExerciseResetOptionsDTO resetOptions = new ProgrammingExerciseResetOptionsDTO(deleteParticipationsSubmissionsAndResults, recreateBuildPlans);
         request.putWithResponseBody(path, resetOptions, String.class, HttpStatus.OK);
 
@@ -176,7 +179,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExercise_createsExerciseVersion() throws Exception {
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
@@ -195,7 +198,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseFromFile_createsExerciseVersion() throws Exception {
 
         String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase(Locale.ROOT);
@@ -215,7 +218,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseTimeline_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -238,7 +241,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExerciseProblemStatement_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -259,7 +262,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -267,7 +270,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
 
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
@@ -286,7 +290,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
      */
     @ParameterizedTest(name = "problemStatement=[{0}]")
     @CsvSource(value = { "''", "'   '", "MISSING" }, nullValues = "MISSING")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_blankOrMissingProblemStatement_keepsExistingProblemStatement(String problemStatementValue) throws Exception {
         // Arrange: persist a known, non-empty problem statement via the dedicated endpoint, as the collaborative editor would.
         final String existingStatement = "This problem statement must survive a metadata-only update";
@@ -297,7 +301,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // The body is built as a JSON tree so the problem statement can be sent exactly as the client sends it: present-but-empty (""), whitespace-only, or a missing attribute.
         // Serializing the DTO directly could not express the empty string because @JsonInclude(NON_EMPTY) would drop it.
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise));
+        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)));
         if (problemStatementValue == null) {
             body.remove("problemStatement");
         }
@@ -312,7 +317,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateAndUpdateProgrammingExercise_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -320,8 +325,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
-        request.putWithResponseBody(endpoint, de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
-                HttpStatus.OK);
+        request.putWithResponseBody(endpoint,
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
@@ -330,7 +336,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddSubmissionPolicyProgrammingExercise_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -351,7 +357,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetTestCases_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -372,7 +378,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateTestCases_createsExerciseVersion() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -396,7 +402,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testVersionCreationOnProcessNewPush_templateRepository() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -419,7 +425,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testVersionCreationOnProcessNewPush_solutionRepository() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -442,7 +448,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testVersionCreationOnProcessNewPush_auxiliaryRepository() throws Exception {
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -468,12 +474,13 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_returnsPagedVersionsWithUserInfo() throws Exception {
         ExerciseVersion version1 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
@@ -504,7 +511,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_forbidden_forStudent() throws Exception {
         // `beforeEach` requires instructor access to run
         // Switch to student user and attempt to get snapshot
@@ -513,7 +520,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_forbidden_forInstructorNotInExercise() throws Exception {
         // `beforeEach` requires instructor access to run;
         // Switch to instructor user and attempt to get snapshot
@@ -523,10 +530,11 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_includesPaginationHeaders() throws Exception {
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
@@ -544,7 +552,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_returnsEmptyPageWhenNoVersions() throws Exception {
         var versionsToDelete = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId());
         exerciseVersionRepository.deleteAll(versionsToDelete);
@@ -564,14 +572,14 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseVersions_forbiddenForUnknownExercise() throws Exception {
         long unknownExerciseId = programmingExercise.getId() + 9999;
         request.get("/api/exercise/exercises/" + unknownExerciseId + "/versions?page=0&size=1", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_returnsCompleteSnapshotData() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         ExerciseSnapshotDTO snapshot = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + version.getId(), HttpStatus.OK,
@@ -582,7 +590,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_forbidden_forStudent() throws Exception {
         // `beforeEach` requires instructor access to run
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
@@ -594,7 +602,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_forbidden_instructorNotInExercise() throws Exception {
         // `beforeEach` requires instructor access to run
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
@@ -607,7 +615,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_forbidden_forTutorWithoutCourseAccess() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         Long versionId = version.getId();
@@ -623,7 +631,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_notFoundForUnknownVersion() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         long unknownVersionId = version.getId() + 9999;
@@ -632,17 +640,41 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExerciseSnapshot_badRequest_wrongExerciseId() throws Exception {
         // `beforeEach` requires instructor access to run
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         Long versionId = version.getId();
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        newExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        newExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExercise.class, HttpStatus.CREATED);
 
         // attempt to get snapshot with wrong exercise id
         request.get("/api/exercise/exercises/" + newExercise.getId() + "/versions/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);
+    }
+
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deletingTasksRemovesOnlyExerciseTasksAndRecordsVersion() throws Exception {
+        var task = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask();
+        task.setTaskName("Task to remove");
+        task.setExercise(programmingExercise);
+        var testCases = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        task.setTestCases(new java.util.HashSet<>(List.of(testCases.getFirst())));
+        task = programmingExerciseTaskRepository.saveAndFlush(task);
+        Long taskId = task.getId();
+        exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
+        assertThat(programmingExerciseTaskRepository.existsById(taskId)).isFalse();
+        assertThat(programmingExerciseTestCaseRepository.existsById(testCases.getFirst().getId())).isTrue();
+        assertThat(programmingExerciseRepository.existsById(programmingExercise.getId())).isTrue();
+        var version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        assertThat(version.getId()).isNotEqualTo(originalVersion.getId());
     }
 
 }

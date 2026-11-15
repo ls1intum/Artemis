@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Profile(PROFILE_JENKINS)
 @Lazy
 @Service

@@ -29,6 +29,10 @@ export interface EntitySummary {
 export interface EntitySummaryItem {
     labelKey: string;
     value: string | number | boolean | undefined;
+    // emphasises the value, e.g. because it is a large amount of data that is about to be deleted
+    highlight?: boolean;
+    // the amount is never emphasised, e.g. because it counts infrastructure or registrations instead of student work that would be lost
+    neverHighlight?: boolean;
 }
 
 /**

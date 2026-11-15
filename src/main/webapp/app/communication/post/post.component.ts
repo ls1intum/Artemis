@@ -1,10 +1,27 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, Renderer2, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    HostListener,
+    OnDestroy,
+    OnInit,
+    Renderer2,
+    computed,
+    effect,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
+import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posting-banner.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
+import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../communication.util';
 import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
@@ -12,9 +29,9 @@ import { PostingFooterComponent } from 'app/communication/posting-footer/posting
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -33,9 +50,10 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
-    styleUrls: ['./post.component.scss', './../metis.component.scss'],
+    styleUrls: ['./post.component.scss', './../communication.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        SavedPostingBannerComponent,
         NgClass,
         FaIconComponent,
         TranslateDirective,
@@ -47,7 +65,6 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
         PostingReactionsBarComponent,
         MessageInlineInputComponent,
         PostingFooterComponent,
-        NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
         EmojiPickerComponent,
@@ -57,7 +74,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnDestroy {
-    override metisService = inject(MetisService);
+    override communicationService = inject(CommunicationService);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -95,7 +112,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     readonly mayDelete = signal(false);
     readonly canPin = signal(false);
     readonly canMarkAsUnread = signal(false);
-    readonly originalPostDetails = signal<Post | AnswerPost | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
     // Icons
@@ -114,21 +130,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     readonly course = signal<Course>(undefined!);
 
-    readonly hasOriginalPostBeenDeleted = signal<boolean>(undefined!);
+    readonly originalPostDetails = computed(() => (this.forwardedAnswerPosts().length > 0 ? this.forwardedAnswerPosts()[0] : this.forwardedPosts()[0]));
+    readonly hasUnavailableForwardedSource = computed(() => (this.forwardedPosts().length > 0 || this.forwardedAnswerPosts().length > 0) && !this.originalPostDetails());
 
     constructor() {
         super();
-        this.course.set(this.metisService.getCourse() ?? throwError(() => new Error('Course not found')));
-        // Reactive check: if forwarded post/answer is deleted, update flag
-        effect(() => {
-            const forwardedPosts = this.forwardedPosts();
-            const forwardedAnswerPosts = this.forwardedAnswerPosts();
-            untracked(() => {
-                const hasDeletedForwardedPost = forwardedPosts.length > 0 && forwardedPosts[0] === undefined;
-                const hasDeletedForwardedAnswerPost = forwardedAnswerPosts.length > 0 && forwardedAnswerPosts[0] === undefined;
-                this.hasOriginalPostBeenDeleted.set(hasDeletedForwardedAnswerPost || hasDeletedForwardedPost);
-            });
-        });
+        this.course.set(this.communicationService.getCourse() ?? throwError(() => new Error('Course not found')));
         // Track posting signal changes (replaces ngOnChanges)
         effect(() => {
             this.posting();
@@ -143,9 +150,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                     this.posting.set(hydrate(new Post(), posting));
                     return;
                 }
-                this.contextInformation.set(this.metisService.getContextInformation(posting));
-                this.routerLink = this.metisService.getLinkForPost();
-                this.queryParams = this.metisService.getQueryParamsForPost(posting);
+                this.contextInformation.set(this.communicationService.getContextInformation(posting));
+                this.routerLink = this.communicationService.getLinkForPost();
+                this.queryParams = this.communicationService.getQueryParamsForPost(posting);
                 this.showAnnouncementIcon.set((getAsChannelDTO(posting.conversation)?.isAnnouncementChannel && this.showChannelReference()) ?? false);
                 this.updateShowSearchResultInAnswersHint();
                 this.sortAnswerPosts();
@@ -212,26 +219,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
             PostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition.set({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            this.showDropdown.set(true);
-            this.adjustDropdownPosition();
+            this.openDropdownAt(event);
             this.disableBodyScroll();
-        }
-    }
-
-    /**
-     * Adjusts dropdown position if it overflows the screen on the right.
-     */
-    adjustDropdownPosition() {
-        const dropdownWidth = 200;
-        const screenWidth = window.innerWidth;
-
-        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -281,16 +270,15 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
      */
     override ngOnInit() {
         super.ngOnInit();
-        this.pageType.set(this.metisService.getPageType());
+        this.pageType.set(this.communicationService.getPageType());
         const posting = this.posting();
         if (posting) {
-            this.contextInformation.set(this.metisService.getContextInformation(posting));
+            this.contextInformation.set(this.communicationService.getContextInformation(posting));
         }
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.isAtLeastTutorInCourse = this.communicationService.currentUserIsAtLeastTutorInCourse();
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
-        this.fetchForwardedMessages();
     }
 
     updateShowSearchResultInAnswersHint() {
@@ -322,29 +310,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     }
 
     /**
-     * Sets originalPostDetails if forwarded post or forwarded answer post exists.
-     */
-    fetchForwardedMessages(): void {
-        try {
-            if (this.forwardedPosts().length > 0) {
-                this.originalPostDetails.set(this.forwardedPosts()[0]);
-            }
-            if (this.forwardedAnswerPosts().length > 0) {
-                this.originalPostDetails.set(this.forwardedAnswerPosts()[0]);
-            }
-        } catch (error) {
-            throw new Error(String(error), { cause: error });
-        }
-    }
-
-    /**
      * ensures that only when clicking on context without having control key pressed,
      * the modal is dismissed (closed and cleared)
      */
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
             this.modalRef()?.close();
-            this.metisConversationService.setActiveConversation(this.contextInformation().queryParams!['conversationId']);
+            this.courseConversationsService.setActiveConversation(this.contextInformation().queryParams!['conversationId']);
         }
     }
 
@@ -387,10 +359,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
      * @param channelId id of the referenced channel
      */
     onChannelReferenceClicked(channelId: number) {
-        const course = this.metisService.getCourse();
+        const course = this.communicationService.getCourse();
         if (isCommunicationEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.setActiveConversation(channelId);
+                this.courseConversationsService.setActiveConversation(channelId);
             } else {
                 void this.router.navigate(['courses', course.id, 'communication'], {
                     queryParams: {

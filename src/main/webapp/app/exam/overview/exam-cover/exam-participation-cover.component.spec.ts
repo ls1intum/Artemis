@@ -100,6 +100,13 @@ describe('ExamParticipationCoverComponent', () => {
         vi.clearAllMocks();
     });
 
+    it('should select instructor-owner conduction from known course access before loading', () => {
+        vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
+        component.startExam();
+        expect(load).toHaveBeenCalledWith(course.id, exam.id, studentExam.id, 'instructor-owner');
+    });
+
     it('should initialize accountName when identity resolves', async () => {
         const user = { name: 'admin' } as User;
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
@@ -118,6 +125,45 @@ describe('ExamParticipationCoverComponent', () => {
         fixture.componentRef.setInput('startView', false);
         component.updateConfirmation();
         expect(component.endEnabled()).toBe(false);
+    });
+
+    it('should enable the end of the exam as soon as the confirmation checkbox is ticked', async () => {
+        flushInputs();
+        const checkbox = fixture.nativeElement.querySelector('#confirmBox') as HTMLInputElement;
+        expect(checkbox).toBeTruthy();
+        expect(component.endEnabled()).toBe(false);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(true);
+        expect(component.endEnabled()).toBe(true);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(false);
+        expect(component.endEnabled()).toBe(false);
+    });
+
+    it('should put the title of the hand-in page in a title row of its own', () => {
+        flushInputs();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('[data-testid="exam-finished-header"] [data-testid="exam-finished-title"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="exam-start-header"]')).toBeNull();
+    });
+
+    it('should inset the hand-in page by the 12px of the exam bar, so that its title starts where the title of the bar starts', () => {
+        flushInputs();
+
+        const card: HTMLElement = fixture.nativeElement.firstElementChild;
+        expect(card.getAttribute('data-testid')).toBe('exam-cover');
+        expect(card.classList).toContain('px-3!');
+        expect(card.classList).not.toContain('px-4!');
+        expect(card.classList).not.toContain('px-6!');
+        // the same 12px between the rule and the content as on the pages of the exam
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3!');
     });
 
     it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {

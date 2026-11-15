@@ -25,7 +25,6 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
@@ -67,7 +66,6 @@ class LtiDynamicRegistrationServiceTest {
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
         Course course = new Course();
-        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
         course.setOnlineCourse(true);
         course.setShortName("shortName");
         openIdConfigurationUrl = "https://example.com/.well-known/openid-configuration";

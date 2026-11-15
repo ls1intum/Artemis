@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("@elevatedAccessService.hasAtLeastRoleOrAdminAccess(T(de.tum.cit.aet.artemis.core.security.Role).EDITOR)")
+@PreAuthorize("hasRole('USER')")
 @EnforceRoleInExercise(Role.EDITOR)
 public @interface EnforceAtLeastEditorInExercise {
 

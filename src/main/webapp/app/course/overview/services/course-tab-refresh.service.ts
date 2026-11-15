@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, filter, map } from 'rxjs';
 
@@ -13,7 +13,7 @@ import { Observable, Subject, filter, map } from 'rxjs';
  * Selecting a different tab destroys the current tab component and creates the new one, so that tab loads its data
  * anyway. Only re-selecting the tab you are already on needs this signal.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseTabRefreshService {
     private readonly tabSelections = new Subject<string>();
 

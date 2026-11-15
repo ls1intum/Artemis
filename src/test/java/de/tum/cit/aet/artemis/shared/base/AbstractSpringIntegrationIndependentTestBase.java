@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
@@ -89,6 +91,10 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoBean
     protected TumLiveService tumLiveService;
 
+    // Mock for the optional GoCast integration service so callback tests can exercise the real MVC boundary.
+    @MockitoBean
+    protected GocastBindingService gocastBindingService;
+
     // Both scan every exercise with an upcoming release, assessment or due date once, a fixed delay after startup, on a
     // shared scheduler thread; mocked here (rather than in a leaf test class) so every Independent test shares one Spring
     // context instead of each override combination spawning its own. See CourseOverviewLoadProfileTest, which reads
@@ -117,6 +123,10 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoSpyBean
     protected SbomService sbomService;
 
+    // Shared by the HTTP template tests without creating a separate Spring context for a leaf test override.
+    @MockitoSpyBean
+    protected ResourceLoaderService resourceLoaderService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -137,7 +147,7 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
         Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService, examLiveEventsService, groupNotificationScheduleService,
-                passkeyAuthenticationService);
+                passkeyAuthenticationService, resourceLoaderService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
@@ -146,6 +156,9 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (gocastBindingService != null) {
+            Mockito.reset(gocastBindingService);
         }
         if (notificationScheduleService != null) {
             Mockito.reset(notificationScheduleService);

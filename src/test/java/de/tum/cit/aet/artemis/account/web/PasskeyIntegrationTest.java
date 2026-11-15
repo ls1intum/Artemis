@@ -449,7 +449,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // Create regular users (students, instructors, etc.) without ADMIN authority
             User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             User instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
-            instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.INSTRUCTOR_AUTHORITY));
+            instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.USER_AUTHORITY));
             userTestRepository.save(instructor);
 
             // Create passkeys for all users

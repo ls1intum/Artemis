@@ -2,18 +2,18 @@
     max-width: 100%;
 }
 
-.list-group-horizontal.student-group {
+.student-group {
     padding: 3px 0;
     overflow-x: auto;
     max-width: 100%;
 
     // show custom thinner scrollbar for Webkit-based browsers
     $size: 4px;
-    $thumb-color: #bbb;
+    $thumb-color: var(--tumaet-ui-muted-color);
 
     &::-webkit-scrollbar-track {
         border-radius: $size;
-        -webkit-box-shadow: inset 0 0 $size rgba(0, 0, 0, 0.15);
+        background-color: var(--tumaet-ui-control-background);
     }
 
     &::-webkit-scrollbar {
@@ -26,7 +26,7 @@
     }
 }
 
-.list-group-item.student-group-item {
+.team-list-item.student-group-item {
     padding: 0.175rem 0.75rem;
     white-space: nowrap;
 

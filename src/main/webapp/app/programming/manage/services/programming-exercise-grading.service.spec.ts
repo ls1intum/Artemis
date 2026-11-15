@@ -142,6 +142,20 @@ describe('ProgrammingExerciseGradingService', () => {
         expect(testCasesExercise1Subscriber2).toEqual(newTestCasesOracle);
     });
 
+    it('should bypass the cache and publish freshly reloaded test cases', () => {
+        let currentTestCases: ProgrammingExerciseTestCase[] | undefined;
+        gradingService.subscribeForTestCases(exercise1.id).subscribe((testCases) => (currentTestCases = testCases));
+        const generatedTestCases = [{ testName: 'generatedTest', active: true }] as ProgrammingExerciseTestCase[];
+        getStub.mockReturnValueOnce(of(generatedTestCases));
+
+        gradingService.refreshTestCases(exercise1.id).subscribe();
+
+        expect(getStub).toHaveBeenCalledTimes(2);
+        expect(currentTestCases).toEqual(generatedTestCases);
+        gradingService.getTestCases(exercise1.id).subscribe((testCases) => expect(testCases).toEqual(generatedTestCases));
+        expect(getStub).toHaveBeenCalledTimes(2);
+    });
+
     it('should reuse locally saved test cases if they exist and not send two rest requests', () => {
         gradingService.getTestCases(exercise1.id).subscribe();
         gradingService.getTestCases(exercise1.id).subscribe();

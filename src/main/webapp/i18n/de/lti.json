@@ -92,7 +92,8 @@
                 "jwkSetUriTooltip": "Der JSON Web Key Set (JWKS)-Endpunkt der LTI-Plattform. Diese URL stellt die öffentlichen Schlüssel zur Verfügung, die zur Verifizierung von JWT-Tokens der Plattform verwendet werden.",
                 "form": {
                     "userPrefix": {
-                        "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten."
+                        "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten.",
+                        "maxlength": "Nutzer-Präfix ist zu lang."
                     }
                 },
                 "customNameIdTooltip": "Gib einen erkennbaren Namen für die Plattform ein, um sie in der Liste leicht identifizieren zu können. Dieser Name dient nur als administrative Referenz und hat keinen Einfluss auf die tatsächliche Konfiguration oder Konnektivität der Plattform."
@@ -109,8 +110,22 @@
                 "clientIdRequired": "Client-ID ist erforderlich.",
                 "authorizationUriRequired": "Autorisierungs-URI ist erforderlich.",
                 "tokenUriRequired": "Token-URI ist erforderlich.",
-                "jwkSetUriRequired": "JWK-Set-URI ist erforderlich."
+                "jwkSetUriRequired": "JWK-Set-URI ist erforderlich.",
+                "customNameRequired": "Benutzerdefinierter Name ist erforderlich."
             }
+        },
+        "onlineCourseConfiguration": {
+            "userPrefix": "Nutzer-Präfix",
+            "requireExistingUser": "Bestehenden Nutzer voraussetzen"
+        },
+        "ltiPlatformConfigurationUpdate": {
+            "registrationId": "Registrierung ID",
+            "clientId": "Client ID",
+            "originalUrl": "Original URL",
+            "customName": "Benutzerdefinierter Name",
+            "authorizationUri": "Authorization URI",
+            "jwkSetUri": "JWKSet URI",
+            "tokenUri": "Token URI"
         },
         "lti13": {
             "launch": {

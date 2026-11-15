@@ -9,11 +9,10 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -32,7 +31,6 @@ describe('CourseLectureRow', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/lectures', component: DummyComponent },
                     { path: 'courses/:courseId/lectures/:lectureId', component: DummyComponent },
@@ -86,7 +84,7 @@ describe('CourseLectureRow', () => {
         courseLectureRowComponentFixture.componentRef.setInput('course', course);
         courseLectureRowComponentFixture.changeDetectorRef.detectChanges();
 
-        const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
+        const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-state-danger'));
         expect(dateContainer).not.toBeNull();
     });
 
@@ -102,7 +100,7 @@ describe('CourseLectureRow', () => {
         courseLectureRowComponentFixture.componentRef.setInput('course', course);
         courseLectureRowComponentFixture.changeDetectorRef.detectChanges();
 
-        const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
+        const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-state-danger'));
         expect(dateContainer).toBeNull();
     });
 
@@ -118,7 +116,7 @@ describe('CourseLectureRow', () => {
 
         courseLectureRowComponentFixture.detectChanges();
 
-        const link = courseLectureRowComponentFixture.debugElement.nativeElement.querySelector('.stretched-link');
+        const link = courseLectureRowComponentFixture.debugElement.nativeElement.querySelector('a');
         link.click();
         await courseLectureRowComponentFixture.whenStable();
 

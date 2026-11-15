@@ -2,6 +2,7 @@
 id: communication
 title: Communication
 sidebar_label: Communication
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -26,7 +27,7 @@ message each other to communicate in private. Below, you can find more informati
 
 Artemis courses will by default enable all the communication features.
 In case you do not want to provide users with these features, you can disable them on course creation by unchecking the
-respective checkbox, **Communication Enabled** — it can also be edited afterwards. Additionally, you can enable or disable group chats and direct messages with the **Direct Messages Enabled / Group Chats** checkbox.
+respective checkbox, **Communication Enabled** — it can also be edited afterwards. Additionally, you can enable or disable group chats and direct messages with the **Direct Messages / Group Chats Enabled** checkbox.
 
 <Image src={communicationToggleImg} alt={"communication-toggle"} size={ImageSize.small} />
 
@@ -109,7 +110,8 @@ The video below provides a demonstration for the creation of a course-wide chann
 Besides automatic creation during lecture, exercise, or exam setup, moderators can also manually create new channels later
 if needed. When creating a channel, they must choose between a *selective* channel (default option) and a *course-wide* channel.
 In a *selective* channel, users are added manually after the channel is created. In a *course-wide* channel, all users
-enrolled in the course are automatically added as members.
+enrolled in the course are automatically added as members. Channels can also be created as *announcement* channels, in which only
+moderators can post. Only instructors can create announcement channels, tutors can create all other channels.
 
 <Image src={channelCreationImg} alt={"channel-creation"} size={ImageSize.medium} />
 

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 
@@ -247,9 +248,9 @@ class FeatureUsageCollectorTest {
 
     @Test
     void shouldRegisterAGitFeatureOnFirstSighting() {
-        when(registry.featureId(eq(FeatureKind.GIT), anyString(), anyString())).thenReturn(FEATURE_ID);
+        when(registry.featureId(eq(FeatureKind.GIT), anyString(), anyString(), any(), any())).thenReturn(FEATURE_ID);
 
-        collector.recordUsage(FeatureKind.GIT, "localvc", "push/assignment", Role.ANONYMOUS, false, 12);
+        collector.recordUsage(FeatureKind.GIT, "localvc", "push/assignment", UserFeature.PROGRAMMING_LOCAL_IDE, FeatureInteraction.ACTION, Role.ANONYMOUS, false, 12);
 
         var deltas = collector.drain(today());
         assertThat(deltas).hasSize(1);
@@ -258,9 +259,10 @@ class FeatureUsageCollectorTest {
 
     @Test
     void shouldRecordNothingWhenTheFeatureCouldNotBeRegistered() {
-        when(registry.featureId(any(), anyString(), anyString())).thenReturn(null);
+        when(registry.featureId(any(), anyString(), anyString(), any(), any())).thenReturn(null);
 
-        collector.recordUsage(FeatureKind.BACKGROUND, "plagiarism", "continuous-plagiarism-control/text", Role.ANONYMOUS, false, 1);
+        collector.recordUsage(FeatureKind.BACKGROUND, "plagiarism", "continuous-plagiarism-control/text", UserFeature.CONTINUOUS_PLAGIARISM_CONTROL, FeatureInteraction.ACTION,
+                Role.ANONYMOUS, false, 1);
 
         assertThat(collector.drain(today())).isEmpty();
     }
@@ -270,7 +272,7 @@ class FeatureUsageCollectorTest {
         var disabled = newCollector(new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of())));
 
         disabled.recordUsage(FEATURE_ID, Role.STUDENT, false, 1);
-        disabled.recordUsage(FeatureKind.GIT, "localvc", "push/assignment", Role.ANONYMOUS, false, 1);
+        disabled.recordUsage(FeatureKind.GIT, "localvc", "push/assignment", UserFeature.PROGRAMMING_LOCAL_IDE, FeatureInteraction.ACTION, Role.ANONYMOUS, false, 1);
 
         assertThat(disabled.isEnabled()).isFalse();
         assertThat(disabled.drain(today())).isEmpty();
@@ -279,10 +281,10 @@ class FeatureUsageCollectorTest {
 
     @Test
     void shouldNotPropagateAFailureOfTheRegistryIntoTheRequest() {
-        when(registry.featureId(any(), anyString(), anyString())).thenThrow(new IllegalStateException("database down"));
+        when(registry.featureId(any(), anyString(), anyString(), any(), any())).thenThrow(new IllegalStateException("database down"));
 
         // a usage counter must never be able to break the operation it is measuring
-        collector.recordUsage(FeatureKind.GIT, "localvc", "fetch/tests", Role.ANONYMOUS, false, 1);
+        collector.recordUsage(FeatureKind.GIT, "localvc", "fetch/tests", UserFeature.PROGRAMMING_REPOSITORY_EDITING, FeatureInteraction.VIEW, Role.ANONYMOUS, false, 1);
 
         assertThat(collector.drain(today())).isEmpty();
     }

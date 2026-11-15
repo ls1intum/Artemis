@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 /**
  * Base class containing shared configuration and mock setup for Jenkins+LocalVC integration tests.
  * Subclasses should add their own @Tag and @ResourceLock annotations to control parallel execution.
@@ -63,6 +65,10 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
     @MockitoSpyBean
     protected GitService gitServiceSpy;
+
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected BareGitRepositoryService bareGitRepositoryServiceSpy;
 
     @Autowired
     protected LocalVCService versionControlService;
@@ -100,8 +106,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, gitServiceSpy, programmingMessagingService, resultWebsocketService, examLiveEventsService, groupNotificationScheduleService,
-                continuousIntegrationTriggerService);
+        Mockito.reset(continuousIntegrationService, gitServiceSpy, bareGitRepositoryServiceSpy, programmingMessagingService, resultWebsocketService, examLiveEventsService,
+                groupNotificationScheduleService, continuousIntegrationTriggerService);
         super.resetSpyBeans();
     }
 

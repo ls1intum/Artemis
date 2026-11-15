@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -25,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -34,16 +34,19 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.web.repository.util.RepositoryExecutor;
@@ -68,17 +71,21 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    private final Optional<LocalVCServletService> localVCServletService;
+    protected final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
+
+    private final Optional<LocalVCPushProcessingService> localVCPushProcessingService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.localVCServletService = localVCServletService;
+        this.localVCPushProcessingService = localVCPushProcessingService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
     /**
@@ -116,6 +123,15 @@ public abstract class RepositoryResource {
      * @return the name of the default branch of that domain object
      */
     abstract String getOrRetrieveBranchOfDomainObject(Long domainID);
+
+    /** Resolves the exercise mutation slot for Hyperion-owned repositories; unrelated repositories return empty. */
+    abstract OptionalLong getExerciseIdForMutation(Long domainId, RepositoryActionType repositoryAction);
+
+    @FunctionalInterface
+    protected interface RepositoryLoader {
+
+        Repository load() throws IOException, GitAPIException;
+    }
 
     /**
      * Get a map of files for the given domainId.
@@ -161,8 +177,9 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", filePath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
-            try (var inputStream = request.getInputStream()) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE));
+                    var inputStream = request.getInputStream()) {
+                Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
                 repositoryService.createFile(repository, filePath, inputStream);
             }
             return new ResponseEntity<>(HttpStatus.OK);
@@ -181,8 +198,9 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", folderPath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
-            try (InputStream inputStream = request.getInputStream()) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE));
+                    InputStream inputStream = request.getInputStream()) {
+                Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
                 repositoryService.createFolder(repository, folderPath, inputStream);
             }
             return new ResponseEntity<>(HttpStatus.OK);
@@ -200,8 +218,10 @@ public abstract class RepositoryResource {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.currentFilePath(), fileMove.newFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
-            repositoryService.renameFile(repository, fileMove);
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
+                Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
+                repositoryService.renameFile(repository, fileMove);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -217,8 +237,10 @@ public abstract class RepositoryResource {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
-            repositoryService.deleteFile(repository, filename);
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
+                Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
+                repositoryService.deleteFile(repository, filename);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -233,7 +255,8 @@ public abstract class RepositoryResource {
         log.debug("REST request to pull Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.READ));
+                    Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {
                 repositoryService.pullChanges(repository);
 
                 return new ResponseEntity<>(HttpStatus.OK);
@@ -244,22 +267,26 @@ public abstract class RepositoryResource {
     /**
      * Save files and commit changes.
      *
-     * @param domainId    that serves as an abstract identifier for retrieving the repository.
-     * @param submissions list of file submissions to save.
-     * @param commit      if the changes should be committed.
+     * @param domainId         that serves as an abstract identifier for retrieving the repository.
+     * @param submissions      list of file submissions to save.
+     * @param commit           if the changes should be committed.
+     * @param repositoryLoader retrieves the authorized repository after the mutation slot has been claimed
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    protected ResponseEntity<Map<String, String>> saveFilesAndCommitChanges(Long domainId, List<FileSubmission> submissions, boolean commit, Repository repository) {
-        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+    protected ResponseEntity<Map<String, String>> saveFilesAndCommitChanges(Long domainId, List<FileSubmission> submissions, boolean commit, RepositoryLoader repositoryLoader) {
+        OptionalLong exerciseId = getExerciseIdForMutation(domainId, RepositoryActionType.WRITE);
+        return executeAndCheckForExceptions(() -> {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+                Repository repository = repositoryLoader.load();
+                Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
-        if (commit) {
-            var response = commitChanges(domainId);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new ResponseStatusException(response.getStatusCode());
+                if (commit) {
+                    commitChanges(domainId, repository, userRepository.getUser());
+                }
+
+                return ResponseEntity.ok(fileSaveResult);
             }
-        }
-
-        return ResponseEntity.ok(fileSaveResult);
+        });
     }
 
     /**
@@ -273,21 +300,26 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, true);
-            // Kept, so the commit alert that versioning broadcasts can be attributed to this client and to no other. The
-            // repository head is not a substitute: this working copy is shared per repository, so a concurrent commit from
-            // another editor can move it.
-            String createdCommitHash = repositoryService.commitChanges(repository, user);
-            var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
-
-            // Trigger a build, and process the result.
-            // For Jenkins, webhooks were added when creating the repository,
-            // that notify the CI system when the commit happens and thus trigger the build.
-            // The build hash stays null on purpose, so the latest commit is used for the build; only the attribution of the
-            // commit alert uses the exact commit created above.
-            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
-            return new ResponseEntity<>(HttpStatus.OK);
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
+                Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, true);
+                return commitChanges(domainId, repository, user);
+            }
         });
+    }
+
+    private ResponseEntity<Void> commitChanges(Long domainId, Repository repository, User user) throws GitAPIException {
+        String createdCommitHash = repositoryService.commitChanges(repository, user);
+        var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
+
+        // Trigger a build, and process the result. Jenkins webhooks perform the equivalent notification for remote repositories.
+        try {
+            localVCPushProcessingService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
+        }
+        catch (BuildOutsideTimeWindowException e) {
+            // The commit is saved, it is only not built. The client knows the build time window and tells the student, so this is no error.
+            log.debug("Commit {} of the online editor was not built: {}", createdCommitHash, e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -298,8 +330,10 @@ public abstract class RepositoryResource {
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.RESET, false, true);
-            gitService.resetToOriginHead(repository);
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
+                Repository repository = getRepository(domainId, RepositoryActionType.RESET, false, true);
+                gitService.resetToOriginHead(repository);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -401,7 +435,12 @@ public abstract class RepositoryResource {
             throw new IOException("File could not be found.");
         }
 
-        try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
+        byte[] content = submission.getFileContent().getBytes(StandardCharsets.UTF_8);
+        if (content.length > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
+            throw new IOException("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes.");
+        }
+
+        try (var inputStream = new ByteArrayInputStream(content)) {
             FileUtils.copyToFile(inputStream, file.get());
         }
     }

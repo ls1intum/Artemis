@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service.conversation;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -17,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,11 +30,12 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.UserConversationInfo;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -58,8 +59,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 public class ConversationService {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
     private final ConversationDTOService conversationDTOService;
 
@@ -133,25 +132,20 @@ public class ConversationService {
      * @return an optional conversation
      */
     public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
+        Conversation conversation = getConversationById(conversationId);
+        checkConversationVisibilityElseThrow(conversation, user);
         if (isMember(conversationId, user.getId())) {
             return Optional.empty();
         }
 
-        Conversation conversation = loadConversationWithParticipantsIfGroupChat(conversationId);
-
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
             boolean canBecomeModerator = (channel.getIsAnnouncementChannel() ? authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user)
                     : authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user));
-            conversationParticipant.setIsModerator(canBecomeModerator);
-            lastReadDate.ifPresent(conversationParticipant::setLastRead);
-            try {
-                conversationParticipantRepository.saveAndFlush(conversationParticipant);
-            }
-            catch (DataIntegrityViolationException e) {
+            // Like a new participant: nothing read yet, which is why the last read date lies in the past
+            ZonedDateTime lastRead = lastReadDate.orElseGet(() -> ZonedDateTime.now().minusYears(2));
+            if (!conversationParticipantRepository.createIfAbsent(channel.getId(), user.getId(), canBecomeModerator, lastRead, 0L)) {
                 log.info("User {} is already a participant in conversation {}", user.getId(), conversationId);
             }
-
         }
         else {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
@@ -224,18 +218,22 @@ public class ConversationService {
     }
 
     /**
-     * Determines if the user has unread messages in that course
+     * Determines if the user has unread messages in that course: new messages of other users since they last read a conversation, or
+     * replies that raised the unread count of a conversation, which are no new messages
      *
      * @param courseId       the id of the course
      * @param requestingUser the user for which the conversations should be checked
      * @return true if the user has unread messages in that course, false otherwise
      */
     public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
-        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
+        boolean isTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, requestingUser);
+        ZonedDateTime now = ZonedDateTime.now();
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId(), isTutor, now)
+                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId(), isTutor, now);
     }
 
     public void markAsRead(Long conversationId, Long userId) {
-        conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
+        conversationParticipantRepository.updateLastRead(userId, conversationId, ZonedDateTime.now());
     }
 
     /**
@@ -297,8 +295,8 @@ public class ConversationService {
         }
         if (!newConversationParticipants.isEmpty()) {
             conversationParticipantRepository.saveAll(newConversationParticipants);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToBeRegistered);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, existingUsers);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, conversation, usersToBeRegistered);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, existingUsers);
         }
     }
 
@@ -310,7 +308,29 @@ public class ConversationService {
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
         var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), CommunicationCrudAction.UPDATE, conversation, usersToContact);
+    }
+
+    /**
+     * Refreshes a channel after its linked item's visibility date changes. Hiding a course-wide channel also evicts
+     * caches of course members who never opened it and therefore have no participant row yet. Visible updates stay
+     * scoped to participants, whose personalized metadata is recalculated.
+     *
+     * @param channel the channel with its newly persisted exercise or exam
+     */
+    public void notifyChannelMembersAboutVisibilityChange(Channel channel) {
+        Set<User> usersToContact;
+        if (channel.getIsCourseWide() && !channel.isVisibleToStudents()) {
+            var logins = userRepository.findAllNotificationRecipientsInCourseForConversation(channel.getId(), channel.getCourse().getId()).stream()
+                    .map(recipient -> recipient.userLogin()).collect(Collectors.toSet());
+            // Preload roles and administrator authorities once: hidden channels otherwise cause one role query per recipient.
+            usersToContact = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(logins);
+        }
+        else {
+            usersToContact = conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(channel.getId()).stream()
+                    .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+        }
+        broadcastOnConversationMembershipChannel(channel.getCourse(), CommunicationCrudAction.UPDATE, channel, usersToContact);
     }
 
     /**
@@ -319,8 +339,9 @@ public class ConversationService {
      * @param course       the course in which the conversation is located
      * @param users        the users to be removed
      * @param conversation the conversation from which the users are removed
+     * @return the users that were participants of the conversation and have been removed; the other given users are ignored
      */
-    public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
+    public Set<User> deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
         var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
@@ -329,9 +350,10 @@ public class ConversationService {
                 usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
         if (!participantsToRemove.isEmpty()) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.DELETE, conversation, usersToBeDeregistered);
+            broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, remainingUsers);
         }
+        return usersToBeDeregistered;
     }
 
     /**
@@ -348,25 +370,28 @@ public class ConversationService {
     /**
      * Broadcasts a message on the conversation membership channel of users
      *
-     * @param course          the course in which the conversation is located
-     * @param metisCrudAction the action that was performed
-     * @param conversation    the conversation that was affected
-     * @param recipients      the users to be messaged
+     * @param course       the course in which the conversation is located
+     * @param crudAction   the action that was performed
+     * @param conversation the conversation that was affected
+     * @param recipients   the users to be messaged
      */
     // TODO: this should be Async
-    public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
-        String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+    public void broadcastOnConversationMembershipChannel(Course course, CommunicationCrudAction crudAction, Conversation conversation, Set<User> recipients) {
+        recipients.forEach(user -> sendToConversationMembershipChannel(crudAction, conversation, user, course.getId()));
     }
 
-    @NonNull
-    public static String getConversationParticipantTopicName(Long courseId) {
-        return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(CommunicationCrudAction crudAction, Conversation conversation, User user, long courseId) {
+        if (!isConversationVisibleToUser(conversation, user)) {
+            // Remove a previously visible channel from the student's cache after its date is postponed, without
+            // disclosing its current name, description or linked item through the membership update.
+            var hiddenChannel = new ChannelDTO();
+            hiddenChannel.setId(conversation.getId());
+            websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()),
+                    new ConversationWebsocketDTO(hiddenChannel, CommunicationCrudAction.DELETE));
+            return;
+        }
         ConversationDTO dto;
-        if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
+        if (crudAction.equals(CommunicationCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
             dto = conversationDTOService.convertToDTOWithNoExtraDBCalls(conversation);
         }
@@ -376,8 +401,8 @@ public class ConversationService {
             conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
-        var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
-        websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
+        var websocketDTO = new ConversationWebsocketDTO(dto, crudAction);
+        websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()), websocketDTO);
     }
 
     /**
@@ -478,24 +503,26 @@ public class ConversationService {
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
         if (!conversationIds.isEmpty()) {
-            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+            conversationParticipantRepository.updateMultipleLastRead(userId, conversationIds, now);
         }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // Then, find all course-wide channels that the user has not yet accessed and create conversation participants for them
-        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
-        List<ConversationParticipant> participants = new ArrayList<>();
+        boolean isTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, requestingUser);
+        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId)
+                .stream().filter(channel -> isTutor || channel.isVisibleToStudents()).toList();
+        // The participants of the channels the user has not yet accessed are created as read. A concurrent request, e.g. opening one of these channels, may have created one in
+        // the meantime. Such a participant is marked as read as well.
+        List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
-            var newParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-            newParticipant.setUnreadMessagesCount(0L);
-            newParticipant.setLastRead(now);
-            participants.add(newParticipant);
+            if (!conversationParticipantRepository.createIfAbsent(channel.getId(), userId, false, now, 0L)) {
+                concurrentlyCreatedConversationIds.add(channel.getId());
+            }
         }
-        // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
-        if (!participants.isEmpty()) {
-            conversationParticipantRepository.saveAll(participants);
+        if (!concurrentlyCreatedConversationIds.isEmpty()) {
+            conversationParticipantRepository.updateMultipleLastRead(userId, concurrentlyCreatedConversationIds, now);
         }
         log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
     }
@@ -532,6 +559,37 @@ public class ConversationService {
             return new HashSet<>();
         }
         return userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), roles);
+    }
+
+    /**
+     * Finds the users with the given logins that are members of the given course. Logins of users outside the course, of unknown users and of deleted users are ignored.
+     * The users are loaded together with their course roles and authorities, so that checking the membership needs no further query per user.
+     *
+     * @param course     the course the users have to belong to
+     * @param userLogins the logins to resolve
+     * @return the matching users that are at least students in the course
+     */
+    public Set<User> findCourseUsersInDatabase(Course course, List<String> userLogins) {
+        Set<String> logins = userLogins.stream().filter(login -> login != null && !login.isEmpty()).collect(Collectors.toSet());
+        if (logins.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<User> users = new HashSet<>(userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(logins));
+        users.removeIf(user -> !authorizationCheckService.isAtLeastStudentInCourse(course, user));
+        return users;
+    }
+
+    /**
+     * Finds a user by id, provided the user is a member of the given course.
+     *
+     * @param course the course the user has to belong to
+     * @param userId the id of the user
+     * @return the user
+     * @throws EntityNotFoundException if no user with this id exists or the user is not a member of the course
+     */
+    public User findCourseUserByIdElseThrow(Course course, long userId) {
+        return userRepository.findById(userId).filter(user -> authorizationCheckService.isAtLeastStudentInCourse(course, user))
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     /**
@@ -572,23 +630,45 @@ public class ConversationService {
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
-        if (channel.getExercise() != null) {
-            return channel.getExercise().isVisibleToStudents();
+        return channel.isVisibleToStudents();
+    }
+
+    /**
+     * Enforces the release gate even when a student already belongs to the channel or knows its id.
+     * Staff can prepare a channel before its exercise or exam becomes visible to students.
+     *
+     * @param conversation the conversation being accessed
+     * @param user         the requesting user
+     * @throws AccessForbiddenException if the conversation is not visible to the user yet
+     */
+    public void checkConversationVisibilityElseThrow(Conversation conversation, User user) {
+        if (!isConversationVisibleToUser(conversation, user)) {
+            throw new AccessForbiddenException("This channel is not visible to students yet");
         }
-        else if (channel.getExam() != null) {
-            return channel.getExam().isVisibleToStudents();
-        }
-        return true;
+    }
+
+    /**
+     * Whether a conversation's metadata and notifications may be delivered to the given user.
+     *
+     * @param conversation the conversation whose visibility is checked
+     * @param user         the recipient
+     * @return whether the recipient may see the conversation
+     */
+    public boolean isConversationVisibleToUser(Conversation conversation, User user) {
+        return !(conversation instanceof Channel channel) || channel.isVisibleToStudents()
+                || authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user);
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
         var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+        var conversation = participation.map(ConversationParticipant::getConversation).orElseGet(() -> getConversationById(conversationId));
+        checkConversationVisibilityElseThrow(conversation, requestingUser);
 
         if (participation.isEmpty()) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+                // Like a new participant: nothing read yet, which is why the last read date lies in the past
+                conversationParticipantRepository.createIfAbsent(channel.getId(), requestingUser.getId(), false, ZonedDateTime.now().minusYears(2), 0L);
+                return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId()).orElseThrow();
             }
             else {
                 throw new AccessForbiddenException("User not allowed to access this conversation!");

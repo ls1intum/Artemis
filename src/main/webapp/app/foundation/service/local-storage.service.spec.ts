@@ -15,7 +15,7 @@ describe('LocalStorageService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({});
         service = TestBed.inject(LocalStorageService);
-        service.clear();
+        localStorage.clear();
     });
 
     it('should store and retrieve a string correctly', () => {
@@ -64,6 +64,18 @@ describe('LocalStorageService', () => {
         expect(service.retrieve<string>('key1')).toBeUndefined();
         expect(service.retrieve<string>('key2')).toBeUndefined();
         expect(service.retrieve<string>('key3')).toBeUndefined();
+    });
+
+    it('preserves each user’s build notification preference through logout while clearing session data', () => {
+        service.store('buildNotifications.7', true);
+        service.store('buildNotifications.8', false);
+        service.store('authenticationToken', 'expired-token');
+
+        service.clear();
+
+        expect(service.retrieve<boolean>('buildNotifications.7')).toBe(true);
+        expect(service.retrieve<boolean>('buildNotifications.8')).toBe(false);
+        expect(service.retrieve<string>('authenticationToken')).toBeUndefined();
     });
 
     it('should clear all items except specified keys', () => {

@@ -1,25 +1,28 @@
-import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
-import { Component, OnInit, Type, computed, inject, signal } from '@angular/core';
+import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseGroupDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { EntityDeletionProgress, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { faAngleDown, faAngleUp, faFileImport, faLayerGroup, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
-import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExamExerciseImportDialogComponent } from 'app/exam/manage/exercise-groups/exercise-import-dialog/exam-exercise-import-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,9 +32,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ExamExerciseTableComponent, ExamTableGroupChange } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
 import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
 import { ExamExerciseTypePickerComponent, ExamExerciseTypePickerMode } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -44,8 +45,12 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
-        TumUiPanelComponent,
-        TumUiButtonComponent,
+        TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        ExamImportComponent,
+        ExamExerciseImportDialogComponent,
+        ExamDeleteDialogComponent,
         ExamExerciseTableComponent,
         ExamExerciseGroupEditModalComponent,
         ExamExerciseTypePickerComponent,
@@ -55,15 +60,15 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private exerciseGroupService = inject(ExerciseGroupService);
+    private entityDeletionService = inject(EntityDeletionService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
-    private deleteDialogService = inject(DeleteDialogService);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     readonly courseId = signal<number>(undefined!);
     course = signal<Course | undefined>(undefined);
@@ -95,6 +100,34 @@ export class ExerciseGroupsComponent implements OnInit {
     readonly typePickerMode = signal<ExamExerciseTypePickerMode>('create');
 
     readonly groupEditVisible = signal(false);
+    protected readonly groupImportVisible = signal(false);
+
+    protected readonly exerciseImportVisible = signal(false);
+    protected readonly exerciseImportType = signal<ExerciseType | undefined>(undefined);
+    private readonly exerciseImportGroup = signal<ExerciseGroup | undefined>(undefined);
+
+    protected readonly deleteGroupVisible = signal(false);
+    /** One observable per dialog opening, so that the delete dialog does not get a new input on every change detection pass. */
+    protected readonly deleteGroupSummary = computed(() => {
+        const exerciseGroup = this.groupToDelete();
+        return exerciseGroup?.id === undefined ? undefined : this.exerciseGroupService.getDeletionSummary(this.courseId(), this.examId(), exerciseGroup.id);
+    });
+    protected readonly groupToDelete = signal<ExerciseGroup | undefined>(undefined);
+    protected readonly deleteGroupQuestion = computed(() =>
+        this.groupToDelete() && this.containsProgrammingExercise(this.groupToDelete()!)
+            ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC'
+            : 'artemisApp.examManagement.exerciseGroup.delete.question',
+    );
+    /** Groups with a programming exercise also offer to clean up build plans, unless LocalCI is active, which needs none. */
+    protected readonly deleteGroupChecks = computed<Record<string, string>>(() => {
+        const group = this.groupToDelete();
+        const checks: Record<string, string> = {};
+        if (group && this.containsProgrammingExercise(group) && !this.localCIEnabled()) {
+            checks['deleteStudentReposBuildPlans'] = 'artemisApp.programmingExercise.delete.studentReposBuildPlans';
+            checks['deleteBaseReposBuildPlans'] = 'artemisApp.programmingExercise.delete.baseReposBuildPlans';
+        }
+        return checks;
+    });
     readonly groupEditTarget = signal<ExerciseGroup | undefined>(undefined);
     /** Selects the create vs. update persistence path in {@link onGroupEditSaved}. */
     readonly groupEditIsNew = signal(false);
@@ -121,6 +154,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
                 this.course.set(this.exam()!.course);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
+                this.resumeRunningDeletion();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -158,6 +192,15 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
+     * Reads the exercise groups of the exam from the server again, e.g. when it is not known how a deletion ended.
+     */
+    reloadExerciseGroups() {
+        this.loadExerciseGroups()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });
+    }
+
+    /**
      * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
      * @param exerciseId
      * @param exerciseGroupId
@@ -186,62 +229,103 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId(), this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'exerciseGroupOverviewModification',
-                    content: 'Deleted an exercise group',
-                });
+        const courseId = this.courseId();
+        const examId = this.examId();
+        const title = this.exerciseGroups()?.find((exerciseGroup) => exerciseGroup.id === exerciseGroupId)?.title;
+        const request$ = this.exerciseGroupService.delete(courseId, examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        this.entityDeletionService.delete(exerciseGroupDeletionTarget(courseId, examId, exerciseGroupId, title), request$).subscribe({
+            next: (progress) => {
+                this.onGroupDeletionEnded(progress, exerciseGroupId);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
-                this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
     /**
-     * Opens the import module for a specific exercise type
+     * Shows the progress of a deletion in this exam that is already running, e.g. after the page was reloaded or another instructor started it:
+     * of an exercise group, or of the exam itself.
+     */
+    private resumeRunningDeletion(): void {
+        const exam = this.exam();
+        if (!exam?.course?.isAtLeastInstructor) {
+            return;
+        }
+        this.entityDeletionService
+            .resumeInExam(
+                this.courseId(),
+                this.examId(),
+                (entityType, entityId) => (entityType === EntityDeletionType.EXAM ? exam.title : this.exerciseGroups()?.find((group) => group.id === entityId)?.title),
+                this.destroyRef,
+            )
+            .subscribe((progress) =>
+                progress.entityType === EntityDeletionType.EXAM ? this.onExamDeletionEnded(progress) : this.onGroupDeletionEnded(progress, progress.entityId),
+            );
+    }
+
+    private onGroupDeletionEnded(progress: EntityDeletionProgress, exerciseGroupId: number): void {
+        if (isDeletionCompleted(progress)) {
+            this.eventManager.broadcast({
+                name: 'exerciseGroupOverviewModification',
+                content: 'Deleted an exercise group',
+            });
+            this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
+        }
+        if (isDeletionCompleted(progress) || isDeletionOutcomeUnknown(progress)) {
+            // The exam only reports its latest operation. When another operation replaced ours before the end was seen, the outcome is
+            // unknown: nothing is announced and the groups are read from the server, which tells how it really ended.
+            this.reloadExerciseGroups();
+        }
+    }
+
+    /** The exam that this page belongs to is being deleted: handled like the exam detail page does, and the page is left once the exam is gone. */
+    private onExamDeletionEnded(progress: EntityDeletionProgress): void {
+        if (isDeletionCompleted(progress)) {
+            // Drop the exam from the shared exam list first, then read it again, then leave: the overview must not show a deleted exam.
+            this.eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: progress.entityId }));
+            this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
+            if (this.isAlive() && this.examId() === progress.entityId) {
+                void this.router.navigate(['/course-management', this.courseId(), 'exams']);
+            }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh what is shown, which tells whether the exam still exists.
+            this.eventManager.broadcast({ name: 'examListModification', content: 'Refresh after an unknown deletion outcome' });
+            this.reloadExerciseGroups();
+        }
+    }
+
+    /**
+     * Opens the import dialog for a specific exercise type
      * @param exerciseGroup The current exercise group
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
-        const dialogData: ExerciseImportDialogData = { exerciseType };
+        this.exerciseImportGroup.set(exerciseGroup);
+        this.exerciseImportType.set(exerciseType);
+        this.exerciseImportVisible.set(true);
+    }
 
-        // Determine the header key based on exercise type
-        const headerKey = exerciseType === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${exerciseType}Exercise.home.importLabel`;
-
-        // For programming exercises, use tabs component (allows import from file), otherwise use direct import
-        const componentToOpen: Type<ExerciseImportTabsComponent | ExerciseImportComponent> =
-            exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
-
-        const dialogRef = this.dialogService.open(componentToOpen, {
-            header: this.translateService.instant(headerKey),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: dialogData,
-        });
-
-        dialogRef?.onClose.subscribe((result: Exercise | undefined) => {
-            if (result) {
-                if (result.id) {
-                    importBaseRoute.push('import', result.id);
-                    void this.router.navigate(importBaseRoute);
-                } else {
-                    // we know it must be a programming exercise, because only programming exercises can be imported from a file
-                    importBaseRoute.push('import-from-file');
-                    void this.router.navigate(importBaseRoute, {
-                        state: {
-                            programmingExerciseForImportFromFile: result,
-                        },
-                    });
-                }
-            }
-        });
+    /**
+     * Closes the exercise import dialog and continues on the import route of the exercise type: with the chosen exercise, or with
+     * the exercise read from a file.
+     * @param result the exercise to import
+     */
+    protected onExerciseImported(result: Exercise): void {
+        const exerciseGroup = this.exerciseImportGroup();
+        const exerciseType = this.exerciseImportType();
+        this.exerciseImportVisible.set(false);
+        if (!exerciseGroup || !exerciseType) {
+            return;
+        }
+        const groupRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id];
+        if (result.id) {
+            void this.router.navigate([...groupRoute, `${exerciseType}-exercises`, 'import', result.id], { queryParams: { sourceIsExamExercise: !!result.exerciseGroup } });
+        } else {
+            // An exercise read from a file has no id.
+            const { segments, extras } = importFromFileNavigation(result);
+            void this.router.navigate([...groupRoute, ...segments], extras);
+        }
     }
 
     /**
@@ -418,32 +502,20 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * Opens the import module for an exam import
+     * Opens the import dialog for an import of the exercise groups of another exam
      */
     openExerciseGroupImportModal() {
-        const dialogData: ExamImportDialogData = {
-            subsequentExerciseGroupSelection: true,
-            targetCourseId: this.courseId(),
-            targetExamId: this.examId(),
-        };
+        this.groupImportVisible.set(true);
+    }
 
-        const dialogRef = this.dialogService.open(ExamImportComponent, {
-            header: this.translateService.instant('artemisApp.examManagement.importExam'),
-            width: '70rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: dialogData,
-        });
-
-        dialogRef?.onClose.subscribe((exerciseGroups: ExerciseGroup[] | undefined) => {
-            if (exerciseGroups) {
-                this.exerciseGroups.set(exerciseGroups);
-                this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
-            }
-        });
+    /**
+     * Closes the import dialog and shows the exercise groups of the exam after the import
+     * @param exerciseGroups all exercise groups of the exam after the import
+     */
+    protected onExerciseGroupsImported(exerciseGroups: ExerciseGroup[]): void {
+        this.groupImportVisible.set(false);
+        this.exerciseGroups.set(exerciseGroups);
+        this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
     }
 
     protected containsProgrammingExercise(exerciseGroup: ExerciseGroup): boolean {
@@ -451,34 +523,14 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * Opens the shared delete-confirmation dialog for an exercise group, mirroring the course-side exercise-group
-     * card's delete button. A group containing a programming exercise gets the LocalVC-aware question plus the
-     * build-plan cleanup checks (unless LocalCI is active, which needs none); every other group gets the plain
-     * question. The actual deletion runs on confirm via {@link deleteExerciseGroup}.
+     * Opens the delete-confirmation dialog for an exercise group, mirroring the course-side exercise-group card's delete button.
+     * The actual deletion runs on confirm via {@link deleteExerciseGroup}.
      */
     protected confirmDeleteGroup(exerciseGroup: ExerciseGroup): void {
-        const groupId = exerciseGroup.id;
-        if (groupId === undefined) {
+        if (exerciseGroup.id === undefined) {
             return;
         }
-        const isProgrammingGroup = this.containsProgrammingExercise(exerciseGroup);
-        this.deleteDialogService.openDeleteDialog({
-            entityTitle: exerciseGroup.title,
-            deleteQuestion: isProgrammingGroup ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC' : 'artemisApp.examManagement.exerciseGroup.delete.question',
-            deleteConfirmationText: 'artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm',
-            translateValues: {},
-            actionType: ActionType.Delete,
-            buttonType: ButtonType.ERROR,
-            requireConfirmationOnlyForAdditionalChecks: false,
-            additionalChecks:
-                isProgrammingGroup && !this.localCIEnabled()
-                    ? {
-                          deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                          deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
-                      }
-                    : {},
-            dialogError: this.dialogError,
-            delete: (checks) => this.deleteExerciseGroup(groupId, checks),
-        });
+        this.groupToDelete.set(exerciseGroup);
+        this.deleteGroupVisible.set(true);
     }
 }

@@ -43,6 +43,8 @@ public final class WeaviateTestConfiguration {
             registry.add("artemis.weaviate.scheme", () -> "http");
             registry.add("artemis.weaviate.vectorizer-module", () -> "none");
             registry.add("artemis.weaviate.collection-prefix", () -> COLLECTION_PREFIX + collectionPrefix);
+            // Check the index at the first drain instead of 30 seconds after the start, so tests do not wait for it.
+            registry.add("artemis.weaviate.migration.initial-delay-seconds", () -> 0);
         }
         else {
             // Explicitly disable Weaviate when container is unavailable to prevent bean creation attempts

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,6 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -26,6 +29,32 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 @Lazy
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.id IN :entityIds
+            """)
+    Set<Long> findExistingLectureIds(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.id > :afterId
+            ORDER BY lecture.id ASC
+            """)
+    List<Long> findLectureIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(l.course.id, l.id)
+            FROM Lecture l
+            WHERE l.course.id IN :courseIds
+            """)
+    List<CourseEntityIdDTO> findLectureIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT lecture
@@ -163,7 +192,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = lecture.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR))
-                AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
+                AND (LOWER(lecture.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%') OR LOWER(lecture.course.title) LIKE CONCAT('%', LOWER(CAST(:partialCourseTitle AS string)), '%'))
             """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("userId") long userId, Pageable pageable);

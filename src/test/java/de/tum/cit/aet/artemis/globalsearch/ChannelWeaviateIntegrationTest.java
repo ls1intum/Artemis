@@ -6,11 +6,10 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCh
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryChannelProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -36,9 +37,14 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateOutboxDispatcher;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -75,6 +81,15 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     @Autowired
+    private WeaviateOutboxDispatcher weaviateOutboxDispatcher;
+
+    @Autowired
+    private WeaviateOutboxRepository outboxRepository;
+
+    @Autowired
+    private SearchableEntitySyncStateRepository syncStateRepository;
+
+    @Autowired
     private PostTestRepository postRepository;
 
     @Autowired
@@ -102,7 +117,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleChannelPrivacy_updatesWeaviate() throws Exception {
         Channel channel = new Channel();
         channel.setName("privacy-test");
@@ -120,7 +135,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
         assertThat(updatedChannel.getIsPublic()).isFalse();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(false);
@@ -128,7 +143,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleChannelPrivacy_removesPostsFromWeaviate() throws Exception {
         // Create a non-course-wide public channel (toggling to private makes it non-indexable)
         Channel channel = new Channel();
@@ -162,11 +177,72 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertPostNotInWeaviate(weaviateService, postId);
     }
 
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReconcileDelete_afterPrivateChannelBecomesPublic_rederivesAndKeepsTheCurrentRow(WeaviateOutboxOrigin origin) throws Exception {
+        Channel channel = new Channel();
+        channel.setName("reconcile-" + reconcileOriginLabel(origin));
+        channel.setIsPublic(false);
+        channel.setIsCourseWide(false);
+        channel.setIsAnnouncementChannel(false);
+
+        Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
+                new org.springframework.util.LinkedMultiValueMap<>());
+        Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
+        assertThat(updatedChannel.getIsPublic()).isTrue();
+        assertChannelExistsInWeaviate(weaviateService, updatedChannel);
+
+        assertReconcileDeleteReindexesCurrentChannel(updatedChannel, origin);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReconcileDelete_afterArchivedChannelIsUnarchived_rederivesAndKeepsTheCurrentRow(WeaviateOutboxOrigin origin) throws Exception {
+        Channel channel = new Channel();
+        channel.setName("unarchive-" + reconcileOriginLabel(origin));
+        channel.setIsPublic(true);
+        channel.setIsCourseWide(true);
+        channel.setIsAnnouncementChannel(false);
+
+        Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
+        channelService.archiveChannel(createdChannel.getId());
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+        channelService.unarchiveChannel(createdChannel.getId());
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
+
+        assertReconcileDeleteReindexesCurrentChannel(createdChannel, origin);
+    }
+
+    private void assertReconcileDeleteReindexesCurrentChannel(Channel channel, WeaviateOutboxOrigin origin) {
+        WeaviateOutboxEntry staleDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId(), origin));
+
+        weaviateOutboxDispatcher.drain();
+
+        awaitIndexing(() -> {
+            var properties = queryChannelProperties(weaviateService, channel.getId());
+            assertThat(properties).as("the channel must be re-derived rather than removed by a stale reconcile decision").isNotNull();
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isEqualTo(staleDelete.getId());
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId())).isPresent()
+                    .hasValueSatisfying(state -> assertThat(properties.get(SearchableEntitySchema.Properties.CONTENT_HASH)).isEqualTo(state.getContentHash()));
+            assertThat(outboxRepository.existsById(staleDelete.getId())).as("the confirmed reconcile row is acknowledged").isFalse();
+        });
+    }
+
+    private static String reconcileOriginLabel(WeaviateOutboxOrigin origin) {
+        return origin == WeaviateOutboxOrigin.RECONCILE_DRIFT ? "drift" : "orphan";
+    }
+
     @Nested
     class CreateChannelTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateChannel_indexesInWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("test-channel");
@@ -180,7 +256,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateLectureChannel_indexesInWeaviate() throws Exception {
             Lecture lecture = new Lecture();
             lecture.setTitle("Test Lecture");
@@ -195,7 +271,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateExerciseChannel_indexesInWeaviate() throws Exception {
             ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -206,7 +282,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateChannelsForLectures_indexesInWeaviate() throws Exception {
             Lecture lecture1 = new Lecture();
             lecture1.setTitle("Lecture One");
@@ -234,7 +310,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     class UpdateChannelTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpdateLectureChannelName_updatesWeaviate() throws Exception {
             Lecture lecture = new Lecture();
             lecture.setTitle("Original Lecture");
@@ -251,7 +327,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             channelService.updateLectureChannel(lecture, newChannelName);
 
             Channel updatedChannel = channelRepository.findChannelByLectureId(lecture.getId());
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(newChannelName);
@@ -259,7 +335,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpdateExerciseChannelName_updatesWeaviate() throws Exception {
             ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             Channel createdChannel = channelService.createExerciseChannel(exercise, Optional.empty());
@@ -269,7 +345,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             exercise.setChannelName("exercise-renamed");
             channelService.updateExerciseChannel(exercise, exercise);
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryChannelProperties(weaviateService, createdChannel.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("exercise-renamed");
@@ -277,7 +353,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testArchiveChannel_removesFromWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("archive-test");
@@ -294,7 +370,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUnarchiveChannel_reIndexesInWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("unarchive-test");
@@ -318,7 +394,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     class DeleteChannelTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannel_removesFromWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("delete-test");
@@ -336,7 +412,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannelForExerciseId_removesFromWeaviate() throws Exception {
             ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             Channel createdChannel = channelService.createExerciseChannel(exercise, Optional.empty());
@@ -350,7 +426,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannelViaRest_removesChannelAndPostsFromWeaviate() throws Exception {
             // Create and index a public course-wide channel
             Channel channel = new Channel();
@@ -367,7 +443,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             post = postRepository.save(post);
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
             long postId = post.getId();
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertPostExistsInWeaviate(weaviateService, postId));
+            assertPostExistsInWeaviate(weaviateService, postId);
 
             // Create and index an answer post (reply) in the channel
             AnswerPost answerPost = new AnswerPost();
@@ -378,14 +454,14 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             answerPost = answerPostRepository.save(answerPost);
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, createdChannel));
             long answerPostId = answerPost.getId();
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertAnswerPostExistsInWeaviate(weaviateService, answerPostId));
+            assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
 
             // Delete the channel via the REST endpoint (this is what was broken: it bypassed Weaviate cleanup)
             long channelId = createdChannel.getId();
             request.delete("/api/communication/courses/" + course.getId() + "/channels/" + channelId, HttpStatus.OK);
 
             // All three entries must be gone from the search index
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 assertChannelNotInWeaviate(weaviateService, channelId);
                 assertPostNotInWeaviate(weaviateService, postId);
                 assertAnswerPostNotInWeaviate(weaviateService, answerPostId);

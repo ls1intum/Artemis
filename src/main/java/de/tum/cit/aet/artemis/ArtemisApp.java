@@ -1,7 +1,13 @@
 package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -15,7 +21,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
@@ -31,6 +39,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.DefaultProfileUtil;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
+import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -77,6 +86,27 @@ public class ArtemisApp {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
+        app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
+            Environment environment = event.getEnvironment();
+            if (environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+                throw new IllegalArgumentException("An AI Worker node cannot also run the core profile");
+            }
+            if (!isWorkerOnly(environment)) {
+                return;
+            }
+            if (environment.getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
+                throw new IllegalArgumentException("An AI Worker-only node cannot enable an HTTP server");
+            }
+            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " | " + PROFILE_LOCALCI + " | " + PROFILE_LOCALVC)) {
+                throw new IllegalArgumentException("An AI Worker-only node cannot use server or build-agent profiles");
+            }
+            if (DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
+                throw new IllegalArgumentException("An AI Worker-only node requires a shared Hazelcast or Redis data provider");
+            }
+            if (DistributedDataProviderResolver.isProvider(environment, HAZELCAST) && !environment.getProperty("eureka.client.enabled", Boolean.class, false)) {
+                throw new IllegalArgumentException("An AI Worker-only node requires Eureka discovery with Hazelcast");
+            }
+        });
         // The upload root of FilePathConverter is not set here. It is set by FileUploadPathEnvironmentPostProcessor,
         // before the context is created, because ApplicationReadyEvent fires inside run() and its listeners resolve
         // file locations.
@@ -98,6 +128,10 @@ public class ArtemisApp {
         }
     }
 
+    private static boolean isWorkerOnly(Environment environment) {
+        return environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && !environment.acceptsProfiles(Profiles.of(PROFILE_CORE));
+    }
+
     /**
      * Initializes deferred eager beans after the application context is fully initialized.
      * We explicitly call this method instead of invoking it on ApplicationReadyEvent, because we want to start this process as soon as the run method returns which is after all
@@ -112,6 +146,11 @@ public class ArtemisApp {
     }
 
     private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {
+        if (isWorkerOnly(env)) {
+            log.info("{} AI Worker started without an HTTP server (version {}, commit {})", env.getProperty("spring.application.name"), buildProperties.getVersion(),
+                    gitProperties.getShortCommitId());
+            return;
+        }
         String protocol = "http";
         if (env.getProperty("server.ssl.key-store") != null) {
             protocol = "https";

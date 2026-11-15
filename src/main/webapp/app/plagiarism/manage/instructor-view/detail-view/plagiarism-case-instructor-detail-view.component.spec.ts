@@ -12,7 +12,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, ReplaySubject, of } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -75,7 +75,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should set plagiarism case and exercises on initialization', async () => {
-        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'setCourse');
+        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'setCourse');
         component.ngOnInit();
         await Promise.resolve();
         expect(component.courseId()).toBe(1);
@@ -83,6 +83,44 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.plagiarismCase()).toEqual(plagiarismCase);
         expect(component.currentAccount?.id).toBe(99);
         expect(setCourseSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 1, title: exercise.courseTitle }));
+    });
+
+    it('should render the verdict forms as tabs and keep the typed warning when switching tabs', async () => {
+        component.courseId.set(1);
+        component.plagiarismCaseId = 1;
+        component.plagiarismCase.set({ id: 1, exercise });
+        component.posts.set([]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const element = fixture.nativeElement as HTMLElement;
+        const tabs = Array.from(element.querySelectorAll<HTMLElement>('[role="tab"]'));
+        expect(tabs.map((tab) => tab.getAttribute('data-testid'))).toEqual([
+            'plagiarism-verdict-tab-plagiarism',
+            'plagiarism-verdict-tab-point-deduction',
+            'plagiarism-verdict-tab-warning',
+        ]);
+        expect(component.activeTab).toBe(1);
+
+        tabs[2].click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.activeTab).toBe(3);
+        const textarea = element.querySelector('textarea') as HTMLTextAreaElement;
+        textarea.value = 'Please cite your sources';
+        textarea.dispatchEvent(new Event('input'));
+
+        tabs[0].click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.activeTab).toBe(1);
+        expect(component.verdictMessage()).toBe('Please cite your sources');
+        // the panels stay in the document, so a typed message survives a change of tab
+        expect(element.querySelector('textarea')).not.toBeNull();
     });
 
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
@@ -253,9 +291,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should not display post unrelated to the current plagiarism case', async () => {
-        const metisPostsSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+        const communicationPostsSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
-        metisPostsSpy.mockReturnValue(postsSubject.asObservable());
+        communicationPostsSpy.mockReturnValue(postsSubject.asObservable());
 
         postsSubject.next([]);
 
@@ -280,9 +318,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should delete post successfully', async () => {
-        const metisPostsSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+        const communicationPostsSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
-        metisPostsSpy.mockReturnValue(postsSubject.asObservable());
+        communicationPostsSpy.mockReturnValue(postsSubject.asObservable());
 
         postsSubject.next([]);
 

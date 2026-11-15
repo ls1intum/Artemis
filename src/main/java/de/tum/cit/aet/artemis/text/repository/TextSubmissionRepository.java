@@ -32,8 +32,9 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     boolean existsByIdAndParticipationId(long submissionId, long participationId);
 
     /**
-     * Writes the client-editable fields of an existing text submission by id, provided it belongs to the given participation.
-     * The id comes from the client, so the participation predicate keeps the update scoped to the caller's own participation.
+     * Writes the client-editable fields of an existing text submission by id, provided it belongs to the given participation and has no result.
+     * The id comes from the client, so the participation predicate keeps the update scoped to the caller's own participation. The result predicate prevents an assessment
+     * created concurrently with an autosave from being overwritten.
      * <p>
      * Prefer this over {@code save} on the autosave path: the submission is detached there (no transaction spans the load
      * and the save), so Spring Data routes it through {@code merge}, which reads the row back - along with its
@@ -59,6 +60,11 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
                 submission.type = :type
             WHERE submission.id = :submissionId
                 AND submission.participation.id = :participationId
+                AND NOT EXISTS (
+                    SELECT result.id
+                    FROM Result result
+                    WHERE result.submission.id = submission.id
+                )
             """)
     int updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("text") String text,
             @Param("language") Language language, @Param("submitted") boolean submitted, @Param("submissionDate") ZonedDateTime submissionDate, @Param("type") SubmissionType type);

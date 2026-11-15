@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { Exercise, getExerciseCompetencies } from './exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Exercise, getExerciseCompetencies, resetForImport } from './exercise.model';
 
 describe('Exercise Model', () => {
+    describe('resetForImport', () => {
+        it('should start the copy outside the variant group of its source', () => {
+            const exercise = new TextExercise(undefined, undefined);
+            exercise.title = 'Sorting';
+            exercise.dueDate = dayjs();
+            exercise.exerciseVariantGroup = { id: 4, title: 'Sorting variants', maxPoints: 10, dueDate: dayjs() };
+
+            resetForImport(exercise);
+
+            expect(exercise.exerciseVariantGroup).toBeUndefined();
+            expect(exercise.dueDate).toBeUndefined();
+            expect(exercise.title).toBe('Sorting');
+        });
+    });
+
     describe('getExerciseCompetencies', () => {
         it('should return empty array when exercise has no competencyLinks', () => {
             const exercise = { id: 1 } as Exercise;

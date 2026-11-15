@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
@@ -53,7 +53,7 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
     private MailSendingService mailSendingService;
 
     @Mock
-    private GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private GlobalNotificationSettingService globalNotificationSettingService;
 
     @InjectMocks
     private UserSshPublicKeyExpiryNotificationService service;
@@ -81,7 +81,7 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
         UserSshPublicKey key = expiredKey();
         when(userSshPublicKeyRepository.findByExpiryDateBetween(any(), any())).thenReturn(List.of(key));
         when(userRepository.findAllByIdIn(anyList())).thenReturn(List.of(user()));
-        when(globalNotificationSettingRepository.isNotificationEnabled(USER_ID, GlobalNotificationType.SSH_KEY_EXPIRED)).thenReturn(true);
+        when(globalNotificationSettingService.isNotificationEnabled(any(User.class), eq(GlobalNotificationType.SSH_KEY_EXPIRED))).thenReturn(true);
 
         service.notifyUserOnExpiredKey();
 
@@ -114,7 +114,7 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
 
     @Test
     void notifyUserAboutExpiredSshKey_whenTheUserTurnedTheNotificationOff_sendsNothing() {
-        when(globalNotificationSettingRepository.isNotificationEnabled(USER_ID, GlobalNotificationType.SSH_KEY_EXPIRED)).thenReturn(false);
+        when(globalNotificationSettingService.isNotificationEnabled(any(User.class), eq(GlobalNotificationType.SSH_KEY_EXPIRED))).thenReturn(false);
 
         service.notifyUserAboutExpiredSshKey(user(), expiredKey());
 
@@ -126,7 +126,7 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
         // A key without an expiry date never expires, but the mail template reads the variable unconditionally, so it has to be there.
         UserSshPublicKey keyWithoutExpiryDate = expiredKey();
         keyWithoutExpiryDate.setExpiryDate(null);
-        when(globalNotificationSettingRepository.isNotificationEnabled(USER_ID, GlobalNotificationType.SSH_KEY_EXPIRED)).thenReturn(true);
+        when(globalNotificationSettingService.isNotificationEnabled(any(User.class), eq(GlobalNotificationType.SSH_KEY_EXPIRED))).thenReturn(true);
 
         service.notifyUserAboutExpiredSshKey(user(), keyWithoutExpiryDate);
 
@@ -140,7 +140,7 @@ class UserSshPublicKeyExpiryNotificationServiceTest {
         // This is the entry point the scheduler calls; it must do the same work as the method a caller would invoke directly.
         when(userSshPublicKeyRepository.findByExpiryDateBetween(any(), any())).thenReturn(List.of(expiredKey()));
         when(userRepository.findAllByIdIn(anyList())).thenReturn(List.of(user()));
-        when(globalNotificationSettingRepository.isNotificationEnabled(USER_ID, GlobalNotificationType.SSH_KEY_EXPIRED)).thenReturn(true);
+        when(globalNotificationSettingService.isNotificationEnabled(any(User.class), eq(GlobalNotificationType.SSH_KEY_EXPIRED))).thenReturn(true);
 
         service.sendKeyExpirationNotifications();
 

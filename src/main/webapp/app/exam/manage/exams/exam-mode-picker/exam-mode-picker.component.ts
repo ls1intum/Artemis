@@ -1,16 +1,18 @@
 import { Component, input, output } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiButtonGroupComponent, TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 
+/**
+ * Lets instructors choose between an exam and a practice exam. A practice exam can optionally start with a supervised session
+ * (stored as {@link ExamMode.TEST_WITH_SIMULATION}), which behaves like a real exam from the start date for the working time.
+ */
 @Component({
     selector: 'jhi-exam-mode-picker',
     templateUrl: './exam-mode-picker.component.html',
-    styleUrls: ['./exam-mode-picker.component.scss'],
-    imports: [NgClass, TranslateDirective, ArtemisTranslatePipe, TumUiTooltipDirective],
+    imports: [TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiButtonGroupComponent, TumAetUiCheckboxComponent, TumAetUiTooltipDirective],
 })
 export class ExamModePickerComponent {
     exam = input.required<Exam>();
@@ -19,6 +21,31 @@ export class ExamModePickerComponent {
     examModeChanged = output();
 
     protected readonly ExamMode = ExamMode;
+
+    isRealExam(): boolean {
+        return this.exam().examMode === ExamMode.REAL;
+    }
+
+    hasSupervisedSession(): boolean {
+        return this.exam().examMode === ExamMode.TEST_WITH_SIMULATION;
+    }
+
+    /**
+     * Switches to a practice exam. A previously chosen supervised session is kept when the practice exam is already selected.
+     */
+    selectPracticeExam() {
+        if (this.isRealExam()) {
+            this.setExamMode(ExamMode.TEST);
+        }
+    }
+
+    /**
+     * Adds or removes the supervised session at the beginning of a practice exam.
+     * @param enabled whether the practice exam should start with a supervised session
+     */
+    setSupervisedSession(enabled: boolean) {
+        this.setExamMode(enabled ? ExamMode.TEST_WITH_SIMULATION : ExamMode.TEST);
+    }
 
     /**
      * Set the exam mode directly and emit changes

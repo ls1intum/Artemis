@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, input, output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-editor/file-browser/node/code-editor-file-browser-node.component';
@@ -12,7 +13,7 @@ import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models
     selector: 'jhi-code-editor-file-browser-folder',
     templateUrl: './code-editor-file-browser-folder.component.html',
     providers: [NgbModal],
-    imports: [FaIconComponent, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, FaIconComponent, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {
     onCollapseExpand = input.required<() => void>();

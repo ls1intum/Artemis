@@ -16,7 +16,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackHighlightColor, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
@@ -51,7 +51,8 @@ import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-w
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
-import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -72,8 +73,8 @@ import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular'
         ModelingAssessmentTopRightDirective,
         ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
@@ -102,7 +103,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = [];
     readonly highlightedElements = signal<Map<string, string>>(undefined!);
     readonly highlightMissingFeedback = signal(false);
 
@@ -170,10 +170,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (result) {
             result.assessmentNote = assessmentNote;
         }
-    }
-
-    get unreferencedFeedbackSuggestions(): Feedback[] {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
@@ -286,7 +282,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.loadingInitialSubmission.set(false);
         this.referencedFeedback = [];
         this.unreferencedFeedback.set([]);
-        this.feedbackSuggestions = [];
         this.hasAutomaticFeedback.set(false);
         this.loadingFeedbackSuggestions.set(false);
         this.highlightedElements.set(undefined!);
@@ -339,8 +334,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        const feedbacks = this.result()?.feedbacks ?? [];
+        const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
+        // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
+        // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
+        // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
+        // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
+        const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
+        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }
@@ -354,9 +355,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
-            this.feedbackSuggestions = suggestions;
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (this.result()) {
-                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+                // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL),
+                // so an assessment containing only already-persisted suggestions still satisfies the "automatic
+                // feedback only" reload gate above and fetches Athena again. Skip anything already present so a
+                // reload cannot append the same suggestion twice.
+                const existingFeedback = this.result()?.feedbacks ?? [];
+                const newSuggestions = suggestions.filter((suggestion) =>
+                    existingFeedback.every(
+                        (feedback) =>
+                            feedback.reference !== suggestion.reference ||
+                            Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                            feedback.detailText !== suggestion.detailText,
+                    ),
+                );
+                this.result()!.feedbacks = [...existingFeedback, ...newSuggestions];
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
@@ -383,7 +397,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.submission()) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission()!.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(this.submission()!.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
@@ -404,7 +418,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.unreferencedFeedback.set(feedback.filter((feedbackElement) => !feedbackElement.reference));
 
-        this.hasAutomaticFeedback.set(feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC));
+        // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
+        // AUTOMATIC type check alone misses them on reload - it only ever sees suggestions merged in this session.
+        this.hasAutomaticFeedback.set(
+            feedback.some(
+                (feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC || Feedback.getFeedbackSuggestionType(feedbackItem) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+        );
         this.highlightAutomaticFeedback();
 
         if (this.highlightMissingFeedback()) {
@@ -433,10 +453,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
-    }
-
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
 
     get readOnly(): boolean {
@@ -478,6 +494,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            return;
+        }
 
         this.modelingAssessmentService.saveAssessment(this.result()!.id!, this.feedback, this.submission()!.id!, this.result()!.assessmentNote?.note).subscribe({
             next: (result: Result) => {
@@ -491,7 +511,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
                 this.alertService.closeAll();
-                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error(isCreditsOutOfBounds(error) ? FEEDBACK_CREDITS_OUT_OF_BOUNDS : 'artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
     }
@@ -523,6 +543,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            return;
+        }
 
         this.modelingAssessmentService.saveAssessment(this.result()!.id!, this.feedback, this.submission()!.id!, this.result()!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
@@ -538,7 +562,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
                 let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
-                if (error.error && error.error.entityName && error.error.message) {
+                if (isCreditsOutOfBounds(error)) {
+                    errorMessage = FEEDBACK_CREDITS_OUT_OF_BOUNDS;
+                } else if (error.error?.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
                 this.alertService.closeAll();
@@ -551,6 +577,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.validateFeedback();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             assessmentAfterComplaint.onError();
             return;
         }
@@ -567,13 +598,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
                 assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else {
-                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                }
+                alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         });
     }

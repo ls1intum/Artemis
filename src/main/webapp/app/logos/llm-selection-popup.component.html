@@ -1,15 +1,14 @@
-@if (isVisible()) {
-    <div
-        class="modal-backdrop"
-        data-testid="llm-selection-modal"
-        [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
-        (click)="onBackdropClick($event)"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ai-modal-title"
-    >
-        <div class="modal-content" role="document">
-            <div class="modal-header">
+<tumaet-ui-dialog
+    [visible]="isVisible()"
+    (visibleChange)="onVisibleChange($event)"
+    size="large"
+    [showHeader]="false"
+    [dismissableMask]="true"
+    [ariaLabel]="'artemisApp.llmSelectionPopup.header' | artemisTranslate"
+>
+    @if (isVisible()) {
+        <div class="llm-modal" data-testid="llm-selection-modal">
+            <div class="llm-modal-header">
                 <h1 id="ai-modal-title" jhiTranslate="artemisApp.llmSelectionPopup.header"></h1>
                 <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleOne"></p>
                 <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleTwo"></p>
@@ -96,7 +95,7 @@
                         </div>
                     </div>
 
-                    <div class="card-header">
+                    <div class="option-header">
                         <h2 jhiTranslate="artemisApp.llmSelectionPopup.cloud"></h2>
                         @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
                             <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
@@ -200,7 +199,7 @@
                             </div>
                         </div>
 
-                        <div class="card-header">
+                        <div class="option-header">
                             <h2 jhiTranslate="artemisApp.llmSelectionPopup.onPremise"></h2>
                             @if (currentSelection() === LLMSelectionDecision.LOCAL_AI) {
                                 <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
@@ -260,7 +259,7 @@
                         </div>
                     </div>
 
-                    <div class="card-header">
+                    <div class="option-header">
                         <h2 jhiTranslate="artemisApp.llmSelectionPopup.noAI"></h2>
                         @if (currentSelection() === LLMSelectionDecision.NO_AI) {
                             <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
@@ -292,20 +291,20 @@
                 </div>
             </div>
 
-            <div class="memiris-toggle-section">
-                <div class="memiris-toggle-content">
-                    <div class="memiris-toggle-text">
-                        <span class="memiris-toggle-title" jhiTranslate="artemisApp.llmSelectionPopup.memirisTitle"></span>
-                        <span class="memiris-toggle-description" jhiTranslate="artemisApp.llmSelectionPopup.memirisDescription"></span>
-                    </div>
-                    <p-toggleswitch [ngModel]="memirisEnabled()" (ngModelChange)="memirisEnabled.set($event)" (onChange)="onMemirisToggle()" inputId="memiris-toggle" />
-                </div>
-            </div>
-
             <div class="footer-note">
                 <p jhiTranslate="artemisApp.llmSelectionPopup.disclaimer"></p>
-                <a class="learn-more-link" (click)="onLearnMoreClick($event)" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
+                <a
+                    class="learn-more-link"
+                    (click)="onLearnMoreClick($event)"
+                    jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"
+                    #keyboardAction307
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                ></a>
             </div>
         </div>
-    </div>
-}
+    }
+</tumaet-ui-dialog>

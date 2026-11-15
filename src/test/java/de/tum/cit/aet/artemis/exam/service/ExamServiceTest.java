@@ -266,7 +266,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "student1", roles = "STUDENT")
+        @WithMockUser(username = "student1", roles = "USER")
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
             boolean isInstructor = false;
@@ -276,7 +276,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "student1", roles = "STUDENT")
+        @WithMockUser(username = "student1", roles = "USER")
         void testThrowsExceptionIfNotPublished() {
             studentExam.setSubmitted(true);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
@@ -287,7 +287,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = "instructor1", roles = "USER")
         void testDoesNotThrowExceptionForInstructors() {
             studentExam.setId(1L);
             studentExam.setSubmitted(false);

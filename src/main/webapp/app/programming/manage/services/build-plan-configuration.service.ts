@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
@@ -13,7 +13,7 @@ export interface UpdateBuildPlanConfiguration {
     dockerFlags?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BuildPlanConfigurationService {
     private http = inject(HttpClient);
 

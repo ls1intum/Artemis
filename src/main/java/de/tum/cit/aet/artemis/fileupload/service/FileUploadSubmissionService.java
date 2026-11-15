@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -182,7 +184,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new EmptyFileException(file.getOriginalFilename());
         }
 
-        final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+        final String multipartFileHash = DigestUtils.sha256Hex(file.getInputStream());
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
@@ -191,7 +193,8 @@ public class FileUploadSubmissionService extends SubmissionService {
         final URI newFilePath = URI.create(new PublicFileUrl.FileUploadSubmission(exercise.getId(), fileUploadSubmission.getId(), savePath.getFileName().toString()).clientPath());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(savePath));
+        // Reviewed false positive (CodeQL java/path-injection): savePath comes from saveFileForSubmission, which builds it from a sanitized file name.
+        final var storedFileHash = DigestUtils.sha256Hex(Files.newInputStream(savePath)); // codeql[java/path-injection]
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
@@ -254,8 +257,13 @@ public class FileUploadSubmissionService extends SubmissionService {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository
                 .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
 
-        if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
-            checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Result latestResult = fileUploadSubmission.getLatestResult();
+        if (latestResult == null || latestResult.getAssessor() == null) {
+            Course course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
+            if (course == null) {
+                throw new IllegalStateException("The course of exercise " + fileUploadExercise.getId() + " cannot be resolved");
+            }
+            checkSubmissionLockLimit(course.getId());
         }
 
         // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams

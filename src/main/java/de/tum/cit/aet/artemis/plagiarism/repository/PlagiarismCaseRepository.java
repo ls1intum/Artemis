@@ -123,7 +123,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.student student
                 LEFT JOIN plagiarismCase.verdictBy verdictBy
                 LEFT JOIN plagiarismCase.exercise exercise
-                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN PlagiarismDetectionConfig plagiarismDetectionConfig ON plagiarismDetectionConfig.exercise = exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam
@@ -177,7 +177,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.student student
                 LEFT JOIN plagiarismCase.verdictBy verdictBy
                 LEFT JOIN plagiarismCase.exercise exercise
-                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN PlagiarismDetectionConfig plagiarismDetectionConfig ON plagiarismDetectionConfig.exercise = exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam
@@ -341,6 +341,45 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
             """)
     Optional<Long> findCourseIdById(@Param("plagiarismCaseId") long plagiarismCaseId);
 
+    /**
+     * Checks whether the user is the student a plagiarism case is about, or a member of the team it is about.
+     *
+     * @param plagiarismCaseId the id of the plagiarism case
+     * @param login            the login of the user
+     * @return true if the case is about the user or the user's team
+     */
+    @Query("""
+            SELECT COUNT(plagiarismCase) > 0
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.student student
+                LEFT JOIN plagiarismCase.team team
+                LEFT JOIN team.students teamStudent
+            WHERE plagiarismCase.id = :plagiarismCaseId
+                AND (student.login = :login OR teamStudent.login = :login)
+            """)
+    boolean existsByIdAndStudentOrTeamMemberLogin(@Param("plagiarismCaseId") long plagiarismCaseId, @Param("login") String login);
+
+    /**
+     * Checks whether the user is the student, or a member of the team, of a plagiarism case that has been communicated by a post and that contains a submission of the
+     * given comparison.
+     *
+     * @param comparisonId the id of the plagiarism comparison
+     * @param login        the login of the user
+     * @return true if such a communicated case exists
+     */
+    @Query("""
+            SELECT COUNT(plagiarismCase) > 0
+            FROM PlagiarismCase plagiarismCase
+                JOIN plagiarismCase.post post
+                JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
+                LEFT JOIN plagiarismCase.student student
+                LEFT JOIN plagiarismCase.team team
+                LEFT JOIN team.students teamStudent
+            WHERE plagiarismSubmission.plagiarismComparison.id = :comparisonId
+                AND (student.login = :login OR teamStudent.login = :login)
+            """)
+    boolean existsCommunicatedCaseForComparisonAndUser(@Param("comparisonId") long comparisonId, @Param("login") String login);
+
     @Query("""
             SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO(
                 plagiarismCase.id,
@@ -381,7 +420,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.student student
                 LEFT JOIN plagiarismCase.verdictBy verdictBy
                 LEFT JOIN plagiarismCase.exercise exercise
-                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN PlagiarismDetectionConfig plagiarismDetectionConfig ON plagiarismDetectionConfig.exercise = exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam

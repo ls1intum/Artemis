@@ -47,6 +47,8 @@ function padWithZero(x: number): string {
  *
  * @param date date to convert
  */
+export function toISO8601DateString(date: Date): string;
+export function toISO8601DateString(date: Date | undefined | null): string | undefined | null;
 export function toISO8601DateString(date: Date | undefined | null) {
     if (date) {
         return date.getFullYear() + '-' + padWithZero(date.getMonth() + 1) + '-' + padWithZero(date.getDate());
@@ -89,9 +91,9 @@ export function isDateLessThanAWeekInTheFuture(date: dayjs.Dayjs, compareTime?: 
     return date.isBetween(now.add(1, 'week'), now);
 }
 
-export function isFirstDateAfterOrEqualSecond(firstDate?: Date, secondDate?: Date): boolean {
+export function isFirstDateAfterOrEqualSecond(firstDate?: dayjs.Dayjs, secondDate?: dayjs.Dayjs): boolean {
     if (!firstDate || !secondDate) {
         return false;
     }
-    return firstDate.getTime() >= secondDate.getTime();
+    return !firstDate.isBefore(secondDate);
 }

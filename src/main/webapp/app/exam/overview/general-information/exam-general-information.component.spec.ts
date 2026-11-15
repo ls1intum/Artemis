@@ -43,6 +43,7 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.resetAllMocks();
     });
 
@@ -57,6 +58,17 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.detectChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate()).toBeUndefined();
+    });
+
+    it('should render the section title in the same size as the other sections of the summary', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
+        fixture.changeDetectorRef.detectChanges();
+
+        const title = (fixture.nativeElement as HTMLElement).querySelector('#general-information-title')!;
+        expect(title.classList).toContain('text-base!');
+        expect(title.classList).toContain('font-semibold!');
+        expect(title.getAttribute('data-testid')).toBe('exam-summary-heading');
     });
 
     it('should return the start date plus the working time as the student exam end date', () => {
@@ -96,17 +108,17 @@ describe('ExamGeneralInformationComponent', () => {
         expect(component.isExamOverMultipleDays()).toBe(false);
     });
 
-    it('should detect an TestExam and set the currentDate correctly', () => {
+    // These distinct instants share 02:30 in Europe/Berlin when the clocks move back.
+    it.each(['2026-10-25T00:30:00Z', '2026-10-25T01:30:00Z'])('should detect a TestExam and set the currentDate at %s', (instant) => {
+        const currentInstant = new Date(instant);
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(currentInstant);
         const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
-        const minimumNowRange = dayjs();
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
-        const maximumNowRange = dayjs();
         expect(component.isTestExam()).toBe(true);
-        expect(component.currentDate()).toBeDefined();
-        // test execution could slow down the check
-        expect(component.currentDate()!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBe(true);
+        expect(component.currentDate()?.valueOf()).toBe(currentInstant.getTime());
     });
 
     it('should detect an RealExam and not set the currentDate', () => {

@@ -61,7 +61,7 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportInstructorRepository_forAnExerciseThatDoesNotExist_reportsWhyNothingWasExported() {
         List<String> exportErrors = new ArrayList<>();
 
@@ -73,7 +73,7 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportInstructorAuxiliaryRepository_forAnExerciseThatDoesNotExist_reportsWhyNothingWasExported() {
         List<String> exportErrors = new ArrayList<>();
         var auxiliaryRepository = new AuxiliaryRepository();
@@ -89,7 +89,7 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportInstructorAuxiliaryRepository_withoutARepositoryUri_reportsTheMissingUri() {
         // Auxiliary repositories of older exercises can be stored without a URI, and the export has to say so rather than fail silently.
         List<String> exportErrors = new ArrayList<>();
@@ -106,7 +106,7 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportInstructorRepository_whenTheArchiveCannotBeWritten_reportsTheExerciseItBelongsTo() throws Exception {
         // A repository that is missing on disk is exported as an unborn repository rather than reported, so the failure this covers is the one the export cannot work
         // around: the directory the archive has to be written to cannot be created because a file already occupies its path.
@@ -123,7 +123,7 @@ class ProgrammingExerciseExportErrorTest extends AbstractProgrammingIntegrationL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportInstructorRepository_forTheTestsRepository_writesAnArchiveNamedAfterTheExercise() throws Exception {
         // The counterpart of the failure above: the same call on a usable output directory has to produce a readable archive and report nothing.
         List<String> exportErrors = new ArrayList<>();

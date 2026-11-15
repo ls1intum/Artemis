@@ -9,6 +9,7 @@ package de.tum.cit.aet.artemis.core.security.filter;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -16,6 +17,7 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
@@ -23,11 +25,11 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 /**
  * Sets long-lived HTTP cache headers on the client bundle.
  * <p>
- * Registered in {@code WebConfigurer} for {@code *.js}, {@code *.css} and {@code /i18n/*}. Every one of those is
- * versioned in its URL — Angular emits content-hashed filenames, and the translation loader appends the build's
- * {@code I18N_HASH} as a query parameter — so a new build is a new URL and a cached response can never go stale. That
- * is what makes caching them for weeks safe, and why they do not share the conservative lifetime that
- * {@code StaticResourcesConfiguration} applies to the mutable files under {@code /public}.
+ * Registered in {@code WebConfigurer} for {@code *.js}, {@code *.css} and {@code /i18n/*}. Every one of those, except
+ * the theme override stylesheet, is versioned in its URL — Angular emits content-hashed filenames, and the translation
+ * loader appends the build's {@code I18N_HASH} as a query parameter — so a new build is a new URL and a cached
+ * response can never go stale. That is what makes caching them for weeks safe, and why they do not share the
+ * conservative lifetime that {@code StaticResourcesConfiguration} applies to the mutable files under {@code /public}.
  */
 public class CachingHttpHeadersFilter implements Filter {
 
@@ -38,6 +40,22 @@ public class CachingHttpHeadersFilter implements Filter {
      * may skip asking, not about how long a mistake would persist.
      */
     public static final int DEFAULT_DAYS_TO_LIVE = 30;
+
+    /**
+     * The theme override stylesheets ({@code theme-dark.css}), which are the one exception to the rule above.
+     * <p>
+     * Angular does not put a content hash into the name of a stylesheet that is not injected into {@code index.html},
+     * and the client only appends an hourly timestamp query to the URL. A shared cache that keys on the path alone
+     * ignores that query, so a long lifetime lets it keep serving the stylesheet of an older release after an update.
+     * Users then see the old dark theme variables, for example a light hover background for messages and an empty
+     * primary button. These files are therefore marked {@code no-cache}, so browsers and caches that honour the header
+     * revalidate them on every use, which costs a conditional request that answers {@code 304} while the file is
+     * unchanged.
+     * <p>
+     * A reverse proxy that ignores {@code Cache-Control} has to apply a short lifetime to these paths itself. The
+     * production proxy does, see the {@code proxy} role of the Artemis ansible collection.
+     */
+    private static final Pattern UNVERSIONED_THEME_STYLESHEET = Pattern.compile(".*/theme-[a-z]+\\.css");
 
     /**
      * Seconds, because that is the unit {@code Cache-Control: max-age} is defined in.
@@ -80,6 +98,13 @@ public class CachingHttpHeadersFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
         HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+        if (request instanceof HttpServletRequest httpRequest && UNVERSIONED_THEME_STYLESHEET.matcher(httpRequest.getRequestURI()).matches()) {
+            // Must be revalidated on every use, see UNVERSIONED_THEME_STYLESHEET.
+            httpResponse.setHeader("Cache-Control", "no-cache");
+            chain.doFilter(request, response);
+            return;
+        }
 
         httpResponse.setHeader("Cache-Control", "max-age=" + cacheTimeToLiveSeconds + ", public");
         httpResponse.setHeader("Pragma", "cache");

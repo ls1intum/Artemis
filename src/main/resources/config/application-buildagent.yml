@@ -10,7 +10,7 @@
 artemis:
     atlas:
         enabled: false
-        atlasml:
+        atlasllm:
             enabled: false
     hyperion:
         enabled: false

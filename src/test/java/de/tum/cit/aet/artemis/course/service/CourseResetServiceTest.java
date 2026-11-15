@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,11 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -84,6 +91,12 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
+    @Autowired
+    private PresentationAssessmentRepository presentationAssessmentRepository;
+
+    @Autowired
+    private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
+
     private Course course;
 
     private User student;
@@ -96,7 +109,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCourseWithLLMTokenUsageData_shouldNotViolateForeignKeyConstraint() {
         // Create a trace with an associated request (simulating real LLM usage)
         var trace = new LLMTokenUsageTrace();
@@ -128,7 +141,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCourseWithMultipleLLMTokenUsageRequests_shouldDeleteAll() {
         // Create a trace with multiple requests
         var trace = new LLMTokenUsageTrace();
@@ -159,7 +172,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetDeletesExamUsersAndConversationParticipantsButKeepsCourseAndInstructor() {
         Exercise exercise = course.getExercises().iterator().next();
         long courseId = course.getId();
@@ -206,5 +219,43 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         // The unrelated course's exam users and conversation participants are untouched.
         assertThat(examUserRepository.countByExamId(otherExamId)).isEqualTo(1);
         assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(otherChannel.getId(), student.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testResetDeletesPresentationAssessmentInstancesButKeepsDefinitions() {
+        Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        PresentationAssessment presentationAssessment = createPresentationAssessmentWithInstance(course, "Course presentation");
+        PresentationAssessment otherPresentationAssessment = createPresentationAssessmentWithInstance(otherCourse, "Other course presentation");
+
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isEqualTo(1);
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(otherCourse.getId())).isEqualTo(1);
+
+        courseResetService.resetStudentData(course.getId());
+
+        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isZero();
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(otherCourse.getId())).isEqualTo(1);
+        assertThat(presentationAssessmentRepository.findById(otherPresentationAssessment.getId())).isPresent();
+    }
+
+    private PresentationAssessment createPresentationAssessmentWithInstance(Course course, String title) {
+        PresentationAssessment presentationAssessment = new PresentationAssessment();
+        presentationAssessment.setCourse(course);
+        presentationAssessment.setTitle(title);
+        presentationAssessment.setMaxPoints(20.0);
+        presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(ZonedDateTime.now().plusDays(1));
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setLocation("Room 1");
+        instance.setResultPoints(17.0);
+        instance.setRemark("Strong presentation");
+        instance.setStudent(student);
+        presentationAssessmentInstanceRepository.save(instance);
+        return presentationAssessment;
     }
 }

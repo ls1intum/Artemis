@@ -36,6 +36,31 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
     Optional<Conversation> findWithParticipantsById(long conversationId);
 
     /**
+     * Checks whether the conversation belongs to the given course and the user takes part in it, or the conversation is a course-wide channel.
+     *
+     * @param conversationId the id of the conversation
+     * @param courseId       the id of the course the conversation is expected to belong to
+     * @param userId         the id of the user
+     * @return true if the user may use the conversation
+     */
+    @Query("""
+            SELECT COUNT(conv.id) > 0
+            FROM Conversation conv
+                LEFT JOIN ConversationParticipant cp
+                    ON cp.conversation.id = conv.id
+                    AND cp.user.id = :userId
+                LEFT JOIN Channel channel
+                    ON channel.id = conv.id
+            WHERE conv.id = :conversationId
+                AND conv.course.id = :courseId
+                AND (
+                    cp.id IS NOT NULL
+                    OR channel.isCourseWide = TRUE
+                )
+            """)
+    boolean isConversationOfCourseAccessibleByUser(@Param("conversationId") long conversationId, @Param("courseId") long courseId, @Param("userId") long userId);
+
+    /**
      * Retrieves a list of user-related information for the provided conversations for the given user
      *
      * @param conversationIds a list of conversation ids you want to retrieve information for
@@ -87,14 +112,21 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 JOIN c.posts p
                 LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
                 LEFT JOIN Channel ch ON c.id = ch.id
+                LEFT JOIN ch.exercise exercise
+                LEFT JOIN ch.exam exam
             WHERE c.course.id = :courseId
             AND p.author.id <> :userId
+            AND (cp.id IS NULL OR cp.isMuted = FALSE)
             AND (
                 p.creationDate > cp.lastRead OR
                 (ch.isCourseWide = TRUE AND cp.id IS NULL)
             )
+            AND (:isTutor = TRUE OR (
+                (exercise.id IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate < :now)))
+                AND (exercise.id IS NOT NULL OR exam.id IS NULL OR exam.visibleDate < :now)
+            ))
             """)
-    boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId, @Param("isTutor") boolean isTutor, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT DISTINCT c

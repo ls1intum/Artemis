@@ -72,11 +72,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-25"
+                    default: "ls1tum/artemis-maven-template:java25-3"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-25"
+                    default: "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.0"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -99,7 +99,7 @@ artemis:
                 rust:
                     default: "ghcr.io/ls1intum/artemis-rust-docker:v1.2.0"
                 javascript:
-                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.1.0"
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.0"
                 r:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.2.0"
                 bash:
@@ -107,11 +107,11 @@ artemis:
                 c_plus_plus:
                     default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.2"
                 c_sharp:
-                    default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.1"
+                    default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.1.0"
                 typescript:
-                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.1.0"
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.0"
                 go:
-                    default: "ghcr.io/ls1intum/artemis-go-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-go-docker:v1.1.0"
                 matlab:
                     default: "mathworks/matlab:r2024b"
                 ruby:
@@ -128,11 +128,11 @@ artemis:
 
     compatible-versions:
       android:
-        min: "2.1.2"
-        recommended: "2.1.2"
+        min: "3.0.0"
+        recommended: "3.0.0"
       ios:
-        min: "2.0.0"
-        recommended: "2.5.0"
+        min: "3.0.0"
+        recommended: "3.0.0"
 
     # Theia configuration for online IDE functionality
     theia:
@@ -231,6 +231,15 @@ management:
             export:
                 enabled: true
                 step: 60
+    otlp:
+        # spring-boot-starter-opentelemetry (used for LLM tracing, see application-artemis.yml) puts
+        # micrometer-registry-otlp on the classpath, and Spring Boot then auto-configures an OTLP push meter
+        # registry that is enabled by default and pushes to http://localhost:4318/v1/metrics every step. Artemis
+        # is scraped by Prometheus and runs no OTLP collector, so every step logged a ConnectException warning.
+        # Disabling metrics export does not affect OTLP tracing, which is configured separately.
+        metrics:
+            export:
+                enabled: false
     metrics:
         distribution:
             percentiles-histogram:
@@ -253,6 +262,13 @@ management:
                     name: http.server.requests
 
 spring: #disabled by default, you must enable it
+    mail:
+        properties:
+            # Without a timeout the mail library waits forever for an SMTP server that stopped answering and blocks the thread
+            # that sends (milliseconds)
+            mail.smtp.connectiontimeout: 10000
+            mail.smtp.timeout: 30000
+            mail.smtp.writetimeout: 30000
     ai:
         model:
             chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
@@ -342,8 +358,9 @@ spring: #disabled by default, you must enable it
             enabled: always
     servlet:
         multipart:
-            max-file-size: 20MB # this should match the value in /webapp/app/foundation/constants/input.constants.ts MAX_FILE_SIZE
-            max-request-size: 20MB
+            # Reviewed false positive (Sonar S5693): the limits are set explicitly and 20MB is the largest upload the product supports.
+            max-file-size: 20MB # NOSONAR - this should match the value in /webapp/app/foundation/constants/input.constants.ts MAX_FILE_SIZE
+            max-request-size: 20MB # NOSONAR
     lifecycle:
         timeout-per-shutdown-phase: 10
     websocket:
@@ -389,26 +406,9 @@ server:
     shutdown: graceful
     forward-headers-strategy: native
 
-# The below configuration is given so the Sentry Logback appender is configured properly
-# If these are set through Java code, the Logback appender fails to pick up the desired settings
-# Errors are still reported if the appender fails, but traces are missing
-sentry:
-    dsn: # Leave empty to disable Sentry, must be a valid URI
-    logging:
-        enabled: true
-        minimum-breadcrumb-level: error
-        minimum-event-level: error
-    sample-rate: 1
-    release: ${artemis.version}
-    # This is a placeholder value overwritten in both application-prod.yml and application-dev.yml.
-    # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
-    environment: test
-
 # Properties to be exposed on the /management/info endpoint via DeduplicatedEnvironmentInfoContributor.
 # Define keys in camelCase here; INFO_* environment-variable overrides (necessarily all-lowercase) are case-normalized back to these camelCase keys.
 info:
-    sentry:
-        dsn: ${sentry.dsn}
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     textAssessmentAnalyticsEnabled: false
@@ -452,6 +452,9 @@ jhipster:
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
+            # Fixed data-member count for Hyperion job/save map protection; worker clients do not count.
+            # When generation is enabled, every member must use the same value and all members must be present.
+            expected-data-member-count: 1
 
 # =======================================================================================
 # EUREKA CONFIGURATION (Service Discovery via JHipster Registry)

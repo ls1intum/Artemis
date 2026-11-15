@@ -34,13 +34,14 @@ import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
-import { Component, input, output, signal } from '@angular/core';
-import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
+import { Component, forwardRef, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -52,6 +53,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -72,12 +74,14 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
@@ -92,16 +96,18 @@ class MockMarkdownEditorMonacoComponent {
 
 class MockTitleChannelNameComponent {
     isValid = signal(true);
-    channelFieldDisplayed = true;
-    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
-    titleErrors: ValidationErrors | undefined = undefined;
-    get field_title(): NgModel {
-        return { control: { errors: this.titleErrors } } as NgModel;
-    }
+    isChannelFieldDisplayed = signal(true);
+    isTitleDisallowed = signal(false);
 }
 
-// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly
-@Component({ selector: 'jhi-exercise-title-channel-name', template: '', standalone: true })
+// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly.
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNameComponent) finds it.
+@Component({
+    selector: 'jhi-exercise-title-channel-name',
+    template: '',
+    standalone: true,
+    providers: [{ provide: ExerciseTitleChannelNameComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNameComponent) }],
+})
 class StubExerciseTitleChannelNameComponent {
     exercise = input<TextExercise | undefined>();
     titlePattern = input<string>('');
@@ -114,25 +120,44 @@ class StubExerciseTitleChannelNameComponent {
     courseId = input<number>();
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
+    exerciseChange = output<TextExercise>();
     // Use a method that returns a mock instance instead of viewChild
     private readonly _titleChannelNameComponent = new MockTitleChannelNameComponent();
     titleChannelNameComponent = () => this._titleChannelNameComponent;
 }
 
-// Stub for ExerciseUpdatePlagiarismComponent
-@Component({ selector: 'jhi-exercise-update-plagiarism', template: '', standalone: true })
+// Stub for ExerciseUpdatePlagiarismComponent, provided under the real class for the host's viewChild
+@Component({
+    selector: 'jhi-exercise-update-plagiarism',
+    template: '',
+    standalone: true,
+    providers: [{ provide: ExerciseUpdatePlagiarismComponent, useExisting: forwardRef(() => StubExerciseUpdatePlagiarismComponent) }],
+})
 class StubExerciseUpdatePlagiarismComponent {
     exercise = input<TextExercise | undefined>();
     isFormValid = signal(true);
+    invalidControlNames = signal<string[]>([]);
 }
 
 // Stub for TeamConfigFormGroupComponent
 @Component({ selector: 'jhi-team-config-form-group', template: '', standalone: true })
 class StubTeamConfigFormGroupComponent {
-    exercise = input<TextExercise | undefined>();
+    exercise = input.required<TextExercise>();
     isImport = input<boolean>(false);
-    formValid = true;
-    formValidChanges = new Subject<boolean>();
+    exerciseChange = output<TextExercise>();
+
+    /** Changes the team config the way the real component does: it writes onto the exercise, then emits it. */
+    changeTeamConfig(mode: ExerciseMode, minTeamSize?: number) {
+        const exercise = this.exercise();
+        exercise.mode = mode;
+        exercise.teamAssignmentConfig = undefined;
+        if (mode === ExerciseMode.TEAM) {
+            exercise.teamAssignmentConfig = new TeamAssignmentConfig();
+            exercise.teamAssignmentConfig.minTeamSize = minTeamSize;
+            exercise.teamAssignmentConfig.maxTeamSize = 5;
+        }
+        this.exerciseChange.emit(exercise);
+    }
 }
 
 describe('TextExercise Management Update Component', () => {
@@ -140,7 +165,6 @@ describe('TextExercise Management Update Component', () => {
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let textExerciseService: TextExerciseService;
     let calendarService: CalendarService;
-    let exerciseService: ExerciseService;
 
     let routeData$: BehaviorSubject<Data>;
     let routeUrl$: BehaviorSubject<UrlSegment[]>;
@@ -187,16 +211,16 @@ describe('TextExercise Management Update Component', () => {
                     },
                 },
                 {
-                    provide: NgbModal,
+                    provide: TumAetUiDialogService,
                     useValue: {
                         open: vi.fn(),
-                        hasOpenModals: vi.fn().mockReturnValue(false),
+                        hasOpenDialogs: vi.fn().mockReturnValue(false),
                     },
                 },
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },
@@ -241,6 +265,7 @@ describe('TextExercise Management Update Component', () => {
                 set: {
                     imports: [
                         FormsModule,
+                        PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
                         NgbTooltip,
@@ -253,7 +278,7 @@ describe('TextExercise Management Update Component', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorPrimengComponent),
+                        MockComponent(CategorySelectorComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
@@ -270,7 +295,6 @@ describe('TextExercise Management Update Component', () => {
 
         textExerciseService = TestBed.inject(TextExerciseService);
         calendarService = TestBed.inject(CalendarService);
-        exerciseService = TestBed.inject(ExerciseService);
     });
 
     afterEach(() => {
@@ -301,6 +325,52 @@ describe('TextExercise Management Update Component', () => {
                 expect(textExerciseService.update).toHaveBeenCalledWith(exercise, {});
                 expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should flush grading instructions before setting isSaving', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                let savingDuringFlush = false;
+                const prepareForSave = vi.fn(() => {
+                    savingDuringFlush = component.isSaving();
+                });
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave }) });
+                vi.spyOn(textExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+                component.save();
+                await fixture.whenStable();
+
+                expect(prepareForSave).toHaveBeenCalledOnce();
+                expect(savingDuringFlush).toBe(false);
+            });
+
+            it('should abort the save when the grading instructions could not be parsed', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave: () => false }) });
+                const update = vi.spyOn(textExerciseService, 'update');
+
+                component.save();
+                await fixture.whenStable();
+
+                // The exercise still holds the previous grading criteria, so sending it would persist
+                // criteria the user no longer sees and discard the text they typed.
+                expect(update).not.toHaveBeenCalled();
+                expect(component.isSaving()).toBe(false);
             });
 
             it('should error during save', async () => {
@@ -382,25 +452,6 @@ describe('TextExercise Management Update Component', () => {
 
             expect(component.isExamMode()).toBe(true);
             expect(component.textExercise).toEqual(exercise);
-        });
-
-        it('should not set dateErrors', async () => {
-            const exerciseGroup = new ExerciseGroup();
-            const exercise = createExercise(undefined, exerciseGroup);
-            routeData$.next({ textExercise: exercise });
-            routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
-
-            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const dateErrorNames = ['dueDateError', 'startDateError', 'assessmentDueDateError', 'exampleSolutionPublicationDateError'];
-            component.validateDate();
-
-            for (const errorName of dateErrorNames) {
-                expect(component.textExercise[errorName as keyof TextExercise]).toBeFalsy();
-            }
         });
     });
 
@@ -488,23 +539,6 @@ describe('TextExercise Management Update Component', () => {
             (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
 
             expect(openModalSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should validate dates when the timeline status changes', async () => {
-            const exercise = createExercise(createCourse());
-            routeData$.next({ textExercise: exercise });
-
-            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-            vi.mocked(exerciseService.validateDate).mockClear();
-
-            component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
-            await fixture.whenStable();
-
-            expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
-            expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
         });
     });
 
@@ -666,8 +700,9 @@ describe('TextExercise Management Update Component', () => {
         expect(component.exerciseCategories()).toEqual(newCategories);
     });
 
-    describe('getInvalidReasons', () => {
+    describe('invalidReasons', () => {
         let course: Course;
+        let titleChannelNameMock: MockTitleChannelNameComponent;
 
         const filledInExercise = () => {
             const exercise = new TextExercise(course, undefined);
@@ -679,102 +714,217 @@ describe('TextExercise Management Update Component', () => {
             exercise.bonusPoints = 0;
             return exercise;
         };
+        const reasonKeys = () => component.invalidReasons().map((reason) => reason.translateKey);
+        const sectionOf = (title: string) => component.formSectionStatus().find((section) => section.title === `artemisApp.exercise.sections.${title}`);
 
-        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
-
-        beforeEach(async () => {
-            course = createCourse();
-            routeData$.next({ textExercise: createExercise(course) });
+        async function render(exercise: TextExercise) {
+            routeData$.next({ textExercise: exercise });
             routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
-
             fixture = TestBed.createComponent(TextExerciseUpdateComponent);
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-
-            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
-            component.exerciseTitleChannelNameComponent = (() => ({
-                titleChannelNameComponent: () => titleChannelNameComponentMock,
-            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
-        });
-
-        it('should report the mandatory fields of an untouched creation form', () => {
-            component.textExercise = new TextExercise(course, undefined);
-            component.isExamMode.set(false);
-
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
-
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
-            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
-        });
-
-        it('should report no reason for a completely filled in exercise', () => {
-            component.textExercise = filledInExercise();
-            component.isExamMode.set(false);
+            titleChannelNameMock = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance.titleChannelNameComponent();
             component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            // Read once, so that every later read has to be invalidated by the change under test rather than computed fresh.
+            fixture.detectChanges();
+            component.invalidReasons();
+            component.formSectionStatus();
+        }
 
-            expect(component.getInvalidReasons()).toEqual([]);
+        async function typeInto(selector: string, value: string) {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css(selector)).nativeElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        beforeEach(() => {
+            course = createCourse();
         });
 
-        it('should forward the timeline reasons', () => {
-            component.textExercise = filledInExercise();
-            component.isExamMode.set(false);
+        it('should report the mandatory fields of an untouched creation form', async () => {
+            await render(new TextExercise(course, undefined));
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.undefined');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.points.undefined');
+        });
+
+        it('should report no reason for a completely filled in exercise', async () => {
+            await render(filledInExercise());
+
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should forward the timeline reasons', async () => {
+            await render(filledInExercise());
             component.timelineStatus.set({
                 valid: false,
                 empty: true,
                 invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
             });
 
-            expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+            expect(component.invalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
         });
 
-        it('should report a title shorter than the minimum length', () => {
+        it('should report a title shorter than the minimum length', async () => {
             const exercise = filledInExercise();
             exercise.title = 'ab';
-            component.textExercise = exercise;
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            await render(exercise);
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
-
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.minlength');
         });
 
-        it('should report a disallowed title', () => {
-            component.textExercise = filledInExercise();
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+        it('should follow the title field when it reports a title as already used', async () => {
+            await render(filledInExercise());
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+            titleChannelNameMock.isTitleDisallowed.set(true);
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.disallowedValue');
         });
 
-        it('should require a channel name when the channel field is displayed', () => {
+        it('should require a channel name only while the channel field is displayed', async () => {
             const exercise = filledInExercise();
             exercise.channelName = undefined;
-            component.textExercise = exercise;
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.channelFieldDisplayed = true;
+            await render(exercise);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.channelName.empty');
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+            titleChannelNameMock.isChannelFieldDisplayed.set(false);
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
 
-        it('should not require a channel name when the channel field is hidden', () => {
+        // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
             const exercise = filledInExercise();
-            exercise.channelName = undefined;
-            component.textExercise = exercise;
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.channelFieldDisplayed = false;
+            await render(exercise);
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+            await typeInto('#field_points', '2,5');
+            await typeInto('#field_bonusPoints', '0.75');
 
-            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
+            expect(exercise.maxPoints).toBe(2.5);
+            expect(exercise.bonusPoints).toBe(0.75);
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
+            const exercise = filledInExercise();
+            exercise.maxPoints = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            await typeInto('#field_points', '10');
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+            expect(component.textExercise.maxPoints).toBe(10);
+
+            await typeInto('#field_points', '');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should follow the bonus points as they are typed', async () => {
+            await render(filledInExercise());
+
+            await typeInto('#field_bonusPoints', '-1');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+
+            await typeInto('#field_bonusPoints', '3');
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should follow the team config component when it changes the mode and the team size', async () => {
+            await render(filledInExercise());
+            const teamConfig: StubTeamConfigFormGroupComponent = fixture.debugElement.query(By.directive(StubTeamConfigFormGroupComponent)).componentInstance;
+
+            teamConfig.changeTeamConfig(ExerciseMode.TEAM, undefined);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.minTeamSize.required']);
+            expect(sectionOf('mode')?.valid).toBe(false);
+
+            teamConfig.changeTeamConfig(ExerciseMode.TEAM, 2);
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('mode')?.valid).toBe(true);
+        });
+
+        it('should follow the title component when it writes a new title', async () => {
+            await render(filledInExercise());
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            component.textExercise.title = 'ab';
+            titleComponent.exerciseChange.emit(component.textExercise);
+
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should report an example solution publication date before the due date, and stop once it is moved', async () => {
+            await render(filledInExercise());
+            const timeline: ExerciseTimelineComponent = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance;
+            const dueDate = dayjs().add(2, 'days');
+
+            timeline.dueDate.set(dueDate);
+            timeline.exampleSolutionPublicationDate.set(dueDate.subtract(1, 'day'));
+            expect(reasonKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+
+            timeline.exampleSolutionPublicationDate.set(dueDate.add(1, 'day'));
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+        });
+
+        it('should name the plagiarism control that is invalid, also when another one takes its place', async () => {
+            await render(filledInExercise());
+            const plagiarism: StubExerciseUpdatePlagiarismComponent = fixture.debugElement.query(By.directive(StubExerciseUpdatePlagiarismComponent)).componentInstance;
+
+            plagiarism.isFormValid.set(false);
+            plagiarism.invalidControlNames.set(['similarityThreshold']);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.continuousPlagiarismControl.similarityThreshold.pattern']);
+
+            plagiarism.invalidControlNames.set(['minimumScore']);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.continuousPlagiarismControl.minimumScore.customMin']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should mark the problem and solution sections empty until they are written', async () => {
+            await render(filledInExercise());
+            expect(sectionOf('problem')?.empty).toBe(true);
+
+            const editors = fixture.debugElement.queryAll(By.directive(MockMarkdownEditorMonacoComponent));
+            editors[0].triggerEventHandler('markdownChange', 'A problem');
+            editors[1].triggerEventHandler('markdownChange', 'A solution');
+
+            expect(sectionOf('problem')?.empty).toBe(false);
+            expect(sectionOf('solution')?.empty).toBe(false);
+            expect(component.textExercise.problemStatement).toBe('A problem');
+        });
+        it('should trim the title through the state when saving, so that the reasons follow a failed save', async () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab ';
+            await render(exercise);
+            expect(component.invalidReasons()).toEqual([]);
+            vi.spyOn(TestBed.inject(TextExerciseService), 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+            component.save();
+
+            expect(exercise.title).toBe('ab');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+        });
+
+        it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+            const teamConfig: StubTeamConfigFormGroupComponent = fixture.debugElement.query(By.directive(StubTeamConfigFormGroupComponent)).componentInstance;
+
+            await typeInto('#field_points', '7');
+            await typeInto('#field_bonusPoints', '2');
+
+            expect(component.textExercise).toBe(exercise);
+            expect(titleComponent.exercise()).toBe(exercise);
+            expect(teamConfig.exercise()).toBe(exercise);
+            expect(exercise.maxPoints).toBe(7);
+            expect(exercise.bonusPoints).toBe(2);
         });
     });
 
@@ -782,10 +932,9 @@ describe('TextExercise Management Update Component', () => {
         const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
         const gradingSectionIsValid = () => component.formSectionStatus().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
 
-        /** Switches the score mode the way the picker does: it writes onto the exercise, then emits. */
+        /** Switches the score mode the way the picker does: it emits the new mode. */
         async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
             const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
-            component.textExercise.includedInOverallScore = mode;
             picker.componentInstance.includedInOverallScoreChange.emit(mode);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -802,14 +951,9 @@ describe('TextExercise Management Update Component', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-            // The status is only computed once the title field resolves, and the real one is stubbed out here.
-            component.exerciseTitleChannelNameComponent = (() => ({
-                titleChannelNameComponent: () => new MockTitleChannelNameComponent(),
-            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
             // Exam mode short-circuits the plagiarism and timeline half of the grading verdict, leaving the points
             // and the bonus points - which is the part these tests are about.
             component.isExamMode.set(true);
-            component.calculateFormSectionStatus();
             fixture.detectChanges();
         });
 
@@ -825,8 +969,6 @@ describe('TextExercise Management Update Component', () => {
 
             await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
 
-            // The field is gone because the score does not include bonus points, which is not a fault to report -
-            // and the verdict has to be taken again to say so, rather than left at what it said a moment ago.
             expect(bonusInput()).toBeNull();
             expect(gradingSectionIsValid()).toBe(true);
         });
@@ -843,8 +985,6 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // Not recalculated by hand here: the point is that the subscription to the rebuilt control does it.
-            // Wiring done once at view init would still be listening to the control destroyed two switches ago.
             expect(gradingSectionIsValid()).toBe(false);
         });
     });

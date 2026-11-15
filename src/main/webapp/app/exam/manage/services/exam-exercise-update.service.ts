@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 export interface ExamExerciseUpdate {
@@ -6,7 +6,7 @@ export interface ExamExerciseUpdate {
     problemStatement: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamExerciseUpdateService {
     private examExerciseIdAndProblemStatementSource = new Subject<ExamExerciseUpdate>();
     currentExerciseIdAndProblemStatement = this.examExerciseIdAndProblemStatementSource.asObservable();

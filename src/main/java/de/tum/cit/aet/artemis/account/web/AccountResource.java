@@ -25,10 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.BasicInformationUpdateResultDTO;
+import de.tum.cit.aet.artemis.account.dto.PendingEmailChangeDTO;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.EmailChangeService;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -43,7 +46,9 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -55,7 +60,7 @@ import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("account/self-service")
+@FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
 @RestController
 @RequestMapping("api/account/")
 public class AccountResource {
@@ -80,11 +85,16 @@ public class AccountResource {
 
     private final AccountSecurityNotificationService accountSecurityNotificationService;
 
+    private final SessionFreshnessService sessionFreshnessService;
+
+    private final EmailChangeService emailChangeService;
+
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
     public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
-            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService) {
+            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService, SessionFreshnessService sessionFreshnessService,
+            EmailChangeService emailChangeService) {
         this.userRepository = userRepository;
         this.userAiPreferenceService = userAiPreferenceService;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
@@ -93,21 +103,60 @@ public class AccountResource {
         this.fileService = fileService;
         this.accountCredentialRevocationService = accountCredentialRevocationService;
         this.accountSecurityNotificationService = accountSecurityNotificationService;
+        this.sessionFreshnessService = sessionFreshnessService;
+        this.emailChangeService = emailChangeService;
     }
 
     /**
      * PUT basic-information : update the basic information (name, email, language, image) of the current user's account.
+     * <p>
+     * A new e-mail address of an internal account is only requested here: it is applied once the owners of both the current and the new address have confirmed it by mail. The
+     * other fields are saved immediately.
      *
      * @param userDTO the current user information.
-     * @return the ResponseEntity with status 200 (OK) when the user information is updated.
+     * @return the ResponseEntity with status 200 (OK) when the user information is updated, with the e-mail change that is waiting for confirmation, if there is one.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
     @PutMapping("basic-information")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> saveAccount(@Valid @RequestBody UserDTO userDTO) {
-        accountService.updateBasicInformationOfCurrentUser(userDTO);
+    public ResponseEntity<BasicInformationUpdateResultDTO> saveAccount(@Valid @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(accountService.updateBasicInformationOfCurrentUser(userDTO));
+    }
+
+    /**
+     * GET pending-email-change : the e-mail change of the current user that is waiting for confirmation.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the pending change, or 204 (No Content) if none is pending
+     */
+    @GetMapping("pending-email-change")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PendingEmailChangeDTO> getPendingEmailChange() {
+        return emailChangeService.findPendingChange(userRepository.getUserIdElseThrow()).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /**
+     * DELETE pending-email-change : withdraws the e-mail change of the current user that is waiting for confirmation.
+     *
+     * @return the ResponseEntity with status 200 (OK), also if nothing was pending
+     */
+    @DeleteMapping("pending-email-change")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> cancelPendingEmailChange() {
+        emailChangeService.cancel(userRepository.getUserIdElseThrow());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST pending-email-change/resend : mails new confirmation links for the pending e-mail change to the current and the new address.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the renewed pending change
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if no change is pending, or the last mails went out a moment ago
+     */
+    @PostMapping("pending-email-change/resend")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PendingEmailChangeDTO> resendPendingEmailChange() {
+        return ResponseEntity.ok(emailChangeService.resend(userRepository.getUser()));
     }
 
     /**
@@ -117,6 +166,7 @@ public class AccountResource {
      * @return the ResponseEntity with status 200 (OK) when the password has been changed.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @PostMapping("change-password")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
@@ -165,11 +215,14 @@ public class AccountResource {
      * PUT user-vcs-access-token : creates a vcsAccessToken for a user
      *
      * @param expiryDate The expiry date which should be set for the token
-     * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), with status 400 (Bad Request), or with status 401
+     *         (Unauthorized) if the session was established before the credentials of the account last changed
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @PutMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
+        sessionFreshnessService.requireCurrentSession();
         User user = userRepository.getUser();
         log.debug("REST request to create a new VCS access token for user {}", user.getLogin());
         if (expiryDate.isBefore(ZonedDateTime.now()) || expiryDate.isAfter(ZonedDateTime.now().plusYears(1))) {
@@ -192,6 +245,7 @@ public class AccountResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @DeleteMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteVcsAccessToken() {
@@ -207,12 +261,16 @@ public class AccountResource {
      *
      * @param participationId the participation for which the access token should be fetched
      *
-     * @return the versionControlAccessToken belonging to the provided participation and user
+     * @return the versionControlAccessToken belonging to the provided participation and user, or status 401 (Unauthorized) if the session was established before the
+     *         credentials of the account last changed
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @GetMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
+        // The token is minted when a participation is started, so reading it back is how a session gets a credential that outlives it.
+        sessionFreshnessService.requireCurrentSession();
         User user = userRepository.getUser();
 
         log.debug("REST request to get VCS access token of user {} for participation {}", user.getLogin(), participationId);
@@ -224,12 +282,15 @@ public class AccountResource {
      *
      * @param participationId the participation for which the access token should be fetched
      *
-     * @return the versionControlAccessToken belonging to the provided participation and user
+     * @return the versionControlAccessToken belonging to the provided participation and user, or status 401 (Unauthorized) if the session was established before the
+     *         credentials of the account last changed
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @PutMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
+        sessionFreshnessService.requireCurrentSession();
         User user = userRepository.getUser();
 
         log.debug("REST request to create a new VCS access token for user {} for participation {}", user.getLogin(), participationId);
@@ -248,7 +309,7 @@ public class AccountResource {
         log.debug("REST request to update profile picture for logged-in user");
         String contentType = file.getContentType();
 
-        // Check if the content type is either image/png or image/jpeg, else return 400
+        // The declared content type comes from the client and only filters out obvious mistakes; saveImageFile checks the content itself
         if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
             throw new BadRequestAlertException("The file format is not supported, please make sure to upload a .png or .jpg file.", ENTITY_NAME,
                     "profilePictureFileFormatNotSupported", true);
@@ -260,12 +321,13 @@ public class AccountResource {
         User user = userRepository.getUser();
         Path basePath = FilePathConverter.getProfilePictureFilePath();
 
-        // Delete existing
+        Path savePath = FileUtil.saveImageFile(file, basePath, FilePathType.PROFILE_PICTURE);
+
+        // Delete the previous picture only once the new one is stored, so a rejected upload keeps it
         if (user.getImageUrl() != null) {
             fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path(), 0);
         }
 
-        Path savePath = FileUtil.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
         // The column stores the filename; the URL the client needs is assembled on the way out, see User.getImageUrl().
         String filename = savePath.getFileName().toString();
         userRepository.updateUserImageUrl(user.getId(), filename);
@@ -287,20 +349,6 @@ public class AccountResource {
             fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path(), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * PUT enable-memiris : sets the memirisEnabled flag for the user to true or false.
-     *
-     * @param memirisEnabled the boolean indicating whether Memiris is enabled or not
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PutMapping("enable-memiris")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
-        User user = userRepository.getUser();
-        userAiPreferenceService.setMemirisEnabled(user.getId(), memirisEnabled);
         return ResponseEntity.ok().build();
     }
 }

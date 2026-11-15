@@ -11,7 +11,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalCIBuildPlanEditorComponent } from 'app/programming/manage/build-plan-editor/localci-build-plan-editor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/build-plan-editor/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
@@ -86,8 +86,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
                 imports: [
                     ProgrammingExerciseBuildConfigurationComponent,
                     BuildPhasesEditorComponent,
-                    TumUiButtonComponent,
-                    TumUiTooltipDirective,
+                    TumAetUiButtonComponent,
+                    TumAetUiTooltipDirective,
                     HelpIconComponent,
                     UpdatingResultComponent,
                     TranslateDirective,
@@ -98,8 +98,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
                 imports: [
                     StubProgrammingExerciseBuildConfigurationComponent,
                     MockComponent(BuildPhasesEditorComponent),
-                    MockComponent(TumUiButtonComponent),
-                    MockDirective(TumUiTooltipDirective),
+                    MockComponent(TumAetUiButtonComponent),
+                    MockDirective(TumAetUiTooltipDirective),
                     MockComponent(HelpIconComponent),
                     MockComponent(UpdatingResultComponent),
                     MockDirective(TranslateDirective),

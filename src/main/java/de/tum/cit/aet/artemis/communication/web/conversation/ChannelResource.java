@@ -49,9 +49,12 @@ import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -65,7 +68,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conversations/channels")
+@FeatureUsage(UserFeature.CHANNELS)
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ChannelResource extends ConversationManagementResource {
@@ -120,25 +123,44 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
      */
     @GetMapping("{courseId}/channels/overview")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
-        log.debug("REST request to all channels of course: {}", courseId);
+        return courseChannelsOverview(courseId, true, true);
+    }
+
+    /**
+     * Retrieves released and unreleased channels that are public or joined by the staff member.
+     *
+     * @param courseId the course to inspect
+     * @return the sorted staff overview
+     */
+    @GetMapping("{courseId}/channels/overview/for-staff")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverviewForStaff(@PathVariable Long courseId) {
+        return courseChannelsOverview(courseId, false, true);
+    }
+
+    /**
+     * Retrieves every channel in a course, including private channels without membership.
+     *
+     * @param courseId the course to inspect
+     * @return the sorted instructor overview
+     */
+    @GetMapping("{courseId}/channels/overview/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverviewForInstructor(@PathVariable Long courseId) {
+        return courseChannelsOverview(courseId, false, false);
+    }
+
+    private ResponseEntity<List<ChannelDTO>> courseChannelsOverview(Long courseId, boolean studentVisibility, boolean memberVisibility) {
         checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithAuthorities();
-        var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
-        var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var channels = channelRepository.findChannelsByCourseId(courseId).stream();
-
-        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var filteredChannels = studentVisibility ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
         var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDTO(requestingUser, channel));
-
-        // only instructors / system admins can see all channels
-        if (!isAtLeastInstructor) {
+        if (memberVisibility) {
             channelDTOs = filterVisibleChannelsForNonInstructors(channelDTOs);
         }
-
         var sortedChannelDTOs = channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList();
         conversationDTOService.fillSubTypeReferenceDates(sortedChannelDTOs);
         return ResponseEntity.ok(sortedChannelDTOs);
@@ -188,6 +210,7 @@ public class ChannelResource extends ConversationManagementResource {
         if (channel == null) {
             return ResponseEntity.ok(null);
         }
+        checkEntityIdMatchesPathIds(channel, Optional.of(courseId), Optional.empty());
         checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, channel));
@@ -214,6 +237,7 @@ public class ChannelResource extends ConversationManagementResource {
             return ResponseEntity.ok(null);
 
         }
+        checkEntityIdMatchesPathIds(channel, Optional.of(courseId), Optional.empty());
         checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, channel));
@@ -233,7 +257,7 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
-        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser, Boolean.TRUE.equals(channelDTO.getIsAnnouncementChannel()));
 
         var channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
@@ -314,7 +338,7 @@ public class ChannelResource extends ConversationManagementResource {
         });
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
-                .collect(Collectors.toSet());
+                .filter(user -> conversationService.isConversationVisibleToUser(channel, user)).collect(Collectors.toSet());
         channelService.deleteChannel(channel);
 
         var course = channel.getCourse();
@@ -381,7 +405,7 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         channelAuthorizationService.isAllowedToGrantChannelModeratorRole(channel, userRepository.getUserWithAuthorities());
-        var usersToGrant = conversationService.findUsersInDatabase(userLogins);
+        var usersToGrant = conversationService.findCourseUsersInDatabase(channel.getCourse(), userLogins);
         channelService.grantChannelModeratorRole(channel, usersToGrant);
         return ResponseEntity.ok().build();
     }
@@ -453,7 +477,8 @@ public class ChannelResource extends ConversationManagementResource {
         var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 channelFromDatabase.getName(), channelFromDatabase.getId());
 
-        courseNotificationService.sendCourseNotification(addedToChannelNotification, registeredUsers.stream().toList());
+        courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                registeredUsers.stream().filter(user -> conversationService.isConversationVisibleToUser(channelFromDatabase, user)).toList());
 
         return ResponseEntity.ok().build();
     }
@@ -490,12 +515,14 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("You are not allowed to deregister the creator of a channel", "conversation", "creatorDeregistration");
         }
 
-        conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
+        // only the users that were participants and have been removed are notified, the other logins are ignored
+        var removedUsers = conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
 
         var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 channelFromDatabase.getName(), channelFromDatabase.getId());
 
-        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification,
+                removedUsers.stream().filter(user -> conversationService.isConversationVisibleToUser(channelFromDatabase, user)).toList());
         return ResponseEntity.ok().build();
     }
 
@@ -510,6 +537,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
+    @FeatureUsage(UserFeature.RESULTS_AND_FEEDBACK_ANALYSIS)
     @PostMapping("{courseId}/exercises/{exerciseId}/feedback-channel")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId,
@@ -523,6 +551,7 @@ public class ChannelResource extends ConversationManagementResource {
         User requestingUser = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser, Boolean.TRUE.equals(channelDTO.getIsAnnouncementChannel()));
         Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailTexts, testCaseName, requestingUser);
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
@@ -533,6 +562,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the id of the course.
      * @return ResponseEntity with status 200 (Ok).
      */
+    @FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
     @PostMapping("{courseId}/channels/mark-as-read")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {
@@ -600,6 +630,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     private void checkChannelMembership(Channel channel, @NonNull User user) {
+        conversationService.checkConversationVisibilityElseThrow(channel, user);
         if (channel == null || channel.getIsCourseWide() || conversationService.isMember(channel.getId(), user.getId())) {
             return;
         }

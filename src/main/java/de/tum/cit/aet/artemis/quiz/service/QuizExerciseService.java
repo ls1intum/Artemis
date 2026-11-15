@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -87,6 +88,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForStudentResponseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -132,6 +134,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseConfigurationService exerciseConfigurationService;
+
     private final UserRepository userRepository;
 
     private final QuizBatchRepository quizBatchRepository;
@@ -155,7 +159,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi) {
+            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi, ExerciseConfigurationService exerciseConfigurationService) {
         super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -175,6 +179,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.examDateApi = examDateApi;
         this.ltiApi = ltiApi;
+        this.exerciseConfigurationService = exerciseConfigurationService;
     }
 
     /**
@@ -324,7 +329,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 originalAnswerOptionItem.setText(answerOptionDTOItem.text());
                 originalAnswerOptionItem.setHint(answerOptionDTOItem.hint());
                 originalAnswerOptionItem.setExplanation(answerOptionDTOItem.explanation());
-                if (originalAnswerOptionItem.isIsCorrect() != answerOptionDTOItem.isCorrect()) {
+                if (!Objects.equals(originalAnswerOptionItem.isIsCorrect(), answerOptionDTOItem.isCorrect())) {
                     recalculationNecessary = true;
                     originalAnswerOptionItem.setIsCorrect(answerOptionDTOItem.isCorrect());
                 }
@@ -395,6 +400,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 if (shouldSetInvalid(originalSolutionItem.isInvalid(), solutionDTOItem.invalid(), solutionDTOItem.id(), "short answer solution")) {
                     recalculationNecessary = true;
                     originalSolutionItem.setInvalid(Boolean.TRUE);
+                }
+                // the solution text is what submitted answers are graded against, so a changed text requires a recalculation
+                if (!Objects.equals(originalSolutionItem.getText(), solutionDTOItem.text())) {
+                    recalculationNecessary = true;
+                    originalSolutionItem.setText(solutionDTOItem.text());
                 }
             }
         }
@@ -593,19 +603,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         List<QuizSubmission> submissions = new ArrayList<>();
         Map<Long, StudentParticipation> affectedParticipations = new LinkedHashMap<>();
         for (Result result : results) {
-
-            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
             result.setSubmission(quizSubmission);
-
-            for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                // Delete all references to question and question-elements if the question was changed
-                submittedAnswer.checkAndDeleteReferences(quizExercise);
-                if (!quizExercise.getQuizQuestions().contains(submittedAnswer.getQuizQuestion())) {
-                    submittedAnswersToDelete.add(submittedAnswer);
-                }
-            }
-            quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
+            removeOutdatedAnswerReferences(quizSubmission, quizExercise);
 
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
@@ -620,11 +620,36 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
             submissions.add(quizSubmission);
         }
+        // A submission without a result, e.g. after an instructor deleted it, is not reached through the results, but its answers still reference the questions.
+        // They have to be updated as well, otherwise removing an answered question violates the foreign key of the answers.
+        for (QuizSubmission quizSubmission : quizSubmissionRepository.findWithEagerSubmittedAnswersWithoutResultsByExerciseId(quizExercise.getId())) {
+            removeOutdatedAnswerReferences(quizSubmission, quizExercise);
+            quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+            submissions.add(quizSubmission);
+        }
         // save the updated submissions and results
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
         ltiApi.ifPresent(api -> affectedParticipations.values().forEach(api::onNewResult));
         log.info("{} results have been updated successfully for quiz re-evaluate", results.size());
+    }
+
+    /**
+     * Removes the references of the submitted answers to changed question elements, and the answers to removed questions.
+     *
+     * @param quizSubmission the submission with its submitted answers
+     * @param quizExercise   the changed quiz exercise
+     */
+    private static void removeOutdatedAnswerReferences(QuizSubmission quizSubmission, QuizExercise quizExercise) {
+        Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            // Delete all references to question and question-elements if the question was changed
+            submittedAnswer.checkAndDeleteReferences(quizExercise);
+            if (!quizExercise.getQuizQuestions().contains(submittedAnswer.getQuizQuestion())) {
+                submittedAnswersToDelete.add(submittedAnswer);
+            }
+        }
+        quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
     }
 
     /**
@@ -693,6 +718,18 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
+     * Schedules the start of a quiz exercise again after {@link #cancelScheduledQuiz(Long)} cancelled it for a deletion that then did not delete the quiz exercise. Nothing
+     * happens if the quiz exercise is gone, because the deletion got far enough to remove it.
+     *
+     * @param quizExerciseId the id of the quiz exercise that was not deleted
+     */
+    public void rescheduleQuizAfterFailedDeletion(Long quizExerciseId) {
+        if (quizExerciseRepository.existsById(quizExerciseId)) {
+            instanceMessageSendService.sendQuizExerciseStartSchedule(quizExerciseId);
+        }
+    }
+
+    /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required.
      * Does not save the quiz — callers that want to persist the change are expected to either write the scalar fields
      * explicitly (e.g. via {@link de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository#updateDueDate} and
@@ -744,8 +781,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    handleDndBackgroundForCreation(dragAndDropQuestion, fileMap);
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null) {
+                    handleDndBackgroundForCreation(dragAndDropQuestion, backgroundFilePath, fileMap);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
@@ -757,11 +795,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * This logic is necessary to handle the case where a DragAndDropQuestion is created based on an existing one (e.g. via import).
      *
      * @param question the DragAndDropQuestion
+     * @param path     the stored background file path of the question, which is not null
      * @param fileMap  the map of provided files
      * @throws IOException if file operations fail
      */
-    public void handleDndBackgroundForCreation(DragAndDropQuestion question, Map<String, MultipartFile> fileMap) throws IOException {
-        String path = question.getBackgroundFilePath();
+    private void handleDndBackgroundForCreation(DragAndDropQuestion question, @NonNull String path, Map<String, MultipartFile> fileMap) throws IOException {
         FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
         Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
 
@@ -793,8 +831,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         dragAndDropQuestion.assignMissingComponentIds();
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
-            if (dragItem.getPictureFilePath() != null) {
-                String path = dragItem.getPictureFilePath();
+            String path = dragItem.getPictureFilePath();
+            if (path != null) {
                 Path oldPath = new FileSystemLocation.DragItem(path).path();
                 if (Files.exists(oldPath)) {
                     Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
@@ -1097,7 +1135,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 quizBatch.setQuizExercise(quizExercise);
                 if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     if (quizBatch.getStartTime() != null) {
-                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
                     }
                 }
                 else {
@@ -1124,11 +1162,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (!Files.exists(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path())) {
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null && !Files.exists(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path())) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap);
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null && !Files.exists(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path())) {
+                    String pictureFilePath = dragItem.getPictureFilePath();
+                    if (pictureFilePath != null && !Files.exists(new FileSystemLocation.DragItem(pictureFilePath).path())) {
                         saveDndDragItemPicture(dragItem, fileMap);
                     }
                 }
@@ -1388,6 +1428,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
         QuizExercise savedExercise = save(quizExercise);
 
+        // The permanent configuration rows hold the key to the exercise, so they are created once it is stored. Native statements,
+        // so the exercise itself is not saved again (see the note below).
+        exerciseConfigurationService.initialize(savedExercise);
+
         // Add competency links after the initial save (they need the exercise ID for @MapsId).
         // IMPORTANT: Do NOT re-save the exercise (neither via QuizService.save() nor via
         // quizExerciseRepository.saveAndFlush()). Re-saving causes Hibernate's @OrderColumn
@@ -1411,17 +1455,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param quizExercise the quiz exercise to map
      * @param batch        the optional quiz batch associated with the student
-     * @return the mapped DTO (QuizExerciseWithoutQuestionsDTO, QuizExerciseWithQuestionsDTO, or QuizExerciseWithSolutionsDTO)
+     * @return the response DTO for the current quiz state
      */
-    public Object createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
+    public QuizExerciseForStudentResponseDTO createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
         if (quizExercise.isQuizEnded()) {
-            return QuizExerciseWithSolutionDTO.of(quizExercise);
+            return QuizExerciseForStudentResponseDTO.afterQuizEnd(QuizExerciseWithSolutionDTO.of(quizExercise));
         }
         else if (batch.isEmpty() || !batch.get().isSubmissionAllowed()) {
-            return QuizExerciseWithoutQuestionsDTO.of(quizExercise);
+            return QuizExerciseForStudentResponseDTO.beforeQuizStart(QuizExerciseWithoutQuestionsDTO.of(quizExercise));
         }
         else {
-            return QuizExerciseWithQuestionsDTO.of(quizExercise);
+            return QuizExerciseForStudentResponseDTO.liveQuiz(QuizExerciseWithQuestionsDTO.of(quizExercise));
         }
     }
 

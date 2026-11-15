@@ -177,10 +177,6 @@ public class LocalCIEventListenerService {
         @Override
         public void entryAdded(MapEntryAddedEvent<String, BuildJobQueueItem> event) {
             BuildJobQueueItem job = event.value();
-            if (job == null) {
-                log.warn("Processing job entryAdded event received with null value");
-                return;
-            }
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", job);
             localCIQueueWebsocketService.processingJobsChanged(job.courseId());
             localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(job);
@@ -194,10 +190,6 @@ public class LocalCIEventListenerService {
         @Override
         public void entryRemoved(MapEntryRemovedEvent<String, BuildJobQueueItem> event) {
             BuildJobQueueItem job = event.oldValue();
-            if (job == null) {
-                log.warn("Processing job entryRemoved event received with null oldValue");
-                return;
-            }
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", job);
             localCIQueueWebsocketService.processingJobsChanged(job.courseId());
             localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(job);

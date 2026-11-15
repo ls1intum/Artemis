@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.service.LicenseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Lazy
 @Service
 @Profile(PROFILE_JENKINS)

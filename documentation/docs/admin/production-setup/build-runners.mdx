@@ -2,6 +2,7 @@
 id: build-runners
 title: LocalCI Build Runners
 sidebar_label: LocalCI Build Runners
+last_reviewed: 2026-11-14
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -23,6 +24,9 @@ queue and its priorities, estimated start and completion times, retries, cancell
 consecutive-failure auto-pause, build logs, result and static-code-analysis parsing, statistics, and the build agent
 views in the administration section. Repositories are cloned by the agent either way, so git credentials never reach
 the build. Changing the runner changes only where the build script runs.
+
+What the build sees inside the container, which user runs it, and where images come from is described in
+[LocalCI Build Environment](/admin/production-setup/localci-build-environment).
 
 The exercise-visible feature set is the same with two exceptions, both rejected with an explicit build error rather
 than silently ignored: named Docker networks and a custom memory swap. See
@@ -70,8 +74,9 @@ image and container cleanup schedules.
 <Callout variant={CalloutVariant.warning}>
 
   The Kubernetes runner is a proof of concept. It supports everything a normal programming exercise build needs, but it
-  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, autoscaling, external secret
-  management, and highly available data services are deliberately out of scope and are left to the deployment.
+  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, external secret
+  management, and highly available data services are deliberately out of scope and are left to the deployment. The Helm chart can scale the build agents with the queue, see
+  [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically).
 
 </Callout>
 
@@ -103,12 +108,14 @@ neither a Docker socket nor a Kubernetes API token.
 - The **controller** service account, used by the build agent pod, is granted only what it needs in the build
   namespace: create, read, watch, and delete `Job`s and `Pod`s, read pod logs and events, and open exec sessions into a
   pod. It has no cluster-wide permissions and no permissions in any other namespace.
-- The builder container requests the `RuntimeDefault` seccomp profile. It deliberately keeps the default capability set
-  and allows privilege escalation, because exercise images legitimately install packages as root and use setuid tooling
-  such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises
-  on Kubernetes that build fine on Docker.
+- The builder container requests the `RuntimeDefault` seccomp profile and drops the capabilities `MKNOD`, `SYS_CHROOT` and `SETFCAP`. The Docker runner applies the same
+  restriction. Builds that run as root still install packages, change file ownership and open network connections. By default, setuid programs such as `sudo` keep working, because some
+  build scripts use them. `artemis.continuous-integration.allow-privilege-escalation: false` refuses them, see
+  [Which privileges a build has](/admin/production-setup/localci-build-environment#which-privileges-a-build-has).
 - Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
-  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not.
+  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not. The builder
+  of such an exercise also loses `CAP_NET_RAW`, because raw sockets are of no
+  use to a build without a network and could send frames past those firewall rules.
 
 ### Configuration
 
@@ -121,12 +128,12 @@ artemis:
         build-runner: kubernetes
         kubernetes:
             namespace: artemis-builds                       # Namespace the build Jobs are created in
-            helper-image: artemis-localci-helper:local      # Trusted sidecar image, see docker/localci-kubernetes-helper
+            helper-image: artemis-localci-helper:local      # Trusted sidecar image, see deployment/docker/localci-kubernetes-helper
             image-pull-policy: IfNotPresent
             workload-service-account: artemis-localci-workload
             pod-start-timeout-seconds: 120                  # Budget for scheduling and image pulls, excluded from the build timeout
             result-collection-timeout-seconds: 60           # Budget for each helper exec call
-            job-ttl-seconds: 300                            # How long a finished Job is kept for inspection
+            job-ttl-seconds: 300                            # Fallback cleanup of finished Jobs that the agent did not delete itself
             active-deadline-grace-seconds: 60               # Added on top of the build timeout before Kubernetes kills the Job
             orphan-cleanup-interval-seconds: 30
             workspace-size-limit: 4Gi                       # Size limit of the shared emptyDir workspace
@@ -184,26 +191,26 @@ exercise-visible difference. Three operational settings have no Kubernetes equiv
 
 ### Deploying
 
-The repository contains a Helm chart, `helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
+The repository contains a Helm chart, `deployment/helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
 Artemis core nodes, one or more build-agent controllers, the service registry, the message broker, PostgreSQL, and the
-namespaced RBAC the runner needs. `helm/artemis/README.md` describes the chart and `helm/artemis/CLUSTER-SETUP.md` the
+namespaced RBAC the runner needs. `deployment/helm/artemis/README.md` describes the chart and `deployment/helm/artemis/CLUSTER-SETUP.md` the
 lifecycle and verification commands.
 
 There are three ways in, in decreasing order of how much cluster you need to bring:
 
 | | Use it for | Start from |
 |---|---|---|
-| [An existing cluster](#on-an-existing-cluster) | A real deployment on a cluster you already run, such as Rancher | `helm/artemis/values-cluster-example.yaml` |
-| [A single Ubuntu machine](#on-a-single-ubuntu-machine) | Evaluating the runner, or a small self-contained installation | `./install-localci-kubernetes-ubuntu.sh` |
-| [Docker Desktop](#on-docker-desktop) | Reproducing the multi-node acceptance test while developing | `./run-localci-kubernetes.sh all` |
+| [An existing cluster](#on-an-existing-cluster) | A real deployment on a cluster you already run, such as Rancher | `deployment/helm/artemis/values-cluster-example.yaml` |
+| [A single Ubuntu machine](#on-a-single-ubuntu-machine) | Evaluating the runner, or a small self-contained installation | `./deployment/kubernetes/install-localci-kubernetes-ubuntu.sh` |
+| [Docker Desktop](#on-docker-desktop) | Reproducing the multi-node acceptance test while developing | `./deployment/kubernetes/run-localci-kubernetes.sh all` |
 
 #### On an existing cluster
 
 The chart is not tied to any distribution; a Rancher-managed cluster is an ordinary target. Copy
-`helm/artemis/values-cluster-example.yaml`, work through the values marked `CHANGE ME`, and install:
+`deployment/helm/artemis/values-cluster-example.yaml`, work through the values marked `CHANGE ME`, and install:
 
 ```bash
-helm upgrade --install artemis ./helm/artemis \
+helm upgrade --install artemis ./deployment/helm/artemis \
   --namespace artemis --create-namespace \
   --values my-values.yaml --wait --timeout 25m
 ```
@@ -218,9 +225,9 @@ Five things need a decision before that command:
    ```bash
    ./gradlew -Pprod -Pwar clean bootWar
    docker build --build-arg WAR_FILE_STAGE=external_builder \
-     -f docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
-   docker build -f docker/localci-kubernetes-helper/Dockerfile \
-     -t <registry>/artemis-localci-helper:<tag> docker/localci-kubernetes-helper
+     -f deployment/docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
+   docker build -f deployment/docker/localci-kubernetes-helper/Dockerfile \
+     -t <registry>/artemis-localci-helper:<tag> deployment/docker/localci-kubernetes-helper
    ```
 
 2. **Shared storage.** Every core node mounts `/opt/artemis/data`, which holds the LocalVC repositories, uploads,
@@ -262,7 +269,7 @@ kubectl auth can-i list secrets \
 
 #### On a single Ubuntu machine
 
-`install-localci-kubernetes-ubuntu.sh` sets up a complete single-node installation on Ubuntu 24.04 — a VM, a cloud
+`deployment/kubernetes/install-localci-kubernetes-ubuntu.sh` sets up a complete single-node installation on Ubuntu 24.04 — a VM, a cloud
 instance, or bare metal. It installs k3s and Helm if they are missing, loads the two images, generates every secret,
 and installs the chart with a single-node profile: one core node, one build agent, local-path storage, the bundled
 PostgreSQL, and Artemis served on a `NodePort` instead of a Gateway.
@@ -282,7 +289,7 @@ scp artemis-app.tar artemis-helper.tar <machine>:~/artemis-images/
 Then, from a checkout of this repository on that machine:
 
 ```bash
-./install-localci-kubernetes-ubuntu.sh install --image-archive-dir ~/artemis-images
+./deployment/kubernetes/install-localci-kubernetes-ubuntu.sh install --image-archive-dir ~/artemis-images
 ```
 
 With the images in a registry, drop `--image-archive-dir` and pass `--image` and `--helper-image` instead. The script
@@ -300,13 +307,18 @@ the credentials under `~/.artemis-localci-kubernetes`. `status`, `logs` and `uni
 
 #### On Docker Desktop
 
-`./run-localci-kubernetes.sh all` builds the application and helper images, installs the chart into Docker Desktop's
+`./deployment/kubernetes/run-localci-kubernetes.sh all` builds the application and helper images, installs the chart into Docker Desktop's
 managed Kubernetes cluster, and runs a Playwright acceptance test that submits, queues, builds, and cancels programming
 exercise builds across two build workers. It refuses to touch any kubectl context other than `docker-desktop`.
 
 It expects Docker Desktop 4.51 or newer with the `kind` provisioner, exactly three nodes, the containerd image store,
-and at least 8 CPUs and 24 GiB assigned. `helm/artemis/CLUSTER-SETUP.md` documents the individual commands
+and at least 8 CPUs and 24 GiB assigned. `deployment/helm/artemis/CLUSTER-SETUP.md` documents the individual commands
 (`build`, `up`, `status`, `test`, `logs`, `down`) and the diagnostics.
+
+### Operating
+
+Configuration beyond the install, sizing, scaling, updates and monitoring of an installation that uses the chart are described in
+[Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes).
 
 ### Troubleshooting
 
@@ -316,4 +328,4 @@ and at least 8 CPUs and 24 GiB assigned. `helm/artemis/CLUSTER-SETUP.md` documen
 | Builds fail immediately with an image-pull message | The exercise image cannot be pulled in the build namespace. Add an entry to `image-pull-secrets`. These failures are reported as exercise problems and do not pause the agent. |
 | Builds report no test feedback although the script ran | The exercise's result paths did not match anything. `kubectl -n artemis-builds logs job/<name> -c builder` shows what the script produced. |
 | Builds time out before the script starts | Scheduling or image pulls exceed `pod-start-timeout-seconds`. Raise it, or pre-pull the exercise images onto the build nodes. |
-| Jobs accumulate in the build namespace | Raise `job-ttl-seconds` only if you want to keep them for inspection; otherwise check the agent logs for failing delete calls. |
+| Jobs accumulate in the build namespace | The agent deletes a Job after it has parsed the result, and `job-ttl-seconds` only cleans up what was left behind. Check the agent logs for failing delete calls. |

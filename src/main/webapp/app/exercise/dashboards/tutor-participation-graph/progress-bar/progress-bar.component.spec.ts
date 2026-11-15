@@ -1,8 +1,8 @@
+import { By } from '@angular/platform-browser';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('ProgressBarComponent', () => {
     let fixture: ComponentFixture<ProgressBarComponent>;
@@ -11,7 +11,6 @@ describe('ProgressBarComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ProgressBarComponent],
-            providers: [{ provide: ThemeService, useClass: MockThemeService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgressBarComponent);
@@ -23,29 +22,24 @@ describe('ProgressBarComponent', () => {
     });
 
     it.each([
-        { percentage: 49, clazz: 'bg-danger' },
-        { percentage: 99, clazz: 'bg-warning' },
-        { percentage: 100, clazz: 'bg-success' },
-    ])('uses correct background for percentage $percentage', ({ percentage, clazz }) => {
+        { percentage: 0, severity: 'danger', contrast: 'danger', clipPath: 'inset(0 100% 0 0)' },
+        { percentage: 49, severity: 'danger', contrast: 'danger', clipPath: 'inset(0 51% 0 0)' },
+        { percentage: 99, severity: 'warn', contrast: 'warning', clipPath: 'inset(0 1% 0 0)' },
+        { percentage: 100, severity: 'success', contrast: 'success', clipPath: 'inset(0 0% 0 0)' },
+    ])('keeps the label readable on both track segments at $percentage percent', ({ percentage, severity, contrast, clipPath }) => {
         fixture.componentRef.setInput('percentage', percentage);
         fixture.componentRef.setInput('numerator', percentage);
         fixture.componentRef.setInput('denominator', 100);
-        expect(component.backgroundColorClass()).toBe(clazz);
-    });
-
-    it('updates foreground color correctly based on theme and percentage', () => {
-        const themeService = TestBed.inject(ThemeService);
-        fixture.componentRef.setInput('numerator', 100);
-        fixture.componentRef.setInput('denominator', 100);
-
-        fixture.componentRef.setInput('percentage', 100);
-        expect(component.foregroundColorClass()).toBe('text-white');
-
-        fixture.componentRef.setInput('percentage', 50);
-        expect(component.foregroundColorClass()).toBe('text-dark');
-
-        themeService.applyThemePreference(Theme.DARK);
-        expect(component.foregroundColorClass()).toBe('text-white');
+        fixture.detectChanges();
+        const bar = fixture.debugElement.query(By.directive(TumAetUiProgressBarComponent)).componentInstance as TumAetUiProgressBarComponent;
+        expect(bar.severity()).toBe(severity);
+        const baseLabel = fixture.nativeElement.querySelector('[data-testid="tutor-progress-label"]') as HTMLElement;
+        expect(baseLabel?.textContent).toContain(`${percentage} / 100 (${percentage}%)`);
+        expect(baseLabel.getAttribute('aria-hidden')).not.toBe('true');
+        const filledLabel = fixture.nativeElement.querySelector('[data-testid="tutor-progress-filled-label"]') as HTMLElement;
+        expect(filledLabel?.style.color).toBe(`var(--tumaet-ui-state-${contrast}-contrast)`);
+        expect(filledLabel.style.clipPath).toBe(clipPath);
+        expect(filledLabel.getAttribute('aria-hidden')).toBe('true');
     });
 
     it('returns 0 percentage when both numerator and denominator are zero', () => {

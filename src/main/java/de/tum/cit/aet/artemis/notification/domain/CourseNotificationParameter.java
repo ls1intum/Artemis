@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Parent;
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 @Table(name = "course_notification_parameter")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @IdClass(CourseNotificationParameter.CourseNotificationParameterId.class)
-public class CourseNotificationParameter implements Serializable {
+public class CourseNotificationParameter extends AssignedIdNotificationEntity<CourseNotificationParameter.CourseNotificationParameterId> {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
@@ -109,6 +110,12 @@ public class CourseNotificationParameter implements Serializable {
      */
     public void setValue(String value) {
         this.paramValue = value;
+    }
+
+    @Override
+    @JsonIgnore
+    public CourseNotificationParameterId getId() {
+        return new CourseNotificationParameterId(courseNotification.getId(), paramKey);
     }
 
     /**

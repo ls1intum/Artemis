@@ -1,3 +1,4 @@
+import { StatisticsSpanSelectorComponent } from 'app/exercise/statistics/statistics-span-selector/statistics-span-selector.component';
 import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
@@ -8,7 +9,6 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/c
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { StatisticsAverageScoreGraphComponent } from 'app/exercise/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 
@@ -17,10 +17,10 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
     templateUrl: './course-management-statistics.component.html',
     styleUrls: ['./course-management-statistics.component.scss'],
     imports: [
+        StatisticsSpanSelectorComponent,
         DocumentationButtonComponent,
         StatisticsAverageScoreGraphComponent,
         StatisticsGraphComponent,
-        ArtemisTranslatePipe,
         CourseTitleBarTitleDirective,
         CourseTitleBarTitleComponent,
     ],

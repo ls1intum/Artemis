@@ -110,8 +110,15 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         userId = user.getId();
 
+        // The question goes in through the exercise: its position in that list is the order column, which a direct
+        // save would leave empty and every later read of the list would then reject.
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setCourse(course);
         quizQuestion = new MultipleChoiceQuestion();
-        quizQuestion = quizQuestionRepository.save(quizQuestion);
+        quizQuestion.setExercise(quizExercise);
+        quizExercise.setQuizQuestions(new ArrayList<>(List.of(quizQuestion)));
+        quizExercise = quizExerciseTestRepository.save(quizExercise);
+        quizQuestion = quizExercise.getQuizQuestions().getFirst();
         quizQuestionId = quizQuestion.getId();
 
         quizQuestionProgress = new QuizQuestionProgress();
@@ -159,8 +166,18 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<QuizQuestion> questions = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
-            QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
+            QuizQuestion question = new MultipleChoiceQuestion();
+            question.setExercise(quizExercise);
             questions.add(question);
+        }
+        // Saved through the exercise: the position in its list is the order column, and a question stored on its own
+        // would leave that empty, which every later read of the list rejects.
+        quizExercise.setQuizQuestions(questions);
+        quizExercise = quizExerciseTestRepository.save(quizExercise);
+        questions = quizExercise.getQuizQuestions();
+
+        for (int i = 0; i < questions.size(); i++) {
+            QuizQuestion question = questions.get(i);
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
@@ -172,9 +189,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             progress.setLastAnsweredAt(ZonedDateTime.now());
             quizQuestionProgressRepository.save(progress);
         }
-
-        quizExercise.setQuizQuestions(questions);
-        quizExerciseTestRepository.save(quizExercise);
 
         Pageable pageable = Pageable.ofSize(10);
 
@@ -200,8 +214,18 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<QuizQuestion> questions = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
-            QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
+            QuizQuestion question = new MultipleChoiceQuestion();
+            question.setExercise(quizExercise);
             questions.add(question);
+        }
+        // Saved through the exercise: the position in its list is the order column, and a question stored on its own
+        // would leave that empty, which every later read of the list rejects.
+        quizExercise.setQuizQuestions(questions);
+        quizExercise = quizExerciseTestRepository.save(quizExercise);
+        questions = quizExercise.getQuizQuestions();
+
+        for (int i = 0; i < questions.size(); i++) {
+            QuizQuestion question = questions.get(i);
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
@@ -213,9 +237,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             progress.setLastAnsweredAt(ZonedDateTime.now());
             quizQuestionProgressRepository.save(progress);
         }
-
-        quizExercise.setQuizQuestions(questions);
-        quizExerciseTestRepository.save(quizExercise);
 
         Pageable pageable = Pageable.ofSize(10);
 
@@ -284,12 +305,26 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(quizQuestionProgressService.calculateRepetition(1, quizQuestionProgress.getProgressJson())).isEqualTo(2);
     }
 
+    /**
+     * Creates an enrolled course with one quiz exercise whose due date has passed, i.e. a quiz that is offered for training.
+     */
+    private Course addEnrolledCourseWithEndedQuizExercise(String title, String userPrefix) {
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise(title, userPrefix);
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        quizExercise.setDuration(0);
+        quizExercise.getQuizBatches().forEach(quizBatch -> quizBatch.setStartTime(ZonedDateTime.now().minusDays(1)));
+        quizExerciseService.save(quizExercise);
+        return course;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining() throws Exception {
         // Use a quiz exercise attached to the course so the training-submit endpoint can resolve the question
-        // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdElseThrow).
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdWithDueDateBeforeElseThrow).
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
                 .orElseThrow();
@@ -340,15 +375,36 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * Security regression: a student must not be able to submit a training answer for a quiz question that belongs to a different course.
-     * The training-submit endpoint scopes the question lookup to the path {@code courseId}; a mismatched id pair must return 404 instead of
-     * leaking the question (with its solutions) via {@link SubmittedAnswerAfterEvaluationDTO}.
+     * The training-submit endpoint only accepts questions of quiz exercises whose due date has passed, like the training question listing;
+     * a question of a quiz that is still running or not yet due must return 404.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_quizNotYetDue_returns404() throws Exception {
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
+                .orElseThrow();
+
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(mcQuestion);
+        submittedAnswer.setSelectedOptions(Set.of(mcQuestion.getAnswerOptions().getFirst()));
+
+        request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit?isRated=true", submittedAnswer,
+                SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.NOT_FOUND);
+
+        assertThat(quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, mcQuestion.getId())).isEmpty();
+    }
+
+    /**
+     * Validation of the id pair: a training answer can only be submitted for a quiz question that belongs to the course in the path.
+     * The training-submit endpoint scopes the question lookup to the path {@code courseId}; a mismatched id pair must return 404.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_questionFromOtherCourse_returns404() throws Exception {
-        Course courseA = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Course A Quiz", TEST_PREFIX);
-        Course courseB = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Course B Quiz", TEST_PREFIX);
+        Course courseA = addEnrolledCourseWithEndedQuizExercise("Course A Quiz", TEST_PREFIX);
+        Course courseB = addEnrolledCourseWithEndedQuizExercise("Course B Quiz", TEST_PREFIX);
         QuizExercise quizExerciseA = (QuizExercise) courseA.getExercises().stream().findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestionInCourseA = (MultipleChoiceQuestion) quizExerciseA.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
                 .orElseThrow();
@@ -357,7 +413,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         submittedAnswer.setQuizQuestion(mcQuestionInCourseA);
         submittedAnswer.setSelectedOptions(mcQuestionInCourseA.getAnswerOptions().stream().filter(option -> Boolean.TRUE.equals(option.isIsCorrect())).collect(Collectors.toSet()));
 
-        // Submit the question from course A while passing course B's id in the path → must 404 instead of returning the question's solutions.
+        // Submit the question from course A while passing course B's id in the path → must 404.
         request.postWithResponseBody("/api/quiz/courses/" + courseB.getId() + "/training-questions/" + mcQuestionInCourseA.getId() + "/submit?isRated=true", submittedAnswer,
                 SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.NOT_FOUND);
 
@@ -373,7 +429,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_typeMismatch_returns400() throws Exception {
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
@@ -396,7 +452,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_dragAndDropQuestion() throws Exception {
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).findFirst().orElseThrow();
 
@@ -425,7 +481,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_shortAnswerQuestion() throws Exception {
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
 

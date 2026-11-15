@@ -1,6 +1,6 @@
 import { Component, input, model } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,6 +24,5 @@ export class CollapsableAssessmentInstructionsComponent {
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    faGripLinesVertical = faGripLinesVertical;
     farListAlt = faListAlt;
 }

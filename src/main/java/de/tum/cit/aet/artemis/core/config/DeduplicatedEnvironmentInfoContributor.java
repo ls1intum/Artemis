@@ -69,7 +69,7 @@ public class DeduplicatedEnvironmentInfoContributor implements InfoContributor {
      * Collapses keys that differ only by case. When both a mixed-case key (the camelCase spelling from YAML, e.g. {@code testServer}) and an all-lowercase key (the
      * spelling produced by an {@code INFO_*} environment variable, e.g. {@code testserver}) exist for the same logical property, the mixed-case key is kept — it is the
      * contract the Angular client consumes — and the all-lowercase duplicate is dropped. A property that exists <em>only</em> in its all-lowercase form (set purely via
-     * an env var, with no YAML default) keeps that lowercase key. Recurses into nested maps (e.g. {@code sentry}).
+     * an env var, with no YAML default) keeps that lowercase key. Recurses into nested maps.
      *
      * @param source the bound {@code info.*} map, potentially containing case-variant duplicates
      * @return a map with case-variant duplicates collapsed to their preferred (camelCase) spelling

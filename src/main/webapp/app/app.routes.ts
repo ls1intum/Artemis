@@ -126,6 +126,14 @@ const routes: Routes = [
         },
     },
     {
+        path: 'usage',
+        loadComponent: () => import('app/core/usage-statistics/usage-dashboard.component').then((m) => m.UsageDashboardComponent),
+        data: {
+            pageTitle: 'artemisApp.usageDashboard.title',
+            usesModuleBackground: true,
+        },
+    },
+    {
         path: 'about',
         loadComponent: () => import('app/core/about-us/about-us.component').then((m) => m.AboutUsComponent),
         data: {
@@ -143,6 +151,14 @@ const routes: Routes = [
                 loadComponent: () => import('app/account/activate/activate.component').then((m) => m.ActivateComponent),
                 data: {
                     pageTitle: 'activate.title',
+                },
+            },
+            {
+                path: 'confirm-email-change',
+                pathMatch: 'full',
+                loadComponent: () => import('app/account/confirm-email-change/confirm-email-change.component').then((m) => m.ConfirmEmailChangeComponent),
+                data: {
+                    pageTitle: 'confirmEmailChange.title',
                 },
             },
             {
@@ -178,16 +194,6 @@ const routes: Routes = [
                 data: {
                     pageTitle: 'register.title',
                 },
-            },
-            {
-                path: 'settings',
-                pathMatch: 'full',
-                loadComponent: () => import('app/account/settings/settings.component').then((m) => m.SettingsComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'global.menu.account.settings',
-                },
-                canActivate: [UserRouteAccessService],
             },
         ],
         data: {

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +39,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseRepositoryServiceTest {
@@ -64,6 +68,24 @@ class ProgrammingExerciseRepositoryServiceTest {
         mavenCentralMirrorService = new MavenCentralMirrorService();
         programmingExerciseRepositoryService = new ProgrammingExerciseRepositoryService(gitService, userRepository, resourceLoaderService, Optional.empty(),
                 mavenCentralMirrorService);
+    }
+
+    @Test
+    void setupExerciseTemplate_failsWhenStaleCheckoutCannotBeRemoved() throws Exception {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        exercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
+        exercise.setTemplateRepositoryUri("https://example.com/git/TEST/test-exercise.git");
+        LocalVCRepositoryUri uri = exercise.getVcsTemplateRepositoryUri();
+        Repository staleRepository = mock(Repository.class);
+        when(gitService.getDefaultLocalCheckOutPathOfRepo(uri)).thenReturn(tempDir);
+        when(gitService.getExistingCheckedOutRepositoryByLocalPath(tempDir, uri)).thenReturn(staleRepository);
+        IOException deletionFailure = new IOException("Checkout cannot be removed");
+        doThrow(deletionFailure).when(gitService).deleteLocalRepository(staleRepository);
+
+        assertThatThrownBy(() -> programmingExerciseRepositoryService.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), new User(), false))
+                .isInstanceOf(GitException.class).hasMessageContaining("Could not clear stale checkout").hasCause(deletionFailure);
+        verifyNoInteractions(resourceLoaderService);
     }
 
     /**
@@ -212,7 +234,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Path repoPath = gradleTestRepository();
         Repository repository = mockRepository(repoPath);
 
-        programmingExerciseRepositoryService.replacePlaceholders(javaExercise(), repository);
+        programmingExerciseRepositoryService.replacePlaceholders(javaExercise(), new ProgrammingExerciseBuildConfig(), repository);
 
         assertThat(Files.readString(repoPath.resolve("build.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
         assertThat(Files.readString(repoPath.resolve("settings.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
@@ -254,7 +276,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Path repoPath = blackboxTestRepository();
         programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(true));
 
-        programmingExerciseRepositoryService.replacePlaceholders(blackboxExercise(), mockRepository(repoPath));
+        programmingExerciseRepositoryService.replacePlaceholders(blackboxExercise(), new ProgrammingExerciseBuildConfig(), mockRepository(repoPath));
 
         assertThat(Files.readString(repoPath.resolve(".mvn").resolve("local-settings.xml"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
         assertThat(Files.readString(repoPath.resolve("pom.xml"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
@@ -339,7 +361,6 @@ class ProgrammingExerciseRepositoryServiceTest {
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setPackageName("de.tum.in.ase");
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         return exercise;
     }
 

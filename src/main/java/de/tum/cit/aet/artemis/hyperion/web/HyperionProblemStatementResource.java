@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -55,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
-@FeatureUsage("authoring-assistance/problem-statement")
+@FeatureUsage(UserFeature.HYPERION_PROBLEM_STATEMENT)
 @RestController
 @RequestMapping("api/hyperion/")
 public class HyperionProblemStatementResource {
@@ -104,6 +105,7 @@ public class HyperionProblemStatementResource {
      *                              and skips creating new review-comment threads after the check (default: {@code false})
      * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
+    @FeatureUsage(UserFeature.HYPERION_CONSISTENCY_CHECK)
     @PostMapping("programming-exercises/{exerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("exerciseId") long exerciseId,
@@ -168,6 +170,7 @@ public class HyperionProblemStatementResource {
      * @return the checklist analysis result
      */
     @EnforceAtLeastEditorInCourse
+    @FeatureUsage(UserFeature.HYPERION_CHECKLIST)
     @PostMapping("courses/{courseId}/checklist-analysis")
     public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
@@ -187,6 +190,7 @@ public class HyperionProblemStatementResource {
      * @return the analysis response with only the requested section populated
      */
     @EnforceAtLeastEditorInCourse
+    @FeatureUsage(UserFeature.HYPERION_CHECKLIST)
     @PostMapping("courses/{courseId}/checklist-analysis/sections/{section}")
     public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklistSection(@PathVariable long courseId, @PathVariable ChecklistSection section,
             @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
@@ -221,6 +225,7 @@ public class HyperionProblemStatementResource {
      * @return the response containing the updated problem statement
      */
     @EnforceAtLeastEditorInCourse
+    @FeatureUsage(UserFeature.HYPERION_CHECKLIST)
     @PostMapping("courses/{courseId}/checklist-actions")
     public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long courseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
         log.debug("REST request to Hyperion checklist action [{}] for course [{}]", request.actionType(), courseId);

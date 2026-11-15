@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
@@ -26,11 +26,10 @@ type SubscribedJob = { wsSubscription: Subscription; subject: Subject<VariantGen
 
 /**
  * Per-job websocket subscriptions for variant-generation progress on
- * `/user/topic/hyperion/variant-generation/jobs/{jobId}`. Same multiplexing pattern as
- * `HyperionWebsocketService.subscribeToJob`, kept separate because that service is bound to the
- * code-generation topic and is owned by another team.
+ * `/user/topic/hyperion/variant-generation/jobs/{jobId}`, multiplexed so several listeners of one
+ * job share a single subscription.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVariantWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
     private subscribedJobs = new Map<string, SubscribedJob>();

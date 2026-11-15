@@ -1,0 +1,39 @@
+.activity-card {
+    background: var(--popover-bg);
+}
+
+.activity-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 0.875rem;
+    left: calc(50% + 1rem);
+    width: calc(100% - 2rem);
+    height: 2px;
+    background: var(--border-color);
+}
+
+.activity-step--complete:not(:last-child)::after {
+    background: var(--primary);
+}
+
+.activity-step-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-body-secondary);
+
+    &--current,
+    &--complete {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    &--current {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+}

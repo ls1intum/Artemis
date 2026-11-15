@@ -192,7 +192,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // A test exam, because that is the only kind whose summary offers the button. The flag used to be on the wire of
         // every exam only because the association was eager; a real exam summary no longer reads it.
@@ -216,12 +216,12 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
      * hides the AI feedback button on exactly the screen this feature adds it to.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRunSummaryWireCarriesAthenaFormativeFeedbackEnabled() throws Exception {
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // deliberately not a test exam: the point of this test is that a test run lives on a real exam
         StudentExam testRun = examUtilService.addStudentExamWithUser(exam, instructor);
@@ -248,7 +248,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
      * unpublished fixture (null publishResultsDate) is exactly how this was missed.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorGetStudentExamWireCarriesPublishGateFieldsAndAccuracyOfScores() throws Exception {
         StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
 
@@ -277,12 +277,12 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
      * {@code Course#isAthenaFormativeFeedbackEnabled}, which reports false for an athenaConfig that was not loaded.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorGetStudentExamWireCarriesAthenaFormativeFeedbackEnabled() throws Exception {
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
 
@@ -317,7 +317,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
      * see {@code hasComplaint == true} once a complaint has been filed, so the complaint column renders correctly.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorGetStudentExamWireCarriesHasComplaintTrueForResultWithComplaint() throws Exception {
         SubmittedStudentExamWithResult setup = createSubmittedStudentExamWithResult(true);
         complaintUtilService.addComplaintToSubmission(setup.submission(), student.getLogin(), ComplaintType.COMPLAINT);

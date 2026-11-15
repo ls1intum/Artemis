@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -27,7 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 @Table(name = "user_course_notification_status")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @IdClass(UserCourseNotificationStatus.UserCourseNotificationStatusId.class)
-public class UserCourseNotificationStatus implements Serializable {
+public class UserCourseNotificationStatus extends AssignedIdNotificationEntity<UserCourseNotificationStatus.UserCourseNotificationStatusId> {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
@@ -117,6 +118,12 @@ public class UserCourseNotificationStatus implements Serializable {
      */
     public void setStatus(UserCourseNotificationStatusType status) {
         this.status = status;
+    }
+
+    @Override
+    @JsonIgnore
+    public UserCourseNotificationStatusId getId() {
+        return new UserCourseNotificationStatusId(courseNotification.getId(), user.getId());
     }
 
     /**

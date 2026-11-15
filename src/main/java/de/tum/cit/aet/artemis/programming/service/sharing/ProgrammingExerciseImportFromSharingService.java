@@ -10,10 +10,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 
 /**
@@ -38,14 +43,20 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseService courseService;
+
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
             ExerciseSharingService exerciseSharingService, UserRepository userRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, AuthorizationCheckService authorizationCheckService, CourseService courseService) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.exerciseSharingService = exerciseSharingService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseService = courseService;
     }
 
     /**
@@ -53,8 +64,10 @@ public class ProgrammingExerciseImportFromSharingService {
      * <p>
      * Steps:
      * <ol>
+     * <li>Resolve the target course from {@code sharingSetupInfo.courseId()} (for an exam exercise: the course of its exercise group) and require the
+     * current user to be at least an editor of it</li>
      * <li>Fetch the exported exercise ZIP via {@link ExerciseSharingService getCachedBasketItem(SharingSetupInfo.SharingInfoDTO)}</li>
-     * <li>Resolve the target course from {@code sharingSetupInfo.courseId()} and attach it to a course exercise</li>
+     * <li>Attach the course to a course exercise</li>
      * <li>Resolve the competency links the author picked in the create form, which are competencies of the target
      * course: the client drops the shared exercise's own links before it shows the form</li>
      * <li>Run the standard ZIP import using {@link ProgrammingExerciseImportFromFileService}</li>
@@ -81,10 +94,21 @@ public class ProgrammingExerciseImportFromSharingService {
         // Map the request body to the transient exercise the import pipeline works on. Null collections become empty
         // ones, exactly as the previous entity binding produced them.
         ProgrammingExercise exercise = sharingSetupInfo.exercise().toEntity();
-        try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
+        // The build configuration is a row of its own that names the exercise, so it is bound next to it.
+        ProgrammingExerciseBuildConfig buildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(sharingSetupInfo.exercise());
 
-            User user = userRepository.getUserWithAuthorities();
-            Course course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
+        User user = userRepository.getUserWithAuthorities();
+        Course course;
+        if (exercise.isExamExercise()) {
+            // The request only names the exercise group by id, so the role is checked in the course the group belongs to.
+            course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exercise);
+        }
+        else {
+            course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
             // An exam exercise reaches its course over the exercise group, which the request only references by id. A
             // course exercise gets the target course, overwriting the source course the exported details carry: the
@@ -98,7 +122,7 @@ public class ProgrammingExerciseImportFromSharingService {
             // exercise, exactly as the entity request body used to leave them there.
             competencyExerciseLinkService.updateCompetencyLinks(sharingSetupInfo.exercise(), exercise);
 
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, zip, course, user, true);
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true);
         }
     }
 }

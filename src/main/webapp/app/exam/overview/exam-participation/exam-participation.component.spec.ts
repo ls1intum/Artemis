@@ -51,9 +51,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
-import { Subject, of, throwError } from 'rxjs';
-import { skip } from 'rxjs/operators';
+import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
+import { skip, tap } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -67,9 +66,13 @@ import { CourseOverviewTabDataService } from 'app/course/overview/services/cours
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 describe('ExamParticipationComponent', () => {
     // Backing signal for the mocked submission-sync contract; see the MockProvider below.
     const submissionSyncVersion = signal(0);
+    // Backing subject of the mocked layout flag: true while the shell around a real exam is in its exam layout.
+    const examIsStarted = new BehaviorSubject<boolean>(false);
     let fixture: ComponentFixture<ExamParticipationComponent>;
     let comp: ExamParticipationComponent;
     let examParticipationService: ExamParticipationService;
@@ -112,6 +115,7 @@ describe('ExamParticipationComponent', () => {
     }
 
     beforeEach(async () => {
+        examIsStarted.next(false);
         await TestBed.configureTestingModule({
             imports: [
                 MockComponent(ExamExerciseOverviewPageComponent),
@@ -151,6 +155,8 @@ describe('ExamParticipationComponent', () => {
                 // the same signal instance too: a no-op notifier would leave those bindings permanently stale,
                 // which is the staleness bug this contract exists to prevent.
                 MockProvider(ExamParticipationService, {
+                    // a field-initialised observable as well, so the mock has to bring it, see above
+                    examIsStarted$: examIsStarted.asObservable(),
                     submissionSyncVersion: submissionSyncVersion.asReadonly(),
                     notifySubmissionSyncStateChanged: () => submissionSyncVersion.update((version) => version + 1),
                     setSubmissionSaving: vi.fn(),
@@ -165,11 +171,17 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
-                MockProvider(DialogService),
                 MockProvider(CourseOverviewTabDataService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        }).compileComponents();
+        })
+            // The mock in `imports` above does not replace what the component itself imports. The real summary needs a route snapshot,
+            // and these tests are about the frame around it, so it is swapped here.
+            .overrideComponent(ExamParticipationComponent, {
+                remove: { imports: [ExamResultSummaryComponent] },
+                add: { imports: [MockComponent(ExamResultSummaryComponent)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(ExamParticipationComponent);
         comp = fixture.componentInstance;
         examParticipationService = TestBed.inject(ExamParticipationService);
@@ -215,6 +227,12 @@ describe('ExamParticipationComponent', () => {
     it('should initialize', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(ExamParticipationComponent).toBeTruthy();
+    });
+
+    it('should stop handling live events when the exam is left', () => {
+        const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+        comp.ngOnDestroy();
+        expect(resetSpy).toHaveBeenCalledOnce();
     });
 
     describe('ExamParticipationSummaryComponent for TestRuns', () => {
@@ -511,6 +529,41 @@ describe('ExamParticipationComponent', () => {
         expect(comp.exam()).toEqual(studentExam.exam);
     });
 
+    it.each(['route change', 'destroy'])('cancels a fallback participation start on %s', (cancellation) => {
+        const pending = new Subject<StudentParticipation>();
+        vi.spyOn(courseExerciseService, 'startExercise').mockReturnValue(pending);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        comp.createParticipationForExercise(exercise).subscribe();
+        expect(pending.observed).toBe(true);
+        if (cancellation === 'destroy') {
+            comp.ngOnDestroy();
+        } else {
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '999' });
+            comp.ngOnInit();
+        }
+        expect(pending.observed).toBe(false);
+        pending.next({ id: 42 });
+        expect(exercise.studentParticipations).toBeUndefined();
+    });
+
+    it.each(['route change', 'destroy'])('cancels an own exam load on %s', (cancellation) => {
+        const pending = new Subject<StudentExam>();
+        vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(pending);
+        const params = new Subject<{ courseId: string; examId: string }>();
+        TestBed.inject(ActivatedRoute).params = params;
+        comp.ngOnInit();
+        params.next({ courseId: '1', examId: '2' });
+        expect(pending.observed).toBe(true);
+        if (cancellation === 'destroy') {
+            comp.ngOnDestroy();
+        } else {
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(NEVER);
+            params.next({ courseId: '1', examId: '999' });
+        }
+        expect(pending.observed).toBe(false);
+    });
+
     it('should determine tutor status if no exam was loaded', () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },
@@ -724,6 +777,133 @@ describe('ExamParticipationComponent', () => {
         expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
     });
 
+    describe('manual participation recovery', () => {
+        function prepareExercise(exercise: TextExercise | ProgrammingExercise) {
+            fixture.detectChanges();
+            exercise.id = 42;
+            comp.exam.set({ id: 2, course: new Course(), startDate: dayjs().subtract(1, 'hours') });
+            comp.studentExam.set({ id: 3, exercises: [exercise], exam: comp.exam(), numberOfExamSessions: 0 });
+            comp.activeExamPage.set({ isOverviewPage: false, exercise });
+            comp.pageComponentVisited.set([false]);
+            comp.examStartConfirmed.set(true);
+            comp.individualStudentEndDate.set(dayjs().add(1, 'hours'));
+            comp.updateSidebarData();
+            vi.spyOn(comp, 'isVisible').mockReturnValue(true);
+            vi.spyOn(comp, 'isActive').mockReturnValue(true);
+            vi.spyOn(comp, 'isOver').mockReturnValue(false);
+            vi.spyOn(comp, 'triggerSave').mockImplementation(() => {});
+        }
+
+        function clickRetry() {
+            fixture.detectChanges();
+            const button = fixture.debugElement.query(By.css('[data-testid="retry-exercise-participation"]'));
+            expect(button, 'the failed start exposes the real Retry control').not.toBeNull();
+            button.nativeElement.click();
+            fixture.detectChanges();
+        }
+
+        it('renders the text exercise after the real Retry control succeeds', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const participation = new StudentParticipation();
+            participation.id = 321;
+            participation.initializationState = InitializationState.INITIALIZED;
+            participation.submissions = [new TextSubmission()];
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(of(participation));
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            expect(comp.pageComponentVisited()).toEqual([false]);
+
+            clickRetry();
+
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+            expect(exercise.studentParticipations).toEqual([participation]);
+            expect(comp.pageComponentVisited()).toEqual([true]);
+            expect(fixture.debugElement.query(By.css('#exercise-42 jhi-text-editor-exam'))).not.toBeNull();
+        });
+
+        it('clears the failed status when Retry finds the participation already valid', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const start = vi.spyOn(courseExerciseService, 'startExercise').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            expect(comp.generateParticipationStatus.value).toBe('failed');
+            const participation = new StudentParticipation();
+            participation.initializationState = InitializationState.INITIALIZED;
+            participation.submissions = [new TextSubmission()];
+            exercise.studentParticipations = [participation];
+
+            comp.retryParticipationForExercise();
+
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+            expect(comp.pageComponentVisited()).toEqual([true]);
+        });
+
+        it('initializes the programming submission subscription and clean placeholder once after Retry', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const participation = new StudentParticipation();
+            participation.id = 321;
+            participation.initializationState = InitializationState.INITIALIZED;
+            const pendingSubmissions = new Subject<ProgrammingSubmissionStateObj>();
+            const pending = vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(pendingSubmissions);
+            const delayedStart = new Subject<StudentParticipation>();
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(delayedStart);
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+
+            clickRetry();
+            comp.retryParticipationForExercise();
+            expect(start, 'a second Retry while the request is pending does not start it again').toHaveBeenCalledTimes(2);
+            delayedStart.next(participation);
+            delayedStart.complete();
+            fixture.detectChanges();
+
+            expect(pending.mock.calls.filter((call) => call[4] === true)).toEqual([[321, 42, true, false, true]]);
+            expect(participation.submissions).toHaveLength(1);
+            expect(participation.submissions![0]).toMatchObject({ isSynced: true, submitted: false });
+            expect(comp.pageComponentVisited()).toEqual([true]);
+            expect(fixture.debugElement.query(By.css('#exercise-42 jhi-programming-submission-exam'))).not.toBeNull();
+        });
+
+        it('cancels a pending manual Retry when another exercise is selected', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const otherExercise = new TextExercise(new Course(), undefined);
+            otherExercise.id = 43;
+            const otherParticipation = new StudentParticipation();
+            otherParticipation.initializationState = InitializationState.INITIALIZED;
+            otherParticipation.submissions = [new TextSubmission()];
+            otherExercise.studentParticipations = [otherParticipation];
+            comp.studentExam().exercises!.push(otherExercise);
+            comp.pageComponentVisited.set([false, false]);
+            const delayed = new Subject<StudentParticipation>();
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(delayed);
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            clickRetry();
+            expect(comp.generateParticipationStatus.value).toBe('generating');
+
+            comp.onPageChange({ overViewChange: false, exercise: otherExercise, forceSave: false });
+            delayed.next(new StudentParticipation());
+            delayed.complete();
+
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(exercise.studentParticipations).toBeUndefined();
+            expect(comp.activeExamPage().exercise).toBe(otherExercise);
+            expect(comp.pageComponentVisited()).toEqual([false, true]);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+        });
+    });
+
     describe('websocket working time subscription', () => {
         const startDate = dayjs('2022-02-21T23:00:00+01:00');
 
@@ -886,6 +1066,128 @@ describe('ExamParticipationComponent', () => {
             expectSyncedSubmissions(submission, syncedSubmission);
         });
 
+        describe('text saves of one submission', () => {
+            const pendingSaves: Subject<HttpResponse<TextSubmission>>[] = [];
+            let sentTexts: (string | undefined)[];
+            let inFlight: number;
+            let maxInFlight: number;
+            let submission: TextSubmission;
+
+            // Every request stays open until the test completes it, so tests control the order of the responses.
+            beforeEach(() => {
+                const textExercise = new TextExercise(new Course(), undefined);
+                textExercise.id = 5;
+                const participation = new StudentParticipation();
+                submission = new TextSubmission();
+                submission.text = 'Answer A';
+                submission.isSynced = false;
+                participation.submissions = [submission];
+                textExercise.studentParticipations = [participation];
+                comp.studentExam().exercises = [textExercise];
+                pendingSaves.length = 0;
+                sentTexts = [];
+                inFlight = 0;
+                maxInFlight = 0;
+                vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                    sentTexts.push(answer.text);
+                    inFlight++;
+                    maxInFlight = Math.max(maxInFlight, inFlight);
+                    const save = new Subject<HttpResponse<TextSubmission>>();
+                    pendingSaves.push(save);
+                    return save.pipe(
+                        tap({
+                            next: () => inFlight--,
+                            error: () => inFlight--,
+                        }),
+                    );
+                });
+            });
+
+            function respond(index: number) {
+                pendingSaves[index].next(new HttpResponse({ body: new TextSubmission() }));
+                pendingSaves[index].complete();
+            }
+
+            function edit(text: string) {
+                submission.text = text;
+                submission.isSynced = false;
+            }
+
+            it('should send the newest text only after the previous save responded, never two requests at once', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                comp.triggerSave(false);
+                // Save B must not overlap with save A: the database write order has to equal the send order.
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                expect(submission.isSynced).toBe(false);
+
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(maxInFlight).toBe(1);
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+            });
+
+            it('should only send the latest of several edits made while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer C');
+                comp.triggerSave(false);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer C']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer C');
+            });
+
+            it('should keep the submission synced when the student undoes to the text that is being saved', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer A');
+
+                respond(0);
+                // The server holds the same text as the editor, so nothing has to be sent again.
+                expect(sentTexts).toEqual(['Answer A']);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should release the slot after a failed save so the next trigger sends the latest text', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                pendingSaves[0].error(new HttpErrorResponse({ status: 500 }));
+                expect(submission.isSynced).toBe(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should still flush the latest text of a forced save while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(true);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer B');
+            });
+        });
+
         it('should sync modeling submissions', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             modelingExercise.id = 5;
@@ -908,16 +1210,18 @@ describe('ExamParticipationComponent', () => {
             quizExercise.id = 5;
             const participation = new StudentParticipation();
             const submission = new QuizSubmission();
+            submission.id = 1;
             const syncedSubmission = new QuizSubmission();
+            syncedSubmission.id = 2;
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
             comp.studentExam().exercises = [quizExercise];
-            quizSubmissionUpdateSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
+            quizSubmissionUpdateSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             comp.triggerSave(false);
             await new Promise((resolve) => setTimeout(resolve, 500));
-            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
-            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(submission));
+            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(syncedSubmission));
             expectSyncedSubmissions(submission, syncedSubmission);
         });
     });
@@ -964,7 +1268,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // The mocked submission services return synchronous observables, so the re-send happens synchronously.
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -973,7 +1277,7 @@ describe('ExamParticipationComponent', () => {
             // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
         });
 
         it('should force the recovery re-send even when the websocket is not (re)connected yet at resume', () => {
@@ -984,14 +1288,14 @@ describe('ExamParticipationComponent', () => {
             // and it must fire regardless — otherwise the restored answers are silently deferred to the next autosave
             // cycle, the answer-loss window this recovery path exists to close (regression: ExamSubmissionRecovery E2E).
             comp.connected.set(false);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
 
             // All three restored answers are re-sent immediately, not deferred, despite the websocket being down.
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
@@ -1018,7 +1322,7 @@ describe('ExamParticipationComponent', () => {
         it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -1058,7 +1362,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // the text re-send fails (still-flaky connection on resume), while quiz and modeling succeed
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -1082,7 +1386,7 @@ describe('ExamParticipationComponent', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -1102,7 +1406,7 @@ describe('ExamParticipationComponent', () => {
             textSubmission.isSynced = true;
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -1110,8 +1414,68 @@ describe('ExamParticipationComponent', () => {
 
             // an already-synced answer must not be re-sent (avoids overwriting good server state / a duplicate submission)
             expect(textSpy).not.toHaveBeenCalled();
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+        });
+
+        describe('after a page reload during the exam', () => {
+            // What the server returns for a student who has already started: the exam is running and the student exam is marked started.
+            const buildStartedStudentExam = () => {
+                const { studentExam } = buildResumeStudentExam();
+                studentExam.exam!.visibleDate = dayjs().subtract(1, 'hours');
+                studentExam.id = 1;
+                studentExam.started = true;
+                studentExam.startedDate = dayjs().subtract(5, 'minutes');
+                studentExam.submitted = false;
+                return studentExam;
+            };
+
+            const cover = () => fixture.debugElement.query(By.css('jhi-exam-participation-cover'));
+
+            it('should show the start cover again and neither resume nor create a session by itself when the last save succeeded', () => {
+                // Intended behavior: a reload sends the student back to the start cover, where typing the name and confirming the rules
+                // starts the exam again (a new exam session). Only a failed save resumes automatically (next test).
+                // Let Angular run its own first change detection (ngOnInit) before arranging the state under test.
+                fixture.changeDetectorRef.detectChanges();
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+                comp.handleStudentExam(buildStartedStudentExam());
+                fixture.changeDetectorRef.detectChanges();
+
+                expect(examStartedSpy).not.toHaveBeenCalled();
+                expect(loadLocalSpy).not.toHaveBeenCalled();
+                expect(comp.examStartConfirmed()).toBe(false);
+                expect(comp.loadingExam()).toBe(false);
+                expect(cover()).not.toBeNull();
+                expect(fixture.debugElement.query(By.css('jhi-exam-bar'))).toBeNull();
+            });
+
+            it('should resume the exam without the start cover and re-send the unsaved answers when the last save failed', () => {
+                // The one automatic resume: the unsaved answers only exist in local storage, so the exam is restored from there.
+                fixture.changeDetectorRef.detectChanges();
+                const { studentExam: localExam, textSubmission } = buildResumeStudentExam();
+                localExam.id = 1;
+                localExam.started = true;
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+                vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localExam));
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+                comp.handleStudentExam(buildStartedStudentExam());
+
+                expect(examStartedSpy).toHaveBeenCalledOnce();
+                expect(examStartedSpy).toHaveBeenCalledWith(comp.studentExam(), true);
+                expect(comp.examStartConfirmed()).toBe(true);
+                expect(comp.loadingExam()).toBe(false);
+                // the unsaved text answer is re-sent at once, without waiting for the websocket or the next autosave
+                expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+                fixture.changeDetectorRef.detectChanges();
+                expect(cover()).toBeNull();
+            });
         });
     });
 
@@ -1123,6 +1487,22 @@ describe('ExamParticipationComponent', () => {
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam()?.submitted).toBe(true);
+    });
+
+    it('should stop handling live events again if the submission response arrives after the exam was left', () => {
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.exam.set(new Exam());
+        const submissionResponse = new Subject<void>();
+        vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(submissionResponse);
+        const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+
+        comp.onExamEndConfirmed();
+        comp.ngOnDestroy();
+        expect(resetSpy).toHaveBeenCalledOnce();
+        submissionResponse.next();
+
+        expect(resetSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should leave the hand-in-early view after a successful early submission so the confirmation panel can show', () => {
@@ -1819,6 +2199,22 @@ describe('ExamParticipationComponent', () => {
             expect(summarySpy).toHaveBeenCalledOnce();
         });
 
+        it('should stop handling the live events of the previous exam when the reused component navigates to another exam', () => {
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            setRouteStudentExamId(activatedRoute, undefined);
+            // the next exam never finishes loading
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(NEVER);
+            const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+            comp.ngOnInit();
+
+            params.next({ courseId: '1', examId: '2' });
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(resetSpy).toHaveBeenCalledTimes(2);
+        });
+
         it('should clear the error state when the reused component navigates to another exam', () => {
             // The component instance is reused when only the :examId route parameter changes, so a failure on one exam
             // must not leave its error message on the next one
@@ -2079,7 +2475,8 @@ describe('ExamParticipationComponent', () => {
         expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 
-    it('should display exam bar and timer during working time', () => {
+    /** Puts the component into a running exam (two exercises, the second one open) and renders it. */
+    const showRunningExam = () => {
         const exercise0 = new QuizExercise(undefined, undefined);
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
@@ -2103,9 +2500,199 @@ describe('ExamParticipationComponent', () => {
         vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
 
         fixture.changeDetectorRef.detectChanges();
+    };
+
+    it('should display exam bar and timer during working time', () => {
+        showRunningExam();
         expect(fixture).toBeTruthy();
         const examBarDebugElement = fixture.debugElement.query(By.css('jhi-exam-bar'));
         expect(examBarDebugElement).toBeTruthy();
+
+        // #13916: the exercise column is sized by CSS alone. It used to get `h-100` from a `scrollHeight >
+        // clientHeight` measurement of the very element it sizes, so each state produced the other and the scroll
+        // bar flickered in and out on every change-detection pass. `.exam-content__column` is as tall as the scroll
+        // container when the exercise is short and grows when the exercise is tall, with no measurement in the loop.
+        const column = fixture.debugElement.query(By.css('.content-exam-height > div'));
+        expect(column).toBeTruthy();
+        expect([...column.nativeElement.classList]).toEqual(['exam-content__column']);
+    });
+
+    it('should lay out the exam inside the card of a test run instead of below the navbar', () => {
+        showRunningExam();
+
+        expect(fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement.classList).toContain('exam-background-wrapper--test-run');
+    });
+
+    it('should lay out a real exam below the navbar', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        showRunningExam();
+
+        expect(fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement.classList).not.toContain('exam-background-wrapper--test-run');
+    });
+
+    describe('frame of the screens after the exam', () => {
+        const submittedStudentExam = (): StudentExam => {
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.submitted = true;
+            studentExam.exam = new Exam();
+            return studentExam;
+        };
+
+        /** Shows the "submission successful" hint. The default route is a test run, `realExam` makes it a real exam instead. */
+        const showSubmissionHint = (options: { realExam?: boolean; examLayoutActive?: boolean } = {}) => {
+            if (options.realExam) {
+                TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            }
+            examIsStarted.next(!!options.examLayoutActive);
+            // the first change detection runs ngOnInit, whose route emission resets the state of a previously displayed exam
+            fixture.changeDetectorRef.detectChanges();
+            const studentExam = submittedStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.studentExam.set(studentExam);
+            comp.loadingExam.set(false);
+            fixture.changeDetectorRef.detectChanges();
+        };
+
+        const wrapper = (): HTMLElement => fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement;
+        const hint = (): HTMLElement => fixture.debugElement.query(By.css('.submissionSuccessfulHint')).nativeElement;
+
+        it('shows the hint as a card between the dividers of the exam layout while a real exam is still in its shell', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: true });
+
+            // the wrapper is the full-height frame of the running exam (6px dividers on all sides), without the fill-the-card modifier
+            expect(wrapper().classList).toContain('body-bg');
+            expect(wrapper().classList).not.toContain('exam-background-wrapper--test-run');
+            expect(hint().parentElement).toBe(wrapper());
+            expect(hint().classList).toContain('module-bg');
+        });
+
+        it('insets the hint like the scroller of an exercise', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: true });
+
+            expect(hint().classList).toContain('p-3!');
+            expect(hint().classList).not.toContain('px-4!');
+        });
+
+        it('lets the hint fill the card of the shell once the exam layout is reset, as for a test exam or a reload after the exam', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: false });
+
+            expect(wrapper().classList).toContain('exam-background-wrapper--test-run');
+            expect(hint().parentElement).toBe(wrapper());
+        });
+
+        it('lets the hint of a test run fill the card of the management shell even if the layout flag is set', () => {
+            showSubmissionHint({ examLayoutActive: true });
+
+            expect(wrapper().classList).toContain('exam-background-wrapper--test-run');
+        });
+
+        it('follows the layout flag when the layout is reset while the hint is shown', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: true });
+            expect(wrapper().classList).not.toContain('exam-background-wrapper--test-run');
+
+            examIsStarted.next(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(wrapper().classList).toContain('exam-background-wrapper--test-run');
+        });
+
+        it('gives the hint a section-sized heading and a small summary button', () => {
+            showSubmissionHint();
+
+            const heading: HTMLElement = hint().querySelector('h2')!;
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-lg!');
+            expect(heading.classList).toContain('font-semibold!');
+
+            const button: HTMLElement = hint().querySelector('#showExamSummaryButton')!;
+            expect(button).not.toBeNull();
+            // the small size is 34px, below the 40px a page-level button may have
+            expect(button.classList).toContain('tumaet:text-sm');
+            expect(button.classList).not.toContain('tumaet:text-base');
+        });
+
+        it('lets the summary of a real exam scroll in a container as tall as its card, without the viewport-based legacy class', () => {
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            fixture.changeDetectorRef.detectChanges();
+            const studentExam = submittedStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.studentExam.set(studentExam);
+            comp.showExamSummary.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const scroller = fixture.debugElement.query(By.css('jhi-exam-participation-summary')).nativeElement.parentElement as HTMLElement;
+            expect(scroller.classList).toContain('exam-summary-scroll');
+            expect(scroller.getAttribute('data-testid')).toBe('exam-summary-scroll');
+            // `scrollable-content` is 100vh minus a hard-coded 156px and ended 75px above the bottom of the card
+            expect(scroller.classList).not.toContain('scrollable-content');
+            expect(scroller.classList).not.toContain('p-6!');
+        });
+
+        it('leaves the summary of a test run, which sits in the card of the management shell, without a scroll container class', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const studentExam = submittedStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.studentExam.set(studentExam);
+            comp.showExamSummary.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const scroller = fixture.debugElement.query(By.css('jhi-exam-participation-summary')).nativeElement.parentElement as HTMLElement;
+            expect(scroller.className).toBe('');
+        });
+
+        it('gives the end view card only a top padding, so the inset of the cover is the single one and lines up with the bar', () => {
+            fixture.changeDetectorRef.detectChanges();
+            comp.exam.set(new Exam());
+            comp.exam().startDate = dayjs().subtract(1, 'hours');
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().submitted = false;
+            comp.examStartConfirmed.set(true);
+            comp.individualStudentEndDateWithGracePeriod.set(dayjs().add(1, 'minutes'));
+            vi.spyOn(comp, 'isOver').mockReturnValue(true);
+            vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            const card: HTMLElement = fixture.debugElement.query(By.css('.end-view')).nativeElement;
+            expect(card.getAttribute('data-testid')).toBe('exam-end-view');
+            expect(card.classList).toContain('pt-3!');
+            // `px-3!` on the card would stack 12px on the 12px of the cover and put the text 24px from the edge
+            expect(card.classList).not.toContain('px-3!');
+            expect(card.classList).not.toContain('pt-4!');
+        });
+    });
+
+    it('should inset the scroller of an exercise by 12px on every side, so that the title of every page starts where the title of the bar starts', () => {
+        showRunningExam();
+
+        const scroller: HTMLElement = fixture.debugElement.query(By.css('.content-exam-height')).nativeElement;
+        // the card is not a frame of white space around the exercise
+        expect(scroller.classList).toContain('p-3!');
+        expect(scroller.classList).not.toContain('px-4!');
+    });
+
+    it('should mark the content card, which holds the scroller and the status bar, for the layout contract', () => {
+        showRunningExam();
+
+        const card: HTMLElement = fixture.debugElement.query(By.css('[data-testid="exam-content"]')).nativeElement;
+        expect(card.classList).toContain('exam-content');
+        // the scroller and the column of the page inside it, which the contract measures the insets with
+        const scroller = card.querySelector('.content-exam-height') as HTMLElement;
+        expect(scroller.getAttribute('data-testid')).toBe('exam-content-scroller');
+        expect(scroller.querySelector('.exam-content__column')!.getAttribute('data-testid')).toBe('exam-content-column');
+        expect(card.querySelector('[data-testid="exam-status-bar"]')).not.toBeNull();
+    });
+
+    it('should show the connection status bar and flag a lost connection', () => {
+        showRunningExam();
+        const statusBar = fixture.debugElement.query(By.css('.exam-status-bar'));
+        expect(statusBar).toBeTruthy();
+        expect(statusBar.nativeElement.classList).not.toContain('disconnected');
+
+        comp.connected.set(false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.exam-status-bar')).nativeElement.classList).toContain('disconnected');
     });
 
     it('should not display exam bar and timer when exam was not submitted', () => {
@@ -2130,7 +2717,7 @@ describe('ExamParticipationComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
 
-        const warning = fixture.debugElement.query(By.css('.text-danger span'));
+        const warning = fixture.debugElement.query(By.css('.text-state-danger span'));
         const directiveInstance = warning.injector.get(TranslateDirective);
         expect(directiveInstance.jhiTranslate()).toBe('artemisApp.studentExam.submissionNotInTime');
     });

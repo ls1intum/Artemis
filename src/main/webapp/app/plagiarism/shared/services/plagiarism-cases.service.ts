@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlagiarismCase, PlagiarismCaseDTO, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -13,7 +13,7 @@ export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
 export type VerdictResponseType = HttpResponse<PlagiarismCaseVerdictResponse>;
 export type Comparison = PlagiarismComparison;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PlagiarismCasesService {
     private http = inject(HttpClient);
     private resourceUrl = 'api/plagiarism/courses';

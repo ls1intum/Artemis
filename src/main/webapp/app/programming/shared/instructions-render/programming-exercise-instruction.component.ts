@@ -18,6 +18,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
@@ -47,6 +48,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { setInputs } from 'app/foundation/util/set-inputs.util';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -56,6 +58,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestroy {
+    private static nextInstanceId = 0;
+
     private viewContainerRef = inject(ViewContainerRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -68,6 +72,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
+    private translateService = inject(TranslateService);
+
+    // Distinguishes this component from others that show the same exercise at the same time (e.g. exercise details and online editor sidebar).
+    private readonly instanceId = ProgrammingExerciseInstructionComponent.nextInstanceId++;
 
     readonly exercise = input<ProgrammingExercise | undefined>(undefined);
     readonly participation = input<Participation | undefined>(undefined);
@@ -318,7 +326,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         this.taskIndex = 0;
         // Set the exercise ID so PlantUML container IDs are scoped per exercise.
         // This prevents cross-contamination when multiple exercises are on the same page (e.g. in exams).
+        // The instance ID additionally keeps components that show the same exercise apart.
         this.programmingExercisePlantUmlWrapper.setExerciseId(exercise?.id);
+        this.programmingExercisePlantUmlWrapper.setInstanceId(this.instanceId);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
         this.latestResult = this.latestResultValue();
@@ -425,7 +435,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
+            // Reviewed false positive (Sonar S6268): htmlForMarkdown sanitizes the rendered HTML with DOMPurify, the later steps only add classes and task markers.
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks)); // NOSONAR // nosemgrep
             // Differences between UMLs are ignored, and we only inject the current one (last callback)
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
@@ -433,7 +444,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement, this.markdownExtensions ?? []);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
+            // Reviewed false positive (Sonar S6268): htmlForMarkdown sanitizes the rendered HTML with DOMPurify, the later steps only add classes and task markers.
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks)); // NOSONAR // nosemgrep
             this.scheduleContentInjection(false);
         } else {
             // Clear the rendered markdown when problem statement is empty or whitespace-only
@@ -479,6 +491,12 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 table.style.maxWidth = '100%';
                 table.style.overflowX = 'scroll';
                 table.style.display = 'block';
+                table.tabIndex = 0;
+                const hasAuthoredName =
+                    table.getAttribute('aria-label')?.trim() || table.getAttribute('aria-labelledby')?.trim() || table.caption?.textContent?.trim() || table.title.trim();
+                if (!hasAuthoredName) {
+                    table.setAttribute('aria-label', this.translateService.instant('artemisApp.programmingExercise.instructionTableLabel'));
+                }
             });
             return doc.body.innerHTML;
         }
@@ -537,11 +555,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             hostElement: taskHtmlContainer,
             environmentInjector: this.injector,
         });
-        componentRef.setInput('exercise', this.exercise());
-        componentRef.setInput('participation', this.participation());
-        componentRef.setInput('taskName', taskName);
-        componentRef.setInput('latestResult', this.latestResult);
-        componentRef.setInput('testIds', testIds);
+        setInputs(componentRef, {
+            exercise: this.exercise(),
+            participation: this.participation(),
+            taskName,
+            latestResult: this.latestResult,
+            testIds,
+        });
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);

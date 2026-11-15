@@ -1,10 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type LongFeedbackResponse = HttpResponse<string>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LongFeedbackTextService {
     private http = inject(HttpClient);
 

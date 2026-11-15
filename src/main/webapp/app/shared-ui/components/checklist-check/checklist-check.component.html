@@ -1,6 +1,5 @@
 @if (checkAttribute()) {
-    <fa-icon [icon]="faCheckCircle" [size]="size()" [style]="{ color: iconColor() ?? 'var(--green)' }" data-testid="check-icon-checked" />
+    <fa-icon [icon]="faCheckCircle" [size]="size()" class="text-state-success" [style.color]="iconColor()" data-testid="check-icon-checked" />
 } @else {
-    <fa-icon [icon]="faTimes" [size]="size()" class="fs-5" [style]="{ color: iconColor() ?? 'var(--markdown-preview-red)' }" data-testid="check-icon-unchecked" />
+    <fa-icon [icon]="faTimes" [size]="size()" class="text-state-danger text-xl" [style.color]="iconColor()" data-testid="check-icon-unchecked" />
 }
-&nbsp;

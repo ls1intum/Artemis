@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -27,7 +28,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionFaqRewriteService;
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
-@FeatureUsage("authoring-assistance/faq-rewrite")
+@FeatureUsage(UserFeature.HYPERION_FAQ_REWRITE)
 @RestController
 @RequestMapping("api/hyperion/")
 public class HyperionFaqResource {

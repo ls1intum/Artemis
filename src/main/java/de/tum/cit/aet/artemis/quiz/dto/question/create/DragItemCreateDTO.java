@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH;
+
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record DragItemCreateDTO(@NotNull Long tempID, String text, String pictureFilePath) {
+public record DragItemCreateDTO(@NotNull Long tempID, @Size(max = MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH) String text, String pictureFilePath) {
 
     /**
      * Converts this DTO to a {@link DragItem} domain object.

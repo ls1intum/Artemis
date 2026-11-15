@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -67,6 +68,8 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final BareGitRepositoryService bareGitRepositoryService;
+
     private final ResultRepository resultRepository;
 
     private final SubmissionRepository submissionRepository;
@@ -75,14 +78,15 @@ public class ProgrammingExerciseParticipationService {
 
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, GitService gitService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, UserRepository userRepository) {
+            ParticipationRepository participationRepository, GitService gitService, BareGitRepositoryService bareGitRepositoryService,
+            Optional<VersionControlService> versionControlService, ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
@@ -204,37 +208,39 @@ public class ProgrammingExerciseParticipationService {
      * @param sourceUri the repository that should be used as source for all files
      */
     public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
-        Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
-
-        // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
-        FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
-        final var targetRepoFiles = Optional.ofNullable(targetRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
-        for (java.io.File file : targetRepoFiles) {
-            FileSystemUtils.deleteRecursively(file);
-        }
-        final var sourceRepoFiles = Optional.ofNullable(sourceRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
-        for (java.io.File file : sourceRepoFiles) {
-            if (file.isDirectory()) {
-                FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+        // Everything in the target is replaced, so its working copy on the server must not block the reset because of a local modification that conflicts with the remote.
+        // The lock of the target is held until the reset is committed, so that two resets of the same repository cannot interleave.
+        gitService.replaceWorkingCopyContent(targetUri, targetRepo -> {
+            // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
+            FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
+            final var targetRepoFiles = Optional.ofNullable(targetRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+            for (java.io.File file : targetRepoFiles) {
+                FileSystemUtils.deleteRecursively(file);
             }
-            else {
-                FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+            final var sourceRepoFiles = Optional.ofNullable(sourceRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+            for (java.io.File file : sourceRepoFiles) {
+                if (file.isDirectory()) {
+                    FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+                }
+                else {
+                    FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+                }
             }
-        }
-        String login = SecurityUtils.getCurrentUserLogin().orElse(null);
-        User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
-        String commitMessage = "Reset Exercise";
+            String login = SecurityUtils.getCurrentUserLogin().orElse(null);
+            User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
+            String commitMessage = "Reset Exercise";
 
-        if (coAuthor != null && coAuthor.getEmail() != null) {
-            String name = coAuthor.getName() != null ? coAuthor.getName() : login;
-            commitMessage += "\n\nCo-authored-by: %s <%s>".formatted(name, coAuthor.getEmail());
-        }
+            if (coAuthor != null && coAuthor.getEmail() != null) {
+                String name = coAuthor.getName() != null ? coAuthor.getName() : login;
+                commitMessage += "\n\nCo-authored-by: %s <%s>".formatted(name, coAuthor.getEmail());
+            }
 
-        gitService.stageAllChanges(targetRepo);
-        gitService.commitAndPush(targetRepo, commitMessage, true, null);
+            gitService.stageAllChanges(targetRepo);
+            gitService.commitAndPush(targetRepo, commitMessage, true, null);
+        });
 
-        log.info("Reset repo by {}", login != null ? login : "unknown");
+        log.info("Reset repo by {}", SecurityUtils.getCurrentUserLogin().orElse("unknown"));
     }
 
     /**
@@ -270,6 +276,38 @@ public class ProgrammingExerciseParticipationService {
         }
         return studentParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURL);
 
+    }
+
+    /**
+     * A reference to the participation a repository belongs to, read as one id and nothing else.
+     *
+     * <p>
+     * Unlike {@link #fetchParticipationWithSubmissionsByRepository}, this loads no entity at all: the query returns the
+     * primary key, and the participation is handed back unloaded. It exists for the access log, which records that a
+     * repository was touched and therefore stores the participation as a foreign key without reading anything from it.
+     * Loading the entity instead would pull the exercise and its course along, because a participation holds those as
+     * eager associations and the exercise of a solution participation cannot even be proxied, and this runs on every
+     * rejected authentication, which is traffic whose volume an attacker chooses.
+     *
+     * <p>
+     * The returned participation carries its id and nothing more. Reading any other field initialises it, which fails
+     * outside a transaction, so it is only good for writing the association.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryUri            the uri of the repository
+     * @param projectKey               the project key of the exercise, which is how the solution participation shared
+     *                                     with the test repository is found
+     * @return a reference to the participation behind the repository, or empty if there is none
+     */
+    public Optional<ProgrammingExerciseParticipation> getParticipationReferenceForRepository(String repositoryTypeOrUserName, String repositoryUri, String projectKey) {
+        String repositoryUriWithoutService = repositoryUri.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findIdByProjectKey(projectKey).map(solutionParticipationRepository::getReferenceById);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findIdByRepositoryUri(repositoryUriWithoutService).map(templateParticipationRepository::getReferenceById);
+        }
+        return studentParticipationRepository.findIdByRepositoryUri(repositoryUriWithoutService).map(studentParticipationRepository::getReferenceById);
     }
 
     public ProgrammingExerciseParticipation retrieveSolutionParticipation(Exercise exercise) {
@@ -318,7 +356,7 @@ public class ProgrammingExerciseParticipationService {
     // TODO: use some kind of paging mechanism
     public List<CommitInfoDTO> getCommitInfos(LocalVCRepositoryUri localVCRepositoryUri) {
         try {
-            return gitService.getCommitInfos(localVCRepositoryUri);
+            return bareGitRepositoryService.getCommitInfos(localVCRepositoryUri);
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for repository with uri {}", localVCRepositoryUri);
@@ -335,6 +373,9 @@ public class ProgrammingExerciseParticipationService {
     @Nullable
     public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
+        if (planKey == null) {
+            return null;
+        }
         if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
             return templateParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }

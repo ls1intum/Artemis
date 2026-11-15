@@ -21,8 +21,12 @@ export class AttachmentAction extends TextEditorAction {
     private uploadCallback?: (files: File[]) => void;
     private openFileDialogCallback?: () => void;
 
-    constructor() {
+    constructor(private canExecute: () => boolean = () => true) {
         super(AttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined);
+    }
+
+    setExecutionGuard(canExecute: () => boolean): void {
+        this.canExecute = canExecute;
     }
 
     /**
@@ -46,7 +50,7 @@ export class AttachmentAction extends TextEditorAction {
         super.register(editor, translateService);
         this.disposablePasteListener = editor.addPasteListener(async (insertedText: string) => {
             // We do not read from the clipboard if the user pasted text. This prevents an unnecessary prompt on Firefox.
-            if (!this.uploadCallback || insertedText) {
+            if (!this.canExecute() || !this.uploadCallback || insertedText) {
                 return;
             }
             const clipboardItems = await navigator.clipboard.read();
@@ -62,7 +66,9 @@ export class AttachmentAction extends TextEditorAction {
                     }
                 }
             }
-            this.uploadCallback(files);
+            if (this.canExecute()) {
+                this.uploadCallback?.(files);
+            }
         });
     }
 
@@ -78,7 +84,9 @@ export class AttachmentAction extends TextEditorAction {
      * @param args The text and url of the attachment to insert. If one or both are not provided, checks for selected text to wrap.
      */
     override executeInCurrentEditor(args?: AttachmentArguments): void {
-        super.executeInCurrentEditor(args);
+        if (this.canExecute()) {
+            super.executeInCurrentEditor(args);
+        }
     }
 
     /**

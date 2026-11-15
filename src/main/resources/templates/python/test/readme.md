@@ -1,7 +1,7 @@
 ## Test Repository instructions
 
 #### Test tool & command
-Tests will be run using pytest.
+Tests will be run using pytest. Only the folders "structural" and "behavior" are collected, so the tests of the student submission are never run.
 
 #### Sequential test runs
 If you have decided to use the sequential test runs feature for this exercise, read the following instructions:

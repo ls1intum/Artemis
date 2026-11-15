@@ -13,9 +13,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -23,9 +30,13 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -38,6 +49,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -46,6 +58,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -74,6 +87,15 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
+
+    @Autowired
+    private AthenaFeedbackRequestRepository athenaFeedbackRequestRepository;
+
+    @Autowired
+    private ExampleSubmissionTestRepository exampleSubmissionRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
@@ -322,6 +344,161 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterDueDate_practiceParticipationOfTeamExercise_savedIndividually() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName(TEST_PREFIX + "practiceteam");
+        team.setExercise(useCaseExercise);
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        teamRepository.save(useCaseExercise, team);
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        // the submission is the student's own, saved against the practice participation, which is reported with the student instead of the team
+        assertThat(returnedSubmission.participation().id()).isEqualTo(practiceParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isTrue();
+        assertThat(returnedSubmission.participation().team()).isNull();
+        assertThat(returnedSubmission.participation().student().login()).isEqualTo(TEST_PREFIX + "student2");
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.id(), emptyUseCaseModel);
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipation.getId())).extracting(Submission::getId).contains(returnedSubmission.id());
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).as("the team's graded participation is not touched").isEmpty();
+        assertThat(submissionVersionRepository.findLatestVersion(returnedSubmission.id())).as("an individual practice submission has no team versions").isEmpty();
+    }
+
+    static Stream<Arguments> workingPeriodOfTheTeamIsOpen() {
+        return Stream.of(Arguments.of("the due date is in the future", 1L, null), Arguments.of("the due date is over but the team has an extension", -1L, 2L),
+                Arguments.of("the exercise has no due date", null, null));
+    }
+
+    /**
+     * The practice participation takes over only when the working period is over. As long as the team can still work, the student's submission belongs to the team, also for a
+     * student who has started the practice mode before.
+     *
+     * @param scenario         the description of the scenario
+     * @param dueDateHours     the due date of the exercise in hours from now, or null for none
+     * @param extensionInHours the extension of the team participation in hours from now, or null for none
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("workingPeriodOfTheTeamIsOpen")
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_teamExerciseWithPracticeParticipation_workingPeriodOpen_savedToTheTeam(String scenario, Long dueDateHours, Long extensionInHours)
+            throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(dueDateHours == null ? null : ZonedDateTime.now().plusHours(dueDateHours));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("workingperiod", TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        if (extensionInHours != null) {
+            teamParticipation.setIndividualDueDate(ZonedDateTime.now().plusHours(extensionInHours));
+            teamParticipation = studentParticipationRepository.save(teamParticipation);
+        }
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        assertThat(returnedSubmission.participation().id()).as(scenario).isEqualTo(teamParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isFalse();
+        assertThat(returnedSubmission.participation().team()).as("the graded participation is reported with the team").isNotNull();
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).extracting(Submission::getId).containsExactly(returnedSubmission.id());
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipation.getId())).as("the practice participation is not touched").isEmpty();
+        Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.id());
+        assertThat(version).as("the team's submission is versioned").isNotEmpty();
+        assertThat(version.orElseThrow().getAuthor().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+    }
+
+    /**
+     * The extension of the team is over as well, so the practice participation takes over, and the effective due date is the one of the team's participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterTeamExtensionOver_practiceParticipationOfTeamExercise_savedIndividually() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(3));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("extensionover", TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        teamParticipation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(30));
+        studentParticipationRepository.save(teamParticipation);
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        assertThat(returnedSubmission.participation().id()).isEqualTo(practiceParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isTrue();
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).isEmpty();
+    }
+
+    /**
+     * Practice is private: a teammate who has not started the practice mode must not end up in the practice participation of the other member, and must not write into the
+     * team's participation either once the working period is over.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void saveAndSubmitModelingSubmission_afterDueDate_teammateWithoutPracticeParticipation_forbidden() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("teammate", TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        // the team started before the due date, a participation that starts afterwards may still submit late
+        teamParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        studentParticipationRepository.save(teamParticipation);
+        StudentParticipation practiceParticipationOfStudent2 = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        request.postWithResponseBody("/api/modeling/exercises/" + useCaseExercise.getId() + "/modeling-submissions",
+                toRequest(ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false)), ModelingSubmissionResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipationOfStudent2.getId())).as("the practice work of the teammate stays private").isEmpty();
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).as("the working period of the team is over").isEmpty();
+    }
+
+    /**
+     * Without a practice participation, the working period of the team is over, so the save is rejected, like for the text counterpart.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterDueDate_teamExerciseWithoutPracticeParticipation_forbidden() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("nopractice", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        teamParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        studentParticipationRepository.save(teamParticipation);
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        request.postWithResponseBody("/api/modeling/exercises/" + useCaseExercise.getId() + "/modeling-submissions",
+                toRequest(ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false)), ModelingSubmissionResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).isEmpty();
+    }
+
+    private Team createTeamOfStudents(String shortName, String... logins) {
+        Team team = new Team();
+        team.setName("Team " + shortName);
+        team.setShortName(TEST_PREFIX + shortName);
+        team.setExercise(useCaseExercise);
+        for (String login : logins) {
+            team.addStudents(userTestRepository.findOneByLogin(login).orElseThrow());
+        }
+        return teamRepository.save(useCaseExercise, team);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void updateModelSubmission() throws Exception {
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyModel, true);
@@ -412,7 +589,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAllSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
         ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
@@ -424,29 +601,28 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void getAllSubmissionsOfExercise_instructorNotInCourse() throws Exception {
         request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAllSubmissionsOfExercise_assessedByTutor() throws Exception {
-        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true",
+        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/assessed-by-me",
                 HttpStatus.OK, ModelingSubmissionResponseDTO.class);
         assertThat(submissions).as("does not have a modeling submission assessed by the tutor").isEmpty();
 
         modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        submissions = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK,
+        submissions = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.OK,
                 ModelingSubmissionResponseDTO.class);
         assertThat(submissions).as("has a modeling submission assessed by the tutor").hasSizeGreaterThanOrEqualTo(1);
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "USER")
     void getAllSubmissionsOfExercise_assessedByTutor_instructorNotInCourse() throws Exception {
-        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN,
-                ModelingSubmissionResponseDTO.class);
+        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
     }
 
     @Test
@@ -460,7 +636,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
         modelingExerciseUtilService.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
@@ -473,7 +649,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAllSubmissionsOfExercise_queryCount() throws Exception {
         modelingExerciseUtilService.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
         modelingExerciseUtilService.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
@@ -482,13 +658,13 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
-        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK,
+        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK,
                 ModelingSubmissionResponseDTO.class);
 
         assertThat(storedSubmission.results()).as("result has been set").isNotEmpty();
@@ -498,33 +674,34 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_queryCount() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
         final Long submissionId = submission.getId();
-        assertThatDb(() -> request.get("/api/modeling/modeling-submissions/" + submissionId, HttpStatus.OK, ModelingSubmissionResponseDTO.class)).hasBeenCalledAtMostTimes(40);
+        assertThatDb(() -> request.get("/api/modeling/modeling-submissions/" + submissionId + "/for-assessment", HttpStatus.OK, ModelingSubmissionResponseDTO.class))
+                .hasBeenCalledAtMostTimes(40);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutResults() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
-        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "?withoutResults=true", HttpStatus.OK,
-                ModelingSubmissionResponseDTO.class);
+        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment?withoutResults=true",
+                HttpStatus.OK, ModelingSubmissionResponseDTO.class);
 
         assertThat(storedSubmission.results()).as("result has not been set").isNullOrEmpty();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_tutorNotInCourse() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
-        request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
     }
 
     @Test
@@ -554,14 +731,14 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_lockLimitReached_success() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(useCaseExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK,
+        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK,
                 ModelingSubmissionResponseDTO.class);
 
         assertThat(storedSubmission.results()).as("result has been set").isNotEmpty();
@@ -571,17 +748,17 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_lockLimitReached_badRequest() throws Exception {
         createTenLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmission(useCaseExercise, submission, TEST_PREFIX + "student2");
 
-        request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.BAD_REQUEST, ModelingSubmissionResponseDTO.class);
+        request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.BAD_REQUEST, ModelingSubmissionResponseDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getModelingSubmissionWithResultId() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = (ModelingSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, TEST_PREFIX + "student1",
@@ -589,21 +766,21 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmissionResponseDTO.class,
-                params);
+        ModelingSubmissionResponseDTO storedSubmission = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class, params);
 
         assertThat(storedSubmission.results()).isNotNull();
         assertThat(storedSubmission.results()).extracting(ResultDTO::id).contains(storedResult.getId());
 
         // result-id stability round-trip (C4 @OrderColumn on Submission.results): a second fetch returns the same result id
-        ModelingSubmissionResponseDTO refetched = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmissionResponseDTO.class,
-                params);
+        ModelingSubmissionResponseDTO refetched = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class, params);
         assertThat(refetched.results()).extracting(ResultDTO::id).isEqualTo(storedSubmission.results().stream().map(ResultDTO::id).toList());
         checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelingSubmissionWithResultIdAsTutor_badRequest() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = (ModelingSubmission) modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1",
@@ -611,11 +788,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class, params);
+        request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class, params);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -634,13 +811,13 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
         request.get("/api/modeling/exercises/" + textExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmissionResponseDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
@@ -659,7 +836,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_queryCount() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -670,7 +847,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, false);
         modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -682,7 +859,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_null() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -694,7 +871,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -703,7 +880,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_notTutorInCourse() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -723,7 +900,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmissionWithoutAssessment_testLockLimit() throws Exception {
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission newSubmission = ParticipationFactory.generateModelingSubmission(validModel, true);
@@ -737,7 +914,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAllModelingSubmissions() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> modelingSubmissionRepo.findByIdElseThrow(Long.MAX_VALUE));
 
@@ -990,6 +1167,62 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(returnedSubmission.results()).as("the result is not sent to the client if the assessment is not finished").isNullOrEmpty();
     }
 
+    @ParameterizedTest
+    @CsvSource({ "student1, none, false", "student1, none, true", "student1, past, false", "student1, past, true", "student1, future, false", "student1, future, true",
+            "instructor1, none, false", "instructor1, none, true", "instructor1, past, false", "instructor1, past, true", "instructor1, future, false",
+            "instructor1, future, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentReloadWithAthenaRequestHidesEachUnfinishedManualAssessment(String owner, String publication, boolean failed) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        classExercise.setAssessmentDueDate(switch (publication) {
+            case "past" -> ZonedDateTime.now().minusDays(1);
+            case "future" -> ZonedDateTime.now().plusDays(1);
+            default -> null;
+        });
+        exerciseRepository.save(classExercise);
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmission(classExercise, ParticipationFactory.generateModelingSubmission(validModel, true),
+                TEST_PREFIX + owner);
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        Result completed = createResult(AssessmentType.MANUAL, submission, participation, assessor);
+        Result draft = createResult(AssessmentType.SEMI_AUTOMATIC, submission, participation, assessor);
+        draft.setCompletionDate(null);
+        resultRepository.saveAndFlush(draft);
+        // A timestamp without an assessor must not turn an incomplete manual assessment into a published result either.
+        createResult(AssessmentType.MANUAL, submission, participation, null);
+
+        // Add feedback after constructing the result history so saving the submission cannot re-merge transient feedback.
+        Feedback releasedFeedback = new Feedback();
+        releasedFeedback.setDetailText("Released manual feedback");
+        completed.addFeedback(releasedFeedback);
+        resultRepository.saveAndFlush(completed);
+        Feedback privateFeedback = new Feedback();
+        privateFeedback.setDetailText("Unfinished manual feedback must stay private");
+        draft.addFeedback(privateFeedback);
+        resultRepository.saveAndFlush(draft);
+
+        Result athenaRequest = athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission);
+        if (failed) {
+            assertThat(athenaFeedbackRequestRepository.failAthenaFeedbackRequest(athenaRequest)).isTrue();
+        }
+        Set<Long> expectedIds = publication.equals("future") ? Set.of(athenaRequest.getId()) : Set.of(completed.getId(), athenaRequest.getId());
+        String path = "/api/modeling/participations/" + participation.getId();
+        ModelingSubmissionResponseDTO latest = request.get(path + "/latest-modeling-submission", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        List<ModelingSubmissionResponseDTO> history = request.getList(path + "/submissions-with-results", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(history).hasSize(1);
+        for (var response : List.of(latest, history.getFirst())) {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactlyInAnyOrderElementsOf(expectedIds);
+            assertThat(response.results()).allSatisfy(result -> assertThat(result.assessor()).isNull());
+            assertThat(response.results()).filteredOn(result -> result.id().equals(athenaRequest.getId())).singleElement()
+                    .satisfies(result -> assertThat(result.successful()).isEqualTo(failed ? false : null));
+            if (!publication.equals("future")) {
+                assertThat(response.results()).filteredOn(result -> result.assessmentType() == AssessmentType.MANUAL).singleElement().satisfies(
+                        result -> assertThat(result.feedbacks()).singleElement().satisfies(feedback -> assertThat(feedback.detailText()).isEqualTo("Released manual feedback")));
+            }
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void submitExercise_afterDueDate_forbidden() throws Exception {
@@ -1080,7 +1313,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getSubmissionsWithResultsForParticipation_withUnfinishedAssessment_returnsResults() throws Exception {
         classExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         classExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
@@ -1095,8 +1328,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         unfinished.setCompletionDate(null);
         resultRepository.save(unfinished);
 
-        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK,
-                ModelingSubmissionResponseDTO.class);
+        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results/for-staff",
+                HttpStatus.OK, ModelingSubmissionResponseDTO.class);
 
         assertThat(submissions).hasSize(1);
         var results = submissions.getFirst().results();
@@ -1154,7 +1387,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // Create an Athena automatic result and a manual result
         createResult(AssessmentType.AUTOMATIC_ATHENA, submission, participation, null);
-        createResult(AssessmentType.MANUAL, submission, participation, null);
+        createResult(AssessmentType.MANUAL, submission, participation, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
 
         List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK,
                 ModelingSubmissionResponseDTO.class);
@@ -1198,7 +1431,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getSubmissionsWithResultsForParticipation_asTutor_returnsAllResults() throws Exception {
         // No need to adjust assessment due date; tutors have access before the due date
         // Create participation and submission for student1
@@ -1213,8 +1446,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         createResult(AssessmentType.MANUAL, submission, participation, tutor);
 
-        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK,
-                ModelingSubmissionResponseDTO.class);
+        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results/for-staff",
+                HttpStatus.OK, ModelingSubmissionResponseDTO.class);
 
         assertThat(submissions).hasSize(1);
         ModelingSubmissionResponseDTO returnedSubmission = submissions.getFirst();
@@ -1323,4 +1556,318 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         modelingSubmissionRepo.save(submission);
         return result;
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void submissionList_legacyFilterCannotBypassInstructorAuthorization() throws Exception {
+        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN,
+                ModelingSubmissionResponseDTO.class);
+        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByMe=true", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submissionList_studentCannotAccessOwnAssessments() throws Exception {
+        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void submissionList_endpointDeterminesIdentityProjection() throws Exception {
+        var own = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "instructor1");
+        var other = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, ParticipationFactory.generateModelingSubmission(validModel, true),
+                TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        participationUtilService.addResultToSubmission(own, AssessmentType.AUTOMATIC_ATHENA);
+        var all = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(all).extracting(ModelingSubmissionResponseDTO::id).containsExactlyInAnyOrder(own.getId(), other.getId());
+
+        var identified = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByMe=true", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class);
+        assertThat(identified).extracting(ModelingSubmissionResponseDTO::id).containsExactly(own.getId());
+        assertThat(identified.getFirst().participation().student().login()).isEqualTo(TEST_PREFIX + "student1");
+
+        var anonymous = request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/assessed-by-me?assessorId=0", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class);
+        assertThat(anonymous).extracting(ModelingSubmissionResponseDTO::id).containsExactly(own.getId());
+        assertThat(anonymous.getFirst().participation().id()).isEqualTo(identified.getFirst().participation().id());
+        assertThat(anonymous.getFirst().results()).isNotEmpty();
+        assertThat(anonymous.getFirst().results()).noneMatch(result -> result.assessmentType() == AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(identified.getFirst().results()).noneMatch(result -> result.assessmentType() == AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(anonymous.getFirst().participation().student()).isNull();
+        assertThat(anonymous.getFirst().participation().team()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "foreign" + TEST_PREFIX + "tutor1", roles = "USER")
+    void submissionList_foreignTutorCannotAccessEitherAudience() throws Exception {
+        userUtilService.addUsers("foreign" + TEST_PREFIX, 0, 1, 0, 0);
+        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/assessed-by-me", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerByIdNeverAssessesEvenForInstructor() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "instructor1");
+        var response = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(response.model()).isEqualTo(submission.getModel());
+        assertThat(response.participation()).isNull();
+        assertThat(response.results()).isNullOrEmpty();
+        assertThat(response.submissionDate()).isNull();
+        assertThat(modelingSubmissionRepo.findByIdWithEagerResult(submission.getId()).orElseThrow().getResults()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void staffEditorDoesNotNameTheStudentForTutors() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        var latest = request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(latest.participation().student()).isNull();
+        var all = request.getList(url + "/submissions-with-results/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(all).isNotEmpty().allSatisfy(dto -> assertThat(dto.participation().student()).isNull());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void staffEditorNamesTheStudentForInstructors() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        var latest = request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(latest.participation().student()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerEditorsNeverElevateInstructorProjection() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "instructor1",
+                TEST_PREFIX + "tutor1");
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().plusDays(1));
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        assertThat(request.getList(url + "/submissions-with-results", HttpStatus.OK, ModelingSubmissionResponseDTO.class)).isEmpty();
+        var staff = request.getList(url + "/submissions-with-results/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(staff).hasSize(1);
+        assertThat(staff.getFirst().results()).hasSize(1);
+        assertThat(staff.getFirst().results().getFirst().assessor()).isNull();
+        assertThat(request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class).results()).isNullOrEmpty();
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusDays(1));
+        var owner = request.get(url + "/latest-modeling-submission", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(owner.results()).hasSize(1);
+        assertThat(owner.results().getFirst().assessor()).isNull();
+        var preview = request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(preview.results().getFirst().assessor()).isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerTimelineMasksExerciseSolutionsAndKeepsResultPublication(String owner) throws Exception {
+        classExercise.setExampleSolutionModel("Private solution model");
+        classExercise.setExampleSolutionExplanation("Private solution explanation");
+        classExercise.setGradingInstructions("Private grading instructions");
+        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        classExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(1));
+        exerciseRepository.save(classExercise);
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, generateSubmittedSubmission(), TEST_PREFIX + owner);
+        var participation = (StudentParticipation) submission.getParticipation();
+        var assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var athena = createResult(AssessmentType.AUTOMATIC_ATHENA, submission, participation, null);
+        var manual = createResult(AssessmentType.MANUAL, submission, participation, assessor);
+        String url = "/api/modeling/participations/" + participation.getId() + "/submissions-with-results";
+
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        var beforePublication = request.getList(url, HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(beforePublication).singleElement().satisfies(response -> {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactly(athena.getId());
+            assertOwnerTimelineExerciseIsFiltered(response);
+        });
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var staff = request.getList(url + "/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(staff).singleElement().satisfies(response -> {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(athena.getId(), manual.getId());
+            assertThat(response.participation().exercise().exampleSolutionModel()).isEqualTo("Private solution model");
+            assertThat(response.participation().exercise().exampleSolutionExplanation()).isEqualTo("Private solution explanation");
+            assertThat(response.participation().exercise().gradingInstructions()).isEqualTo("Private grading instructions");
+        });
+
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        var afterPublication = request.getList(url, HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(afterPublication).singleElement().satisfies(response -> {
+            assertThat(response.results()).extracting(ResultDTO::id).containsExactlyInAnyOrder(athena.getId(), manual.getId());
+            assertOwnerTimelineExerciseIsFiltered(response);
+        });
+        var storedExercise = (ModelingExercise) exerciseRepository.findByIdElseThrow(classExercise.getId());
+        assertThat(storedExercise.getExampleSolutionModel()).isEqualTo("Private solution model");
+        assertThat(storedExercise.getExampleSolutionExplanation()).isEqualTo("Private solution explanation");
+        assertThat(storedExercise.getGradingInstructions()).isEqualTo("Private grading instructions");
+        assertThat(submissionRepository.findByIdWithResultsElseThrow(submission.getId()).getResults()).extracting(Result::getId).containsExactlyInAnyOrder(athena.getId(),
+                manual.getId());
+        assertThat(resultRepository.findByIdElseThrow(manual.getId()).getAssessor().getId()).isEqualTo(assessor.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerTimelineMasksExamManagementContextWithoutChangingPersistedExercise(String owner) throws Exception {
+        var group = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
+        var exam = group.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(2));
+        exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam);
+        var exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, group);
+        exercise.setExampleSolutionModel("Private solution model");
+        exercise.setExampleSolutionExplanation("Private solution explanation");
+        exercise.setGradingInstructions("Private grading instructions");
+        exercise = exerciseRepository.save(exercise);
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(exercise, generateSubmittedSubmission(), TEST_PREFIX + owner,
+                TEST_PREFIX + "tutor1");
+        String url = "/api/modeling/participations/" + submission.getParticipation().getId() + "/submissions-with-results";
+
+        userUtilService.changeUser(TEST_PREFIX + owner);
+        var response = request.getList(url, HttpStatus.OK, ModelingSubmissionResponseDTO.class).getFirst();
+        assertThat(response.results()).extracting(ResultDTO::id).containsExactly(submission.getLatestResult().getId());
+        assertOwnerTimelineExerciseIsFiltered(response);
+        assertThat(response.participation().exercise().exerciseGroup().exam()).isNull();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var staff = request.getList(url + "/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class).getFirst();
+        assertThat(staff.participation().exercise().exerciseGroup().exam().id()).isEqualTo(exam.getId());
+        assertThat(staff.participation().exercise().exampleSolutionModel()).isEqualTo("Private solution model");
+        var storedExercise = (ModelingExercise) exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(storedExercise.getExerciseGroup().getExam().getId()).isEqualTo(exam.getId());
+        assertThat(storedExercise.getExampleSolutionModel()).isEqualTo("Private solution model");
+        assertThat(storedExercise.getExampleSolutionExplanation()).isEqualTo("Private solution explanation");
+        assertThat(storedExercise.getGradingInstructions()).isEqualTo("Private grading instructions");
+    }
+
+    private void assertOwnerTimelineExerciseIsFiltered(ModelingSubmissionResponseDTO response) {
+        assertThat(response.participation().exercise().exampleSolutionModel()).isNull();
+        assertThat(response.participation().exercise().exampleSolutionExplanation()).isNull();
+        assertThat(response.participation().exercise().gradingInstructions()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void staffAssessmentWithResultCannotFallBackToOwner() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "tutor1",
+                TEST_PREFIX + "tutor1");
+        request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment?resultId=" + submission.getLatestResult().getId(), HttpStatus.FORBIDDEN,
+                ModelingSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ownerExamEditorsRespectPublicationEvenForInstructor() throws Exception {
+        var group = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
+        var exam = group.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(2));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam);
+        var exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, group);
+        group.addExercise(exercise);
+        exerciseGroupRepository.save(group);
+        exercise = exerciseRepository.save(exercise);
+        var submission = modelingExerciseUtilService.addModelingSubmission(exercise, generateSubmittedSubmission(), TEST_PREFIX + "instructor1");
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        request.get(url + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.getList(url + "/submissions-with-results", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        request.getList(url + "/submissions-with-results/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(CourseRole.class)
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void modelingStaffReadsUseCurrentOwningCourseRole(CourseRole role) throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student2",
+                TEST_PREFIX + "tutor1");
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, course, role);
+        var status = role == CourseRole.STUDENT ? HttpStatus.FORBIDDEN : HttpStatus.OK;
+        var editor = "/api/modeling/participations/" + submission.getParticipation().getId();
+        var assessment = "/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment?withoutResults=true";
+        request.get(assessment, status, ModelingSubmissionResponseDTO.class);
+        request.get(editor + "/latest-modeling-submission/for-staff", status, ModelingSubmissionResponseDTO.class);
+        request.getList(editor + "/submissions-with-results/for-staff", status, ModelingSubmissionResponseDTO.class);
+        request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.get(editor + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.getList(editor + "/submissions-with-results", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        userUtilService.unenrollUserFromCourse(caller, course);
+        userUtilService.enrollUserInCourse(caller, textExercise.getCourseViaExerciseGroupOrCourseMember(), CourseRole.INSTRUCTOR);
+        request.get(assessment, HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.get(editor + "/latest-modeling-submission/for-staff", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.getList(editor + "/submissions-with-results/for-staff", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void modelingOwnerEditorsRetainMembershipPolicyAfterRevocation() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "instructor1");
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course);
+        request.get(url + "/latest-modeling-submission", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        request.getList(url + "/submissions-with-results", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.getList(url + "/submissions-with-results/for-staff", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void staffAssessmentRejectsResultOfAnotherSubmission() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        var other = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student2",
+                TEST_PREFIX + "tutor1");
+        request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment?resultId=" + other.getLatestResult().getId(), HttpStatus.BAD_REQUEST,
+                ModelingSubmissionResponseDTO.class);
+        assertThat(modelingSubmissionRepo.findByIdWithEagerResult(submission.getId()).orElseThrow().getResults()).extracting(Result::getId)
+                .containsExactly(submission.getLatestResult().getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseRole.class, names = { "STUDENT", "TEACHING_ASSISTANT", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void modelingStaffEditorsAuthorizeOwningCourseBeforeExerciseType(CourseRole role) throws Exception {
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+        var caller = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var owningCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        userUtilService.unenrollUserFromCourse(caller, owningCourse);
+        // The instructor case has membership only in another course.
+        var membershipCourse = role == CourseRole.INSTRUCTOR ? course : owningCourse;
+        userUtilService.unenrollUserFromCourse(caller, membershipCourse);
+        userUtilService.enrollUserInCourse(caller, membershipCourse, role);
+        var url = "/api/modeling/participations/" + participation.getId();
+        var status = role == CourseRole.TEACHING_ASSISTANT ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN;
+        request.get(url + "/latest-modeling-submission/for-staff", status, ModelingSubmissionResponseDTO.class);
+        request.getList(url + "/submissions-with-results/for-staff", status, ModelingSubmissionResponseDTO.class);
+        assertThat(studentParticipationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).getSubmissions()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void byIdReadsRejectExerciseLinkedExampleWithoutParticipation(boolean staffView) throws Exception {
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true));
+        var submissionId = example.getSubmission().getId();
+        assertThat(example.getSubmission().getParticipation()).isNull();
+        request.get("/api/modeling/modeling-submissions/" + submissionId + (staffView ? "/for-assessment" : ""), HttpStatus.NOT_FOUND, ModelingSubmissionResponseDTO.class);
+        var storedExample = exampleSubmissionRepository.findById(example.getId()).orElseThrow();
+        assertThat(storedExample.getExercise().getId()).isEqualTo(classExercise.getId());
+        assertThat(storedExample.getSubmission().getId()).isEqualTo(submissionId);
+        var storedSubmission = (ModelingSubmission) submissionRepository.findWithEagerResultsAndAssessorById(submissionId).orElseThrow();
+        assertThat(storedSubmission.isExampleSubmission()).isTrue();
+        assertThat(storedSubmission.getParticipation()).isNull();
+        assertThat(storedSubmission.getResults()).isEmpty();
+        assertThat(storedSubmission.getModel()).isEqualTo(validModel);
+    }
+
 }

@@ -18,12 +18,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
@@ -49,22 +47,16 @@ public class TextExerciseFeedbackService {
 
     private final ParticipationService participationService;
 
-    private final ResultService resultService;
-
-    private final ResultRepository resultRepository;
-
-    private final TextBlockService textBlockService;
+    private final AthenaFeedbackRequestRepository athenaFeedbackRequestRepository;
 
     private final UserRepository userRepository;
 
-    public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, ResultService resultService, ResultRepository resultRepository,
-            ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService, UserRepository userRepository) {
+    public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, AthenaFeedbackRequestRepository athenaFeedbackRequestRepository,
+            ResultWebsocketService resultWebsocketService, ParticipationService participationService, UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
-        this.resultService = resultService;
-        this.resultRepository = resultRepository;
+        this.athenaFeedbackRequestRepository = athenaFeedbackRequestRepository;
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
-        this.textBlockService = textBlockService;
         this.userRepository = userRepository;
     }
 
@@ -96,7 +88,12 @@ public class TextExerciseFeedbackService {
         }
         // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
         User requestingUser = userRepository.getUser();
-        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise, requestingUser));
+        try {
+            scheduleFeedback(textSubmission, participation, textExercise, requestingUser);
+        }
+        catch (BadRequestAlertException duplicateOrLimit) {
+            log.debug("Skipping duplicate or rate-limited test-exam feedback for submission {}", submission.getId());
+        }
     }
 
     /**
@@ -125,35 +122,44 @@ public class TextExerciseFeedbackService {
             }
 
             User requestingUser = userRepository.getUser();
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise, requestingUser));
+            scheduleFeedback(textSubmission, participation, textExercise, requestingUser);
         }
         return participation;
+    }
+
+    private void scheduleFeedback(TextSubmission submission, StudentParticipation participation, TextExercise exercise, User requestingUser) {
+        Result pending = athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission);
+        submission.addResult(pending);
+        participation.getSubmissions().stream().filter(existing -> existing.getId().equals(submission.getId())).forEach(existing -> existing.addResult(pending));
+        notifyResult(participation, pending);
+        CompletableFuture.runAsync(() -> generateAutomaticNonGradedFeedback(submission, participation, exercise, requestingUser, pending));
+    }
+
+    private void notifyResult(StudentParticipation participation, Result result) {
+        try {
+            resultWebsocketService.broadcastNewResult(participation, result);
+        }
+        catch (RuntimeException notificationFailure) {
+            // The durable state is authoritative. A disconnected websocket must not prevent work or invalidate success.
+            log.warn("Could not broadcast Athena feedback state for result {}", result.getId(), notificationFailure);
+        }
     }
 
     /**
      * Generates automatic non-graded feedback for a text exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param textSubmission the text submission associated with the student participation.
-     * @param participation  the student participation associated with the exercise.
-     * @param textExercise   the text exercise object.
-     * @param requestingUser the user that requested the feedback generation
+     * @param textSubmission  the text submission associated with the student participation.
+     * @param participation   the student participation associated with the exercise.
+     * @param textExercise    the text exercise object.
+     * @param requestingUser  the user that requested the feedback generation
+     * @param automaticResult the durable reservation owned by this worker
      */
-    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User requestingUser) {
+    private void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User requestingUser,
+            Result automaticResult) {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
-        // athena takes over the control here
-        Result automaticResult = new Result();
-        automaticResult.setExerciseId(textExercise.getId());
-        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(true);
-        automaticResult.setScore(0.0);
-        automaticResult.setSuccessful(null);
-        automaticResult.setSubmission(textSubmission);
         try {
-            // This broadcast signals the client that feedback is being generated, does not save empty result
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
-
             log.debug("Submission id: {}", textSubmission.getId());
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
@@ -193,30 +199,24 @@ public class TextExerciseFeedbackService {
                 totalFeedbacksScore += feedback.getCredits();
             }
             totalFeedbacksScore = totalFeedbacksScore / textExercise.getMaxPoints() * 100;
-            automaticResult.setCompletionDate(ZonedDateTime.now());
-            automaticResult.setScore(Math.clamp(totalFeedbacksScore, 0, 100));
-
-            // For Athena automatic results successful = true will mean that the generation was successful
-            // undefined in progress and false it failed
-            automaticResult.setSuccessful(true);
-
-            automaticResult = this.resultRepository.save(automaticResult);
-            resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            textBlockService.saveAll(textBlocks);
-            textSubmission.setBlocks(textBlocks);
-            // Only the result: it owns the association, and merging the detached submission could undo a newer save.
-            automaticResult = this.resultRepository.save(automaticResult);
-            // This broadcast signals the client that feedback generation succeeded, result is saved in this case only
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
+            double score = Math.clamp(totalFeedbacksScore, 0, 100);
+            if (athenaFeedbackRequestRepository.completeAthenaFeedbackRequest(automaticResult, score, feedbacks, textBlocks)) {
+                automaticResult.setCompletionDate(ZonedDateTime.now());
+                automaticResult.setScore(score);
+                automaticResult.setRated(true);
+                automaticResult.setSuccessful(true);
+                automaticResult.setFeedbacks(feedbacks);
+                textSubmission.setBlocks(textBlocks);
+                notifyResult(participation, automaticResult);
+            }
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
-            // Broadcast the failed result but don't save, note that successful = false is normally used to indicate a score < 100
-            // but since we do not differentiate for athena feedback we use it to indicate a failed generation
-            automaticResult.setSuccessful(false);
-            automaticResult.setCompletionDate(null);
-            // This broadcast signals the client that feedback generation failed, does not save empty result
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
+            if (athenaFeedbackRequestRepository.failAthenaFeedbackRequest(automaticResult)) {
+                automaticResult.setSuccessful(false);
+                automaticResult.setCompletionDate(ZonedDateTime.now());
+                notifyResult(participation, automaticResult);
+            }
         }
     }
 }

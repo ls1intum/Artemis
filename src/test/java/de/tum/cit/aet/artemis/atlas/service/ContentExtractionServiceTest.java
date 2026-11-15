@@ -14,9 +14,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -131,11 +136,121 @@ class ContentExtractionServiceTest {
 
     @Test
     void extractContent_unsupportedLearningObjectType_throwsIllegalArgumentException() {
-        TextUnit textUnit = new TextUnit();
-        textUnit.setName("Intro");
+        // A LearningObject that is neither an exercise nor a lecture-unit subtype hits the defensive default branch.
+        LearningObject unsupported = mock(LearningObject.class);
 
-        assertThatThrownBy(() -> contentExtractionService.extractContent(textUnit)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> contentExtractionService.extractContent(unsupported)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unsupported learning object type");
+    }
+
+    @Test
+    void extractContent_exerciseUnit_throwsBecauseNeverOrchestrated() {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+
+        assertThatThrownBy(() -> contentExtractionService.extractContent(exerciseUnit)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ExerciseUnit is never orchestrated");
+    }
+
+    @Test
+    void extractContent_textUnit_populatesTitleAndContent() {
+        TextUnit unit = new TextUnit();
+        unit.setName("Recursion basics");
+        unit.setContent("A recursive function calls itself until a base case is reached.");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Recursion basics");
+        assertThat(result.extractedLearningText()).isEqualTo("A recursive function calls itself until a base case is reached.");
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "text");
+    }
+
+    @Test
+    void extractContent_textUnit_blankContent_returnsEmptyLearningText() {
+        TextUnit unit = new TextUnit();
+        unit.setName("Empty");
+        unit.setContent("   ");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.extractedLearningText()).isEmpty();
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "text");
+    }
+
+    @Test
+    void isLectureUnitEligibleForOrchestration_textUnitWithContent_isEligible() {
+        TextUnit unit = new TextUnit();
+        unit.setContent("A recursive function calls itself until a base case is reached.");
+
+        assertThat(ContentExtractionService.isLectureUnitEligibleForOrchestration(unit)).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t\n" })
+    void isLectureUnitEligibleForOrchestration_blankTextUnit_isIneligible(String content) {
+        // Blank text extracts to an empty learning text that batch orchestration drops, so it must never be queued or offered.
+        TextUnit unit = new TextUnit();
+        unit.setContent(content);
+
+        assertThat(ContentExtractionService.isLectureUnitEligibleForOrchestration(unit)).isFalse();
+    }
+
+    @Test
+    void extractContent_onlineUnit_usesDescriptionAndRecordsSource() {
+        OnlineUnit unit = new OnlineUnit();
+        unit.setName("Spring docs");
+        unit.setDescription("Read the dependency-injection chapter.");
+        unit.setSource("https://spring.io/guides");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Spring docs");
+        assertThat(result.extractedLearningText()).isEqualTo("Read the dependency-injection chapter.");
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "online").containsEntry("source", "https://spring.io/guides");
+    }
+
+    @Test
+    void extractContent_onlineUnit_blankSource_omitsSourceMetadata() {
+        OnlineUnit unit = new OnlineUnit();
+        unit.setName("Notes");
+        unit.setDescription("Some notes.");
+        unit.setSource("  ");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "online").doesNotContainKey("source");
+    }
+
+    @Test
+    void extractContent_attachmentVideoUnit_usesDescription() {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setName("Lecture 3 slides");
+        unit.setDescription("Covers hashing and collision resolution.");
+        unit.setVideoSource(" https://videos.example/lecture-3 ");
+        Attachment attachment = new Attachment();
+        attachment.setLink(" /api/core/files/lecture-3.pdf ");
+        unit.setAttachment(attachment);
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Lecture 3 slides");
+        assertThat(result.extractedLearningText()).isEqualTo("Covers hashing and collision resolution.");
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "attachment").containsEntry("videoSource", "https://videos.example/lecture-3")
+                .containsEntry("attachmentLink", "lecture-3.pdf");
+    }
+
+    @Test
+    void extractContent_attachmentVideoUnit_blankDescription_returnsEmptyLearningText() {
+        // A file/video-only unit carries no description; the orchestrator treats the empty learning text as "skip".
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setName("Lecture recording");
+        unit.setDescription(null);
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Lecture recording");
+        assertThat(result.extractedLearningText()).isEmpty();
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "attachment");
     }
 
     @Test
@@ -352,4 +467,169 @@ class ContentExtractionServiceTest {
         assertThat(result.metadata()).containsEntry("exerciseType", "file-upload").doesNotContainKey("filePattern");
     }
 
+    @Test
+    void quizRenderingSkipsIncompleteOptionsAndMappingsWithoutLosingQuestionStructure() {
+        var quiz = new QuizExercise();
+        var mc = new de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion();
+        mc.setTitle(null);
+        mc.setText(" ");
+        mc.setHint(" Hint ");
+        mc.setExplanation(" Explanation ");
+        var answer = new de.tum.cit.aet.artemis.quiz.domain.AnswerOption();
+        answer.setText(null);
+        answer.setIsCorrect(false);
+        answer.setExplanation(" ");
+        mc.setAnswerOptions(List.of(answer));
+        var shortAnswer = new ShortAnswerQuestion();
+        shortAnswer.setTitle(" ");
+        var invalidSpot = new ShortAnswerMapping();
+        invalidSpot.setSolution(new ShortAnswerSolution());
+        var invalidSolution = new ShortAnswerMapping();
+        invalidSolution.setSpot(new ShortAnswerSpot());
+        shortAnswer.setCorrectMappings(Set.of(invalidSpot, invalidSolution));
+        var nullSolution = new ShortAnswerSolution();
+        nullSolution.setText(null);
+        var blankSolution = new ShortAnswerSolution();
+        blankSolution.setText(" ");
+        shortAnswer.setSolutions(List.of(nullSolution, blankSolution));
+        var emptyMc = new de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion();
+        emptyMc.setAnswerOptions(null);
+        var emptyShortAnswer = new ShortAnswerQuestion();
+        emptyShortAnswer.setCorrectMappings(null);
+        emptyShortAnswer.setSolutions(null);
+        quiz.setQuizQuestions(List.of(mc, shortAnswer, emptyMc, emptyShortAnswer));
+        var text = contentExtractionService.extractContent(quiz).extractedLearningText();
+        assertThat(text)
+                .isEqualTo("Question 1\nHint: Hint\nExplanation: Explanation\nAnswer options:\n-  [incorrect]\n\n\nQuestion 2\nAccepted answers:\n\n\nQuestion 3\n\n\nQuestion 4");
+    }
+
+    @Test
+    void dragAndDropRenderingFiltersBrokenMappingsAndSortsValidZones() {
+        var quiz = new QuizExercise();
+        var question = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion();
+        var item = new de.tum.cit.aet.artemis.quiz.domain.DragItem();
+        item.setText(" value ");
+        var blank = new de.tum.cit.aet.artemis.quiz.domain.DragItem();
+        blank.setText(" ");
+        var nullText = new de.tum.cit.aet.artemis.quiz.domain.DragItem();
+        var zone = new de.tum.cit.aet.artemis.quiz.domain.DropLocation();
+        zone.setId(1L);
+        var outside = new de.tum.cit.aet.artemis.quiz.domain.DropLocation();
+        outside.setId(2L);
+        question.setDragItems(List.of(blank, nullText, item));
+        question.setDropLocations(List.of(zone));
+        var valid = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping();
+        valid.setDragItem(item);
+        valid.setDropLocation(zone);
+        var missingItem = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping();
+        missingItem.setDropLocation(zone);
+        var missingZone = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping();
+        missingZone.setDragItem(item);
+        var outsideZone = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping();
+        outsideZone.setDragItem(item);
+        outsideZone.setDropLocation(outside);
+        var emptyItem = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping();
+        emptyItem.setDragItem(blank);
+        emptyItem.setDropLocation(zone);
+        var nullItemText = new de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping();
+        nullItemText.setDragItem(nullText);
+        nullItemText.setDropLocation(zone);
+        question.setCorrectMappings(Set.of(valid, missingItem, missingZone, outsideZone, emptyItem, nullItemText));
+        quiz.setQuizQuestions(List.of(question));
+        assertThat(contentExtractionService.extractContent(quiz).extractedLearningText())
+                .isEqualTo("Question 1\nDrag items:\n- value\nCorrect drop mapping:\n- value -> drop zone 1");
+        question.setCorrectMappings(Set.of(outsideZone));
+        assertThat(contentExtractionService.extractContent(quiz).extractedLearningText()).isEqualTo("Question 1\nDrag items:\n- value");
+        question.setDropLocations(null);
+        assertThat(contentExtractionService.extractContent(quiz).extractedLearningText()).isEqualTo("Question 1\nDrag items:\n- value");
+        question.setDragItems(null);
+        assertThat(contentExtractionService.extractContent(quiz).extractedLearningText()).isEqualTo("Question 1");
+    }
+
+    @Test
+    void shortAnswerMappingWithMissingSpotNumberAndTextStillRendersDeterministically() {
+        var quiz = new QuizExercise();
+        var question = new ShortAnswerQuestion();
+        var mapping = new ShortAnswerMapping();
+        var spot = new ShortAnswerSpot();
+        var solution = new ShortAnswerSolution();
+        question.setSpots(List.of(spot));
+        question.setSolutions(List.of(solution));
+        mapping.setSpot(spot);
+        mapping.setSolution(solution);
+        question.setCorrectMappings(Set.of(mapping));
+        quiz.setQuizQuestions(List.of(question));
+        assertThat(contentExtractionService.extractContent(quiz).extractedLearningText()).isEqualTo("Question 1\nCorrect answers by spot:\n- Spot 0:");
+    }
+
+    @Test
+    void attachmentMetadataOmitsMissingOrBlankLinksAndSources() {
+        var unit = new AttachmentVideoUnit();
+        unit.setVideoSource(" ");
+        var attachment = new Attachment();
+        unit.setAttachment(attachment);
+        assertThat(contentExtractionService.extractContent(unit).metadata()).doesNotContainKeys("videoSource", "attachmentLink");
+        attachment.setLink(" ");
+        assertThat(contentExtractionService.extractContent(unit).metadata()).doesNotContainKey("attachmentLink");
+        var online = new OnlineUnit();
+        online.setSource(" ");
+        assertThat(contentExtractionService.extractContent(online).metadata()).doesNotContainKey("source");
+    }
+
+    @Test
+    void courseLectureEligibilityRequiresMatchingLectureCourseAndNonblankLearningText() {
+        var unit = new TextUnit();
+        unit.setContent("Teach Java");
+        assertThat(ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(null, 1L)).isFalse();
+        assertThat(ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(unit, 1L)).isFalse();
+        var lecture = new de.tum.cit.aet.artemis.lecture.domain.Lecture();
+        unit.setLecture(lecture);
+        assertThat(ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(unit, 1L)).isFalse();
+        var course = new de.tum.cit.aet.artemis.course.domain.Course();
+        course.setId(2L);
+        lecture.setCourse(course);
+        assertThat(ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(unit, 1L)).isFalse();
+        course.setId(1L);
+        assertThat(ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(unit, 1L)).isTrue();
+        unit.setContent(" ");
+        assertThat(ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(unit, 1L)).isFalse();
+    }
+
+    @Test
+    void persistedQuizReloadsFullInstructorQuestionsInsteadOfUsingThinEntity() {
+        var thin = new QuizExercise();
+        thin.setId(9L);
+        thin.setTitle("Thin");
+        var loaded = new QuizExercise();
+        loaded.setId(9L);
+        loaded.setTitle("Loaded quiz");
+        var question = new de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion();
+        question.setTitle("Question");
+        question.setText("Text");
+        loaded.setQuizQuestions(List.of(question));
+        org.mockito.Mockito.when(quizExerciseRepository.findByIdWithQuestionsElseThrow(9L)).thenReturn(loaded);
+        var result = contentExtractionService.extractContent(thin);
+        assertThat(result.title()).isEqualTo("Loaded quiz");
+        assertThat(result.extractedLearningText()).isEqualTo("Question 1: Question\nText");
+        assertThat(result.metadata()).containsEntry("questionCount", "1");
+    }
+
+    @Test
+    void explicitRawExtractionPreservesTextForAllNarrativeLearningObjectTypes() {
+        var text = new TextExercise();
+        text.setProblemStatement(" Statement ");
+        text.setExampleSolution(" Solution ");
+        assertThat(contentExtractionService.extractContent(text, false).extractedLearningText()).isEqualTo(" Statement \n\nExample solution:\nSolution");
+        var model = new ModelingExercise();
+        model.setProblemStatement(" Model statement ");
+        assertThat(contentExtractionService.extractContent(model, false).extractedLearningText()).isEqualTo(" Model statement ");
+        var file = new FileUploadExercise();
+        file.setProblemStatement(" Upload statement ");
+        assertThat(contentExtractionService.extractContent(file, false).extractedLearningText()).isEqualTo(" Upload statement ");
+        var unit = new TextUnit();
+        unit.setContent(" Unit content ");
+        var lecture = new de.tum.cit.aet.artemis.lecture.domain.Lecture();
+        unit.setLecture(lecture);
+        assertThat(contentExtractionService.extractContent(unit, false).extractedLearningText()).isEqualTo(" Unit content ");
+    }
 }

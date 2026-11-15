@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -58,14 +59,17 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
             new TestProvider("HASKELL?sequentialRuns=true&examMode=false", 3),
             new TestProvider("OCAML?examMode=false", 3),
             new TestProvider("SWIFT/PLAIN?examMode=false", 4),
-            new TestProvider("SWIFT/PLAIN?staticAnalysis=true&examMode=false", 5)
+            new TestProvider("SWIFT/PLAIN?staticAnalysis=true&examMode=false", 5),
+            new TestProvider("PYTHON?examMode=false", 2),
+            new TestProvider("PYTHON?sequentialRuns=true&examMode=false", 3),
+            new TestProvider("PYTHON?staticAnalysis=true&examMode=false", 3)
         ).map(provider -> Arguments.of(provider.templateKey(), provider.expectedPhases()));
         // @formatter:on
     }
 
     @ParameterizedTest
     @MethodSource("templateProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildPhasesTemplateFile(String templateKey, int expectedPhases) throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -73,13 +77,13 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetNonExistingBuildPhasesTemplateFile() throws Exception {
         request.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&examMode=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFactTemplateUsesConfiguredDockerImage() throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/FACT?examMode=false", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -87,11 +91,26 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGccTemplateUsesConfiguredDockerImage() throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(C_DOCKER_IMAGE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "PYTHON?examMode=false", "PYTHON?sequentialRuns=true&examMode=false", "PYTHON?staticAnalysis=true&examMode=false" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPythonTemplatesOnlyCollectOfficialTestDirectories(String templateKey) throws Exception {
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
+        assertThat(buildPlanPhases).isNotNull();
+        var pytestScripts = buildPlanPhases.phases().stream().map(phase -> phase.script()).filter(script -> script.startsWith("pytest")).toList();
+        assertThat(pytestScripts).isNotEmpty();
+        // A bare "pytest" would also collect test files and conftest.py from the student submission in the "assignment" directory
+        // The default template runs both directories in one call, the sequential template runs one directory per phase
+        assertThat(pytestScripts).allSatisfy(script -> assertThat(script).containsPattern("^pytest (structural behavior|structural/\\*|behavior/\\*) "));
+        assertThat(pytestScripts).anyMatch(script -> script.contains("structural"));
+        assertThat(pytestScripts).anyMatch(script -> script.contains("behavior"));
     }
 
     void assertBuildPlanPhasesAreCorrect(BuildPlanPhasesDTO buildPlanPhases, int expectedPhases) {
@@ -102,4 +121,32 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
             assertThat(phase.script()).isNotBlank();
         }
     }
+
+    @Autowired
+    private de.tum.cit.aet.artemis.core.service.ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService buildScriptProviderService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void malformedAdministratorTemplateReturnsNotFound() throws Exception {
+        Object original = org.springframework.test.util.ReflectionTestUtils.getField(resourceLoaderService, "templateFileSystemPath");
+        String filename = buildScriptProviderService.buildTemplateName(java.util.Optional.of(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE), true, true,
+                "yaml");
+        var file = tempPath.resolve("templates/phases/java").resolve(filename);
+        java.nio.file.Files.createDirectories(file.getParent());
+        org.apache.commons.io.FileUtils.writeStringToFile((file).toFile(), "phases: not-a-list", java.nio.charset.StandardCharsets.UTF_8);
+        try {
+            org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", java.util.Optional.of(tempPath));
+            request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE")
+                    .param("staticAnalysis", "true").param("sequentialRuns", "true").param("examMode", "false"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        }
+        finally {
+            org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", original);
+        }
+    }
+
 }

@@ -5,13 +5,19 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumUiButtonDirective, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiSelectComponent,
+} from '@tumaet/ui-angular';
 /**
  * Form structure for system notification editing.
  * Note: FormControl values can be null when initialized with undefined.
@@ -36,15 +42,15 @@ interface SystemNotificationForm {
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        DatePickerControlDirective,
         FaIconComponent,
-        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        TumUiCheckboxComponent,
-        TumUiInputDirective,
-        TumUiSelectComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -75,14 +81,17 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     readonly form = new FormGroup<SystemNotificationForm>(
         {
             id: new FormControl<number | undefined>(undefined),
-            title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(50)]),
-            text: new FormControl<string | undefined>(undefined),
+            title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(255)]),
+            text: new FormControl<string | undefined>(undefined, [Validators.maxLength(2000)]),
             type: new FormControl<SystemNotificationType | undefined>(undefined, [Validators.required]),
             notificationDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
             expireDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
         },
         { validators: this.validateDates.bind(this) },
     );
+
+    protected readonly titleControl = this.form.controls.title;
+    protected readonly textControl = this.form.controls.text;
 
     /** Icons */
     protected readonly faSave = faSave;

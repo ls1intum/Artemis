@@ -2,6 +2,7 @@
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header" [hidden]="showPreview()">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed()"
@@ -11,6 +12,7 @@
             </button>
             <div class="question-title">
                 <input
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate"
                     data-testid="mc-question-title"
                     pInputText
                     [(ngModel)]="question().title"
@@ -21,9 +23,11 @@
             <div class="question-card-header-inputs">
                 <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <p-inputnumber
+                    <jhi-points-input
                         inputId="score"
-                        styleClass="score-input"
+                        class="score-input"
+                        [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                        fluid
                         [(ngModel)]="question().points!"
                         (ngModelChange)="questionUpdated.emit()"
                         [min]="0"
@@ -34,7 +38,12 @@
                     @if (hyperionEnabled()) {
                         <button
                             type="button"
+                            tumAetUiButton
+                            size="small"
+                            severity="warn"
+                            variant="outlined"
                             class="question-action-btn question-action-btn--refine"
+                            data-testid="quiz-question-refine"
                             attr.aria-label="{{ 'artemisApp.quizExercise.refineQuestion' | artemisTranslate }}"
                             (click)="refineAndExpand()"
                         >
@@ -43,7 +52,12 @@
                     }
                     <button
                         type="button"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
                         class="question-action-btn question-action-btn--delete"
+                        data-testid="quiz-question-delete"
                         attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
                         (click)="deleteQuestion()"
                     >
@@ -58,6 +72,7 @@
     } @else {
         <div class="question-card-header-reevaluation">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed()"
@@ -85,35 +100,7 @@
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge bg-info align-text-top" style="width: 60px">MC</span></h3>
             </div>
-            <div class="question-reevaluation-actions">
-                <button
-                    id="move-up-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="moveUp()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <button
-                    id="move-down-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="moveDown()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
-                <button
-                    id="reset-button"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    (click)="resetQuestion()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faUndo" />
-                </button>
-            </div>
+            <div jhi-question-reevaluation-actions class="question-reevaluation-actions" (moveUp)="moveUp()" (moveDown)="moveDown()" (resetQuestion)="resetQuestion()"></div>
         </div>
     }
 
@@ -138,7 +125,13 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled style="width: 100%" />
+                        <jhi-points-input
+                            [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            fluid
+                            [ngModel]="question().points"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="true"
+                        />
                     </div>
                 </div>
             }
@@ -172,18 +165,31 @@
             @if (reEvaluationInProgress()) {
                 <div class="col-12 col-md-3 d-flex align-items-center gap-2">
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="question().invalid"
                         (click)="question().invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="!question().invalid"
                         [disabled]="question().invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                     ></button>
-                    <div id="delete-button" class="delete-button flex-shrink-0" (click)="deleteQuestion()">
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button flex-shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction186
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                    >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>

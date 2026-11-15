@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLayerGroup, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +24,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -81,9 +82,10 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
  */
 export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDate' | 'isTutorialLecture'>;
 
-@Injectable({
-    providedIn: 'root',
-})
+/** The exam fields the sidebar renders; see {@link SidebarLecture}. */
+export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'examMode'>;
+
+@Service()
 export class CourseOverviewService {
     private participationService = inject(ParticipationService);
     private translate = inject(TranslateService);
@@ -110,26 +112,26 @@ export class CourseOverviewService {
             const earliestStart = earliest.nextSession?.start;
             const currentStart = current.nextSession?.start;
             return currentStart?.isBefore(earliestStart) ? current : earliest;
-        });
+        }, futureGroups[0]);
     }
 
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
-            return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return lectures.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b), lectures[0]);
         }
         return undefined;
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
         if (exams && exams.length) {
-            return exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return exams.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b), exams[0]);
         }
         return undefined;
     }
 
     getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
         if (exercises && exercises.length) {
-            return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
+            return exercises.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b), exercises[0]);
         }
         return undefined;
     }
@@ -258,7 +260,13 @@ export class CourseOverviewService {
         return groupedExerciseGroups;
     }
 
-    buildGroupedExerciseData(exercises: Exercise[]): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
+    /**
+     * Builds the cards of the exercise sidebar.
+     *
+     * @param exercises the exercises of the course
+     * @param course what every card needs of the course of the exercises for the accuracy of the score in its result, as the exercises of the course overview have no course
+     */
+    buildGroupedExerciseData(exercises: Exercise[], course?: CourseScoreAccuracy): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
         for (const group of buildGroupsFromExercises(exercises)) {
             for (const member of group.exercises ?? []) {
@@ -283,7 +291,7 @@ export class CourseOverviewService {
                     ungroupedData.push(card);
                 }
             } else {
-                const card = this.mapExerciseToSidebarCardElement(exercise);
+                const card = this.mapExerciseToSidebarCardElement(exercise, course);
                 groupedData[this.getCorrespondingExerciseGroupByDate(exercise)].entityData.push(card);
                 ungroupedData.push(card);
             }
@@ -498,6 +506,11 @@ export class CourseOverviewService {
         }
         let averageAttendanceRatio: number | undefined;
         let attendanceText: string | undefined;
+        // The list endpoint sends no sessions, only this server-computed average of the last completed sessions (students get it too).
+        if (tutorialGroup.averageAttendance !== undefined && tutorialGroup.averageAttendance !== null && capacity > 0) {
+            averageAttendanceRatio = tutorialGroup.averageAttendance / capacity;
+            return [`Ø ${(averageAttendanceRatio * 100).toFixed(0)}%`, averageAttendanceRatio];
+        }
         const sessionsWithAttendance = tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
         if (sessionsWithAttendance.length !== 0) {
             const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
@@ -541,7 +554,7 @@ export class CourseOverviewService {
         return [undefined, undefined];
     }
 
-    mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
+    mapExerciseToSidebarCardElement(exercise: Exercise, course?: CourseScoreAccuracy): SidebarCardElement {
         return {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
@@ -550,6 +563,7 @@ export class CourseOverviewService {
             icon: getIcon(exercise.type),
             difficulty: exercise.difficulty,
             exercise: exercise,
+            course,
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,

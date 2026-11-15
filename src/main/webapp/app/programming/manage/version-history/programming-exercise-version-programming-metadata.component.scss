@@ -29,21 +29,14 @@
     letter-spacing: 0.02em;
 }
 
-// ::ng-deep is required to style PrimeNG Button internals (no public API for these overrides)
-:host ::ng-deep .metadata-commit__button.p-button {
+.metadata-commit__button {
     min-width: 1.75rem;
     height: 1.75rem;
     padding: 0.15rem;
-    color: var(--text-color-secondary);
-}
 
-:host ::ng-deep .metadata-commit__button.p-button:hover {
-    color: var(--text-color);
-    background: var(--surface-hover);
-}
-
-:host ::ng-deep .metadata-commit__button fa-icon {
-    font-size: 0.9rem;
+    fa-icon {
+        font-size: 0.9rem;
+    }
 }
 
 .metadata-row__value--empty {

@@ -15,6 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -44,6 +45,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 public class Feedback extends DomainObject {
 
     public static final int MAX_REFERENCE_LENGTH = 2000;
+
+    /**
+     * Upper bound for the absolute credits of a single manual feedback that is not linked to a grading instruction, matching the points input of the assessment editor.
+     */
+    public static final int MAX_MANUAL_CREDITS = 100;
 
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
@@ -105,7 +111,8 @@ public class Feedback extends DomainObject {
     @Column(name = "visibility")
     private Visibility visibility;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "result_id", nullable = false)
     @JsonIgnoreProperties("feedbacks")
     @Parent
     private Result result;
@@ -522,5 +529,13 @@ public class Feedback extends DomainObject {
     @Override
     public int hashCode() {
         return Feedback.class.hashCode();
+    }
+
+    /**
+     * Id-based equality as inherited from {@link DomainObject}; declared here so that it is visibly paired with the constant {@link #hashCode()}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
     }
 }

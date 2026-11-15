@@ -25,12 +25,26 @@
         }
     }
 
-    .card-title {
-        overflow: hidden;
-        padding-bottom: 1px;
+    // The flex item that holds the title has to be allowed to shrink below its content width. Otherwise a long word
+    // keeps it wider than the card and the title overflows instead of wrapping.
+    .course-title-container {
+        min-width: 0;
+    }
 
-        // matches 4 lines
-        max-height: 76px;
+    .card-title {
+        // Three lines (3 * 1.2 * 1.25rem = 72px) fit into the 85px header. The clamp ends the title with an ellipsis,
+        // where a fixed max-height cut the fourth line in half. The full title is available as tooltip.
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        overflow: hidden;
+
+        // break a word that is wider than the card rather than overflowing it
+        overflow-wrap: anywhere;
+
+        // the title is centered vertically, so it must not carry the bottom margin of Bootstrap's .card-title
+        margin-bottom: 0;
     }
 
     .course-circle {

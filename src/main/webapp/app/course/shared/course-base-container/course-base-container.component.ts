@@ -22,11 +22,20 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, MODULE_FEATURE_TUTORIALGROUP, PROFILE_LOCALCI } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATHENA,
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_LECTURE,
+    MODULE_FEATURE_LTI,
+    MODULE_FEATURE_TUTORIALGROUP,
+    PROFILE_LOCALCI,
+} from 'app/app.constants';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -52,7 +61,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseManagementService = inject(CourseManagementService);
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
-    protected metisConversationService = inject(MetisConversationService);
+    protected courseConversationsService = inject(CourseConversationsService);
     protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
@@ -75,6 +84,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     atlasEnabled: boolean = false;
     lectureEnabled: boolean = false;
     irisEnabled: boolean = false;
+    hyperionEnabled: boolean = false;
+    athenaEnabled: boolean = false;
     ltiEnabled: boolean = false;
     tutorialGroupEnabled: boolean = false;
     localCIActive: boolean = false;
@@ -135,7 +146,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeBaseCourseContainerComponent();
+    }
+
+    protected async initializeBaseCourseContainerComponent(): Promise<void> {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.isSidebarCollapsed.set(true);
         });
@@ -149,6 +164,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
@@ -211,7 +228,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     private disableConversationService() {
         this.conversationServiceInstantiated.set(false);
-        this.metisConversationService.disableConversationService();
+        this.courseConversationsService.disableConversationService();
     }
 
     /**
@@ -271,7 +288,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             return;
         }
         if (!this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
-            this.metisConversationService
+            this.courseConversationsService
                 .setUpConversationService(currentCourse)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
@@ -286,14 +303,14 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                     },
                 });
         } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {
-            this.metisConversationService.checkForUnreadMessages(currentCourse);
+            this.courseConversationsService.checkForUnreadMessages(currentCourse);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages.set(true);
         }
     }
 
     protected subscribeToHasUnreadMessages() {
-        this.metisConversationService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
+        this.courseConversationsService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
             this.hasUnreadMessages.set(hasUnreadMessages ?? false);
         });
     }

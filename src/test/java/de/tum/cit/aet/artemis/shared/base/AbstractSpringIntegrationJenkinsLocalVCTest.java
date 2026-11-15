@@ -18,6 +18,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 // TODO: rewrite this test to use LocalVC
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 @Tag("BucketJenkinsLocalVC")
 @ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!

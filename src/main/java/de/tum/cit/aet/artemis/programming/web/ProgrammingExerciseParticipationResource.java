@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.lib.ObjectChecker;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,9 +36,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -45,16 +48,17 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -77,16 +81,19 @@ import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticip
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_HISTORY)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseParticipationResource {
@@ -114,13 +121,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final RepositoryAccessService repositoryAccessService;
+
+    private final UserRepository userRepository;
+
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
     private final ResultService resultService;
 
     private final RepositoryService repositoryService;
-
-    private final Optional<StudentExamApi> studentExamApi;
 
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
@@ -128,17 +137,18 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
 
-    private final Optional<ExamApi> examApi;
-
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
+            RepositoryAccessService repositoryAccessService, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -149,12 +159,12 @@ public class ProgrammingExerciseParticipationResource {
         this.resultService = resultService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
-        this.studentExamApi = studentExamApi;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.examApi = examApi;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.repositoryAccessService = repositoryAccessService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -163,6 +173,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipationDTO> getParticipationWithLatestResultForStudentParticipation(@PathVariable long participationId) {
@@ -170,7 +181,7 @@ public class ProgrammingExerciseParticipationResource {
                 .findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
         hasAccessToParticipationElseThrow(participation);
 
-        boolean hideResults = shouldHideExamExerciseResults(participation);
+        boolean hideResults = participationAuthCheckService.shouldHideExamExerciseResults(participation);
         ProgrammingSubmission submission = participation.getSubmissions().isEmpty() ? null : (ProgrammingSubmission) participation.getSubmissions().iterator().next();
         // hide details that should not be shown to the students; masking happens by mapping fewer DTOs, never by mutating the loaded (possibly managed) submission
         Collection<Result> results = submission == null || hideResults ? List.of() : submission.getResults();
@@ -179,8 +190,11 @@ public class ProgrammingExerciseParticipationResource {
 
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
                 : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
-        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
-        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
+        // the editor tells the student why a push is not built, which needs the build time window of the exercise
+        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.ofForStudent(participation.getProgrammingExercise(),
+                programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(participation.getProgrammingExercise().getId()));
+        var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
+        return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
     private static List<ResultDTO> mapResults(Collection<Result> results) {
@@ -195,6 +209,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     // TODO: this is currently only used in the commit history view. Ideally we add an option to fetch this data additionally as part of the commit history endpoint below and
     // avoid sending so much data. Then, we can remove this endpoint in the future as well
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-all-results")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipationDTO> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
@@ -203,7 +218,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
-        boolean hideResults = shouldHideExamExerciseResults(participation);
+        boolean hideResults = participationAuthCheckService.shouldHideExamExerciseResults(participation);
 
         List<ProgrammingSubmission> submissions = participation.getSubmissions().stream().filter(ProgrammingSubmission.class::isInstance).map(ProgrammingSubmission.class::cast)
                 .toList();
@@ -217,7 +232,8 @@ public class ProgrammingExerciseParticipationResource {
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream()
                 .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission, hideResults ? List.of() : mapResults(submission.getResults()))).toList();
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
-        return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
+        var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
+        return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
     /**
@@ -255,6 +271,9 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUriElseThrow(repoUri);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        if (!canSeeParticipantInformation(participation)) {
+            throw new AccessForbiddenException();
+        }
         // check if the exercise is released. This also checks if the user can see an exam exercise
         if (!participation.getProgrammingExercise().isReleased()) {
             throw new AccessForbiddenException("exercise", participation.getProgrammingExercise().getId());
@@ -274,6 +293,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
      *         to access the participation.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -282,27 +302,38 @@ public class ProgrammingExerciseParticipationResource {
         var participation = participationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
-                && shouldHideExamExerciseResults(programmingExerciseStudentParticipation)) {
+        // This endpoint also serves text and other student participations (findByIdElseThrow is not restricted to programming), so the exam hiding must apply to every student
+        // participation, not only programming ones; otherwise an unpublished exam result of a non-programming exercise would leak here.
+        if (participation instanceof StudentParticipation studentParticipation && participationAuthCheckService.shouldHideExamExerciseResults(studentParticipation)) {
             return ResponseEntity.ok(null);
         }
 
-        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
+        // Apply the same release gate as the sibling student endpoints: a not-yet-released manual assessment must not leak its score, so only a visible result (automatic, or a
+        // completed manual assessment after the assessment due date) is returned, falling back to an earlier automatic result. The exam hiding above runs first.
+        Optional<Result> result = resultRepository.findLatestVisibleResultWithFeedbacksForParticipation(participation.getId(), withSubmission, ZonedDateTime.now());
         // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
         result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
-        return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value))).orElseGet(() -> ResponseEntity.ok(null));
+        boolean hideParticipant = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation);
+        return result.map(value -> {
+            var response = ProgrammingParticipationLatestResultDTO.of(value);
+            return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
+        }).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
      * Check if the participation has a result yet.
      *
      * @param participationId of the participation to check.
-     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
+     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false, 404 if the participation can't be found or 403 if the user is not allowed to
+     *         access the participation.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         boolean hasResult = resultRepository.existsBySubmissionParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
@@ -316,6 +347,8 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given
      *         id and forbidden (403) if the user is not allowed to access the participation.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercise-participations/{participationId}/latest-pending-submission")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -361,14 +394,11 @@ public class ProgrammingExerciseParticipationResource {
      * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
      *         {@code submission} is populated if a pending submission exists and {@code null} otherwise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<PendingProgrammingSubmissionDTO>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
-            throw new AccessForbiddenException("exercise", exerciseId);
-        }
         return ResponseEntity.ok(submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId));
     }
 
@@ -379,6 +409,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_ONLINE_EDITOR)
     @PutMapping("programming-exercise-participations/{participationId}/reset-repository")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
@@ -388,18 +419,24 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise for Participation", participationId));
         participation.setProgrammingExercise(exercise);
 
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        if (participationAuthCheckService.isLocked(participation, exercise)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        User user = userRepository.getUserWithAuthorities();
+        repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.RESET);
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
 
         LocalVCRepositoryUri sourceUri;
         if (gradedParticipationId != null) {
+            if (gradedParticipationId.equals(participationId)) {
+                throw new BadRequestAlertException("The repository cannot be reset to itself", ENTITY_NAME, "gradedParticipationIsTarget");
+            }
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
-            participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
+            // the access check comes first, so that a caller who may not read the participation gets the same answer wherever it belongs to
+            repositoryAccessService.checkAccessRepositoryElseThrow(gradedParticipation, user, exercise, RepositoryActionType.READ);
+            ProgrammingExercise gradedExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(gradedParticipation);
+            if (!gradedExercise.getId().equals(exercise.getId())) {
+                throw new BadRequestAlertException("The graded participation does not belong to the exercise of the participation", ENTITY_NAME, "gradedParticipationMismatch");
+            }
 
             sourceUri = gradedParticipation.getVcsRepositoryUri();
         }
@@ -409,12 +446,21 @@ public class ProgrammingExerciseParticipationResource {
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
 
+        // like a push, the reset is kept in the repository but not built outside the build time window, otherwise the reset commit would be graded
+        if (isBuildOutsideTimeWindow(participation, ZonedDateTime.now())) {
+            return ResponseEntity.ok().build();
+        }
+
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(
                         "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
                 .triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
+    }
+
+    private boolean isBuildOutsideTimeWindow(ProgrammingExerciseStudentParticipation participation, ZonedDateTime instant) {
+        return submissionService.findBuildTimeWindowExcluding(participation, instant).isPresent();
     }
 
     /**
@@ -434,6 +480,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        checkParticipantRepositoryVisibilityElseThrow(participation);
         var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation.getVcsRepositoryUri());
         return ResponseEntity.ok(commitInfo);
     }
@@ -446,12 +493,15 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
      */
     @GetMapping("programming-exercise-participations/{participationId}/vcs-access-log")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForParticipationRepo(@PathVariable long participationId) {
         if (vcsAccessLogRepository.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         log.info("Fetching VCS access logs for participation ID: {}", participationId);
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participationId);
@@ -470,7 +520,8 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
     @GetMapping("programming-exercises/{exerciseId}/commit-history/{repositoryType}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType,
             @RequestParam Optional<Long> repositoryId) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
@@ -516,7 +567,8 @@ public class ProgrammingExerciseParticipationResource {
      * @return The files of repository along with their content
      */
     @GetMapping("programming-exercise-participations/{participationId}/files-content")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @RequestParam(name = "commitId") String commitId) {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
@@ -545,29 +597,58 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @RequestParam(name = "commitId") String commitId,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
+        if (participationId == null || repositoryType != null) {
+            throw new BadRequestAlertException("Provide a participationId; editor repositories use the editor content operation", ENTITY_NAME, "invalidParameters");
+        }
         try {
-            if (participationId != null) {
-                Participation participation = participationRepository.findByIdElseThrow(participationId);
-                ProgrammingExerciseParticipation programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId,
-                        participation, ENTITY_NAME);
-                ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
-                participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-                // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation, null));
-            }
-            else if (repositoryType != null) {
-                ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-                var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null));
-            }
-            else {
-                throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
-            }
+            Participation participation = participationRepository.findByIdElseThrow(participationId);
+            ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
+                    ENTITY_NAME);
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+            checkParticipantRepositoryVisibilityElseThrow(participation);
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, null));
         }
         catch (IOException e) {
             log.error("Could not read files at commit {} for exercise {}", commitId, exerciseId, e);
             throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
+        }
+    }
+
+    /**
+     * Reads an exercise repository for the editor commit details view.
+     *
+     * @param exerciseId     the owning exercise
+     * @param commitId       the requested commit
+     * @param repositoryType the explicit editor repository kind
+     * @param repositoryId   the auxiliary repository ID, required for auxiliary repositories
+     * @return repository text files at the commit
+     */
+    @GetMapping("programming-exercises/{exerciseId}/files-content-commit-details/for-editor")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Map<String, String>> getEditorRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
+            @RequestParam RepositoryType repositoryType, @RequestParam(required = false) Long repositoryId) {
+        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        var repositoryUri = switch (repositoryType) {
+            case TEMPLATE -> exercise.getVcsTemplateRepositoryUri();
+            case SOLUTION -> exercise.getVcsSolutionRepositoryUri();
+            case TESTS -> exercise.getVcsTestRepositoryUri();
+            case AUXILIARY -> {
+                if (repositoryId == null) {
+                    throw new BadRequestAlertException("Select an auxiliary repository", ENTITY_NAME, "missingRepositoryId");
+                }
+                var auxiliary = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId);
+                if (!auxiliary.getExercise().getId().equals(exerciseId)) {
+                    throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
+                }
+                yield auxiliary.getVcsRepositoryUri();
+            }
+            default -> throw new BadRequestAlertException("Select an exercise repository", ENTITY_NAME, "invalidRepositoryType");
+        };
+        try {
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(repositoryUri, commitId, null));
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorAlertException("Could not read editor repository files at commit " + commitId, ENTITY_NAME, "fileReadError");
         }
     }
 
@@ -580,10 +661,32 @@ public class ProgrammingExerciseParticipationResource {
      * @param filePaths       the repository-relative file paths to retrieve
      * @return the requested text files that exist at the commit
      */
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("programming-exercises/{exerciseId}/files-content-commit-details/selected")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getSelectedParticipationRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
             @RequestParam long participationId, @RequestBody Set<String> filePaths) {
+        Set<String> validFilePaths = validateSelectedFilePaths(filePaths);
+
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
+                ENTITY_NAME);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        // Only a recorded submission of this participation is an assessment snapshot; a full hash alone can also name unsubmitted code.
+        if (!ObjectId.isId(commitId) || !submissionService.isCommitSubmitted(participationId, commitId)) {
+            checkParticipantRepositoryVisibilityElseThrow(participation);
+        }
+        try {
+            return ResponseEntity
+                    .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
+        }
+        catch (IOException e) {
+            log.error("Could not read selected files at commit {} for exercise {}", commitId, exerciseId, e);
+            throw new InternalServerErrorAlertException("Could not read selected files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
+        }
+    }
+
+    private Set<String> validateSelectedFilePaths(Set<String> filePaths) {
         if (filePaths != null && filePaths.size() > MAX_SELECTED_FILE_PATHS) {
             throw new BadRequestAlertException("Too many selected file paths", ENTITY_NAME, "tooManySelectedFilePaths");
         }
@@ -605,18 +708,7 @@ public class ProgrammingExerciseParticipationResource {
             }
         }
 
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
-                ENTITY_NAME);
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        try {
-            return ResponseEntity
-                    .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
-        }
-        catch (IOException e) {
-            log.error("Could not read selected files at commit {} for exercise {}", commitId, exerciseId, e);
-            throw new InternalServerErrorAlertException("Could not read selected files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
-        }
+        return validFilePaths;
     }
 
     /**
@@ -648,6 +740,21 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * Refuses a tutor the live repository and its history of another student while participant information is hidden. Editors keep the repository permissions they have, which
+     * include reading, so they follow the visibility of the participant list only for names.
+     */
+    private void checkParticipantRepositoryVisibilityElseThrow(Participation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation)
+                && !authCheckService.isAtLeastEditorForExercise(studentParticipation.getExercise())) {
+            throw new AccessForbiddenException("Direct repository access is unavailable during anonymous assessment. Use the assessment dashboard.");
+        }
+    }
+
+    private boolean canSeeParticipantInformation(ProgrammingExerciseStudentParticipation participation) {
+        return participationAuthCheckService.canSeeParticipantInformation(participation);
+    }
+
+    /**
      * Checks if the user has access to the participation.
      * If the exercise has not started yet and the user is a student, access is denied.
      *
@@ -657,36 +764,12 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         ZonedDateTime exerciseStartDate = participation.getExercise().getParticipationStartDate();
         if (exerciseStartDate != null) {
-            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMember(), null);
+            boolean isStudent = authCheckService.isOnlyStudentInCourse(participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
             boolean exerciseNotStarted = exerciseStartDate.isAfter(ZonedDateTime.now());
             if (isStudent && exerciseNotStarted) {
                 throw new AccessForbiddenException("Participation not yet started");
             }
         }
-    }
-
-    /**
-     * Checks if the results should be hidden for the given participation.
-     *
-     * @param participation the participation to check
-     * @return true if the results should be hidden, false otherwise
-     */
-    private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
-        // Test-run results are never hidden: the conductor is the instructor who created the test run. The lookup below cannot resolve a test run either, because a test run has no
-        // regular (non-test-run) student exam.
-        if (participation.isTestRun()) {
-            return false;
-        }
-        if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
-            var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
-            var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            User student = participation.getStudent()
-                    .orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
-            var studentExam = studentExamApi.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
-            return !examApi.shouldStudentSeeResult(studentExam, participation);
-        }
-        return false;
     }
 
 }

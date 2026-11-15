@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of, throwError } from 'rxjs';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -772,6 +775,211 @@ describe('ProgrammingSubmissionService', () => {
         }
     });
 
+    describe('long-running local CI builds', () => {
+        let states: ProgrammingSubmissionStateObj[];
+        let pending: ProgrammingSubmission;
+        let processing: SubmissionProcessingDTO;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2026-09-20T12:00:00Z'));
+            submissionService.isLocalCIEnabled = true;
+            states = [];
+            pending = {
+                id: 12,
+                commitHash: 'long-build',
+                participation: { id: participationId },
+                submissionDate: dayjs().subtract(90, 'seconds'),
+                isProcessing: true,
+                buildStartDate: dayjs(),
+                estimatedCompletionDate: dayjs().add(240, 'seconds'),
+            };
+            processing = { ...pending, participationId, exerciseId };
+            getLatestResultStub.mockReturnValue(of(undefined));
+        });
+
+        afterEach(() => {
+            submissionService.ngOnDestroy();
+            vi.useRealTimers();
+        });
+
+        it.each(['submission first', 'processing first', 'page reload'])('waits for a 240-second build (%s)', async (arrivalOrder) => {
+            httpGetStub.mockReturnValue(of(arrivalOrder === 'page reload' ? pending : undefined));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+            const submitted = { ...pending, isProcessing: false, buildStartDate: undefined, estimatedCompletionDate: undefined };
+            if (arrivalOrder === 'submission first') {
+                wsSubmissionSubject.next(submitted);
+                wsSubmissionProcessingSubject.next(processing);
+            } else if (arrivalOrder === 'processing first') {
+                wsSubmissionProcessingSubject.next(processing);
+                wsSubmissionSubject.next(submitted);
+            }
+
+            await vi.advanceTimersByTimeAsync(200_000);
+
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).not.toHaveBeenCalled();
+            wsLatestResultSubject.next({ id: 31, submission: pending });
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        });
+
+        it('checks active processing for an old submission loaded through the exercise overview', async () => {
+            const minimalSubmission: ProgrammingSubmission = {
+                id: pending.id,
+                commitHash: pending.commitHash,
+                submissionDate: dayjs().subtract(180, 'seconds'),
+            };
+            httpGetStub.mockReturnValueOnce(of([{ participationId, submission: minimalSubmission }])).mockReturnValue(of(pending));
+            const exerciseStates: ExerciseSubmissionState[] = [];
+            submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => exerciseStates.push(state));
+
+            await vi.advanceTimersByTimeAsync(200_000);
+
+            expect(exerciseStates.at(-1)?.[participationId].submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            expect(exerciseStates.some((state) => state[participationId]?.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+        });
+
+        it('keeps waiting while the server confirms a build has exceeded its estimate', async () => {
+            pending.submissionDate = dayjs().subtract(180, 'seconds');
+            pending.buildStartDate = dayjs().subtract(150, 'seconds');
+            pending.estimatedCompletionDate = dayjs().subtract(30, 'seconds');
+            httpGetStub.mockReturnValue(of(pending));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            await vi.advanceTimersByTimeAsync(120_001);
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+
+            // Once the server no longer reports an active build, a missing result must still be detected.
+            httpGetStub.mockReturnValue(of({ ...pending, isProcessing: false }));
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(getLatestResultStub).toHaveBeenCalledTimes(2);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(getLatestResultStub).toHaveBeenCalledTimes(3);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        });
+
+        it.each(['poll', 'websocket', 'missing'])('waits for result persistence after processing ends (%s)', async (resultArrival) => {
+            pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
+            httpGetStub.mockReturnValueOnce(of(pending)).mockReturnValue(of({ ...pending, isProcessing: false }));
+            notifyAllResultSubscribersStub.mockImplementation((receivedResult: Result) => wsLatestResultSubject.next(receivedResult));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+
+            await vi.advanceTimersByTimeAsync(120_000);
+
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            const delayedResult = { id: 31, submission: pending };
+            if (resultArrival === 'poll') {
+                getLatestResultStub.mockReturnValue(of(delayedResult));
+            } else if (resultArrival === 'websocket') {
+                wsLatestResultSubject.next(delayedResult);
+            }
+
+            await vi.advanceTimersByTimeAsync(119_999);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            await vi.advanceTimersByTimeAsync(1);
+
+            expect(states.at(-1)?.submissionState).toBe(
+                resultArrival === 'missing' ? ProgrammingSubmissionState.HAS_FAILED_SUBMISSION : ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            );
+            if (resultArrival === 'poll') {
+                expect(notifyAllResultSubscribersStub).toHaveBeenCalledExactlyOnceWith(delayedResult);
+            }
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(getLatestResultStub).toHaveBeenCalledTimes(resultArrival === 'websocket' ? 1 : 2);
+        });
+
+        it.each(['pending request', 'grace interval', 'final result request'])('ignores stale checks when the same submission restarts during the %s', async (restartDuring) => {
+            pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
+            const delayedPending = new Subject<ProgrammingSubmission>();
+            const delayedResult = new Subject<Result | undefined>();
+            httpGetStub.mockReturnValueOnce(of(pending)).mockReturnValue(delayedPending);
+            getLatestResultStub.mockReturnValueOnce(of(undefined)).mockReturnValueOnce(delayedResult).mockReturnValue(of(undefined));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+            await vi.advanceTimersByTimeAsync(120_000);
+
+            if (restartDuring !== 'pending request') {
+                delayedPending.next({ ...pending, isProcessing: false });
+                delayedPending.complete();
+            }
+            if (restartDuring === 'final result request') {
+                await vi.advanceTimersByTimeAsync(120_000);
+            }
+
+            const restartedProcessing = { ...processing, buildStartDate: dayjs(), estimatedCompletionDate: dayjs().add(300, 'seconds') };
+            wsSubmissionProcessingSubject.next(restartedProcessing);
+            httpGetStub.mockReturnValue(of({ ...pending, ...restartedProcessing }));
+            if (restartDuring === 'pending request') {
+                delayedPending.next({ ...pending, isProcessing: false });
+                delayedPending.complete();
+            } else if (restartDuring === 'final result request') {
+                delayedResult.next(undefined);
+                delayedResult.complete();
+            }
+
+            await vi.advanceTimersByTimeAsync(120_001);
+
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).toHaveBeenCalledTimes(restartDuring === 'final result request' ? 2 : 1);
+            wsLatestResultSubject.next({ id: 31, submission: pending });
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        });
+
+        it.each(['result', 'pending submission'])('retries an inconclusive %s request without failing the build', async (failedRequest) => {
+            pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
+            httpGetStub.mockReturnValue(of(pending));
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+            const failedRequestStub = failedRequest === 'result' ? getLatestResultStub : httpGetStub;
+            failedRequestStub.mockReturnValueOnce(throwError(() => new Error('Temporary connection failure')));
+
+            await vi.advanceTimersByTimeAsync(120_001);
+
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+
+            await vi.advanceTimersByTimeAsync(120_000);
+
+            expect(getLatestResultStub).toHaveBeenCalledTimes(2);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+
+            // A successful response confirming no active submission still terminates the wait.
+            httpGetStub.mockReturnValue(of(undefined));
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+            await vi.advanceTimersByTimeAsync(120_000);
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        });
+
+        it.each(['success', 'error'])('does not overwrite a result that arrives while the active-build check is in flight (%s)', async (response) => {
+            pending.submissionDate = dayjs();
+            pending.estimatedCompletionDate = dayjs().add(30, 'seconds');
+            const delayedPending = new Subject<ProgrammingSubmission>();
+            httpGetStub.mockReturnValueOnce(of(pending)).mockReturnValue(delayedPending);
+            submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe((state) => states.push(state));
+            await vi.advanceTimersByTimeAsync(120_001);
+
+            wsLatestResultSubject.next({ id: 31, submission: pending });
+            if (response === 'success') {
+                delayedPending.next(pending);
+                delayedPending.complete();
+            } else {
+                delayedPending.error(new Error('Temporary connection failure'));
+            }
+            await vi.advanceTimersByTimeAsync(120_000);
+
+            expect(states.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+            expect(states.some((state) => state.submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION)).toBe(false);
+            expect(getLatestResultStub).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('getExpectedRemainingTimeForBuild / getExpectedRemainingTimeForQueue', () => {
         afterEach(() => {
             vi.useRealTimers();
@@ -884,5 +1092,59 @@ describe('ProgrammingSubmissionService', () => {
 
             expect(inner.submissionSubjects).toEqual({ 1: subject });
         });
+    });
+    it('initializes cached student build state without replacing existing subscribers', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        const latest: ProgrammingSubmission = { id: 9, results: [{ id: 10, submission: { id: 9 } }] };
+        exercise.studentParticipations = [{ id: 8, type: ParticipationType.PROGRAMMING, submissions: [{ id: 3 }, latest] }];
+        const empty = new ProgrammingExercise(undefined, undefined);
+        empty.id = 11;
+        const missingSubmissions = new ProgrammingExercise(undefined, undefined);
+        missingSubmissions.studentParticipations = [{ id: 12 }];
+        submissionService.initializeCacheForStudent(undefined);
+        submissionService.initializeCacheForStudent([new TextExercise(undefined, undefined), empty, missingSubmissions, exercise]);
+        const received: (ProgrammingSubmissionStateObj | undefined)[] = [];
+        const subject = priv(submissionService).submissionSubjects[8];
+        const subscription = subject.subscribe((state) => received.push(state));
+        expect(received.at(-1)).toMatchObject({ participationId: 8, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
+        submissionService.initializeCacheForStudent([exercise]);
+        expect(received).toHaveLength(1);
+        submissionService.initializeCacheForStudent([exercise], true);
+        expect(priv(submissionService).submissionSubjects[8]).toBe(subject);
+        expect(received.at(-2)).toBeUndefined();
+        expect(received.at(-1)?.submissionState).toBe(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        subscription.unsubscribe();
+        submissionService.unsubscribeAllWebsocketTopics(exercise);
+    });
+
+    it('loads assessed submissions with round filters and detaches returned records', () => {
+        const payload = [{ id: 9, participation: { id: 8, initializationDate: '2026-01-01T10:00:00Z' }, results: [{ id: 10, score: 80 }] }];
+        submissionService.getSubmissions(7, { submittedOnly: true, assessedByTutor: true }, 1).subscribe((response) => {
+            expect(response.body).toEqual(payload);
+            expect(response.body).not.toBe(payload);
+            expect(response.body?.[0]).not.toBe(payload[0]);
+            expect(response.body?.[0].results?.[0].score).toBe(80);
+        });
+        const request = httpMock.expectOne((r) => r.url === 'api/programming/exercises/7/programming-submissions');
+        expect(request.request.params.get('submittedOnly')).toBe('true');
+        expect(request.request.params.get('assessedByTutor')).toBe('true');
+        expect(request.request.params.get('correction-round')).toBe('1');
+        request.flush(payload);
+        httpMock.verify();
+    });
+
+    it('releases websocket listeners and cached exercise state when the page is destroyed', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = exerciseId;
+        httpGetStub.mockReturnValue(of(undefined));
+        const subscription = submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe();
+        expect(wsSubmissionSubject.observed).toBe(true);
+        submissionService.unsubscribeAllWebsocketTopics(exercise);
+        expect(wsSubmissionSubject.observed).toBe(false);
+        expect(wsSubmissionProcessingSubject.observed).toBe(false);
+        expect(priv(submissionService).submissionSubjects).toEqual({});
+        expect(priv(submissionService).exerciseBuildStateSubjects.has(exerciseId)).toBe(false);
+        subscription.unsubscribe();
     });
 });

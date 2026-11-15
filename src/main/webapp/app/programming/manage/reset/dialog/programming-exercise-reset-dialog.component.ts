@@ -81,7 +81,10 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         }
 
         this.resetInProgress.set(true);
-        this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
+        const reset = this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults
+            ? this.programmingExerciseService.resetParticipations(this.programmingExercise.id, this.programmingExerciseResetOptions)
+            : this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions);
+        reset.subscribe({
             next: this.handleResetResponse,
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.reset.errorMessage');

@@ -5,10 +5,63 @@ import {
     calculateBottomCenterPlacement,
     calculateRailDisclosureMaxHeight,
     clearBottomCenterPlacement,
+    measureBottomCenterPlacement,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
 
 const rectangle = (left: number, right: number): Pick<DOMRect, 'left' | 'right' | 'width'> => ({ left, right, width: right - left });
+
+describe('measureBottomCenterPlacement', () => {
+    function element(left: number, width: number): HTMLElement {
+        const result = document.createElement('div');
+        vi.spyOn(result, 'getBoundingClientRect').mockReturnValue(new DOMRect(left, 0, width, 50));
+        return result;
+    }
+
+    it('uses the supplied chrome container and preserves the previous horizontal shift', () => {
+        const chromeContainer = document.createElement('div');
+        chromeContainer.style.setProperty('--apollon-chrome-gap', '8px');
+        chromeContainer.style.setProperty('--apollon-chrome-edge', '16px');
+        const surface = element(300, 400);
+        const positionedElement = document.createElement('div');
+        positionedElement.style.setProperty('--test-shift', '12px');
+
+        expect(
+            measureBottomCenterPlacement({
+                root: element(0, 1000),
+                zoom: element(16, 100),
+                minimap: element(884, 100),
+                surface,
+                positionedElement,
+                chromeContainer,
+                shiftProperty: '--test-shift',
+            }),
+        ).toEqual({ elevated: false, panelWidth: 704, shift: 12 });
+    });
+
+    it('measures the palette rail and constrains the panel to the free space', () => {
+        const chromeContainer = document.createElement('div');
+        chromeContainer.style.setProperty('--apollon-chrome-gap', '8px');
+        chromeContainer.style.setProperty('--apollon-chrome-edge', '16px');
+        const rail = document.createElement('div');
+        rail.dataset.apollonRegion = 'left-rail';
+        const palette = element(16, 384);
+        rail.appendChild(palette);
+
+        expect(
+            measureBottomCenterPlacement({
+                root: element(0, 1000),
+                zoom: element(16, 100),
+                minimap: element(884, 100),
+                surface: element(300, 400),
+                positionedElement: document.createElement('div'),
+                chromeContainer,
+                shiftProperty: '--test-shift',
+                palette,
+            }),
+        ).toEqual({ elevated: false, panelWidth: 468, shift: 142 });
+    });
+});
 
 describe('calculateBottomCenterPlacement', () => {
     const baseGeometry = {

@@ -172,7 +172,7 @@ WHERE cc.CONSTRAINT_SCHEMA = DATABASE();
 
 
 def read_mysql(container: str, database: str, user: str) -> SchemaModel:
-    mysql = ["mysql", "-u", user, "-N", "-B", "--database", database]
+    mysql = ["mysql", "--default-character-set=utf8mb4", "-u", user, "-N", "-B", "--database", database]
     tables: dict[str, dict] = {}
 
     for table, column, data_type, char_len, precision, scale, dt_precision, nullable, default, extra in _rows(

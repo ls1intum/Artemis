@@ -19,7 +19,7 @@ class LectureUnitSearchableEntityDTOTest {
     void toPropertyMap_keepsSecondsInDatesForExactMinuteTimes() {
         // Weaviate requires full RFC3339 with seconds and rejects dates like "2026-04-23T11:00Z" with HTTP 422
         ZonedDateTime releaseDate = ZonedDateTime.of(2026, 4, 23, 11, 0, 0, 0, ZoneOffset.UTC);
-        var dto = new LectureUnitSearchableEntityDTO(1L, 2L, 3L, "Unit 1", null, "text", releaseDate);
+        var dto = new LectureUnitSearchableEntityDTO(1L, 2L, 3L, null, "Unit 1", null, "text", releaseDate);
 
         Map<String, Object> properties = dto.toPropertyMap();
 

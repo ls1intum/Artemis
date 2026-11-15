@@ -17,8 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -32,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
  */
 @Profile(PROFILE_LOCALCI)
 @Lazy
-@FeatureUsage("build-system/build-phase-templates")
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
 @RestController
 @RequestMapping("api/localci/phases/")
 public class BuildPhasesTemplateResource {
@@ -64,7 +65,7 @@ public class BuildPhasesTemplateResource {
      * @return The requested build plan phases, or 404 if the file doesn't exist
      */
     @GetMapping({ "templates/{language}/{projectType}", "templates/{language}" })
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns, @RequestParam(value = "examMode") boolean examMode) {

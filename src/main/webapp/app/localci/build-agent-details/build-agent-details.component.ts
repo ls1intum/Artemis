@@ -1,24 +1,25 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { BuildJobSearchComponent } from 'app/localci/shared/build-job-search.component';
+import { subscribeToFinishedBuildJobSearch, subscribeToFinishedBuildJobs } from 'app/localci/build-queue/finished-build-job-loading';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
-import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { onError } from 'app/foundation/util/global.utils';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -43,16 +44,17 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        ArtemisTranslatePipe,
+        TumAetUiTableLayoutComponent,
+        BuildJobSearchComponent,
         FontAwesomeModule,
         RouterModule,
-        TumUiButtonComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiInputDirective,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
-        HelpIconComponent,
         FormsModule,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
@@ -170,13 +172,19 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     itemsPerPage = ITEMS_PER_PAGE;
 
     /** Current page number for pagination (1-indexed) */
-    currentPage = 1;
+    currentPage = signal(1);
 
     /** Column to sort finished build jobs by */
     predicate = 'buildSubmissionDate';
 
     /** Sort direction: false = descending, true = ascending */
     ascending = false;
+
+    private readonly finishedBuildLoading = {
+        loading: this.isLoading,
+        apply: (jobs: FinishedBuildJob[], headers: HttpHeaders) => this.onSuccess(jobs, headers),
+        error: (error: unknown) => onError(this.alertService, error),
+    };
 
     ngOnInit() {
         // Subscribe to route query params to get the agent name and initialize data loading
@@ -190,22 +198,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.loadAgentData();
             this.initWebsocketSubscription();
             // Set up debounced search for finished build jobs to avoid excessive API calls
-            this.searchSubscription = this.finishedJobsSearchTrigger
-                .pipe(
-                    debounceTime(UI_RELOAD_TIME),
-                    tap(() => this.isLoading.set(true)),
-                    switchMap(() => this.fetchFinishedBuildJobs()),
-                )
-                .subscribe({
-                    next: (response: HttpResponse<FinishedBuildJob[]>) => {
-                        this.onSuccess(response.body || [], response.headers);
-                        this.isLoading.set(false);
-                    },
-                    error: (errorResponse: HttpErrorResponse) => {
-                        onError(this.alertService, errorResponse);
-                        this.isLoading.set(false);
-                    },
-                });
+            this.searchSubscription = subscribeToFinishedBuildJobSearch(this.finishedJobsSearchTrigger, () => this.fetchFinishedBuildJobs(), this.finishedBuildLoading);
         });
     }
 
@@ -220,6 +213,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.registeredAddressesSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
+        this.searchSubscription?.unsubscribe();
     }
 
     /**
@@ -408,16 +402,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Cancels all running build jobs on this build agent.
-     */
-    cancelAllBuildJobs() {
-        const agent = this.buildAgent();
-        if (agent?.buildAgent?.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(agent.buildAgent.name).subscribe();
-        }
-    }
-
-    /**
      * Opens the build logs for a specific result in a new browser tab.
      * @param resultId The ID of the result whose build logs to view
      */
@@ -506,16 +490,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Called on initial load and when pagination/filters change.
      */
     loadFinishedBuildJobs() {
-        this.fetchFinishedBuildJobs().subscribe({
-            next: (response: HttpResponse<FinishedBuildJob[]>) => {
-                this.onSuccess(response.body || [], response.headers);
-                this.isLoading.set(false);
-            },
-            error: (errorResponse: HttpErrorResponse) => {
-                onError(this.alertService, errorResponse);
-                this.isLoading.set(false);
-            },
-        });
+        subscribeToFinishedBuildJobs(this.fetchFinishedBuildJobs(), this.finishedBuildLoading);
     }
 
     /**
@@ -552,7 +527,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     fetchFinishedBuildJobs() {
         return this.buildQueueService.getFinishedBuildJobs(
             {
-                page: this.currentPage,
+                page: this.currentPage(),
                 pageSize: this.itemsPerPage,
                 sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                 sortedColumn: this.predicate,
@@ -581,7 +556,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     onPageChange(event: PageChangeEvent) {
         const newPageNumber = event?.page;
         if (newPageNumber) {
-            this.currentPage = newPageNumber;
+            this.currentPage.set(newPageNumber);
             this.loadFinishedBuildJobs();
         }
     }

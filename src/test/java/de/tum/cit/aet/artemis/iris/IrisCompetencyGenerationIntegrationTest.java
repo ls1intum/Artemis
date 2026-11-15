@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -45,17 +46,17 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void generateCompetencies_asEditor_shouldSucceed() throws Exception {
         String courseDescription = "Cool course description";
-        var currentCompetencies = new PyrisCompetencyRecommendationDTO[] { new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND), };
+        var currentCompetencies = List.of(new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND));
 
         // Expect that a request is sent to Pyris having the following characteristics
         irisRequestMockProvider.mockRunCompetencyExtractionResponseAnd(dto -> {
             var token = dto.execution().settings().authenticationToken();
             assertThat(token).isNotNull();
             assertThat(dto.courseDescription()).contains(courseDescription);
-            assertThat(dto.currentCompetencies()).containsExactly(currentCompetencies);
+            assertThat(dto.currentCompetencies()).isEqualTo(currentCompetencies);
             assertThat(dto.taxonomyOptions()).isNotEmpty();
             assertThat(dto.maxN()).isPositive();
         });
@@ -75,7 +76,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         irisCompetencyGenerationService.handleStatusUpdate(job, new PyrisCompetencyStatusUpdateDTO(PyrisRunState.FINISHED, null, recommendations, null));
 
         ArgumentCaptor<IrisCompetencyGenerationStatusDTO> argumentCaptor = ArgumentCaptor.forClass(IrisCompetencyGenerationStatusDTO.class);
-        verify(websocketMessagingService, timeout(200).times(2)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), eq("/topic/iris/competencies/" + course.getId()),
+        verify(websocketMessagingService, timeout(200).times(2)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), userTopic("/topic/iris/competencies/" + course.getId()),
                 argumentCaptor.capture());
 
         List<IrisCompetencyGenerationStatusDTO> allValues = argumentCaptor.getAllValues();
@@ -87,7 +88,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void generateCompetencies_withNullCurrentCompetency_shouldReturnBadRequest() throws Exception {
         String requestBody = "{\"courseDescription\":\"Cool course description\",\"currentCompetencies\":[null]}";
 
@@ -95,13 +96,13 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();
     }

@@ -13,7 +13,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -174,7 +174,9 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should place the complaint banner and form beside the diagram, not in the scrolling feedback pane', async () => {
         vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>));
+        vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(
+            of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>),
+        );
 
         component.ngOnInit();
         await fixture.whenStable();
@@ -208,7 +210,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     describe('ngOnInit tests', () => {
         it('ngOnInit', async () => {
             modelingSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission');
-            complaintSpy = vi.spyOn(complaintService, 'findBySubmissionId');
+            complaintSpy = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment');
             const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
@@ -346,7 +348,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.referencedFeedback).toHaveLength(1);
             component.loadingFeedbackSuggestions.set(true);
             component.highlightedElements.set(new Map([['element', 'red']]));
-            component.feedbackSuggestions = [createTestFeedback()];
             component.hasAutomaticFeedback.set(true);
 
             paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
@@ -356,7 +357,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.unreferencedFeedback()).toHaveLength(0);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
             expect(component.highlightedElements()).toBeUndefined();
-            expect(component.feedbackSuggestions).toHaveLength(0);
             expect(component.hasAutomaticFeedback()).toBe(false);
         });
 
@@ -375,9 +375,27 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
 
             expect(suggestionsSpy).toHaveBeenCalledOnce();
-            expect(component.feedbackSuggestions).toEqual([suggestion]);
             expect(component.referencedFeedback).toContainEqual(suggestion);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
+            // Referenced modeling suggestions are typed AUTOMATIC, so a saved adapted suggestion alone still looked
+            // like "only automatic feedback" (a fresh assessment) to the old gate, causing it to refetch and
+            // duplicate the suggestion - and its credits - on every reload.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [
+                { id: 3, reference: 'element:1', type: FeedbackType.AUTOMATIC, credits: 2, text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Adapted suggestion` } as Feedback,
+            ];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(component.result()?.feedbacks).toHaveLength(1);
         });
 
         it('should not fetch feedback suggestions when Athena grading feedback is disabled', async () => {
@@ -423,6 +441,42 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.assessmentsAreValid()).toBe(false);
         });
 
+        it('should merge unreferenced Athena feedback suggestions directly into the editable unreferenced feedback list', async () => {
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '1',
+                    exerciseId: '1',
+                }),
+            );
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                        course: { athenaGradingFeedbackEnabled: true },
+                    } as unknown as Exercise,
+                },
+                results: [{ id: 55, feedbacks: [], correctionRound: 0 } as unknown as Result],
+            } as ModelingSubmission;
+
+            const unreferencedSuggestion = { id: 42, credits: 1, text: 'FeedbackSuggestion:accepted:Suggestion', type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([unreferencedSuggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            // The suggestion must land directly in the editable feedback list (auto-accepted), not in a separate pending list.
+            expect(component.unreferencedFeedback()).toHaveLength(1);
+            expect(component.unreferencedFeedback()[0]?.id).toBe(unreferencedSuggestion.id);
+            expect(component.result()?.feedbacks).toContainEqual(unreferencedSuggestion);
+        });
+
         it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
             const mockSubmission = {
                 id: 123,
@@ -435,7 +489,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 },
             } as ModelingSubmission;
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
             const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
             const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
 
@@ -579,6 +633,90 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
 
             expect(submitMock).toHaveBeenCalledOnce();
+        });
+
+        it('should refuse to save points outside the bounds and name the bounds', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const saveSpy = vi.spyOn(service, 'saveAssessment');
+            component.ngOnInit();
+            await fixture.whenStable();
+            component.unreferencedFeedback.set([{ credits: 100.5, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'too many points' } as Feedback]);
+
+            component.onSaveAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            vi.spyOn(service, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            component.onSaveAssessment();
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should refuse to submit points outside the bounds and name the bounds', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const saveSpy = vi.spyOn(service, 'saveAssessment');
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            component.ngOnInit();
+            await fixture.whenStable();
+            component.unreferencedFeedback.set([{ credits: -100.5, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'too many points' } as Feedback]);
+
+            component.onSubmitAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the submitted points', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            vi.spyOn(service, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            component.onSubmitAssessment();
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should refuse to update points outside the bounds after a complaint and name the bounds', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const updateSpy = vi.spyOn(service, 'updateAssessmentAfterComplaint');
+            component.ngOnInit();
+            await fixture.whenStable();
+            component.unreferencedFeedback.set([{ credits: 100.5, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'too many points' } as Feedback]);
+            vi.spyOn(component, 'validateFeedback').mockImplementation(() => component.assessmentsAreValid.set(true));
+            let onErrorCalled = false;
+
+            component.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => (onErrorCalled = true) });
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(onErrorCalled).toBe(true);
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points after a complaint', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            vi.spyOn(service, 'updateAssessmentAfterComplaint').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            component.ngOnInit();
+            await fixture.whenStable();
+            vi.spyOn(component, 'validateFeedback').mockImplementation(() => component.assessmentsAreValid.set(true));
+
+            component.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => {} });
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
         });
 
         describe('when the exam is not over yet', () => {
@@ -957,20 +1095,50 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
         });
     });
+    it('rejects overlong feedback before saving or submitting an assessment', () => {
+        component.result.set({ id: 7 });
+        component.submission.set({ id: 8 });
+        component.unreferencedFeedback.set([{ text: 'x'.repeat(501), credits: 1 }]);
+        const save = vi.spyOn(service, 'saveAssessment');
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        component.onSaveAssessment();
+        component['submitAssessment']();
+        expect(save).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledTimes(2);
+        expect(alert).toHaveBeenLastCalledWith('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
+    });
 
-    it('should return unreferenced feedback only', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.ngOnInit();
+    it('retains the assessment after an ordinary save error or a detailed submit error', () => {
+        const result = { id: 7, feedbacks: [] };
+        component.result.set(result);
+        component.submission.set({ id: 8 });
+        vi.spyOn(service, 'saveAssessment')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400 })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { entityName: 'modelingExercise', message: 'invalidScore' } })));
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        component.onSaveAssessment();
+        expect(alert).toHaveBeenLastCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+        component['submitAssessment']();
+        expect(alert).toHaveBeenLastCalledWith('artemisApp.modelingExercise.invalidScore');
+        expect(component.result()).toBe(result);
+        expect(component.submission()?.id).toBe(8);
+    });
 
-        const unreferencedFeedback = createTestFeedback();
-        const referencedFeedback = createTestFeedback();
+    it('returns empty feedback suggestions and reports a rejected suggestions request', async () => {
+        vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(throwError(() => new Error('Unavailable')));
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        expect(await component['loadFeedbackSuggestions']({ id: 7 } as ModelingExercise, { id: 8 })).toEqual([]);
+        expect(alert).toHaveBeenCalledExactlyOnceWith('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+    });
 
-        referencedFeedback.type = FeedbackType.MANUAL;
-        referencedFeedback.reference = 'element_id';
-
-        component.feedbackSuggestions = [unreferencedFeedback, referencedFeedback];
-
-        expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
-        expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
+    it('keeps an incomplete assessment open when submission confirmation is declined', () => {
+        component.assessmentsAreValid.set(false);
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const save = vi.spyOn(service, 'saveAssessment');
+        component.onSubmitAssessment();
+        expect(window.confirm).toHaveBeenCalledOnce();
+        expect(save).not.toHaveBeenCalled();
+        expect(component.highlightMissingFeedback()).toBe(true);
+        expect(component.legendHighlights()).toContainEqual({ color: FeedbackHighlightColor.RED, text: 'artemisApp.modelingAssessment.legend.missingAssessment' });
     });
 });

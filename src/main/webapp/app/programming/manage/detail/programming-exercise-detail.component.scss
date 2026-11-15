@@ -1,34 +1,4 @@
-.programming-exercise-detail-wrapper-class {
-    .button-header {
-        // Only the legacy bottom row relies on this margin. The top action row is a flex row that spaces
-        // itself with `gap`, and its items stretch to the row height — a <button> there would end up 10px
-        // shorter than its <a class="btn"> siblings, which carry no such margin.
-        > div:not(.d-flex) button {
-            margin-bottom: 10px;
-        }
-    }
-
-    .repository-status-icon {
-        font-size: 2.5em;
-    }
-
-    .custom-tag {
-        margin-right: 5px;
-        padding: 0 0.45rem;
-        background: #ccc;
-        border-radius: 0.25rem;
-        color: white;
-    }
-
-    .repository-url {
-        display: block;
-    }
-
-    .clone-buttons {
-        display: inline;
-    }
-
-    .auxiliaryRepositoryDescription {
-        display: block;
-    }
+:host {
+    display: block;
+    min-width: 0;
 }

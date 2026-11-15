@@ -12,15 +12,19 @@ export class ModalDialogBox {
         return this.page.getByRole('dialog').first();
     }
 
-    async checkDialogTime(dialogTime: Dayjs) {
+    /**
+     * Checks that the event of the dialog happened between the two given moments, to the minute. The displayed minute may also be the one after
+     * the later moment, because the server stamps the event a little later than the test notes the time.
+     */
+    async checkDialogTime(from: Dayjs, to: Dayjs = from) {
         const modalDialog = this.getModalDialogContent();
         await expect(modalDialog).toBeVisible({ timeout: 30000 });
         const timeFormat = 'MMM D, YYYY HH:mm';
-        const dialogTimeFormatted = dialogTime.format(timeFormat);
-        const dialogTimeAfterMinuteFormatted = dialogTime.add(1, 'minute').format(timeFormat);
-        await expect(modalDialog.getByTestId('live-event-date').getByText(new RegExp(`(${dialogTimeFormatted}|${dialogTimeAfterMinuteFormatted})`))).toBeVisible({
-            timeout: 10000,
-        });
+        const accepted: string[] = [];
+        for (let minute = from.startOf('minute'); !minute.isAfter(to.add(1, 'minute')); minute = minute.add(1, 'minute')) {
+            accepted.push(minute.format(timeFormat));
+        }
+        await expect(modalDialog.getByTestId('live-event-date').getByText(new RegExp(`(${accepted.join('|')})`))).toBeVisible({ timeout: 10000 });
     }
 
     async checkDialogMessage(message: string) {

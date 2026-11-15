@@ -846,18 +846,10 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                log.error("Error in build success handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
-                // Ensure we continue processing next builds even if cleanup/update fails
-                try {
-                    checkAvailabilityAndProcessNextBuild();
-                }
-                catch (Exception ignored) {
-                    log.error("Failed to check for next build after error in success handler", ignored);
-                }
+                recoverAfterCompletionHandlerFailure(buildJob, e, "success");
             }
             finally {
-                activeBuildAttempts.remove(buildJob.id(), attemptState);
-                buildJobManagementService.releaseBuildJob(futureResult);
+                releaseBuildAttempt(buildJob, attemptState, futureResult);
             }
         });
 
@@ -906,7 +898,7 @@ public class SharedQueueProcessingService {
                 BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
                         buildLogs, false);
 
-                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
+                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ResultQueueExceptionNormalizer.normalize(ex));
                 enqueueBuildResult(resultQueueItem);
                 // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
@@ -923,21 +915,28 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                log.error("Error in build exception handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
-                // Ensure we continue processing next builds even if cleanup/update fails
-                try {
-                    checkAvailabilityAndProcessNextBuild();
-                }
-                catch (Exception ignored) {
-                    log.error("Failed to check for next build after error in exception handler", ignored);
-                }
+                recoverAfterCompletionHandlerFailure(buildJob, e, "exception");
             }
             finally {
-                activeBuildAttempts.remove(buildJob.id(), attemptState);
-                buildJobManagementService.releaseBuildJob(futureResult);
+                releaseBuildAttempt(buildJob, attemptState, futureResult);
             }
             return null;
         });
+    }
+
+    private void recoverAfterCompletionHandlerFailure(BuildJobQueueItem buildJob, Exception failure, String handler) {
+        log.error("Error in build {} handler for job {}: {}. Attempting to continue processing.", handler, buildJob.id(), failure.getMessage(), failure);
+        try {
+            checkAvailabilityAndProcessNextBuild();
+        }
+        catch (Exception recoveryFailure) {
+            log.error("Failed to check for next build after error in {} handler", handler, recoveryFailure);
+        }
+    }
+
+    private void releaseBuildAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState, CompletableFuture<BuildResult> futureResult) {
+        activeBuildAttempts.remove(buildJob.id(), attemptState);
+        buildJobManagementService.releaseBuildJob(futureResult);
     }
 
     private void finishInternallyRequeuedAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState) {
@@ -1064,10 +1063,8 @@ public class SharedQueueProcessingService {
     }
 
     private static boolean sameAttempt(BuildJobQueueItem current, BuildJobQueueItem buildJob) {
-        return current != null && current.retryCount() == buildJob.retryCount() && current.buildAgent() != null && buildJob.buildAgent() != null
-                && Objects.equals(current.buildAgent().name(), buildJob.buildAgent().name())
-                && Objects.equals(current.jobTimingInfo() != null ? current.jobTimingInfo().buildStartDate() : null,
-                        buildJob.jobTimingInfo() != null ? buildJob.jobTimingInfo().buildStartDate() : null);
+        return current != null && current.retryCount() == buildJob.retryCount() && Objects.equals(current.buildAgent().name(), buildJob.buildAgent().name())
+                && Objects.equals(current.jobTimingInfo().buildStartDate(), buildJob.jobTimingInfo().buildStartDate());
     }
 
     /**

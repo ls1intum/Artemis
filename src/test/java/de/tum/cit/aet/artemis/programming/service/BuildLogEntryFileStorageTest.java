@@ -71,6 +71,9 @@ class BuildLogEntryFileStorageTest {
     @Mock
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    @Mock
+    private FailedBuildLogService failedBuildLogService;
+
     @TempDir
     Path buildLogsPath;
 
@@ -78,8 +81,8 @@ class BuildLogEntryFileStorageTest {
 
     @BeforeEach
     void setUp() {
-        buildLogEntryService = new BuildLogEntryService(buildLogEntryRepository, programmingSubmissionRepository, profileService, buildJobRepository,
-                programmingExerciseRepository);
+        buildLogEntryService = new BuildLogEntryService(buildLogEntryRepository, programmingSubmissionRepository, profileService, buildJobRepository, programmingExerciseRepository,
+                failedBuildLogService);
         ReflectionTestUtils.setField(buildLogEntryService, "buildLogsPath", buildLogsPath);
         ReflectionTestUtils.setField(buildLogEntryService, "expiryDays", EXPIRY_DAYS);
     }
@@ -118,6 +121,21 @@ class BuildLogEntryFileStorageTest {
         assertThat(logFile).as("the log is stored under the course and the exercise it belongs to").isRegularFile();
         // The timestamp is what makes a build log readable, so it is written in front of every line rather than only once.
         assertThat(logFile).content(StandardCharsets.UTF_8).contains(firstEntryTime + "\tcompiling").contains(firstEntryTime.plusSeconds(1) + "\tdone");
+    }
+
+    @Test
+    void saveBuildLogsToFile_forABuildJobIdWithPathElements_writesNothing() throws IOException {
+        List<BuildLogDTO> buildLogs = List.of(new BuildLogDTO(ZonedDateTime.parse("2200-01-10T12:00:00Z"), "compiling\n"));
+
+        for (String invalidBuildJobId : List.of("../../other", "..", "sub/build-job", "sub\\build-job", "C:other", "build:job")) {
+            buildLogEntryService.saveBuildLogsToFile(buildLogs, invalidBuildJobId, exercise());
+        }
+        // a missing id is treated like one that is not a file name
+        buildLogEntryService.saveBuildLogsToFile(buildLogs, null, exercise());
+
+        try (var files = Files.walk(buildLogsPath)) {
+            assertThat(files.filter(Files::isRegularFile)).as("no file is written for an id that is not a plain file name").isEmpty();
+        }
     }
 
     @Test
@@ -167,6 +185,16 @@ class BuildLogEntryFileStorageTest {
             assertThatExceptionOfType(IllegalArgumentException.class).as("build job id '%s' must be rejected", maliciousBuildJobId)
                     .isThrownBy(() -> buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(maliciousBuildJobId)).withMessageContaining("Invalid build job ID");
         }
+    }
+
+    @Test
+    void retrieveBuildLogsFromFileForBuildJob_forABuildJobIdThatIsNotAFileName_isRejected() {
+        for (String invalidBuildJobId : List.of("C:build-job", "build:job")) {
+            assertThatExceptionOfType(IllegalArgumentException.class).as("build job id '%s' must be rejected", invalidBuildJobId)
+                    .isThrownBy(() -> buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(invalidBuildJobId)).withMessageContaining("Invalid build job ID");
+        }
+        assertThatExceptionOfType(IllegalArgumentException.class).as("a missing build job id must be rejected without a NullPointerException")
+                .isThrownBy(() -> buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(null)).withMessageContaining("Invalid build job ID");
     }
 
     @Test

@@ -51,6 +51,18 @@ export class MockComplaintService implements IComplaintService {
         return of(MockComplaintResponse);
     }
 
+    findBySubmissionIdForAssessment(submissionId: number): Observable<EntityResponseType> {
+        return this.findBySubmissionId(submissionId);
+    }
+
+    findForTutorByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return of(MockComplaintArrayResponse);
+    }
+
+    findForTutorByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return of(MockComplaintArrayResponse);
+    }
+
     findAllByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         return of(MockComplaintArrayResponse);
     }
@@ -60,6 +72,14 @@ export class MockComplaintService implements IComplaintService {
     }
 
     findAllByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return of(MockComplaintArrayResponse);
+    }
+
+    findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return of(MockComplaintArrayResponse);
+    }
+
+    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         return of(MockComplaintArrayResponse);
     }
 

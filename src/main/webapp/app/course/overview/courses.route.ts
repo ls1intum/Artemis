@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { CanMatchFn, Route, Routes, UrlSegment } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
@@ -7,25 +7,7 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
-
-export enum CourseOverviewRoutePath {
-    IRIS = 'iris',
-    EXERCISES = 'exercises',
-    EXAMS = 'exams',
-    COMPETENCIES = 'competencies',
-    TUTORIAL_GROUPS = 'tutorial-groups',
-    FAQ = 'faq',
-    LEARNING_PATH = 'learning-path',
-    LECTURES = 'lectures',
-    ENROLL = 'enroll',
-    ARCHIVE = 'archive',
-    STATISTICS = 'statistics',
-    COMMUNICATION = 'communication',
-    SETTINGS = 'settings',
-    TRAINING = 'training',
-    TRAINING_QUIZ = 'training/quiz',
-    CALENDAR = 'calendar',
-}
+import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
 
 /**
  * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
@@ -45,6 +27,12 @@ export const COURSE_OVERVIEW_GUARDED_ROUTE_PATHS: ReadonlySet<string> = new Set(
     CourseOverviewRoutePath.TRAINING,
     CourseOverviewRoutePath.TRAINING_QUIZ,
 ]);
+
+/**
+ * Matches the URLs of the text unit full screen page, `lectures/:lectureId/text-units/:unitId`. It receives all
+ * segments from the `lectures` one on, so these are exactly four.
+ */
+export const isTextUnitFullscreenUrl: CanMatchFn = (_route: Route, segments: UrlSegment[]) => segments.length === 4 && segments[2].path === 'text-units';
 
 export const courseRoutes: Routes = [
     {
@@ -207,6 +195,36 @@ export const courseRoutes: Routes = [
                 loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
             },
 
+            {
+                // A text unit shown on its own page. It shares the `lectures` path, and therefore its guards, but not
+                // the lecture list around the regular lecture routes. `isolatedView` makes the course shell drop its
+                // sidebar and title bar.
+                //
+                // `canMatch` is what keeps every other lecture URL on the route below: a route without a component
+                // whose children do not match is still taken when no URL segments are left over, which is the case
+                // for the bare `lectures` URL that the sidebar links to.
+                path: CourseOverviewRoutePath.LECTURES,
+                canMatch: [isTextUnitFullscreenUrl],
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.lectures',
+                    isolatedView: true,
+                },
+                canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
+                children: [
+                    {
+                        path: ':lectureId/text-units/:unitId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.lectures',
+                            isolatedView: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/lecture/overview/course-lectures/text-unit-fullscreen/text-unit-fullscreen.component').then((m) => m.TextUnitFullscreenComponent),
+                    },
+                ],
+            },
             {
                 path: CourseOverviewRoutePath.LECTURES,
                 loadComponent: () => import('app/lecture/shared/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),

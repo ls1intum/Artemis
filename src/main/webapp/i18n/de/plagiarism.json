@@ -12,6 +12,9 @@
             "plagiarism": "Plagiat",
             "teamModeDisabled": "Benachrichtigung und Urteil für den Teammodus <b>nicht</b> verfügbar.",
             "back": "Zurück",
+            "expandLeftPane": "Linken Bereich vergrößern",
+            "resetSplitPanes": "Geteilte Ansicht zurücksetzen",
+            "expandRightPane": "Rechten Bereich vergrößern",
             "empty": "Es liegen keine Ergebnisse vor.",
             "notFound": "Kein Plagiat gefunden",
             "notSelected": "Kein Plagiat ausgewählt",
@@ -120,6 +123,7 @@
                 "noCourseCases": "Keine Plagiatsfälle in diesem Kurs",
                 "noExamCases": "Keine Plagiatsfälle in dieser Prüfung",
                 "notifyStudent": "Studierende:n benachrichtigen",
+                "print": "Drucken",
                 "studentNotified": "Studierende:r wurde benachrichtigt.",
                 "viewComparisons": "Vergleiche ansehen"
             },

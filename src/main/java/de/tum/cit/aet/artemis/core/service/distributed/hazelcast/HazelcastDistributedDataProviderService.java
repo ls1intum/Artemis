@@ -157,7 +157,15 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
 
     @Override
     public <K, V> DistributedMap<K, V> getMap(String name) {
-        return new NonExpiringDistributedMap<>(new HazelcastDistributedMap<>(hazelcastInstance.getMap(name)), name);
+        return new NonExpiringDistributedMap<>(new HazelcastDistributedMap<>(hazelcastInstance.getMap(name), requiresOwnerCheck(name)), name);
+    }
+
+    private boolean requiresOwnerCheck(String name) {
+        if (hazelcastInstance instanceof HazelcastClientProxy) {
+            return false;
+        }
+        String policy = hazelcastInstance.getConfig().findMapConfig(name).getSplitBrainProtectionName();
+        return policy != null && hazelcastInstance.getConfig().getSplitBrainProtectionConfig(policy).getFunctionImplementation() != null;
     }
 
     /**

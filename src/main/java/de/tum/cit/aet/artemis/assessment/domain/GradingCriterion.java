@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -10,8 +10,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -28,8 +30,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public class GradingCriterion extends DomainObject {
 
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("sortOrder ASC, id ASC")
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
-    private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();
+    private Set<GradingInstruction> structuredGradingInstructions = new LinkedHashSet<>();
 
     @ManyToOne
     @JoinColumn(nullable = false)
@@ -38,6 +41,18 @@ public class GradingCriterion extends DomainObject {
 
     @Column(name = "title")
     private String title;
+
+    @Column(name = "sort_order", nullable = false)
+    private long sortOrder;
+
+    @JsonIgnore
+    public long getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(long sortOrder) {
+        this.sortOrder = sortOrder;
+    }
 
     public String getTitle() {
         return title;

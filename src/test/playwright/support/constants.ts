@@ -18,7 +18,7 @@ export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercise
 // Timeformat used when sending dates to the server (ISO-8601, UTC).
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
-// Format the PrimeNG p-datepicker (jhi-date-time-picker, DEFAULT date+time mode) expects/displays
+// Format the date picker expects and displays in its date+time mode
 // in its text input. Used when typing dates into the picker through the UI.
 export const DATE_TIME_PICKER_FORMAT = 'DD.MM.YYYY HH:mm';
 
@@ -66,15 +66,6 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-// CourseWideContext
-// Copied from src\main\webapp\app\shared\metis\metis.util.ts
-export enum CourseWideContext {
-    TECH_SUPPORT = 'TECH_SUPPORT',
-    ORGANIZATION = 'ORGANIZATION',
-    RANDOM = 'RANDOM',
-    ANNOUNCEMENT = 'ANNOUNCEMENT',
-}
-
 // AdditionalData
 export class AdditionalData {
     quizExerciseID?: number;
@@ -85,6 +76,8 @@ export class AdditionalData {
     practiceMode?: boolean;
     skipBuildResultCheck?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+    /** Whether students may complain about an automatic result of the programming exercise, which a tutor then answers manually. */
+    allowComplaintsForAutomaticAssessments?: boolean;
     programmingLanguage?: ProgrammingLanguage;
 }
 

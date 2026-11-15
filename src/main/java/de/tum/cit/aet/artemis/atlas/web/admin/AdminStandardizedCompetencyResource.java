@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
@@ -44,7 +45,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @FeatureToggle(Feature.StandardizedCompetencies)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("competencies/standardized-competencies")
+@FeatureUsage(UserFeature.STANDARDIZED_COMPETENCIES)
 @RestController
 @RequestMapping("api/atlas/admin/")
 public class AdminStandardizedCompetencyResource {

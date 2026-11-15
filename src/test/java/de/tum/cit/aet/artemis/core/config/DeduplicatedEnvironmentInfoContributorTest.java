@@ -57,7 +57,7 @@ class DeduplicatedEnvironmentInfoContributorTest {
         yaml.put("info.testServer", false);
         yaml.put("info.operatorName", "");
         yaml.put("info.localLLMDeploymentEnabled", false);
-        yaml.put("info.sentry.dsn", "https://example.invalid");
+        yaml.put("info.nested.url", "https://example.invalid");
 
         Info info = contribute(environmentWith(envVars, yaml));
 
@@ -71,10 +71,10 @@ class DeduplicatedEnvironmentInfoContributorTest {
         assertThat(info.get("localLLMDeploymentEnabled")).isEqualTo(false);
 
         // Nested maps are preserved and recursed into.
-        assertThat(info.get("sentry")).isInstanceOf(Map.class);
+        assertThat(info.get("nested")).isInstanceOf(Map.class);
         @SuppressWarnings("unchecked")
-        Map<String, Object> sentry = (Map<String, Object>) info.get("sentry");
-        assertThat(sentry).containsEntry("dsn", "https://example.invalid");
+        Map<String, Object> nested = (Map<String, Object>) info.get("nested");
+        assertThat(nested).containsEntry("url", "https://example.invalid");
 
         // No all-lowercase case-variant duplicate leaks through.
         assertThat(info.getDetails().keySet()).doesNotContain("testserver", "operatorname");
@@ -97,7 +97,7 @@ class DeduplicatedEnvironmentInfoContributorTest {
         yaml.put("info.operatorName", "");
         yaml.put("info.operatorAdminName", "");
         yaml.put("info.contact", "");
-        yaml.put("info.sentry.dsn", "https://example.invalid");
+        yaml.put("info.nested.url", "https://example.invalid");
 
         StandardEnvironment environment = environmentWith(envVars, yaml);
 
@@ -123,7 +123,7 @@ class DeduplicatedEnvironmentInfoContributorTest {
         Set<String> droppedKeys = builtIn.keySet().stream().filter(key -> !deduped.containsKey(key)).collect(Collectors.toSet());
         assertThat(droppedKeys).containsExactlyInAnyOrder("testserver", "operatorname", "textassessmentanalyticsenabled", "studentexamstoresessiondata");
 
-        // Every surviving key keeps the exact value the built-in contributor produced (including the nested sentry map).
+        // Every surviving key keeps the exact value the built-in contributor produced (including the nested map).
         deduped.forEach((key, value) -> assertThat(value).isEqualTo(builtIn.get(key)));
     }
 

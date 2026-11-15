@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# REMOVE_IN_ARTEMIS_11 (Jenkins): delete this directory once Jenkins support is removed
 # Script to migrate the Artemis API paths baked into Jenkins job definitions to the paths Artemis serves today.
 # A job stores the URL it calls back into Artemis at the moment it is created, and nothing rewrites it afterwards, so a
 # job keeps calling whatever spelling was current when it was generated. This script rewrites those URLs in place.

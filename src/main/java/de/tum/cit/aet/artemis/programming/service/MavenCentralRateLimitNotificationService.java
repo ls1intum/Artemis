@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -81,22 +81,22 @@ public class MavenCentralRateLimitNotificationService {
 
     private final UserRepository userRepository;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private final GlobalNotificationSettingService globalNotificationSettingService;
 
     private final MailSendingService mailSendingService;
 
     /** Lazily resolved cluster-shared map with the last notification timestamp (epoch millis) per exercise id; {@code null} until first use. */
-    private volatile DistributedMap<Long, Long> distributedSentMap;
+    private final AtomicReference<DistributedMap<Long, Long>> distributedSentMap = new AtomicReference<>();
 
     /** Node-local fallback for deployments without a {@link DistributedDataProvider}. */
     private final ConcurrentHashMap<Long, Long> localSentMap = new ConcurrentHashMap<>();
 
     public MavenCentralRateLimitNotificationService(Optional<DistributedDataProvider> distributedDataProvider, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, GlobalNotificationSettingRepository globalNotificationSettingRepository, MailSendingService mailSendingService) {
+            UserRepository userRepository, GlobalNotificationSettingService globalNotificationSettingService, MailSendingService mailSendingService) {
         this.distributedDataProvider = distributedDataProvider;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.globalNotificationSettingService = globalNotificationSettingService;
         this.mailSendingService = mailSendingService;
     }
 
@@ -185,27 +185,14 @@ public class MavenCentralRateLimitNotificationService {
     }
 
     private DistributedMap<Long, Long> distributedSentMap() {
-        DistributedMap<Long, Long> resolved = distributedSentMap;
-        if (resolved == null) {
-            synchronized (this) {
-                resolved = distributedSentMap;
-                if (resolved == null) {
-                    resolved = distributedDataProvider.orElseThrow().getMap(NOTIFICATION_SENT_MAP);
-                    distributedSentMap = resolved;
-                }
-            }
-        }
-        return resolved;
+        return distributedSentMap.updateAndGet(current -> current != null ? current : distributedDataProvider.orElseThrow().getMap(NOTIFICATION_SENT_MAP));
     }
 
     private void notifyInstructors(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findWithEagerCourseAndExamById(exerciseId).orElseThrow();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Set<User> instructors = userRepository.getInstructors(course);
         log.info("Notifying {} instructors of course {} about Maven Central rate limiting in programming exercise {}", instructors.size(), course.getId(), exercise.getId());
-        Set<Long> instructorIds = instructors.stream().map(User::getId).collect(Collectors.toSet());
-        Set<Long> optedOutUserIds = instructorIds.isEmpty() ? Set.of()
-                : globalNotificationSettingRepository.findUserIdsWithNotificationDisabled(instructorIds, GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT);
         String editorPath;
         if (exercise.isExamExercise()) {
             var exerciseGroup = exercise.getExerciseGroup();
@@ -218,7 +205,8 @@ public class MavenCentralRateLimitNotificationService {
         Map<String, Object> contextVariables = Map.of("exerciseTitle", exercise.getTitle(), "courseTitle", course.getTitle(), "editorPath", editorPath, "documentationUrl",
                 DOCUMENTATION_URL);
         for (User instructor : instructors) {
-            if (!instructor.getActivated() || instructor.getEmail() == null || optedOutUserIds.contains(instructor.getId())) {
+            if (!instructor.getActivated() || instructor.getEmail() == null
+                    || !globalNotificationSettingService.isNotificationEnabled(instructor, GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT)) {
                 continue;
             }
             try {

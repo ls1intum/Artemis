@@ -4,41 +4,53 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAn
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAnswerPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryPostProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManagerFactory;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -56,6 +68,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "postweaviateint";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
@@ -91,7 +106,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     private Channel createPublicChannel(String name) {
@@ -136,8 +151,11 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     @Nested
     class UpsertTests {
 
+        @Autowired
+        private SearchableEntitySyncStateRepository syncStateRepository;
+
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPost_indexesInWeaviate() throws Exception {
             Channel channel = createPublicChannel("upsert-test");
             Post post = createAndSavePost(channel);
@@ -147,15 +165,38 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertPostExistsInWeaviate(weaviateService, post.getId());
         }
 
+        /**
+         * Regression test for a ledger that only ever grows: post and answer post are excluded from every
+         * reconcile pass, so nothing reads their ledger rows back, and a bulk delete has no entity id to clean
+         * one up with. The dispatcher must never write a row for them at all, confirmed live against real
+         * Postgres, even though the entity is correctly indexed in Weaviate.
+         */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void testUpsertPostAndAnswerPost_neverWriteALedgerRow() throws Exception {
+            Channel channel = createPublicChannel("no-ledger-test");
+            Post post = createAndSavePost(channel);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+
+            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel));
+
+            assertPostExistsInWeaviate(weaviateService, post.getId());
+            assertAnswerPostExistsInWeaviate(weaviateService, answer.getId());
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.POST, post.getId())).as("no ledger row for a post, ever").isEmpty();
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId())).as("no ledger row for an answer post, ever")
+                    .isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPost_storesCorrectProperties() throws Exception {
             Channel channel = createPublicChannel("props-test");
             Post post = createAndSavePost(channel);
 
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryPostProperties(weaviateService, post.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo(post.getContent());
@@ -165,7 +206,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPost_updatesContentInWeaviate() throws Exception {
             Channel channel = createPublicChannel("update-test");
             Post post = createAndSavePost(channel);
@@ -173,11 +214,12 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
             assertPostExistsInWeaviate(weaviateService, post.getId());
 
-            // Simulate content update
+            // Simulate a content update. Persist it, since the dispatcher re-derives the entity from the database at dispatch time
             post.setContent("Updated content");
+            postRepository.save(post);
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryPostProperties(weaviateService, post.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo("Updated content");
@@ -185,14 +227,14 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsIndexable_returnsFalseForPrivateChannel() {
             Channel channel = createPrivateChannel("private-test");
             assertThat(PostSearchableEntityDTO.isIndexable(channel)).isFalse();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsIndexable_returnsTrueForPublicChannel() {
             Channel channel = createPublicChannel("public-test");
             assertThat(PostSearchableEntityDTO.isIndexable(channel)).isTrue();
@@ -203,7 +245,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     class DeleteTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeletePost_removesFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-post-test");
             Post post = createAndSavePost(channel);
@@ -218,7 +260,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannel_removesPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-channel-test");
             Post post1 = createAndSavePost(channel);
@@ -238,7 +280,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testArchiveChannel_removesPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("archive-post-test");
             Post post = createAndSavePost(channel);
@@ -262,13 +304,14 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertPostExistsInWeaviate(weaviateService, post.getId());
 
             long postId = post.getId();
-            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
             assertPostNotInWeaviate(weaviateService, postId);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteAllAnswerPostsForPost_removesAnswerPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-answers-test");
             Post post = createAndSavePost(channel);
@@ -293,7 +336,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteMessage_removesAnswerPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-msg-answers-test");
             Post post = createAndSavePost(channel);
@@ -322,7 +365,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     class PrivacyFilterTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreatePostInPrivateChannel_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-priv");
@@ -340,7 +383,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreatePostInOneToOneChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-dm");
@@ -359,7 +402,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreatePostInGroupChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-gc");
@@ -375,6 +418,142 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             // Assert the group chat post was NOT indexed
             assertThat(queryPostProperties(weaviateService, gcPost.id())).isNull();
+        }
+    }
+
+    /**
+     * Posts and answer posts stay indexed but are not searchable: the reconcile passes do not manage them, so their rows
+     * drift from the database. The palette must never return them, whatever types the request names.
+     */
+    @Nested
+    class SearchExclusionTests {
+
+        private static final String SEARCH_TOKEN = "hiddenpostprobe";
+
+        private List<GlobalSearchResultDTO> search(String query) throws Exception {
+            return request.getList("/api/search?" + query, HttpStatus.OK, GlobalSearchResultDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void testSearchNeverReturnsIndexedPostsOrReplies() throws Exception {
+            Channel channel = createPublicChannel(SEARCH_TOKEN + "-channel");
+            Post post = ConversationFactory.createBasicPost(0, instructor);
+            post.setContent(SEARCH_TOKEN + " message");
+            post.setConversation(channel);
+            post = postRepository.save(post);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel));
+
+            // Both message rows are in the index, so their absence below is the search's doing and not a missing document.
+            assertPostExistsInWeaviate(weaviateService, post.getId());
+            assertAnswerPostExistsInWeaviate(weaviateService, answer.getId());
+
+            String scope = "&courseIds=" + course.getId();
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(search("q=" + SEARCH_TOKEN + scope)).extracting(GlobalSearchResultDTO::type).contains(SearchableEntitySchema.TypeValues.CHANNEL);
+            });
+
+            assertThat(search("q=" + SEARCH_TOKEN + scope)).extracting(GlobalSearchResultDTO::type).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                    SearchableEntitySchema.TypeValues.ANSWER_POST);
+            assertThat(search("q=" + SEARCH_TOKEN)).as("unscoped").extracting(GlobalSearchResultDTO::type).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                    SearchableEntitySchema.TypeValues.ANSWER_POST);
+            // Naming them is accepted rather than rejected, so a client built while they were searchable keeps its channels.
+            assertThat(search("q=" + SEARCH_TOKEN + "&types=post,answer_post" + scope)).isEmpty();
+            assertThat(search("q=" + SEARCH_TOKEN + "&types=channel,post,answer_post" + scope)).isNotEmpty().extracting(GlobalSearchResultDTO::type)
+                    .containsOnly(SearchableEntitySchema.TypeValues.CHANNEL);
+        }
+    }
+
+    @Nested
+    class ResolverProjectionTests {
+
+        @Autowired
+        private SearchableEntityResolver searchableEntityResolver;
+
+        @Autowired
+        private ReactionRepository reactionRepository;
+
+        @Autowired
+        private EntityManagerFactory entityManagerFactory;
+
+        private Statistics statistics;
+
+        @BeforeEach
+        void enableStatistics() {
+            statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+            statistics.setStatisticsEnabled(true);
+        }
+
+        private void addReaction(Post post, AnswerPost answerPost, String emojiId) {
+            Reaction reaction = new Reaction();
+            reaction.setUser(instructor);
+            reaction.setEmojiId(emojiId);
+            reaction.setPost(post);
+            reaction.setAnswerPost(answerPost);
+            reactionRepository.save(reaction);
+        }
+
+        /**
+         * Regression test for a resolve that instantiated the whole {@code Post} entity, dragging in its
+         * {@code FetchType.EAGER} reactions and answers (and each answer's own reactions) to build a property map
+         * that needs none of it. Resolving a post must go through the scalar projection alone.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void testResolvingAPostNeverLoadsItsEagerReactionsAndAnswersGraph() {
+            Channel channel = createPublicChannel("resolver-post-test");
+            Post post = createAndSavePost(channel);
+            addReaction(post, null, "smiley");
+            addReaction(post, null, "tada");
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            addReaction(null, answer, "smiley");
+            statistics.clear();
+
+            Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.POST, post.getId());
+
+            // The resolver adds the chunk metadata to the scalar projection.
+            assertThat(resolved).hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap())
+                    .containsKeys(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntitySchema.Properties.CHUNKER_VERSION));
+            assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving a post must not load the Post entity").isZero();
+            assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving a post must not load its answers").isZero();
+            assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving a post must not load its reactions").isZero();
+        }
+
+        /**
+         * Same regression as above, but for the answer post branch and its own {@code FetchType.EAGER} reactions plus
+         * its default-eager {@code Post} association.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void testResolvingAnAnswerPostNeverLoadsItsEagerReactionsOrParentPost() {
+            Channel channel = createPublicChannel("resolver-answer-test");
+            Post post = createAndSavePost(channel);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            addReaction(null, answer, "smiley");
+            statistics.clear();
+
+            Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId());
+
+            // The resolver adds the chunk metadata to the scalar projection.
+            assertThat(resolved)
+                    .hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel).toPropertyMap())
+                            .containsKeys(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntitySchema.Properties.CHUNKER_VERSION));
+            assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving an answer post must not load the AnswerPost entity").isZero();
+            assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving an answer post must not load its parent Post entity").isZero();
+            assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving an answer post must not load its reactions").isZero();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void testResolvingAPostInAPrivateChannelResolvesToEmpty() {
+            Channel channel = createPrivateChannel("resolver-priv-test");
+            Post post = createAndSavePost(channel);
+
+            assertThat(searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.POST, post.getId())).isEmpty();
         }
     }
 }

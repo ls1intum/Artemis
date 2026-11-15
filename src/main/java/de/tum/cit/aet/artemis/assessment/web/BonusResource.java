@@ -40,11 +40,11 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("grading/bonus")
+@FeatureUsage(UserFeature.BONUS)
 @RestController
 @RequestMapping("api/assessment/")
 public class BonusResource {
@@ -173,7 +173,8 @@ public class BonusResource {
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("courses/{courseId}/exams/{examId}/bonuses")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<BonusResponseDTO> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody BonusRequestDTO bonusDTO)
             throws URISyntaxException {
         log.debug("REST request to create a bonus for exam: {}", examId);
@@ -221,7 +222,8 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/bonuses/{bonusId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<BonusResponseDTO> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId,
             @RequestBody BonusRequestDTO updatedBonus) {
         log.debug("REST request to update a updatedBonus: {}", bonusId);
@@ -287,7 +289,8 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) if the bonus is successfully deleted and 400 (Bad request) otherwise
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/bonuses/{bonusId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus: {}", bonusId);
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));

@@ -1,5 +1,13 @@
 th,
 td {
     text-align: start;
-    padding: 0.25em;
+}
+
+th {
+    padding: 2px 16px 2px 0;
+    font-weight: 600;
+}
+
+td {
+    padding: 2px 0;
 }

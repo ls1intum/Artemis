@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
@@ -46,11 +46,15 @@ public class PlagiarismPostApi extends AbstractPlagiarismApi {
         plagiarismAnswerPostService.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
-    public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+    public void broadcastForPost(Post post, CommunicationCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         plagiarismPostService.broadcastForPost(post, action, courseId, recipients);
     }
 
     public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         plagiarismPostService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+    }
+
+    public void checkUserMayInteractWithPostElseThrow(User user, Post post, Course course) {
+        plagiarismPostService.checkUserMayInteractWithPostElseThrow(user, post, course);
     }
 }

@@ -1,18 +1,19 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Observable } from 'rxjs';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { map } from 'rxjs/operators';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingService } from 'app/communication/service/posting.service';
-import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
+import { DisplayPriority, PostContextFilter } from 'app/communication/communication.util';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PostService extends PostingService<Post> {
     private http = inject(HttpClient);
 
@@ -147,7 +148,14 @@ export class PostService extends PostingService<Post> {
      */
     getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
         const params = new HttpParams().set('postIds', postIds.join(','));
-        return this.http.get<Post[]>(`api/communication/courses/${courseId}/messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
+        // The chat renders an unavailable-source placeholder if a source is deleted or cannot be loaded.
+        return this.http
+            .get<Post[]>(`api/communication/courses/${courseId}/messages-source-posts`, {
+                params,
+                observe: 'response',
+                context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+            })
+            .pipe(map((response) => response.body!));
     }
 
     /**

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
@@ -9,7 +9,7 @@ import { round } from 'app/foundation/util/utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StatisticsService {
     private http = inject(HttpClient);
 
@@ -48,6 +48,8 @@ export class StatisticsService {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params }).pipe(
             map((res: CourseManagementStatisticsDTO) => {
+                // The server leaves the list out while no exercise of the course has an average score yet.
+                res.averageScoresOfExercises ??= [];
                 StatisticsService.convertExerciseCategoriesOfCourseManagementStatisticsFromServer(res);
                 return StatisticsService.convertCourseManagementStatisticDatesFromServer(res);
             }),

@@ -37,19 +37,18 @@ final class PdfMergeUtil {
             return Optional.empty();
         }
 
-        List<Path> existingPaths = paths.stream().filter(Files::exists).toList();
-        if (existingPaths.isEmpty()) {
-            return Optional.of(new byte[0]);
+        if (paths.stream().anyMatch(path -> !Files.isRegularFile(path))) {
+            return Optional.empty();
         }
 
         try {
-            return Optional.of(mergePdfFiles(existingPaths, mergedPdfFilename, DocumentMergeMode.PDFBOX_LEGACY_MODE));
+            return Optional.of(mergePdfFiles(paths, mergedPdfFilename, DocumentMergeMode.PDFBOX_LEGACY_MODE));
         }
         catch (IOException legacyMergeException) {
             log.warn(
                     "Could not fully merge PDF files {}. Retrying with a page-only merge that omits PDF tags, bookmarks, and internal destinations. Re-export or repair the source PDFs to preserve these elements.",
-                    existingPaths, legacyMergeException);
-            return mergePdfFilesPageOnly(existingPaths, mergedPdfFilename);
+                    paths, legacyMergeException);
+            return mergePdfFilesPageOnly(paths, mergedPdfFilename);
         }
     }
 

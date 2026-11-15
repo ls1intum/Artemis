@@ -3,8 +3,17 @@ import { TestBed, inject } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import englishUserManagement from 'src/main/webapp/i18n/en/user-management.json';
+import germanUserManagement from 'src/main/webapp/i18n/de/user-management.json';
+import englishErrors from 'src/main/webapp/i18n/en/error.json';
+import germanErrors from 'src/main/webapp/i18n/de/error.json';
+import enQuizSubmission from 'src/main/webapp/i18n/en/quizSubmission.json';
+import deQuizSubmission from 'src/main/webapp/i18n/de/quizSubmission.json';
+
+vi.mock('app/core/error-reporting/capture-exception', () => ({ captureException: vi.fn() }));
 
 describe('Alert Service Test', () => {
     const alertSample = {
@@ -194,10 +203,127 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Server not reachable');
     });
 
+    it('should show the translation of the server not being reachable once the translations are loaded', () => {
+        TestBed.inject(TranslateService).setTranslation('en', { 'global.generic.serverNotReachable': 'Der Server ist nicht erreichbar' }, true);
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Der Server ist nicht erreichbar');
+    });
+
+    it('should not report a missing translation if the server is not reachable, because the translations may not be loadable either', () => {
+        vi.mocked(captureException).mockClear();
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Server not reachable');
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should not display an alert on status 404', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
+        expect(service.get()).toHaveLength(0);
+    });
+
+    describe('showsHttpErrorAlert', () => {
+        const rejection = (status: number, body?: unknown, headers?: Record<string, string>) => new HttpErrorResponse({ status, error: body, headers: new HttpHeaders(headers) });
+
+        // Each case is also sent through the real listener, so the decision cannot drift away from what the alert handling really does.
+        it.each([
+            { description: 'the server is not reachable', error: rejection(0), alerted: true },
+            {
+                description: 'a bad request has an error header with a known translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'Error Message' }),
+                alerted: true,
+            },
+            {
+                description: 'a bad request has an error header without a translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'error.unknown.key' }),
+                alerted: false,
+            },
+            { description: 'a bad request has field errors', error: rejection(400, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }), alerted: true },
+            { description: 'a bad request has an empty list of field errors', error: rejection(400, { fieldErrors: [], title: 'Bad Request' }), alerted: false },
+            { description: 'a bad request has only a title', error: rejection(400, { title: 'Bad Request', message: 'Bad Request' }), alerted: true },
+            { description: 'a bad request has a title whose key is skipped', error: rejection(400, { title: 'Bad Request', errorKey: 'courseShortNameExists' }), alerted: false },
+            { description: 'a bad request has nothing to show', error: rejection(400, {}), alerted: false },
+            { description: 'access is denied', error: rejection(403), alerted: true },
+            { description: 'access is denied with a key whose alert is skipped', error: rejection(403, { errorKey: 'cannotRegisterStaff' }), alerted: false },
+            { description: 'the resource was not found', error: rejection(404, { title: 'Not Found' }), alerted: false },
+            { description: 'a server error has a title', error: rejection(500, { title: 'Error Message', message: 'Error Message' }), alerted: true },
+            { description: 'a server error has an error header but no title', error: rejection(500, undefined, { 'x-artemisapp-error': 'Error Message' }), alerted: false },
+            {
+                description: 'a gateway error has field errors but no title',
+                error: rejection(502, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }),
+                alerted: false,
+            },
+            { description: 'a gateway error is the plain page of a proxy', error: rejection(502, '<html>Bad Gateway</html>'), alerted: false },
+            { description: 'the server asked for no alert', error: rejection(500, { skipAlert: true, title: 'Error Message' }), alerted: false },
+        ])('is $alerted when $description', ({ error, alerted }) => {
+            expect(service.showsHttpErrorAlert(error)).toBe(alerted);
+
+            eventManager.broadcast({ name: 'artemisApp.httpError', content: error });
+
+            expect(service.get().length > 0).toBe(alerted);
+        });
+    });
+
+    it.each([
+        {
+            language: 'en',
+            errors: englishErrors,
+            expected: 'You do not have permission to access this content or perform this action. Contact your course team if you need access.',
+        },
+        {
+            language: 'de',
+            errors: germanErrors,
+            expected: 'Du hast keine Berechtigung, auf diesen Inhalt zuzugreifen oder diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.',
+        },
+    ])('explains a 403 without a problem body in $language', ({ language, errors, expected }) => {
+        const translations = TestBed.inject(TranslateService);
+        translations.setTranslation(language, errors, true);
+        translations.use(language);
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 403 }) });
+        expect(service.get()).toHaveLength(1);
+        const rendered = document.createElement('div');
+        rendered.innerHTML = service.get()[0].message!;
+        expect(rendered.textContent).toBe(expected);
+    });
+
+    it('preserves a specific translated 403 reason and its parameters', () => {
+        const translations = TestBed.inject(TranslateService);
+        translations.setTranslation('en', { error: { restricted: 'Only {{role}} can do this.' } }, true);
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.restricted', params: { role: 'instructors' } },
+            }),
+        });
+        expect(service.get()[0].message).toBe('Only instructors can do this.');
+    });
+
+    it('falls back to permission guidance for an untranslated 403 reason', () => {
+        TestBed.inject(TranslateService).setTranslation('en', englishErrors, true);
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.untranslatedReason' },
+            }),
+        });
+        expect(service.get()[0].message).toBe('You do not have permission to access this content or perform this action. Contact your course team if you need access.');
+    });
+
+    it('does not duplicate a locally handled cannotRegisterStaff error', () => {
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.cannotRegisterStaff', errorKey: 'cannotRegisterStaff' },
+            }),
+        });
         expect(service.get()).toHaveLength(0);
     });
 
@@ -255,6 +381,74 @@ describe('Alert Service Test', () => {
         // THEN
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Error on field &#34;artemisApp.foo.minField&#34;');
+    });
+
+    it.each([
+        { language: 'en', users: englishUserManagement, errors: englishErrors, fieldName: 'Password' },
+        { language: 'de', users: germanUserManagement, errors: germanErrors, fieldName: 'Passwort' },
+    ])('should translate a managed user password validation error in $language', ({ language, users, errors, fieldName }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, users);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: { fieldErrors: [{ objectName: 'managedUserVM', field: 'password', message: 'Size' }] },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toContain(fieldName);
+        expect(service.get()[0].message).not.toContain('translation-not-found');
+    });
+
+    it.each([
+        { language: 'en', users: englishUserManagement, errors: englishErrors, expected: 'Field Email must be a valid email address!' },
+        { language: 'de', users: germanUserManagement, errors: germanErrors, expected: 'Feld E-Mail muss eine gültige E-Mail-Adresse sein!' },
+    ])('should translate a managed user email validation error in $language', ({ language, users, errors, expected }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, users);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: { fieldErrors: [{ objectName: 'managedUserVM', field: 'email', message: 'Email' }] },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(expected);
+    });
+
+    it.each([
+        { language: 'en', quizTranslations: enQuizSubmission, errors: englishErrors, expected: 'Field Short answer cannot be blank!' },
+        { language: 'de', quizTranslations: deQuizSubmission, errors: germanErrors, expected: 'Feld Kurzantwort darf nicht leer sein!' },
+    ])('should translate short-answer validation errors in $language', ({ language, quizTranslations, errors, expected }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, quizTranslations, true);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: {
+                    fieldErrors: [{ objectName: 'quizSubmissionFromStudent', field: 'submittedAnswers[0].submittedTexts[1].text', message: 'NotBlank' }],
+                },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe(expected);
     });
 
     it('should display an alert on status 400 for error headers', () => {

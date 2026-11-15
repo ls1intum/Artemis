@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { parseJson } from 'app/foundation/util/json.util';
 
@@ -6,7 +6,7 @@ import { parseJson } from 'app/foundation/util/json.util';
  * The purpose of this service is to transform the legacy build plan into the new format so it can still be edited
  * with the new editor.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LegacyBuildPlanConverterService {
     private static readonly LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = '/var/tmp';
 

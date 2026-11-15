@@ -1,5 +1,5 @@
 .highlighted td {
-    background-color: #0079bf;
-    color: white;
+    background-color: var(--tumaet-ui-highlight-background);
+    color: var(--tumaet-ui-highlight-color);
     font-weight: bold;
 }

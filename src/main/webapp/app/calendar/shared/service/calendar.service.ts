@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
-import { Observable, Subscription, catchError, map, throwError } from 'rxjs';
+import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
+import { EMPTY, Observable, Subscription, catchError, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
@@ -10,9 +10,7 @@ import { CalendarApi } from 'app/openapi/api/calendar-api';
 import { CalendarEvent } from 'app/openapi/model/calendar-event';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CalendarService implements OnDestroy {
     private readonly apiService = inject(CalendarApi);
     private readonly alertService = inject(AlertService);
@@ -36,6 +34,12 @@ export class CalendarService implements OnDestroy {
      * state with the previous user's data.
      */
     private stateGeneration = 0;
+
+    /**
+     * Incremented for every events request. Only the response of the latest request may update the event map, so a slow
+     * response for a previous course (or month) never overwrites the events of the course the user is looking at.
+     */
+    private latestEventsRequest = 0;
 
     private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
@@ -98,16 +102,17 @@ export class CalendarService implements OnDestroy {
         const language = this.currentLocale() === 'de' ? 'GERMAN' : 'ENGLISH';
 
         const generation = this.stateGeneration;
+        const requestId = ++this.latestEventsRequest;
         return this.apiService.getCalendarEventsOverlappingMonths(courseId, monthKeys, timeZone, language).pipe(
             map((res: { [key: string]: CalendarEvent[] }) => {
-                if (this.stateGeneration !== generation) return;
+                if (this.stateGeneration !== generation || this.latestEventsRequest !== requestId) return;
                 const parsed = this.createCalendarEventMap(res);
                 this.currentEventMap.set(parsed);
                 this.currentCourseId = courseId;
                 this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
             }),
             catchError((error) => {
-                if (this.stateGeneration !== generation) return throwError(() => error);
+                if (this.stateGeneration !== generation || this.latestEventsRequest !== requestId) return EMPTY;
                 this.alertService.addErrorAlert('artemisApp.calendar.eventsLoadingError');
                 return throwError(() => error);
             }),

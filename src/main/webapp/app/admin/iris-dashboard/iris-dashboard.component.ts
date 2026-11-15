@@ -2,21 +2,21 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, comp
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
 import {
-    TumUiButtonComponent,
-    TumUiMessageComponent,
-    TumUiPanelComponent,
-    TumUiSelectComponent,
-    TumUiTabComponent,
-    TumUiTabListComponent,
-    TumUiTableDirective,
-    TumUiTabsComponent,
+    TumAetUiButtonComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTableDirective,
+    TumAetUiTabsComponent,
 } from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisDashboardService } from './iris-dashboard.service';
-import { IrisDashboardBreakdownEntry, IrisDashboardConfig, IrisDashboardOverview, IrisDashboardTimeSpan } from './iris-dashboard.model';
+import { IrisDashboardAiSelection, IrisDashboardBreakdownEntry, IrisDashboardConfig, IrisDashboardOverview, IrisDashboardTimeSpan } from './iris-dashboard.model';
 import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
@@ -25,6 +25,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 
 type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: number };
+type AiSelectionOption = { label: string; value: IrisDashboardAiSelection };
 
 @Component({
     selector: 'jhi-iris-dashboard',
@@ -32,14 +33,14 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
     imports: [
         DecimalPipe,
         JsonPipe,
-        TumUiTableDirective,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
-        TumUiPanelComponent,
-        TumUiSelectComponent,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiPanelComponent,
+        TumAetUiSelectComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -65,6 +66,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     readonly error = signal(false);
     readonly activeBreakdownTab = signal(0);
 
+    onBreakdownTabChange(value: number | string | undefined): void {
+        if (typeof value === 'number') {
+            this.activeBreakdownTab.set(value);
+        }
+    }
+
     readonly chatModeBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly courseBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly modelBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
@@ -72,6 +79,10 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     readonly timeSpanOptions = signal<TimeSpanOption[]>([]);
 
     readonly selectedTimeSpan = signal<TimeSpanOption>({ label: 'Month', value: 'MONTH', days: 30 });
+
+    readonly aiSelectionOptions = signal<AiSelectionOption[]>([]);
+
+    readonly selectedAiSelection = signal<AiSelectionOption>({ label: 'All', value: 'ALL' });
 
     private readonly refreshTrigger = signal(0);
 
@@ -93,6 +104,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.quarter'), value: 'QUARTER', days: 90 },
         ]);
         this.selectedTimeSpan.set(this.timeSpanOptions()[2]);
+        this.aiSelectionOptions.set([
+            { label: this.translateService.instant('artemisApp.irisDashboard.aiSelection.all'), value: 'ALL' },
+            { label: this.translateService.instant('artemisApp.irisDashboard.aiSelection.cloud'), value: 'CLOUD' },
+            { label: this.translateService.instant('artemisApp.irisDashboard.aiSelection.local'), value: 'LOCAL' },
+        ]);
+        this.selectedAiSelection.set(this.aiSelectionOptions()[0]);
         this.loadData();
         this.dashboardService
             .getConfig()
@@ -106,6 +123,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
 
     onTimeSpanChange(newValue: TimeSpanOption): void {
         this.selectedTimeSpan.set(newValue);
+        this.refreshTrigger.update((v) => v + 1);
+        this.loadData();
+    }
+
+    onAiSelectionChange(newValue: AiSelectionOption): void {
+        this.selectedAiSelection.set(newValue);
         this.refreshTrigger.update((v) => v + 1);
         this.loadData();
     }
@@ -124,11 +147,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
         this.courseBreakdown.set([]);
         this.modelBreakdown.set([]);
         const { from, to } = this.dateRange();
+        const aiSelection = this.selectedAiSelection().value;
 
         const sub = new Subscription();
 
         sub.add(
-            this.dashboardService.getOverview(from, to).subscribe({
+            this.dashboardService.getOverview(from, to, aiSelection).subscribe({
                 next: (data) => {
                     this.overview.set(data);
                     this.loading.set(false);
@@ -140,9 +164,9 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
             }),
         );
 
-        sub.add(this.dashboardService.getBreakdown(from, to, 'CHAT_MODE').subscribe({ next: (data) => this.chatModeBreakdown.set(data), error: (_err) => {} }));
-        sub.add(this.dashboardService.getBreakdown(from, to, 'COURSE').subscribe({ next: (data) => this.courseBreakdown.set(data), error: (_err) => {} }));
-        sub.add(this.dashboardService.getBreakdown(from, to, 'MODEL').subscribe({ next: (data) => this.modelBreakdown.set(data), error: (_err) => {} }));
+        sub.add(this.dashboardService.getBreakdown(from, to, 'CHAT_MODE', aiSelection).subscribe({ next: (data) => this.chatModeBreakdown.set(data), error: (_err) => {} }));
+        sub.add(this.dashboardService.getBreakdown(from, to, 'COURSE', aiSelection).subscribe({ next: (data) => this.courseBreakdown.set(data), error: (_err) => {} }));
+        sub.add(this.dashboardService.getBreakdown(from, to, 'MODEL', aiSelection).subscribe({ next: (data) => this.modelBreakdown.set(data), error: (_err) => {} }));
 
         this.dataSubscription = sub;
     }

@@ -82,7 +82,7 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
             )
             FROM User student
             WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = student AND ucr.course.id = :courseId AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
-                AND (student.login LIKE %:loginOrName% OR CONCAT(student.firstName, ' ', student.lastName) LIKE %:loginOrName%)
+                AND (LOWER(student.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%') OR LOWER(CONCAT(student.firstName, ' ', student.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%'))
                 AND NOT EXISTS (
                     SELECT 1
                     FROM TutorialGroupRegistration registration

@@ -1,0 +1,28 @@
+// The field reserves room for the clear and calendar buttons, so a narrower field cuts off the end of the text it
+// shows (the minutes of a time, the year of a date). The host therefore never shrinks below the width its format needs:
+// the text, the 12px start padding, the 68px button padding and the border. A flex or grid parent that would give it
+// less has to wrap or grow instead of clipping the value.
+:host {
+    display: block;
+    min-width: 15rem;
+}
+
+:host(.tumaet-ui-date-picker--date-only) {
+    min-width: 11.5rem;
+}
+
+:host(.tumaet-ui-date-picker--time-only) {
+    min-width: 8rem;
+}
+
+// The inline variant has no field and keeps the natural width of its controls.
+:host(.tumaet-ui-date-picker--inline) {
+    min-width: 0;
+}
+
+.tumaet-ui-date-picker-input {
+    border-start-start-radius: var(--_tumaet-ui-input-group-start-radius, var(--tumaet-ui-radius-md));
+    border-end-start-radius: var(--_tumaet-ui-input-group-start-radius, var(--tumaet-ui-radius-md));
+    border-start-end-radius: var(--_tumaet-ui-input-group-end-radius, var(--tumaet-ui-radius-md));
+    border-end-end-radius: var(--_tumaet-ui-input-group-end-radius, var(--tumaet-ui-radius-md));
+}

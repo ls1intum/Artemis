@@ -141,7 +141,7 @@ describe('ExamImportProgressDialogComponent', () => {
         request$.complete();
 
         expect(() => fixture.detectChanges()).not.toThrow();
-        expect(fixture.nativeElement.querySelectorAll('li')).toHaveLength(4);
+        expect(document.body.querySelectorAll('.tumaet-ui-dialog li')).toHaveLength(4);
 
         component.onDismiss();
         await expect(promise).resolves.toBeDefined();

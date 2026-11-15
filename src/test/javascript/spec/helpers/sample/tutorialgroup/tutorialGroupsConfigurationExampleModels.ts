@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 
 export const generateExampleTutorialGroupsConfiguration = ({
     id = 1,
@@ -25,22 +25,13 @@ export const generateExampleTutorialGroupsConfigurationDTO = ({
     tutorialPeriodEndInclusive = '2021-01-02',
     useTutorialGroupChannels = true,
     usePublicTutorialGroupChannels = true,
-}: Partial<TutorialGroupConfigurationDTO> = {}) => {
-    const dto = {} as TutorialGroupConfigurationDTO;
-    dto.id = id;
-    dto.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
-    dto.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
-    dto.useTutorialGroupChannels = useTutorialGroupChannels;
-    dto.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
-    return dto;
+}: Partial<TutorialGroupConfiguration> = {}): TutorialGroupConfiguration => {
+    return { id, tutorialPeriodStartInclusive, tutorialPeriodEndInclusive, useTutorialGroupChannels, usePublicTutorialGroupChannels };
 };
 
-export const tutorialsGroupsConfigurationDtoToFormData = (dto: TutorialGroupConfigurationDTO): TutorialGroupsConfigurationFormData => {
+export const tutorialsGroupsConfigurationDtoToFormData = (dto: TutorialGroupConfiguration): TutorialGroupsConfigurationSettings => {
     return {
-        period: [
-            dto.tutorialPeriodStartInclusive ? dayjs(dto.tutorialPeriodStartInclusive).toDate() : undefined,
-            dto.tutorialPeriodEndInclusive ? dayjs(dto.tutorialPeriodEndInclusive).toDate() : undefined,
-        ].filter((d): d is Date => !!d),
+        period: [dayjs(dto.tutorialPeriodStartInclusive).toDate(), dayjs(dto.tutorialPeriodEndInclusive).toDate()],
         useTutorialGroupChannels: dto.useTutorialGroupChannels,
         usePublicTutorialGroupChannels: dto.usePublicTutorialGroupChannels,
     };

@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { InputTextModule } from 'primeng/inputtext';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-confirm-entity-name',
@@ -33,7 +33,7 @@ import { InputTextModule } from 'primeng/inputtext';
             useExisting: ConfirmEntityNameComponent,
         },
     ],
-    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule, CopyToClipboardButtonComponent, InputTextModule],
+    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule, CopyToClipboardButtonComponent, TumAetUiInputDirective],
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     private fb = inject(FormBuilder);

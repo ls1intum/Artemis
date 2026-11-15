@@ -252,7 +252,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         registered.setLastTriggeredAt(ZonedDateTime.now().minusDays(30));
         irisProactiveEpisodeRepository.save(registered);
         // Free the slot the first trigger reserved, or the second call is rejected before it reaches the registry.
-        pyrisJobService.releaseStruggleInFlightJob(first.trigger().jobToken(), user.getId(), exercise.getId());
+        pyrisJobService.releaseStruggleInFlightJob(first.trigger().runId(), user.getId(), exercise.getId());
 
         // The confirm_close run that follows a decide run carries the same episode id, so re-registration is normal.
         var second = struggleTriggerService.prepareTrigger(exercise.getId(), user, "confirm_close", new StruggleEpisodeDTO("ep-touch", true, null), "progress", null, null);

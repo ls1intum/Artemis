@@ -65,8 +65,8 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
             relations.map((relation) => {
                 return {
                     id: 'edge-' + relation.id!.toString(),
-                    source: relation.headCompetencyId!.toString(),
-                    target: relation.tailCompetencyId!.toString(),
+                    source: relation.tailCompetencyId!.toString(),
+                    target: relation.headCompetencyId!.toString(),
                     label: relation.relationType,
                     data: {
                         id: relation.id,

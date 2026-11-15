@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,9 +22,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
@@ -37,6 +41,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  */
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseValidationServiceTest {
+
+    private static final ZonedDateTime NOW = ZonedDateTime.now();
 
     @Mock
     private AuxiliaryRepositoryService auxiliaryRepositoryService;
@@ -59,13 +65,16 @@ class ProgrammingExerciseValidationServiceTest {
     @Mock
     private ProfileService profileService;
 
+    @Mock
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private ProgrammingExerciseValidationService validationService;
 
     @BeforeEach
     void setUp() {
-        validationService = new ProgrammingExerciseValidationService(auxiliaryRepositoryService, programmingExerciseRepository, submissionPolicyService,
-                Optional.of(programmingLanguageFeatureService), Optional.empty(), programmingExerciseBuildConfigService, Optional.empty(), programmingExerciseTestCaseRepository,
-                profileService);
+        validationService = new ProgrammingExerciseValidationService(programmingExerciseBuildConfigRepository, auxiliaryRepositoryService, programmingExerciseRepository,
+                submissionPolicyService, Optional.of(programmingLanguageFeatureService), Optional.empty(), programmingExerciseBuildConfigService, Optional.empty(),
+                programmingExerciseTestCaseRepository, profileService);
     }
 
     private ProgrammingExercise exerciseWithPackageName(ProgrammingLanguage programmingLanguage, String packageName) {
@@ -77,11 +86,9 @@ class ProgrammingExerciseValidationServiceTest {
         return exercise;
     }
 
-    private ProgrammingExercise exerciseWithDockerFlags(DockerFlagsDTO dockerFlags) {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+    private ProgrammingExerciseBuildConfig buildConfigWithDockerFlags(DockerFlagsDTO dockerFlags) {
         when(programmingExerciseBuildConfigService.parseDockerFlags(any())).thenReturn(dockerFlags);
-        return exercise;
+        return new ProgrammingExerciseBuildConfig();
     }
 
     @ParameterizedTest
@@ -142,19 +149,19 @@ class ProgrammingExerciseValidationServiceTest {
     @Test
     void validateDockerFlags_rejectsAContainerTooSmallToBuildIn() {
         // A container below the minimum dies during the build without an error a student could act on.
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(exerciseWithDockerFlags(flags(1, 2, 0))))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 2, 0))))
                 .withMessageContaining("memory limit is invalid");
     }
 
     @Test
     void validateDockerFlags_rejectsAContainerWithoutACpu() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(exerciseWithDockerFlags(flags(0, 1024, 0))))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(0, 1024, 0))))
                 .withMessageContaining("cpu count is invalid");
     }
 
     @Test
     void validateDockerFlags_rejectsANegativeSwapLimit() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(exerciseWithDockerFlags(flags(1, 1024, -1))))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 1024, -1))))
                 .withMessageContaining("memory swap limit is invalid");
     }
 
@@ -162,52 +169,86 @@ class ProgrammingExerciseValidationServiceTest {
     void validateDockerFlags_rejectsAnEnvironmentVariableTooLongToPass() {
         DockerFlagsDTO withLongValue = new DockerFlagsDTO(null, Map.of("KEY", "v".repeat(1001)), 1, 1024, 0);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(exerciseWithDockerFlags(withLongValue)))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(withLongValue)))
                 .withMessageContaining("environment variables are too long");
     }
 
     @Test
     void validateDockerFlags_acceptsAUsableConfiguration() {
-        assertThatCode(() -> validationService.validateDockerFlags(exerciseWithDockerFlags(new DockerFlagsDTO(null, Map.of("KEY", "value"), 2, 2048, 0))))
+        assertThatCode(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(new DockerFlagsDTO(null, Map.of("KEY", "value"), 2, 2048, 0))))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void validateDockerFlags_withoutAnyFlags_acceptsTheExercise() {
         // Most exercises configure no flags at all and then run with the instance defaults.
-        assertThatCode(() -> validationService.validateDockerFlags(exerciseWithDockerFlags(null))).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(null))).doesNotThrowAnyException();
     }
 
     @Test
     void validateDockerFlags_whenTheFlagsCannotBeParsed_saysSoRatherThanFailingLater() {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         when(programmingExerciseBuildConfigService.parseDockerFlags(any())).thenThrow(new IllegalArgumentException("not json"));
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(exercise))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfig))
                 .withMessageContaining("parsing the docker flags");
     }
 
     @Test
     void validateBuildConfigSize_rejectsABuildConfigurationTooLargeForTheColumn() {
-        ProgrammingExercise exercise = new ProgrammingExercise();
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setBuildPlanConfiguration("x".repeat(1024 * 1024 + 1));
-        exercise.setBuildConfig(buildConfig);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(exercise))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
                 .withMessageContaining("build plan configuration is too long");
     }
 
     @Test
     void validateBuildConfigSize_rejectsDockerFlagsTooLargeForTheColumn() {
-        ProgrammingExercise exercise = new ProgrammingExercise();
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setDockerFlags("x".repeat(8 * 1024 + 1));
-        exercise.setBuildConfig(buildConfig);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(exercise))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
                 .withMessageContaining("docker flags are too long");
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatIsNotValid() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is not a valid");
+    }
+
+    @Test
+    void validateBuildConfigSize_ignoresABranchRegexWhileBranchingIsNotAllowed() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumnEvenWithoutBranching() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumn() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
     }
 
     @Test
@@ -216,18 +257,16 @@ class ProgrammingExerciseValidationServiceTest {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setBuildPlanConfiguration("{}");
         buildConfig.setDockerFlags("{}");
-        exercise.setBuildConfig(buildConfig);
 
-        assertThatCode(() -> validationService.validateBuildConfigSize(exercise)).doesNotThrowAnyException();
-        exercise.setBuildConfig(null);
-        assertThatCode(() -> validationService.validateBuildConfigSize(exercise)).as("an exercise without a build config has nothing to check").doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateBuildConfigSize(null)).as("a request without a build config has nothing to check").doesNotThrowAnyException();
     }
 
     @Test
     void validateCheckoutDirectoriesUnchanged_rejectsAChangeAfterTheExerciseExists() {
         // The checkout paths are baked into the build script and into every repository already checked out, so they cannot move once students have started.
-        ProgrammingExercise original = exerciseWithCheckoutPaths("assignment", "solution", "tests");
-        ProgrammingExercise updated = exerciseWithCheckoutPaths("somewhere-else", "solution", "tests");
+        ProgrammingExerciseBuildConfig original = buildConfigWithCheckoutPaths("assignment", "solution", "tests");
+        ProgrammingExerciseBuildConfig updated = buildConfigWithCheckoutPaths("somewhere-else", "solution", "tests");
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateCheckoutDirectoriesUnchanged(original, updated))
                 .withMessageContaining("cannot be changed");
@@ -235,24 +274,107 @@ class ProgrammingExerciseValidationServiceTest {
 
     @Test
     void validateCheckoutDirectoriesUnchanged_acceptsAnUpdateThatLeavesThemAlone() {
-        ProgrammingExercise original = exerciseWithCheckoutPaths("assignment", "solution", "tests");
-        ProgrammingExercise updated = exerciseWithCheckoutPaths("assignment", "solution", "tests");
+        ProgrammingExerciseBuildConfig original = buildConfigWithCheckoutPaths("assignment", "solution", "tests");
+        ProgrammingExerciseBuildConfig updated = buildConfigWithCheckoutPaths("assignment", "solution", "tests");
 
         assertThatCode(() -> validationService.validateCheckoutDirectoriesUnchanged(original, updated)).doesNotThrowAnyException();
-        assertThat(updated.getBuildConfig().getAssignmentCheckoutPath()).isEqualTo("assignment");
+        assertThat(updated.getAssignmentCheckoutPath()).isEqualTo("assignment");
+    }
+
+    private static ProgrammingExercise exerciseWithDates(ZonedDateTime release, ZonedDateTime start, ZonedDateTime due) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setReleaseDate(release);
+        exercise.setStartDate(start);
+        exercise.setDueDate(due);
+        return exercise;
+    }
+
+    private static ProgrammingExerciseBuildConfig buildConfigWithWindow(ZonedDateTime start, ZonedDateTime end) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(start, end));
+        return buildConfig;
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAnExerciseWithoutAWindow() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), null, NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAWindowInsideTheStartAndDueDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(8)))).doesNotThrowAnyException();
+        // the bounds themselves are inside
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(3), NOW.plusDays(10)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAnOpenEndedWindow() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        // builds begin a week after the release, which is the use case of keeping the CI off while students prepare
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), null))).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(null, NOW.plusDays(5)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_usesTheReleaseDateWhenThereIsNoStartDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(2), null, NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(2), NOW.plusDays(4)))).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(1), NOW.plusDays(4))))
+                .withMessageContaining("must lie between");
+    }
+
+    @Test
+    void validateBuildTimeWindow_rejectsAWindowThatEndsBeforeItStartsOrIsEmpty() {
+        ProgrammingExercise exercise = exerciseWithDates(null, null, null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(4)))).withMessageContaining("end after");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(5)))).withMessageContaining("end after");
+    }
+
+    @Test
+    void validateBuildTimeWindow_rejectsAWindowOutsideTheStartAndDueDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(2), NOW.plusDays(5))))
+                .withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(11))))
+                .withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(11), null))).withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(null, NOW.plusDays(2)))).withMessageContaining("must lie between");
+    }
+
+    @Test
+    void validateBuildTimeWindow_isNotAvailableForExamExercises() {
+        ProgrammingExercise exercise = exerciseWithDates(null, null, null);
+        exercise.setExerciseGroup(new ExerciseGroup());
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW, NOW.plusDays(1))))
+                .withMessageContaining("exam exercises");
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
     }
 
     private static DockerFlagsDTO flags(int cpuCount, int memory, int memorySwap) {
         return new DockerFlagsDTO(null, Map.of(), cpuCount, memory, memorySwap);
     }
 
-    private static ProgrammingExercise exerciseWithCheckoutPaths(String assignment, String solution, String tests) {
-        ProgrammingExercise exercise = new ProgrammingExercise();
+    private static ProgrammingExerciseBuildConfig buildConfigWithCheckoutPaths(String assignment, String solution, String tests) {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setAssignmentCheckoutPath(assignment);
         buildConfig.setSolutionCheckoutPath(solution);
         buildConfig.setTestCheckoutPath(tests);
-        exercise.setBuildConfig(buildConfig);
-        return exercise;
+        return buildConfig;
     }
 }

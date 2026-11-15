@@ -81,6 +81,7 @@ describe('ModelingExamSummaryComponent', () => {
 
         const modelingSubmissionComponent = fixture.debugElement.query(By.directive(ModelingSubmissionComponent))?.componentInstance;
         expect(modelingSubmissionComponent).toBeTruthy();
+        expect(modelingSubmissionComponent.viewingPurpose()).toBe('owner');
     });
 
     it('should not show modeling submission when there is no submission or exercise', () => {
@@ -88,5 +89,13 @@ describe('ModelingExamSummaryComponent', () => {
 
         const modelingSubmissionComponent = fixture.debugElement.query(By.directive(ModelingSubmissionComponent))?.componentInstance;
         expect(modelingSubmissionComponent).not.toBeTruthy();
+    });
+    it.each(['owner', 'staff-preview'] as const)('passes explicit %s purpose to its reusable editor', (purpose) => {
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        fixture.componentRef.setInput('exercise', { diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise);
+        fixture.componentRef.setInput('submission', {} as ModelingSubmission);
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(ModelingSubmissionComponent)).componentInstance as ModelingSubmissionComponent;
+        expect(editor.viewingPurpose()).toBe(purpose);
     });
 });

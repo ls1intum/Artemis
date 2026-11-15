@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/foundation/util/utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -12,7 +14,7 @@ import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entitie
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CsvCellValue, CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -20,7 +22,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     templateUrl: './exercise-scores-export-button.component.html',
-    imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, NgbTooltip, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExerciseScoresExportButtonComponent {
     private resultService = inject(ResultService);

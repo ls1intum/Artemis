@@ -44,6 +44,27 @@ describe('SplitPaneHeaderComponent', () => {
         fixture2.componentRef.setInput('files', files);
     });
 
+    it.each([false, true])('only exposes the file toggle when files exist (%s)', (active) => {
+        fixture1.componentRef.setInput('files', active ? files : []);
+        fixture1.detectChanges();
+        const header = fixture1.nativeElement.querySelector('.split-pane-header-top') as HTMLElement;
+        const toggle = vi.spyOn(comp1, 'toggleShowFiles');
+        expect(header.getAttribute('role')).toBe(active ? 'button' : null);
+        expect(header.getAttribute('aria-expanded')).toBe(active ? 'false' : null);
+        expect(header.tabIndex).toBe(active ? 0 : -1);
+        const event = new KeyboardEvent('keydown', { key: ' ', repeat: true, bubbles: true, cancelable: true });
+        header.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(active);
+        expect(toggle).not.toHaveBeenCalled();
+        header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(toggle).toHaveBeenCalledTimes(active ? 1 : 0);
+        expect(comp1.showFiles()).toBe(active);
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        // Closing also synchronizes the local state through the shared subject.
+        expect(toggle.mock.calls.filter(([propagate]) => propagate)).toHaveLength(active ? 2 : 0);
+        expect(comp1.showFiles()).toBe(false);
+    });
+
     it('selects the first file on change', () => {
         const emitSpy = vi.spyOn(comp1.selectFile, 'emit');
         fixture1.detectChanges();

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261029130730-1-create-tum-live-unit-upload" author="pat">
+        <!-- No foreign key to lecture_unit: a unit deleted with its course leaves the row behind, and a pending upload in it still has to reach the cleanup queue. -->
+        <createTable tableName="tum_live_unit_upload">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lecture_unit_id" type="BIGINT">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_tum_live_unit_upload_unit"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="integration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_ref" type="VARCHAR(64)"/>
+            <column name="current_grant_id" type="BIGINT"/>
+            <column name="current_stream_id" type="BIGINT"/>
+            <column name="pending_ref" type="VARCHAR(64)"/>
+            <column name="pending_grant_id" type="BIGINT"/>
+            <column name="pending_stream_id" type="BIGINT"/>
+            <column name="pending_since" type="DATETIME(3)"/>
+            <column name="pending_checked_at" type="DATETIME(3)"/>
+            <column name="pending_course_slug" type="VARCHAR(255)"/>
+            <column name="expected_video_source" type="longtext"/>
+            <column name="last_error" type="VARCHAR(255)"/>
+        </createTable>
+        <createIndex tableName="tum_live_unit_upload" indexName="idx_tum_live_unit_upload_pending">
+            <column name="pending_checked_at"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="tum_live_unit_upload"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261029130730-2-create-tum-live-recording-cleanup" author="pat">
+        <createTable tableName="tum_live_recording_cleanup">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="integration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="grant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_ref" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stream_id" type="BIGINT"/>
+            <column name="next_attempt_at" type="DATETIME(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="blocked_reason" type="VARCHAR(255)"/>
+        </createTable>
+        <addUniqueConstraint tableName="tum_live_recording_cleanup" columnNames="integration_id, external_ref" constraintName="ux_tum_live_recording_cleanup_ref"/>
+        <createIndex tableName="tum_live_recording_cleanup" indexName="idx_tum_live_recording_cleanup_due">
+            <column name="next_attempt_at"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="tum_live_recording_cleanup"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

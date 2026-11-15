@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -117,7 +120,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnThreadsWithCommentsWhenRequested() {
         CommentThread thread = persistThread(programmingExercise);
         Comment comment = buildUserCommentEntity("First");
@@ -132,7 +135,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCreateThreadWhenValid() {
         CreateCommentThreadDTO dto = buildThreadDto();
         CommentThread saved = exerciseReviewService.createThread(programmingExercise.getId(), dto).thread();
@@ -142,7 +145,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCreateUserCommentWithAuthorAndInitialVersion() {
         ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -156,7 +159,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUseLatestVersionForReplyComments() {
         ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -173,7 +176,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldAppendConsistencyCheckThreadsWithoutDeletingPreviousOnes() {
         ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread oldConsistencyThread = persistThread(programmingExercise);
@@ -212,7 +215,79 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateConsistencyCheckThreadsWithExplicitAuthorWithoutSecurityContext() {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
+
+        SecurityContextHolder.clearContext();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author);
+
+        assertThat(createdThreads).singleElement()
+                .satisfies(thread -> assertThat(thread.getComments()).singleElement().satisfies(comment -> assertThat(comment.getAuthor().getId()).isEqualTo(author.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldValidateAndAnchorConsistencyCheckThreadsAtCallerCapturedVersionAndCommits() throws Exception {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ExerciseVersion savedVersion = exerciseVersionRepository.findById(exerciseVersionService.createExerciseVersionOrThrow(programmingExercise, author)).orElseThrow();
+        programmingExercise.setProblemStatement("A concurrent edit after the generated save");
+        programmingExerciseRepository.save(programmingExercise);
+        ExerciseVersion newerVersion = exerciseVersionRepository.findById(exerciseVersionService.createExerciseVersionOrThrow(programmingExercise, author)).orElseThrow();
+
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-exact-anchor");
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+        RevCommit capturedTemplateCommit = templateRepo.git().log().setMaxCount(1).call().iterator().next();
+        Files.delete(templateRepo.workingCopyPath().resolve("src/Main.java"));
+        templateRepo.git().rm().addFilepattern("src/Main.java").call();
+        GitService.commit(templateRepo.git()).setMessage("Remove src/Main.java").call();
+        pushHeadToDefaultBranch(templateRepo.git());
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Generated review issue", "Review the mismatch",
+                List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 1, 1), new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 1, 1)));
+
+        List<CommentThread> threads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author, savedVersion.getId(),
+                Map.of(RepositoryType.TEMPLATE, capturedTemplateCommit.getName()));
+
+        assertThat(newerVersion.getId()).isNotEqualTo(savedVersion.getId());
+        assertThat(threads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getInitialVersion()).isEqualTo(savedVersion);
+        }).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getInitialCommitSha()).isEqualTo(capturedTemplateCommit.getName());
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRejectConsistencyCheckLocationMissingAtCallerCapturedCommit() throws Exception {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ExerciseVersion savedVersion = createExerciseVersion();
+
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-exact-missing");
+        pushFileToRepository(templateRepo, "README.md", "Initial content");
+        RevCommit capturedTemplateCommit = templateRepo.git().log().setMaxCount(1).call().iterator().next();
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated review issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 1);
+
+        List<CommentThread> threads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author, savedVersion.getId(),
+                Map.of(RepositoryType.TEMPLATE, capturedTemplateCommit.getName()));
+
+        assertThat(threads).isEmpty();
+        assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldPersistInlineFixForProblemStatementConsistencyLocation() {
         ExerciseVersion initialVersion = createExerciseVersion();
         ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Rename parameter in statement",
@@ -239,7 +314,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotPersistInlineFixWhenSuggestedInlineFixIsNull() {
         createExerciseVersion();
         ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Rename parameter in statement",
@@ -256,7 +331,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldPersistDeletionInlineFixWhenSuggestedInlineFixIsEmptyString() {
         createExerciseVersion();
         ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Remove obsolete statement line",
@@ -276,7 +351,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldKeepPreviousConsistencyCheckThreadsWhenNoIssuesRemain() {
         CommentThread oldConsistencyThread = persistThread(programmingExercise);
         Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
@@ -289,7 +364,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldMapTemplateRepositoryIssueToTemplateReviewThread() throws Exception {
         LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-issue");
         pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
@@ -316,7 +391,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldBuildInlineFixForTextFileWithBinaryListedExtension() throws Exception {
         LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-shell-inline-fix");
         pushFileToRepository(templateRepo, "check.sh", "#!/bin/sh\necho old\n");
@@ -339,7 +414,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() throws Exception {
         createExerciseVersion();
         LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-grouped");
@@ -417,7 +492,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnOnlyPersistedConsistencyCheckThreadsWithIds() throws Exception {
         createExerciseVersion();
         LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-returned-ids");
@@ -437,7 +512,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSkipConsistencyIssueWhenRepositoryFileDoesNotExist() {
         ConsistencyIssueDTO issue = buildConsistencyIssue("Missing file issue", ArtifactType.TEMPLATE_REPOSITORY, "src/DoesNotExist.java", 3);
 
@@ -448,7 +523,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldDeleteThreadWhenLastCommentRemoved() {
         ExerciseReviewService.ThreadCreationResult creation = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
         CommentThread thread = creation.thread();
@@ -461,7 +536,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldKeepThreadWhenOtherCommentsExist() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment first = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
@@ -474,7 +549,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCountCommentsByThreadId() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
@@ -486,7 +561,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateThreadResolvedState() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
@@ -498,7 +573,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateThreadGroupResolvedState() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -514,7 +589,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCreateThreadGroupWithTwoThreads() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -528,7 +603,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldDeleteThreadGroupAndKeepThreads() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -542,7 +617,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadGroupWithTooFewThreads() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
@@ -551,13 +626,13 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadCreationWithNullBody() {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createThread(programmingExercise.getId(), null));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadCreationWithInvalidInitialFilePath() {
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "src/../invalid/path.java", 1, new UserCommentContentDTO("Initial"));
 
@@ -565,7 +640,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadCreationWithBlankInitialFilePath() {
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "   ", 1, new UserCommentContentDTO("Initial"));
 
@@ -573,7 +648,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadCreationWithTooLongInitialFilePath() {
         String tooLongPath = "a".repeat(1025);
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, tooLongPath, 1, new UserCommentContentDTO("Initial"));
@@ -582,13 +657,13 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadGroupCreationWithNullBody() {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createGroup(programmingExercise.getId(), null));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadResolvedUpdateWithNullBody() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         assertThatExceptionOfType(BadRequestAlertException.class)
@@ -596,7 +671,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectThreadGroupResolvedUpdateWithNullBody() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -607,7 +682,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldLoadThreadWithCommentsById() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
@@ -619,7 +694,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldLoadThreadsWithCommentsByExerciseId() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
@@ -631,7 +706,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldLoadCommentWithThreadAndExercise() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
@@ -645,7 +720,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateCommentContentAndTimestamp() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
@@ -659,14 +734,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectCommentWithoutContent() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), null));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectUpdateWithMissingContent() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
@@ -676,7 +751,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldMarkConsistencyInlineFixAsAppliedWithoutChangingOtherFields() {
         CommentThread thread = persistThread(programmingExercise);
         InlineCodeChangeDTO inlineFix = new InlineCodeChangeDTO(2, 3, "int value = foo;", "int value = bar;", false);
@@ -704,7 +779,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectMarkConsistencyInlineFixAsAppliedForUserComment() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment userComment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
@@ -714,7 +789,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectMarkConsistencyInlineFixAsAppliedWhenInlineFixMissing() {
         CommentThread thread = persistThread(programmingExercise);
         Comment consistencyComment = buildConsistencyIssueCommentEntity("Missing inline fix");
@@ -726,7 +801,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectCreateUserCommentWhenExerciseIdDoesNotMatchThread() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         long mismatchingExerciseId = programmingExercise.getId() + 1;
@@ -736,7 +811,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectDeleteCommentWhenExerciseIdDoesNotMatchComment() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Reply"));
@@ -746,7 +821,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectUpdateResolvedStateWhenExerciseIdDoesNotMatchThread() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         long mismatchingExerciseId = programmingExercise.getId() + 1;
@@ -756,7 +831,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectUpdateResolvedStateWhenExerciseIdDoesNotMatchThreadGroup() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -768,7 +843,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectUpdateCommentContentWhenExerciseIdDoesNotMatchComment() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
@@ -779,7 +854,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectDeleteGroupWhenExerciseIdDoesNotMatchGroup() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -790,7 +865,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnNullCommitForProblemStatementThreads() {
         String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.PROBLEM_STATEMENT, null, programmingExercise.getId());
 
@@ -798,7 +873,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldResolveInitialVersionForProblemStatement() {
         ExerciseVersion initialVersion = createExerciseVersion();
 
@@ -808,7 +883,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldResolveInitialVersionToNullForRepositoryTargets() {
         ExerciseVersion resolved = exerciseReviewService.resolveInitialVersion(CommentThreadLocationType.TEMPLATE_REPO, programmingExercise.getId());
 
@@ -816,7 +891,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectInitialVersionWhenMissingProblemStatementVersion() {
         commentThreadRepository.deleteAll();
         exerciseVersionRepository.deleteAll();
@@ -826,7 +901,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnLatestCommitForTemplateRepo() throws Exception {
         LocalRepoWithGit repo = createLocalRepositoryWithGit("template");
         LocalVCRepositoryUri repositoryUri = repo.uri();
@@ -841,7 +916,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnLatestCommitForSolutionRepo() throws Exception {
         LocalRepoWithGit repo = createLocalRepositoryWithGit("solution");
         LocalVCRepositoryUri repositoryUri = repo.uri();
@@ -856,7 +931,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnLatestCommitForTestRepo() throws Exception {
         LocalRepoWithGit repo = createLocalRepositoryWithGit("tests");
         LocalVCRepositoryUri repositoryUri = repo.uri();
@@ -869,7 +944,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnLatestCommitForAuxiliaryRepo() throws Exception {
         LocalRepoWithGit repo = createLocalRepositoryWithGit("aux");
         LocalVCRepositoryUri repositoryUri = repo.uri();
@@ -994,7 +1069,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateThreadsForVersionChangeForTemplateRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("template-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 2);
@@ -1016,7 +1091,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSkipUpdateThreadsForVersionChangeWhenTemplateRepoParticipationMissing() {
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 5);
         thread.setExercise(programmingExercise);
@@ -1037,7 +1112,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateThreadsForVersionChangeForTestRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("test-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEST_REPO, "src/Main.java", 2);
@@ -1057,7 +1132,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateThreadsForVersionChangeForAuxiliaryRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("aux-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 2);
@@ -1080,7 +1155,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSkipUpdateThreadsForVersionChangeWhenAuxRepoIdMissing() {
         CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 5);
         thread.setExercise(programmingExercise);
@@ -1099,7 +1174,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSkipUpdateThreadsForVersionChangeWhenAuxRepoCommitMissing() {
         CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 5);
         thread.setAuxiliaryRepositoryId(42L);
@@ -1190,7 +1265,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateInlineFixRangeForTemplateRepositoryOnVersionChange() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("template-inline-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 2);
@@ -1332,7 +1407,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private ExerciseSnapshotDTO buildExerciseSnapshot(long exerciseId, String problemStatement, ProgrammingExerciseSnapshotDTO programmingData) {
         return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null, null,
-                null, null, null, null, null, programmingData, null, null, null, null);
+                null, null, null, null, null, programmingData, null, null, null, null, null);
     }
 
     private ProgrammingExerciseSnapshotDTO buildProgrammingSnapshot(String testRepositoryUri, String testsCommitId,

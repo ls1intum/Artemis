@@ -76,6 +76,15 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     Optional<OneToOneChat> findWithParticipantsAndUserCourseRolesInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA,
             @Param("userIdB") Long userIdB);
 
+    /**
+     * Find the one-to-one chat of a pair of users in a course by the key of the pair, whether or not its participants exist yet.
+     *
+     * @param courseId           the ID of the course to search in
+     * @param participantPairKey the key of the pair, see {@link OneToOneChat#pairKeyOf(long, long)}
+     * @return the chat of the pair, if there is one
+     */
+    Optional<OneToOneChat> findByCourseIdAndParticipantPairKey(Long courseId, String participantPairKey);
+
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 
     @Query("""
@@ -92,6 +101,22 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
                         FROM ConversationParticipant participantB
                         WHERE participantB.conversation = chat AND participantB.user.login = :loginB
                   )
+            ORDER BY chat.id
             """)
-    Long findIdOfChatInCourseBetweenUsers(@Param("courseId") long courseId, @Param("loginA") String loginA, @Param("loginB") String loginB);
+    List<Long> findIdsOfChatsInCourseBetweenUsers(@Param("courseId") long courseId, @Param("loginA") String loginA, @Param("loginB") String loginB);
+
+    /**
+     * Find the id of the one-to-one chat between two users in a given course.
+     * <p>
+     * A pair of users normally has one chat per course. Should there be more than one, the oldest is returned rather than failing the caller, because a lookup that throws turns
+     * a page that merely links to the chat into a server error.
+     *
+     * @param courseId the ID of the course to search in
+     * @param loginA   the login of the first user
+     * @param loginB   the login of the second user
+     * @return the id of the oldest chat between the two users, or null if they have none
+     */
+    default Long findIdOfChatInCourseBetweenUsers(long courseId, String loginA, String loginB) {
+        return findIdsOfChatsInCourseBetweenUsers(courseId, loginA, loginB).stream().findFirst().orElse(null);
+    }
 }

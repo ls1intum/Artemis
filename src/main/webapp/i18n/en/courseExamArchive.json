@@ -8,9 +8,10 @@
             "archiveSuccessWithWarnings": "The archival process has completed with the following warnings:",
             "archiveCourseError": {
                 "NOTHING_TO_EXPORT": "Did not archive course '{{ courseName }}': Nothing to export.",
-                "DIR_NOT_CREATED": "Failed to archive course '{{ courseName }}': Directory not created."
+                "DIR_NOT_CREATED": "Failed to archive course '{{ courseName }}': Directory not created.",
+                "ZIP_NOT_CREATED": "Failed to archive course '{{ courseName }}': ZIP file could not be created."
             },
-            "archiveExamError": "Failed to archive the exam '{{ examName }}': Directory not created.",
+            "archiveExamError": "Failed to archive the exam '{{ examName }}'.",
             "archiveDownloadError": "There was a problem downloading the archive",
             "downloadArchive": "Download Archive",
             "popup": {

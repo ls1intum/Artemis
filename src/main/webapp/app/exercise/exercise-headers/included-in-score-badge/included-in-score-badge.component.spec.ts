@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,16 +27,28 @@ describe('IncludedInScoreBadge', () => {
 
     it('should show a warning badge if the score is included as bonus', () => {
         fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.INCLUDED_AS_BONUS);
-        expect(component.badgeClass()).toBe('bg-warning');
+        expect(component.badgeClass()).toBe('bg-state-warning');
     });
 
     it('should show a success badge if the score is fully included', () => {
         fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.INCLUDED_COMPLETELY);
-        expect(component.badgeClass()).toBe('bg-success');
+        expect(component.badgeClass()).toBe('bg-state-success');
     });
 
     it('should show a danger badge if the score is not included', () => {
         fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.NOT_INCLUDED);
-        expect(component.badgeClass()).toBe('bg-secondary');
+        expect(component.badgeClass()).toBe('bg-surface-sunken');
+    });
+
+    it.each([
+        { inclusion: IncludedInOverallScore.INCLUDED_AS_BONUS, tooltipKey: 'artemisApp.exercise.includedAsBonusTooltip' },
+        { inclusion: IncludedInOverallScore.INCLUDED_COMPLETELY, tooltipKey: 'artemisApp.exercise.includedCompletelyTooltip' },
+        { inclusion: IncludedInOverallScore.NOT_INCLUDED, tooltipKey: 'artemisApp.exercise.notIncludedTooltip' },
+    ])('uses the explanatory translation key $tooltipKey for $inclusion', ({ inclusion, tooltipKey }) => {
+        fixture.componentRef.setInput('includedInOverallScore', inclusion);
+        fixture.detectChanges();
+
+        const tooltip = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).injector.get(TumAetUiTooltipDirective);
+        expect(tooltip.content()).toBe(tooltipKey);
     });
 });

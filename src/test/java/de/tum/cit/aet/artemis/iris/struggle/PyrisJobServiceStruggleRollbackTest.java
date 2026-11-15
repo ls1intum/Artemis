@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DelegatingDistrib
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisCallbackTokenService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
@@ -98,13 +101,12 @@ class PyrisJobServiceStruggleRollbackTest {
     private ServiceUnderTest serviceOver(DistributedMap<String, PyrisJob> jobs, DistributedMap<String, String> inFlight) {
         var failingInFlight = new FailingLockDistributedMap(inFlight, refreshFailure);
         var distributedDataProvider = mock(DistributedDataProvider.class);
-        when(distributedDataProvider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map"), any())).thenReturn(jobs);
+        when(distributedDataProvider.<String, PyrisJob>getExpiringMap(eq("pyris-job-map-v2"), any())).thenReturn(jobs);
         when(distributedDataProvider.<String, String>getExpiringMap(eq("struggle-inflight-map"), any())).thenReturn(failingInFlight);
 
-        var service = new PyrisJobService(distributedDataProvider, new IrisProactiveProperties());
+        var service = new PyrisJobService(distributedDataProvider, Optional.empty(), new IrisProactiveProperties(), mock(IrisLectureMaterialVersionService.class),
+                mock(PyrisCallbackTokenService.class));
         ReflectionTestUtils.setField(service, "jobTimeout", 300);
-        ReflectionTestUtils.setField(service, "serverUrl", "http://localhost:8080");
-        ReflectionTestUtils.setField(service, "instanceId", "test-node");
         return new ServiceUnderTest(service, failingInFlight);
     }
 

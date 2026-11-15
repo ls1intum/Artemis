@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,6 +27,19 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 @Lazy
 @Repository
 public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<PlagiarismComparison, Long> {
+
+    /**
+     * Counts the compared pairs of submissions of the plagiarism checks of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of plagiarism comparisons
+     */
+    @Query("""
+            SELECT COUNT(comparison)
+            FROM PlagiarismComparison comparison
+            WHERE comparison.plagiarismResult.exercise.id IN :exerciseIds
+            """)
+    long countByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     @Query("""
             SELECT DISTINCT comparison

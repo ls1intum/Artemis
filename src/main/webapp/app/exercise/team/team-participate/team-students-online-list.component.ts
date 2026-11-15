@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { OnlineTeamStudent, Team } from 'app/exercise/shared/entities/team/team.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,8 +12,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { captureException } from '@sentry/angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -20,7 +21,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, FaIconComponent, NgbTooltip],
+    imports: [TumAetUiButtonDirective, NgClass, FaIconComponent, TumAetUiTooltipDirective],
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
@@ -70,7 +71,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 error: (error: unknown) => captureException(error),
             });
         setTimeout(() => {
-            this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
+            this.websocketService.send<object>(this.buildSendDestination('/trigger'), {});
         }, 700);
     }
 
@@ -78,7 +79,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         const typing$ = this.typing$();
         if (typing$) {
             this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
+                next: () => this.websocketService.send<object>(this.buildSendDestination('/typing'), {}),
                 error: (error: unknown) => captureException(error),
             });
         }
@@ -166,9 +167,16 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
+     * Topic for updates on online status of team members (needs to match ExerciseWebsocketTopics.TEAM_ONLINE_STUDENTS)
      */
-    private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation().id}/team${path}`;
+    private buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation().id}/team`;
+    }
+
+    /**
+     * Destination for messages to the server (needs to match the routes in ParticipationTeamWebsocketService.java)
+     */
+    private buildSendDestination(path: string): string {
+        return `/app/participations/${this.participation().id}/team${path}`;
     }
 }

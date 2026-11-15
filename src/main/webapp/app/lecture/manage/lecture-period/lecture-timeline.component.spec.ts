@@ -1,11 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { By } from '@angular/platform-browser';
-import { MockComponent } from 'ng-mocks';
 import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TimelineComponent } from 'app/shared-ui/timeline/timeline.component';
 import dayjs from 'dayjs/esm';
 
 describe('LectureTimelineComponent', () => {
@@ -16,43 +13,69 @@ describe('LectureTimelineComponent', () => {
         await TestBed.configureTestingModule({
             imports: [LectureTimelineComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideComponent(LectureTimelineComponent, { set: { imports: [MockComponent(TimelineComponent)] } })
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(LectureTimelineComponent);
         component = fixture.componentInstance;
-
-        await fixture.whenStable();
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        expect(component).not.toBeNull();
+    function orderError(): HTMLElement | null {
+        return fixture.nativeElement.querySelector('[data-testid="lecture-period-order-error"]');
+    }
+
+    it('should label both date fields', () => {
+        const labels = Array.from(fixture.nativeElement.querySelectorAll('label')).map((label) => (label as HTMLLabelElement).htmlFor);
+
+        expect(labels).toEqual(['lecture-start-date', 'lecture-end-date']);
+        expect(fixture.nativeElement.querySelector('#lecture-start-date')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#lecture-end-date')).not.toBeNull();
     });
 
-    it('should expose the lecture dates in chronological order', () => {
-        expect(component.timelineItems.map((item) => item.labelStringKey)).toEqual(['artemisApp.lecture.startDate', 'artemisApp.lecture.endDate']);
-        expect(component.timelineItems.map((item) => item.date)).toEqual([component.startDate, component.endDate]);
-        expect(component.timelineItems.every((item) => item.kind === 'optional')).toBe(true);
-    });
+    it('should accept an empty period and a period whose end follows its start', () => {
+        expect(component.isValid()).toBe(true);
 
-    it('should forward the timeline status', () => {
+        component.startDate.set(dayjs('2026-10-01T10:00'));
+        component.endDate.set(dayjs('2026-10-01T12:00'));
         fixture.detectChanges();
-        const emitSpy = vi.spyOn(component.timelineStatusChange, 'emit');
-        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as TimelineComponent;
-        const status = { valid: false, empty: false, invalidItems: [] };
 
-        timeline.timelineStatusChange.emit(status);
+        expect(component.isValid()).toBe(true);
+        expect(orderError()).toBeNull();
+    });
 
-        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(status);
+    it.each([
+        ['before', dayjs('2026-10-01T08:00')],
+        ['equal to', dayjs('2026-10-01T10:00')],
+    ])('should reject an end %s the start and say why', (_, endDate) => {
+        const validity: boolean[] = [];
+        component.periodValidChange.subscribe((valid) => validity.push(valid));
+
+        component.startDate.set(dayjs('2026-10-01T10:00'));
+        component.endDate.set(endDate);
+        fixture.detectChanges();
+
+        expect(component.isEndBeforeStart()).toBe(true);
+        expect(component.isValid()).toBe(false);
+        expect(validity.at(-1)).toBe(false);
+        expect(orderError()).not.toBeNull();
+    });
+
+    it('should report typed text that is not a date yet as invalid', () => {
+        const startField: HTMLInputElement = fixture.nativeElement.querySelector('#lecture-start-date');
+
+        startField.value = '01.10.';
+        startField.dispatchEvent(new Event('input'));
+        startField.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+
+        expect(component.isValid()).toBe(false);
     });
 
     it('should emit when a lecture date changes', () => {
-        fixture.detectChanges();
         const emitSpy = vi.spyOn(component.datesChanged, 'emit');
 
         component.startDate.set(dayjs());

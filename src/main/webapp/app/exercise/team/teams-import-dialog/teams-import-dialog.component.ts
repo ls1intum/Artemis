@@ -1,6 +1,8 @@
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -12,7 +14,6 @@ import { flatMap } from 'lodash-es';
 import { User } from 'app/account/user/user.model';
 import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 import { TeamsImportFromFileFormComponent } from './teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -27,9 +28,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     styleUrls: ['./teams-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiRadioButtonComponent,
+        TumAetUiButtonDirective,
         FormsModule,
         TranslateDirective,
-        NgClass,
         TeamsImportFromFileFormComponent,
         HelpIconComponent,
         FaIconComponent,
@@ -41,17 +43,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private teamService = inject(TeamService);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject<TumAetUiDialogRef<Team[], TeamsImportDialogComponent>>(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<{ exercise: Exercise; teams: Team[] }>>(TumAetUiDialogConfig);
     private alertService = inject(AlertService);
 
     readonly ImportStrategy = ImportStrategy;
     readonly ActionType = ActionType;
 
-    // Inputs come from DynamicDialogConfig.data. Initialize at field declaration to
+    // Inputs come from TumAetUiDialogConfig.data. Initialize at field declaration to
     // avoid ExpressionChangedAfterItHasBeenCheckedError in zoneless dev mode.
-    readonly exercise = signal<Exercise>(this.dialogConfig.data.exercise);
-    readonly teams = signal<Team[]>(this.dialogConfig.data.teams); // existing teams already in exercise
+    readonly exercise = signal<Exercise>(this.dialogConfig.data!.exercise);
+    readonly teams = signal<Team[]>(this.dialogConfig.data!.teams); // existing teams already in exercise
 
     // The fields below are read across large parts of the template (directly or through getters) and are
     // mutated from async callbacks (the `loadSourceTeams` / `importTeams` HTTP subscribes, the import-error
@@ -372,7 +374,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param {HttpResponse<Team[]>} teams - Successfully updated teams
      */
     onSaveSuccess(teams: HttpResponse<Team[]>) {
-        this.dialogRef.close(teams.body);
+        this.dialogRef.close(teams.body ?? undefined);
         this.isImporting.set(false);
 
         setTimeout(() => {

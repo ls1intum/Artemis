@@ -73,12 +73,6 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/memiris")
-    private URL memirisApiURL;
-
-    @Value("${artemis.iris.url}/api/v2/memiris")
-    private URL memirisApiV2URL;
-
     @Value("${artemis.iris.url}/api/v1/search/lectures")
     private URL lectureSearchApiURL;
 
@@ -179,16 +173,29 @@ public class IrisRequestMockProvider {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
 
-    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
-        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
-    }
-
-    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
-        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
+    public void mockFaqIngestionWebhookError(HttpStatus status) {
+        mockPostError(webhooksApiURL.toString(), "/faqs/ingest", status.value());
     }
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    /** Verifies that disabled FAQ synchronization sends no ingestion request. */
+    public void expectNoFaqIngestionWebhook() {
+        mockServer.expect(ExpectedCount.never(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+    }
+
+    /** FAQ ingestion fails before Iris accepts a job, as during an outage. */
+    public void mockFaqIngestionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    /** FAQ deletion fails before Iris accepts a job, as during an outage. */
+    public void mockFaqDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
     }
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
@@ -197,6 +204,12 @@ public class IrisRequestMockProvider {
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
+    }
+
+    /** The lecture deletion webhook fails once, as when Pyris is temporarily unavailable. */
+    public void mockDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withRawStatus(HttpStatus.SERVICE_UNAVAILABLE.value()));
     }
 
     public void mockLectureUnitMetadataWebhookRunResponse(Consumer<PyrisLectureUnitMetadataWebhookDTO> responseConsumer, ExpectedCount count) {
@@ -227,8 +240,16 @@ public class IrisRequestMockProvider {
         mockPostError(pipelinesApiURL.toString(), "/programming-exercise-chat/run", httpStatus);
     }
 
-    public void mockIngestionWebhookRunError(int httpStatus) {
-        mockPostError(webhooksApiURL.toString(), "/lectures/ingest", httpStatus);
+    /**
+     * Answers the lecture unit visibility webhook with an error and a body, so that a caller which distinguishes
+     * Pyris's own "not ingested" answer from any other 404 can be exercised.
+     *
+     * @param httpStatus the status to answer with
+     * @param body       the response body
+     */
+    public void mockLectureVisibilityWebhookError(int httpStatus, String body) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/visibility")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)).body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockDeletionWebhookRunError(int httpStatus) {
@@ -246,7 +267,8 @@ public class IrisRequestMockProvider {
                     null,
                     null
                 )
-            )
+            ),
+            null
         );
 
         shortTimeoutMockServer
@@ -294,7 +316,7 @@ public class IrisRequestMockProvider {
     public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JacksonException {
         var modules = moduleStatuses.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> new PyrisHealthStatusDTO.ModuleStatusDTO(e.getValue(), null, null)));
-        var dto = new PyrisHealthStatusDTO(overallHealthy, modules);
+        var dto = new PyrisHealthStatusDTO(overallHealthy, modules, null);
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
@@ -325,7 +347,7 @@ public class IrisRequestMockProvider {
 
     /** Full control over modules, including null, error, and metaData. */
     public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JacksonException {
-        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
+        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules, null); // allow null → false
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
@@ -432,78 +454,19 @@ public class IrisRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }
 
-    // -------------------- Memiris endpoints --------------------
-
-    public void mockListMemories(long userId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockListMemoriesError(long userId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockListMemoryData(long userId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockListMemoryDataError(long userId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockGetMemoryWithRelations(long userId, String memoryId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockGetMemoryWithRelationsError(long userId, String memoryId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockDeleteMemory(long userId, String memoryId) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withRawStatus(HttpStatus.NO_CONTENT.value()));
-        // @formatter:on
-    }
-
-    public void mockDeleteMemoryError(long userId, String memoryId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
+    /**
+     * Answers the global search request with an error whose body repeats the whole request, as a validation error that quotes its input does.
+     *
+     * @param status          the error status
+     * @param requestConsumer receives the request Artemis sent
+     */
+    public void mockGlobalSearchIrisAnswerErrorEchoingTheRequest(HttpStatus status, Consumer<PyrisGlobalSearchAnswerRequestDTO> requestConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            String body = ((MockClientHttpRequest) request).getBodyAsString();
+            requestConsumer.accept(mapper.readValue(body, PyrisGlobalSearchAnswerRequestDTO.class));
+            return withRawStatus(status.value()).contentType(MediaType.APPLICATION_JSON).body("{\"detail\":\"invalid input: " + body.replace("\"", "'") + "\"}")
+                    .createResponse(request);
+        });
     }
 
     private String write(Object responseBody) {

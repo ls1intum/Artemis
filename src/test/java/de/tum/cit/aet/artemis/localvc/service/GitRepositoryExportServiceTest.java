@@ -84,12 +84,12 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportStudentRepositoryInMemory_streamsTheSubmittedWorkingTreeWithoutGitMetadata() throws Exception {
         var participation = seedParticipation(TEST_PREFIX + "student1", Map.of("src/Main.java", "public class Main {}"));
         List<String> exportErrors = new ArrayList<>();
 
-        var exported = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, exportErrors);
+        var exported = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, false, exportErrors);
 
         assertThat(exportErrors).as("a repository with a commit exports without errors").isEmpty();
         assertThat(exported).as("the download is served the archive").isNotNull();
@@ -102,7 +102,7 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportStudentRepositoryInMemory_withoutARepositoryUri_reportsTheParticipation() {
         var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -110,7 +110,7 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
         studentParticipationTestRepository.save(participation);
         List<String> exportErrors = new ArrayList<>();
 
-        var exported = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, exportErrors);
+        var exported = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, false, exportErrors);
 
         assertThat(exported).as("a participation without a repository has nothing to export").isNull();
         assertThat(exportErrors).as("the caller is told which participation could not be exported").hasSize(1);
@@ -118,7 +118,7 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportStudentRepositoryInMemory_forARepositoryWithoutACommit_reportsTheExerciseAndTheParticipation() throws Exception {
         // An empty archive is indistinguishable from an empty submission, so a repository whose setup never produced a commit has to be reported instead. The repository is
         // created but deliberately not seeded, so that this is the no-commit path rather than the missing-repository one.
@@ -135,7 +135,7 @@ class GitRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILoc
         studentParticipationTestRepository.save(participation);
         List<String> exportErrors = new ArrayList<>();
 
-        var exported = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, exportErrors);
+        var exported = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, false, exportErrors);
 
         assertThat(exported).as("a repository without a commit has nothing to export").isNull();
         assertThat(exportErrors).as("the failure is reported rather than swallowed").hasSize(1);

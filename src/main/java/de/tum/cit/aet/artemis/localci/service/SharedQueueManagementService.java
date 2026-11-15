@@ -156,9 +156,11 @@ public class SharedQueueManagementService {
 
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo, only executed on the main node (with active scheduling)
-     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds.
+     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds. Both can be changed with
+     * {@code artemis.continuous-integration.image-cleanup.info-push-interval-seconds} and
+     * {@code artemis.continuous-integration.image-cleanup.info-push-delay-seconds}.
      */
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000)
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.info-push-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.image-cleanup.info-push-delay-seconds:30}", timeUnit = TimeUnit.SECONDS)
     public void pushDockerImageCleanupInfo() {
         if (profileService.isSchedulingActive()) {
             var startDate = System.currentTimeMillis();
@@ -214,6 +216,35 @@ public class SharedQueueManagementService {
             if (buildJob != null) {
                 triggerBuildJobCancellation(buildJobId);
             }
+        }
+    }
+
+    /**
+     * Cancel a build job of the given course by removing it from the queue or stopping the build process.
+     * <p>
+     * The course is compared with the job that is actually cancelled, not with an earlier look at the queue: a job that is handed over from the queue to an agent is in neither
+     * of them for a moment, and a job of another course is never cancelled here.
+     *
+     * @param buildJobId id of the build job to cancel
+     * @param courseId   id of the course the job has to belong to
+     */
+    public void cancelBuildJobOfCourse(String buildJobId, long courseId) {
+        List<BuildJobQueueItem> toRemove = distributedDataAccessService.getQueuedJobs().stream().filter(job -> Objects.equals(job.id(), buildJobId) && job.courseId() == courseId)
+                .toList();
+        if (!toRemove.isEmpty()) {
+            distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
+            // A job that an agent took from the queue before its removal is in the processing jobs now. It is stopped below and finishes through the agent, so its status is
+            // not changed here.
+            List<BuildJobQueueItem> removed = toRemove.stream().filter(job -> distributedDataAccessService.getDistributedProcessingJobs().get(job.id()) == null).toList();
+            if (!removed.isEmpty()) {
+                updateCancelledQueuedBuildJobsStatus(removed);
+            }
+        }
+        // An agent may have taken the job from the queue between the look at the queue and its removal, so the processing jobs are checked after the removal as well.
+        // The id of a job always belongs to the same course, so the job that is removed here is the one that has been compared
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null && processingJob.courseId() == courseId && distributedDataAccessService.getDistributedProcessingJobs().remove(buildJobId) != null) {
+            triggerBuildJobCancellation(buildJobId);
         }
     }
 
@@ -324,6 +355,23 @@ public class SharedQueueManagementService {
     }
 
     /**
+     * Cancel all queued and running build jobs of an exercise, i.e. of its template, solution and student participations.
+     * <p>
+     * Used when the exercise is deleted: a job that is still waiting is removed from the queue, a running one is cancelled on its build agent.
+     * A job that has already finished and whose result is waiting to be processed is not affected, so the result processing has to drop such a result itself.
+     *
+     * @param exerciseId id of the exercise
+     */
+    public void cancelAllJobsForExercise(long exerciseId) {
+        List<BuildJobQueueItem> toRemove = distributedDataAccessService.getQueuedJobs().stream().filter(queuedJob -> queuedJob.exerciseId() == exerciseId).toList();
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
+
+        distributedDataAccessService.getProcessingJobs().stream().filter(runningJob -> runningJob.exerciseId() == exerciseId)
+                .forEach(runningJob -> cancelBuildJob(runningJob.id()));
+    }
+
+    /**
      * Clear all build related data from the distributed data structures.
      * This method should only be called by an admin user.
      */
@@ -332,6 +380,7 @@ public class SharedQueueManagementService {
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         distributedDataAccessService.getDistributedBuildAgentInformation().clear();
     }
 
@@ -354,7 +403,9 @@ public class SharedQueueManagementService {
         Slice<Long> buildJobIdsSlice = buildJobRepository.findFinishedIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
                 search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
 
-        log.info("findFinishedIds took {} for search: {}", TimeLogUtil.formatDurationFrom(start), search);
+        log.info("findFinishedIds took {} for course {} (status {}, from {}, to {}, duration {}-{}, agent filter {}, search term {}, page {})",
+                TimeLogUtil.formatDurationFrom(start), courseId, search.buildStatus(), search.startDate(), search.endDate(), buildDurationLower, buildDurationUpper,
+                search.buildAgentAddress() != null, search.pageable().getSearchTerm() != null && !search.pageable().getSearchTerm().isBlank(), search.pageable().getPage());
 
         List<Long> buildJobIds = buildJobIdsSlice.toList();
         // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.
@@ -502,12 +553,6 @@ public class SharedQueueManagementService {
      * @param removedAgent the build agent information that was removed
      */
     private void requeueOrphanedJobsOf(BuildAgentInformation removedAgent) {
-        if (removedAgent.buildAgent() == null) {
-            // An entry without agent details carries no name to match processing jobs against, so there is nothing to
-            // re-queue. Dereferencing it would abort the listener and leave the capacity update half done.
-            log.warn("Removed build agent entry has no agent details, skipping orphaned job handling");
-            return;
-        }
         requeueOrphanedJobsOf(removedAgent.buildAgent().name());
     }
 
@@ -615,7 +660,7 @@ public class SharedQueueManagementService {
      * @return whether the job started early enough that a missing agent means the agent is gone rather than not yet registered
      */
     private static boolean startedBefore(BuildJobQueueItem job, ZonedDateTime deadline) {
-        ZonedDateTime buildStartDate = job.jobTimingInfo() != null ? job.jobTimingInfo().buildStartDate() : null;
+        ZonedDateTime buildStartDate = job.jobTimingInfo().buildStartDate();
         return buildStartDate == null || buildStartDate.isBefore(deadline);
     }
 

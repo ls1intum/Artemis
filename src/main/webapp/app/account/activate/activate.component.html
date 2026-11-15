@@ -4,15 +4,15 @@
             <div class="w-full md:w-2/3">
                 <h1 jhiTranslate="activate.title"></h1>
                 @if (success()) {
-                    <tum-ui-message severity="success">
+                    <tumaet-ui-message severity="success">
                         <span jhiTranslate="activate.messages.success"><strong>Your user account has been activated.</strong> Please </span>
                         <a class="underline" [routerLink]="['/']" jhiTranslate="global.messages.info.authenticated.link"></a>.
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
                 @if (error()) {
-                    <tum-ui-message severity="error">
+                    <tumaet-ui-message severity="error">
                         <span jhiTranslate="activate.messages.error"><strong>Your user could not be activated.</strong> Please use the registration form to sign up.</span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
             </div>
         </div>

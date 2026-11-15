@@ -78,6 +78,7 @@ describe('CourseNotificationOverviewComponent', () => {
             getNotificationCountForCourse$: vi.fn().mockReturnValue(notificationCountSubject.asObservable()),
             getNotificationsForCourse$: vi.fn().mockReturnValue(notificationsSubject.asObservable()),
             setNotificationStatus: vi.fn(),
+            markDisplayedNotificationsAsSeen: vi.fn(),
             setNotificationStatusInMap: vi.fn(),
             decreaseNotificationCountBy: vi.fn(),
             removeNotificationFromMap: vi.fn(),
@@ -212,6 +213,46 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(updateSpy).toHaveBeenCalledOnce();
     });
 
+    it.each([
+        { description: 'finished history', seenIds: [1], unseenId: 2, pagesFinished: true },
+        { description: 'full page', seenIds: [1, 2, 3, 4, 5, 6, 7, 8, 9], unseenId: 10, pagesFinished: false },
+    ])('persists newly displayed notifications when reopening cached $description', ({ seenIds, unseenId, pagesFinished }) => {
+        component['selectedCategory'] = CourseNotificationCategory.COMMUNICATION;
+        component['pagesFinished'] = pagesFinished;
+        const cachedNotifications = seenIds.map((id) => createMockNotification(id, 101, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.SEEN));
+        const arrival = createMockNotification(unseenId, 101, CourseNotificationCategory.COMMUNICATION);
+
+        // A websocket arrival updates the cached list while the overview is closed.
+        notificationsSubject.next([...cachedNotifications, arrival]);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
+
+        component['toggleOverlay']();
+
+        expect(component['isShown']()).toBe(true);
+        expect(courseNotificationService.getNextNotificationPage).not.toHaveBeenCalled();
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledExactlyOnceWith(101, [unseenId]);
+
+        component['closeOverlay']();
+
+        expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [unseenId], CourseNotificationViewingStatus.SEEN);
+    });
+
+    it('waits for loading to finish before marking cached notifications as displayed', () => {
+        component['pagesFinished'] = true;
+        const arrival = createMockNotification(1, 101, CourseNotificationCategory.GENERAL);
+        notificationsSubject.next([arrival]);
+        component['isLoading'].set(true);
+
+        component['toggleOverlay']();
+
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
+
+        notificationsSubject.next([arrival]);
+
+        expect(component['isLoading']()).toBe(false);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledExactlyOnceWith(101, [1]);
+    });
+
     it('should query for more notifications if less than pageSize are available', () => {
         componentAsAny.notificationsForSelectedCategory.set(
             Array(5)
@@ -285,6 +326,51 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should not hide overlay when clicking an entry of the preset menu, which is rendered in an overlay outside the component', () => {
+        componentAsAny.isShown.set(true);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const menu = document.createElement('tumaet-ui-menu');
+        menu.setAttribute('data-notification-preset-menu', '');
+        const menuEntry = document.createElement('button');
+        menu.appendChild(menuEntry);
+        document.body.appendChild(menu);
+
+        componentAsAny.onClickOutside(menuEntry);
+        menu.remove();
+
+        expect(componentAsAny.isShown()).toBe(true);
+        expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hide overlay when clicking an entry of an unrelated menu outside the component', () => {
+        componentAsAny.isShown.set(true);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const otherMenu = document.createElement('tumaet-ui-menu');
+        const otherEntry = document.createElement('button');
+        otherMenu.appendChild(otherEntry);
+        document.body.appendChild(otherMenu);
+
+        componentAsAny.onClickOutside(otherEntry);
+        otherMenu.remove();
+
+        expect(componentAsAny.isShown()).toBe(false);
+        expect(updateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should hide overlay when clicking inside an unrelated overlay outside the component', () => {
+        componentAsAny.isShown.set(true);
+        const unrelatedOverlay = document.createElement('div');
+        unrelatedOverlay.className = 'cdk-overlay-container';
+        const entry = document.createElement('button');
+        unrelatedOverlay.appendChild(entry);
+        document.body.appendChild(unrelatedOverlay);
+
+        componentAsAny.onClickOutside(entry);
+        unrelatedOverlay.remove();
+
+        expect(componentAsAny.isShown()).toBe(false);
+    });
+
     it('should load more notifications when scrolling to bottom', () => {
         componentAsAny.pagesFinished = false;
         componentAsAny.isLoading.set(false);
@@ -320,7 +406,9 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.markAllAsReadClicked();
 
+        // A click, so it goes to the status endpoint as an action and not to the automatic seen update
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(101, 2);
     });
@@ -390,7 +478,9 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnServer();
 
-        expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        // Displaying notifications is not an action of the user, so it uses the automatic seen update
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledWith(101, [1, 2]);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
     });
 
     it('should correctly identify visible unseen notification IDs', () => {
@@ -415,6 +505,7 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
         expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
     });
 
     it('should query for more notifications from service', () => {

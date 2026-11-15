@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +22,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, RouterLink, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
     private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);
@@ -66,7 +67,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
      * The result of the given correction round, matched on the round the result belongs to.
      *
      * Indexing the results by the round only worked while a submission's results were an ordered list whose position was
-     * the round. They are a set now and the round lives on the result, so it is matched instead. The scores view is fed
+     * the round. They are a set now and the round lives on the result, so it is matched instead. The participation page is fed
      * one entry per round for exactly this lookup.
      */
     resultForRound(correctionRound: number): Result | undefined {
@@ -117,8 +118,8 @@ export class ManageAssessmentButtonsComponent implements OnInit {
      * released round 2 and round 1 stayed locked (#13396).
      */
     cancelAssessment(result: Result, participation: Participation) {
-        // Take the submission from the participation, not from the result. The scores overview builds its rows from
-        // ParticipationScoreDTO (ExerciseScoresComponent#toParticipation), and those results carry no back reference to
+        // Take the submission from the participation, not from the result. The participation page builds its rows from
+        // ParticipationManagementDTO (ParticipationComponent#toParticipation), and those results carry no back reference to
         // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed
         // every click: no request ever left the client and the lock was never released (#13396).
         const submissionId = participation.submissions?.[0]?.id;

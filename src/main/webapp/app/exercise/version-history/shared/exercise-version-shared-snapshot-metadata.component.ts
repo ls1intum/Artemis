@@ -11,9 +11,8 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { PanelModule } from 'primeng/panel';
-import { DividerModule } from 'primeng/divider';
-import { TagModule } from 'primeng/tag';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 /** A label/value pair for a plain-text or numeric metadata field. */
 interface MetadataField {
@@ -41,7 +40,7 @@ interface MetadataDateField {
     selector: 'jhi-exercise-version-shared-snapshot-metadata',
     templateUrl: './exercise-version-shared-snapshot-metadata.component.html',
     styleUrls: ['./exercise-version-shared-snapshot-metadata.component.scss'],
-    imports: [PanelModule, DividerModule, TagModule, TranslateDirective, ArtemisDatePipe],
+    imports: [TumAetUiPanelComponent, TumAetUiTagComponent, TranslateDirective, ArtemisDatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy {
@@ -140,6 +139,8 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         }
         this.injectableCallbacks.length = 0;
         this.plantUmlWrapper.setExerciseId(snapshot.id);
+        // The wrapper is a singleton: clear the instance scope that a programming exercise instructions component may have left behind
+        this.plantUmlWrapper.setInstanceId(undefined);
 
         this.problemStatement.set(this.renderMarkdown(snapshot.problemStatement));
         this.gradingInstructions.set(this.renderMarkdown(snapshot.gradingInstructions));

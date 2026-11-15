@@ -1,0 +1,18 @@
+<th class="build-jobs-column-tiny"></th>
+<th class="build-jobs-column-strings" jhiTranslate="artemisApp.buildQueue.buildJob.name"></th>
+@if (running()) {
+    <th class="build-jobs-column-strings" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></th>
+    <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.start"></th>
+    <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.duration"></th>
+} @else {
+    <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.submitted"></th>
+    <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.waitingTime"></th>
+}
+@if (showCourseId()) {
+    <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></th>
+}
+<th class="build-jobs-column">
+    <span jhiTranslate="artemisApp.buildQueue.buildJob.priority"></span>
+    <jhi-help-icon text="artemisApp.buildQueue.buildJob.priorityTooltip" />
+</th>
+<th class="build-jobs-column-tiny"></th>

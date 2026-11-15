@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -178,8 +179,8 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
             append(buildJob.id(), "Kubernetes build Pod " + execution.podName + " is running");
 
             BuildLogOutputStream buildLogOutput = new BuildLogOutputStream(buildJob.id(), buildLogsMap, maxLogLineBytes);
-            execution.buildLogOutput = buildLogOutput;
-            execution.logWatch = kubernetesClient.pods().inNamespace(properties.namespace()).withName(execution.podName).inContainer(BUILDER_CONTAINER).watchLog(buildLogOutput);
+            execution.buildLogOutput.set(buildLogOutput);
+            execution.logWatch.set(kubernetesClient.pods().inNamespace(properties.namespace()).withName(execution.podName).inContainer(BUILDER_CONTAINER).watchLog(buildLogOutput));
 
             inputArchive = archiveService.createInputArchive(buildJob, preparedBuildJob);
             uploadInputArchive(execution.podName, inputArchive);
@@ -377,7 +378,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private Duration effectiveExecutionWait(BuildJobQueueItem buildJob) {
         // Reuse the capping of the Job factory so that this wait never outlives the activeDeadlineSeconds of the Job it waits for.
-        return Duration.ofSeconds(jobFactory.effectiveBuildTimeout(buildJob) + properties.activeDeadlineGraceSeconds());
+        return Duration.ofSeconds((long) jobFactory.effectiveBuildTimeout(buildJob) + properties.activeDeadlineGraceSeconds());
     }
 
     private boolean containersStarted(Pod pod) {
@@ -522,19 +523,21 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private void closeLogWatch(ActiveExecution execution) {
-        if (execution.logWatch != null) {
-            execution.logWatch.close();
-            execution.logWatch = null;
+        LogWatch logWatch = execution.logWatch.getAndSet(null);
+        if (logWatch != null) {
+            logWatch.close();
         }
-        if (execution.buildLogOutput != null) {
-            execution.buildLogOutput.flushLine();
+        BuildLogOutputStream buildLogOutput = execution.buildLogOutput.get();
+        if (buildLogOutput != null) {
+            buildLogOutput.flushLine();
         }
     }
 
     private void drainLogWatch(ActiveExecution execution) {
-        if (execution.logWatch != null) {
+        LogWatch logWatch = execution.logWatch.get();
+        if (logWatch != null) {
             try {
-                execution.logWatch.onClose().toCompletableFuture().get(LOG_DRAIN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+                logWatch.onClose().toCompletableFuture().get(LOG_DRAIN_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -567,7 +570,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     static String jobName(BuildJobQueueItem buildJob, String buildAgentName) {
-        ZonedDateTime buildStartDate = buildJob.jobTimingInfo() != null ? buildJob.jobTimingInfo().buildStartDate() : null;
+        ZonedDateTime buildStartDate = buildJob.jobTimingInfo().buildStartDate();
         String claimIdentity = buildJob.id() + '|' + buildJob.retryCount() + '|' + buildAgentName + '|' + buildStartDate;
         String suffix = "-r" + buildJob.retryCount() + "-" + sha256(claimIdentity).substring(0, 10);
         String base = "local-ci-" + toDnsLabel(buildJob.id());
@@ -654,9 +657,9 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
         private volatile String podName;
 
-        private volatile LogWatch logWatch;
+        private final AtomicReference<LogWatch> logWatch = new AtomicReference<>();
 
-        private volatile BuildLogOutputStream buildLogOutput;
+        private final AtomicReference<BuildLogOutputStream> buildLogOutput = new AtomicReference<>();
 
         private ActiveExecution(String jobName) {
             this.jobName = jobName;

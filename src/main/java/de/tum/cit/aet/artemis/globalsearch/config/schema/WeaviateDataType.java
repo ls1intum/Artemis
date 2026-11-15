@@ -17,6 +17,11 @@ public enum WeaviateDataType {
     TEXT("text"),
 
     /**
+     * Array of text values, stored as-is.
+     */
+    TEXT_ARRAY("text[]"),
+
+    /**
      * Number type for floating-point values.
      */
     NUMBER("number"),

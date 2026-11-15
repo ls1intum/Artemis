@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, effect, inject, signal, untracked } from '@angular/core';
 import { Observable, Subscription, map, tap } from 'rxjs';
 import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
 import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
@@ -7,7 +7,8 @@ import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AccountService } from 'app/core/auth/account.service';
-import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
  * Client service for AI exercise-variant generation. Two responsibilities:
@@ -16,41 +17,45 @@ import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants
  *    client-side copy of the user's job list, kept live by the per-job websocket topics and re-synced from
  *    REST on demand (events are fire-and-forget; the server-side job record is authoritative).
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVariantGenerationService {
     private readonly api = inject(HyperionExerciseVariantApi);
     private readonly websocketService = inject(ExerciseVariantWebsocketService);
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     private readonly jobSubscriptions = new Map<string, Subscription>();
 
-    /** Login of the user whose jobs are currently loaded, used to avoid redundant re-syncs. */
+    /** The load triggered by a change of login or access; cancelled on the next change so that a late response cannot restore stale jobs. */
+    private accessLoad?: Subscription;
+
+    /** Login of the user whose jobs are currently loaded (undefined while none are), used to avoid redundant re-syncs. */
     private loadedForLogin?: string;
+
+    private identityRevision = 0;
 
     /** All jobs of the current user (running + retained-finished), authoritative copy of GET /variant-jobs. */
     readonly jobs = signal<VariantJob[]>([]);
-
-    /** Running jobs drive the tray spinner ring + count badge. */
-    readonly runningJobs = computed(() => this.jobs().filter((job) => !isTerminalVariantPhase(job.phase)));
-
-    /** Tray button hidden when the user has no variant jobs at all. */
-    readonly hasJobs = computed(() => this.jobs().length > 0);
 
     constructor() {
         effect(() => {
             const login = this.accountService.userIdentity()?.login;
             untracked(() => {
-                if (login === this.loadedForLogin) {
+                // Variant generation is an editor tool: the job endpoint only lists the jobs of the caller, so a user without
+                // editor access has none and the tray stays hidden either way; asking would only be a pointless request.
+                // Without Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
+                const mayLoadJobs = !!login && this.accountService.hasEditorAccess() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+                // Keyed on the access as well as the login, so that a user who gains editor access later in the same session
+                // gets the jobs without a reload
+                const loadFor = mayLoadJobs ? login : undefined;
+                if (loadFor === this.loadedForLogin) {
                     return;
                 }
-                this.loadedForLogin = login;
-                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, so fetching as
-                // a student produced nothing but a 403 in the console. Mirror the server's rule here — a user who
-                // cannot generate variants has no jobs to show, and the tray stays hidden either way.
-                if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
-                    this.loadJobs().subscribe({ error: () => {} });
-                } else {
-                    this.clearJobs();
+                this.loadedForLogin = loadFor;
+                this.accessLoad?.unsubscribe();
+                this.clearJobs();
+                if (mayLoadJobs) {
+                    this.accessLoad = this.loadJobs().subscribe({ error: () => {} });
                 }
             });
         });
@@ -65,9 +70,12 @@ export class ExerciseVariantGenerationService {
      * @returns the created job id
      */
     startGeneration(exerciseId: number, request: VariantGenerationRequest, sourceExerciseTitle?: string): Observable<string> {
+        const login = this.accountService.userIdentity()?.login;
+        const revision = this.identityRevision;
         return this.api.generateVariant(exerciseId, request).pipe(
             map((response) => response.jobId!),
             tap((jobId) => {
+                if (!this.isCurrentIdentity(login, revision)) return;
                 this.upsertJob({ jobId, sourceExerciseId: exerciseId, sourceExerciseTitle, request, phase: 'ANALYZING' });
                 this.attachToJob(jobId);
             }),
@@ -79,8 +87,11 @@ export class ExerciseVariantGenerationService {
      * fire-and-forget, so the server-side job record is authoritative.
      */
     loadJobs(): Observable<VariantJob[]> {
+        const login = this.accountService.userIdentity()?.login;
+        const revision = this.identityRevision;
         return this.api.getJobsOfCurrentUser().pipe(
             tap((jobs) => {
+                if (!this.isCurrentIdentity(login, revision)) return;
                 this.jobs.set(jobs);
                 const stillRunning = new Set(jobs.filter((job) => !isTerminalVariantPhase(job.phase) && job.jobId).map((job) => job.jobId!));
                 // REST is authoritative: a job that finished while its terminal event was missed must lose its
@@ -99,6 +110,7 @@ export class ExerciseVariantGenerationService {
 
     /** Clears the tray state and detaches all websocket subscriptions — called on logout. */
     clearJobs(): void {
+        this.identityRevision++;
         this.jobSubscriptions.forEach((subscription, jobId) => {
             subscription.unsubscribe();
             this.websocketService.unsubscribeFromJob(jobId);
@@ -138,6 +150,8 @@ export class ExerciseVariantGenerationService {
     }
 
     private handleEvent(jobId: string, event: VariantGenerationEvent): void {
+        const login = this.accountService.userIdentity()?.login;
+        const revision = this.identityRevision;
         this.jobs.update((jobs) =>
             jobs.map((job) => {
                 if (job.jobId !== jobId) {
@@ -159,7 +173,7 @@ export class ExerciseVariantGenerationService {
             // copy instead; it is the authority on what survived.
             this.api.getJobDetail(jobId).subscribe({
                 next: (detail) => {
-                    if (detail.job) {
+                    if (detail.job && this.isCurrentIdentity(login, revision)) {
                         this.replaceJob(jobId, detail.job);
                     }
                 },
@@ -170,8 +184,14 @@ export class ExerciseVariantGenerationService {
             // subject — done synchronously it would stop later subscribers (the wizard modal) before the
             // subject's next() loop delivers this terminal event to them, freezing the modal in the last live
             // phase. Detaching in a microtask lets every subscriber receive the event first.
-            window.queueMicrotask(() => this.detachFromJob(jobId));
+            window.queueMicrotask(() => {
+                if (this.isCurrentIdentity(login, revision)) this.detachFromJob(jobId);
+            });
         }
+    }
+
+    private isCurrentIdentity(login: string | undefined, revision: number): boolean {
+        return this.accountService.userIdentity()?.login === login && this.identityRevision === revision;
     }
 
     private detachFromJob(jobId: string): void {

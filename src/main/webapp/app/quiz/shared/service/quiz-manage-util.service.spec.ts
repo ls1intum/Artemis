@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { isQuizEditable, isQuizQuestionValid } from 'app/quiz/shared/service/quiz-manage-util.service';
+import { computeQuizQuestionInvalidReason, isQuizEditable, isQuizQuestionValid } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('QuizManageUtil', () => {
     let quizExercise: QuizExercise;
@@ -89,6 +94,55 @@ describe('QuizManageUtil', () => {
             answerOption0.isCorrect = true;
             multipleChoiceQuestion.answerOptions = [answerOption0, answerOption1];
             expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(true);
+        });
+
+        it.each([
+            { text: 'a'.repeat(254), valid: true },
+            { text: 'a'.repeat(255), valid: true },
+            { text: 'a'.repeat(256), valid: false },
+            { text: 'Lorem ipsum '.repeat(5000), valid: false },
+        ])('should validate text drag-item length for $text.length characters', ({ text, valid }) => {
+            const question = new DragAndDropQuestion();
+            question.title = 'Drag and drop';
+            question.points = 1;
+            const dragItem = new DragItem();
+            dragItem.id = 1;
+            dragItem.text = 'Mapped item';
+            const dropLocation = new DropLocation();
+            dropLocation.id = 1;
+            question.dragItems = [dragItem, { id: 2, text, invalid: false }];
+            question.dropLocations = [dropLocation];
+            question.correctMappings = [new DragAndDropMapping(dragItem, dropLocation)];
+
+            expect(!!isQuizQuestionValid(question, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(valid);
+            const invalidReasons: ValidationReason[] = [];
+            computeQuizQuestionInvalidReason(invalidReasons, question, 0, dragAndDropQuestionUtil, shortAnswerQuestionUtil);
+            expect(invalidReasons).toEqual(
+                valid
+                    ? []
+                    : [
+                          {
+                              translateKey: 'artemisApp.quizExercise.invalidReasons.dragItemTextLength',
+                              translateValues: { index: 1, threshold: 255 },
+                          },
+                      ],
+            );
+        });
+
+        it('should exempt picture drag items from the text length limit', () => {
+            const question = new DragAndDropQuestion();
+            question.title = 'Picture question';
+            question.points = 1;
+            const dragItem: DragItem = { id: 1, pictureFilePath: 'item.png', text: 'a'.repeat(256), invalid: false };
+            const dropLocation: DropLocation = { id: 1, invalid: false };
+            question.dragItems = [dragItem];
+            question.dropLocations = [dropLocation];
+            question.correctMappings = [new DragAndDropMapping(dragItem, dropLocation)];
+
+            expect(isQuizQuestionValid(question, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(true);
+            const invalidReasons: ValidationReason[] = [];
+            computeQuizQuestionInvalidReason(invalidReasons, question, 0, dragAndDropQuestionUtil, shortAnswerQuestionUtil);
+            expect(invalidReasons).toEqual([]);
         });
     });
 });

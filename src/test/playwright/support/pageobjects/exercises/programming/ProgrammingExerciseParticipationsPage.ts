@@ -46,11 +46,11 @@ export class ProgrammingExerciseParticipationsPage {
     async openRepositoryOnNewPage(participantName: string): Promise<RepositoryPage> {
         console.log(`[openRepositoryOnNewPage] Opening repository for participation with participant ${participantName}`);
         const participation = this.getParticipation(participantName);
-        await participation.locator('.code-button').click();
+        await participation.getByTestId('code-button').click();
         console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
 
         // Wait for the popover to appear and the button to be visible
-        const openRepoButton = this.page.locator('.open-repository-button');
+        const openRepoButton = this.page.getByTestId('open-repository-button');
         await openRepoButton.waitFor({ state: 'visible' });
         // The href is bound via an Angular routerLink that can resolve a tick AFTER the button becomes visible, so
         // reading getAttribute('href') immediately occasionally returns null (the rare "Could not find href" flake).
@@ -85,7 +85,8 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     async checkParticipationStudents(participantName: string, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(participantName, 'Students');
+        // The members are listed below the team name
+        const studentsCell = await this.getParticipationCell(participantName, 'Team');
         expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
             await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();

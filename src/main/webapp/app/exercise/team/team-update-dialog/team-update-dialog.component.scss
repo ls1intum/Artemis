@@ -1,4 +1,4 @@
-.form-control-error {
+.control-error {
     margin-top: 0.35rem;
 
     & + & {
@@ -19,10 +19,10 @@
     margin-left: 5px;
 }
 
-.list-group--students {
+.team-list--students {
     max-width: 450px;
 
-    .list-group-item-container {
+    .team-list-item-container {
         position: relative;
 
         &:not(:last-child) {
@@ -30,14 +30,14 @@
         }
     }
 
-    .list-group-item-index {
+    .team-list-item-index {
         font-size: 1.1rem;
         margin-left: 1.5rem;
         margin-right: 1rem;
         font-weight: 500;
     }
 
-    .list-group-item {
+    .team-list-item {
         flex-grow: 1;
 
         &.has-error {
@@ -45,12 +45,12 @@
         }
     }
 
-    .list-group-item-error {
+    .team-list-item-error {
         width: 280px;
         position: absolute;
         left: 100%;
         margin-left: 2rem;
-        color: var(--danger);
+        color: var(--tumaet-ui-state-danger);
     }
 
     .student-name {
@@ -65,13 +65,7 @@
         background-color: transparent;
         border: none;
         -webkit-appearance: none;
-        color: var(--bs-body-color);
-    }
-}
-
-.modal-footer {
-    button[disabled] {
-        cursor: not-allowed;
+        color: var(--tumaet-ui-text-color);
     }
 }
 

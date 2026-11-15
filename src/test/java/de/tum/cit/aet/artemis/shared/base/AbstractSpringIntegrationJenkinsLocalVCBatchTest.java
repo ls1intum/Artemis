@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 /**
  * Batch test class for JenkinsLocalVC tests - runs in parallel with AbstractSpringIntegrationJenkinsLocalVCTest.
  * This class contains the larger/slower test classes to improve parallel test execution time.
@@ -34,8 +35,9 @@ import org.springframework.test.context.TestPropertySource;
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_batch", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
         // Use separate paths for parallel bucket execution
-        "artemis.repo-clone-path=./local/server-integration-test-batch/repos", "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-batch/local-vcs-repos",
-        "artemis.lti.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true" })
+        "artemis.failed-build-logs-path=./local/server-integration-test-batch/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-batch/repos",
+        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-batch/local-vcs-repos", "artemis.lti.enabled=true", "artemis.athena.enabled=true",
+        "artemis.apollon.enabled=true" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCBatchTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
 
     private static final int serverPort;

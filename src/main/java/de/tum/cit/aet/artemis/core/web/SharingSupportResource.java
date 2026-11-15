@@ -19,7 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
@@ -34,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
  * All endpoints require a shared secret API key sent via the {@code Authorization} header
  * using the {@code Bearer <token>} scheme.
  */
-@FeatureUsage("sharing/sharing-platform")
+@FeatureUsage(UserFeature.SHARING_PLATFORM)
 @RestController
 @RequestMapping("api/core/sharing/")
 @Conditional(SharingEnabled.class)
@@ -50,8 +54,11 @@ public class SharingSupportResource {
 
     private final SharingConnectorService sharingConnectorService;
 
-    public SharingSupportResource(SharingConnectorService sharingConnectorService) {
+    private final RateLimitService rateLimitService;
+
+    public SharingSupportResource(SharingConnectorService sharingConnectorService, RateLimitService rateLimitService) {
         this.sharingConnectorService = sharingConnectorService;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -77,6 +84,7 @@ public class SharingSupportResource {
      * <li><b>400 Bad Request</b>: malformed or disallowed {@code apiBaseUrl}
      * (missing host, unsupported scheme, or invalid URL).</li>
      * <li><b>401 Unauthorized</b>: missing or invalid API key.</li>
+     * <li><b>429 Too Many Requests</b>: the calling address presented too many invalid keys.</li>
      * </ul>
      *
      * @param sharingApiKey    the {@code Authorization} header value; either {@code Bearer <token>} or the raw token
@@ -86,12 +94,15 @@ public class SharingSupportResource {
      *         {@code 401} on missing/invalid credentials
      * @see <a href="https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform/-/wikis/Setup/Connector-Interface-Setup">Connector Interface Setup</a>
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
             @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
+        rateLimitService.requireServiceCredentialBudget();
         final String BEARER_PREFIX = "Bearer ";
         final Optional<String> token = sharingApiKey.map(key -> key.startsWith(BEARER_PREFIX) ? key.substring(BEARER_PREFIX.length()) : key);
         if (token.isPresent() && sharingConnectorService.validateApiKey(token.get())) {
+            rateLimitService.refundServiceCredentialBudget();
             log.info("Delivered Sharing Config");
             URL parsedApiBaseUrl;
             try {
@@ -136,6 +147,7 @@ public class SharingSupportResource {
      *
      * @return {@code ResponseEntity<Boolean>} indicating connection status when sharing is enabled
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {
         return ResponseEntity.ok(sharingConnectorService.isSharingApiBaseUrlPresent());

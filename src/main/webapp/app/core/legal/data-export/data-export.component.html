@@ -8,6 +8,7 @@
     <div class="column d-flex justify-content-center align-content-center">
         @if (!downloadMode()) {
             <button
+                type="button"
                 jhiDataExportRequestButton
                 [adminDialog]="isAdmin()"
                 [expectedLogin]="currentLogin()!"
@@ -21,6 +22,7 @@
         @if (canDownload()) {
             <jhi-button
                 id="download-data-export-btn"
+                [btnType]="ButtonType.SECONDARY"
                 [btnSize]="ButtonSize.LARGE"
                 [disabled]="!canDownload()"
                 [tooltip]="'artemisApp.dataExport.download'"

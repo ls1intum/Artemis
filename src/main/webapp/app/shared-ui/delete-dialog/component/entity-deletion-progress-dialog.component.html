@@ -1,0 +1,64 @@
+<!-- <output> is a polite live region with the status role by itself, so the state changes of the deletion are announced without extra attributes. -->
+<output class="block pt-5" data-testid="entity-deletion-progress" [attr.data-status]="progress()?.status ?? 'PREPARING'">
+    <div class="mb-4 flex items-center">
+        @if (isCompleted()) {
+            <fa-icon [icon]="faCheckCircle" size="lg" class="me-2 text-state-success" />
+            <strong data-testid="entity-deletion-title">{{ 'artemisApp.deletionProgress.title.completed' | artemisTranslate: { title: target.title } }}</strong>
+        } @else if (isFailed()) {
+            <fa-icon [icon]="faExclamationTriangle" size="lg" class="me-2 text-state-danger" />
+            <strong data-testid="entity-deletion-title">{{ 'artemisApp.deletionProgress.title.failed' | artemisTranslate: { title: target.title } }}</strong>
+        } @else {
+            <fa-icon [icon]="faSpinner" size="lg" animation="spin" class="me-2 text-(color:--primary)" />
+            <strong data-testid="entity-deletion-title">{{ 'artemisApp.deletionProgress.title.inProgress' | artemisTranslate: { title: target.title } }}</strong>
+        }
+    </div>
+
+    @if (isRunning()) {
+        <p class="mb-2!" data-testid="entity-deletion-step">
+            @if (stepKey(); as key) {
+                {{ key | artemisTranslate }}
+            } @else {
+                {{ 'artemisApp.deletionProgress.preparing' | artemisTranslate }}
+            }
+        </p>
+        <tumaet-ui-progress-bar [value]="progressPercentage()" [ariaLabel]="'artemisApp.deletionProgress.progressLabel' | artemisTranslate" />
+        <div class="mt-2 flex justify-between text-sm text-(color:--text-body-secondary)">
+            @if (showSteps()) {
+                <span data-testid="entity-deletion-steps">
+                    {{ 'artemisApp.deletionProgress.steps' | artemisTranslate: { current: stepNumber(), total: progress()!.totalSteps } }}
+                </span>
+            } @else {
+                <span></span>
+            }
+            @if (remainingTime(); as time) {
+                <span data-testid="entity-deletion-eta">{{ 'artemisApp.deletionProgress.remaining' | artemisTranslate: { time: time } }}</span>
+            }
+        </div>
+        @if (showItems()) {
+            <div class="mt-2 text-sm" data-testid="entity-deletion-items">
+                {{ 'artemisApp.deletionProgress.items' | artemisTranslate: { processed: progress()!.itemsProcessed, total: progress()!.totalItems } }}
+                @if (progress()!.currentItemTitle; as itemTitle) {
+                    <div class="text-(color:--text-body-secondary)">{{ 'artemisApp.deletionProgress.currentItem' | artemisTranslate: { title: itemTitle } }}</div>
+                }
+            </div>
+        }
+        <p class="mt-4 mb-0! text-sm text-(color:--text-body-secondary)">{{ 'artemisApp.deletionProgress.backgroundHint' | artemisTranslate }}</p>
+        <div class="mt-4 flex justify-end">
+            <button tumAetUiButton severity="secondary" type="button" data-testid="entity-deletion-background" (click)="continueInBackground()">
+                {{ 'artemisApp.deletionProgress.continueInBackground' | artemisTranslate }}
+            </button>
+        </div>
+    } @else {
+        @if (isFailed()) {
+            <p class="mb-2!">{{ 'artemisApp.deletionProgress.failedHint' | artemisTranslate }}</p>
+            @if (progress()!.errorMessage; as error) {
+                <p class="mb-0! rounded-md border border-(--border-color) p-3 text-state-danger" data-testid="entity-deletion-error">{{ error }}</p>
+            }
+        }
+        <div class="mt-6 flex justify-end">
+            <button tumAetUiButton severity="secondary" type="button" data-testid="entity-deletion-dismiss" (click)="dismiss()">
+                {{ 'artemisApp.deletionProgress.dismiss' | artemisTranslate }}
+            </button>
+        </div>
+    }
+</output>

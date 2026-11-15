@@ -12,6 +12,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component that manages notification settings for a course.
@@ -26,6 +27,7 @@ import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/
 export class NotificationSettingsComponent extends CourseSettingCategoryDirective implements OnDestroy {
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
+    private readonly accountService = inject(AccountService);
 
     // Icons
     protected readonly faBell = faBell;
@@ -127,13 +129,18 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
     /**
      * Creates notification specifications from a notification map.
      * Used to update the UI based on either user selections or preset values.
+     * Instructor-only notification types are left out for users below instructor in this course.
      *
      * @param notificationMap - Map of notification types to channel settings
      * @param useValue - Whether to use the value (true) or key (false) as the lookup in the map
      */
     private updateSpecificationArrayByNotificationMap(notificationMap: CourseNotificationSettingsMap, useValue: boolean) {
         const notificationSpecifications: CourseNotificationSettingSpecification[] = [];
+        const isInstructor = this.accountService.isAtLeastInstructorInCourseWithId(this.courseId);
         Object.entries(this.info!.notificationTypes).forEach(([key, value]) => {
+            if (!isInstructor && CourseNotificationService.INSTRUCTOR_ONLY_NOTIFICATION_TYPES.includes(value)) {
+                return;
+            }
             notificationSpecifications.push(new CourseNotificationSettingSpecification(value, Number(key), notificationMap[useValue ? value : key]));
         });
         this.notificationSpecifications.set(notificationSpecifications);

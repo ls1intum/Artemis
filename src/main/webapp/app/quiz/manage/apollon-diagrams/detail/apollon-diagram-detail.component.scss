@@ -1,7 +1,7 @@
 /* Two spacing systems meet in this dialog, deliberately:
-   - Outside the canvas (header, footer, the inset around the canvas) uses the TUM UI
+   - Outside the canvas (header, footer, the inset around the canvas) uses the TUM AET UI
      dialog scale — 1rem padding, 0.5rem gaps — so this PrimeNG DynamicDialog is
-     indistinguishable from a <tum-ui-dialog>. Those come from Tailwind utilities in
+     indistinguishable from a <tumaet-ui-dialog>. Those come from Tailwind utilities in
      the template; nothing here re-states them.
    - Inside the canvas, the floating action cluster uses Apollon's own chrome tokens
      (--apollon-chrome-*), because it has to line up with Apollon's palette, zoom and

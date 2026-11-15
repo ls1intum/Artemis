@@ -18,10 +18,13 @@ import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
 import de.tum.cit.aet.artemis.admin.service.SbomService;
 import de.tum.cit.aet.artemis.admin.service.VulnerabilityScanScheduleService;
 import de.tum.cit.aet.artemis.admin.service.VulnerabilityService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing Software Bill of Materials (SBOM) as admin.
@@ -30,7 +33,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("dependencies/software-bill-of-materials")
+@FeatureUsage(UserFeature.DEPENDENCIES)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/")
@@ -126,6 +129,7 @@ public class AdminSbomResource {
      * @return the ResponseEntity with status 200 (OK) and the fresh vulnerability data in the body,
      *         or status 404 (Not Found) if no SBOMs are available
      */
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("sbom/vulnerabilities/refresh")
     public ResponseEntity<ComponentVulnerabilitiesDTO> refreshVulnerabilities() {
         log.info("REST request to refresh SBOM vulnerabilities");

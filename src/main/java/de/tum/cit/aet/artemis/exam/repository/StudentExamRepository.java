@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -47,6 +46,27 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Lazy
 @Repository
 public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
+
+    /**
+     * Counts every student exam that was started, so a student who took several exams is counted once per exam. Which exams are real is defined like in
+     * {@link ExamRepository#countRealExamsInCourses}. Test runs of instructors are not counted.
+     *
+     * @param courseIds the courses
+     * @return the number of started student exams of the real exams of these courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(se.id)
+            FROM StudentExam se
+            WHERE se.exam.course.id IN :courseIds
+                AND se.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                AND LOWER(se.exam.title) NOT LIKE 'test%'
+                AND LOWER(se.exam.title) NOT LIKE 'mock%'
+                AND se.started = TRUE
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+                AND se.user.deleted = FALSE
+                AND se.user.isTestUser = FALSE
+            """)
+    long countParticipationsInRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
 
     @Query("""
             SELECT se
@@ -230,6 +250,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the student exams of real exams (no test runs) that contain at least one of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+                JOIN se.exercises ex
+            WHERE ex.id IN :exerciseIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
@@ -297,24 +332,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
-     * Reads only the two values needed to compute a student's individual exam end date, rather than loading the whole
-     * student exam. Pair with {@link de.tum.cit.aet.artemis.exam.domain.StudentExam#individualEndDate} and the exam the
-     * caller already holds.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the student
-     * @return the working time and started date of the student exam, if one exists
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO(se.workingTime, se.startedDate)
-            FROM StudentExam se
-            WHERE se.testRun = FALSE
-                AND se.exam.id = :examId
-                AND se.user.id = :userId
-            """)
-    Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
-
-    /**
      * Reads everything the exam preparation needs to set up the participations of an exam: one row per
      * (student exam, exercise) pair, carrying only identifiers and the student's login.
      * <p>
@@ -322,8 +339,12 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * the exam row and the full exercise row - problem statement included - once per student exam, so its size grows
      * with students times exercises even though the distinct data does not.
      *
+     * Test runs are left out: they set up their own participations when they are created, flagged as test run, and the
+     * preparation here would add graded ones alongside them that the test run never reads back. The flag is nullable and
+     * only ever set on a test run, so a null has to count as a regular student exam rather than drop it.
+     *
      * @param examId the id of the exam
-     * @return one row per exercise of every student exam of the exam, test runs included
+     * @return one row per exercise of every student exam of the exam, test runs excluded
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
@@ -331,28 +352,10 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 JOIN studentExam.user student
                 JOIN studentExam.exercises exercise
             WHERE studentExam.exam.id = :examId
+                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
-
-    /**
-     * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
-     * belong to the exam simply do not match, so callers cannot prepare exercises across exams.
-     *
-     * @param examId         the id of the exam
-     * @param studentExamIds the ids of the student exams to read
-     * @return one row per exercise of every requested student exam that belongs to the exam
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
-            FROM StudentExam studentExam
-                JOIN studentExam.user student
-                JOIN studentExam.exercises exercise
-            WHERE studentExam.exam.id = :examId
-                AND studentExam.id IN :studentExamIds
-            ORDER BY studentExam.id, exercise.id
-            """)
-    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
@@ -383,6 +386,49 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             )
             """)
     Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
+    /**
+     * Finds which of the given users have a student exam of their own in an exam, ignoring instructor test runs. Only such a student has a working period that a result
+     * can be attached to.
+     *
+     * @param examId  the id of the exam
+     * @param userIds the ids of the users to check
+     * @return the ids of the given users that have a student exam in the exam
+     */
+    @Query("""
+            SELECT DISTINCT se.user.id
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND se.user.id IN :userIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    Set<Long> findUserIdsWithStudentExamByExamIdAndUserIdIn(@Param("examId") long examId, @Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Finds which of the given users have the exercise in their newest student exam of an exam, ignoring instructor test runs. An earlier attempt of a test exam does not
+     * count, because the exercises of an attempt are assigned to it alone.
+     *
+     * @param examId     the id of the exam
+     * @param exerciseId the id of the exercise
+     * @param userIds    the ids of the users to check
+     * @return the ids of the given users whose newest student exam contains the exercise
+     */
+    @Query("""
+            SELECT DISTINCT se.user.id
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE se.exam.id = :examId
+                AND se.user.id IN :userIds
+                AND e.id = :exerciseId
+                AND se.id = (
+                    SELECT MAX(se2.id)
+                    FROM StudentExam se2
+                    WHERE se2.exam.id = :examId
+                        AND se2.user.id = se.user.id
+                        AND (se2.testRun IS NULL OR se2.testRun = FALSE)
+                )
+            """)
+    Set<Long> findUserIdsWithExerciseInNewestStudentExam(@Param("examId") long examId, @Param("exerciseId") long exerciseId, @Param("userIds") Collection<Long> userIds);
 
     @Query("""
             SELECT se
@@ -459,6 +505,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @return True if the given user id has a matching StudentExam in the given exam and course, else false.
      */
     boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
+
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.id = :studentExamId
+                AND studentExam.user.login = :login
+            """)
+    boolean existsByIdAndUserLogin(@Param("studentExamId") long studentExamId, @Param("login") String login);
+
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.user.login = :login
+            """)
+    boolean existsByExamIdAndUserLogin(@Param("examId") long examId, @Param("login") String login);
 
     @Query("""
             SELECT DISTINCT se

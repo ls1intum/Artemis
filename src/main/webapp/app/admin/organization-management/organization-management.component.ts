@@ -1,19 +1,16 @@
-import { ChangeDetectionStrategy, Component, TrackByFunction, computed, inject, signal, viewChild } from '@angular/core';
+import { OrganizationListDirective } from './organization-list.directive';
+import { ChangeDetectionStrategy, Component, TrackByFunction, computed, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { CellTemplateRef, ColumnDef, TumUiButtonDirective, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { CellTemplateRef, ColumnDef, TumAetUiButtonDirective, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui-integration/tum-ui-table-request-builder';
-import { AlertService } from 'app/foundation/service/alert.service';
-import { onError } from 'app/foundation/util/global.utils';
 
 /**
  * Component for managing organizations.
@@ -30,18 +27,11 @@ import { onError } from 'app/foundation/util/global.utils';
         DeleteButtonDirective,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiTableComponent,
-        TumUiButtonDirective,
+        TumAetUiTableComponent,
+        TumAetUiButtonDirective,
     ],
 })
-export class OrganizationManagementComponent {
-    private readonly organizationService = inject(OrganizationManagementService);
-    private readonly alertService = inject(AlertService);
-
-    organizations = signal<Organization[]>([]);
-    totalCount = signal(0);
-    isLoading = signal(false);
-
+export class OrganizationManagementComponent extends OrganizationListDirective {
     nameColumnTemplate = viewChild<CellTemplateRef<Organization>>('nameColumn');
 
     columns = computed<ColumnDef<Organization>[]>(() => [
@@ -62,8 +52,7 @@ export class OrganizationManagementComponent {
     faTrash = faTrash;
     faPencil = faPencil;
 
-    private lastLoadEvent: TumUiTableQueryEvent | undefined;
-    private loadRequestId = 0;
+    private lastLoadEvent: TumAetUiTableQueryEvent | undefined;
 
     /**
      * Deletes an organization by ID and refreshes the current page.
@@ -86,25 +75,8 @@ export class OrganizationManagementComponent {
         });
     }
 
-    loadOrganizations(event: TumUiTableQueryEvent): void {
+    override loadOrganizations(event: TumAetUiTableQueryEvent): void {
         this.lastLoadEvent = event;
-        this.isLoading.set(true);
-        const requestId = ++this.loadRequestId;
-        const query = buildDbQueryFromTableEvent(event);
-        this.organizationService.getOrganizations(query, true).subscribe({
-            next: (response) => {
-                if (requestId !== this.loadRequestId) return;
-                this.organizations.set(response.content);
-                this.totalCount.set(response.totalElements);
-                this.isLoading.set(false);
-            },
-            error: (error: HttpErrorResponse) => {
-                if (requestId !== this.loadRequestId) return;
-                this.organizations.set([]);
-                this.totalCount.set(0);
-                this.isLoading.set(false);
-                onError(this.alertService, error);
-            },
-        });
+        super.loadOrganizations(event, true);
     }
 }

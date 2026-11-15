@@ -174,12 +174,13 @@ public class BuildPhasesTemplateService {
     /**
      * Returns the file content of the template file for the given exercise
      *
-     * @param exercise the exercise for which the template file should be returned
+     * @param exercise    the exercise for which the template file should be returned
+     * @param buildConfig its build configuration, which is stored separately and passed in because a not yet created
+     *                        exercise has none stored
      * @return the requested template as a list of {@link BuildPhaseDTO} object
      */
-    public List<BuildPhaseDTO> getDefaultBuildPlanPhasesFor(ProgrammingExercise exercise) {
+    public List<BuildPhaseDTO> getDefaultBuildPlanPhasesFor(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
         try {
-            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getBuildPlanPhasesFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                     buildConfig.hasSequentialTestRuns());
         }

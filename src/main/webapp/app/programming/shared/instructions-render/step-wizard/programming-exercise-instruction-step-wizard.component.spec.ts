@@ -12,7 +12,7 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 
@@ -28,7 +28,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
             providers: [
                 ProgrammingExerciseInstructionService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
@@ -78,7 +78,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(steps).toHaveLength(0);
     });
 
-    it('should open the feedback dialog with responsive breakpoints', () => {
+    it('should open the named feedback dialog with the selected task and result', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
@@ -88,7 +88,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         fixture.componentRef.setInput('tasks', [{ id: 1, completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] }]);
         fixture.detectChanges();
 
-        const dialogService = TestBed.inject(DialogService);
+        const dialogService = TestBed.inject(TumAetUiDialogService);
         const openSpy = vi.spyOn(dialogService, 'open');
 
         fixture.componentInstance.showDetailsForTests([1], 'Implement BubbleSort');
@@ -96,11 +96,35 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             FeedbackComponent,
             expect.objectContaining({
-                width: '50rem',
-                breakpoints: {
-                    '850px': '95vw',
-                },
+                size: 'large',
+                header: 'artemisApp.result.detail.feedbackForTask',
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
+                inputValues: expect.objectContaining({ result, feedbackFilter: [1], taskName: 'Implement BubbleSort', numberOfNotExecutedTests: 0 }),
             }),
         );
+    });
+
+    // Task names are taken from the rendered markdown, so special characters arrive HTML-escaped (e.g. ">" as "&gt;")
+    it('should show the unescaped task name in the tooltip and the feedback dialog header', () => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
+            feedbacks: [{ testCase: { testName: 'testCoverage', id: 1 }, positive: false, detailText: 'lorem ipsum' }],
+        };
+        fixture.componentRef.setInput('latestResult', result);
+        fixture.componentRef.setInput('tasks', [{ id: 1, completeString: '[task][Coverage >= 80%](1)', taskName: 'Coverage &gt;= 80% &amp; <code>Foo</code>', testIds: [1] }]);
+        fixture.detectChanges();
+
+        const steps = fixture.componentInstance.steps();
+        expect(steps).toHaveLength(1);
+        expect(steps[0].title).toBe('Coverage >= 80% & Foo');
+
+        const translateService = TestBed.inject(TranslateService);
+        const instantSpy = vi.spyOn(translateService, 'instant');
+        fixture.componentInstance.showDetailsForTests(steps[0].testIds, 'Coverage &gt;= 80% &amp; <code>Foo</code>');
+
+        expect(instantSpy).toHaveBeenCalledWith('artemisApp.result.detail.feedbackForTask', { taskName: 'Coverage >= 80% & Foo' });
     });
 });

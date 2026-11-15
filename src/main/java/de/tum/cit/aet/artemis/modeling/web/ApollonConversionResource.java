@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.modeling.web;
 import java.io.IOException;
 import java.io.InputStream;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -15,8 +17,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
@@ -26,7 +31,7 @@ import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
  */
 @Conditional(ApollonEnabled.class)
 @Lazy
-@FeatureUsage("diagrams/apollon-conversion")
+@FeatureUsage(UserFeature.MODELING_EXERCISES)
 @RestController
 @RequestMapping("api/modeling/")
 public class ApollonConversionResource {
@@ -42,12 +47,13 @@ public class ApollonConversionResource {
     /**
      * Converts given model to pdf
      *
-     * @param request the model for conversion
+     * @param request the model for conversion, which must not be blank and is limited in size
      * @return input stream for conversion
      */
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("apollon/convert-to-pdf")
     @EnforceAtLeastStudent
-    public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) throws IOException {
+    public ResponseEntity<InputStreamResource> convertApollonModel(@Valid @RequestBody ApollonModelDTO request) throws IOException {
         log.debug("REST call to convert apollon model to pdf");
 
         InputStream inputStream = apollonConversionService.convertModel(request.model());

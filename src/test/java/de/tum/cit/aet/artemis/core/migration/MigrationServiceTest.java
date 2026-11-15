@@ -150,6 +150,7 @@ class MigrationServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(changelogs).hasSize(3);
         assertThat(changelogs.stream().map(MigrationChangelog::getSystemVersion).distinct()).hasSize(1);
         assertThat(changelogs.stream().map(MigrationChangelog::getDeploymentId).distinct()).hasSize(1);
+        assertThat(changelogs).allSatisfy(changelog -> assertThat(changelog.getDeploymentId()).matches("[0-9a-f]{32}"));
         assertThat(changelogs.stream().map(MigrationChangelog::getDateString).distinct()).hasSize(3);
     }
 

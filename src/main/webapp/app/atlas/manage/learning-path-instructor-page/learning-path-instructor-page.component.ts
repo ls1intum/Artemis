@@ -23,11 +23,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     styleUrl: './learning-path-instructor-page.component.scss',
 })
 export class LearningPathInstructorPageComponent {
-    protected readonly faNetworkWired = faNetworkWired;
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly courseManagementService = inject(CourseManagementService);
+
+    protected readonly faNetworkWired = faNetworkWired;
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly course = signal<Course | undefined>(undefined);
@@ -47,7 +48,7 @@ export class LearningPathInstructorPageComponent {
             this.isLoading.set(true);
             // Only the course record is read here, so the plain course endpoint is enough; the dashboard variant would
             // additionally load the instructor's exercises, participations and results for nothing.
-            const courseBody = await lastValueFrom(this.courseManagementService.find(courseId));
+            const courseBody = await lastValueFrom(this.courseManagementService.findForInstructor(courseId));
             this.course.set(courseBody.body!);
         } catch (error) {
             onError(this.alertService, error);

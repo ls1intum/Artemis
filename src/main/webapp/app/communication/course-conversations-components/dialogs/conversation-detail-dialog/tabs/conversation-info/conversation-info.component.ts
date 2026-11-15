@@ -36,6 +36,13 @@ import { TextareaModule } from 'primeng/textarea';
     imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent, RouterLink, SelectButton, InputTextModule, TextareaModule],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+    private conversationService = inject(ConversationService);
+    private courseNotificationSettingService = inject(CourseNotificationSettingService);
+    private translateService = inject(TranslateService);
+
     private ngUnsubscribe = new Subject<void>();
     private mute$ = new Subject<boolean>();
     private nameChange$ = new Subject<string>();
@@ -87,13 +94,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     activeConversation = input.required<ConversationDTO>();
     course = input<Course>();
     changesPerformed = output<void>();
-
-    private channelService = inject(ChannelService);
-    private groupChatService = inject(GroupChatService);
-    private alertService = inject(AlertService);
-    private conversationService = inject(ConversationService);
-    private courseNotificationSettingService = inject(CourseNotificationSettingService);
-    private translateService = inject(TranslateService);
 
     readonly readOnlyMode = signal<boolean>(false);
     notificationSettings?: CourseNotificationSettingInfo;

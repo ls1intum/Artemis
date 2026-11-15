@@ -11,8 +11,8 @@ This script generates a code coverage report for changed files in a PR by runnin
 
 ## Prerequisites
 
-- Node.js 24+ (same as project requirement)
-- For client tests: `pnpm install` completed (activate pnpm once via `corepack enable`)
+- Node.js 26.13.1+ (same as project requirement)
+- For client tests: `pnpm install` completed (activate pnpm once via `npm install --global corepack` and `corepack enable`)
 - For server tests: Java 25+ and Gradle
 
 ## Usage
@@ -94,6 +94,19 @@ The output is a Markdown table compatible with GitHub PR descriptions:
 |------------|-------------:|------:|
 | CourseService.java | 91.5% | 200 |
 | CourseResource.java | 88.2% | 150 |
+```
+
+Server coverage is matched by package and source filename. A source file that JaCoCo reports
+without executable lines (for example, an interface containing only abstract methods) is shown as
+`N/A (no executable lines)`. A missing source entry or report still shows `not found`.
+Module reports take precedence over the aggregated report.
+
+### Regression Tests
+
+The parser tests run in CI with the build-helper tests. To run them locally:
+
+```bash
+pnpm exec vitest run --config config/eslint/rules/vitest.config.mjs supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.spec.mjs
 ```
 
 ### Column Descriptions

@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH;
+
+import jakarta.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -16,7 +20,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pictureFilePath) {
+public record DragItemFromEditorDTO(Long id, Long tempID, @Size(max = MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH) String text, String pictureFilePath) {
 
     /**
      * Creates a DragItemFromEditorDTO from the given DragItem domain object.

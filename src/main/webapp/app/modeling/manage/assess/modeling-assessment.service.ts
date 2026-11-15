@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -11,7 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ModelingAssessmentService {
     private http = inject(HttpClient);
 
@@ -50,9 +51,11 @@ export class ModelingAssessmentService {
      * @param resultId - Optional ID of a specific result to retrieve; if not provided, returns the latest result
      * @returns Observable of the assessment result
      */
-    getAssessment(submissionId: number, resultId?: number): Observable<Result> {
+    getAssessment(submissionId: number, resultId?: number, purpose: EditorViewingPurpose = 'owner'): Observable<Result> {
         const params = resultId ? { resultId: resultId.toString() } : undefined;
-        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`, { params }).pipe(map((res) => this.convertResult(res)));
+        return this.http
+            .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result${purpose === 'staff-preview' ? '/for-instructor' : ''}`, { params })
+            .pipe(map((res) => this.convertResult(res)));
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {

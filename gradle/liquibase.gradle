@@ -13,6 +13,7 @@ dependencies {
     liquibaseRuntime "info.picocli:picocli:4.7.7"
 
     liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
+    // REMOVE_IN_ARTEMIS_11 (MySQL): remove the MySQL driver
     liquibaseRuntime "com.mysql:mysql-connector-j:${mysql_connector_version}"
     liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
 }
@@ -74,6 +75,7 @@ def liquibaseCommand(command) {
             "--referenceUsername=root",
             "--referencePassword=",
             // we need an empty database to compare with for the creation of the new initial schema
+            // REMOVE_IN_ARTEMIS_11 (MySQL): the diff/generate tasks use MySQL; switch them to PostgreSQL before removal
             "--referenceUrl=jdbc:mysql://localhost:3306/ArtemisEmpty?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--username=root",
             "--password=",

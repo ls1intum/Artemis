@@ -1,6 +1,22 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Table in the problem statement",
+            "repositoryBuildOverview": {
+                "title": "Repositories and builds",
+                "template": "Template",
+                "solution": "Solution",
+                "tests": "Tests",
+                "auxiliary": "Auxiliary repository",
+                "templateDescription": "The starting point for students.",
+                "solutionDescription": "The reference implementation.",
+                "templateExpectedScore": "Expected score: 0% before students implement the solution.",
+                "solutionExpectedScore": "Expected score: 100% for the reference implementation.",
+                "result": "Build result",
+                "resultsLoading": "Loading build result…",
+                "checkoutLoading": "Loading checkout directories…",
+                "checkoutUnavailable": "Checkout directories could not be loaded."
+            },
             "home": {
                 "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
@@ -62,6 +78,7 @@
                     "branch": "Branch",
                     "dockerFlags": "Docker Flags",
                     "theiaImage": "Online IDE Image",
+                    "onlineIdeExperienceLevel": "Online IDE Experience Level",
                     "postDueDateHandling": "Post Due Date Handling",
                     "assignmentCheckoutPath": "Assignment Checkout Path",
                     "solutionCheckoutPath": "Solution Checkout Path",
@@ -73,11 +90,6 @@
             },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
-                "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
-                "uploadForImport": "Upload Programming Exercise for Import",
-                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
-                "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a JSON file at the root level with the exercise details.",
                 "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
                 "GccNotSupportedForC": "The project type is not yet supported for the import from file."
             },
@@ -153,7 +165,9 @@
             "script": "Build script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
-                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
+                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB.",
+                "branchRegexTooLong": "The branch regex is too long. The maximum allowed length is 128 characters.",
+                "branchRegexInvalid": "The branch regex is not a valid regular expression."
             },
             "buildPhasesEditor": {
                 "title": "Build Phases",
@@ -174,7 +188,7 @@
                 "resultPaths": "Result Paths",
                 "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
                 "testsExpected": "Tests expected",
-                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, go to \"Edit\", switch to \"advanced mode\", check \"Customize build configuration\" and find \"Build Phases\".",
+                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, click \"Edit build plan\" at the top of this page, set the \"Inclusion condition\" of the phase to \"After due date\" and click \"Submit\".",
                 "expectedTestsBeforeDueDateEditorWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date.",
                 "resultPathPlaceholder": "e.g. **/results/*.xml",
                 "addResultPath": "Add Result Path",
@@ -235,6 +249,25 @@
                 "title": "Regular Expression for the branch name",
                 "description": "Custom branches names must match the regular expression."
             },
+            "buildTimeWindow": {
+                "title": "Build Time Window",
+                "message": "Optionally limit when pushes to student repositories are built. Pushes outside the window are saved, but not built, and do not create a submission. Leave both fields empty to build every push.",
+                "description": "Pushes of students outside of this window are accepted into the repository, but not built, tested or graded. Either bound can stay empty: with only a start, builds begin at that time, with only an end, builds stop at that time. Both bounds are inclusive. Editors and instructors, the practice mode and builds triggered by instructors are not affected. The window must lie between the start date (or release date) and the due date of the exercise. For a student with an individual due date extension, the end of the window moves by the same extension.",
+                "collapsedMessage": "By default every push is built. Set a window if pushes should only be built during a period, for example from a start date a week after the release.",
+                "addButton": "Set build time window",
+                "removeButton": "Remove build time window",
+                "start": "Build window start",
+                "end": "Build window end",
+                "endNotAfterStart": "The end of the build time window must be after its start.",
+                "outsideExerciseDates": "The build time window must lie between the start date (or release date) and the due date of the exercise.",
+                "invalidInput": "The build time window contains a date that cannot be read.",
+                "triggerDisabled": "Builds cannot be triggered outside of the build time window.",
+                "notice": {
+                    "before": "Builds start on {{ start }}. Pushes before that are saved, but not built or graded.",
+                    "during": "Builds are active until {{ end }}.",
+                    "after": "The build window ended on {{ end }}. Pushes are saved, but not built."
+                }
+            },
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
@@ -274,6 +307,16 @@
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
                 "alert": "A valid configuration for the Online IDE must be selected."
             },
+            "onlineIdeExperienceLevel": {
+                "title": "Starting experience level in the Online IDE",
+                "notSet": "Not set (Artemis adds no configuration)",
+                "description": "Students start at this experience level when they open the exercise in the Online IDE. Artemis writes it into .vscode/eduide.json of every student repository it creates from the template, replacing a file of the template at that path. If not set, Artemis adds no file: students start at the level in the template's own .vscode/eduide.json if it has one, otherwise at the Online IDE's default level. Students can still choose another level, and repositories that already exist are not changed.",
+                "levels": {
+                    "BEGINNER": "Beginner",
+                    "ADVANCED": "Advanced",
+                    "EXPERT": "Expert"
+                }
+            },
             "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
@@ -282,6 +325,7 @@
             "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "repositoryFilesError": "Repository files could not be retrieved.",
+            "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -333,66 +377,9 @@
                 },
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
-            "codeGeneration": {
-                "creationAssistance": "Creation Assistance",
-                "generateCode": "Generate Code",
-                "generateWithAi": "Generate with AI",
-                "generating": "Generating...",
-                "runningTitle": "Code generation in progress",
-                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
-                "description": "Generate solution, template, and test code using AI",
-                "tooltip": "AI Code Generation - Generate solution, template, and test code",
-                "confirmTitle": "Confirm Code Generation",
-                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
-                "success": "{{repositoryType}} code generation completed.",
-                "warning": "{{repositoryType}} code generation completed with issues.",
-                "error": "{{repositoryType}} code generation failed. Please try again later.",
-                "timeoutDetails": "The generation timed out after waiting too long for a response.",
-                "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
-                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
-                "noRepositorySelected": "Select at least one repository before starting code generation.",
-                "settingsTitle": "Generation Settings",
-                "settingsTooltip": "Select repositories to generate",
-                "statusTitle": "Generation Status",
-                "statusTooltip": "Show live generation status",
-                "executionOrder": "Selected repositories run consecutively in this order: Solution, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Selected Feedback Threads",
-                    "description": "These selected threads will be forwarded as feedback context for code generation.",
-                    "count": "{{count}} selected",
-                    "empty": "No threads are currently selected as feedback.",
-                    "showThreads": "Show Threads",
-                    "hideThreads": "Hide Threads",
-                    "viewThread": "View Thread",
-                    "line": "Line {{line}}",
-                    "unknownLocation": "Unknown location"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "File Activity",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "No files have been created, updated, or removed yet.",
-                "attempts": "Attempts made: {{attempts}}",
-                "status": {
-                    "idle": "Not started",
-                    "queued": "Queued",
-                    "running": "Running",
-                    "success": "Completed",
-                    "warning": "Completed with issues",
-                    "error": "Failed",
-                    "skipped": "Skipped",
-                    "skippedMessage": "Skipped because a previous repository generation failed.",
-                    "fileCreated": "created",
-                    "fileUpdated": "updated",
-                    "fileDeleted": "removed"
-                }
-            },
             "status": {
-                "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
-                "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."
+                "solutionFailsTest": "The solution should score 100% and pass all tests. Check the solution repository and test cases.",
+                "templateFulfillsTest": "The template should score 0%. Check the template repository and test cases if its score differs."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
@@ -495,7 +482,6 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} item(s)",
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
@@ -835,7 +821,9 @@
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
                 "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
@@ -984,6 +972,13 @@
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
+            },
+            "buildNotifications": {
+                "enable": "Enable browser notifications for build results",
+                "disable": "Disable browser notifications for build results",
+                "blocked": "Notifications are blocked. Allow them in your browser settings.",
+                "error": "Browser notifications are unavailable. The tab icon still shows build results.",
+                "resultReceived": "Build result received"
             }
         },
         "checklistAnalysisRequest": {

@@ -1,33 +1,33 @@
-<div class="mx-auto max-w-[1200px] p-4">
+<div class="mx-auto max-w-[1200px] p-6!">
     <h5 *adminTitleBarTitle id="features-heading" class="mb-0" jhiTranslate="artemisApp.features.title"></h5>
 
     <!-- Quick Navigation in Title Bar -->
     <div *adminTitleBarActions class="flex flex-wrap items-center gap-2" data-testid="feature-toggle-nav-actions">
         <span class="me-1 font-medium text-muted-color" jhiTranslate="artemisApp.features.jumpTo"></span>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('profile-features')" data-testid="nav-profile-features">
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('profile-features')" data-testid="nav-profile-features">
             {{ 'artemisApp.features.profileFeatures.shortTitle' | artemisTranslate }}
-        </tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('module-features')" data-testid="nav-module-features">
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('module-features')" data-testid="nav-module-features">
             {{ 'artemisApp.features.moduleFeatures.shortTitle' | artemisTranslate }}
-        </tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('runtime-toggles')" data-testid="nav-runtime-toggles">
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('runtime-toggles')" data-testid="nav-runtime-toggles">
             {{ 'artemisApp.features.dynamicToggles.shortTitle' | artemisTranslate }}
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 
     <!-- Section 1: Profile-Based Features -->
     <section id="profile-features" class="mb-8">
         <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.profileFeatures.title"></h4>
-        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.profileFeatures.description"></p>
+        <p class="mb-6! text-sm text-muted-color" jhiTranslate="artemisApp.features.profileFeatures.description"></p>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6! md:grid-cols-2 xl:grid-cols-3">
             @for (profileInfo of profileFeatures(); track profileInfo.profile) {
                 <div
-                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border p-6! transition-all duration-200 hover:border-primary"
                     [class]="featureCardClasses(profileInfo.isActive)"
                     data-testid="profile-feature-card"
                 >
-                    <div class="mb-3 flex items-start justify-between">
+                    <div class="mb-4! flex items-start justify-between">
                         <div class="flex items-center gap-2">
                             <h5 class="m-0 text-base font-semibold">{{ getProfileNameKey(profileInfo.profile) | artemisTranslate }}</h5>
                             @if (profileInfo.documentationLink) {
@@ -36,7 +36,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm text-primary hover:underline"
-                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
                                     data-testid="profile-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
@@ -45,9 +45,9 @@
                         </div>
                         <div class="flex items-center">
                             @if (profileInfo.isActive) {
-                                <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
+                                <tumaet-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
                             } @else {
-                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
+                                <tumaet-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
                             }
                         </div>
                     </div>
@@ -60,16 +60,16 @@
     <!-- Section 2: Module Features -->
     <section id="module-features" class="mb-8">
         <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.moduleFeatures.title"></h4>
-        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.moduleFeatures.description"></p>
+        <p class="mb-6! text-sm text-muted-color" jhiTranslate="artemisApp.features.moduleFeatures.description"></p>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6! md:grid-cols-2 xl:grid-cols-3">
             @for (moduleInfo of moduleFeatures(); track moduleInfo.feature) {
                 <div
-                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border p-6! transition-all duration-200 hover:border-primary"
                     [class]="featureCardClasses(moduleInfo.isActive)"
                     data-testid="module-feature-card"
                 >
-                    <div class="mb-3 flex items-start justify-between">
+                    <div class="mb-4! flex items-start justify-between">
                         <div class="flex items-center gap-2">
                             <h5 class="m-0 text-base font-semibold">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
                             @if (moduleInfo.documentationLink) {
@@ -78,7 +78,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm text-primary hover:underline"
-                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
                                     data-testid="module-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
@@ -87,9 +87,9 @@
                         </div>
                         <div class="flex items-center">
                             @if (moduleInfo.isActive) {
-                                <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
+                                <tumaet-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
                             } @else {
-                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
+                                <tumaet-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
                             }
                         </div>
                     </div>
@@ -102,16 +102,16 @@
     <!-- Section 3: Runtime Feature Toggles -->
     <section id="runtime-toggles" class="mb-8">
         <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.dynamicToggles.title"></h4>
-        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
+        <p class="mb-6! text-sm text-muted-color" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6! md:grid-cols-2 xl:grid-cols-3">
             @for (featureInfo of featureToggles(); track featureInfo.feature) {
                 <div
-                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border p-6! transition-all duration-200 hover:border-primary"
                     [class]="featureCardClasses(featureInfo.isActive)"
                     data-testid="runtime-toggle-card"
                 >
-                    <div class="mb-3 flex items-start justify-between">
+                    <div class="mb-4! flex items-start justify-between">
                         <div class="flex items-center gap-2">
                             <h5 class="m-0 text-base font-semibold">{{ getFeatureNameKey(featureInfo.feature) | artemisTranslate }}</h5>
                             @if (featureInfo.documentationLink) {
@@ -120,7 +120,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm text-primary hover:underline"
-                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
                                     data-testid="toggle-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
@@ -128,7 +128,7 @@
                             }
                         </div>
                         <div class="flex items-center gap-2">
-                            <tum-ui-toggle-switch
+                            <tumaet-ui-toggle-switch
                                 [ngModel]="featureInfo.isActive"
                                 [disabled]="pendingFeatures().has(featureInfo.feature)"
                                 [inputId]="'toggle-' + featureInfo.feature"
@@ -140,9 +140,9 @@
                     </div>
                     <p class="mb-2 text-sm leading-snug text-muted-color">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
                     @if (!featureInfo.isActive) {
-                        <tum-ui-message severity="warn" class="w-full" data-testid="feature-warning">{{
+                        <tumaet-ui-message severity="warn" class="w-full" data-testid="feature-warning">{{
                             getFeatureWarningKey(featureInfo.feature) | artemisTranslate
-                        }}</tum-ui-message>
+                        }}</tumaet-ui-message>
                     }
                 </div>
             }

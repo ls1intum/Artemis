@@ -114,7 +114,7 @@ describe('VideoPlayerComponent', () => {
                             (resizeMove)="onVideoColumnResize($event)"
                             (resizeEnd)="onResizeEnd()"
                         >
-                            <video #videoRef></video>
+                            <video #videoRef (pointermove)="onVideoInteraction()" (focus)="onVideoInteraction()" (keydown)="onVideoInteraction()" (play)="onVideoPlaybackChange()" (pause)="onVideoPlaybackChange()" (seeking)="onVideoPlaybackChange()" (ratechange)="onVideoPlaybackChange()"></video>
                         </div>
                         <button #resizerHandle type="button" class="resizer-handle"></button>
                         <div class="transcript-column"></div>
@@ -194,6 +194,104 @@ describe('VideoPlayerComponent', () => {
         expect(component.getCurrentSlideNumber()).toBe(7);
     });
 
+    it('keeps following the transcript while the pointer rests still on the video', async () => {
+        const segments: TranscriptSegment[] = [
+            { startTime: 10, endTime: 12, text: 'A' },
+            { startTime: 20, endTime: 22, text: 'B' },
+        ];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        const scrollSpy = vi.fn();
+        // The test template renders no transcript viewer, so stub the viewChild signal.
+        (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+
+        component.updateCurrentSegment(10.1);
+        expect(scrollSpy).toHaveBeenLastCalledWith(0);
+        component.updateCurrentSegment(20.1);
+        expect(scrollSpy).toHaveBeenLastCalledWith(1);
+    });
+
+    it('holds the transcript still while the pointer moves over the video so a native menu stays open, then catches up', async () => {
+        vi.useFakeTimers();
+        try {
+            const segments: TranscriptSegment[] = [
+                { startTime: 10, endTime: 12, text: 'A' },
+                { startTime: 20, endTime: 22, text: 'B' },
+            ];
+            setInputs('https://cdn.example.com/m.m3u8', segments);
+            await render();
+
+            const scrollSpy = vi.fn();
+            (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+            const videoElement = component.videoRef()!.nativeElement;
+
+            videoElement.dispatchEvent(new Event('pointermove'));
+            component.updateCurrentSegment(10.1);
+            component.updateCurrentSegment(20.1);
+            expect(getIndex()).toBe(1);
+            expect(scrollSpy).not.toHaveBeenCalled();
+
+            // The hold ends by itself; the next update scrolls to the segment that is active by then
+            vi.advanceTimersByTime(10_001);
+            component.updateCurrentSegment(20.2);
+            expect(scrollSpy).toHaveBeenCalledExactlyOnceWith(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('refreshes the hold on every pointer movement and on focus', async () => {
+        vi.useFakeTimers();
+        try {
+            const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 12, text: 'A' }];
+            setInputs('https://cdn.example.com/m.m3u8', segments);
+            await render();
+
+            const scrollSpy = vi.fn();
+            (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+            const videoElement = component.videoRef()!.nativeElement;
+
+            videoElement.dispatchEvent(new Event('pointermove'));
+            component.updateCurrentSegment(10.1);
+            vi.advanceTimersByTime(6_000);
+            // Still moving 6 s later: the hold now runs until 16 s, not 10 s
+            videoElement.dispatchEvent(new Event('pointermove'));
+            vi.advanceTimersByTime(6_000);
+            component.updateCurrentSegment(10.2);
+            expect(scrollSpy).not.toHaveBeenCalled();
+
+            // Focusing the video (clicking its controls, or tabbing to it) holds the transcript again
+            videoElement.dispatchEvent(new Event('focus'));
+            vi.advanceTimersByTime(9_000);
+            component.updateCurrentSegment(10.3);
+            expect(scrollSpy).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(2_000);
+            component.updateCurrentSegment(10.4);
+            expect(scrollSpy).toHaveBeenCalledExactlyOnceWith(0);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('ends the hold early when the playback speed or state changes', async () => {
+        const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 12, text: 'A' }];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        const scrollSpy = vi.fn();
+        (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+        const videoElement = component.videoRef()!.nativeElement;
+
+        videoElement.dispatchEvent(new Event('keydown'));
+        component.updateCurrentSegment(10.1);
+        expect(scrollSpy).not.toHaveBeenCalled();
+
+        videoElement.dispatchEvent(new Event('ratechange'));
+        expect(scrollSpy).toHaveBeenCalledExactlyOnceWith(0);
+    });
+
     it('timeupdate outside any segment leaves index at -1', async () => {
         const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 12, text: 'A' }];
         setInputs('https://cdn.example.com/m.m3u8', segments);
@@ -238,7 +336,7 @@ describe('VideoPlayerComponent', () => {
 
         const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
 
-        component.seekTo(42);
+        expect(component.seekTo(42)).toBe(true);
 
         expect(videoElement.currentTime).toBe(42);
         expect(playSpy).toHaveBeenCalled();
@@ -254,6 +352,76 @@ describe('VideoPlayerComponent', () => {
 
         expect(videoElement.currentTime).toBe(21);
         expect(playSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports seekability only once the video has a length', async () => {
+        // Before metadata arrives the duration is NaN, which is nothing to judge a target against: the element takes
+        // any of them and reports it back unchanged. The seek is still carried out — the browser applies it once the
+        // resource has loaded — but a caller that must state whether it really got there waits for this signal
+        // instead of trusting the seek's own answer.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        // Stated explicitly rather than relying on what jsdom happens to report for a media element without a resource.
+        Object.defineProperty(videoElement, 'duration', { value: NaN, configurable: true });
+
+        expect(component.isSeekable()).toBe(false);
+        expect(component.seekTo(42, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(42);
+
+        // Metadata arriving is exactly what gives the element its duration, so a real one comes with it — asserting
+        // seekability off readyState alone would describe a state the element never actually reaches.
+        Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: 0, configurable: true });
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+        expect(component.isSeekable()).toBe(false);
+
+        Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(component.isSeekable()).toBe(true);
+    });
+
+    it('never reports an unbounded stream as seekable', async () => {
+        // Live media has its metadata and still no length: seekTo has nothing to reject a target against there and
+        // would take any of them, so a caller that must state whether it really got there must not be let through.
+        setInputs('https://cdn.example.com/live.m3u8', []);
+        await render();
+        Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: Infinity, configurable: true });
+
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(component.isSeekable()).toBe(false);
+        // Stated separately from "not seekable yet", so a caller waiting on seekability can stop rather than wait out
+        // a budget that will never be met.
+        expect(component.isUnbounded()).toBe(true);
+    });
+
+    it('emits playerFailed when the media element reports an error', async () => {
+        // A video that cannot load will never state a length, so waiting callers need to be told to stop waiting.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        const emitSpy = vi.spyOn(component.playerFailed, 'emit');
+
+        videoElement.dispatchEvent(new Event('error'));
+
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('refuses a target outside the video instead of letting it clamp to the end', async () => {
+        // Iris proposes the timestamp, so it can name one the video does not have. The browser would clamp such a seek
+        // to the end, which is not the position that was asked for — reporting it as applied would leave a point-out
+        // chip pointing at a place nobody was taken to.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
+
+        expect(component.seekTo(301, false)).toBe(false);
+        expect(component.seekTo(-1, false)).toBe(false);
+        expect(videoElement.currentTime).toBe(0);
+
+        expect(component.seekTo(300, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(300);
     });
 
     it('applies initial timestamp after metadata is available', async () => {
@@ -542,15 +710,15 @@ describe('VideoPlayerComponent', () => {
     });
 
     describe('Edge cases', () => {
-        it('seekTo does nothing when videoRef is undefined', async () => {
+        it('seekTo does nothing and reports no seek when videoRef is undefined', async () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
             // Force videoRef to return undefined
             vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
 
-            // Should not throw
-            expect(() => component.seekTo(10)).not.toThrow();
+            // Should not throw, and must not claim a seek nobody took
+            expect(component.seekTo(10)).toBe(false);
         });
 
         it('updateCurrentSegment does not update if same segment is current', async () => {

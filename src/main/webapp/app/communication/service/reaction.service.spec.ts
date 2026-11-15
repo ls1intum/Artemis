@@ -7,7 +7,7 @@ import { PostingType } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ReactionService } from 'app/communication/service/reaction.service';
-import { metisReactionToCreate, metisReactionUser2 } from 'test/helpers/sample/metis-sample-data';
+import { communicationReactionToCreate, communicationReactionUser2 } from 'test/helpers/sample/communication-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Reaction Service', () => {
@@ -31,7 +31,7 @@ describe('Reaction Service', () => {
 
     describe('Service methods', () => {
         it('should create a Reaction', () => {
-            const returnedFromService = { ...metisReactionToCreate };
+            const returnedFromService = { ...communicationReactionToCreate };
             const expected = { ...returnedFromService };
             service
                 .create(1, new Reaction())
@@ -55,7 +55,7 @@ describe('Reaction Service', () => {
         });
 
         it('should delete a Reaction', () => {
-            service.delete(1, metisReactionUser2).subscribe((resp) => expect(resp.ok).toBe(true));
+            service.delete(1, communicationReactionUser2).subscribe((resp) => expect(resp.ok).toBe(true));
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             vi.advanceTimersByTime(0);

@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -27,6 +28,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
  */
 @Lazy
 @Configuration
+@Profile("!" + Constants.PROFILE_AIWORKER)
 @ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class LlmOnlyExporterConfig {
 
@@ -41,7 +43,7 @@ public class LlmOnlyExporterConfig {
      * Defines a custom {@link SpanExporter} bean that wraps the default
      * {@link OtlpHttpSpanExporter} and filters out non-AI spans.
      * The bean is explicitly named {@code otlpLlmTraceExporter}. Disable the default
-     * OTLP exporter (`management.otlp.tracing.export.enabled=false`) to avoid double
+     * OTLP exporter (`management.tracing.export.otlp.enabled=false`) to avoid double
      * export and rely only on this filtered exporter.
      *
      * @param endpoint   the OTLP endpoint for Langfuse (e.g., https://langfuse.de/api/public/otel/v1/traces)
@@ -49,8 +51,8 @@ public class LlmOnlyExporterConfig {
      * @return a {@link SpanExporter} that exports only spans with {@code ai.span=true}
      */
     @Bean(name = "otlpLlmTraceExporter")
-    public SpanExporter llmOnlyOtlpExporter(@Value("${management.otlp.tracing.endpoint}") String endpoint,
-            @Value("${management.otlp.tracing.headers.Authorization}") String authHeader) {
+    public SpanExporter llmOnlyOtlpExporter(@Value("${management.opentelemetry.tracing.export.otlp.endpoint:${management.otlp.tracing.endpoint}}") String endpoint,
+            @Value("${management.opentelemetry.tracing.export.otlp.headers.Authorization:${management.otlp.tracing.headers.Authorization}}") String authHeader) {
 
         SpanExporter delegate = OtlpHttpSpanExporter.builder().setEndpoint(endpoint).addHeader("Authorization", authHeader).build();
 

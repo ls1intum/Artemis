@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -28,11 +29,17 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
@@ -40,20 +47,25 @@ import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for creating programming exercises.
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseCreationResource {
@@ -77,6 +89,8 @@ public class ProgrammingExerciseCreationResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final UserRepository userRepository;
 
     private final ExerciseVersionService exerciseVersionService;
@@ -86,8 +100,10 @@ public class ProgrammingExerciseCreationResource {
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
-            ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -101,36 +117,53 @@ public class ProgrammingExerciseCreationResource {
     /**
      * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
-     * @param createDTO         the programmingExercise to set up
-     * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
+     * @param createDTO             the programmingExercise to set up
+     * @param emptyRepositories     if true, clear sources in template, solution, and test repositories after setup
+     * @param hyperionCompetencyIds IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping("programming-exercises/setup")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @Operation(summary = "Create a programming exercise", description = """
+            Creates a programming exercise with its template, solution and test repositories and its build plan. This takes a while. \
+            A request with a personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically \
+            at releaseDate, so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            Required: title, shortName (unique in the course), course (with its id), \
+            programmingLanguage, buildConfig, staticCodeAnalysisEnabled, maxPoints and at least one of allowOnlineEditor, \
+            allowOfflineIde and allowOnlineIde. A language with project types also needs projectType, and Java and Kotlin need packageName. \
+            To edit the code, clone the repositories with git, using your VCS access token from the user settings.""")
+    @ApiResponse(responseCode = "201", description = "The exercise and its repositories were created as a draft.")
+    @ApiResponse(responseCode = "500", description = "The repositories or the build plan could not be set up. The exercise may be partly created, so check the course before retrying.")
     public ResponseEntity<ProgrammingExerciseResponseDTO> createProgrammingExercise(@RequestBody CreateProgrammingExerciseDTO createDTO,
-            @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories) {
+            @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories,
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to setup ProgrammingExercise : {}", createDTO.title());
-
         // The id is mapped onto the entity so that the existing "a new exercise must not have an id" validation still fires
         final ProgrammingExercise programmingExercise = createDTO.toEntity();
+        // The build configuration is a row of its own that names the exercise, so it is bound next to it.
+        final ProgrammingExerciseBuildConfig buildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(createDTO);
 
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
+        // After the role check, so that a caller who may not create exercises is not told what the dates should be.
+        AgentDraftRules.requireDraftDatesForCreate(createDTO.releaseDate(), createDTO.startDate());
+        programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
         // The request DTO does not bind the competency links itself: they need managed competencies, which only this
         // service resolves. The creation pipeline then reads them off the exercise, exactly as the entity request body
         // used to leave them there.
-        competencyExerciseLinkService.updateCompetencyLinks(createDTO, programmingExercise);
+        competencyExerciseLinkService.updateCompetencyLinks(createDTO, programmingExercise, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, emptyRepositories);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, buildConfig, emptyRepositories);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
@@ -140,7 +173,7 @@ public class ProgrammingExerciseCreationResource {
             exerciseVersionService.createExerciseVersion(newProgrammingExercise);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId()))
-                    .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise));
+                    .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise, buildConfig));
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
@@ -156,13 +189,12 @@ public class ProgrammingExerciseCreationResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping(value = "programming-exercises/{exerciseId}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
@@ -175,7 +207,9 @@ public class ProgrammingExerciseCreationResource {
         try {
             String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
+            testsPath = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId).hasSequentialTestRuns()
+                    ? Path.of("structural", testsPath).toString()
+                    : testsPath;
             boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
             if (didGenerateOracle) {

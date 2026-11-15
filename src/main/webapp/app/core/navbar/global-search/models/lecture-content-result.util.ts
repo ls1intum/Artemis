@@ -1,5 +1,6 @@
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { normalizeLectureSearchResultQueryParams } from 'app/core/navbar/global-search/services/lecture-search-result-normalization.util';
 
 /** Internal type string for Iris content hits. Never displayed; used only for
  *  card rendering and click routing. Distinct from 'lecture_unit' (metadata hits),
@@ -13,12 +14,13 @@ export const LECTURE_CONTENT_TYPE = 'lecture_content';
  */
 function serializeQueryParams(queryParams: Record<string, string | number>): string {
     return Object.keys(queryParams)
-        .sort()
+        .sort((a, b) => a.localeCompare(b))
         .map((key) => `${key}=${queryParams[key]}`)
         .join('&');
 }
 
 export function mapLectureContentResult(result: LectureSearchResult): GlobalSearchResult {
+    result = normalizeLectureSearchResultQueryParams(result);
     const unit = result.lectureUnit;
     // A content hit is uniquely identified by its navigation destination: the deep-link path plus
     // its canonicalized query params. Video excerpts from one unit share a path and pageNumber -1,

@@ -3,12 +3,12 @@ import { NgClass } from '@angular/common';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IncludedInScoreBadgeComponent } from '../exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { DifficultyBadgeComponent } from '../exercise-headers/difficulty-badge/difficulty-badge.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
+import { getReadableTextColor } from 'app/foundation/util/color.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 interface ShowTagsConfig {
@@ -22,8 +22,7 @@ interface ShowTagsConfig {
 @Component({
     selector: 'jhi-exercise-categories',
     templateUrl: './exercise-categories.component.html',
-    styleUrls: ['./exercise-categories.component.scss'],
-    imports: [NgClass, RouterLink, NotReleasedTagComponent, TranslateDirective, IncludedInScoreBadgeComponent, NgStyle, DifficultyBadgeComponent, TruncatePipe],
+    imports: [NgClass, RouterLink, NotReleasedTagComponent, TranslateDirective, IncludedInScoreBadgeComponent, DifficultyBadgeComponent, TruncatePipe],
 })
 export class ExerciseCategoriesComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -38,6 +37,11 @@ export class ExerciseCategoriesComponent {
         difficultyIfNoLevel: false,
         includedInScore: false,
     });
+
+    /** Picks black or white text so the category name stays readable on dark and light category colors; undefined keeps the inherited color. */
+    categoryTextColor(color: string | undefined): string | undefined {
+        return getReadableTextColor(color);
+    }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise;

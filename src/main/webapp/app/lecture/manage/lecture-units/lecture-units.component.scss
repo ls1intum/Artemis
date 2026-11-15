@@ -1,0 +1,14 @@
+// Layout is Tailwind in the template; the border, highlight and muted text roles have no Tailwind utility in the application.
+.lecture-units-panel {
+    border: 1px solid var(--border-color);
+}
+
+// A form that is open for a content item stands out from the list and the panel around it.
+.lecture-unit-form {
+    border: 1px solid var(--primary);
+    background-color: color-mix(in srgb, var(--primary) 3%, transparent);
+}
+
+.lecture-units-hint {
+    color: var(--text-body-secondary);
+}

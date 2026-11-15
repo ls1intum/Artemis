@@ -18,12 +18,13 @@ import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/Exe
  * `MOCK_VARIANT_TITLE`, so the test can assert the exact exercise surfaces in the course list.
  *
  * These tests require Hyperion to be enabled on the server. Run them with:
- *     RUN_HYPERION=true ./run-e2e-tests-local-fast.sh --filter "Variant"
- * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in normal CI runs.
+ *     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Variant"
+ * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in the per-pull-request CI runs.
+ * The nightly workflow `nightly-hyperion-e2e.yml` enables Hyperion and runs it, and fails when the suite skipped itself.
  *
  * Note: one manual multi-node sanity run before the PR (the job map is Hazelcast-backed and the WebSocket
  * event must reach the user regardless of which node runs the job):
- *     RUN_HYPERION=true ./run-e2e-tests-local-multinode-fast.sh --filter "Variant"
+ *     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --filter "Variant"
  */
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
@@ -143,8 +144,8 @@ test.describe('Exercise variant generation with AI', { tag: '@fast' }, () => {
 
         // Closing the wizard detaches the UI but must not cancel the @Async job.
         await wizard.runInBackground();
-        await expect(page.getByTestId('variant-tray-button')).toBeVisible();
-        await expect(page.getByTestId('variant-tray-spinner')).toBeVisible();
+        await expect(page.getByTestId('ai-activity-trigger')).toBeVisible();
+        await expect(page.getByTestId('ai-activity-running')).toBeVisible();
 
         // The background job runs to completion on the server; the variant lands in the course list.
         const job = await awaitCompletedJob(page.request, sourceQuiz.id!);

@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -23,11 +25,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
@@ -36,6 +40,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Autowired
     private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -73,7 +80,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -85,7 +92,17 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void createTextUnit_competencyOfAnotherCourse_shouldBeRejected() throws Exception {
+        var otherCourse = lectureUtilService.createCourseWithLecture(false).getCourse();
+        var foreignCompetency = competencyUtilService.createCompetency(otherCourse);
+        textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(foreignCompetency, textUnit, 1)));
+
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         var persistedTextUnit = request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class,
@@ -103,7 +120,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "editor42", roles = "EDITOR")
+    @WithMockUser(username = OTHER_PREFIX + "editor42", roles = "USER")
     void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.FORBIDDEN);
@@ -111,7 +128,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void updateTextUnit_asEditor_shouldUpdateTextUnit() throws Exception {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         persistTextUnitWithLecture();
@@ -125,7 +142,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
         persistTextUnitWithLecture();
 
@@ -152,7 +169,36 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void updateTextUnit_textUnitDoesNotExist_shouldReturnNotFound() throws Exception {
+        persistTextUnitWithLecture();
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitDtoWithId(21312321L), TextUnitDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void updateTextUnit_ofAnotherLecture_shouldReturnBadRequest() throws Exception {
+        persistTextUnitWithLecture();
+        Lecture otherLecture = lectureUtilService.createLecture(lecture.getCourse());
+
+        request.putWithResponseBody("/api/lecture/lectures/" + otherLecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void createTextUnit_withId_shouldReturnBadRequest() throws Exception {
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitDtoWithId(21312321L), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getTextUnit_textUnitDoesNotExist_shouldReturnNotFound() throws Exception {
+        // Administrators pass the access check without the text unit, so the text unit itself is looked up.
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/21312321", HttpStatus.NOT_FOUND, TextUnitDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
         TextUnitDTO textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnitDTO.class);
@@ -164,7 +210,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
         persistTextUnitWithLecture();
         TextUnitDTO textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnitDTO.class);
@@ -175,7 +221,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         persistTextUnitWithLecture();
@@ -183,6 +229,33 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         request.delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
         request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.FORBIDDEN, TextUnitDTO.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void createTextUnit_withContent_publishesContentChangedEvent() throws Exception {
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.CREATED);
+        // Creating a unit with non-blank content is a content change: the Atlas pipeline event must fire exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void updateTextUnit_changedContent_publishesContentChangedEvent() throws Exception {
+        persistTextUnitWithLecture();
+        textUnit.setContent("Genuinely changed content");
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.OK);
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void updateTextUnit_unchangedContent_doesNotPublishContentChangedEvent() throws Exception {
+        persistTextUnitWithLecture();
+        // Keep the same content ("This is a Test") but change only the name — no content-bearing field changed.
+        textUnit.setName("Renamed but same content");
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.OK);
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
     }
 
     private TextUnitDTO textUnitDtoWithId(Long id) {

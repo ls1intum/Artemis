@@ -66,7 +66,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldGenerateAssessmentCriteriaForCourseEditor() throws Exception {
         mockGenerationSuccess();
         userUtilService.changeUser(TEST_PREFIX + "editor1");
@@ -78,7 +78,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldRejectCourseTutor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
@@ -87,7 +87,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRejectNonPositiveMaximumPoints() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         String requestBody = TEXT_REQUEST.replace("\"maxPoints\": 5", "\"maxPoints\": 0");
@@ -97,7 +97,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRejectNegativeBonusPoints() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         String requestBody = TEXT_REQUEST.replace("\"bonusPoints\": 0", "\"bonusPoints\": -1");

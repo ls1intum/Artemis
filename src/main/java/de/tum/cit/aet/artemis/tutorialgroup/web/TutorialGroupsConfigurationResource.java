@@ -27,11 +27,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -42,7 +44,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
-@FeatureUsage("management/configuration")
+@FeatureUsage(UserFeature.TUTORIAL_GROUP_MANAGEMENT)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupsConfigurationResource {
@@ -73,6 +75,7 @@ public class TutorialGroupsConfigurationResource {
      * @param courseId the id of the course to which the tutorial groups configuration belongs
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @GetMapping({ "courses/{courseId}/tutorial-groups-configurations", "courses/{courseId}/tutorial-groups-configuration" })
     @EnforceAtLeastStudent
     public ResponseEntity<TutorialGroupConfigurationDTO> getOneOfCourse(@PathVariable Long courseId) {
@@ -94,7 +97,7 @@ public class TutorialGroupsConfigurationResource {
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping({ "courses/{courseId}/tutorial-groups-configurations", "courses/{courseId}/tutorial-groups-configuration" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDto)
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDto, courseId);
@@ -102,17 +105,23 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("A new tutorial group configuration cannot already have an ID", ENTITY_NAME, "idExists");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
         }
         checkCourseTimeZone(course);
         validateTutorialGroupConfiguration(tutorialGroupConfigurationDto);
-        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
-        configuration.setCourse(course);
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configuration);
-        course.setTutorialGroupsConfiguration(persistedConfiguration);
-        courseRepository.save(course);
+        // Every course owns a permanent settings row, so configuring means activating it. The statement itself refuses a row that is
+        // already configured, which is what keeps two concurrent requests from both creating the channels.
+        if (tutorialGroupsConfigurationRepository.activateSettings(courseId, tutorialGroupConfigurationDto.tutorialPeriodStartInclusive(),
+                tutorialGroupConfigurationDto.tutorialPeriodEndInclusive(), tutorialGroupConfigurationDto.useTutorialGroupChannels(),
+                tutorialGroupConfigurationDto.usePublicTutorialGroupChannels()) != 1) {
+            if (tutorialGroupsConfigurationRepository.findByCourseId(courseId).isPresent()) {
+                throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
+            }
+            throw new EntityNotFoundException("TutorialGroupsConfiguration", courseId);
+        }
+        var persistedConfiguration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("TutorialGroupsConfiguration", courseId));
 
         if (persistedConfiguration.getUseTutorialGroupChannels()) {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
@@ -132,7 +141,7 @@ public class TutorialGroupsConfigurationResource {
      */
     @PutMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}",
             "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<TutorialGroupConfigurationDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
         log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfigurationDto, courseId);
@@ -149,7 +158,6 @@ public class TutorialGroupsConfigurationResource {
 
         checkCourseTimeZone(course);
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.of(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
         validateTutorialGroupConfiguration(updatedTutorialGroupConfigurationDto);
 
         boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
@@ -162,7 +170,10 @@ public class TutorialGroupsConfigurationResource {
         configurationFromDatabase.setUseTutorialGroupChannels(updatedTutorialGroupConfigurationDto.useTutorialGroupChannels());
         configurationFromDatabase.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
 
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
+        tutorialGroupsConfigurationRepository.updateSettings(courseId, updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive(),
+                updatedTutorialGroupConfigurationDto.tutorialPeriodEndInclusive(), updatedTutorialGroupConfigurationDto.useTutorialGroupChannels(),
+                updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
+        var persistedConfiguration = configurationFromDatabase;
 
         if (useTutorialGroupChannelSettingChanged) {
             log.debug("Tutorial group channel setting changed, updating tutorial group channels for course: {}", persistedConfiguration.getCourse().getId());
@@ -197,7 +208,7 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("Tutorial period start date must be before tutorial period end date.", ENTITY_NAME, "tutorialPeriodInvalidOrder");
         }
         if (tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods() != null) {
-            for (TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO freePeriod : tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods()) {
+            for (TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO freePeriod : tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods()) {
                 if (freePeriod.start() == null) {
                     throw new BadRequestAlertException("Tutorial group free period start date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
                             "tutorialFreePeriodStartDateMissing");

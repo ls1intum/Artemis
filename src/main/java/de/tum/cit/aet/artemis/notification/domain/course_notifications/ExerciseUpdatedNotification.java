@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.notification.domain.course_notifications;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseUpdatedPayloadDTO;
 import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
@@ -19,12 +16,13 @@ public class ExerciseUpdatedNotification extends CourseNotification {
     private final ExerciseUpdatedPayloadDTO payload;
 
     /**
-     * Default constructor used when creating a new post notification.
+     * Default constructor used when creating a new exercise updated notification. The notification text is the message
+     * the editor wrote about the update, {@code null} when they wrote none.
      */
     public ExerciseUpdatedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId,
-            String exerciseType) {
+            String exerciseType, String notificationText) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new ExerciseUpdatedPayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId, exerciseType);
+        this.payload = new ExerciseUpdatedPayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId, exerciseType, notificationText);
     }
 
     /**
@@ -36,18 +34,8 @@ public class ExerciseUpdatedNotification extends CourseNotification {
     }
 
     @Override
-    public CourseNotificationCategory getCourseNotificationCategory() {
-        return CourseNotificationCategory.GENERAL;
-    }
-
-    @Override
-    public Duration getCleanupDuration() {
-        return Duration.ofDays(14);
-    }
-
-    @Override
-    public List<NotificationChannelOption> getSupportedChannels() {
-        return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
+    protected CourseNotificationDeliveryPolicy getDeliveryPolicy() {
+        return CourseNotificationDeliveryPolicy.EXERCISE;
     }
 
     @Override

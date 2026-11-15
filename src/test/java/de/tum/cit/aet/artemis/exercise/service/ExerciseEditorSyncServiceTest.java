@@ -1,9 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -23,6 +22,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTar
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 
 class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
@@ -49,7 +50,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
      */
     @BeforeEach
     void setUp() {
-        doReturn(CompletableFuture.completedFuture(null)).when(websocketMessagingService).sendMessage(anyString(), any(Object.class));
+        doReturn(CompletableFuture.completedFuture(null)).when(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(Object.class));
         clearInvocations(websocketMessagingService);
     }
 
@@ -69,7 +70,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         synchronizationService.broadcastNewCommitAlert(90L, ExerciseEditorSyncTarget.TESTS_REPOSITORY, null, null);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/90/synchronization"), captor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/90/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.TESTS_REPOSITORY);
@@ -85,7 +86,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         synchronizationService.broadcastNewCommitAlert(100L, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L, null);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/100/synchronization"), captor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/100/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
@@ -108,7 +109,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         synchronizationService.broadcastNewCommitAlert(101L, ExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null, "client-commits");
 
         var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/101/synchronization"), captor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/101/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.sessionId()).isEqualTo("client-commits");
@@ -145,7 +146,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         synchronizationService.broadcastReviewThreadUpdate(102L, reviewUpdate);
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/102/synchronization"), captor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/102/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
@@ -168,7 +169,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         synchronizationService.broadcastReviewThreadUpdate(103L, reviewUpdate);
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/103/synchronization"), captor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/103/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.sessionId()).isEqualTo("client-review");
@@ -179,9 +180,8 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
      * Verifies that synchronization topics are generated consistently.
      */
     @Test
-    void getSynchronizationTopicGeneratesCorrectTopic() {
-        String topic = ExerciseEditorSyncService.getSynchronizationTopic(123L);
-        assertThat(topic).isEqualTo("/topic/exercises/123/synchronization");
+    void synchronizationTopicGeneratesCorrectDestination() {
+        assertThat(ExerciseWebsocketTopics.EDITOR_SYNCHRONIZATION.at(123L).value()).isEqualTo("/topic/exercises/123/synchronization");
     }
 
     /**
@@ -216,7 +216,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         synchronizationService.broadcastNewExerciseVersionAlert(95L, 7L, author, Set.of("title", "maxPoints"));
 
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/95/synchronization"), captor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/95/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);

@@ -20,7 +20,7 @@ Components (see `docker-compose.yml`):
 | Service     | Image                                             | Purpose                                                            |
 | ----------- | ------------------------------------------------- | ------------------------------------------------------------------ |
 | `pyris-app` | `pyris-e2e:local` (built, see below)              | Real Pyris. Reads the mounted config; calls back to Artemis on the host. |
-| `weaviate`  | `cr.weaviate.io/semitechnologies/weaviate:1.37.14`| Vector DB. Required for Pyris `/health` to be UP and for chat to run. Kept in sync with `WEAVIATE_SERVER_VERSION` in the root `.env`. |
+| `weaviate`  | `cr.weaviate.io/semitechnologies/weaviate:1.40.5`| Vector DB. Required for Pyris `/health` to be UP and for chat to run. Kept in sync with `WEAVIATE_SERVER_VERSION` in the root `.env`. |
 | `mock-llm`  | `iris-mock-llm:local` (built from `../iris-mock-llm`) | Deterministic OpenAI-compatible LLM. Canned reply contains `mock-llm`. |
 
 ## Why this is the high-fidelity version
@@ -65,9 +65,9 @@ edutelligence commit you're running.
 
 **Building from source** is only needed to test an in-progress edutelligence branch/PR that
 hasn't been merged to `main` yet (no published image exists for those). Pyris's Dockerfile
-(`iris/Dockerfile`) `COPY memiris ../memiris`, so the **build context must be the
-edutelligence repo root** (the directory that contains both `iris/` and `memiris/`), not
-`iris/`:
+(`iris/Dockerfile`) copies paths relative to the edutelligence repo root (e.g.
+`COPY iris/pyproject.toml ...`), so the **build context must be the edutelligence repo root**,
+not `iris/`:
 
 ```bash
 # from a fresh checkout of edutelligence at the branch/commit you want to test:
@@ -92,8 +92,8 @@ Key choices, and why:
   Artemis `artemis.iris.secret-token` (the runner sets `ARTEMIS_IRIS_SECRETTOKEN` to the
   same value). Pyris raw-compares the incoming `Authorization` header to this token.
 - `weaviate.host: "weaviate"` — the compose service name (same docker network).
-- `memiris.enabled: false` — disables memory pipelines so no Ollama/embedding hosts are
-  contacted at message time.
+- `memiris.enabled: false` — only read by Pyris images from before the Memiris removal, which
+  refuse to start without the block; newer Pyris ignores it.
 - `local_llm_enabled: false` — only the `.cloud` LLM ids must resolve; Artemis sends
   `selection=CLOUD_AI` by default, so only cloud ids are used.
 - `llm_configuration` includes the `chat_pipeline` key (the unified pipeline, PIPELINE_ID
@@ -128,10 +128,10 @@ purely for debugging; Pyris reaches it over the docker network regardless.
 The runner brings up this stack and enables Iris on the Artemis server when `RUN_IRIS=true`:
 
 ```bash
-RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
 ```
 
-What `RUN_IRIS=true` does (see `run-e2e-tests-local-fast.sh`):
+What `RUN_IRIS=true` does (see `supporting_scripts/e2e/run-e2e-tests-local-fast.sh`):
 
 1. Verifies the `pyris-e2e:local` image exists and brings up this stack, waiting for
    Pyris `/api/v1/health/` to report `isHealthy:true`.
@@ -150,7 +150,7 @@ What `RUN_IRIS=true` does (see `run-e2e-tests-local-fast.sh`):
 Course-level Iris settings default to `enabled` for the seed lecture course (9022), and the
 spec additionally PUTs `api/iris/courses/9022/iris-settings {enabled:true}` defensively.
 
-`./run-e2e-tests-local-fast.sh --stop` also tears this stack down.
+`./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` also tears this stack down.
 
 ## Networking summary
 
@@ -170,5 +170,5 @@ iris-e2e-mock-llm grep <your-change> /app/mock_llm.py`, then force a rebuild:
 ```bash
 docker compose -f src/test/playwright/support/iris-stack/docker-compose.yml down -v
 docker rmi iris-mock-llm:local
-RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"   # rebuilds mock-llm fresh
+RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Iris"   # rebuilds mock-llm fresh
 ```

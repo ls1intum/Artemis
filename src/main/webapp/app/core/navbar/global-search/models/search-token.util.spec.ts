@@ -32,8 +32,9 @@ describe('search token utilities', () => {
             expect(expandTypeTokens([type('lecture_content')])).toBeUndefined();
         });
 
-        it('expands communication to channel, post, answer_post', () => {
-            expect(expandTypeTokens([type('communication')])).toBe('channel,post,answer_post');
+        it('expands channel to channels only, never to messages or replies', () => {
+            expect(expandTypeTokens([type('channel')])).toBe('channel');
+            expect(excludedTypeTokens([type('channel', true)])).toBe('channel');
         });
 
         it('unions multiple positive type tokens as OR', () => {

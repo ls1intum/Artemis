@@ -101,6 +101,37 @@ describe('ComplaintsForTutorComponent', () => {
         expect(complainTextArea.value).toEqual(handledComplaint.complaintText);
     });
 
+    it('should render the section heading and both column headings in the same heading style', async () => {
+        const handledComplaint = new Complaint();
+        handledComplaint.id = 1;
+        handledComplaint.accepted = true;
+        handledComplaint.complaintText = 'please check again';
+        handledComplaint.complaintResponse = new ComplaintResponse();
+        handledComplaint.complaintResponse.id = 1;
+        handledComplaint.complaintResponse.responseText = 'gj';
+        handledComplaint.complaintType = ComplaintType.COMPLAINT;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', handledComplaint);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const sectionHeading = fixture.nativeElement.querySelector('h3') as HTMLElement;
+        const columnHeadings = Array.from(fixture.nativeElement.querySelectorAll('h4')) as HTMLElement[];
+        // The complaint and its response are sibling columns, so their headings must be the same element, otherwise the textareas start at different heights.
+        expect(columnHeadings).toHaveLength(2);
+        expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(1);
+
+        // Bootstrap's unlayered heading rules win over layered utilities, so every utility needs the important modifier.
+        for (const heading of [sectionHeading, ...columnHeadings]) {
+            expect(['mb-2!', 'text-base!', 'leading-tight!', 'font-semibold!'].every((utility) => heading.classList.contains(utility))).toBe(true);
+        }
+        expect(columnHeadings[0].className).toBe(columnHeadings[1].className);
+        // The textareas follow their heading directly in both columns.
+        expect(columnHeadings[0].nextElementSibling).toBe(fixture.nativeElement.querySelector('#complaintTextArea'));
+        expect(columnHeadings[1].nextElementSibling?.querySelector('#responseTextArea')).not.toBeNull();
+    });
+
     it('should create a new complaint response for a unhandled complaint without a connected complaint response', () => {
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;

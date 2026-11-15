@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisDashboardAiSelection;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
@@ -70,24 +71,25 @@ public class IrisAdminDashboardService {
     /**
      * Computes all overview KPIs for the given time range.
      *
-     * @param from start of the range (inclusive)
-     * @param to   end of the range (exclusive)
+     * @param from        start of the range (inclusive)
+     * @param to          end of the range (exclusive)
+     * @param aiSelection restricts the KPIs to users with this AI selection
      * @return the overview DTO
      */
-    public IrisDashboardOverviewDTO computeOverview(Instant from, Instant to) {
-        return computeOverview(from, to, computeStaleBefore(to, TimeUtil.now().toInstant()));
+    public IrisDashboardOverviewDTO computeOverview(Instant from, Instant to, IrisDashboardAiSelection aiSelection) {
+        return computeOverview(from, to, computeStaleBefore(to, TimeUtil.now().toInstant()), aiSelection.queryValue());
     }
 
-    private IrisDashboardOverviewDTO computeOverview(Instant from, Instant to, Instant staleBefore) {
-        long totalSessions = dashboardRepository.countTotalSessions(from, to);
-        long activeSessions = dashboardRepository.countActiveSessions(from, to);
+    private IrisDashboardOverviewDTO computeOverview(Instant from, Instant to, Instant staleBefore, String aiSelection) {
+        long totalSessions = dashboardRepository.countTotalSessions(from, to, aiSelection);
+        long activeSessions = dashboardRepository.countActiveSessions(from, to, aiSelection);
         double engagementRate = totalSessions > 0 ? (double) activeSessions / totalSessions * 100.0 : 0.0;
 
-        long totalMessages = dashboardRepository.countTotalMessages(from, to);
-        long uniqueUsers = dashboardRepository.countUniqueUsers(from, to);
+        long totalMessages = dashboardRepository.countTotalMessages(from, to, aiSelection);
+        long uniqueUsers = dashboardRepository.countUniqueUsers(from, to, aiSelection);
 
         // Single fetch of user messages for both no-response and response-time computation
-        List<IrisDashboardUserMessageResultDTO> allUserMessages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to));
+        List<IrisDashboardUserMessageResultDTO> allUserMessages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to, aiSelection));
 
         // No-response: only consider messages before staleBefore
         long noResponseMessageCount = 0;
@@ -112,14 +114,14 @@ public class IrisAdminDashboardService {
         double noResponseRate = eligibleMessages > 0 ? (double) noResponseMessageCount / eligibleMessages * 100.0 : 0.0;
 
         // Thumbs up/down
-        long thumbsUp = dashboardRepository.countThumbsUp(from, to);
-        long thumbsDown = dashboardRepository.countThumbsDown(from, to);
-        long totalLlmMessages = dashboardRepository.countTotalLlmMessages(from, to);
+        long thumbsUp = dashboardRepository.countThumbsUp(from, to, aiSelection);
+        long thumbsDown = dashboardRepository.countThumbsDown(from, to, aiSelection);
+        long totalLlmMessages = dashboardRepository.countTotalLlmMessages(from, to, aiSelection);
         double thumbsUpRatio = totalLlmMessages > 0 ? (double) thumbsUp / totalLlmMessages * 100.0 : 0.0;
         double thumbsDownRatio = totalLlmMessages > 0 ? (double) thumbsDown / totalLlmMessages * 100.0 : 0.0;
 
-        long sessionsWithThumbsUp = dashboardRepository.countSessionsWithThumbsUp(from, to);
-        long sessionsWithThumbsDown = dashboardRepository.countSessionsWithThumbsDown(from, to);
+        long sessionsWithThumbsUp = dashboardRepository.countSessionsWithThumbsUp(from, to, aiSelection);
+        long sessionsWithThumbsDown = dashboardRepository.countSessionsWithThumbsDown(from, to, aiSelection);
         double thumbsUpAbsoluteRate = totalSessions > 0 ? (double) sessionsWithThumbsUp / totalSessions * 100.0 : 0.0;
         double thumbsDownAbsoluteRate = totalSessions > 0 ? (double) sessionsWithThumbsDown / totalSessions * 100.0 : 0.0;
 
@@ -131,7 +133,7 @@ public class IrisAdminDashboardService {
 
         // Token cost
         double totalTokenCostEur = 0.0;
-        List<Object[]> costRows = dashboardRepository.computeTokenCost(from, to);
+        List<Object[]> costRows = dashboardRepository.computeTokenCost(from, to, aiSelection);
         for (Object[] row : costRows) {
             totalTokenCostEur += ((Number) row[1]).doubleValue();
         }
@@ -154,10 +156,11 @@ public class IrisAdminDashboardService {
      * @return the digest DTO containing all overview fields, chat-mode breakdown, and top courses
      */
     public IrisDashboardDigestDTO computeDigestData(Instant from, Instant to, Instant staleBefore) {
-        IrisDashboardOverviewDTO overview = computeOverview(from, to, staleBefore);
+        String allUsers = IrisDashboardAiSelection.ALL.queryValue();
+        IrisDashboardOverviewDTO overview = computeOverview(from, to, staleBefore, allUsers);
 
         // Chat-mode breakdown: group sessions by mode, zero out per-mode message/rating counts
-        List<Object[]> sessionRows = dashboardRepository.findSessionsWithMode(from, to);
+        List<Object[]> sessionRows = dashboardRepository.findSessionsWithMode(from, to, allUsers);
         Map<String, Long> sessionsByMode = new HashMap<>();
         for (Object[] row : sessionRows) {
             String mode = row[2] != null ? row[2].toString() : "UNKNOWN";
@@ -169,7 +172,7 @@ public class IrisAdminDashboardService {
         }
 
         // Top-5 courses by session count
-        List<Object[]> courseRows = dashboardRepository.findTopCoursesBySessionCount(from, to, 5);
+        List<Object[]> courseRows = dashboardRepository.findTopCoursesBySessionCount(from, to, allUsers, 5);
         List<Long> courseIds = courseRows.stream().map(row -> ((Number) row[0]).longValue()).toList();
         Map<Long, String> courseNames = resolveCourseNames(courseIds);
         List<IrisDashboardDigestCourseDTO> topCourses = new ArrayList<>();
@@ -297,22 +300,24 @@ public class IrisAdminDashboardService {
     /**
      * Computes a time-series for the given metric, bucketed by the specified span.
      *
-     * @param from   start of the range (inclusive)
-     * @param to     end of the range (exclusive)
-     * @param span   one of DAY, WEEK, MONTH, QUARTER, YEAR
-     * @param metric the metric to compute
+     * @param from        start of the range (inclusive)
+     * @param to          end of the range (exclusive)
+     * @param span        one of DAY, WEEK, MONTH, QUARTER, YEAR
+     * @param metric      the metric to compute
+     * @param aiSelection restricts the series to users with this AI selection
      * @return the time-series DTO
      */
-    public IrisDashboardTimeSeriesDTO computeTimeSeries(Instant from, Instant to, String span, IrisDashboardMetric metric) {
+    public IrisDashboardTimeSeriesDTO computeTimeSeries(Instant from, Instant to, String span, IrisDashboardMetric metric, IrisDashboardAiSelection aiSelection) {
         List<Instant> buckets = generateBuckets(from, to, span);
+        String selection = aiSelection.queryValue();
         List<IrisDashboardTimeSeriesEntryDTO> entries = switch (metric) {
-            case SESSIONS -> computeSessionsTimeSeries(from, to, buckets);
-            case MESSAGES -> computeMessagesTimeSeries(from, to, buckets);
-            case NO_RESPONSE_RATE -> computeNoResponseRateTimeSeries(from, to, buckets);
-            case RESPONSE_TIME -> computeResponseTimeTimeSeries(from, to, buckets);
-            case RATINGS -> computeRatingsTimeSeries(from, to, buckets);
-            case TOKEN_COST -> computeTokenCostTimeSeries(from, to, buckets);
-            case ENGAGEMENT -> computeEngagementTimeSeries(from, to, buckets);
+            case SESSIONS -> computeSessionsTimeSeries(from, to, buckets, selection);
+            case MESSAGES -> computeMessagesTimeSeries(from, to, buckets, selection);
+            case NO_RESPONSE_RATE -> computeNoResponseRateTimeSeries(from, to, buckets, selection);
+            case RESPONSE_TIME -> computeResponseTimeTimeSeries(from, to, buckets, selection);
+            case RATINGS -> computeRatingsTimeSeries(from, to, buckets, selection);
+            case TOKEN_COST -> computeTokenCostTimeSeries(from, to, buckets, selection);
+            case ENGAGEMENT -> computeEngagementTimeSeries(from, to, buckets, selection);
         };
         return new IrisDashboardTimeSeriesDTO(metric, entries);
     }
@@ -351,28 +356,35 @@ public class IrisAdminDashboardService {
 
     // -- Sessions time-series ---------------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeSessionsTimeSeries(Instant from, Instant to, List<Instant> buckets) {
-        List<Object[]> rows = dashboardRepository.findSessionsWithMode(from, to);
+    private record SessionCounts(long total, long active) {
+    }
+
+    private SessionCounts countSessions(List<Object[]> rows, Instant bucketStart, Instant bucketEnd) {
+        long total = 0;
+        long active = 0;
+        for (Object[] row : rows) {
+            Instant creationDate = toInstant(row[1]);
+            if (!creationDate.isBefore(bucketStart) && creationDate.isBefore(bucketEnd)) {
+                total++;
+                if (((Number) row[3]).intValue() == 1) {
+                    active++;
+                }
+            }
+        }
+        return new SessionCounts(total, active);
+    }
+
+    private List<IrisDashboardTimeSeriesEntryDTO> computeSessionsTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.findSessionsWithMode(from, to, aiSelection);
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
             Instant bucketStart = buckets.get(i);
             Instant bucketEnd = nextBucketStart(bucketStart, buckets, i, to);
-            long total = 0;
-            long active = 0;
-            for (Object[] row : rows) {
-                Instant creationDate = toInstant(row[1]);
-                if (!creationDate.isBefore(bucketStart) && creationDate.isBefore(bucketEnd)) {
-                    total++;
-                    int hasUserMessage = ((Number) row[3]).intValue();
-                    if (hasUserMessage == 1) {
-                        active++;
-                    }
-                }
-            }
+            SessionCounts counts = countSessions(rows, bucketStart, bucketEnd);
             Map<String, Double> series = new LinkedHashMap<>();
-            series.put("total", (double) total);
-            series.put("active", (double) active);
+            series.put("total", (double) counts.total());
+            series.put("active", (double) counts.active());
             entries.add(new IrisDashboardTimeSeriesEntryDTO(bucketStart, series));
         }
         return entries;
@@ -380,8 +392,8 @@ public class IrisAdminDashboardService {
 
     // -- Messages time-series ---------------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeMessagesTimeSeries(Instant from, Instant to, List<Instant> buckets) {
-        List<Object[]> rows = dashboardRepository.findMessagesInRange(from, to);
+    private List<IrisDashboardTimeSeriesEntryDTO> computeMessagesTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.findMessagesInRange(from, to, aiSelection);
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
@@ -412,9 +424,9 @@ public class IrisAdminDashboardService {
 
     // -- No-response rate time-series -------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeNoResponseRateTimeSeries(Instant from, Instant to, List<Instant> buckets) {
+    private List<IrisDashboardTimeSeriesEntryDTO> computeNoResponseRateTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
         Instant staleBefore = computeStaleBefore(to, TimeUtil.now().toInstant());
-        List<IrisDashboardUserMessageResultDTO> messages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, staleBefore));
+        List<IrisDashboardUserMessageResultDTO> messages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, staleBefore, aiSelection));
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
@@ -441,8 +453,8 @@ public class IrisAdminDashboardService {
 
     // -- Response time time-series ----------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeResponseTimeTimeSeries(Instant from, Instant to, List<Instant> buckets) {
-        List<IrisDashboardUserMessageResultDTO> messages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to));
+    private List<IrisDashboardTimeSeriesEntryDTO> computeResponseTimeTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
+        List<IrisDashboardUserMessageResultDTO> messages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to, aiSelection));
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
@@ -470,8 +482,8 @@ public class IrisAdminDashboardService {
 
     // -- Ratings time-series ----------------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeRatingsTimeSeries(Instant from, Instant to, List<Instant> buckets) {
-        List<Object[]> rows = dashboardRepository.findLlmMessagesWithRatings(from, to);
+    private List<IrisDashboardTimeSeriesEntryDTO> computeRatingsTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.findLlmMessagesWithRatings(from, to, aiSelection);
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
@@ -504,8 +516,8 @@ public class IrisAdminDashboardService {
 
     // -- Token cost time-series -------------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeTokenCostTimeSeries(Instant from, Instant to, List<Instant> buckets) {
-        List<Object[]> rows = dashboardRepository.findTokenCostWithTimestamps(from, to);
+    private List<IrisDashboardTimeSeriesEntryDTO> computeTokenCostTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.findTokenCostWithTimestamps(from, to, aiSelection);
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
@@ -537,30 +549,19 @@ public class IrisAdminDashboardService {
 
     // -- Engagement time-series -------------------------------------------------
 
-    private List<IrisDashboardTimeSeriesEntryDTO> computeEngagementTimeSeries(Instant from, Instant to, List<Instant> buckets) {
-        List<Object[]> rows = dashboardRepository.findSessionsWithMode(from, to);
+    private List<IrisDashboardTimeSeriesEntryDTO> computeEngagementTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.findSessionsWithMode(from, to, aiSelection);
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
 
         for (int i = 0; i < buckets.size(); i++) {
             Instant bucketStart = buckets.get(i);
             Instant bucketEnd = nextBucketStart(bucketStart, buckets, i, to);
-            long total = 0;
-            long active = 0;
-            for (Object[] row : rows) {
-                Instant creationDate = toInstant(row[1]);
-                if (!creationDate.isBefore(bucketStart) && creationDate.isBefore(bucketEnd)) {
-                    total++;
-                    int hasUserMessage = ((Number) row[3]).intValue();
-                    if (hasUserMessage == 1) {
-                        active++;
-                    }
-                }
-            }
-            double rate = total > 0 ? (double) active / total * 100.0 : 0.0;
+            SessionCounts counts = countSessions(rows, bucketStart, bucketEnd);
+            double rate = counts.total() > 0 ? (double) counts.active() / counts.total() * 100.0 : 0.0;
             Map<String, Double> series = new LinkedHashMap<>();
             series.put("rate", rate);
-            series.put("activeSessions", (double) active);
-            series.put("totalSessions", (double) total);
+            series.put("activeSessions", (double) counts.active());
+            series.put("totalSessions", (double) counts.total());
             entries.add(new IrisDashboardTimeSeriesEntryDTO(bucketStart, series));
         }
         return entries;
@@ -571,23 +572,25 @@ public class IrisAdminDashboardService {
     /**
      * Computes a breakdown by the given dimension.
      *
-     * @param from      start of the range (inclusive)
-     * @param to        end of the range (exclusive)
-     * @param dimension the breakdown dimension
+     * @param from        start of the range (inclusive)
+     * @param to          end of the range (exclusive)
+     * @param dimension   the breakdown dimension
+     * @param aiSelection restricts the breakdown to users with this AI selection
      * @return the breakdown entries
      */
-    public List<IrisDashboardBreakdownEntryDTO> computeBreakdown(Instant from, Instant to, IrisDashboardBreakdownDimension dimension) {
+    public List<IrisDashboardBreakdownEntryDTO> computeBreakdown(Instant from, Instant to, IrisDashboardBreakdownDimension dimension, IrisDashboardAiSelection aiSelection) {
+        String selection = aiSelection.queryValue();
         return switch (dimension) {
-            case CHAT_MODE -> computeChatModeBreakdown(from, to);
-            case COURSE -> computeCourseBreakdown(from, to);
-            case MODEL -> computeModelBreakdown(from, to);
+            case CHAT_MODE -> computeChatModeBreakdown(from, to, selection);
+            case COURSE -> computeCourseBreakdown(from, to, selection);
+            case MODEL -> computeModelBreakdown(from, to, selection);
         };
     }
 
-    private List<IrisDashboardBreakdownEntryDTO> computeChatModeBreakdown(Instant from, Instant to) {
+    private List<IrisDashboardBreakdownEntryDTO> computeChatModeBreakdown(Instant from, Instant to, String aiSelection) {
         Instant staleBefore = computeStaleBefore(to, TimeUtil.now().toInstant());
-        List<Object[]> sessionRows = dashboardRepository.findSessionsWithMode(from, to);
-        List<IrisDashboardUserMessageResultDTO> userMessages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, staleBefore));
+        List<Object[]> sessionRows = dashboardRepository.findSessionsWithMode(from, to, aiSelection);
+        List<IrisDashboardUserMessageResultDTO> userMessages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, staleBefore, aiSelection));
 
         // Group sessions by mode
         Map<String, Long> sessionsByMode = new HashMap<>();
@@ -629,8 +632,8 @@ public class IrisAdminDashboardService {
         return entries;
     }
 
-    private List<IrisDashboardBreakdownEntryDTO> computeCourseBreakdown(Instant from, Instant to) {
-        List<Object[]> rows = dashboardRepository.findTopCoursesBySessionCount(from, to, 10);
+    private List<IrisDashboardBreakdownEntryDTO> computeCourseBreakdown(Instant from, Instant to, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.findTopCoursesBySessionCount(from, to, aiSelection, 10);
         List<Long> courseIds = rows.stream().map(row -> ((Number) row[0]).longValue()).toList();
         Map<Long, String> courseNameMap = resolveCourseNames(courseIds);
         List<IrisDashboardBreakdownEntryDTO> entries = new ArrayList<>();
@@ -654,8 +657,8 @@ public class IrisAdminDashboardService {
         return nameMap;
     }
 
-    private List<IrisDashboardBreakdownEntryDTO> computeModelBreakdown(Instant from, Instant to) {
-        List<Object[]> rows = dashboardRepository.computeTokenCostByModel(from, to);
+    private List<IrisDashboardBreakdownEntryDTO> computeModelBreakdown(Instant from, Instant to, String aiSelection) {
+        List<Object[]> rows = dashboardRepository.computeTokenCostByModel(from, to, aiSelection);
         List<IrisDashboardBreakdownEntryDTO> entries = new ArrayList<>();
 
         for (Object[] row : rows) {

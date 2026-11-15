@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -12,11 +12,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -29,8 +29,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
+                MockDirective(TumAetUiTooltipDirective),
                 FaIconComponent,
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
@@ -38,7 +37,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MarkdownDirective),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: TumAetUiDialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {
@@ -99,7 +98,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         });
     });
 
-    it('should sort criteria and their instructions alphabetically', () => {
+    it('should preserve the instructor order of criteria and their instructions', () => {
         const documentation = {
             id: 1,
             title: 'Documentation',
@@ -115,10 +114,10 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         } as GradingCriterion;
         fixture.componentRef.setInput('criteria', [documentation, camera]);
 
-        expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Camera', 'Documentation']);
-        expect(comp.sortedCriteria()[1].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
-            'All methods have proper JavaDoc.',
+        expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Documentation', 'Camera']);
+        expect(comp.sortedCriteria()[0].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
             'Not all methods have proper JavaDoc.',
+            'All methods have proper JavaDoc.',
         ]);
     });
 
@@ -165,7 +164,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
         /** The kit checkbox renders a real, visually hidden input that covers it, so a click always lands there. */
         function checkboxInput(): HTMLInputElement {
-            return fixture.debugElement.query(By.directive(TumUiCheckboxComponent)).query(By.css('input[type="checkbox"]')).nativeElement;
+            return fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent)).query(By.css('input[type="checkbox"]')).nativeElement;
         }
 
         function clickCheckbox(): void {
@@ -174,7 +173,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         }
 
         it('should render a checkbox instead of the usage count', () => {
-            expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent))).not.toBeNull();
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
         });
 
@@ -225,7 +224,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(checkboxInput().checked).toBe(true);
-            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('.tumaet-ui-checkbox-icon'))).not.toBeNull();
 
             // Clicking again must ask to un-apply once more instead of applying a duplicate feedback.
             clickCheckbox();
@@ -245,7 +244,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
 
             expect(checkboxInput().checked).toBe(false);
-            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
+            expect(fixture.debugElement.query(By.css('.tumaet-ui-checkbox-icon'))).toBeNull();
         });
 
         /** The draggable attribute of the row that carries the instruction. */
@@ -321,7 +320,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.detectChanges();
 
         expect(comp.selectable()).toBe(false);
-        expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent))).toBeNull();
         expect(fixture.debugElement.query(By.css('jhi-help-icon'))).not.toBeNull();
     });
 });

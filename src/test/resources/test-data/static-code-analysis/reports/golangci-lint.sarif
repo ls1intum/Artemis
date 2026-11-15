@@ -1,0 +1,246 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.6.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "golangci-lint"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "package-comments: should have a package comment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/bubblesort.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported type BubbleSort should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/bubblesort.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported function NewBubbleSort should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/bubblesort.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "package-comments: should have a package comment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/client/client.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported type Context should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/context.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported function NewContext should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/context.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported type MergeSort should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/mergesort.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported function NewMergeSort should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/mergesort.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported type Policy should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/policy.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported function NewPolicy should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/policy.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "revive",
+          "level": "warning",
+          "message": {
+            "text": "exported: exported type SortStrategy should have comment or be unexported"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/sortstrategy.go",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 6
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

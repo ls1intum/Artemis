@@ -6,14 +6,19 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -24,6 +29,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -317,6 +324,33 @@ public abstract class AbstractGitService {
     }
 
     /**
+     * Gets the last commit hash of a specific remote branch without relying on the repository's symbolic {@code HEAD}.
+     *
+     * @param repoUri the repository to inspect
+     * @param branch  the short branch name
+     * @return the branch head, or {@code null} when the repository or branch does not exist
+     * @throws EntityNotFoundException if querying the remote repository fails
+     */
+    @Nullable
+    public String getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri, String branch) throws EntityNotFoundException {
+        if (repoUri == null || repoUri.getURI() == null) {
+            return null;
+        }
+        try {
+            log.debug("getLastCommitHash {} branch {}", repoUri, branch);
+            Ref branchRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUri)).callAsMap().get(Constants.R_HEADS + branch);
+            if (branchRef == null) {
+                return null;
+            }
+            ObjectId objectId = branchRef.getObjectId();
+            return objectId != null ? objectId.getName() : null;
+        }
+        catch (GitAPIException | URISyntaxException ex) {
+            throw new EntityNotFoundException("Could not retrieve the last commit hash for branch " + branch + " of repoUri " + repoUri + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * Retrieves the hash of the first commit in a bare Git repository whose commit message contains
      * a given search string. The method iterates commits in chronological order (oldest to newest)
      * to ensure that the earliest matching commit is returned.
@@ -410,17 +444,82 @@ public abstract class AbstractGitService {
 
     /**
      * Deletes a local repository folder.
+     * <p>
+     * The folder is first renamed to a sibling and only then deleted. On a network file system, files that are still open (e.g. by another instance of the same
+     * repository) cannot be removed, so deleting in place can fail half-way and leave a folder without HEAD and config behind that still looks like a repository.
+     * A rename also works with open files and frees the path at once, so a failure to delete the renamed folder no longer affects the repository.
      *
      * @param repository Local Repository Object.
-     * @throws IOException if the deletion of the repository failed.
+     * @throws IOException if the repository folder could neither be renamed nor deleted.
      */
     public void deleteLocalRepository(@NonNull Repository repository) throws IOException {
         Path repoPath = repository.getLocalPath();
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
         repository.closeBeforeDelete();
-        FileUtils.deleteDirectory(repoPath.toFile());
-        log.debug("Deleted Repository at {}", repoPath);
+        if (Files.notExists(repoPath)) {
+            return;
+        }
+        Path renamedPath = repoPath.resolveSibling(repoPath.getFileName() + ".deleted-" + UUID.randomUUID());
+        // A plain rename within the same folder: unlike a move, it never falls back to copying and deleting
+        if (!repoPath.toFile().renameTo(renamedPath.toFile())) {
+            log.warn("Could not rename the repository folder {} before deleting it, deleting it in place", repoPath);
+            FileUtils.deleteDirectory(repoPath.toFile());
+            log.debug("Deleted Repository at {}", repoPath);
+            return;
+        }
+        try {
+            FileUtils.deleteDirectory(renamedPath.toFile());
+            log.debug("Deleted Repository at {}", repoPath);
+        }
+        catch (IOException e) {
+            log.warn("Could not delete the renamed repository folder {} of {}: {}", renamedPath, repoPath, e.getMessage());
+        }
+    }
+
+    /**
+     * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
+     * after a local commit, avoiding a second remote read that could observe an unrelated concurrent push.
+     *
+     * @param repository the checked-out repository
+     * @return the local HEAD commit hash, or {@code null} when the repository has no HEAD yet
+     * @throws IOException if HEAD cannot be resolved
+     */
+    public String getLocalHeadHash(Repository repository) throws IOException {
+        ObjectId head = repository.resolve(Constants.HEAD);
+        return head == null ? null : head.name();
+    }
+
+    protected static void assertPushAccepted(Iterable<PushResult> pushResults, String remoteRef) throws TransportException {
+        boolean foundTargetRef = false;
+        for (PushResult pushResult : pushResults) {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                if (!remoteRef.equals(update.getRemoteName())) {
+                    continue;
+                }
+                foundTargetRef = true;
+                if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    throw new TransportException("Leased push of " + remoteRef + " was rejected with status " + update.getStatus() + ": " + update.getMessage());
+                }
+            }
+        }
+        if (!foundTargetRef) {
+            throw new TransportException("Push result did not contain an update for " + remoteRef);
+        }
+    }
+
+    /**
+     * Checks if no differences exist between the working-tree, the index, and the current HEAD.
+     *
+     * @param repo Local Repository Object.
+     * @return True if the status is clean
+     * @throws GitAPIException if the state of the repository could not be retrieved.
+     */
+    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
+        try (Git git = new Git(repo)) {
+            Status status = git.status().call();
+            return status.isClean();
+        }
     }
 
     protected abstract LsRemoteCommand lsRemoteCommand();

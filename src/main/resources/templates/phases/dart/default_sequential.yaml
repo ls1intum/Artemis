@@ -1,0 +1,20 @@
+- name: install_dependencies
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart pub get
+- name: compile
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart analyze --no-fatal-warnings .
+- name: structural_tests
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart test test/structural_test.dart --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > structural-report.xml
+  resultPaths:
+    - '${testWorkingDirectory}/structural-report.xml'
+- name: behavior_tests
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart test test/behavior_test.dart --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > behavior-report.xml
+  resultPaths:
+    - '${testWorkingDirectory}/behavior-report.xml'

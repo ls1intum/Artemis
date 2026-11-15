@@ -41,7 +41,7 @@ Once the virtual environment is activated, you will see the `(venv)` prefix in y
 
 ## 2. Install the Required Packages
 ```shell
-pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.txt
 ```
 
 ## 3. Configure the Environment

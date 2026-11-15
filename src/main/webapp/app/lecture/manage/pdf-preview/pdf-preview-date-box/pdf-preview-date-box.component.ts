@@ -6,10 +6,11 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
 
 interface CategorizedExercise {
     type: ExerciseType;
@@ -23,9 +24,24 @@ const FOREVER = dayjs('9999-12-31');
     templateUrl: './pdf-preview-date-box.component.html',
     styleUrls: ['./pdf-preview-date-box.component.scss'],
     standalone: true,
-    imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiRadioButtonComponent,
+        FontAwesomeModule,
+        RouterModule,
+        TranslateDirective,
+        CommonModule,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiDatePickerComponent,
+    ],
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
+    // Injected services
+    private readonly alertService = inject(AlertService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
+
     // Inputs
     courseId = input<number>();
     selectedPages = input<OrderedPage[]>([]);
@@ -33,7 +49,9 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     // Signals
     calendarSelected = signal<boolean>(false);
     exerciseSelected = signal<boolean>(false);
-    defaultDate = signal<string>(this.formatDate(new Date()));
+    /** The minute the box was opened in: the earliest date it offers, as the date field's `min` used to be. */
+    protected readonly minDate = dayjs().startOf('minute');
+    defaultDate = signal<dayjs.Dayjs | undefined>(this.minDate);
     exercises = signal<Exercise[]>([]);
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
@@ -61,13 +79,10 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         );
     });
     isMultiplePages = computed(() => this.selectedPages().length > 1);
+    isBeforeMinDate = computed(() => !!this.defaultDate()?.isBefore(this.minDate));
     isSubmitDisabled = computed(() => {
         return !this.hideForever() && !this.calendarSelected() && !this.selectedExercise();
     });
-
-    // Injected services
-    private readonly alertService = inject(AlertService);
-    private readonly courseExerciseService = inject(CourseExerciseService);
 
     ngOnInit(): void {
         this.loadExercises();
@@ -120,16 +135,6 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     }
 
     /**
-     * Formats a given `Date` object into a string in the format `YYYY-MM-DDTHH:mm`.
-     *
-     * @param date - The `Date` object to format.
-     * @returns A formatted string representing the date and time.
-     */
-    formatDate(date: Date): string {
-        return dayjs(date).format('YYYY-MM-DDTHH:mm');
-    }
-
-    /**
      * Format a date object to a string for display
      */
     formatDueDate(date: dayjs.Dayjs): string {
@@ -172,7 +177,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         if (this.hideForever()) {
             return FOREVER;
         } else if (this.calendarSelected()) {
-            return dayjs(this.defaultDate());
+            return this.defaultDate();
         } else if (this.exerciseSelected() && this.selectedExercise()) {
             return this.selectedExercise()!.dueDate!;
         }

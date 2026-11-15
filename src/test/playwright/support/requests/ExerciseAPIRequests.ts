@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Page } from '@playwright/test';
+import { APIResponse, Page } from '@playwright/test';
 
 import type { Course } from 'app/course/shared/entities/course.model';
 import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -30,6 +30,7 @@ import {
 } from '../constants';
 import { asModelDate, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
+import { awaitDeletion } from '../deletion';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -44,7 +45,7 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
+import { toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -112,6 +113,12 @@ export class ExerciseAPIRequests {
         buildPlanConfiguration?: string;
         // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
         auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
+        /** Whether students may work in the online editor; the server default of the template applies when omitted. */
+        allowOnlineEditor?: boolean;
+        /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
+        allowOfflineIde?: boolean;
+        /** Whether students may complain about an automatic result, which a tutor then answers manually; the server default of the template applies when omitted. */
+        allowComplaintsForAutomaticAssessments?: boolean;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -135,6 +142,9 @@ export class ExerciseAPIRequests {
             problemStatement,
             buildPlanConfiguration,
             auxiliaryRepositories,
+            allowOnlineEditor,
+            allowOfflineIde,
+            allowComplaintsForAutomaticAssessments,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -159,6 +169,9 @@ export class ExerciseAPIRequests {
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
             ...(projectType ? { projectType } : {}),
+            ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
+            ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
+            ...(allowComplaintsForAutomaticAssessments !== undefined ? { allowComplaintsForAutomaticAssessments } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -195,10 +208,30 @@ export class ExerciseAPIRequests {
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
+    /**
+     * Deletes a programming exercise and waits until the server finished the deletion in the background.
+     * Cleanup stays best-effort like before: an exercise that is already gone or a refused request is not an error, but a deletion that
+     * the server accepted and then failed is reported, so a leaked exercise does not go unnoticed.
+     */
     async deleteProgrammingExercise(exerciseId: number) {
-        await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+        const response = await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
             params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
         });
+        await this.awaitAcceptedDeletion(response, exerciseId);
+    }
+
+    /**
+     * Follows a deletion the server accepted (202) until it finished. A conflict means another deletion of the same exercise is running,
+     * which is awaited the same way. Anything else (404, refused requests) is left to the caller's cleanup semantics.
+     */
+    private async awaitAcceptedDeletion(response: APIResponse, exerciseId: number) {
+        if (response.status() !== 202 && response.status() !== 409) {
+            return;
+        }
+        const outcome = await awaitDeletion(this.page.request, { entityType: 'EXERCISE', entityId: exerciseId });
+        if (outcome.failed) {
+            throw new Error(`Failed to delete exercise ${exerciseId}: ${outcome.errorMessage}`);
+        }
     }
 
     /**
@@ -353,7 +386,11 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise to be deleted.
      */
     async deleteTextExercise(exerciseId: number) {
-        await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        const response = await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete text exercise ${exerciseId}: ${response.status()}`);
+        }
+        await this.awaitAcceptedDeletion(response, exerciseId);
     }
 
     /**
@@ -402,7 +439,8 @@ export class ExerciseAPIRequests {
      * @param exerciseID - The ID of the file upload exercise to be deleted.
      */
     async deleteFileUploadExercise(exerciseID: number) {
-        await this.page.request.delete(`${UPLOAD_EXERCISE_BASE}/${exerciseID}`);
+        const response = await this.page.request.delete(`${UPLOAD_EXERCISE_BASE}/${exerciseID}`);
+        await this.awaitAcceptedDeletion(response, exerciseID);
     }
 
     /**
@@ -571,7 +609,9 @@ export class ExerciseAPIRequests {
      * @param exerciseID - The ID of the modeling exercise to be deleted.
      */
     async deleteModelingExercise(exerciseID: number) {
-        return this.page.request.delete(`${MODELING_EXERCISE_BASE}/${exerciseID}`);
+        const response = await this.page.request.delete(`${MODELING_EXERCISE_BASE}/${exerciseID}`);
+        await this.awaitAcceptedDeletion(response, exerciseID);
+        return response;
     }
 
     /**
@@ -656,6 +696,8 @@ export class ExerciseAPIRequests {
         duration?: number;
         quizMode?: QuizMode;
         competencyLinks?: { competency: { id: number }; weight: number }[];
+        /** The background image of a drag and drop question; its name is the `backgroundFilePath` of the question. */
+        backgroundFile?: { name: string; mimeType: string; buffer: Buffer };
     }): Promise<QuizExercise> {
         const {
             body,
@@ -667,6 +709,7 @@ export class ExerciseAPIRequests {
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
             competencyLinks,
+            backgroundFile,
         } = options;
 
         const quizExercise: any = {
@@ -703,13 +746,14 @@ export class ExerciseAPIRequests {
         if (competencyLinks) {
             newQuizExercise.competencyLinks = competencyLinks;
         }
-        const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
-        const multipartData = {
+        const quizExerciseDTO = toQuizExerciseCreate(newQuizExercise);
+        const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
             exercise: {
                 name: 'exercise',
                 mimeType: 'application/json',
                 buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
             },
+            ...(backgroundFile ? { files: backgroundFile } : {}),
         };
 
         const response = await this.page.request.post(url, {
@@ -762,7 +806,11 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the quiz exercise to be deleted.
      */
     async deleteQuizExercise(exerciseId: number) {
-        await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        const response = await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete quiz exercise ${exerciseId}: ${response.status()}`);
+        }
+        await this.awaitAcceptedDeletion(response, exerciseId);
     }
 
     /**
@@ -800,7 +848,10 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        if (!response.ok()) {
+            throw new Error(`Failed to evaluate quiz exercises of exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
     }
 
     /**
@@ -870,6 +921,23 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Gets the participations of an exercise as the participation management lists them (at most one hundred), with the login of the student and
+     * the number of submissions of each.
+     */
+    async getExerciseParticipations(
+        exerciseId: number,
+        kind: 'course' | 'exam' = 'course',
+    ): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
+        const response = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!response.ok()) {
+            throw new Error(`Failed to get the participations of exercise ${exerciseId}: ${response.status()}`);
+        }
+        return await response.json();
+    }
+
+    /**
      * Gets the participation data for a programming exercise with the specified exercise ID.
      * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
      * participation data (with latest result) via the per-participation endpoint.
@@ -878,9 +946,9 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
-    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipationDTO> {
+    async getProgrammingExerciseParticipation(exerciseId: number, kind: 'course' | 'exam' = 'course'): Promise<StudentParticipationDTO> {
         const pageResponse = await this.page.request.get(
-            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+            `api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
         );
         if (!pageResponse.ok()) {
             throw new Error(`Failed to get participations page for exercise ${exerciseId}: ${pageResponse.status()}`);

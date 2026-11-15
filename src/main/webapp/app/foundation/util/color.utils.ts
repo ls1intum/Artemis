@@ -47,3 +47,31 @@ export const isColorDark = (color: string): boolean => {
 export const getContrastingTextColor = (color: string): string => {
     return isColorDark(color) ? 'white' : 'black';
 };
+
+const PLAIN_HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** Linearizes one sRGB channel (0-255) as defined for the WCAG relative luminance. */
+const linearizeChannel = (channel: number): number => {
+    const value = channel / 255;
+    return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+};
+
+/**
+ * Returns black or white, whichever has the higher WCAG contrast ratio against the given background color.
+ * Only a plain `#rrggbb` color qualifies: any other value (hashless, with alpha, a named color) may not be applied as a
+ * background by the browser, and a text color picked for it could end up invisible on the surface behind it.
+ * @param color - The background color in `#rrggbb` format.
+ * @returns 'black' or 'white', or undefined if the color is not a plain `#rrggbb` color, so the caller keeps the inherited text color.
+ */
+export const getReadableTextColor = (color: string | undefined): 'black' | 'white' | undefined => {
+    if (!color || !PLAIN_HEX_COLOR.test(color)) {
+        return undefined;
+    }
+    const red = linearizeChannel(parseInt(color.substring(1, 3), 16));
+    const green = linearizeChannel(parseInt(color.substring(3, 5), 16));
+    const blue = linearizeChannel(parseInt(color.substring(5, 7), 16));
+    const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    const contrastWithBlack = (luminance + 0.05) / 0.05;
+    const contrastWithWhite = 1.05 / (luminance + 0.05);
+    return contrastWithBlack >= contrastWithWhite ? 'black' : 'white';
+};

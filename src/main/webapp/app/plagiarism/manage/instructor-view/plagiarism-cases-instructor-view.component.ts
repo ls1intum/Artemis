@@ -19,7 +19,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -37,7 +37,8 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
         ArtemisTranslatePipe,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
     ],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
@@ -51,7 +52,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     readonly groupedPlagiarismCases = signal<GroupedPlagiarismCases>({});
     readonly exercisesWithPlagiarismCases = signal<PlagiarismCaseExercise[]>([]);
 
-    exerciseWithPlagCasesElements = viewChildren<ElementRef>('plagExerciseElement');
+    exerciseWithPlagCasesElements = viewChildren('plagExerciseElement', { read: ElementRef });
 
     // method called as html template variable, angular only recognises reference variables in html if they are a property
     // of the corresponding component class
@@ -194,7 +195,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     exportPlagiarismCases(): void {
         const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'];
         const blobParts: string[] = [headers.join(';') + '\n'];
-        this.plagiarismCases().reduce((acc, plagiarismCase) => {
+        this.plagiarismCases().forEach((plagiarismCase) => {
             const fields = [
                 this.sanitizeCSVField(plagiarismCase.student?.login),
                 this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
@@ -209,9 +210,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             } else {
                 fields.push('No verdict yet', '-', '-');
             }
-            acc.push(fields.join(';') + '\n');
-            return acc;
-        }, blobParts);
+            blobParts.push(fields.join(';') + '\n');
+        });
 
         try {
             downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');

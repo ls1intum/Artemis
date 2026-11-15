@@ -101,7 +101,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_rescheduleProgramming_titleChanged_shouldNotReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
@@ -113,7 +113,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_rescheduleProgramming_changeDateSubSecondPrecision_shouldNotReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
@@ -129,7 +129,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_rescheduleProgramming_visibleAndStartDateChanged_shouldReschedule() throws Exception {
         // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
         var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
@@ -146,7 +146,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_rescheduleProgramming_visibleDateChanged_shouldReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
@@ -158,7 +158,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_rescheduleProgramming_gracePeriodChanged_shouldReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
@@ -170,7 +170,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithSingleProgrammingExercise_successful() throws Exception {
         programmingExerciseTestService.setup(this, versionControlService);
 
@@ -213,7 +213,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithProgrammingExercise_repositoryCopyFailureReportedAsIncomplete() throws Exception {
         // Regression test for the resilient exam import: when a programming exercise's repository copy fails mid-import,
         // its basis entity has already been committed (importProgrammingExerciseBasis is @Transactional, and runs before
@@ -223,7 +223,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         // exercise and aborting the whole import with a 5xx.
         programmingExerciseTestService.setup(this, versionControlService);
 
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
@@ -236,7 +236,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         doNothing().when(continuousIntegrationService).createProjectForExercise(any());
 
         // Fail the repository copy, which happens after the (transactional) basis import has already persisted the new exercise.
-        doThrow(new RuntimeException("Simulated repository copy failure")).when(gitServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
+        doThrow(new RuntimeException("Simulated repository copy failure")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
 
         String sourceTitle = sourceExercise.getTitle();
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
@@ -252,7 +252,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithProgrammingExercise_preCheckFailed() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);
@@ -260,22 +260,20 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         exam.setId(null);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
-        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         versionControlService.createProjectForExercise(programming);
         createdProjectKey = programming.getProjectKey();
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.performMvcRequest(
-                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
-                .andExpect(status().isBadRequest())
+        request.performMvcRequest(post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ExamImportDTO.of(exam, course1.getId())))).andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "A,A,B,C", "A,B,C,C", "A,A,B,B" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExamWithExercises_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();

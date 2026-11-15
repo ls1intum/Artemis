@@ -2,10 +2,15 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
+import org.springframework.scheduling.config.FixedRateTask;
+import org.springframework.scheduling.config.ScheduledTask;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -14,6 +19,26 @@ import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 
 class SharedQueueManagementServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    private static final Duration ONE_YEAR = Duration.ofDays(365);
+
+    @Autowired
+    private ScheduledAnnotationBeanPostProcessor scheduledAnnotationBeanPostProcessor;
+
+    /**
+     * The scheduled push clears the shared "dockerImageCleanupInfo" map before it refills it from the database. A test that fills the same map itself (for example
+     * {@code BuildAgentDockerServiceTest}) would lose its entries whenever the push fires in between, so the test context configures the task to never fire on its own.
+     */
+    @Test
+    void testScheduledPushOfDockerImageCleanupInfoNeverFiresOnItsOwnInTests() {
+        // The runnable of a scheduled task is wrapped, its string form names the scheduled method.
+        FixedRateTask pushTask = scheduledAnnotationBeanPostProcessor.getScheduledTasks().stream().map(ScheduledTask::getTask)
+                .filter(task -> task instanceof FixedRateTask && task.getRunnable().toString().endsWith("SharedQueueManagementService.pushDockerImageCleanupInfo"))
+                .map(FixedRateTask.class::cast).findFirst().orElseThrow();
+
+        assertThat(pushTask.getIntervalDuration()).isGreaterThanOrEqualTo(ONE_YEAR);
+        assertThat(pushTask.getInitialDelayDuration()).isGreaterThanOrEqualTo(ONE_YEAR);
+    }
 
     @Test
     void testPushDockerImageCleanupInfo() {

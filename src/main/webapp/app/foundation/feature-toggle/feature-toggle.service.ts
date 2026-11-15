@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
@@ -18,21 +18,22 @@ export enum FeatureToggle {
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
     TutorSuggestions = 'TutorSuggestions',
-    AtlasML = 'AtlasML',
     AtlasAgent = 'AtlasAgent',
-    Memiris = 'Memiris',
     LectureContentProcessing = 'LectureContentProcessing',
     RateLimit = 'RateLimit',
     AutonomousTutor = 'AutonomousTutor',
     GlobalSearch = 'GlobalSearch',
     Deimos = 'Deimos',
     IrisProactiveStruggle = 'IrisProactiveStruggle',
+    PresentationAssessments = 'PresentationAssessments',
+    GlobalSearchReconcile = 'GlobalSearchReconcile',
+    GlobalSearchReconcileOrphan = 'GlobalSearchReconcileOrphan',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
 const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureToggle);
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeatureToggleService {
     private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);

@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -48,7 +49,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final String TEST_RETURN_URL = "http://unused.return.url/";
 
-    private static final String TEST_PREFIX = "exerciseSharingServiceTest";
+    private static final String TEST_PREFIX = "exercisesharingservicetest";
 
     public static final String INSTRUCTOR1 = TEST_PREFIX + "instructor";
 
@@ -82,9 +83,25 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     void shouldReturnFalseForInvalidTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
-        // the token is invalid, however it would return the path
-        // assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
         assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForMalformedBase64Token() {
+        // A single Base64 character passes the alphabet check but cannot be decoded.
+        assertThat(exerciseSharingService.getExportedExerciseByToken("a")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForMalformedUtf8Token() {
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] { (byte) 0xff });
+        assertThat(exerciseSharingService.getExportedExerciseByToken(token)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForTokenContainingNullByte() {
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] { 0 });
+        assertThat(exerciseSharingService.getExportedExerciseByToken(token)).isEmpty();
     }
 
     @Test
@@ -224,7 +241,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR1, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR1, roles = "USER")
     void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
         userUtilService.addInstructor(INSTRUCTOR1);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);

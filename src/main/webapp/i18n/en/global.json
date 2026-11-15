@@ -7,8 +7,11 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "noEntriesYet": "No entries yet",
+            "serverNotReachable": "Server not reachable",
             "filterOptions": "Filter options",
             "noMatchingOptions": "No matching options",
+            "selectedCount": "{{ count }} selected",
             "unset": "Unset",
             "create": "Create",
             "start": "Start",
@@ -18,8 +21,12 @@
             "new": "New",
             "expand": "Expand",
             "collapse": "Collapse",
+            "expandMenu": "Expand menu (Ctrl + M)",
+            "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "resizePanels": "Resize panels",
+            "selectAllRows": "Select all rows"
         },
         "weekdays": {
             "monday": "Monday",
@@ -43,6 +50,10 @@
         "search": {
             "title": "Search",
             "placeholder": "Search or ask a question...",
+            "contentHitsRow": "Slides & videos: {{ count }} hits in {{ lectures }}",
+            "contentHitsRowAction": "Show",
+            "showMoreResults": "Show more results",
+            "resultsLabel": "Search results",
             "noResultsFound": "No results found",
             "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",
@@ -67,8 +78,8 @@
                 "lecturesDescription": "Search lectures and lecture units by title",
                 "slidesAndVideosTitle": "Slides & Videos",
                 "slidesAndVideosDescription": "Search lecture slides and video transcripts",
-                "communicationTitle": "Communication",
-                "communicationDescription": "Search channels and messages",
+                "channelsTitle": "Channels",
+                "channelsDescription": "Search course channels by name and description",
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Search frequently asked questions",
                 "examsTitle": "Exams",
@@ -96,19 +107,21 @@
                     "file-upload": "File Upload Exercise",
                     "exercise": "Exercise",
                     "exam": "Exam",
-                    "test-exam": "Test Exam",
+                    "test-exam": "Practice Exam",
                     "lecture": "Lecture",
                     "lecture-unit": "Lecture Unit",
                     "faq": "FAQ",
                     "channel": "Channel",
                     "course": "Course",
-                    "message": "Message"
+                    "message": "Message",
+                    "page": "Page"
                 }
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
             "courseFallbackLabel": "Course {{ id }}",
             "editFilter": "Edit filter",
+            "filterSelected": "Filter {{ filter }} selected. Press Backspace to remove it.",
             "noFilterMatches": "No matches",
             "loadingCourses": "Loading your courses...",
             "noCoursesToFilter": "You have no courses to filter by",
@@ -148,14 +161,35 @@
             },
             "searchFailed": "Search failed. Please try again.",
             "contentSearchPrompt": "Enter a search term to search lecture slides and videos.",
-            "contentSearchDisabled": "Slides and videos cannot be searched in these courses.",
             "contentSearchUnavailable": "Searching slides and videos is currently unavailable. Please try again later.",
             "irisAnswerShowMore": "Show more",
             "irisAnswerShowLess": "Show less",
             "irisAnswerMore": "more",
             "irisAnswerThinking": "Iris is thinking…",
+            "irisAnswerStageSearching": "Searching course material…",
+            "irisAnswerStageRanking": "Ranking search results…",
+            "irisAnswerStageFoundSources": "Found material in {{summary}}…",
+            "irisAnswerStageFoundSourcesAndMore": "Found material in {{summary}} +{{extra}} more…",
+            "irisAnswerStageGenerating": "Writing the answer…",
+            "irisAnswerNoneRelevant": "Iris looked, but nothing found is relevant enough to answer confidently.",
+            "irisAnswerNoneRelevantHint": "The results below might still help.",
+            "irisAnswerFailed": "Iris ran into a problem while answering. The search results are unaffected.",
+            "irisAnswerRetry": "Try again",
             "irisCollapseSources": "Show fewer sources",
-            "irisAiBadge": "AI"
+            "irisAiBadge": "AI",
+            "irisHandoffFollowUp": "Have a follow-up? Continue chatting with me about",
+            "irisHandoffOpenChat": "Open chat",
+            "entityType": {
+                "exercise": "Exercise",
+                "lecture": "Lecture",
+                "lecture_unit": "Lecture unit",
+                "exam": "Exam",
+                "faq": "FAQ",
+                "channel": "Channel",
+                "course": "Course",
+                "post": "Post",
+                "answer_post": "Reply"
+            }
         },
         "menu": {
             "home": "Home",
@@ -163,7 +197,7 @@
             "courses": "Courses",
             "student": "Student",
             "course": "Management",
-            "courseRequests": "Request a new Course",
+            "courseRequests": "Request new course",
             "entities": {
                 "main": "Entities",
                 "course": "Course",
@@ -222,11 +256,9 @@
                     "fileUpload": "File Upload",
                     "quiz": "Quiz"
                 },
-                "metis": {
-                    "post": "Post",
-                    "answerPost": "Reply"
-                },
                 "messages": {
+                    "post": "Post",
+                    "answerPost": "Reply",
                     "conversation": "Conversation",
                     "conversationParticipant": "Conversation Details"
                 }
@@ -280,6 +312,7 @@
                     "metrics": "Metrics",
                     "statistics": "Statistics",
                     "featureUsage": "Feature Usage",
+                    "errorAnalysis": "Error Analysis",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",
@@ -290,7 +323,9 @@
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
                     "dependencies": "Dependencies",
-                    "irisDashboard": "Iris Dashboard"
+                    "science": "Science",
+                    "irisDashboard": "Iris Dashboard",
+                    "courseIngestionDashboard": "Index Dashboard"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
@@ -362,6 +397,7 @@
                     "required": "Please enter your current password."
                 },
                 "newpassword": {
+                    "maxbytes": "Your password is too long. Use at most {{max}} UTF-8 bytes; accented letters and emojis can use several bytes each.",
                     "required": "Your new password is required.",
                     "minlength": "Your password is required to be at least {{min}} characters.",
                     "maxlength": "Your password cannot be longer than {{max}} characters.",
@@ -388,8 +424,8 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} of {{total}}",
             "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",
@@ -416,7 +452,20 @@
             "invalidTime": "Please enter a valid time.",
             "openTime": "Open clock",
             "timeDialog": "Choose time",
-            "timePlaceholder": "HH:mm"
+            "timePlaceholder": "HH:mm",
+            "dateDialog": "Choose date",
+            "invalidDate": "Please enter a valid date.",
+            "datePlaceholder": "DD.MM.YYYY"
+        },
+        "imageCropper": {
+            "sourceImage": "Image to crop"
+        },
+        "stepState": {
+            "pending": "Not started",
+            "current": "In progress",
+            "complete": "Done",
+            "failed": "Failed",
+            "skipped": "Skipped"
         }
     },
     "entity": {
@@ -425,6 +474,7 @@
         "controlCenter": "Control Center",
         "action": {
             "add": "Add",
+            "create": "Create",
             "addblob": "Add blob",
             "addimage": "Add image",
             "back": "Back",
@@ -458,6 +508,7 @@
             "remove": "Remove",
             "purge": "Purge",
             "archive": "Archive",
+            "warn": "Warn",
             "submit": "Submit",
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDueDateMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the due date, your score will not be counted.",
@@ -467,6 +518,7 @@
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
+            "dismiss": "Dismiss",
             "done": "Done",
             "finish": "Finish",
             "import": "Import",
@@ -514,7 +566,10 @@
             "value": "Value"
         },
         "delete": {
-            "title": "Confirm delete operation"
+            "title": "Confirm delete operation",
+            "summary": {
+                "largeCountWarning": "This deletes a large amount of data. Please check the numbers below carefully before you confirm."
+            }
         },
         "unlink": {
             "title": "Confirm unlink operation"

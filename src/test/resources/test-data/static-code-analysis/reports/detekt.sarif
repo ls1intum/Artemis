@@ -1,0 +1,124 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/src/de/tum/in/ase/QuickSort.kt"
+                },
+                "region": {
+                  "endColumn": 6,
+                  "endLine": 36,
+                  "startColumn": 5,
+                  "startLine": 15
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "A member is named after the class. This might result in confusion. Either rename the member or change it to a constructor."
+          },
+          "ruleId": "detekt.naming.MemberNameEqualsClassName"
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/src/de/tum/in/ase/Client.kt"
+                },
+                "region": {
+                  "endColumn": 51,
+                  "endLine": 8,
+                  "startColumn": 48,
+                  "startLine": 8
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "This expression contains a magic number. Consider defining it to a well named constant."
+          },
+          "ruleId": "detekt.style.MagicNumber"
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/src/de/tum/in/ase/Client.kt"
+                },
+                "region": {
+                  "endColumn": 54,
+                  "endLine": 19,
+                  "startColumn": 44,
+                  "startLine": 19
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Function parameter `sortPolicy` is unused."
+          },
+          "ruleId": "detekt.style.UnusedParameter"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "downloadUri": "https://github.com/detekt/detekt/releases/download/v1.23.8/detekt",
+          "fullName": "detekt",
+          "guid": "022ca8c2-f6a2-4c95-b107-bb72c43263f3",
+          "informationUri": "https://detekt.dev",
+          "language": "en",
+          "name": "detekt",
+          "organization": "detekt",
+          "rules": [
+            {
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://detekt.dev/naming.html#membernameequalsclassname",
+              "id": "detekt.naming.MemberNameEqualsClassName",
+              "name": "MemberNameEqualsClassName",
+              "shortDescription": {
+                "text": "A member should not be given the same name as its parent class or object."
+              }
+            },
+            {
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://detekt.dev/style.html#magicnumber",
+              "id": "detekt.style.MagicNumber",
+              "name": "MagicNumber",
+              "shortDescription": {
+                "text": "Report magic numbers. Magic number is a numeric literal that is not defined as a constant and hence it's unclear what the purpose of this number is. It's better to declare such numbers as constants and give them a proper name. By default, -1, 0, 1, and 2 are not considered to be magic numbers."
+              }
+            },
+            {
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://detekt.dev/style.html#unusedparameter",
+              "id": "detekt.style.UnusedParameter",
+              "name": "UnusedParameter",
+              "shortDescription": {
+                "text": "Function parameter is unused and should be removed."
+              }
+            }
+          ],
+          "semanticVersion": "1.23.8",
+          "version": "1.23.8"
+        }
+      }
+    }
+  ]
+}

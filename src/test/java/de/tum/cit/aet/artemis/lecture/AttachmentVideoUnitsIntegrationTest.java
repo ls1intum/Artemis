@@ -3,13 +3,17 @@ package de.tum.cit.aet.artemis.lecture;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -23,10 +27,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
@@ -74,7 +81,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
         }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -102,19 +109,19 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testAll_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAll_WrongLecture_shouldReturnNotFound() throws Exception {
         // Tests that files created for another lecture are not accessible
         // even by instructors of other lectures
@@ -133,7 +140,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAll_IOException_ShouldReturnInternalServerError() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -153,7 +160,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void uploadSlidesForProcessing_asInstructor_shouldGetFilename() throws Exception {
         var filePart = createLectureFile(true);
 
@@ -163,7 +170,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void uploadSlidesForProcessing_asInstructor_shouldThrowError() throws Exception {
         var filePartWord = createLectureFile(false);
         request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload", null, "upload", filePartWord,
@@ -171,7 +178,16 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void uploadSlidesForProcessing_corruptedPdf_shouldReturnBadRequest() throws Exception {
+        var corruptedPdf = new MockMultipartFile("file", "corrupted.pdf", MediaType.APPLICATION_PDF_VALUE, "This is plain text, not a PDF document".getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload").file(corruptedPdf);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidPdf"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_shouldGetUnitsInformationVideo() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -184,7 +200,21 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getAttachmentVideoUnitsData_asInstructor_slideMentioningOutlineWithoutEnoughUnitsIsIgnored() throws Exception {
+        // Page 12 contains the word "Outline" but lists only two units, so it cannot be the outline slide of a third unit
+        var lectureFile = createLectureFile(true, 12);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.OK,
+                LectureUnitSplitInformationDTO.class);
+
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_realSlides() throws Exception {
         var realFile = readFromFile();
         String filename = manualFileUpload(lecture1.getId(), realFile);
@@ -197,7 +227,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -207,7 +237,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSlidesToRemove_asInstructor_shouldGetUnitsInformation() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -223,7 +253,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSlidesToRemove_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -237,7 +267,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnits_asInstructor_shouldCreateAttachmentVideoUnits() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -264,7 +294,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnits_asInstructor_shouldRemoveSlides() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -283,7 +313,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment video units (1 break slide is removed and 1 solution slide is removed)
 
         List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnitDTO::id).toList();
-        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);
+        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds).stream()
+                .sorted(Comparator.comparing(AttachmentVideoUnit::getId)).toList(); // findAllById does not keep an order; the first unit was created first
 
         assertThat(attachmentVideoUnitList).hasSize(2);
         assertThat(attachmentVideoUnitList).extracting(AttachmentVideoUnit::getId).containsExactlyInAnyOrderElementsOf(attachmentVideoUnitIds);
@@ -309,7 +340,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnits_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -336,14 +367,16 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     /**
      * Generates a lecture file with 20 pages and with 2 slides that contain Outline
      *
-     * @param shouldBePDF true if the file should be PDF, false if it should be word doc
+     * @param shouldBePDF            true if the file should be PDF, false if it should be word doc
+     * @param additionalOutlinePages pages (1-based) that additionally contain the word Outline and list the same two units
      * @return MockMultipartFile lecture file
      */
-    private MockMultipartFile createLectureFile(boolean shouldBePDF) throws IOException {
+    private MockMultipartFile createLectureFile(boolean shouldBePDF, int... additionalOutlinePages) throws IOException {
         var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
             if (shouldBePDF) {
                 for (int i = 1; i <= 20; i++) {
+                    final int page = i;
                     document.addPage(new PDPage());
                     PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
 
@@ -351,7 +384,14 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
                         case 6 -> generateBreakSlide(contentStream, font);
                         case 7 -> generateOutlineSlide(contentStream, font, "Example solution");
                         case 2, 8 -> generateOutlineSlide(contentStream, font, "Outline");
-                        default -> generateContentSlide(contentStream, font);
+                        default -> {
+                            if (IntStream.of(additionalOutlinePages).anyMatch(outlinePage -> outlinePage == page)) {
+                                generateOutlineSlide(contentStream, font, "Outline");
+                            }
+                            else {
+                                generateContentSlide(contentStream, font);
+                            }
+                        }
                     }
                 }
                 document.save(outputStream);

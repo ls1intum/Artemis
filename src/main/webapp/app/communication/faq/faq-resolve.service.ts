@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -6,7 +6,7 @@ import { filter, map } from 'rxjs/operators';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FaqResolve implements Resolve<Faq> {
     private faqService = inject(FaqService);
 
@@ -14,7 +14,7 @@ export class FaqResolve implements Resolve<Faq> {
         const faqId = route.params['faqId'];
         const courseId = route.params['courseId'];
         if (faqId) {
-            return this.faqService.find(courseId, faqId).pipe(
+            return this.faqService.findForManagement(courseId, faqId).pipe(
                 filter((response: HttpResponse<Faq>) => response.ok),
                 map((faq: HttpResponse<Faq>) => faq.body!),
             );

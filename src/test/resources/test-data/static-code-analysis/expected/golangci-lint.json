@@ -1,0 +1,126 @@
+{
+  "tool": "GOLANGCI_LINT",
+  "issues": [
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/bubblesort.go",
+      "startLine": 1,
+      "endLine": 1,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "package-comments: should have a package comment",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/bubblesort.go",
+      "startLine": 3,
+      "endLine": 3,
+      "startColumn": 6,
+      "endColumn": 7,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported type BubbleSort should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/bubblesort.go",
+      "startLine": 5,
+      "endLine": 5,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported function NewBubbleSort should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/client/client.go",
+      "startLine": 1,
+      "endLine": 1,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "package-comments: should have a package comment",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/context.go",
+      "startLine": 3,
+      "endLine": 3,
+      "startColumn": 6,
+      "endColumn": 7,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported type Context should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/context.go",
+      "startLine": 5,
+      "endLine": 5,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported function NewContext should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/mergesort.go",
+      "startLine": 3,
+      "endLine": 3,
+      "startColumn": 6,
+      "endColumn": 7,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported type MergeSort should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/mergesort.go",
+      "startLine": 5,
+      "endLine": 5,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported function NewMergeSort should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/policy.go",
+      "startLine": 3,
+      "endLine": 3,
+      "startColumn": 6,
+      "endColumn": 7,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported type Policy should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/policy.go",
+      "startLine": 5,
+      "endLine": 5,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported function NewPolicy should have comment or be unexported",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/sortstrategy.go",
+      "startLine": 3,
+      "endLine": 3,
+      "startColumn": 6,
+      "endColumn": 7,
+      "rule": "revive",
+      "category": "Lint",
+      "message": "exported: exported type SortStrategy should have comment or be unexported",
+      "priority": "warning"
+    }
+  ]
+}

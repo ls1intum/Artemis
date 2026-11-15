@@ -63,6 +63,15 @@ public class ExamAccessApi extends AbstractExamApi {
     }
 
     /**
+     * Checks actual student-exam enrollment and publication for the fixed student snapshot operation.
+     *
+     * @param exercise the exam exercise
+     */
+    public void checkStudentExampleSolutionAccessElseThrow(Exercise exercise) {
+        examAccessService.checkStudentExampleSolutionAccessElseThrow(exercise);
+    }
+
+    /**
      * Checks if the user is allowed to see the exam result.
      * Otherwise, throws a {@link AccessForbiddenException}.
      *
@@ -74,4 +83,15 @@ public class ExamAccessApi extends AbstractExamApi {
     public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
         examAccessService.checkIfAllowedToGetExamResult(examExercise, studentParticipation, user);
     }
+
+    /**
+     * Checks exam result timing for the fixed owner projection.
+     *
+     * @param examExercise         the owning exam exercise
+     * @param studentParticipation the participation used for individual working time
+     */
+    public void checkIfOwnerAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation) {
+        examAccessService.checkIfOwnerAllowedToGetExamResult(examExercise, studentParticipation);
+    }
+
 }

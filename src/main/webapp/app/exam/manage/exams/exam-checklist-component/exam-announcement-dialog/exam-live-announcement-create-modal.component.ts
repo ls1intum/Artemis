@@ -1,6 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, model, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -16,53 +18,85 @@ import { UnorderedListAction } from 'app/editor/monaco-editor/model/actions/unor
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-modal',
     templateUrl: './exam-live-announcement-create-modal.component.html',
-    styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
-    imports: [FormsModule, TranslateDirective, MarkdownEditorMonacoComponent, ExamLiveEventComponent, FaIconComponent],
+    imports: [
+        FormsModule,
+        ArtemisDatePipe,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        MarkdownEditorMonacoComponent,
+        ExamLiveEventComponent,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+    ],
 })
 export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
-    private examManagementService = inject(ExamManagementService);
+    private readonly examManagementService = inject(ExamManagementService);
+    private readonly destroyRef = inject(DestroyRef);
 
-    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
+    readonly actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
-    courseId!: number; // set in ngOnInit() from dialog config data
-    examId!: number; // set in ngOnInit() from dialog config data
+    readonly visible = model(true);
+    readonly courseId = input.required<number>();
+    readonly examId = input.required<number>();
 
     readonly textContent = signal<string>(undefined!);
     html?: SafeHtml;
 
     readonly status = signal<'not_submitted' | 'submitting' | 'submitted'>('not_submitted');
 
+    readonly pastAnnouncements = signal<ExamWideAnnouncementEvent[]>([]);
+    readonly historyLoadingFailed = signal(false);
+
     readonly announcement = signal<ExamWideAnnouncementEvent | undefined>(undefined);
+
+    readonly sentAnnouncement = computed(() => {
+        const announcement = this.announcement();
+        return announcement && !this.pastAnnouncements().some((event) => event.id === announcement.id) ? announcement : undefined;
+    });
+    private historyRequestId = 0;
 
     // Icons
     faSpinner = faSpinner;
     faCheckCircle = faCheckCircle;
 
-    ngOnInit(): void {
-        const data = this.dialogConfig?.data;
-        if (data) {
-            if (data.courseId !== undefined) {
-                this.courseId = data.courseId;
-            }
-            if (data.examId !== undefined) {
-                this.examId = data.examId;
-            }
-        }
+    ngOnInit() {
+        this.loadAnnouncements();
+    }
+
+    private loadAnnouncements() {
+        const requestId = ++this.historyRequestId;
+        this.historyLoadingFailed.set(false);
+        this.examManagementService
+            .getAnnouncements(this.courseId(), this.examId())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (events) => {
+                    if (requestId === this.historyRequestId) {
+                        this.pastAnnouncements.set(events);
+                    }
+                },
+                error: () => {
+                    if (requestId === this.historyRequestId) {
+                        this.historyLoadingFailed.set(true);
+                    }
+                },
+            });
     }
 
     submitAnnouncement() {
         this.status.set('submitting');
-        this.examManagementService.createAnnouncement(this.courseId, this.examId, this.textContent()).subscribe({
+        this.examManagementService.createAnnouncement(this.courseId(), this.examId(), this.textContent()).subscribe({
             next: (event: ExamWideAnnouncementEvent) => {
                 this.status.set('submitted');
                 this.announcement.set(event);
+                this.loadAnnouncements();
             },
             error: () => {
                 this.status.set('not_submitted');
@@ -81,9 +115,9 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     }
 
     /**
-     * Closes the modal by dismissing it
+     * Closes the dialog by dismissing it
      */
     clear() {
-        this.dialogRef.close('cancel');
+        this.visible.set(false);
     }
 }

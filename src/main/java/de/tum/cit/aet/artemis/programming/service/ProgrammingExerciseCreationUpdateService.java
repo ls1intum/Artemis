@@ -36,7 +36,10 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -45,6 +48,7 @@ import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -108,6 +112,12 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    private final ExerciseConfigurationService exerciseConfigurationService;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     /**
@@ -122,9 +132,9 @@ public class ProgrammingExerciseCreationUpdateService {
         if (automaticAfterDueDateService.isEmpty()) {
             return programmingExercise.getDueDate() == null || buildAndTestOffset == null ? null : programmingExercise.getDueDate().plus(buildAndTestOffset);
         }
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         try {
-            return automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
+            return automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildConfig, buildAndTestOffset);
         }
         catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
@@ -140,7 +150,12 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -167,31 +182,34 @@ public class ProgrammingExerciseCreationUpdateService {
      * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
      *
      * @param programmingExercise The programmingExercise that should be setup
+     * @param buildConfig         Its build configuration, which is stored as a row of its own
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
-        return createProgrammingExercise(programmingExercise, emptyRepositories, false);
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, boolean emptyRepositories)
+            throws GitAPIException, IOException {
+        return createProgrammingExercise(programmingExercise, buildConfig, emptyRepositories, false);
     }
 
     /**
      * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
      *
      * @param programmingExercise           The programmingExercise that should be setup
+     * @param buildConfig                   Its build configuration, which is stored as a row of its own
      * @param emptyRepositories             if true, clear sources in template, solution, and test repositories after setup
      * @param skipRepositoryAndBuildTrigger if true, skip repository setups, initial submissions, and build plan setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories, boolean skipRepositoryAndBuildTrigger)
-            throws GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, boolean emptyRepositories,
+            boolean skipRepositoryAndBuildTrigger) throws GitAPIException, IOException {
         if (programmingExercise == null) {
             throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
         }
-        if (programmingExercise.getBuildConfig() == null) {
+        if (buildConfig == null) {
             throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
         validateProblemStatementLength(programmingExercise.getProblemStatement());
@@ -206,11 +224,11 @@ public class ProgrammingExerciseCreationUpdateService {
         // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
-        programmingExercise.getBuildConfig().setId(null);
+        buildConfig.setId(null);
 
-        programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(programmingExercise);
+        programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(programmingExercise, buildConfig);
         if (programmingExercise.isCourseExercise()) {
-            prepareAndValidateTimelineForUpdate(programmingExercise, null);
+            prepareAndValidateTimelineForUpdate(programmingExercise, buildConfig, null);
         }
         else {
             programmingExercise.validateDates();
@@ -219,16 +237,22 @@ public class ProgrammingExerciseCreationUpdateService {
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
-        // We save once in order to generate an id for the programming exercise
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
+        // These values only depend on the course and short name, so persist them with the initial insert.
+        programmingExercise.generateAndSetProjectKey();
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
 
+        // We save once in order to generate an id for the programming exercise. The build configuration names the
+        // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Like the build configuration, the team assignment and plagiarism detection configuration name the exercise, so they
+        // are written afterwards. The re-fetches below do not carry them, so the stored ones are put back on the exercise
+        // that is returned.
+        exerciseConfigurationService.initialize(savedProgrammingExercise, programmingExercise.getTeamAssignmentConfig(), programmingExercise.getPlagiarismDetectionConfig());
+        final var storedTeamAssignmentConfig = savedProgrammingExercise.getStoredTeamAssignmentConfig();
+        final var storedPlagiarismDetectionConfig = savedProgrammingExercise.getPlagiarismDetectionConfig();
 
-        savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
-        programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
-        savedProgrammingExercise.generateAndSetProjectKey();
-        savedProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
+        buildConfig.setBranch(defaultBranch);
+        var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
 
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         initParticipations(savedProgrammingExercise);
@@ -237,26 +261,22 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        programmingExerciseRepository.updateRepositoryMetadataForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
-
-        // Make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
-            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator, emptyRepositories);
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 
+        // The tasks are written by the task service itself and nothing on the exercise has changed since it was last saved or read, so there is nothing to save and read back here.
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise, savedBuildConfig);
             final boolean buildAndTestDateChanged = !Objects.equals(savedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
             setBuildAndTestDate(savedProgrammingExercise, computedBuildAndTestDate);
             if (buildAndTestDateChanged) {
@@ -267,10 +287,15 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
-        // Restore competency links with proper exercise reference before final save
+        // Only the competency links still need writing. Keep their cascade save, but avoid merging and re-fetching
+        // the entire exercise graph when no links were selected (or none survived resolution).
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
-
-        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = savedProgrammingExercise;
+        if (!savedProgrammingExercise.getCompetencyLinks().isEmpty()) {
+            createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        }
+        createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
+        createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 
         // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories. Done asynchronously (after the exercise is saved) so
         // exercise creation does not block on token generation for potentially many staff members; the clone-dialog lazy fallback covers the brief window before the tokens exist.
@@ -288,7 +313,10 @@ public class ProgrammingExerciseCreationUpdateService {
     public ProgrammingExercise setupBuildPlansAndTriggerInitialBuilds(ProgrammingExercise programmingExercise) {
         programmingSubmissionService.createInitialSubmissions(programmingExercise);
         programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(programmingExercise);
-        return programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+        // The re-fetch does not carry the team assignment and plagiarism detection settings, so the stored ones are put back.
+        var refetched = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+        exerciseConfigurationService.carryOver(programmingExercise, refetched);
+        return refetched;
     }
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
@@ -350,6 +378,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
     /**
      * @param updatedProgrammingExercise     the changed programming exercise with its new values
+     * @param updatedBuildConfig             the build configuration the update carries, which is stored as a row of its own
      * @param notificationText               optional text about the changes for a notification
      * @param originalCompetencyIds          the IDs of competencies originally linked to the exercise before the update
      * @param originalBuildPlanConfiguration the build plan configuration before the update (for change detection)
@@ -359,21 +388,21 @@ public class ProgrammingExerciseCreationUpdateService {
      * @param originalProblemStatement       the problem statement before the update (for notification change detection)
      * @return the updated programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
-            @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
-            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) {
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, ProgrammingExerciseBuildConfig updatedBuildConfig,
+            @Nullable String notificationText, Set<Long> originalCompetencyIds, @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate,
+            @Nullable ZonedDateTime originalAssessmentDueDate, @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) {
         validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, buildAndTestOffset);
-        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
+        prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, updatedBuildConfig, buildAndTestOffset);
+        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise, updatedBuildConfig);
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
-        programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
+        programmingExerciseBuildConfigRepository.saveForExercise(updatedBuildConfig, updatedProgrammingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
@@ -384,6 +413,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration and
+        // adds the default row an incomplete creation left out. The plagiarism detection configuration is stored when the update carried one and read otherwise.
+        teamAssignmentConfigRepository.applyTo(savedProgrammingExercise, null);
+        plagiarismDetectionConfigRepository.applyTo(savedProgrammingExercise, updatedProgrammingExercise.getPlagiarismDetectionConfig());
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
@@ -401,11 +434,12 @@ public class ProgrammingExerciseCreationUpdateService {
      * Computes the effective build and test date and validates the resulting timeline.
      *
      * @param programmingExercise the exercise to prepare
+     * @param buildConfig         its build configuration, which is stored separately and read by the caller
      * @param buildAndTestOffset  the original offset from the due date, or {@code null} when no offset should be preserved
      */
-    public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) {
+    public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, @Nullable Duration buildAndTestOffset) {
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildConfig, buildAndTestOffset);
             setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
         }
         programmingExercise.validateDates();
@@ -437,14 +471,15 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
+     * Loads the exercise and updates its timeline. Callers that already hold the exercise's mutation lease must load it
+     * themselves and use the overload taking the exercise, so the read happens inside the lease.
      *
      * @param timelineUpdateDTO containing the timeline changes that have to be saved
      * @param notificationText  optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
         final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
         return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
     }
@@ -460,13 +495,25 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
             @Nullable Duration originalBuildAndTestOffset) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
+    /**
+     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
+     *
+     * @param programmingExercise the current exercise loaded while holding its mutation lease
+     * @param timelineUpdateDTO   containing the timeline changes that have to be saved
+     * @param notificationText    optional text for a notification to all students about the update
+     * @return the updated ProgrammingExercise object.
+     */
+    public ProgrammingExercise updateTimeline(ProgrammingExercise programmingExercise, ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
         return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
     }
 
     private ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
             @Nullable Duration originalBuildAndTestOffset, ProgrammingExercise programmingExercise) {
-
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
@@ -477,7 +524,9 @@ public class ProgrammingExerciseCreationUpdateService {
 
         if (automaticAfterDueDateService.isPresent()) {
             try {
-                final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+                var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+                final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildConfig,
+                        originalBuildAndTestOffset);
                 setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
             }
             catch (JacksonException e) {
@@ -486,11 +535,28 @@ public class ProgrammingExerciseCreationUpdateService {
             }
         }
         programmingExercise.validateDates();
+        validateBuildTimeWindowFitsDates(programmingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());
         programmingExerciseCreationScheduleService.createNotificationsOnUpdate(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * Rejects a date change that would leave the build time window of the exercise (if any) outside of its new dates, as no push would be built then.
+     * Callers that change several exercises call this before they persist anything.
+     *
+     * @param programmingExercise the exercise with its new dates
+     * @throws BadRequestAlertException if the stored window does not lie between the start (or release) date and the due date
+     */
+    public void validateBuildTimeWindowFitsDates(ProgrammingExercise programmingExercise) {
+        var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(programmingExercise.getId());
+        ZonedDateTime earliest = programmingExercise.getStartDate() != null ? programmingExercise.getStartDate() : programmingExercise.getReleaseDate();
+        if (window != null && !window.isWithin(earliest, programmingExercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "programmingExercise",
+                    "buildTimeWindowOutsideExerciseDates");
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -16,7 +16,7 @@ export interface IProgrammingExerciseParticipationService {
     checkIfParticipationHasResult: (participationId: number) => Observable<boolean>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);
@@ -120,14 +120,18 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         commitId: string,
         repositoryType?: string,
     ): Observable<Map<string, string> | undefined> {
+        const editorRepository = repositoryType && repositoryType !== 'USER';
         const params: { [key: string]: number | string } = {};
-        if (repositoryType) {
+        if (editorRepository) {
             params['repositoryType'] = repositoryType;
-        }
-        if (participationId) {
+            if (repositoryType === 'AUXILIARY' && participationId !== undefined) {
+                params['repositoryId'] = participationId;
+            }
+        } else if (participationId) {
             params['participationId'] = participationId;
         }
-        return this.http.get<Record<string, string>>(`${this.resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}`, { params: params }).pipe(
+        const operation = editorRepository ? 'files-content-commit-details/for-editor' : 'files-content-commit-details';
+        return this.http.get<Record<string, string>>(`${this.resourceUrl}${exerciseId}/${operation}?commitId=${commitId}`, { params }).pipe(
             map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
+import { DELETION_COMPLETION_TIMEOUT } from '../../timeouts';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
@@ -189,9 +190,25 @@ export class CourseManagementPage {
         }
 
         await this.page.locator('#confirm-entity-name').fill(course.title!);
-        const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
+        const responsePromise = this.page.waitForResponse((response) => response.url().endsWith(`${COURSE_ADMIN_BASE}/${course.id}`) && response.request().method() === 'DELETE');
         await deleteButton.click();
-        await responsePromise;
+        // The server accepts the deletion and deletes the course in the background.
+        expect((await responsePromise).status()).toBe(202);
+        await this.finishDeletionProgress();
+    }
+
+    /**
+     * Follows the progress overlay of a course deletion until the server reports its end, closes it (which leads to the courses) and
+     * fails with the reason of the server when the deletion failed.
+     */
+    private async finishDeletionProgress() {
+        const progress = this.page.getByTestId('course-operation-progress');
+        await expect(progress).toHaveAttribute('data-status', /COMPLETED|FAILED/, { timeout: DELETION_COMPLETION_TIMEOUT });
+        if ((await progress.getAttribute('data-status')) === 'FAILED') {
+            throw new Error(`The deletion of the course failed: ${(await progress.innerText()).replace(/\s+/g, ' ')}`);
+        }
+        await this.page.getByTestId('course-operation-close').click();
+        await expect(progress).toBeHidden();
     }
 
     /**
@@ -201,20 +218,23 @@ export class CourseManagementPage {
      * @param selector The selector for the group action button.
      */
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
-        const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
-        // Open the user-management dropdown and the add-<group> action, which navigates to the group page.
-        await this.page.locator('[data-testid="user-management-dropdown"]').click();
+        // The modal registers users through the bulk endpoint (POST .../{groupType}).
+        const responsePromise = this.page.waitForResponse((resp) => new RegExp(`/api/course/courses/\\d+/${groupType}$`).test(resp.url()) && resp.request().method() === 'POST');
+        // Open the user-management dropdown and the add-<group> action, which navigates to the members page.
+        await this.page.getByTestId('user-management-dropdown').click();
         await this.page.locator(selector).click();
-        // The group page hosts a PrimeNG autocomplete to search for and add users.
-        const searchInput = this.page.locator('p-autocomplete input');
-        await searchInput.waitFor({ state: 'visible', timeout: 30_000 });
-        await searchInput.fill(credentials.username);
-        // Pick the matching suggestion (rendered as "Name (login)"). The closing parenthesis keeps the match
-        // unambiguous, e.g. it selects artemis_test_user_1 rather than artemis_test_user_10.
-        await this.page
-            .getByTestId('user-autocomplete-option')
-            .filter({ hasText: `(${credentials.username})` })
-            .click();
+
+        // The members page hosts an "Add users" button that opens the shared user-registration modal.
+        await this.page.getByTestId('course-group-add-users-button').click();
+        const dialog = this.page.getByRole('dialog');
+        await dialog.getByTestId('search-filter').locator('input').fill(credentials.username);
+
+        // Select the exact login (the login cell carries a per-login test id, so artemis_test_user_1
+        // is not confused with artemis_test_user_10) and confirm the bulk registration.
+        const userRow = dialog.locator('tbody tr').filter({ has: this.page.getByTestId(`user-registration-login-${credentials.username}`) });
+        await userRow.waitFor({ state: 'visible', timeout: 30_000 });
+        await userRow.locator('input[type="checkbox"]').check();
+        await dialog.getByTestId('user-registration-confirm-button').click();
         await responsePromise;
     }
 
@@ -265,7 +285,7 @@ export class CourseManagementPage {
 
     async checkCourseHasNoIcon() {
         await expect(this.page.locator('#delete-course-icon')).not.toBeVisible();
-        await expect(this.page.locator('.no-image')).toBeVisible();
+        await expect(this.page.getByTestId('course-icon-placeholder')).toBeVisible();
     }
 
     async removeIconFromCourse() {
@@ -286,8 +306,8 @@ export class CourseManagementPage {
 
     async openSubmissionsForExerciseAndCourse(courseID: number, exerciseID: number) {
         await this.openExercisesOfCourse(courseID);
-        await this.page.click(`[href="/course-management/${courseID}/modeling-exercises/${exerciseID}/scores"]`);
-        await this.page.waitForURL('**/scores');
+        await this.page.click(`[href="/course-management/${courseID}/modeling-exercises/${exerciseID}/participations"]`);
+        await this.page.waitForURL('**/participations');
     }
 
     async checkIfStudentSubmissionExists(studentName: string) {

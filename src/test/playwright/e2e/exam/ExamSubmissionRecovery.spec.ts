@@ -2,10 +2,8 @@ import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import { admin, studentTwo } from '../../support/users';
 import { generateUUID, getExercise } from '../../support/utils';
-import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from '../../support/constants';
-import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 import { POLLING_INTERVAL, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 import { Commands } from '../../support/commands';
@@ -59,7 +57,7 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
 
     test.beforeEach('Create exam with a multiple-choice quiz', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID() });
+        exam = await examAPIRequests.createRunningExam({ course, title: 'exam' + generateUUID() });
         quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
         await examAPIRequests.registerStudentForExam(exam, studentTwo);
         await examAPIRequests.generateMissingIndividualExams(exam);
@@ -217,16 +215,3 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         await examAPIRequests.deleteExam(exam);
     });
 });
-
-async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
-    const defaultExamConfig = {
-        course,
-        title: 'exam' + generateUUID(),
-        visibleDate: dayjs().subtract(3, 'minutes'),
-        startDate: dayjs().subtract(2, 'minutes'),
-        endDate: dayjs().add(1, 'hour'),
-        examMaxPoints: 10,
-        numberOfExercisesInExam: 1,
-    };
-    return await examAPIRequests.createExam({ ...defaultExamConfig, ...customExamConfig });
-}

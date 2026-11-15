@@ -1,6 +1,6 @@
 # Easy Artemis set up and running playwright locally
 
-> **Recommended:** For the fastest local E2E setup, use `./run-e2e-tests-local-fast.sh` from the repository root instead.
+> **Recommended:** For the fastest local E2E setup, use `./supporting_scripts/e2e/run-e2e-tests-local-fast.sh` from the repository root instead.
 > It handles everything (database, server, client, test users, Playwright) in a single command and automatically
 > kills conflicting processes on ports 8080/9000. See the [E2E testing docs](../../documentation/docs/developer/e2e-testing-playwright.mdx)
 > for details.

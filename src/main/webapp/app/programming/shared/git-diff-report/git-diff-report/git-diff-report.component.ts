@@ -5,7 +5,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
 
 import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title/git-diff-file-panel-title.component';
 import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -29,6 +29,8 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
     ],
 })
 export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
+    private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
     protected readonly faSpinner = faSpinner;
     protected readonly faTableColumns = faTableColumns;
     protected readonly faAngleUp = faAngleUp;
@@ -89,8 +91,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     readonly removedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.removedLineCount);
 
     readonly diffPanelContainers = viewChildren<ElementRef<HTMLElement>>('diffPanelContainer');
-
-    private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     constructor() {
         effect(() => {

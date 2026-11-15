@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
@@ -9,10 +9,10 @@ import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/founda
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 /** Per-bar metadata used for tooltips and click navigation, keyed by the bar's chart name. */
 interface ExamScoreLookupEntry {
@@ -32,7 +32,7 @@ const AXIS_AND_PADDING_HEIGHT_PX = 48;
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -63,7 +63,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      */
     readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + Math.max(this.chartEntries().length, 1) * BAR_HEIGHT_PX);
 
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         percentScale: true,
         xAxis: { max: this.xScaleMax() },
@@ -77,29 +77,38 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         },
     }));
 
+    constructor() {
+        effect(() => this.initializeChart());
+    }
+
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
-        this.initializeChart();
     }
 
     private initializeChart(): void {
         const entries: ChartSeriesEntry[] = [];
         const colors: string[] = [];
         let xScaleMax = 100;
-        this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
-        const exerciseGroupAverage = this.averageScores().averagePercentage ?? 0;
-        entries.push({ name: this.averageScores().title, value: exerciseGroupAverage });
-        colors.push(this.determineColor(true, exerciseGroupAverage));
-        xScaleMax = Math.max(xScaleMax, exerciseGroupAverage);
+        this.lookup = {};
+        const exerciseGroupAverage = this.averageScores().averagePercentage;
+        if (exerciseGroupAverage != null && Number.isFinite(exerciseGroupAverage) && Number.isFinite(this.averageScores().averagePoints)) {
+            this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
+            entries.push({ name: this.averageScores().title, value: exerciseGroupAverage });
+            colors.push(this.determineColor(true, exerciseGroupAverage));
+            xScaleMax = Math.max(xScaleMax, exerciseGroupAverage);
+        }
         this.averageScores().exerciseResults.forEach((exercise) => {
-            const exerciseAverage = exercise.averagePercentage ?? 0;
+            const exerciseAverage = exercise.averagePercentage;
+            if (exerciseAverage == null || !Number.isFinite(exerciseAverage) || !Number.isFinite(exercise.averagePoints)) {
+                return;
+            }
             xScaleMax = Math.max(xScaleMax, exerciseAverage);
             entries.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
             this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
-                absoluteValue: exercise.averagePoints ?? 0,
+                absoluteValue: exercise.averagePoints,
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };
@@ -116,10 +125,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     /**
-     * We navigate to the exercise scores page when the user clicks on a data point
+     * We navigate to the exercise participation page when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
-        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores().exerciseGroupId, exerciseType, exerciseId, 'scores');
+        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores().exerciseGroupId, exerciseType, exerciseId, 'participations');
     }
 
     /**
@@ -132,10 +141,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     /**
-     * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
+     * Delegates the user to the participation page of the specific exam exercise if the corresponding bar is clicked
      * @param event the event identifying the clicked bar
      */
-    onSelect(event: TumUiChartSelectEvent) {
+    onSelect(event: TumAetUiChartSelectEvent) {
         if (!event.label) {
             return;
         }

@@ -41,9 +41,11 @@ public enum UserDeletionReferencePolicy {
     PARTICIPATION_TOKEN("participation_vcs_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     PARTICIPATION("participation", "student_id", UserDeletionDataCategory.PARTICIPATION, UserDeletionAction.DELETE, true),
     PASSKEY("passkey_credential", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
+    AGENT_ACCESS_TOKEN("personal_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     PLAGIARISM_CASE_STUDENT("plagiarism_case", "student_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DELETE, true),
     PLAGIARISM_VERDICT_AUTHOR("plagiarism_case", "verdict_by_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DETACH_ACTOR, true),
     POST_AUTHOR("post", "author_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
+    PRESENTATION_ASSESSMENT_INSTANCE("presentation_assessment_instance", "student_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DELETE, true),
     PUSH_NOTIFICATION_DEVICE("push_notification_device_configuration", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     QUIZ_QUESTION_PROGRESS("quiz_question_progress", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
     QUIZ_TRAINING_LEADERBOARD("quiz_training_leaderboard", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
@@ -52,6 +54,10 @@ public enum UserDeletionReferencePolicy {
     RESULT_ASSESSOR("result", "assessor_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DETACH_ACTOR, true),
     REVIEW_COMMENT_AUTHOR("review_comment", "author_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DETACH_ACTOR, true),
     SAVED_POST("saved_post", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
+    // The row records a decision the account holder made, not research data: the science events themselves are keyed by
+    // login and have no foreign key here, so deleting the account with its consent row removes the decision and leaves
+    // nothing pointing at the person. Not a blocker for the same reason - there is no retention cleanup that owns it.
+    SCIENCE_COURSE_CONSENT("science_course_consent", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     STUDENT_EXAM("student_exam", "user_id", UserDeletionDataCategory.EXAM, UserDeletionAction.DELETE, true),
     SUBMISSION_VERSION_AUTHOR("submission_version", "author_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DELETE, true),
     TEAM_MEMBERSHIP("team_student", "student_id", UserDeletionDataCategory.TEAM, UserDeletionAction.REMOVE_MEMBERSHIP, true),

@@ -2,7 +2,9 @@ import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
-import dayjs, { Dayjs } from 'dayjs';
+import { expect } from '@playwright/test';
+import dayjs from 'dayjs';
+import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import { generateUUID, newBrowserPage, waitForExamBuildAndTestAfterDueDate } from '../../support/utils';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
@@ -29,7 +31,6 @@ const course = { id: SEED_COURSES.examResults.id } as any;
 test.describe.serial('Exam Results', { tag: '@slow' }, () => {
     let exam: Exam;
     let studentExam: StudentExam;
-    let examEndDate: Dayjs;
     const exercises: Record<string, Exercise> = {};
 
     test.beforeAll('Create exam with all exercise types', async ({ browser }) => {
@@ -40,18 +41,14 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
 
-        // Allow enough time for 4 exercise groups to be created (including C programming
-        // build ~10-20s) AND for the student to submit all 4 exercises in the next beforeAll.
-        // The third beforeAll waits for this date + grace period before assessing.
-        // Use 3 minutes to provide buffer for slow CI environments with parallel test load.
-        examEndDate = dayjs().add(3, 'minutes');
+        // The exam stays open while the exercises are created and the student takes it; it is ended, and its results published,
+        // only once the student has handed in (see the assessment step below), so no guessed end date can cut the participation short.
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: examEndDate,
-            publishResultsDate: examEndDate.add(1, 'seconds'),
+            endDate: dayjs().add(30, 'minutes'),
             examMaxPoints: 40,
             numberOfExercisesInExam: 4,
             gracePeriod: 10,
@@ -101,12 +98,9 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
         }
-        // Save the last exercise before handing in (navigating away triggers auto-save).
-        // Wait briefly to ensure the modeling editor has fully processed the drag operations.
-        await page.waitForTimeout(2000);
+        // The last submission is the modeling exercise: hand in only once its editor holds everything that was dragged in.
+        await expect.poll(() => new ModelingEditor(page).getModelNodeCount(exercises['modeling'].id!)).toBeGreaterThanOrEqual(3);
         await examNavigation.openOrSaveExerciseByTitle(exerciseEntries[0][1].exerciseGroup!.title!);
-        // Wait for auto-save to complete
-        await page.waitForTimeout(3000);
         await examParticipation.handInEarly();
         await examStartEnd.pressShowSummary();
         await page.close();
@@ -115,13 +109,9 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
     test.beforeAll('Assess all submissions', async ({ browser }) => {
         test.setTimeout(300_000); // Assessment involves multiple dashboard loads with retries
         const page = await newBrowserPage(browser);
-        // Wait for exam end + grace period (10s) so submissions are available for assessment.
-        // Add extra buffer (5s) to account for clock drift and server processing time.
-        const graceEnd = examEndDate.add(10, 'seconds');
-        if (dayjs().isBefore(graceEnd)) {
-            const timeToWait = graceEnd.diff(dayjs(), 'ms') + 5000;
-            await page.waitForTimeout(timeToWait);
-        }
+        // End the exam now that the student has handed in: submissions become available for assessment and the results get published.
+        await Commands.login(page, admin);
+        exam = await new ExamAPIRequests(page).concludeExam(exam);
         await waitForExamBuildAndTestAfterDueDate(exam, page);
 
         const examAssessment = new ExamAssessmentPage(page);
@@ -230,10 +220,9 @@ async function navigateToExerciseAssessment(page: import('@playwright/test').Pag
     // Click "I have read the instructions" to register tutor participation (persisted server-side).
     // After this, reloads will show the submissions table directly.
     const participateButton = page.locator('[data-testid="participate-in-assessment"]');
-    await Commands.reloadUntilFound(page, participateButton, 10000, 90000);
+    await expect(participateButton).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
     await participateButton.click();
-    // Wait for the start-assessment button (reloadUntilFound works because participation is persisted)
     const startButton = page.locator('[data-testid="start-new-assessment"]').first();
-    await Commands.reloadUntilFound(page, startButton, 10000, 90000);
+    await expect(startButton).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
     await startButton.click();
 }

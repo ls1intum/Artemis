@@ -97,19 +97,18 @@ public class ProgrammingExerciseBuildPlanService {
      * Adds the default build plan to a programming exercise.
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
-     * @param programmingExercise the programming exercise whose build config should be normalized
+     * @param programmingExercise the programming exercise the configuration belongs to
+     * @param buildConfig         the build configuration that should be normalized
      */
-    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) {
-        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
+    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
+        if (!profileService.isLocalCIActive() || buildConfig.getBuildPlanConfiguration() != null) {
             return;
         }
-
-        var buildConfig = programmingExercise.getBuildConfig();
 
         // augment with default template or values
         if (buildPhasesTemplateService.isPresent()) {
             final BuildPhasesTemplateService templateService = buildPhasesTemplateService.orElseThrow();
-            List<BuildPhaseDTO> phases = templateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+            List<BuildPhaseDTO> phases = templateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig);
             if (programmingExercise.isExamExercise()) {
                 phases = templateService.applyExamDefaults(phases);
             }
@@ -130,14 +129,16 @@ public class ProgrammingExerciseBuildPlanService {
      *
      * @param originalBuildPlanConfiguration the build plan configuration before the update
      * @param updatedProgrammingExercise     the changed programming exercise with its new values
+     * @param updatedBuildConfig             the build configuration the update carries
      */
-    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) {
-        if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
+    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise,
+            ProgrammingExerciseBuildConfig updatedBuildConfig) {
+        if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedBuildConfig.getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
-        if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
+        if (updatedBuildConfig.getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
@@ -147,7 +148,7 @@ public class ProgrammingExerciseBuildPlanService {
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildPlanConfiguration);
+            updatedBuildConfig.setBuildPlanConfiguration(originalBuildPlanConfiguration);
         }
     }
 
@@ -160,17 +161,18 @@ public class ProgrammingExerciseBuildPlanService {
      * interpreted at build time, so persisting it is sufficient; {@link #updateBuildPlanForExercise} recreates the build
      * plans for external CI systems when the configuration changed.
      *
-     * @param programmingExercise    the programming exercise whose build config should be updated (with its build config loaded)
+     * @param programmingExercise    the programming exercise whose build config should be updated
+     * @param buildConfig            its build configuration, which is stored separately and read by the caller
      * @param buildPlanConfiguration the new build plan configuration (build phases, Docker image, timeout, and Docker flags)
      * @return the persisted build config
      */
-    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration) {
+    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
+            UpdateBuildPlanConfigurationDTO buildPlanConfiguration) {
         // reuse the shared build phase validation so a misconfiguration is rejected with the same error and key as on the
         // full exercise update path
         programmingExerciseValidationService.validateBuildPhases(buildPlanConfiguration.buildPlan().phases());
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
 
-        var buildConfig = programmingExercise.getBuildConfig();
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();
         // parse the serialized configuration back with the same bounded reader used at build time to reject an oversized plan up front
@@ -188,11 +190,11 @@ public class ProgrammingExerciseBuildPlanService {
         // Validate the Docker flags with the same rules the full programming exercise update applies (malformed JSON,
         // disallowed networks, invalid resource limits), so the build plan editor cannot persist a configuration the
         // regular editing path would reject. This runs before any save, so a rejected payload leaves the config unchanged.
-        programmingExerciseValidationService.validateDockerFlags(programmingExercise);
+        programmingExerciseValidationService.validateDockerFlags(buildConfig);
 
         // this endpoint is LocalCI-only, so updateBuildPlanForExercise never takes its non-LocalCI delete-and-recreate
         // branch here; it is still called for parity with the shared full exercise update path
-        updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise);
+        updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise, buildConfig);
 
         return programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
     }

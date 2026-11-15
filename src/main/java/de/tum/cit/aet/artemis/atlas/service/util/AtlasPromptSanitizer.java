@@ -7,23 +7,14 @@ import org.jspecify.annotations.Nullable;
 /**
  * Shared neutralization of instructor-authored text before it is interpolated into an Atlas LLM prompt.
  * <p>
- * Used by both the competency orchestrator (multi-line body of the execute prompt) and the AtlasML
- * similarity shortlist (single-line ranked list items). The two callers differ only in whether newlines
- * and tabs are preserved; everything else — zero-width neutralization, fence-delimiter neutralization,
- * and surrogate-safe hard truncation — is identical, so it lives here once.
+ * Used by the competency orchestrator for the multi-line body of the execute prompt.
  */
 public final class AtlasPromptSanitizer {
 
-    /** Every control character, the newline and the tab included, which the single-line form turns into spaces. */
-    private static final Pattern CONTROL_CHARACTER = Pattern.compile("\\p{Cntrl}");
-
-    /** Two or more whitespace characters in a row, which the single-line form collapses. */
-    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s{2,}");
-
-    /** Every control character except the newline and the tab, which the multi-line form keeps. */
+    /** Every control character except the newline and the tab, which are kept. */
     private static final Pattern CONTROL_CHARACTER_TO_STRIP = Pattern.compile("[\\p{Cntrl}&&[^\\n\\t]]");
 
-    /** Three or more newlines in a row, which the multi-line form collapses into one blank line. */
+    /** Three or more newlines in a row, which are collapsed into one blank line. */
     private static final Pattern NEWLINE_RUN = Pattern.compile("\\n{3,}");
 
     private static final String TRUNCATION_MARKER = " …[truncated]";
@@ -37,31 +28,22 @@ public final class AtlasPromptSanitizer {
     }
 
     /**
-     * Neutralizes {@code raw} for prompt interpolation: replaces zero-width characters with spaces, strips or
-     * collapses control characters depending on {@code singleLine}, neutralizes the user-data fence delimiters,
-     * and hard-truncates at {@code maxChars} without ever splitting a UTF-16 surrogate pair.
+     * Neutralizes {@code raw} for prompt interpolation: replaces zero-width characters with spaces, strips control
+     * characters except {@code \n}/{@code \t}, collapses 3+ consecutive newlines, neutralizes the user-data fence
+     * delimiters, and hard-truncates at {@code maxChars} without ever splitting a UTF-16 surrogate pair.
      *
      * @param raw              the untrusted instructor text (may be {@code null})
      * @param maxChars         the hard length cap after which the truncation marker is appended
-     * @param singleLine       {@code true} to force everything onto one line (all control chars incl. {@code \n}/{@code \t}
-     *                             become spaces, runs of whitespace collapse); {@code false} to preserve {@code \n}/{@code \t}
-     *                             and only collapse 3+ consecutive newlines
      * @param emptyPlaceholder the value returned when {@code raw} is null, blank, or reduces to empty after normalization
      * @return the sanitized, length-bounded string
      */
-    public static String sanitizeForPrompt(@Nullable String raw, int maxChars, boolean singleLine, String emptyPlaceholder) {
+    public static String sanitizeForPrompt(@Nullable String raw, int maxChars, String emptyPlaceholder) {
         if (raw == null || raw.isBlank()) {
             return emptyPlaceholder;
         }
         String normalized = raw.replace('\u00A0', ' ').replace('\u200B', ' ').replace('\u200C', ' ').replace('\u200D', ' ').replace('\uFEFF', ' ');
-        if (singleLine) {
-            normalized = CONTROL_CHARACTER.matcher(normalized).replaceAll(" ");
-            normalized = WHITESPACE_RUN.matcher(normalized).replaceAll(" ").strip();
-        }
-        else {
-            normalized = CONTROL_CHARACTER_TO_STRIP.matcher(normalized).replaceAll("");
-            normalized = NEWLINE_RUN.matcher(normalized).replaceAll("\n\n").strip();
-        }
+        normalized = CONTROL_CHARACTER_TO_STRIP.matcher(normalized).replaceAll("");
+        normalized = NEWLINE_RUN.matcher(normalized).replaceAll("\n\n").strip();
         if (normalized.isEmpty()) {
             return emptyPlaceholder;
         }

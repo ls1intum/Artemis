@@ -8,6 +8,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseCompetencyImportSettings } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { Course } from 'app/course/shared/entities/course.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { By } from '@angular/platform-browser';
 
 describe('ImportAllCourseCompetenciesModalComponent', () => {
     let component: ImportAllCourseCompetenciesModalComponent;
@@ -83,6 +85,24 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
                 isReleaseDate: undefined,
             },
         });
+    });
+
+    it('should not close the modal while the reference date holds text that is not a date', () => {
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        fixture.detectChanges();
+        const settings = fixture.debugElement.query(By.css('jhi-import-course-competencies-settings'));
+        const course = <Course>{ id: 2, title: 'Course 02', shortName: 'C2' };
+
+        settings.triggerEventHandler('referenceDateTextValidChange', false);
+        component.selectCourse(course);
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.courseCompetency.importSettings.referenceDateTextInvalid');
+        expect(closeModalSpy).not.toHaveBeenCalled();
+
+        settings.triggerEventHandler('referenceDateTextValidChange', true);
+        component.selectCourse(course);
+
+        expect(closeModalSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize table columns correctly', () => {

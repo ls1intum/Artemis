@@ -1,24 +1,32 @@
-import { Component, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCloudUploadAlt, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 
+let nextDropZoneId = 0;
+
+/** An area to drop PDFs on, with a button that selects them instead; each PDF becomes one content item. */
 @Component({
     selector: 'jhi-pdf-drop-zone',
-    standalone: true,
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './pdf-drop-zone.component.html',
-    styleUrls: ['./pdf-drop-zone.component.scss'],
+    styleUrl: './pdf-drop-zone.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfDropZoneComponent {
     private readonly alertService = inject(AlertService);
 
     filesDropped = output<File[]>();
     disabled = input<boolean>(false);
+    /** Translation key that says what dropping PDFs here does. */
+    /** Translation key of the heading; not named title, which would also become the tooltip of the element. */
+    readonly heading = input<string>('artemisApp.lecture.pdfUpload.dropZoneTitle');
+
+    protected readonly hintId = `pdf-drop-zone-hint-${nextDropZoneId++}`;
 
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 

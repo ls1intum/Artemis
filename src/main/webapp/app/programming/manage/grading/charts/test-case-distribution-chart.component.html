@@ -3,7 +3,14 @@
         <div class="d-flex justify-content-between">
             <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title"></h4>
             @if (tableFiltered) {
-                <button type="button" class="btn btn-info" (click)="resetTableFilter()" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"></button>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    severity="secondary"
+                    (click)="resetTableFilter()"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
+                ></button>
             }
         </div>
         <p>
@@ -13,7 +20,7 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>
     <div class="chart bg-light">
-        <tum-ui-bar-chart
+        <tumaet-ui-bar-chart
             [labels]="weightChartData().labels"
             [series]="weightChartData().series"
             [config]="weightChartConfig()"
@@ -27,7 +34,7 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
     <div class="points-chart bg-light">
-        <tum-ui-bar-chart
+        <tumaet-ui-bar-chart
             [labels]="pointsChartData().labels"
             [series]="pointsChartData().series"
             [config]="pointsChartConfig()"

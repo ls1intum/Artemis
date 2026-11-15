@@ -1,0 +1,20 @@
+- name: install_dependencies
+  script: 'npm ci --prefer-offline --no-audit'
+- name: build
+  script: npm run build
+- name: structural_tests
+  script: |-
+    status=0
+    npm run test:ci -- src/structural.test.ts || status=$?
+    mv junit.xml structural-junit.xml
+    exit $status
+  resultPaths:
+    - structural-junit.xml
+- name: behavior_tests
+  script: |-
+    status=0
+    npm run test:ci -- src/behavior.test.ts || status=$?
+    mv junit.xml behavior-junit.xml
+    exit $status
+  resultPaths:
+    - behavior-junit.xml

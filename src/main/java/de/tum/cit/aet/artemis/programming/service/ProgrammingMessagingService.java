@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
-import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.ALL_BUILDS_TRIGGERED;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.EXERCISE_SUBMISSION_PROCESSING;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SELECTED_BUILDS_RUN_COMPLETED;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SUBMISSION_PROCESSING;
 
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 
 @Profile(PROFILE_CORE)
@@ -64,24 +66,30 @@ public class ProgrammingMessagingService {
         this.participationRepository = participationRepository;
     }
 
-    private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + SUBMISSION_PROCESSING;
-    }
-
-    private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
-    }
-
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), BuildRunState.RUNNING);
         // Send a notification to the client to inform the instructor about started builds.
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
 
     public void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the completed builds.
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
+    }
+
+    /**
+     * Tells the clients that watch the exercise that a run of selected participations has queued its last build, without the
+     * notification to the instructors that the run of all builds sends. The rebuild of selected participations uses it so that the
+     * client can keep its retry action busy until then.
+     * <p>
+     * The message names the run. Several runs of one exercise may overlap, and a client must not take the end of another run for its own.
+     *
+     * @param programmingExercise the exercise whose builds were queued
+     * @param runId               the run that is done
+     */
+    public void notifyAboutCompletedSelectedBuildRun(ProgrammingExercise programmingExercise, String runId) {
+        websocketMessagingService.sendMessage(SELECTED_BUILDS_RUN_COMPLETED.at(programmingExercise.getId()), new SelectedBuildRunDTO(runId));
     }
 
     /**
@@ -134,19 +142,16 @@ public class ProgrammingMessagingService {
      * @param participationId the ID of the participation associated with the submission
      */
     public void notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO submission, long exerciseId, long participationId) {
-        Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElseThrow();
+        Participation participation = participationRepository.findWithProgrammingExerciseById(participationId).orElseThrow();
         if (participation instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // Eagerly load the team with students so their information can be used for the messages below
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING_TOPIC, submission));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING.at(), submission));
         }
 
-        // send an update to tutors, editors and instructors about submissions for template and solution participations
-        if (!(participation instanceof StudentParticipation)) {
-            String topicDestination = getSubmissionProcessingTopicForTAAndAbove(exerciseId);
-            websocketMessagingService.sendMessage(topicDestination, submission);
-        }
+        // Staff track processing for all participations on the exercise topic.
+        websocketMessagingService.sendMessage(EXERCISE_SUBMISSION_PROCESSING.at(exerciseId), submission);
     }
 }

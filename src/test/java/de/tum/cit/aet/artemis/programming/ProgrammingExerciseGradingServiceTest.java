@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -170,7 +171,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
-            programmingExercise.setBuildConfig(super.programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
             programmingExercise = super.programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = super.programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -192,7 +192,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotUpdateResultIfNoTestCasesExist() {
         // We do not want to use the test cases generated in the setup
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -204,7 +204,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldAddFeedbackForDuplicateTestCases() {
         // Adjust existing test cases to our need
         var testCases = getTestCases(programmingExercise);
@@ -241,7 +241,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
      * feedback table, and re-evaluating an exercise runs that flow again on a result that already carries them.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotAccumulateDuplicateTestCaseFeedbackOverSeveralRuns() {
         var testCases = getTestCases(programmingExercise);
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
@@ -270,7 +270,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         var tests = getTestCases(programmingExercise);
         tests.put("test4", programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));
@@ -295,7 +295,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSetScoreToZeroForExerciseWithoutMaxPoints() {
         var tests = getTestCases(programmingExercise);
         List<Feedback> feedbacks = new ArrayList<>();
@@ -311,7 +311,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         tests.add(programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));
@@ -340,7 +340,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
         var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -364,7 +364,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
@@ -463,7 +463,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
@@ -517,7 +517,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
@@ -546,7 +546,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
@@ -574,7 +574,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in the past.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
@@ -608,7 +608,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
      * whose typed collections were not loaded is refused outright, so this would fail rather than compute silently.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldKeepScoresWhenReEvaluatingTheExerciseItself() throws Exception {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -622,11 +622,37 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(scoresBefore.values()).anyMatch(score -> score > 0);
 
         final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
-        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // nothing about the grading configuration changed, so every score has to come out the same
         assertThat(scoresOfLatestResults(participations)).isEqualTo(scoresBefore);
+    }
+
+    /**
+     * The re-evaluation refuses an automatically assessed exercise whose test case weights are invalid, like the update does.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefuseReEvaluationWithAnInvalidTestCaseWeightSum() throws Exception {
+        programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
+                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
+        createTestCases(false);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        testCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(testCase -> {
+            testCase.setWeight(-1.0);
+            testCaseRepository.save(testCase);
+        });
+
+        final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
     }
 
     private Map<Long, Double> scoresOfLatestResults(Participation[] participations) {
@@ -640,7 +666,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -689,7 +715,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
         if (isAfterDueDate) {
@@ -751,7 +777,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateTheLatestResultOfASingleParticipation() {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -773,7 +799,17 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateParticipationResults_forAParticipationWithoutExercise_isRejected() {
+        final var participationWithoutExercise = new ProgrammingExerciseStudentParticipation();
+        participationWithoutExercise.setId(4711L);
+
+        assertThatThrownBy(() -> programmingExerciseGradingService.updateParticipationResults(participationWithoutExercise)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("4711");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateOnlyResultsForParticipationsWithoutIndividualDueDate() {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -802,7 +838,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testWeightSumZero() {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -842,7 +878,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUpdateScoresWithSCAAndLongFeedbackText(boolean templateParticipation) {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA, TEST_PREFIX);
         Result result;
@@ -1090,7 +1126,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() {
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         if (programmingExerciseSCAEnabled.isExamExercise()) {
@@ -1117,7 +1153,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithoutCaps() {
         activateAllTestCases(false);
 
@@ -1210,7 +1246,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithBonus() {
         activateAllTestCases(true);
 
@@ -1274,7 +1310,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCalculateScoreWithStaticCodeAnalysisPenalties() {
         activateAllTestCases(false);
 
@@ -1287,7 +1323,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCalculateScoreWithStaticCodeAnalysisPenalties_cappedByExerciseMaxPenalty() {
         programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(20);
         programmingExerciseSCAEnabled = exerciseRepository.save(programmingExerciseSCAEnabled);
@@ -1324,7 +1360,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCalculateCorrectStatistics() throws Exception {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
@@ -1360,7 +1396,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
@@ -1368,7 +1404,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query

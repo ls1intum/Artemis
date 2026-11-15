@@ -18,7 +18,7 @@
             "featureCloudThree": "Schnelle Antwortzeiten",
             "featureCloudFour": "DSGVO-konforme Verarbeitung auf Azure",
             "featureCloudFive": "Alle Daten auf universitären Servern gespeichert",
-            "featureLocalOne": "Neueste Open-Source-LLMs wie GPT-OSS",
+            "featureLocalOne": "Neueste Open-Source-LLMs wie Qwen",
             "featureLocalTwo": "Geringere Antwortqualität",
             "featureLocalThree": "Langsamere Antwortzeiten",
             "featureLocalFour": "Verarbeitung nur in universitären Rechenzentren",
@@ -27,9 +27,7 @@
             "featureNoTwo": "Kein automatisches KI-Feedback zu Modellierungs- und Textaufgaben",
             "featureNoThree": "Keine KI-gestützte Anleitung",
             "disclaimer": "Artemis wird niemals deine persönlichen Daten wie Matrikelnummer oder E-Mail-Adresse an ein großes Sprachmodell senden •",
-            "disclaimerButton": "Erfahre mehr über deine Optionen",
-            "memirisTitle": "Langzeitgedächtnis aktivieren",
-            "memirisDescription": "Iris kann sich deine Lernpräferenzen und vergangene Interaktionen merken, um dich langfristig personalisierter zu unterstützen. Du kannst dies jederzeit deaktivieren."
+            "disclaimerButton": "Erfahre mehr über deine Optionen"
         }
     }
 }

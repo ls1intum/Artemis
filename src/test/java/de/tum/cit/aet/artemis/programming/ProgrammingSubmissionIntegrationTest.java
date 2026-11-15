@@ -1,13 +1,15 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -17,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -34,9 +37,11 @@ import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -56,6 +61,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunStatusDTO;
+import de.tum.cit.aet.artemis.programming.service.SelectedBuildRunStatusService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
@@ -71,6 +79,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private SelectedBuildRunStatusService selectedBuildRunStatusService;
 
     private final Map<String, String> participationCommitHashes = new HashMap<>();
 
@@ -149,7 +160,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerBuildInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         String login = TEST_PREFIX + "student2";
@@ -160,8 +171,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 false);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
-        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK,
-                new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
@@ -174,15 +185,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
 
         // Trigger the call again and make sure that the submission shouldn't be recreated
-        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK,
-                new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.OK, new HttpHeaders());
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(submission.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerBuildInstructor_cannotGetLastCommitHash() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         doThrow(EntityNotFoundException.class).when(gitServiceSpy).getLastCommitHash(any());
@@ -193,12 +204,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 false);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
-        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.NOT_FOUND,
-                new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void triggerBuildInstructorTutorForbidden() throws Exception {
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
@@ -218,6 +229,87 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void ordinaryBuildRejectsInstructorCommandWithoutCreatingASubmission() throws Exception {
+        var participation = programmingExerciseStudentParticipation;
+        long submissions = submissionRepository.count();
+        long results = resultRepository.count();
+        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.FORBIDDEN,
+                new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1", "editor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentInstructorBuildRequiresInstructorWithoutCreatingSubmission(String login) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + login);
+        long submissions = submissionRepository.count();
+        long results = resultRepository.count();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-instructor-build",
+                null, HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorBuildRejectsStudentParticipationWithoutCreatingSubmission() throws Exception {
+        long submissions = submissionRepository.count();
+        long results = resultRepository.count();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-editor-build", null,
+                HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+        assertThat(resultRepository.count()).isEqualTo(results);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorBuildRejectsBaseKindAndForeignExerciseWithoutCreatingSubmission() throws Exception {
+        long submissions = submissionRepository.count();
+        String url = "/api/programming/programming-exercises/" + exercise.getId() + "/participations/";
+        request.postWithoutLocation(url + exercise.getTemplateParticipation().getId() + "/trigger-instructor-build", null, HttpStatus.FORBIDDEN, new HttpHeaders());
+        var other = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        long exerciseId = ExerciseUtilService.getFirstExerciseWithType(other, ProgrammingExercise.class).getId();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exerciseId + "/participations/" + programmingExerciseStudentParticipation.getId() + "/trigger-instructor-build", null,
+                HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(submissions);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorCanTriggerBaseInstructorSubmission(boolean template) throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        var participation = template ? exercise.getTemplateParticipation() : exercise.getSolutionParticipation();
+        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), participation.getBuildPlanId(), false);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/trigger-editor-build", null,
+                HttpStatus.OK, new HttpHeaders());
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(participation.getId())).isNotEmpty()
+                .allSatisfy(submission -> assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void editorBuildRequiresEditorWithoutCreatingOrQueuingSubmission(String login) throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + login);
+        long before = submissionRepository.count();
+        request.postWithoutLocation(
+                "/api/programming/programming-exercises/" + exercise.getId() + "/participations/" + exercise.getTemplateParticipation().getId() + "/trigger-editor-build", null,
+                HttpStatus.FORBIDDEN, new HttpHeaders());
+        assertThat(submissionRepository.count()).isEqualTo(before);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(ProgrammingExerciseParticipation.class));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudentForbidden() throws Exception {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
@@ -226,7 +318,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerBuildForExerciseAsInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
@@ -275,18 +367,18 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(optionalUpdatedProgrammingExercise).isPresent();
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed"), eq(false));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void triggerBuildForExerciseEditorForbidden() throws Exception {
         String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void triggerBuildForExerciseTutorForbidden() throws Exception {
         String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
@@ -300,7 +392,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerBuildForParticipationsInstructorEmpty() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         String login1 = TEST_PREFIX + "student2";
@@ -329,8 +421,20 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
         // aren't being re-created.
         String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
-        request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
-        request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
+        var firstRun = request.postWithResponseBody(url, participationsToTrigger, SelectedBuildRunDTO.class, HttpStatus.OK);
+        var secondRun = request.postWithResponseBody(url, participationsToTrigger, SelectedBuildRunDTO.class, HttpStatus.OK);
+
+        // Every request names its own run, and the server reports the end of each one on the topic of the exercise.
+        assertThat(firstRun.runId()).isNotBlank().isNotEqualTo(secondRun.runId());
+        String completionTopic = "/topic/programming-exercises/" + exercise.getId() + "/selected-builds-run-completed";
+        await().untilAsserted(() -> {
+            verify(websocketMessagingService).sendMessage(topic(completionTopic), eq(firstRun));
+            verify(websocketMessagingService).sendMessage(topic(completionTopic), eq(secondRun));
+        });
+
+        // A client that missed the message can ask for the status, and finds both runs ended.
+        assertThat(selectedBuildRunStatus(firstRun.runId()).running()).isFalse();
+        assertThat(selectedBuildRunStatus(secondRun.runId()).running()).isFalse();
 
         // Note: the participations above have no submissions, so the builds will not be triggered
         assertThat(submissionRepository.findAllByParticipationIdWithResults(participation1.getId())).isEmpty();
@@ -338,21 +442,67 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getSelectedBuildRunStatus_ofARunThatIsNotKnown_isNotRunning() throws Exception {
+        // A run that ended, expired or never existed must not keep a client waiting.
+        assertThat(selectedBuildRunStatus("a-run-nobody-started").running()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getSelectedBuildRunStatus_ofARunThatGoesOn_isRunningUntilItEnds() throws Exception {
+        selectedBuildRunStatusService.markStarted("a-running-run", exercise.getId());
+        assertThat(selectedBuildRunStatus("a-running-run").running()).isTrue();
+
+        selectedBuildRunStatusService.markEnded("a-running-run");
+
+        assertThat(selectedBuildRunStatus("a-running-run").running()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getSelectedBuildRunStatus_ofARunOfAnotherExercise_isNotRunning() throws Exception {
+        selectedBuildRunStatusService.markStarted("a-run-of-another-exercise", exercise.getId() + 1);
+
+        assertThat(selectedBuildRunStatus("a-run-of-another-exercise").running()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getSelectedBuildRunStatus_tutorForbidden() throws Exception {
+        request.get(selectedBuildRunStatusUrl("a-finished-run"), HttpStatus.FORBIDDEN, SelectedBuildRunStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSelectedBuildRunStatus_studentForbidden() throws Exception {
+        request.get(selectedBuildRunStatusUrl("a-finished-run"), HttpStatus.FORBIDDEN, SelectedBuildRunStatusDTO.class);
+    }
+
+    private String selectedBuildRunStatusUrl(String runId) {
+        return "/api/programming/programming-exercises/" + exercise.getId() + "/selected-build-runs/" + runId;
+    }
+
+    private SelectedBuildRunStatusDTO selectedBuildRunStatus(String runId) throws Exception {
+        return request.get(selectedBuildRunStatusUrl(runId), HttpStatus.OK, SelectedBuildRunStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerBuildForParticipationsInstructorParticipationsEmpty() throws Exception {
         String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
         request.postWithoutLocation(url, List.of(), HttpStatus.BAD_REQUEST, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void triggerBuildForParticipationsEditorForbidden() throws Exception {
         String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void triggerBuildForParticipationsTutorForbidden() throws Exception {
         String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
@@ -388,7 +538,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         final Long submissionId = submission.getId();
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_SUBMISSION_TOPIC),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), userTopic("/topic/newSubmissions"),
                 argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
 
         // Perform the request again and make sure no new submission was created
@@ -478,7 +628,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
         final var submissions = new ArrayList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
@@ -499,7 +649,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
      * survive onto the wire, otherwise the service computes it for nothing.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAllProgrammingSubmissions_participationCarriesSubmissionCountAndStudent() throws Exception {
         programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
 
@@ -517,7 +667,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAllProgrammingSubmissionsAssessedByTutorAllSubmissionsReturned() throws Exception {
         programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
         var assessedSubmission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -538,7 +688,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getProgrammingSubmissionWithoutAssessmentAsTutorWithOneAvailableReturnsSubmission() throws Exception {
         String login = TEST_PREFIX + "student1";
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -553,8 +703,60 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(responseSubmission).isEqualTo(submission);
     }
 
+    /**
+     * A complaint about an automatic result turns it into the manual result of the first correction round, so the
+     * tutor who opens the complaint receives it instead of a submission without any result.
+     */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLockAndGetProgrammingSubmissionForAComplaintAboutAnAutomaticResult() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exercise.setAllowComplaintsForAutomaticAssessments(true);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(exercise.getId(), ZonedDateTime.now().minusDays(1));
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+
+        request.post("/api/assessment/complaints", new ComplaintRequestDTO(automaticResult.getId(), "The tests are wrong", ComplaintType.COMPLAINT, Optional.empty()),
+                HttpStatus.CREATED);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        JsonNode response = objectMapper.readTree(request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, String.class));
+
+        assertThat(response.get("results")).as("the complaint is answered through the result it is about").hasSize(1);
+        assertThat(response.get("results").get(0).get("id").asLong()).isEqualTo(automaticResult.getId());
+        assertThat(resultRepository.findById(automaticResult.getId()).orElseThrow().getCorrectionRound()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testLockAndGetProgrammingSubmissionResponseCarriesOnlyWhatTheTutorPageReads() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        JsonNode response = objectMapper.readTree(request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, String.class));
+
+        var participation = response.get("participation");
+        var exerciseNode = participation.get("exercise");
+        assertThat(exerciseNode.get("id").asLong()).isEqualTo(exercise.getId());
+        assertThat(exerciseNode.get("type").asString()).isEqualTo("programming");
+        assertThat(exerciseNode.has("problemStatement")).isTrue();
+        assertThat(exerciseNode.get("course").get("id").asLong()).isEqualTo(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        // the management view of the exercise and the participant stay out of the response
+        assertThat(exerciseNode.propertyNames()).doesNotContain("templateParticipation", "buildConfig", "plagiarismDetectionConfig", "studentParticipations", "competencyLinks");
+        assertThat(exerciseNode.get("course").propertyNames()).doesNotContain("description", "enrollmentConfirmationMessage", "courseArchivePath");
+        assertThat(participation.propertyNames()).doesNotContain("student", "participantName", "participantIdentifier", "repositoryUri");
+        assertThat(response.has("results")).isTrue();
+        assertThat(response.get("commitHash").asString()).as("the feedback dialog shows the commit hash").isNotBlank();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionWithManualResult() throws Exception {
         String login = TEST_PREFIX + "student1";
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
@@ -585,7 +787,30 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testLockAndGetProgrammingSubmissionForTheResultOfAComplaintResponse() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(50), submission);
+        // The response to a complaint is stored as an additional manual result with the next correction round
+        Result complaintResponseResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(10), submission);
+        complaintResponseResult.setCorrectionRound(1);
+        resultRepository.save(complaintResponseResult);
+        long numberOfResults = resultRepository.countBySubmissionId(submission.getId());
+
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        paramMap.add("correction-round", "1");
+        request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedback() throws Exception {
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
@@ -614,7 +839,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -639,7 +864,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -671,7 +896,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentAndLock_negativeCorrectionRound_badRequest() throws Exception {
         final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
@@ -690,7 +915,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
         final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, true, "1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
@@ -708,7 +933,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
         String login = TEST_PREFIX + "student1";
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -718,14 +943,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        // Pin the fields the assessment surfaces read instead of a recursive comparison against the entity: the
+        // Pin the fields the tutor assessment page reads instead of a recursive comparison against the entity: the
         // response is a DTO now, so a recursive comparison would only assert which entity fields it happens to omit.
         assertThat(storedSubmission.getId()).as("submission was found").isEqualTo(submission.getId());
-        assertThat(storedSubmission.isSubmitted()).isEqualTo(submission.isSubmitted());
-        assertThat(storedSubmission.getType()).isEqualTo(submission.getType());
-        assertThat(storedSubmission.getCommitHash()).isEqualTo(submission.getCommitHash());
         assertThat(storedSubmission.isBuildFailed()).isEqualTo(submission.isBuildFailed());
-        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
+        assertThat(storedSubmission.getCommitHash()).as("the feedback dialog shows the commit hash").isEqualTo(submission.getCommitHash());
+        assertThat(storedSubmission.getSubmissionDate()).as("the dashboard shows the submission date").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getParticipation()).as("participation is set").isNotNull();
         assertThat(storedSubmission.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
@@ -738,7 +961,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
      * participation with its nested exercise.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentUnlockedIsASummaryWithoutFeedback() throws Exception {
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
@@ -766,7 +989,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAllProgrammingSubmissionsDoesNotFanOutQueries() throws Exception {
         programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
         programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student2");
@@ -776,7 +999,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentLockSubmission() throws Exception {
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
@@ -814,7 +1037,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
      * automatic feedback including its test-case reference, which the editor echoes back on save.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentLockedCarriesFeedbackWithTestCases() throws Exception {
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockedTestCase");
         // Only student1's participation holds submissions, which makes the selection deterministic.
@@ -839,7 +1062,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentDoesNotFanOutQueries() throws Exception {
         final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
@@ -850,7 +1073,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionDoesNotFanOutQueries() throws Exception {
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
@@ -866,7 +1089,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetModelSubmissionWithoutAssessmentTestLockLimit() throws Exception {
         createTenLockedSubmissionsForExercise(TEST_PREFIX + "tutor1");
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -876,7 +1099,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getProgrammingSubmissionWithoutAssessmentDueDateNotPassedYet() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
@@ -895,7 +1118,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
         // exercise due date in the past
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
@@ -927,7 +1150,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingSubmissionWithoutAssessmentNothingAvailable(boolean lock) throws Exception {
         exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));

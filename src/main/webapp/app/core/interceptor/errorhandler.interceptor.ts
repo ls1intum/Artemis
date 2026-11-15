@@ -1,9 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { HttpContextToken, HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
+
+export interface HttpErrorEvent extends EventWithContent<HttpErrorResponse> {
+    requestMethod?: string;
+}
+
+/**
+ * Set on a request whose caller shows its failure itself, next to the thing that failed, so no error alert pops up for it as well.
+ */
+export const SKIP_HTTP_ERROR_ALERT = new HttpContextToken<boolean>(() => false);
 
 @Injectable()
 export class ErrorHandlerInterceptor implements HttpInterceptor {
@@ -22,9 +31,10 @@ export class ErrorHandlerInterceptor implements HttpInterceptor {
         return next.handle(request).pipe(
             tap({
                 error: (err: unknown) => {
-                    if (err instanceof HttpErrorResponse) {
+                    if (err instanceof HttpErrorResponse && !request.context?.get(SKIP_HTTP_ERROR_ALERT)) {
                         if (!(err.status === 401 && !this.accountService.isAuthenticated())) {
-                            this.eventManager.broadcast({ name: 'artemisApp.httpError', content: err });
+                            const event: HttpErrorEvent = { name: 'artemisApp.httpError', content: err, requestMethod: request.method };
+                            this.eventManager.broadcast(event);
                         }
                     }
                 },

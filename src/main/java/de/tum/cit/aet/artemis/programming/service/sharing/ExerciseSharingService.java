@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +43,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -134,7 +135,9 @@ public class ExerciseSharingService {
         }
         String basketRequestURL = apiBaseUrl.concat("/basket/").concat(basketToken);
         try {
-            ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class);
+            // Reviewed false positive (Sonar S5144): the only caller, ExerciseSharingResource.loadShoppingBasket, verifies the checksum signed with the shared API key
+            // and the configured Sharing API base URL before it passes the base URL on.
+            ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class); // NOSONAR // codeql[java/ssrf]
             return Optional.ofNullable(shoppingBasket);
         }
         catch (HttpClientErrorException.NotFound nf) {
@@ -191,15 +194,30 @@ public class ExerciseSharingService {
         try {
             String exerciseDetailString = getEntryFromBasket(EXERCISE_DETAILS_ENTRY, sharingInfo)
                     .orElseThrow(() -> new EntityNotFoundException("Could not retrieve exercise details from imported exercise"));
-            // Remove the id on the JSON tree: the record is immutable, and the exported id belongs to the source instance.
-            ObjectNode exerciseDetailNode = (ObjectNode) objectMapper.readTree(exerciseDetailString);
-            exerciseDetailNode.remove("id");
-            return objectMapper.treeToValue(exerciseDetailNode, ImportProgrammingExerciseRequestDTO.class);
+            return withoutId(objectMapper.readValue(exerciseDetailString, ImportProgrammingExerciseRequestDTO.class));
         }
         catch (Exception e) {
             String errorMessage = e.getMessage();
             throw new EntityNotFoundException("Could not retrieve exercise details from imported exercise: " + errorMessage);
         }
+    }
+
+    /**
+     * Copies the exercise details without their id: the record is immutable, and the exported id belongs to the source instance.
+     *
+     * @param details the exercise details as exported by the source instance
+     * @return the same details with a {@code null} id
+     */
+    private static ImportProgrammingExerciseRequestDTO withoutId(ImportProgrammingExerciseRequestDTO details) {
+        return new ImportProgrammingExerciseRequestDTO(null, details.title(), details.shortName(), details.channelName(), details.packageName(), details.problemStatement(),
+                details.gradingInstructions(), details.categories(), details.difficulty(), details.mode(), details.teamAssignmentConfig(), details.maxPoints(),
+                details.bonusPoints(), details.includedInOverallScore(), details.releaseDate(), details.startDate(), details.dueDate(), details.assessmentDueDate(),
+                details.exampleSolutionPublicationDate(), details.buildAndTestStudentSubmissionsAfterDueDate(), details.assessmentType(),
+                details.allowComplaintsForAutomaticAssessments(), details.presentationScoreEnabled(), details.secondCorrectionEnabled(), details.allowOnlineEditor(),
+                details.allowOfflineIde(), details.allowOnlineIde(), details.staticCodeAnalysisEnabled(), details.maxStaticCodeAnalysisPenalty(), details.showTestNamesToStudents(),
+                details.releaseTestsWithExampleSolution(), details.programmingLanguage(), details.projectType(), details.projectKey(), details.testRepositoryUri(),
+                details.buildConfig(), details.gradingCriteria(), details.competencyLinks(), details.auxiliaryRepositories(), details.submissionPolicy(),
+                details.plagiarismDetectionConfig(), details.course(), details.exerciseGroup(), details.templateParticipation(), details.solutionParticipation());
     }
 
     /**
@@ -262,7 +280,7 @@ public class ExerciseSharingService {
             throw new SharingException("No Sharing ApiBaseUrl provided");
         }
         try {
-            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(exerciseId);
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exerciseId);
 
             List<String> exportErrors = new ArrayList<>();
             Path zipFilePath = programmingExerciseExportService.exportProgrammingExerciseForDownload(exercise, exportErrors);
@@ -362,7 +380,7 @@ public class ExerciseSharingService {
      * </p>
      *
      * @param b64Token URL-safe Base64 token (no padding)
-     * @return path to the ZIP if it exists; otherwise {@link Optional#empty()}
+     * @return path to the ZIP if it exists; {@link Optional#empty()} for malformed tokens or missing files
      */
     public Optional<Path> getExportedExerciseByToken(String b64Token) {
         if (isInvalidToken(b64Token)) {
@@ -370,12 +388,21 @@ public class ExerciseSharingService {
             return Optional.empty();
         }
 
-        String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
-        Path zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
+        Path zipPath;
+        try {
+            // Reject malformed UTF-8 instead of replacing invalid bytes with characters that some file systems cannot encode.
+            String decodedToken = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(b64Token))).toString();
+            zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
+        }
+        catch (IllegalArgumentException | CharacterCodingException e) {
+            // Base64 decoding and path construction can fail even when the token only contains permitted characters.
+            log.warn("Invalid token received: {}", b64Token);
+            return Optional.empty();
+        }
         if (!Files.isRegularFile(zipPath)) {
             return Optional.empty();
         }
-        // Integrity is ensured via HMAC validation; decodedToken is a safe relative path segment
+        // Integrity is ensured via HMAC validation.
         return Optional.of(zipPath);
     }
 

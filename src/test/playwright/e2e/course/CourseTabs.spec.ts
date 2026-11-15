@@ -36,7 +36,7 @@ function recordRequests(page: Page, pattern: RegExp): string[] {
  * @param waitFor how long to give the modal to appear; 0 to only dismiss one that is already up.
  */
 async function dismissLlmSelectionIfAsked(page: Page, waitFor: number): Promise<void> {
-    const cloudOption = page.locator('jhi-llm-selection-modal .option-card.cloud-card');
+    const cloudOption = page.getByTestId('llm-selection-cloud-option');
     if (waitFor > 0) {
         await cloudOption.waitFor({ state: 'visible', timeout: waitFor }).catch(() => undefined);
     }
@@ -83,6 +83,9 @@ function sidebarCard(page: Page, title: string) {
 }
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
+    // Count the tab's requests from one navigation; an automatic fixture reload would add a cancelled request.
+    test.use({ recoverNavigation: false });
+
     let course: Course;
 
     test.beforeEach('Create a course the student is enrolled in', async ({ login, courseManagementAPIRequests }) => {

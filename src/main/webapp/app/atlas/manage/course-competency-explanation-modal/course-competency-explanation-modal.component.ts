@@ -11,11 +11,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrl: './course-competency-explanation-modal.component.scss',
 })
 export class CourseCompetencyExplanationModalComponent {
+    private readonly dialogRef = inject(DynamicDialogRef);
+
     protected readonly closeIcon = faXmark;
 
     protected readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning';
-
-    private readonly dialogRef = inject(DynamicDialogRef);
 
     protected closeModal(): void {
         this.dialogRef.close();

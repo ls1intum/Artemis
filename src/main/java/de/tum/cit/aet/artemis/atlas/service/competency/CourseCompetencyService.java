@@ -31,14 +31,12 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -88,13 +86,11 @@ public class CourseCompetencyService {
 
     private final CompetencyLectureUnitLinkRepository lectureUnitLinkRepository;
 
-    private final Optional<AtlasMLService> atlasMLService;
-
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
-            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, Optional<AtlasMLService> atlasMLService) {
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -107,7 +103,6 @@ public class CourseCompetencyService {
         this.learningObjectImportService = learningObjectImportService;
         this.courseRepository = courseRepository;
         this.lectureUnitLinkRepository = lectureUnitLinkRepository;
-        this.atlasMLService = atlasMLService;
     }
 
     /**
@@ -254,25 +249,6 @@ public class CourseCompetencyService {
             idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelation(importedCompetency, new ArrayList<>()));
         }
         courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelation::competency).toList());
-
-        // Save imported competencies to AtlasML (always using list-based API)
-        List<Competency> allCompetenciesForAtlas = new ArrayList<>();
-
-        for (CompetencyWithTailRelation competencyDTO : idToImportedCompetency.values()) {
-            CourseCompetency importedCompetency = competencyDTO.competency();
-            if (importedCompetency instanceof Competency competency) {
-                allCompetenciesForAtlas.add(competency);
-            }
-            else {
-                Competency converted = new Competency(importedCompetency);
-                converted.setId(importedCompetency.getId());
-                allCompetenciesForAtlas.add(converted);
-            }
-        }
-
-        if (!allCompetenciesForAtlas.isEmpty()) {
-            atlasMLService.ifPresent(service -> service.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE));
-        }
 
         if (importOptions.importRelations()) {
             var originalCompetencyIds = idToImportedCompetency.keySet();

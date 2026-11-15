@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -11,14 +11,15 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { programmingExerciseResultWarning } from './programming-exercise-result-warning.util';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
-    imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -30,6 +31,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnDestroy {
     readonly exercise = input<ProgrammingExercise>();
 
     protected readonly latestResult = signal<Result | undefined>(undefined);
+    protected readonly warning = computed(() => programmingExerciseResultWarning(this.latestResult(), this.participationType()));
     resultSubscription?: Subscription;
 
     // Tracks the id of the participation the current subscription belongs to, so that the
@@ -44,15 +46,15 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnDestroy {
         // When the participation changes, get the latestResult from it and setup the result subscription for new results.
         effect(() => {
             const participation = this.participation();
-            if (!participation) {
+            this.latestResult.set(findLatestResult(getAllResultsOfAllSubmissions(participation?.submissions)));
+            if (this.subscribedParticipationId === participation?.id) {
                 return;
             }
-            if (this.subscribedParticipationId === participation.id) {
-                return;
+            this.subscribedParticipationId = participation?.id;
+            this.resultSubscription?.unsubscribe();
+            if (participation?.id !== undefined) {
+                this.updateResultSubscription();
             }
-            this.subscribedParticipationId = participation.id;
-            this.latestResult.set(findLatestResult(getAllResultsOfAllSubmissions(participation.submissions)));
-            this.updateResultSubscription();
         });
     }
 

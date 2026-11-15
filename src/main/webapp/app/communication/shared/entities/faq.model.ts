@@ -56,3 +56,20 @@ export class UpdateFaqDTO {
         return new UpdateFaqDTO(faq.id, faq.faqState, faq.questionTitle ?? '', faq.categories, faq.questionAnswer);
     }
 }
+
+/** A visible FAQ and its source course, for the import picker. */
+export interface FaqImportCandidate {
+    id: number;
+    questionTitle: string;
+    questionAnswer?: string;
+    faqState: FaqState;
+    courseId: number;
+    courseTitle: string;
+    courseSemester?: string;
+}
+
+export interface FaqImportSearchResult {
+    resultsOnPage: FaqImportCandidate[];
+    numberOfPages: number;
+    totalElements: number;
+}

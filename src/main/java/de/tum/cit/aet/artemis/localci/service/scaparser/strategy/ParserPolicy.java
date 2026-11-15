@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.ClippyCategorizer;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.DartAnalyzeCategorizer;
+import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.DetektCategorizer;
+import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.RoslynCategorizer;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.RubocopCategorizer;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.RubocopMessageProcessor;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.RuffCategorizer;
@@ -39,14 +41,18 @@ public class ParserPolicy {
             case CLANG_TIDY -> new SarifParser(StaticCodeAnalysisTool.CLANG_TIDY, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
             case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
+            case DETEKT -> new SarifParser(StaticCodeAnalysisTool.DETEKT, new DetektCategorizer());
             case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case GCC -> new GccParser();
+            case GOLANGCI_LINT -> new SarifParser(StaticCodeAnalysisTool.GOLANGCI_LINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case LINTR -> new SarifParser(StaticCodeAnalysisTool.LINTR, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
+            case ROSLYN -> new SarifParser(StaticCodeAnalysisTool.ROSLYN, new RoslynCategorizer());
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());
             case RUFF -> new SarifParser(StaticCodeAnalysisTool.RUFF, new RuffCategorizer());
             case SPOTBUGS -> new SpotbugsParser();
+            case SWIFTLINT -> new SwiftLintParser();
             default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
     }

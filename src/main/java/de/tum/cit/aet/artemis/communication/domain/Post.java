@@ -52,7 +52,7 @@ public class Post extends Posting {
     private Set<AnswerPost> answers = new HashSet<>();
 
     @ManyToOne
-    @Parent
+    @Parent(enforcedBy = "CK_POST_HAS_A_PARENT")
     private Conversation conversation;
 
     // TODO: convert to real database enum
@@ -114,16 +114,6 @@ public class Post extends Posting {
     @Override
     public void setReactions(Set<Reaction> reactions) {
         this.reactions = reactions;
-    }
-
-    @Override
-    public void addReaction(Reaction reaction) {
-        this.reactions.add(reaction);
-    }
-
-    @Override
-    public void removeReaction(Reaction reaction) {
-        this.reactions.remove(reaction);
     }
 
     public Set<AnswerPost> getAnswers() {

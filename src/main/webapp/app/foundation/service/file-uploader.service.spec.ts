@@ -21,9 +21,9 @@ describe('FileUploaderService', () => {
     it('should upload a regular file for the markdown editor', async () => {
         const file = new File([''], 'test.pdf', { type: 'application/pdf' });
         const expectedResponse = { path: 'some-path' };
-        const promise = service.uploadMarkdownFile(file);
+        const promise = service.uploadMarkdownFile(file, 3);
 
-        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/markdown-file-upload' });
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/markdown-file-upload?courseId=3' });
         request.flush(expectedResponse);
 
         httpMock.verify();
@@ -33,7 +33,7 @@ describe('FileUploaderService', () => {
     it('should upload a regular file for communication', async () => {
         const file = new File([''], 'test.pdf', { type: 'application/pdf' });
         const expectedResponse = { path: 'some-path' };
-        const promise = service.uploadMarkdownFileInCurrentMetisConversation(file, 1, 2);
+        const promise = service.uploadMarkdownFileInCurrentConversation(file, 1, 2);
 
         const request = httpMock.expectOne({ method: 'POST', url: '/api/core/files/courses/1/conversations/2' });
         request.flush(expectedResponse);
@@ -44,12 +44,24 @@ describe('FileUploaderService', () => {
 
     it('should reject if the course for communication is not specified', async () => {
         const file = new File([''], 'test.pdf', { type: 'application/pdf' });
-        await expect(service.uploadMarkdownFileInCurrentMetisConversation(file, undefined, 2)).rejects.toThrow(Error);
+        await expect(service.uploadMarkdownFileInCurrentConversation(file, undefined, 2)).rejects.toThrow(Error);
     });
 
     it('should reject if the conversation for communication is not specified', async () => {
         const file = new File([''], 'test.pdf', { type: 'application/pdf' });
-        await expect(service.uploadMarkdownFileInCurrentMetisConversation(file, 1, undefined)).rejects.toThrow(Error);
+        await expect(service.uploadMarkdownFileInCurrentConversation(file, 1, undefined)).rejects.toThrow(Error);
+    });
+
+    it('should upload to the administration endpoint if the markdown file does not belong to a course', async () => {
+        const file = new File([''], 'test.pdf', { type: 'application/pdf' });
+        const expectedResponse = { path: 'some-path' };
+        const promise = service.uploadMarkdownFile(file);
+
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/admin/markdown-file-upload' });
+        request.flush(expectedResponse);
+
+        httpMock.verify();
+        await expect(promise).resolves.toEqual(expectedResponse);
     });
 
     it('should reject files with unsupported extensions', async () => {
@@ -68,6 +80,6 @@ describe('FileUploaderService', () => {
         const largeFile = new File([''], 'test.pdf', { type: 'application/pdf' });
         // Overwrite the size property to be larger than the maximum allowed size
         Object.defineProperty(largeFile, 'size', { value: MAX_FILE_SIZE_COMMUNICATION + 1 });
-        await expect(service.uploadMarkdownFileInCurrentMetisConversation(largeFile, 1, 2)).rejects.toThrow(Error);
+        await expect(service.uploadMarkdownFileInCurrentConversation(largeFile, 1, 2)).rejects.toThrow(Error);
     });
 });

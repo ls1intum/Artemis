@@ -25,14 +25,14 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
 export class LearningPathStudentPageComponent {
-    protected readonly LearningObjectType = LearningObjectType;
-
     private readonly learningApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseTabRefreshService = inject(CourseTabRefreshService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly LearningObjectType = LearningObjectType;
 
     readonly isLearningPathLoading = signal(false);
     readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
@@ -59,7 +59,7 @@ export class LearningPathStudentPageComponent {
             const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
             this.learningPath.set(learningPath);
 
-            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id);
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id, courseId);
         } catch (error) {
             // If learning path does not exist (404) ignore the error
             if (!(error instanceof HttpErrorResponse) || error.status != 404) {

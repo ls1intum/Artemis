@@ -8,8 +8,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
@@ -17,7 +16,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 
 @Component({
     selector: 'jhi-course-import-standardized-prerequisites',
-    templateUrl: './course-import-standardized-prerequisites.component.html',
+    templateUrl: './course-import-standardized-course-competencies.component.html',
     imports: [
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
@@ -29,13 +28,16 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         ButtonComponent,
         DocumentationButtonComponent,
         TranslateDirective,
-        SortByDirective,
-        SortDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         ArtemisTranslatePipe,
     ],
 })
 export class CourseImportStandardizedPrerequisitesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     private prerequisiteService = inject(PrerequisiteService);
+
+    protected override readonly importTitle = 'artemisApp.standardizedCompetency.courseImport.prerequisiteTitle';
 
     protected override importCompetencies() {
         super.importCompetencies(this.prerequisiteService);

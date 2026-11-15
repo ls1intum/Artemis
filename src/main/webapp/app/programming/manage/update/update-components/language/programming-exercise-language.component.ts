@@ -13,12 +13,23 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent, FaIconComponent, ProgrammingExerciseTheiaComponent, KeyValuePipe, RemoveKeysPipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ModePickerComponent,
+        HelpIconComponent,
+        FaIconComponent,
+        ProgrammingExerciseTheiaComponent,
+        KeyValuePipe,
+        RemoveKeysPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -27,6 +38,11 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly programmingExercise = model.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    /**
+     * Whether the online IDE is allowed, passed separately from the exercise: the checkbox lives in the mode section and
+     * changes the exercise in place, which would not make this section render the online IDE settings.
+     */
+    readonly allowOnlineIde = input(false);
 
     readonly selectLanguageField = viewChild<NgModel>('select');
     readonly packageNameField = viewChild<NgModel>('packageName');

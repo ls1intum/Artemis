@@ -1,0 +1,5 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+.user-settings-layout {
+    @include shell-content-height;
+}

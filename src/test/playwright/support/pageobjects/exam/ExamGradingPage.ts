@@ -31,7 +31,8 @@ export class ExamGradingPage {
     }
 
     async selectFirstPassingGrade(gradeName: string) {
-        await this.page.locator('select[title="first passing grade"]').selectOption(gradeName);
+        await this.page.getByTestId('grading-first-passing-grade').getByRole('combobox').click();
+        await this.page.getByRole('option', { name: gradeName, exact: true }).click();
     }
 
     async generateDefaultGrading() {

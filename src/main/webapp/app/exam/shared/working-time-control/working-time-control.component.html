@@ -1,58 +1,70 @@
-<div class="d-flex flex-column gap-1 working-time-control">
-    <div class="d-flex flex-column gap-1">
+<div class="flex w-fit flex-col gap-1">
+    <div class="flex flex-col gap-1">
         @if (durationLabelText()) {
-            <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText()!"></label>
+            <label for="workingTimeHours" class="me-6" [jhiTranslate]="durationLabelText()!"></label>
         }
-        <div class="input-group">
-            <input
-                [(ngModel)]="workingTime.hours"
-                (ngModelChange)="onDurationChanged()"
-                [disabled]="disabled()"
-                id="workingTimeHours"
-                name="hours"
-                type="number"
-                class="text-center form-control form-number-input"
-                [min]="allowNegative() ? null : 0"
-                step="1"
-                required
-            />
-            <label for="workingTimeHours" class="input-group-text">h</label>
-            <input
-                [(ngModel)]="workingTime.minutes"
-                (ngModelChange)="onDurationChanged()"
-                [disabled]="disabled()"
-                id="workingTimeMinutes"
-                name="minutes"
-                type="number"
-                class="text-center form-control form-number-input"
-                [min]="allowNegative() ? -59 : 0"
-                max="59"
-                step="1"
-                required
-            />
-            <label for="workingTimeMinutes" class="input-group-text">min</label>
-            <input
-                [(ngModel)]="workingTime.seconds"
-                (ngModelChange)="onDurationChanged()"
-                [disabled]="disabled()"
-                id="workingTimeSeconds"
-                name="seconds"
-                type="number"
-                class="text-center form-control form-number-input"
-                [min]="allowNegative() ? -59 : 0"
-                max="59"
-                step="1"
-                required
-            />
-            <label for="workingTimeSeconds" class="input-group-text">s</label>
+        <div class="flex gap-1">
+            <tumaet-ui-input-group>
+                <input
+                    [(ngModel)]="workingTime.hours"
+                    (ngModelChange)="onDurationChanged()"
+                    [disabled]="disabled()"
+                    id="workingTimeHours"
+                    name="hours"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20 text-center"
+                    aria-label="h"
+                    [min]="allowNegative() ? null : 0"
+                    step="1"
+                    required
+                />
+                <tumaet-ui-input-group-addon>h</tumaet-ui-input-group-addon>
+            </tumaet-ui-input-group>
+            <tumaet-ui-input-group>
+                <input
+                    [(ngModel)]="workingTime.minutes"
+                    (ngModelChange)="onDurationChanged()"
+                    [disabled]="disabled()"
+                    id="workingTimeMinutes"
+                    name="minutes"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20 text-center"
+                    aria-label="min"
+                    [min]="allowNegative() ? -59 : 0"
+                    max="59"
+                    step="1"
+                    required
+                />
+                <tumaet-ui-input-group-addon>min</tumaet-ui-input-group-addon>
+            </tumaet-ui-input-group>
+            <tumaet-ui-input-group>
+                <input
+                    [(ngModel)]="workingTime.seconds"
+                    (ngModelChange)="onDurationChanged()"
+                    [disabled]="disabled()"
+                    id="workingTimeSeconds"
+                    name="seconds"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20 text-center"
+                    aria-label="s"
+                    [min]="allowNegative() ? -59 : 0"
+                    max="59"
+                    step="1"
+                    required
+                />
+                <tumaet-ui-input-group-addon>s</tumaet-ui-input-group-addon>
+            </tumaet-ui-input-group>
         </div>
     </div>
     @if (exam() && relative()) {
-        <div class="d-flex flex-column gap-1">
+        <div class="flex flex-col gap-1">
             @if (relativeLabelText()) {
-                <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText()!"></label>
+                <label for="workingTimePercent" class="me-6 flex-1" [jhiTranslate]="relativeLabelText()!"></label>
             }
-            <div class="input-group">
+            <tumaet-ui-input-group class="w-fit">
                 <input
                     [(ngModel)]="workingTime.percent"
                     (ngModelChange)="onPercentChanged()"
@@ -60,13 +72,15 @@
                     id="workingTimePercent"
                     name="percent"
                     type="number"
-                    class="text-center form-control form-number-input"
+                    tumAetUiInput
+                    class="w-24 text-center"
+                    aria-label="%"
                     [min]="allowNegative() ? -100 : 0"
                     step=".01"
                     required
                 />
-                <label for="workingTimePercent" class="input-group-text">%</label>
-            </div>
+                <tumaet-ui-input-group-addon>%</tumaet-ui-input-group-addon>
+            </tumaet-ui-input-group>
         </div>
     }
 </div>

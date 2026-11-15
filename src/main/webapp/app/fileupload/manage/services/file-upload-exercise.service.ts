@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { FileUploadExerciseDto, fromFileUploadExerciseDTO, toFileUploadExerciseI
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -52,7 +52,18 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param exerciseId id of the exercise
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<FileUploadExerciseDto>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(map((res) => this.processResponse(res)));
+        return this.findDetails(exerciseId, false);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(exerciseId: number): Observable<EntityResponseType> {
+        return this.findDetails(exerciseId, true);
+    }
+
+    private findDetails(exerciseId: number, exam: boolean): Observable<EntityResponseType> {
+        return this.http
+            .get<FileUploadExerciseDto>(`${this.resourceUrl}/${exerciseId}${exam ? '/for-exam' : ''}`, { observe: 'response' })
+            .pipe(map((res) => this.processResponse(res)));
     }
 
     /**

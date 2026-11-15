@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -20,9 +20,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 export type EntityResponseType = HttpResponse<Result>;
 type FileUploadResultDTOResponseType = HttpResponse<FileUploadResultDTO>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class FileUploadAssessmentService {
     private http = inject(HttpClient);
 
@@ -48,11 +46,6 @@ export class FileUploadAssessmentService {
         return this.http
             .put<FileUploadResultDTO>(url, assessmentUpdate, { observe: 'response' })
             .pipe(map((res: FileUploadResultDTOResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
-    }
-
-    // TODO refactor all asssessment.service getAssessment calls to make similar REST calls
-    getAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<FileUploadResultDTO>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`).pipe(map((result) => this.convertResultFromServer(result)));
     }
 
     cancelAssessment(submissionId: number, resultId?: number): Observable<void> {

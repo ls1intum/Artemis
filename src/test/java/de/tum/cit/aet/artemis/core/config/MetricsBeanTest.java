@@ -80,21 +80,30 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     private SubmissionTestRepository submissionRepository;
 
     @BeforeEach
-    void resetDatabase() {
+    void setUpMetricsTest() {
         SecurityUtils.setAuthorizationObject();
 
-        // Reset ALL exams to the past to avoid time-sensitive cleanup issues.
-        // Using findAll() instead of findAllByEndDateGreaterThanEqual() prevents
-        // edge cases where exams at the boundary of ZonedDateTime.now() are missed.
-        examRepository.findAll().forEach(exam -> {
-            exam.setStartDate(ZonedDateTime.now().minusHours(2));
-            exam.setEndDate(ZonedDateTime.now().minusHours(1));
-            examRepository.save(exam);
-        });
+    }
 
-        // Use bulk update to avoid loading QuizExercise entities, which would trigger
-        // Hibernate 7's strict @OrderColumn validation on quizQuestions
-        exerciseRepository.updateAllExerciseDates(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1));
+    @Test
+    void testMetricsSetupPreservesExistingExamAndExerciseDates() {
+        var course = courseUtilService.createCourse();
+        var future = ZonedDateTime.now().plusDays(2).withNano(0);
+        var exam = examUtilService.addExam(course, future, future.plusDays(1), future.plusDays(2));
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, future, future.plusHours(1), future.plusDays(1), future.plusDays(2));
+
+        // Simulate the next metrics test starting while another test's fixtures remain in the shared database.
+        setUpMetricsTest();
+        metricsBean.updatePublicArtemisMetrics();
+        metricsBean.recalculateMetrics();
+
+        var persistedExam = examRepository.findByIdElseThrow(exam.getId());
+        assertThat(persistedExam.getStartDate().toInstant()).isEqualTo(exam.getStartDate().toInstant());
+        assertThat(persistedExam.getEndDate().toInstant()).isEqualTo(exam.getEndDate().toInstant());
+        var persistedExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(persistedExercise.getReleaseDate().toInstant()).isEqualTo(exercise.getReleaseDate().toInstant());
+        assertThat(persistedExercise.getStartDate().toInstant()).isEqualTo(exercise.getStartDate().toInstant());
+        assertThat(persistedExercise.getDueDate().toInstant()).isEqualTo(exercise.getDueDate().toInstant());
     }
 
     @Test
@@ -115,16 +124,18 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testPublicMetricsActiveUsers() {
-        var submissions = submissionRepository.findAll();
-        submissions.forEach(submission -> submission.setSubmissionDate(ZonedDateTime.now().minusDays(30)));
-        submissionRepository.saveAll(submissions);
-
         var users = userUtilService.addUsers(TEST_PREFIX + "active", 3, 0, 0, 0);
 
         var course1 = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
 
         var textExercise = ExerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
         textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
+
+        metricsBean.updatePublicArtemisMetrics();
+        double baselineActive1Day = getMetricValue("artemis.statistics.public.active_users", "period", "1");
+        double baselineActive7Days = getMetricValue("artemis.statistics.public.active_users", "period", "7");
+        double baselineActive14Days = getMetricValue("artemis.statistics.public.active_users", "period", "14");
+        double baselineActive30Days = getMetricValue("artemis.statistics.public.active_users", "period", "30");
 
         var result1 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.getFirst(), 10.0, 0.0, 50, true);
         result1.getSubmission().setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
@@ -140,10 +151,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(1, "artemis.statistics.public.active_users", "period", "1");
-        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "7");
-        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "14");
-        assertMetricEquals(3, "artemis.statistics.public.active_users", "period", "30");
+        assertMetricEquals(baselineActive1Day + 1, "artemis.statistics.public.active_users", "period", "1");
+        assertMetricEquals(baselineActive7Days + 2, "artemis.statistics.public.active_users", "period", "7");
+        assertMetricEquals(baselineActive14Days + 2, "artemis.statistics.public.active_users", "period", "14");
+        assertMetricEquals(baselineActive30Days + 3, "artemis.statistics.public.active_users", "period", "30");
     }
 
     @Test
@@ -207,8 +218,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var courseWithInactiveExam = courseUtilService.createCourse();
         courseWithInactiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(courseWithInactiveExam, users.getFirst());
         var inactiveExam = examRepository.findByCourseId(courseWithInactiveExam.getId()).getFirst();
-        inactiveExam.setStartDate(ZonedDateTime.now().minusDays(1));
-        inactiveExam.setEndDate(ZonedDateTime.now().plusDays(1));
+        inactiveExam.setStartDate(ZonedDateTime.now().minusDays(2));
+        inactiveExam.setEndDate(ZonedDateTime.now().minusDays(1));
         examRepository.save(inactiveExam);
 
         metricsBean.updatePublicArtemisMetrics();
@@ -268,6 +279,12 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testPublicMetricsExercises() {
+        metricsBean.updatePublicArtemisMetrics();
+        double baselineActiveQuizzes = getMetricValue("artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.QUIZ.toString());
+        double baselineActiveTexts = getMetricValue("artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.TEXT.toString());
+        double baselineQuizzes = getMetricValue("artemis.statistics.public.exercises", "exerciseType", ExerciseType.QUIZ.toString());
+        double baselineTexts = getMetricValue("artemis.statistics.public.exercises", "exerciseType", ExerciseType.TEXT.toString());
+
         var course1 = courseUtilService.createCourse();
         // Active quiz
         course1.addExercises(exerciseRepository
@@ -287,18 +304,28 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.QUIZ.toString());
-        assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.TEXT.toString());
+        assertMetricEquals(baselineActiveQuizzes + 1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.QUIZ.toString());
+        assertMetricEquals(baselineActiveTexts + 1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.TEXT.toString());
 
-        assertMetricEquals(exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.QUIZ).findFirst().get().value(),
-                "artemis.statistics.public.exercises", "exerciseType", ExerciseType.QUIZ.toString());
-        assertMetricEquals(exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.TEXT).findFirst().get().value(),
-                "artemis.statistics.public.exercises", "exerciseType", ExerciseType.TEXT.toString());
+        assertMetricEquals(baselineQuizzes + 2, "artemis.statistics.public.exercises", "exerciseType", ExerciseType.QUIZ.toString());
+        assertMetricEquals(baselineTexts + 2, "artemis.statistics.public.exercises", "exerciseType", ExerciseType.TEXT.toString());
     }
 
     @Test
     void testPrometheusMetricsExercises() {
         var users = userUtilService.addUsers(TEST_PREFIX, 6, 0, 0, 0);
+        metricsBean.calculateActiveUserMetrics();
+        metricsBean.recalculateMetrics();
+        double baselineQuizDueCount = getMetricValue("artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        double baselineQuizDueStudents = getMetricValue("artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        double baselineQuizDueActiveStudents = getMetricValue("artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range",
+                "15");
+        double baselineQuizReleaseCount = getMetricValue("artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        double baselineQuizReleaseStudents = getMetricValue("artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        double baselineQuizReleaseActiveStudents = getMetricValue("artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(),
+                "range", "15");
+        double baselineTextReleaseCount = getMetricValue("artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.TEXT.toString(), "range", "15");
+
         // 3 in course 1
         var course1 = courseUtilService.createCourse();
         userUtilService.enrollUserInCourse(users.getFirst(), course1, CourseRole.STUDENT);
@@ -316,11 +343,12 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         metricsBean.recalculateMetrics();
 
         // Only one of the two quizzes ends in the next 15 minutes
-        assertMetricEquals(1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
-        assertMetricEquals(3, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizDueCount + 1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizDueStudents + 3, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // No active users
-        assertMetricEquals(0, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizDueActiveStudents, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range",
+                "15");
 
         // Add activity to user
         quizExerciseUtilService.saveQuizSubmission(ExerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
@@ -331,11 +359,12 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         metricsBean.recalculateMetrics();
 
         // Should now have one active user
-        assertMetricEquals(1, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizDueActiveStudents + 1, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range",
+                "15");
 
         // Two quizzes are released within the next 15 minutes, but have the same users (-> Users are only counted once)
-        assertMetricEquals(2, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
-        assertMetricEquals(3, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizReleaseCount + 2, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizReleaseStudents + 3, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // Add activity to another user
         quizExerciseUtilService.saveQuizSubmission(ExerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
@@ -346,7 +375,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         metricsBean.recalculateMetrics();
 
         // Should now have two active users
-        assertMetricEquals(2, "artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizReleaseActiveStudents + 2, "artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(),
+                "range", "15");
 
         var course2 = courseUtilService.createCourse();
         userUtilService.enrollUserInCourse(users.get(3), course2, CourseRole.STUDENT);
@@ -359,11 +389,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         metricsBean.recalculateMetrics();
 
         // 2 quizzes end within the next 15 minutes, and are in two different courses -> 6 different users in total
-        assertMetricEquals(2, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
-        assertMetricEquals(3 * 2, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizDueCount + 2, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineQuizDueStudents + 6, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // One text exercise is released within the next 30 minutes
-        assertMetricEquals(1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.TEXT.toString(), "range", "15");
+        assertMetricEquals(baselineTextReleaseCount + 1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.TEXT.toString(), "range", "15");
     }
 
     @Test

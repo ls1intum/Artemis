@@ -73,7 +73,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
         athenaConfig.setGradingFeedbackEnabled(true);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
 
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(3),
                 ZonedDateTime.now().plusDays(5));
@@ -85,6 +85,16 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
                 .as("athenaGradingFeedbackEnabled must reach the client; the assessment views gate feedback suggestions on it").isTrue();
         assertThat(course.get("athenaFormativeFeedbackEnabled").asBoolean()).as("athenaFormativeFeedbackEnabled must reach the client; the request-feedback button gates on it")
                 .isTrue();
+    }
+
+    /**
+     * The programming tutor assessment page answers with a narrowed course (see ProgrammingSubmissionForTutorAssessmentDTO.CourseDTO): it gates the
+     * feedback suggestions on the grading flag and has no request-feedback button, so the formative flag is deliberately not part of the response.
+     */
+    private void assertGradingFlagPresent(JsonNode course) {
+        assertThat(course).as("the response has to carry the course").isNotNull();
+        assertThat(course.get("athenaGradingFeedbackEnabled").asBoolean())
+                .as("athenaGradingFeedbackEnabled must reach the client; the assessment views gate feedback suggestions on it").isTrue();
     }
 
     private static LinkedMultiValueMap<String, String> lockParams() {
@@ -101,14 +111,14 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void assessmentDashboardExerciseCarriesTheAthenaFlags() throws Exception {
         JsonNode response = request.get("/api/exercise/exercises/" + textExercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, JsonNode.class);
         assertBothFlagsPresent(response.get("course"));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void assessmentDashboardProgrammingExerciseCarriesTheAthenaFlags() throws Exception {
         // a programming exercise is reloaded before the response is built, which answers from its own persistence context
         ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseRepository.findByIdWithEagerExercisesElseThrow(course.getId()));
@@ -120,14 +130,14 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void courseManagementDetailCarriesTheAthenaFlags() throws Exception {
-        JsonNode response = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode response = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, JsonNode.class);
         assertBothFlagsPresent(response);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void textAssessmentEditorCarriesTheAthenaFlags() throws Exception {
         TextSubmission submission = assessableTextSubmission();
         JsonNode response = request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, JsonNode.class);
@@ -135,7 +145,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void nextTextSubmissionToAssessCarriesTheAthenaFlags() throws Exception {
         TextExercise exercise = (TextExercise) assessableTextSubmission().getParticipation().getExercise();
         JsonNode response = request.get("/api/text/exercises/" + exercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, JsonNode.class, lockParams());
@@ -143,15 +153,15 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void modelingAssessmentEditorCarriesTheAthenaFlags() throws Exception {
         ModelingSubmission submission = assessableModelingSubmission();
-        JsonNode response = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode response = request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, JsonNode.class);
         assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void nextModelingSubmissionToAssessCarriesTheAthenaFlags() throws Exception {
         ModelingExercise exercise = (ModelingExercise) assessableModelingSubmission().getParticipation().getExercise();
         JsonNode response = request.get("/api/modeling/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, JsonNode.class, lockParams());
@@ -159,20 +169,20 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void programmingAssessmentEditorCarriesTheAthenaFlags() throws Exception {
         ProgrammingSubmission submission = assessableProgrammingSubmission();
         JsonNode response = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, JsonNode.class);
-        assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
+        assertGradingFlagPresent(response.get("participation").get("exercise").get("course"));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void nextProgrammingSubmissionToAssessCarriesTheAthenaFlags() throws Exception {
         ProgrammingExercise exercise = (ProgrammingExercise) assessableProgrammingSubmission().getParticipation().getExercise();
         JsonNode response = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, JsonNode.class,
                 lockParams());
-        assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
+        assertGradingFlagPresent(response.get("participation").get("exercise").get("course"));
     }
 
     /**

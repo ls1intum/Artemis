@@ -183,4 +183,23 @@ describe('Course Management Detail Component', () => {
         expect(fixture.nativeElement.querySelectorAll('jhi-course-detail-doughnut-chart').length).toBeGreaterThan(0);
         expect(fixture.nativeElement.querySelector('jhi-course-detail-line-chart')).toBeTruthy();
     });
+    it('reloads the instructor projection and statistics when the course list changes', async () => {
+        const events = new EventManager();
+        vi.spyOn(eventManager, 'subscribe').mockImplementation(events.subscribe.bind(events));
+        const updated = { ...course, title: 'Updated course', description: 'New description', numberOfStudents: 17 };
+        const load = vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(new HttpResponse({ body: updated })));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const statistics = vi.mocked(courseManagementService.getCourseStatisticsForDetailView);
+        statistics.mockClear();
+
+        events.broadcast({ name: 'courseListModification', content: 'updated' });
+        fixture.detectChanges();
+
+        expect(load).toHaveBeenCalledExactlyOnceWith(123);
+        expect(statistics).toHaveBeenCalledExactlyOnceWith(123);
+        expect(component.course()).toEqual(updated);
+        expect(JSON.stringify(component.courseDetailSections())).toContain('Updated course');
+        expect(fixture.nativeElement.textContent).toContain('Updated course');
+    });
 });

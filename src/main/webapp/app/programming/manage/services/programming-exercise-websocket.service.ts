@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -19,7 +19,7 @@ export interface IProgrammingExerciseWebsocketService {
     getTestCaseState(programmingExerciseId: number): Observable<boolean>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgrammingExerciseWebsocketService {
     private websocketService = inject(WebsocketService);
     private readonly accountService = inject(AccountService);

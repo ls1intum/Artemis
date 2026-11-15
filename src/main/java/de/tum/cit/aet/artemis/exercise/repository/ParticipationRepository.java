@@ -21,11 +21,21 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseLatestDueDateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseParticipationCountDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseLatestDueDateDTO(p.exercise.id, MAX(p.individualDueDate))
+            FROM Participation p
+            WHERE p.exercise.id IN :exerciseIds AND p.individualDueDate IS NOT NULL
+            GROUP BY p.exercise.id
+            """)
+    List<ExerciseLatestDueDateDTO> findLatestIndividualDueDates(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Count the number of participations for a given set of exercises.
@@ -39,6 +49,20 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             WHERE p.exercise.id IN :exerciseIds
             """)
     long countByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
+
+    /**
+     * Count the number of participations of every one of a set of exercises with a single query. Exercises without participations are not part of the result.
+     *
+     * @param exerciseIds the id of the exercises (e.g. all in an exam)
+     * @return the number of participations per exercise
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseParticipationCountDTO(p.exercise.id, COUNT(p))
+            FROM Participation p
+            WHERE p.exercise.id IN :exerciseIds
+            GROUP BY p.exercise.id
+            """)
+    List<ExerciseParticipationCountDTO> countByExerciseIdsGroupedByExercise(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Count the number of participations for a given exercise.
@@ -149,10 +173,9 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             SELECT p
             FROM Participation p
                 LEFT JOIN FETCH p.exercise e
-                LEFT JOIN FETCH e.buildConfig
             WHERE p.id = :participationId
             """)
-    Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
+    Optional<Participation> findWithProgrammingExerciseById(@Param("participationId") long participationId);
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.

@@ -9,17 +9,18 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-search.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-import-prerequisites',
     templateUrl: './import-course-competencies.component.html',
-    imports: [ButtonComponent, TranslateDirective, FormsModule, ImportCompetenciesTableComponent, CompetencySearchComponent],
+    imports: [ButtonComponent, TranslateDirective, FormsModule, ImportCompetenciesTableComponent, CompetencySearchComponent, ArtemisTranslatePipe],
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
+    private readonly prerequisiteService = inject(PrerequisiteService);
+
     entityType = CourseCompetencyType.PREREQUISITE;
     override allowRelationImport = false;
-
-    private readonly prerequisiteService = inject(PrerequisiteService);
 
     onSubmit() {
         this.prerequisiteService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, false).subscribe({

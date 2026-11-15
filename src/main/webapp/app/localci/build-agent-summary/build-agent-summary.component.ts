@@ -6,7 +6,7 @@ import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-i
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
-import { TumUiButtonComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
@@ -30,15 +30,16 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
     styleUrl: './build-agent-summary.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FontAwesomeModule,
         RouterModule,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiTableDirective,
-        TumUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
         BuildAgentPauseAllModalComponent,
         BuildAgentClearDistributedDataComponent,
     ],
@@ -58,6 +59,8 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     /** Signal containing the list of all build agents with their current status */
     readonly buildAgents = signal<BuildAgentInformation[]>([]);
+    /** True once the first list of build agents arrived, so the empty state does not flash while loading. */
+    readonly buildAgentsLoaded = signal(false);
 
     /**
      * Computed signal that calculates the total build capacity across all active agents.
@@ -120,6 +123,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private subscribeToWebsocketUpdates(): void {
         this.buildAgentsWebsocketSubscription = this.websocketService.subscribe<BuildAgentInformation[]>(this.buildAgentsWebsocketTopic).subscribe((updatedBuildAgents) => {
             this.buildAgents.set(updatedBuildAgents);
+            this.buildAgentsLoaded.set(true);
         });
     }
 
@@ -130,6 +134,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private loadBuildAgents(): void {
         this.initialLoadSubscription = this.buildAgentsService.getBuildAgentSummary().subscribe((buildAgentsList) => {
             this.buildAgents.set(buildAgentsList);
+            this.buildAgentsLoaded.set(true);
         });
     }
 

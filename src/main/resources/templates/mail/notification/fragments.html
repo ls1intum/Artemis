@@ -127,6 +127,9 @@
             font-size: smaller;
             padding: 5px;
         }
+        footer a {
+            color: #9cc9f2 !important; /* The default link color is too dark to read against the footer background, and Gmail overrides it without important */
+        }
     </style>
 </th:block>
 
@@ -205,7 +208,7 @@
 <th:block th:fragment="footer">
     <footer>
         <span th:text="#{email.notification.aux.footer}"/>
-        <a th:href="@{|${baseUrl}/user-settings/notifications|}">
+        <a th:href="@{|${baseUrl}/user-settings/profile|}">
             <span th:text="#{email.notification.aux.footer.link}"/>
         </a>
     </footer>

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.api;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisLectureSnippetDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 
 @Conditional(IrisEnabled.class)
 @Controller
@@ -48,5 +50,26 @@ public class IrisLectureSearchApi extends AbstractIrisApi {
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         return pyrisConnectorService.searchLectures(query, limit, courseIds, null, accessContext).stream()
                 .map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet())).toList();
+    }
+
+    /**
+     * Searches indexed material for an already-authorized course-maintenance invocation, including unreleased material.
+     * The caller must authorize maintenance before invoking this internal API and supply the course from server-owned
+     * context, never from model arguments. Both the query filter and visibility context are restricted to that course.
+     * Unlike user-oriented search, this path also supports scheduled maintenance without a persisted user principal.
+     *
+     * @param query    semantic search query
+     * @param limit    maximum number of snippets
+     * @param courseId course whose maintenance was authorized by the caller
+     * @return matching lecture snippets in relevance order
+     */
+    public List<IrisLectureSnippetDTO> searchLecturesForCourseMaintenance(String query, int limit, long courseId) {
+        if (courseId <= 0) {
+            throw new IllegalArgumentException("A positive maintenance course id is required.");
+        }
+        List<Long> courseIds = List.of(courseId);
+        var accessContext = new PyrisAccessContextDTO(courseIds, courseIds, List.of(), List.of(), courseIds, ZonedDateTime.now(), false);
+        return pyrisConnectorService.searchLectures(query, limit, courseIds, null, accessContext).stream()
+                .map(result -> new IrisLectureSnippetDTO(result.lecture().name(), result.lectureUnit().name(), result.snippet())).toList();
     }
 }

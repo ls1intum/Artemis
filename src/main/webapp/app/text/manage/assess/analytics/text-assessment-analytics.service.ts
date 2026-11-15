@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextAssessmentEvent, TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -7,12 +7,12 @@ import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Location } from '@angular/common';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 /**
  * A service used to manage sending TextAssessmentEvent's to the server
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TextAssessmentAnalytics {
     private assessmentsService = inject(TextAssessmentService);
     private accountService = inject(AccountService);

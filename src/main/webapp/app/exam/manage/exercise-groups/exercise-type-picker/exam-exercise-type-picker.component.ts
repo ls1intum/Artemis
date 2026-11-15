@@ -1,4 +1,4 @@
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,7 +65,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exam-exercise-type-picker',
     templateUrl: './exam-exercise-type-picker.component.html',
     styleUrl: './exam-exercise-type-picker.component.scss',
-    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamExerciseTypePickerComponent {

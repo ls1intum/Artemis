@@ -24,10 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
@@ -35,18 +33,19 @@ import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -65,7 +64,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
-@FeatureUsage("assessment/manual-assessment")
+@FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingAssessmentResource extends AssessmentResource {
@@ -82,20 +81,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final GradingInstructionRepository gradingInstructionRepository;
-
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
             AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            GradingInstructionRepository gradingInstructionRepository, LongFeedbackTextRepository longFeedbackTextRepository) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+            LongFeedbackTextRepository longFeedbackTextRepository) {
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
-        this.gradingInstructionRepository = gradingInstructionRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
     }
 
@@ -107,33 +103,53 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param resultId     optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the assessment of the given submission
      */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<ResultDTO> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
-        if (resultId != null) {
-            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
-            ModelingSubmission submission = modelingSubmissionRepository
-                    .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
-            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return getAssessmentBySubmissionId(submissionId, resultId, false);
+    }
 
-            if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
-                throw new AccessForbiddenException();
-            }
-            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+    /**
+     * Returns a modeling result using the existing instructor eligibility policy.
+     *
+     * @param submissionId the submission owning the result
+     * @param resultId     optional specific result, which must belong to the submission
+     * @return the instructor result projection
+     */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
+    @GetMapping("modeling-submissions/{submissionId}/result/for-instructor")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ResultDTO> getAssessmentBySubmissionIdForInstructor(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getAssessmentBySubmissionId(submissionId, resultId, true);
+    }
 
-            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-                throw new AccessForbiddenException();
-            }
-
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                exercise.filterSensitiveInformation();
-                result.filterSensitiveInformation();
-            }
-
-            return ResponseEntity.ok(ResultDTO.of(result));
+    private ResponseEntity<ResultDTO> getAssessmentBySubmissionId(Long submissionId, Long resultId, boolean instructorView) {
+        var submission = resultId == null ? loadSubmissionForAssessment(submissionId)
+                : modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new AccessForbiddenException();
         }
-        ResponseEntity<Result> response = super.getAssessmentBySubmissionId(submissionId);
-        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(ResultDTO.of(response.getBody()));
+        var exercise = participation.getExercise();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(instructorView ? Role.INSTRUCTOR : Role.STUDENT, exercise, null);
+        if (!instructorView && !authCheckService.isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException();
+        }
+
+        Result result = resultId == null ? submission.getLatestResult()
+                : submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        if (result == null) {
+            throw new EntityNotFoundException("Result with submission", submissionId);
+        }
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result, instructorView)) {
+            throw new AccessForbiddenException();
+        }
+        if (!instructorView) {
+            exercise.filterSensitiveInformation();
+            result.filterSensitiveInformation();
+        }
+        return ResponseEntity.ok(ResultDTO.of(result));
     }
 
     /**
@@ -143,8 +159,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @GetMapping("exercises/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<ResultDTO> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         ResponseEntity<Result> response = super.getExampleAssessment(exerciseId, submissionId);
@@ -162,7 +179,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("modeling-submissions/{submissionId}/results/{resultId}/assessment")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ResultDTO> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
@@ -179,8 +197,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @PutMapping("modeling-submissions/{submissionId}/example-assessment")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ResultDTO> saveModelingExampleAssessment(@PathVariable("submissionId") long exampleSubmissionId, @RequestBody List<FeedbackDTO> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
         Result result = saveExampleAssessment(exampleSubmissionId, feedbacksFromDtos(feedbacks));
@@ -196,7 +216,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("modeling-submissions/{submissionId}/assessment-after-complaint")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ResultDTO> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody ModelingAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithAuthorities();
@@ -227,7 +248,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("modeling-submissions/{submissionId}/cancel-assessment")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
         return super.cancelAssessment(submissionId, resultId);
     }
@@ -242,20 +264,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @Override
     @DeleteMapping("participations/{participationId}/modeling-submissions/{submissionId}/results/{resultId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
-    @Override
-    protected String getEntityName() {
-        return ENTITY_NAME;
-    }
-
     /**
      * Maps a list of {@link FeedbackDTO} to transient {@link Feedback} entities, setting only the allowed scalar fields.
-     * All distinct grading instruction IDs referenced by the incoming DTOs are loaded in a single batch query before
-     * the per-item mapping loop, so the conversion stays constant-query for large assessments.
+     * Grading instruction IDs are preserved for validation after exercise authorization.
      *
      * @param feedbackDTOs the DTOs received from the client (may be {@code null})
      * @return the mapped list, never {@code null}
@@ -281,39 +298,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
                     .collect(Collectors.toMap(longFeedback -> longFeedback.getFeedback().getId(), LongFeedbackText::getText, (first, second) -> first));
         }
 
-        List<Long> gradingInstructionIds = feedbackDTOs.stream().filter(dto -> dto.gradingInstruction() != null && dto.gradingInstruction().id() != null)
-                .map(dto -> dto.gradingInstruction().id()).distinct().toList();
-        Map<Long, GradingInstruction> gradingInstructionsById = gradingInstructionIds.isEmpty() ? Map.of()
-                : gradingInstructionRepository.findAllById(gradingInstructionIds).stream()
-                        .collect(Collectors.toMap(GradingInstruction::getId, instruction -> instruction, (first, second) -> first));
-
-        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById, gradingInstructionsById))
-                .collect(Collectors.toCollection(ArrayList::new));
+        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById)).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById,
-            Map<Long, GradingInstruction> gradingInstructionsById) {
-        final Feedback feedback = new Feedback();
-        // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
-        // and cleanup paths (ResultService) key on feedback id.
-        feedback.setId(dto.id());
-        feedback.setCredits(dto.credits());
-        feedback.setDetailText(detailTextFromDto(dto, storedFeedbacksById, storedLongTextsById));
-        feedback.setText(dto.text());
-        feedback.setReference(dto.reference());
-        feedback.setType(dto.type());
-        feedback.setPositive(dto.positive());
-        feedback.setVisibility(dto.visibility());
-        if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
-            final Long instructionId = dto.gradingInstruction().id();
-            // Preserves the not-found semantics of the previous findByIdElseThrow call; any ID not in the batch is absent.
-            final GradingInstruction gradingInstruction = gradingInstructionsById.get(instructionId);
-            if (gradingInstruction == null) {
-                throw new EntityNotFoundException("GradingInstruction", instructionId);
-            }
-            feedback.setGradingInstruction(gradingInstruction);
-        }
-        return feedback;
+    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById) {
+        return dto.toAssessmentFeedback(detailTextFromDto(dto, storedFeedbacksById, storedLongTextsById));
     }
 
     private String detailTextFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById) {
@@ -343,19 +332,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     private AssessmentUpdateBaseDTO assessmentUpdateFromDto(final ModelingAssessmentUpdateDTO assessmentUpdate) {
         final List<Feedback> feedbacks = feedbacksFromDtos(assessmentUpdate.feedbacks());
-        ComplaintResponse complaintResponse = null;
         final ComplaintResponseRequestDTO complaintResponseDTO = assessmentUpdate.complaintResponse();
-        if (complaintResponseDTO != null) {
-            complaintResponse = new ComplaintResponse();
-            complaintResponse.setId(complaintResponseDTO.id());
-            complaintResponse.setResponseText(complaintResponseDTO.responseText());
-            final Complaint complaint = new Complaint();
-            if (complaintResponseDTO.complaint() != null) {
-                complaint.setId(complaintResponseDTO.complaint().id());
-                complaint.setAccepted(complaintResponseDTO.complaint().accepted());
-            }
-            complaintResponse.setComplaint(complaint);
-        }
+        final ComplaintResponse complaintResponse = complaintResponseDTO != null ? complaintResponseDTO.toEntity() : null;
         return new ModelingAssessmentUpdateAdapter(feedbacks, complaintResponse, assessmentUpdate.assessmentNote());
     }
 

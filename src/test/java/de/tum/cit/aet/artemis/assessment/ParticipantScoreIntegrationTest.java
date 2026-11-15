@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,10 +21,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -35,10 +38,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -81,6 +86,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private User student1;
 
     @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
@@ -91,6 +99,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private ResultService resultService;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -168,7 +179,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         long getIdOfIndividualTextExerciseOfExam = examTextExercise.getId();
 
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
         courseRepository.save(course);
@@ -192,7 +202,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -204,7 +214,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
         // The exercise must have a short name because otherwise the corresponding audit event is too long for the database
         textExerciseUtilService.renameTextExercise(textExercise, "1");
@@ -228,9 +238,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
-        request.delete("/api/text/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + idOfIndividualTextExercise, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(idOfIndividualTextExercise);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
     }
@@ -238,14 +249,15 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldDeleteExercise() throws Exception {
-        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
+        request.delete("/api/admin/courses/" + courseId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(courseId);
         assertThat(courseRepository.existsById(courseId)).isFalse();
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(exerciseRepository.existsById(idOfTeamTextExercise)).isFalse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/assessment/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(4);
@@ -257,7 +269,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourseScores_asInstructorOfCourseWithGradedPresentations_shouldReturnCourseScores() throws Exception {
         GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(exam.getCourse(), 2, 20.0);
         gradingScaleRepository.save(gradingScale);
@@ -278,7 +290,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/assessment/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(1);
@@ -290,7 +302,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getGradeScoresForCourse() throws Exception {
         // we only consider participations that have no due date or where the due date has passed
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -363,8 +375,117 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private record IdsMapValue(long exerciseId, long studentId, double score) {
     }
 
+    /**
+     * A student practices a team exercise on their own. The participant of that participation is the student, but the participant scores of a team exercise are keyed by team,
+     * so reading the student's id as a team id would update, replace or delete the scores of an unrelated team. Therefore, no participant score update may be scheduled for it,
+     * neither when the result is created, nor by the cron job, nor when it is deleted.
+     */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void practiceResultOfStudentOnTeamExercise_isNotScheduledForParticipantScores() {
+        Exercise teamExercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
+        var teamScoresBefore = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresBefore).hasSize(1);
+
+        StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(teamExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setTestRun(true);
+        practiceParticipation = studentParticipationRepository.save(practiceParticipation);
+
+        Result practiceResult = participationUtilService.createSubmissionAndResult(practiceParticipation, 100, true);
+        assertThat(participantScoreScheduleService.isIdle()).as("creating the result of an individual practice participation of a team exercise schedules no score update")
+                .isTrue();
+
+        participantScoreScheduleService.executeScheduledTasks();
+        assertThat(participantScoreScheduleService.isIdle()).as("the cron job schedules no score update for it either").isTrue();
+
+        resultRepository.deleteById(practiceResult.getId());
+        assertThat(participantScoreScheduleService.isIdle()).as("deleting the result schedules no score update").isTrue();
+
+        // a task would stay scheduled for the waiting time of the scheduler, so a window longer than that shows that none was queued and finished unnoticed
+        await().during(Duration.ofMillis(3 * ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS)).atMost(Duration.ofSeconds(10))
+                .until(participantScoreScheduleService::isIdle);
+
+        var teamScoresAfter = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresAfter).hasSize(1);
+        var scoreBefore = teamScoresBefore.getFirst();
+        var scoreAfter = teamScoresAfter.getFirst();
+        assertThat(scoreAfter.getId()).isEqualTo(scoreBefore.getId());
+        assertThat(scoreAfter.getParticipant().getId()).as("the score still belongs to the team").isEqualTo(scoreBefore.getParticipant().getId());
+        assertThat(scoreAfter.getLastRatedScore()).isEqualTo(scoreBefore.getLastRatedScore()).isNotEqualTo(100.0);
+        assertThat(scoreAfter.getLastScore()).isEqualTo(scoreBefore.getLastScore()).isNotEqualTo(100.0);
+        assertThat(scoreAfter.getLastModifiedDate()).as("the score of the team was not recalculated").isEqualTo(scoreBefore.getLastModifiedDate());
+        // The kind of score tells a team's score from a student's. Their participant ids must not be compared: users and teams have separate id sequences, so the id of the
+        // student can equal the id of the team by chance, and the team's own score would then look like one created for the student.
+        assertThat(participantScoreRepository.findAllByExercise(teamExercise)).as("no score was created for the student, the only score is the team's")
+                .allSatisfy(score -> assertThat(score).isInstanceOf(TeamScore.class));
+    }
+
+    /**
+     * Deleting a result through the service takes a second route when its feedbacks are not loaded: the result is removed with JPQL, which bypasses the listener, so the service
+     * schedules the score update itself and has to apply the same rule.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deletePracticeResultOfStudentOnTeamExerciseThroughTheService_isNotScheduledForParticipantScores() {
+        Exercise teamExercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
+        var teamScoresBefore = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresBefore).hasSize(1);
+
+        StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(teamExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setTestRun(true);
+        practiceParticipation = studentParticipationRepository.save(practiceParticipation);
+        Result practiceResult = participationUtilService.createSubmissionAndResult(practiceParticipation, 100, true);
+        assertThat(participantScoreScheduleService.isIdle()).isTrue();
+
+        // read it again so that its feedbacks are an uninitialized lazy collection
+        Result resultWithoutFeedbacks = resultRepository.findById(practiceResult.getId()).orElseThrow();
+        resultService.deleteResult(resultWithoutFeedbacks, true);
+
+        assertThat(resultRepository.findById(practiceResult.getId())).isEmpty();
+        assertThat(participantScoreScheduleService.isIdle()).as("deleting the result schedules no score update").isTrue();
+        var teamScoresAfter = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresAfter).hasSize(1);
+        assertThat(teamScoresAfter.getFirst().getId()).isEqualTo(teamScoresBefore.getFirst().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void practiceResultOfStudentOnIndividualExercise_isStillScheduledForParticipantScores() {
+        Exercise individualExercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
+        StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(individualExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setTestRun(true);
+        practiceParticipation = studentParticipationRepository.save(practiceParticipation);
+
+        participationUtilService.createSubmissionAndResult(practiceParticipation, 100, true);
+
+        assertThat(participantScoreScheduleService.isIdle()).as("an individual exercise keeps scheduling the score update for practice results").isFalse();
+        await().until(participantScoreScheduleService::isIdle);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getGradeScoresForCourse_excludesTutorsEditorsAndInstructors() throws Exception {
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User editor1 = userUtilService.addEditorToCourse(TEST_PREFIX + "editor1", course);
+        // student2 left the course after taking part: the results are legitimate and must stay in the scores
+        userUtilService.unenrollUserFromCourse(student2, course);
+
+        for (User participant : List.of(student2, tutor1, editor1, instructor1)) {
+            participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, participant, 10.0, 10.0, 80, true);
+        }
+
+        CourseGradeInformationDTO gradeInformation = request.get("/api/assessment/courses/" + courseId + "/grade-scores", HttpStatus.OK, CourseGradeInformationDTO.class);
+
+        assertThat(gradeInformation).isNotNull();
+        // student1 (individual and team participation) and the former student2 stay, nobody from the teaching staff is returned
+        assertThat(gradeInformation.gradeScores()).extracting(CourseGradeScoreDTO::userId).containsOnly(student1.getId(), student2.getId());
+        assertThat(gradeInformation.students()).extracting(StudentDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.FORBIDDEN, CourseGradeInformationDTO.class);
     }

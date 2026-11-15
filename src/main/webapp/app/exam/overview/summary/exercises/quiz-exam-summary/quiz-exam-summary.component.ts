@@ -17,12 +17,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
     templateUrl: './quiz-exam-summary.component.html',
-    imports: [TranslateDirective, MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent],
+    imports: [TranslateDirective, MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, TumAetUiMessageComponent],
 })
 export class QuizExamSummaryComponent {
     private serverDateService = inject(ArtemisServerDateService);

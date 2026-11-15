@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -33,6 +33,7 @@ import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
@@ -212,6 +213,83 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne(`api/lti/courses/for-lti-dashboard?clientId=${mockClientId}`);
         expect(req.request.method).toBe('GET');
         req.flush(mockResponse);
+    });
+
+    it('should search the users of a course by login or name within the given roles', () => {
+        courseManagementService.searchUsers(1, 'ada', ['tutors', 'students']).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/users/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('roles')).toBe('tutors,students');
+        req.flush([]);
+    });
+
+    it('should search the members of a course for a mention by login or name', () => {
+        courseManagementService.searchMembersForUserMentions(1, 'ada').subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/members/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        req.flush([]);
+    });
+
+    it('should search the students of a course by login or name', () => {
+        courseManagementService.searchStudents(1, 'ada', 0, 25).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/students/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('page')).toBe('0');
+        expect(req.request.params.get('size')).toBe('25');
+        req.flush([]);
+    });
+
+    it('should fetch the time zones a course may use from the server', () => {
+        let timeZones: string[] | undefined;
+
+        courseManagementService.getSupportedTimeZones().subscribe((response) => (timeZones = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
+        expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
+    });
+
+    it.each(['findForTutor', 'findForInstructor'] as const)('%s preserves conversion and title side effects', (method) => {
+        const titleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        let body: Course | null | undefined;
+        courseManagementService[method](7).subscribe((response) => (body = response.body));
+        const suffix = method === 'findForTutor' ? 'for-tutor' : 'for-instructor';
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7, title: 'Course', startDate: '2026-10-14T14:00:00Z' });
+        expect(body?.startDate?.toISOString()).toBe('2026-10-14T14:00:00.000Z');
+        expect(titleSpy).toHaveBeenCalled();
+    });
+
+    it.each([
+        ['STUDENT', 'for-tutor'],
+        ['TEACHING_ASSISTANT', 'for-tutor'],
+        ['EDITOR', 'for-tutor'],
+        ['INSTRUCTOR', 'for-instructor'],
+    ] as const)('management chooses %s audience before reading a course', (role, suffix) => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: [role] }] }));
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7 });
+    });
+
+    it('selects the instructor projection for a numeric course ID from route parameters', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: ['INSTRUCTOR'] }] }));
+        const route = new ActivatedRouteSnapshot();
+        route.params = { courseId: '7' };
+        courseManagementService.findForManagement(route.params['courseId']).subscribe();
+        const request = httpMock.expectOne((request) => request.url.startsWith(`${resourceUrl}/7/`));
+        request.flush({ id: 7 });
+        expect(request.request.url).toBe(`${resourceUrl}/7/for-instructor`);
+    });
+
+    it('management uses tutor projection for a passkey-blocked administrator without instructor membership', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, authorities: ['ROLE_ADMIN'], courseRoles: [] }));
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/for-tutor` }).flush({ id: 7 });
     });
 
     it('should find the course', () => {
@@ -507,17 +585,6 @@ describe('Course Management Service', () => {
         ]);
     });
 
-    it('should add user to course group', () => {
-        const user = new User(1, 'name');
-        const courseRoleSlug = CourseRoleSlug.STUDENTS;
-        courseManagementService
-            .addUserToCourseRole(course.id!, courseRoleSlug, user.login!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
-        req.flush({});
-    });
-
     it('should remove user from course group', () => {
         const user = new User(1, 'name');
         const courseRoleSlug = CourseRoleSlug.STUDENTS;
@@ -548,6 +615,41 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(users));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
         req.flush(returnedFromService);
+    });
+
+    it('should search users for course role and return content with total count', () => {
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
+        const mockUsers: UserForRegistration[] = [
+            { id: 1, login: 'student1', name: 'Student One', isRegistered: true },
+            { id: 2, login: 'student2', name: 'Student Two', isRegistered: false },
+        ];
+        let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+        courseManagementService
+            .searchUsersForCourseRole(course.id!, courseRoleSlug, 'student', 0, 10)
+            .pipe(take(1))
+            .subscribe((res) => (result = res));
+        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${resourceUrl}/${course.id}/${courseRoleSlug}/users/search`);
+        req.flush(mockUsers, { headers: { 'X-Total-Count': '2' } });
+        expect(result).toEqual({ content: mockUsers, totalElements: 2 });
+    });
+
+    it('should search students using the requested page and size', () => {
+        const users = [new User(1, 'student1')];
+
+        courseManagementService
+            .searchStudents(course.id!, 'student', 2, 10)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+
+        const req = httpMock.expectOne(
+            (request) =>
+                request.method === 'GET' &&
+                request.url === `${resourceUrl}/${course.id}/students/search` &&
+                request.params.get('loginOrName') === 'student' &&
+                request.params.get('page') === '2' &&
+                request.params.get('size') === '10',
+        );
+        req.flush(users);
     });
 
     it('getNumberOfAllowedComplaintsInCourse', () => {
@@ -752,6 +854,7 @@ describe('Course DTO adapter boundary', () => {
         athenaGradingFeedbackEnabled: false,
         athenaFormativeFeedbackEnabled: false,
         learningPathsEnabled: false,
+        presentationAssessmentsEnabled: false,
         trainingEnabled: false,
     };
 
@@ -988,6 +1091,11 @@ describe('Course DTO adapter boundary', () => {
 
         expect(courseFromManagementDTO(withArchive).courseArchivePath).toBe('archives/course-1.zip');
         expect(courseFromManagementDTO(minimalCourseManagementDTO).courseArchivePath).toBeUndefined();
+    });
+
+    it.each([true, false])('preserves presentationAssessmentsEnabled=%s when hydrating a management response', (enabled) => {
+        const dto: CourseManagementDTO = { ...minimalCourseManagementDTO, presentationAssessmentsEnabled: enabled };
+        expect(courseFromManagementDTO(dto).presentationAssessmentsEnabled).toBe(enabled);
     });
 
     it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {

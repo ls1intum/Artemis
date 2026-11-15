@@ -18,9 +18,13 @@ import de.tum.cit.aet.artemis.admin.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.admin.service.StatisticsService;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -32,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("statistics/statistics")
+@FeatureUsage(UserFeature.COURSE_STATISTICS)
 @RestController
 @RequestMapping("api/core/")
 public class StatisticsResource {
@@ -65,13 +69,14 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data-for-content")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType,
             @RequestParam StatisticsView view, @RequestParam Long entityId) {
         var courseId = 0L;
         switch (view) {
             case COURSE -> courseId = entityId;
-            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMember().getId();
+            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
             case ARTEMIS -> throw new UnsupportedOperationException("Unsupported view: " + view);
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -86,10 +91,8 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/course-statistics")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return ResponseEntity.ok(this.statisticsService.getCourseStatistics(courseId));
     }
 
@@ -99,11 +102,11 @@ public class StatisticsResource {
      * @param exerciseId the id of the exercise for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @GetMapping("management/statistics/exercise-statistics")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<ExerciseManagementStatisticsDTO> getExerciseStatistics(@RequestParam Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         var exerciseManagementStatisticsDTO = statisticsService.getExerciseStatistics(exercise);
         return ResponseEntity.ok(exerciseManagementStatisticsDTO);
     }

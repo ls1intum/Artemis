@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -50,13 +50,13 @@ public class ExerciseReviewRepositoryService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final GitService gitService;
+    private final BareGitRepositoryService bareGitRepositoryService;
 
     public ExerciseReviewRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            GitService gitService) {
+            BareGitRepositoryService bareGitRepositoryService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
     }
 
     /**
@@ -83,7 +83,7 @@ public class ExerciseReviewRepositoryService {
             return null;
         }
 
-        return gitService.getLastCommitHash(repositoryUri);
+        return bareGitRepositoryService.getLastCommitHash(repositoryUri);
     }
 
     /**
@@ -142,7 +142,7 @@ public class ExerciseReviewRepositoryService {
                 continue;
             }
             try {
-                commitShasByTarget.put(targetType, gitService.getLastCommitHash(repositoryUri));
+                commitShasByTarget.put(targetType, bareGitRepositoryService.getLastCommitHash(repositoryUri));
             }
             catch (Exception ex) {
                 log.warn("Could not resolve latest commit SHA for target {} and repository URI {}: {}", targetType, repositoryUri, ex.getMessage());
@@ -152,28 +152,30 @@ public class ExerciseReviewRepositoryService {
     }
 
     /**
-     * Validates that a repository-relative path exists as a regular file in the configured default branch of a bare repository target.
+     * Validates that a repository-relative path exists as a regular file at the requested commit, or in the configured default branch when no commit is requested.
      *
      * @param targetType             repository-backed thread target type
      * @param auxiliaryRepositoryId  auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
      * @param filePath               repository-relative file path using forward slashes
      * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
+     * @param commitSha              exact commit to inspect, or {@code null} to inspect the configured default branch
      * @return empty if valid; otherwise an error message describing why validation failed
      */
     public Optional<String> validateFileExists(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId, String filePath,
-            ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, @Nullable String commitSha) {
         LocalVCRepositoryUri repositoryUri = findConsistencyTargetRepositoryUri(targetType, auxiliaryRepositoryId, repositoryUrisByTarget);
         if (repositoryUri == null) {
             return Optional.of("repository URI for " + targetType + " is missing");
         }
 
-        try (var repository = gitService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
-            ObjectId defaultBranchCommitId = repository.resolve(Constants.R_HEADS + defaultBranch);
-            if (defaultBranchCommitId == null) {
-                return Optional.of("default branch '" + defaultBranch + "' is missing in " + targetType);
+        try (var repository = bareGitRepositoryService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
+            ObjectId commitId = commitSha == null ? repository.resolve(Constants.R_HEADS + defaultBranch) : repository.resolve(commitSha + "^{commit}");
+            if (commitId == null) {
+                return Optional
+                        .of(commitSha == null ? "default branch '" + defaultBranch + "' is missing in " + targetType : "commit '" + commitSha + "' is missing in " + targetType);
             }
 
-            RevCommit commit = revWalk.parseCommit(defaultBranchCommitId);
+            RevCommit commit = revWalk.parseCommit(commitId);
             try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
                 boolean exists = treeWalk != null && treeWalk.getFileMode(0).getObjectType() == Constants.OBJ_BLOB;
                 return exists ? Optional.empty() : Optional.of("file '" + filePath + "' does not exist in " + targetType);

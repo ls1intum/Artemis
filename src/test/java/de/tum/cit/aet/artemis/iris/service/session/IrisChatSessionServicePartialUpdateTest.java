@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
@@ -60,21 +64,22 @@ class IrisChatSessionServicePartialUpdateTest {
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), mock(ExerciseRepository.class), mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
                 mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), mock(PyrisJobService.class),
-                mock(UserAiPreferenceService.class), new IrisProactiveProperties());
+                mock(UserAiPreferenceService.class), new IrisProactiveProperties(), mock(UserRepository.class), mock(CourseNotificationService.class),
+                mock(IrisSessionPresenceService.class));
     }
 
     @Test
     void partialStatusUpdateRelaysDraftWithoutPersistingMessage() {
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, "partial", 4, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, "partial", 4, null, null);
         var session = new IrisChatSession();
         session.setId(2L);
         session.setUserId(5L);
-        when(irisSessionRepository.findByIdElseThrow(2L)).thenReturn(session);
+        when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
 
-        irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+        assertThat(irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)).isTrue();
 
-        verify(irisSessionRepository).findByIdElseThrow(2L);
+        verify(irisSessionRepository).findById(2L);
         verify(irisChatWebsocketService).sendPartialUpdate(session, "partial", 4, "run-1");
         verifyNoInteractions(irisMessageService, irisMessageRepository);
     }

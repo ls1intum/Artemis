@@ -1,5 +1,5 @@
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { DisplayPriority, UserRole } from 'app/communication/metis.util';
+import { DisplayPriority, UserRole } from 'app/communication/communication.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/account/user/user.model';

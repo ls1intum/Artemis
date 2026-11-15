@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
+import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
+
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -198,6 +202,45 @@ public class SharingConnectorService {
     }
 
     /**
+     * Checks that the given base URL addresses the Sharing Platform API this instance is connected to.
+     * <p>
+     * The connection is held per node. A node that has not been connected yet has no reference to compare with,
+     * so the check passes there and the callers rely on the checksum of the request.
+     *
+     * @param apiBaseUrl the base URL received with a request
+     * @return false if the URL is malformed or differs from the configured one, true otherwise
+     */
+    public boolean matchesConfiguredApiBaseUrl(String apiBaseUrl) {
+        URL configured = sharingApiBaseUrl;
+        if (configured == null) {
+            return true;
+        }
+        if (apiBaseUrl == null) {
+            return false;
+        }
+        try {
+            URL candidate = URI.create(apiBaseUrl).toURL();
+            return candidate.getProtocol().equalsIgnoreCase(configured.getProtocol()) && candidate.getHost().equalsIgnoreCase(configured.getHost())
+                    && effectivePort(candidate) == effectivePort(configured) && trimTrailingSlashes(candidate.getPath()).equals(trimTrailingSlashes(configured.getPath()));
+        }
+        catch (IllegalArgumentException | MalformedURLException e) {
+            return false;
+        }
+    }
+
+    private static int effectivePort(URL url) {
+        return url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
+    }
+
+    private static String trimTrailingSlashes(String path) {
+        int end = path.length();
+        while (end > 0 && path.charAt(end - 1) == '/') {
+            end--;
+        }
+        return path.substring(0, end);
+    }
+
+    /**
      * Overrides the configured API key. Intended for tests.
      *
      * @param sharingApiKey the explicit API key to set
@@ -266,7 +309,7 @@ public class SharingConnectorService {
             apiKey = matcher.group(1);
         }
 
-        boolean success = Objects.equals(sharingApiKey, apiKey);
+        boolean success = sharingApiKey != null && MessageDigest.isEqual(hashSha256(sharingApiKey), hashSha256(apiKey));
         if (!success) {
             lastHealthStati.add(new HealthStatus("Failed api Key validation (unequal)"));
         }

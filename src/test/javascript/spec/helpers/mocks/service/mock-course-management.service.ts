@@ -8,6 +8,10 @@ import { EntityArrayResponseType } from 'app/course/manage/services/course-manag
 export class MockCourseManagementService {
     find = (courseId: number) => of([{ id: 456 } as Course]);
 
+    findForManagement = (courseId: number) => of(new HttpResponse<Course>({ body: { id: courseId } }));
+
+    findForInstructor = (courseId: number) => of(new HttpResponse<Course>({ body: { id: courseId } }));
+
     findWithExercises = (courseId: number) => {
         const mockExercise = new TextExercise(undefined, undefined);
         mockExercise.id = 1;

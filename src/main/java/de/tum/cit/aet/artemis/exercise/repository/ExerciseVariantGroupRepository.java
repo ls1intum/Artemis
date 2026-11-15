@@ -98,6 +98,25 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     int claimExerciseIfUngrouped(@Param("exerciseId") long exerciseId, @Param("groupId") long groupId);
 
     /**
+     * Commits a conditional membership claim together with its validated assignment. A rejected timeline or failed
+     * assignment rolls back the claim and all database changes made by the assignment, rather than leaving membership
+     * pointing at a group whose timeline was never adopted.
+     *
+     * @param exerciseId the source exercise to claim
+     * @param groupId    the destination group
+     * @param assignment validation and assignment, invoked only after a successful claim
+     * @return whether this operation claimed and assigned the exercise
+     */
+    @Transactional
+    default boolean claimAndAssignExerciseIfUngrouped(long exerciseId, long groupId, Runnable assignment) {
+        if (claimExerciseIfUngrouped(exerciseId, groupId) != 1) {
+            return false;
+        }
+        assignment.run();
+        return true;
+    }
+
+    /**
      * Gives up a claim made by {@link #claimExerciseIfUngrouped} when the assignment that followed it was rejected
      * before anything else was written. Scoped to the claiming group, so it can never release a membership somebody
      * else established in the meantime.

@@ -32,11 +32,14 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -51,6 +54,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
@@ -58,10 +62,12 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @Conditional(LectureEnabled.class)
 @Lazy
-@FeatureUsage("units/unit-management")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureUnitResource {
@@ -93,10 +99,13 @@ public class LectureUnitResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final TumLiveUploadService tumLiveUploadService;
+
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
             LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, LectureService lectureService) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, LectureService lectureService, TumLiveUploadService tumLiveUploadService) {
+        this.tumLiveUploadService = tumLiveUploadService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -154,6 +163,7 @@ public class LectureUnitResource {
      * @param completed     true if the lecture unit should be marked as completed, false for uncompleted
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.LECTURE_UNITS)
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
@@ -183,13 +193,15 @@ public class LectureUnitResource {
     /**
      * DELETE lectures/:lectureId/lecture-units/:lectureUnitId
      *
-     * @param lectureId     the id of the lecture to which the unit belongs
-     * @param lectureUnitId the id of the lecture unit to remove
+     * @param lectureId               the id of the lecture to which the unit belongs
+     * @param lectureUnitId           the id of the lecture unit to remove
+     * @param deleteTumLiveRecordings whether to delete in TUM.Live the video Artemis uploaded for the unit; an upload not attached yet is always deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @EnforceAtLeastInstructorInLectureUnit
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId,
+            @RequestParam(defaultValue = "false") boolean deleteTumLiveRecordings) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
@@ -205,6 +217,7 @@ public class LectureUnitResource {
         }
         long unitId = lectureUnitId;
         lectureUnitService.removeLectureUnit(lectureUnit);
+        tumLiveUploadService.releaseForDeletion(List.of(unitId), deleteTumLiveRecordings);
 
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId));
 
@@ -215,14 +228,33 @@ public class LectureUnitResource {
      * GET /lecture-units/:lectureUnitId/for-learning-path-node-details : Gets lecture unit for the details view of a learning path node.
      *
      * @param lectureUnitId the id of the lecture unit that should be fetched
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found) if the lecture unit does not exist
      */
+    @FeatureUsage(UserFeature.LEARNING_PATHS)
     @GetMapping("lecture-units/{lectureUnitId}/for-learning-path-node-details")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnitForLearningPathNodeDetailsDTO> getLectureUnitForLearningPathNodeDetails(@PathVariable long lectureUnitId) {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
+        lectureService.checkLectureUnitVisibleToUserElseThrow(lectureUnitId, userRepository.getUserWithCourseRolesAndAuthorities());
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
+    }
+
+    /**
+     * GET /lecture-units/:lectureUnitId/material-versions : get the versions of the material the lecture unit currently offers.
+     * <p>
+     * Iris citations and point-outs are pinned to the version of the material they were generated from. The client calls this when one is followed, so that the comparison
+     * reflects the material as it is right now rather than as it was when the chat was loaded.
+     *
+     * @param lectureUnitId the id of the lecture unit whose material versions should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the current versions in the body
+     */
+    @GetMapping("lecture-units/{lectureUnitId}/material-versions")
+    @EnforceAtLeastStudentInLectureUnit
+    public ResponseEntity<LectureUnitMaterialVersionsDTO> getLectureUnitMaterialVersions(@PathVariable long lectureUnitId) {
+        log.debug("REST request to get material versions of lecture unit with id: {}", lectureUnitId);
+        lectureService.checkLectureUnitVisibleToUserElseThrow(lectureUnitId, userRepository.getUserWithCourseRolesAndAuthorities());
+        return ResponseEntity.ok(lectureUnitRepository.findMaterialVersionsById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, lectureUnitId)));
     }
 
     /**
@@ -232,6 +264,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and the lecture unit in the body, projected as on the lecture details page, or with status 404 (Not Found) if the lecture
      *         unit could not be found
      */
+    @FeatureUsage(UserFeature.LECTURE_UNITS)
     @GetMapping("lecture-units/{lectureUnitId}")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureDetailsDTO.LectureUnitDetailsDTO> getLectureUnitById(@PathVariable @Valid long lectureUnitId) {
@@ -247,8 +280,14 @@ public class LectureUnitResource {
      * @param lectureId the id of the lecture
      * @return the ResponseEntity with status 200 (OK) and the list of combined statuses
      */
+    @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @GetMapping("lectures/{lectureId}/lecture-units/statuses")
     @EnforceAtLeastEditorInLecture
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Get the processing status of the units of a lecture", description = """
+            Reports, for each attachment video unit of the lecture, how far the background processing of its slides and video has \
+            come: processingPhase is IDLE, TRANSCRIBING, INGESTING, DONE, FAILED or SKIPPED. Poll this after uploading slides; DONE or \
+            SKIPPED means nothing more is pending. The list is empty when processing is not enabled on this instance.""")
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
         log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
 
@@ -287,6 +326,7 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit to retry processing for
      * @return the ResponseEntity with status 200 (OK) and the updated combined status
      */
+    @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing")
     @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<LectureUnitCombinedStatusDTO> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {

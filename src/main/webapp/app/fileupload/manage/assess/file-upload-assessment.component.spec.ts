@@ -164,7 +164,7 @@ describe('FileUploadAssessmentComponent', () => {
                 {
                     provide: ComplaintService,
                     useValue: {
-                        findBySubmissionId: vi.fn().mockReturnValue(of({ body: null })),
+                        findBySubmissionIdForAssessment: vi.fn().mockReturnValue(of({ body: null })),
                         convertComplaintFromServer: vi.fn((dto: ComplaintDTO, result?: Result) =>
                             Object.assign(new Complaint(), dto, {
                                 accepted: dto.complaintIsAccepted ?? (dto as Complaint).accepted,
@@ -448,7 +448,7 @@ describe('FileUploadAssessmentComponent', () => {
             complaint.id = 555;
             complaint.complaintText = 'Test complaint';
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.ngOnInit();
 
@@ -695,6 +695,28 @@ describe('FileUploadAssessmentComponent', () => {
 
             expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission()!.id, 'Test note');
         });
+
+        it('should refuse to save points outside the bounds and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 100.5, detailText: 'too many points' })]);
+            const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSaveAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points', () => {
+            vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSaveAssessment();
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
     });
 
     describe('onSubmitAssessment', () => {
@@ -747,6 +769,29 @@ describe('FileUploadAssessmentComponent', () => {
             component.onSubmitAssessment();
 
             expect(component.result()).toBe(savedResult);
+        });
+
+        it('should refuse to submit points outside the bounds and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: -100.5, detailText: 'too many points' })]);
+            const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSubmitAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the submitted points', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
+            vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSubmitAssessment();
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
         });
     });
 
@@ -952,6 +997,41 @@ describe('FileUploadAssessmentComponent', () => {
 
             expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
         });
+
+        it('should refuse to update points outside the bounds after a complaint and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 100.5, detailText: 'too many points' })]);
+            let onErrorCalled = false;
+            const assessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => {},
+                onError: () => (onErrorCalled = true),
+            };
+            const updateSpy = vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(onErrorCalled).toBe(true);
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points after a complaint', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
+            vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const assessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => {},
+                onError: () => {},
+            };
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
     });
 
     describe('canOverride', () => {
@@ -1035,7 +1115,7 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new Complaint();
             complaint.id = 123;
             complaint.complaintText = 'Test complaint';
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.getComplaint();
 
@@ -1043,7 +1123,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should not set complaint when response body is null', () => {
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as HttpResponse<ComplaintDTO>));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: null } as HttpResponse<ComplaintDTO>));
 
             component.getComplaint();
 
@@ -1051,7 +1131,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should show error alert on failure', () => {
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             const alertErrorSpy = vi.spyOn(alertService, 'error');
 
             component.getComplaint();

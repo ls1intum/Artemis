@@ -88,7 +88,7 @@ public class UserCreationService {
      * <p>
      * The account is created <b>activated</b> unless its own owner is expected to activate it, which requires
      * {@code isInternal}: only an internal account gets {@code activated = false} and an activation key. See
-     * {@link User#activated} for why an externally managed account must never be created unactivated, and for why this is
+     * {@link User#getActivated()} for why an externally managed account must never be created unactivated, and for why this is
      * deliberately not narrowed further to instances that have self-registration enabled.
      *
      * @param login              user login string
@@ -205,44 +205,51 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
-        // An administrator-created account gets a reset key so its owner can set their own password.
-        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;
     }
 
     private void setUserAuthorities(final ManagedUserVM userDTO, final User user) {
-        // A user needs to have at least some role, otherwise an authentication token can never be constructed
-        if (userDTO.getAuthorities() == null || userDTO.getAuthorities().isEmpty()) {
-            userDTO.setAuthorities(Set.of(STUDENT.getAuthority()));
-        }
-
         // clear and add instead of new Set for Hibernate change tracking
         final Set<Authority> authorities = user.getAuthorities();
         authorities.clear();
-        userDTO.getAuthorities().stream().map(authorityRepository::findById).flatMap(Optional::stream).forEach(authorities::add);
+        if (userDTO.getAuthorities() != null) {
+            userDTO.getAuthorities().stream().map(authorityRepository::findById).flatMap(Optional::stream).forEach(authorities::add);
+        }
+
+        // A user needs to have at least some role, otherwise an authentication token can never be constructed.
+        // This is checked after resolving the names, because unknown ones (such as the retired teaching authorities) are dropped above.
+        if (authorities.isEmpty()) {
+            authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
+        }
     }
 
     /**
      * Update basic information (first name, last name, email, language) for the current user.
-     * This method is typically invoked by the user
+     * This method is typically invoked by the user. The profile picture is not part of it: it is owned by the server and only changes through the upload and removal of the
+     * picture, so a value sent with the account information is not taken over.
      *
      * @param firstName first name of user
      * @param lastName  last name of user
-     * @param email     email id of user
+     * @param email     email id of user, or null to leave the address of the account as it is. An account whose address is changed by confirmation must not
+     *                      pass one: it would be compared with the address the account has now, and an address that was confirmed after the caller read the
+     *                      account would be written back as the old one.
      * @param langKey   language key
-     * @param imageUrl  image URL of user
      */
-    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
+    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, @Nullable String email, String langKey) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+            if (email == null) {
+                // The address is not part of this save: only the columns of the form are written, so nothing else is written back as it was read, in particular not an address
+                // that a confirmation applied after the account was read.
+                userRepository.updateBasicInformation(user.getId(), firstName, lastName, langKey, user.getLogin(), Instant.now());
+                log.info("Changed Information for User: {}", user.getLogin());
+                return;
+            }
             updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setLangKey(langKey);
-            if (imageUrl != null) {
-                user.setImageUrl(imageUrl);
-            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
         });
@@ -264,7 +271,7 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
-        updateEmailIfChanged(user, updatedUserDTO.getEmail());
+        boolean emailChangedByAdministrator = updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -318,6 +325,11 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        if (emailChangedByAdministrator || isPasswordBeingChanged) {
+            // The administrator has decided about the address or taken over the password, so a request the account made earlier no
+            // longer describes what it should become, and must not be confirmable afterwards.
+            userRecoveryKeyService.clearPendingEmailChange(savedUser.getId());
+        }
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
@@ -469,9 +481,8 @@ public class UserCreationService {
     }
 
     /**
-     * Rejects a non-blank email address that belongs to another account. Existing legacy duplicates remain editable as long as their email address is not changed through a
-     * path that invokes this validation. The database constraint introduced in the implementation phase will close the concurrent-write race that application validation
-     * cannot eliminate.
+     * Rejects a non-blank email address that belongs to another account, so that a caller is told what is wrong instead of seeing the database refuse the write. The unique
+     * index on the column is what actually enforces this; it also closes the concurrent-write race that a check before the write cannot.
      *
      * @param email         the proposed email address
      * @param currentUserId the current account when updating, or {@code null} when creating an account
@@ -491,9 +502,8 @@ public class UserCreationService {
     }
 
     /**
-     * Applies an email update only when its canonical value differs from the account's current canonical value. This
-     * keeps unrelated edits possible for accounts in a legacy duplicate group and prevents case-only values from external
-     * systems from causing repeated validation and saves.
+     * Applies an email update only when its canonical value differs from the account's current canonical value. This prevents case-only values from external systems from
+     * causing repeated validation and saves.
      *
      * @param user  the account to update
      * @param email the proposed address, which may be {@code null} or blank

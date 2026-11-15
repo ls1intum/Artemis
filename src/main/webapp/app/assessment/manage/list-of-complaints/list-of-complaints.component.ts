@@ -1,4 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -6,33 +18,46 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, combineLatestWith } from 'rxjs';
+import { Observable, Subscription, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
-import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, SortDirective, SortByDirective],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+    ],
     providers: [ArtemisDatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
     complaintService = inject(ComplaintService);
+    private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -53,17 +78,63 @@ export class ListOfComplaintsComponent implements OnInit {
     private examId?: number;
     readonly course = signal<Course>(undefined!);
     correctionRound?: number;
-    complaintsSortingPredicate = 'id';
-    complaintsReverseOrder = false;
+    private readonly sortingPredicateState = signal('id');
+    private readonly reverseOrderState = signal(false);
+
+    get complaintsSortingPredicate(): string {
+        return this.sortingPredicateState();
+    }
+    set complaintsSortingPredicate(value: string) {
+        this.sortingPredicateState.set(value);
+    }
+
+    get complaintsReverseOrder(): boolean {
+        return this.reverseOrderState();
+    }
+    set complaintsReverseOrder(value: boolean) {
+        this.reverseOrderState.set(value);
+    }
     readonly complaintsToShow = signal<Complaint[]>([]);
     readonly showAddressedComplaints = signal(false);
     readonly allComplaintsForTutorLoaded = signal(false);
     readonly isLoadingAllComplaints = signal(false);
     readonly filterOption = signal<number | undefined>(undefined);
+    readonly assessorFilter = signal<string | undefined>(undefined); // assessorKey, only meaningful once allComplaintsForTutorLoaded()
 
     readonly loading = signal(true);
+    // Cached so toggling "mine"/"all" after the first fetch is a pure client-side swap, no repeat request.
+    // Cleared whenever the route identity (course/exercise/exam/tutor/type) changes.
+    private ownComplaints?: Complaint[];
+    private allTutorsComplaints?: Complaint[];
+    private mineScopeSubscription?: Subscription;
+    private allScopeSubscription?: Subscription;
+    private routeIdentity?: string;
+    private selectedComplaintScope: 'mine' | 'all' = 'mine';
+
+    /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
+    assessorFilterOptions(): { key: string | undefined; label: string }[] {
+        return [
+            { key: undefined, label: this.translateService.instant('artemisApp.complaint.listOfComplaints.allAssessors') },
+            ...this.assessorOptions().map((assessor) => ({
+                key: assessor.key,
+                label: assessor.label || this.translateService.instant('artemisApp.complaint.listOfComplaints.unknownAssessor'),
+            })),
+        ];
+    }
+
+    readonly assessorOptions = computed(() => {
+        const byKey = new Map<string, string>();
+        for (const complaint of this.complaints()) {
+            byKey.set(complaint.assessorKey ?? '', complaint.assessorLabel ?? '');
+        }
+        return Array.from(byKey, ([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
+    });
+
+    /** The scope controls serve both views, so their wording follows the complaint type of the current route. */
+    readonly scopeTranslationKeyRoot = computed(() =>
+        this.complaintType() === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.list' : 'artemisApp.complaint.listOfComplaints',
+    );
     // Icons
-    faSort = faSort;
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
 
@@ -75,26 +146,60 @@ export class ListOfComplaintsComponent implements OnInit {
             const queryParams = result[1];
             const data = result[2];
 
-            this.courseId = Number(params['courseId']);
-            this.exerciseId = Number(params['exerciseId']);
-            this.examId = Number(params['examId']);
+            const courseId = Number(params['courseId']);
+            const exerciseId = Number(params['exerciseId']);
+            const examId = Number(params['examId']);
+            const tutorId = Number(queryParams['tutorId']);
+            const complaintType = data.complaintType as ComplaintType;
+            const identity = `${courseId}|${exerciseId}|${examId}|${tutorId}|${complaintType}`;
 
-            this.tutorId = Number(queryParams['tutorId']);
+            if (this.routeIdentity !== undefined && this.routeIdentity !== identity) {
+                this.resetComplaintScopeForRouteChange();
+            }
+            this.routeIdentity = identity;
+
+            this.courseId = courseId;
+            this.exerciseId = exerciseId;
+            this.examId = examId;
+            this.tutorId = tutorId;
             this.correctionRound = Number(queryParams['correctionRound']);
             if (queryParams['filterOption']) {
                 this.filterOption.set(Number(queryParams['filterOption']));
             }
 
-            this.complaintType.set(data.complaintType);
+            this.complaintType.set(complaintType);
 
             this.loadComplaints();
         });
     }
 
+    /** Drop mine/all caches and cancel in-flight fetches so a prior route cannot update this one. */
+    private resetComplaintScopeForRouteChange = (): void => {
+        this.mineScopeSubscription?.unsubscribe();
+        this.mineScopeSubscription = undefined;
+        this.allScopeSubscription?.unsubscribe();
+        this.allScopeSubscription = undefined;
+        this.ownComplaints = undefined;
+        this.allTutorsComplaints = undefined;
+        this.selectedComplaintScope = 'mine';
+        this.allComplaintsForTutorLoaded.set(false);
+        this.isLoadingAllComplaints.set(false);
+        this.assessorFilter.set(undefined);
+        this.filterOption.set(undefined);
+        this.showAddressedComplaints.set(false);
+        this.complaints.set([]);
+        this.complaintsToShow.set([]);
+        this.loading.set(true);
+    };
+
     loadComplaints() {
         let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
 
-        if (this.tutorId) {
+        if (!this.accountService.isAtLeastInstructorInCourseWithId(this.courseId)) {
+            complaintResponse = this.exerciseId
+                ? this.complaintService.findForTutorByExerciseId(this.exerciseId, this.complaintType())
+                : this.complaintService.findForTutorByCourseId(this.courseId, this.complaintType());
+        } else if (this.tutorId) {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
             } else if (this.examId) {
@@ -112,32 +217,89 @@ export class ListOfComplaintsComponent implements OnInit {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
             }
         }
-        this.subscribeToComplaintResponse(complaintResponse);
-        this.courseManagementService.find(this.courseId).subscribe((response) => {
+        this.mineScopeSubscription?.unsubscribe();
+        this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
+        this.courseManagementService.findForManagement(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
         });
     }
 
-    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>) {
-        complaintResponse.subscribe({
+    /**
+     * Always updates the Mine/All cache for {@link scope}. Only writes the displayed list when that scope
+     * is still selected and {@link routeIdentity} still matches the request's identity.
+     */
+    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>, scope: 'mine' | 'all'): Subscription {
+        const identity = this.routeIdentity;
+        return complaintResponse.subscribe({
             next: (res) => {
-                this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
-                if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-                    this.showAddressedComplaints.set(true);
-                }
-
-                if (!this.showAddressedComplaints()) {
-                    this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted === undefined));
-                } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-                    this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted !== undefined));
+                const complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
+                if (scope === 'mine') {
+                    this.ownComplaints = complaints;
                 } else {
-                    this.complaintsToShow.set(this.complaints());
+                    this.allTutorsComplaints = complaints;
+                }
+                if (identity !== this.routeIdentity || scope !== this.selectedComplaintScope) {
+                    return;
+                }
+                this.complaints.set(complaints);
+                if (scope === 'all') {
+                    this.allComplaintsForTutorLoaded.set(true);
+                }
+                this.applyComplaintFilter();
+            },
+            error: (error: HttpErrorResponse) => {
+                if (identity !== this.routeIdentity) {
+                    return;
+                }
+                if (scope === 'all') {
+                    this.isLoadingAllComplaints.set(false);
+                    this.selectedComplaintScope = 'mine';
+                    this.assessorFilter.set(undefined);
+                    this.complaints.set(this.ownComplaints ?? []);
+                    this.applyComplaintFilter();
+                } else {
+                    // `complete` never runs after an error, so the spinner would stay forever without this.
+                    this.loading.set(false);
+                }
+                onError(this.alertService, error);
+            },
+            complete: () => {
+                if (identity !== this.routeIdentity) {
+                    return;
+                }
+                if (scope === 'all') {
+                    this.isLoadingAllComplaints.set(false);
+                } else {
+                    this.loading.set(false);
                 }
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            complete: () => this.loading.set(false),
         });
+    }
+
+    /**
+     * Re-applies the addressed/unaddressed filter to the currently loaded {@link complaints} and updates {@link complaintsToShow}.
+     */
+    private applyComplaintFilter(): void {
+        if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+            this.showAddressedComplaints.set(true);
+        }
+
+        let filtered: Complaint[];
+        if (!this.showAddressedComplaints()) {
+            filtered = this.complaints().filter((complaint) => complaint.accepted === undefined);
+        } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+            filtered = this.complaints().filter((complaint) => complaint.accepted !== undefined);
+        } else {
+            filtered = this.complaints();
+        }
+
+        const assessorKey = this.assessorFilter();
+        if (assessorKey !== undefined) {
+            filtered = filtered.filter((complaint) => (complaint.assessorKey ?? '') === assessorKey);
+        }
+
+        this.complaintsToShow.set(filtered);
     }
 
     openAssessmentEditor(complaint: Complaint) {
@@ -168,6 +330,12 @@ export class ListOfComplaintsComponent implements OnInit {
         void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        this.complaintsSortingPredicate = event.field;
+        this.complaintsReverseOrder = event.order === 1;
+        this.sortRows();
+    }
+
     sortRows() {
         const sorted = [...this.complaintsToShow()];
         switch (this.complaintsSortingPredicate) {
@@ -176,6 +344,10 @@ export class ListOfComplaintsComponent implements OnInit {
                 break;
             case 'lockStatus':
                 this.sortService.sortByFunction(sorted, (complaint) => this.calculateComplaintLockStatus(complaint), this.complaintsReverseOrder);
+                break;
+            case 'assessorName':
+                // Same fallback as the rendered cell: foreign assessors only carry assessorLabel, result.assessor is redacted.
+                this.sortService.sortByFunction(sorted, (complaint) => complaint.result?.assessor?.name || complaint.assessorLabel || '', this.complaintsReverseOrder);
                 break;
             default:
                 this.sortService.sortByProperty(sorted, this.complaintsSortingPredicate, this.complaintsReverseOrder);
@@ -186,22 +358,58 @@ export class ListOfComplaintsComponent implements OnInit {
     triggerAddressedComplaints() {
         this.showAddressedComplaints.update((value) => !value);
 
-        if (this.showAddressedComplaints()) {
-            this.complaintsToShow.set(this.complaints());
-        } else {
-            this.resetFilterOptions();
+        if (!this.showAddressedComplaints()) {
+            this.filterOption.set(undefined);
         }
+        this.applyComplaintFilter();
     }
 
     /**
-     * Used to lazy-load all complaints from the server for a tutor or editor.
+     * Switches between the tutor's own complaints and all complaints in the current scope (the exercise when the route
+     * is exercise-scoped, otherwise the course). The "all" list is fetched from the server once and cached, so
+     * switching back and forth afterwards is instant.
      */
-    triggerShowAllComplaints() {
+    setComplaintScope(scope: 'mine' | 'all') {
+        const wantAll = scope === 'all';
+        if ((wantAll ? 'all' : 'mine') === this.selectedComplaintScope) {
+            return;
+        }
+
+        if (!wantAll) {
+            this.allScopeSubscription?.unsubscribe();
+            this.allScopeSubscription = undefined;
+            this.isLoadingAllComplaints.set(false);
+            this.selectedComplaintScope = 'mine';
+            this.assessorFilter.set(undefined);
+            this.complaints.set(this.ownComplaints ?? []);
+            this.allComplaintsForTutorLoaded.set(false);
+            this.applyComplaintFilter();
+            return;
+        }
+
+        this.selectedComplaintScope = 'all';
+        if (this.allTutorsComplaints) {
+            this.complaints.set(this.allTutorsComplaints);
+            this.allComplaintsForTutorLoaded.set(true);
+            this.applyComplaintFilter();
+            return;
+        }
+
+        if (this.ownComplaints === undefined) {
+            this.ownComplaints = this.complaints();
+        }
         this.isLoadingAllComplaints.set(true);
-        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
-        this.subscribeToComplaintResponse(complaintResponse);
-        this.isLoadingAllComplaints.set(false);
-        this.allComplaintsForTutorLoaded.set(true);
+        this.allScopeSubscription?.unsubscribe();
+        // Must match the scope the Mine list was loaded with, otherwise "All" shows complaints of other exercises.
+        const allComplaintsResponse = this.exerciseId
+            ? this.complaintService.findAllWithoutStudentInformationForExerciseId(this.exerciseId, this.complaintType())
+            : this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
+        this.allScopeSubscription = this.subscribeToComplaintResponse(allComplaintsResponse, 'all');
+    }
+
+    onAssessorFilterChange(key: string | undefined) {
+        this.assessorFilter.set(key);
+        this.applyComplaintFilter();
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {

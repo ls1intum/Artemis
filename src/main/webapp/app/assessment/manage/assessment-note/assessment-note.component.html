@@ -4,7 +4,8 @@
         <p id="assessment-note-description" jhiTranslate="artemisApp.assessment.detail.assessmentNoteInfo"></p>
     </header>
     <textarea
-        tumUiTextarea
+        #noteTextarea
+        tumAetUiTextarea
         class="assessment-note__textarea"
         rows="3"
         (input)="onAssessmentNoteInput($event)"
@@ -13,5 +14,6 @@
         id="assessment_note"
         aria-labelledby="assessment-note-label"
         aria-describedby="assessment-note-description"
+        tumAetUiInput
     ></textarea>
 </section>

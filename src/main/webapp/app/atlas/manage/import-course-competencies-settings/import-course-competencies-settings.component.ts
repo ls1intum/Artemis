@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, model } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { DatePickerModule } from 'primeng/datepicker';
+import { Component, computed, model, output } from '@angular/core';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { Dayjs } from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,13 +14,13 @@ export class CourseCompetencyImportSettings {
     importRelations = false;
     importExercises = false;
     importLectures = false;
-    referenceDate?: Date = undefined;
+    referenceDate?: Dayjs = undefined;
     isReleaseDate?: boolean = undefined;
 }
 
 @Component({
     selector: 'jhi-import-course-competencies-settings',
-    imports: [NgbTooltipModule, FormsModule, CommonModule, FontAwesomeModule, DatePickerModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [NgbTooltipModule, CommonModule, FontAwesomeModule, TumAetUiDatePickerComponent, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './import-course-competencies-settings.component.html',
     styleUrl: './import-course-competencies-settings.component.scss',
 })
@@ -28,6 +28,8 @@ export class ImportCourseCompetenciesSettingsComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
 
     readonly importSettings = model.required<CourseCompetencyImportSettings>();
+    /** Emits whether the text of the reference date field is a date or empty; the picker keeps its last valid date while it is not. */
+    readonly referenceDateTextValidChange = output<boolean>();
     readonly importRelations = computed(() => this.importSettings().importRelations);
     readonly importExercises = computed(() => this.importSettings().importExercises);
     readonly importLectures = computed(() => this.importSettings().importLectures);
@@ -38,8 +40,8 @@ export class ImportCourseCompetenciesSettingsComponent {
         this.importSettings.update((settings) => cloneWith(settings, { [setting]: !settings[setting] }));
     }
 
-    public setReferenceDate(date?: Date | string | null): void {
-        const referenceDate = date instanceof Date ? date : undefined;
+    public setReferenceDate(date?: Dayjs): void {
+        const referenceDate = date?.isValid() ? date : undefined;
         this.importSettings.update((settings) =>
             cloneWith(settings, { referenceDate, isReleaseDate: referenceDate ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined }),
         );

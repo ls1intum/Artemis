@@ -1,7 +1,9 @@
 artemis:
+    aiworker:
+        enabled: false
     atlas:
         enabled: true
-        atlasml:
+        atlasllm:
             enabled: false
     deimos:
         enabled: false

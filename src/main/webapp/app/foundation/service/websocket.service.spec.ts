@@ -45,7 +45,7 @@ vi.mock('@stomp/rx-stomp', async () => {
     };
 });
 
-vi.mock('@sentry/angular', () => ({
+vi.mock('app/core/error-reporting/capture-exception', () => ({
     captureException: (...args: any[]) => captureExceptionMock(...args),
 }));
 
@@ -302,7 +302,7 @@ describe('WebsocketService', () => {
         // now share a single subscription, so one bad frame would disconnect all of them. It is reported and dropped.
         expect(decodeSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
-            mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } },
+            extra: { mechanism: 'websocket-decompression', message: 'Failed to decompress message' },
         });
         expect(errored).toBeUndefined();
         expect(received).toHaveLength(0);
@@ -353,7 +353,7 @@ describe('WebsocketService', () => {
         websocketService.send('/test', { data: 'x'.repeat(2000) });
         expect(errorSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
-            mechanism: { handled: true, type: 'websocket-compression', data: { message: 'Failed to compress message' } },
+            extra: { mechanism: 'websocket-compression', message: 'Failed to compress message' },
         });
         expect(rxStomp.publish).toHaveBeenCalledWith({
             destination: '/test',

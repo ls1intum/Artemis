@@ -11,6 +11,7 @@ export const USERNAME_MIN_LENGTH = 4;
 export const USERNAME_MAX_LENGTH = 50;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 50;
+export const PASSWORD_MAX_BYTES = 72;
 
 export const EXAM_START_WAIT_TIME_MINUTES = 5;
 
@@ -61,7 +62,13 @@ export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkey-admin';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
+export const MODULE_FEATURE_ATLASLLM = 'atlasllm';
+
 export const MODULE_FEATURE_HYPERION = 'hyperion';
+
+export const MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = 'hyperion-exercise-generation';
+
+export const MODULE_FEATURE_AIWORKER = 'aiworker';
 
 export const MODULE_FEATURE_DEIMOS = 'deimos';
 
@@ -95,11 +102,18 @@ export const MODULE_FEATURE_SAML2 = 'saml2';
 
 export const MODULE_FEATURE_THEIA = 'theia';
 
+export const MODULE_FEATURE_GLOBAL_SEARCH = 'globalsearch';
+
+export const MODULE_FEATURE_AGENT_ACCESS = 'agent-access';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
+    | typeof MODULE_FEATURE_ATLASLLM
     | typeof MODULE_FEATURE_HYPERION
+    | typeof MODULE_FEATURE_HYPERION_EXERCISE_GENERATION
+    | typeof MODULE_FEATURE_AIWORKER
     | typeof MODULE_FEATURE_DEIMOS
     | typeof MODULE_FEATURE_IRIS
     | typeof MODULE_FEATURE_EXAM
@@ -115,7 +129,9 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_APOLLON
     | typeof MODULE_FEATURE_LDAP
     | typeof MODULE_FEATURE_SAML2
-    | typeof MODULE_FEATURE_THEIA;
+    | typeof MODULE_FEATURE_THEIA
+    | typeof MODULE_FEATURE_GLOBAL_SEARCH
+    | typeof MODULE_FEATURE_AGENT_ACCESS;
 
 export const PROFILE_LOCALCI = 'localci';
 
@@ -129,6 +145,7 @@ export const PROFILE_DEV = 'dev';
 
 export const PROFILE_TEST = 'test';
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): remove the profile constant and its union member below
 export const PROFILE_JENKINS = 'jenkins';
 
 export type ProfileFeature =

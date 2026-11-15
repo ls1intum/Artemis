@@ -197,6 +197,23 @@ public class ComplaintResponseService {
     }
 
     /**
+     * Makes sure that a complaint response answers the complaint about the given result, so a response can only be used to update the assessment it belongs to.
+     *
+     * @param complaintResponseId the id of the complaint response that is used to update the assessment
+     * @param resultId            the id of the result that is updated
+     * @throws BadRequestAlertException if the complaint response belongs to the complaint about another result
+     */
+    public void checkComplaintResponseBelongsToResultElseThrow(Long complaintResponseId, Long resultId) {
+        validateComplaintResponseId(complaintResponseId);
+        ComplaintResponse complaintResponse = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
+        Complaint complaintAboutResult = complaintRepository.findByResultId(resultId)
+                .orElseThrow(() -> new BadRequestAlertException("There is no complaint about this result", "complaintResponse", "noComplaintForResult"));
+        if (!complaintAboutResult.getId().equals(complaintResponse.getComplaint().getId())) {
+            throw new BadRequestAlertException("The complaint response does not belong to the complaint about this result", "complaintResponse", "complaintResultMismatch");
+        }
+    }
+
+    /**
      * Resolves a complaint using an updated ComplaintResponse object. This method processes the complaint
      * based on the inherent acceptance status and response text within the updated ComplaintResponse.
      *
@@ -265,7 +282,7 @@ public class ComplaintResponseService {
 
     private void validateResponseTextLimit(String responseText, Complaint originalComplaint) {
         if (responseText != null) {
-            Course course = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+            Course course = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
             int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getSubmission().getParticipation().getExercise());
             if (responseText.length() > maxLength) {
                 throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,

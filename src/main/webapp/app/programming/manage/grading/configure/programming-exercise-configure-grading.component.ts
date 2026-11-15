@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -294,7 +295,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe((params) => {
             this.isLoading.set(true);
             const exerciseId = Number(params['exerciseId']);
-            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+            this.courseManagementService.findForManagement(params['courseId']).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
             });
 
@@ -302,7 +303,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.testCaseSubscription?.unsubscribe();
                 this.testCaseChangedSubscription?.unsubscribe();
 
-                const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
+                const loadExercise = (
+                    isExamExerciseRoute(this.route.snapshot) ? this.programmingExerciseService.findForExam(exerciseId) : this.programmingExerciseService.find(exerciseId)
+                ).pipe(
                     map((res) => res.body!),
                     tap((exercise) => (this.programmingExercise = exercise)),
                     tap(() => {

@@ -26,12 +26,16 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -56,7 +60,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizer
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("submission/submissions")
+@FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
 @RestController
 @RequestMapping("api/exercise/")
 public class SubmissionResource {
@@ -111,8 +115,10 @@ public class SubmissionResource {
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
     @DeleteMapping("submissions/{submissionId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to delete Submission : {}", submissionId);
 
@@ -147,14 +153,11 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
     @GetMapping("exercises/{exerciseId}/test-run-submissions")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<SubmissionResponseDTO>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
-            throw new AccessForbiddenException();
-        }
-        if (!authCheckService.isAtLeastEditorForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
         User user = userRepository.getUserWithAuthorities();
@@ -192,14 +195,21 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
     @GetMapping("exercises/{exerciseId}/submissions-with-complaints")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, isAtLeastInstructor);
+        return ResponseEntity.ok(submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, false));
+    }
 
-        return ResponseEntity.ok(submissionWithComplaintDTOs);
+    /**
+     * Get all complained-about assessments for the instructor dashboard, excluding test runs.
+     *
+     * @param exerciseId the exercise
+     * @return the submissions with complaints
+     */
+    @GetMapping("exercises/{exerciseId}/submissions-with-complaints/for-instructor")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForInstructorAssessmentDashboard(@PathVariable Long exerciseId) {
+        return ResponseEntity.ok(submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, true));
     }
 
     /**
@@ -213,11 +223,8 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
     @GetMapping("exercises/{exerciseId}/more-feedback-requests-with-complaints")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithMoreFeedbackRequestForAssessmentDashboard(@PathVariable Long exerciseId) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
         List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(exerciseId);
 
         return ResponseEntity.ok(submissionWithComplaintDTOs);
@@ -231,15 +238,13 @@ public class SubmissionResource {
      * @param search     the pageable search containing the page size and query string
      * @return The desired page, sorted and matching the given query
      */
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SearchResultPageDTO<SubmissionResponseDTO>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
-        return ResponseEntity.ok(submissionService.getSubmissionsOnPageWithSize(search, exercise.getId()));
+        return ResponseEntity.ok(submissionService.getSubmissionsOnPageWithSize(search, exerciseId));
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
@@ -253,11 +258,17 @@ public class SubmissionResource {
 
     private Course findCourseFromSubmission(Submission submission) {
         Participation participation = submission.getParticipation();
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (participation == null) {
+            throw new EntityNotFoundException("Course", "of submission " + submission.getId());
         }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = participation.getExercise() != null ? participation.getExercise().getCourseViaExerciseGroupOrCourseMember() : null;
+        if (course == null) {
+            course = studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of submission " + submission.getId());
+        }
+        return course;
     }
 
     /**
@@ -270,8 +281,10 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body a list of {@link SubmissionVersionDTO} for the given submission
      */
 
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
     @GetMapping("submissions/{submissionId}/versions")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<SubmissionVersionDTO>> getSubmissionVersions(@PathVariable long submissionId) {
         var submission = submissionRepository.findByIdElseThrow(submissionId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());

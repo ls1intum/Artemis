@@ -11,6 +11,8 @@ import { OnboardingAssessmentAiComponent } from './onboarding-assessment-ai.comp
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 
 describe('OnboardingAssessmentAiComponent', () => {
     let comp: OnboardingAssessmentAiComponent;
@@ -148,6 +150,48 @@ describe('OnboardingAssessmentAiComponent', () => {
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.maxRequestMoreFeedbackTimeDays).toBe(0);
+        });
+    });
+
+    describe('max points input', () => {
+        const maxPointsInput = () => fixture.nativeElement.querySelector('#onboarding-maxPoints') as HTMLInputElement;
+        const errorTranslationKeys = () => Array.from(fixture.nativeElement.querySelectorAll('.alert-danger')).map((alert) => (alert as HTMLElement).getAttribute('jhiTranslate'));
+        // the error messages are shown while the typed value violates a bound, before the field is left and clamps it
+        const typeWithoutLeaving = (text: string) => {
+            const input = maxPointsInput();
+            input.focus();
+            input.value = text;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            fixture.detectChanges();
+        };
+
+        it('should emit the typed max points without an error message', () => {
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+
+            typeIntoInputNumber(maxPointsInput(), '120');
+            fixture.detectChanges();
+
+            expect(emitSpy.mock.lastCall![0].maxPoints).toBe(120);
+            expect(errorTranslationKeys()).toEqual([]);
+        });
+
+        it('should show the minimum error message while the value is below 1', () => {
+            typeWithoutLeaving('0');
+
+            expect(errorTranslationKeys()).toEqual(['artemisApp.course.maxPoints.min']);
+        });
+
+        it('should show the maximum error message while the value exceeds the limit', () => {
+            typeWithoutLeaving(String(MAX_GRADING_POINTS + 1));
+
+            expect(errorTranslationKeys()).toEqual(['artemisApp.course.maxPoints.max']);
+        });
+
+        it('should show the whole number error message for a fractional value', () => {
+            typeIntoInputNumber(maxPointsInput(), '10.5');
+            fixture.detectChanges();
+
+            expect(errorTranslationKeys()).toEqual(['artemisApp.course.maxPoints.wholeNumber']);
         });
     });
 

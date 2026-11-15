@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalQueue;
 
 /**
  * Covers which build agents a core node reports as connected.
@@ -119,4 +122,20 @@ class DistributedDataAccessServiceTest {
 
         assertThat(distributedDataAccessService.getBuildAgentInformation()).isEmpty();
     }
+
+    @Test
+    void resultListingAndCountIncludeDeferredResults() {
+        var ordinary = new LocalQueue<ResultQueueItem>(new LinkedBlockingQueue<>(), "buildResultQueue");
+        var deferred = new LocalQueue<ResultQueueItem>(new LinkedBlockingQueue<>(), "deferredBuildResultQueue");
+        when(distributedDataProvider.<ResultQueueItem>getQueue("buildResultQueue")).thenReturn(ordinary);
+        when(distributedDataProvider.<ResultQueueItem>getQueue("deferredBuildResultQueue")).thenReturn(deferred);
+        ResultQueueItem first = mock(ResultQueueItem.class);
+        ResultQueueItem second = mock(ResultQueueItem.class);
+        ordinary.add(first);
+        deferred.add(second);
+
+        assertThat(distributedDataAccessService.getBuildResultQueue()).containsExactly(first, second);
+        assertThat(distributedDataAccessService.getResultQueueSize()).isEqualTo(2);
+    }
+
 }

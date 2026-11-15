@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -24,6 +24,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -39,6 +40,8 @@ import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
  * Typed view onto the private/internal fields of {@link ProgrammingExerciseInstructionComponent}
@@ -72,6 +75,9 @@ type InstructionInternals = Omit<
 
 const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as unknown as InstructionInternals;
 
+/** The container IDs have the form plantUml-{exerciseId}-{instanceId}-{index}; the instance part differs per test run, so it is dropped for comparisons. */
+const withoutInstanceId = (containerId: string): string => containerId.replace(/^(plantUml-\d+)-\d+-(\d+)$/, '$1-$2');
+
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
@@ -79,14 +85,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseGradingService: ProgrammingExerciseGradingService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let openModalStub: ReturnType<typeof vi.spyOn>;
     let getLatestResultWithFeedbacks: ReturnType<typeof vi.spyOn>;
 
-    const dialogRef = {} as unknown as DynamicDialogRef;
+    const dialogRef = {} as unknown as TumAetUiDialogRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -100,7 +106,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
@@ -114,7 +120,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         themeService = TestBed.inject(ThemeService);
 
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
@@ -126,6 +132,91 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('makes each scrolling table keyboard-focusable with a localized accessible name', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Tabelle in der Aufgabenstellung');
+        const rendered = comp.addStylesForTables('<table><tr><td>Wide content</td></tr></table>');
+        const table = new DOMParser().parseFromString(rendered!, 'text/html').querySelector('table')!;
+
+        expect(table.style.overflowX).toBe('scroll');
+        expect(table.tabIndex).toBe(0);
+        expect(table.getAttribute('aria-label')).toBe('Tabelle in der Aufgabenstellung');
+        expect(table.querySelector('td')?.textContent).toBe('Wide content');
+    });
+
+    it('keeps authored table names and supplies a localized fallback only for unnamed rendered tables', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            problemStatement: `
+<table><caption>Input constraints</caption><tr><td>Captioned content</td></tr></table>
+<table aria-label="Expected output"><tr><td>Named content</td></tr></table>
+<h3 id="complexity-heading">Complexity bounds</h3>
+<table aria-labelledby="complexity-heading"><tr><td>Referenced content</td></tr></table>
+<table title="Example runs"><tr><td>Titled content</td></tr></table>
+<table><tr><td>Unnamed content</td></tr></table>
+<table aria-label="  " aria-labelledby=" " title=" "><caption> </caption><tr><td>Empty names</td></tr></table>`,
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables).toHaveLength(6);
+        expect(tables[0].caption?.textContent).toBe('Input constraints');
+        expect(tables[0].hasAttribute('aria-label')).toBe(false);
+        expect(tables[1].getAttribute('aria-label')).toBe('Expected output');
+        expect(tables[2].getAttribute('aria-labelledby')).toBe('complexity-heading');
+        expect(content.querySelector('#complexity-heading')?.textContent).toBe('Complexity bounds');
+        expect(tables[2].hasAttribute('aria-label')).toBe(false);
+        expect(tables[3].title).toBe('Example runs');
+        expect(tables[3].hasAttribute('aria-label')).toBe(false);
+        expect(tables[4].getAttribute('aria-label')).toBe('Instruction table');
+        expect(tables[5].getAttribute('aria-label')).toBe('Instruction table');
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+    });
+
+    it('preserves accessible tables when a live exam update displays instruction differences', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            exerciseGroup: { id: 5 },
+            problemStatement: '<table><caption>Exercise requirements</caption><tr><td>Before update</td></tr></table>',
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        expect(content.textContent).toContain('Before update');
+        expect(content.textContent).not.toContain('After update');
+
+        TestBed.inject(ExamExerciseUpdateService).updateLiveExamExercise(3, '<table><caption>Exercise requirements</caption><tr><td>After update</td></tr></table>');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The live update must display both the removed and added text, rather than silently replacing the instructions.
+        expect(content.textContent).toContain('Before');
+        expect(content.textContent).toContain('After update');
+        expect(content.querySelector('del')?.textContent).toContain('Before');
+        expect(content.querySelector('ins')?.textContent).toContain('After');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables.length).toBeGreaterThan(0);
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.caption?.textContent).toBe('Exercise requirements');
+            expect(table.hasAttribute('aria-label')).toBe(false);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+        expect(fixture.nativeElement.querySelector('#highlightDiffButton')).not.toBeNull();
     });
 
     it('should on participation change clear old subscription for participation results set up new one', async () => {
@@ -512,7 +603,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
-        expect(injectSpy).toHaveBeenCalledWith(expectedUML, `plantUml-${exercise.id}-0`);
+        expect(injectSpy).toHaveBeenCalledWith(expectedUML, expect.stringMatching(new RegExp(`^plantUml-${exercise.id}-\\d+-0$`)));
     });
 
     it('should update the markdown and set the correct problem statement if renderUpdatedProblemStatement is called', () => {
@@ -547,11 +638,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             FeedbackComponent,
             expect.objectContaining({
                 header: 'artemisApp.result.detail.feedbackForTask',
-                width: '50rem',
-                breakpoints: {
-                    '850px': '95vw',
-                },
-                modal: true,
+                size: 'large',
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: true,
@@ -567,7 +654,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
  * Background:
  * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist
  * simultaneously in the DOM (hidden via [hidden], NOT destroyed). They all share
- * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (providedIn: 'root').
+ * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (a root @Service()).
  *
  * These tests simulate the exact exam scenario to prevent regressions of the
  * per-exercise PlantUML container ID scoping fix.
@@ -614,7 +701,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
@@ -656,7 +743,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string));
 
         const uniqueIds = new Set(targetedIds);
         expect(uniqueIds.size).toBe(6);
@@ -699,7 +786,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceB.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string));
         const uniqueIds = new Set(targetedIds);
 
         expect(uniqueIds.size).toBe(4);
@@ -737,7 +824,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceA.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
+        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)).filter((id) => (id as string).startsWith('plantUml-10-')));
         expect(firstRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         injectSpy.mockClear();
@@ -753,7 +840,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceA.comp.forceReRenderProblemStatement();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
+        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)).filter((id) => (id as string).startsWith('plantUml-10-')));
 
         expect(secondRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
@@ -777,7 +864,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         // Initial render injects both diagrams of exercise A.
         instance.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
-        expect(new Set(injectSpy.mock.calls.map((call) => call[1] as string))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+        expect(new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         // Mark the component as past its initial render (as it is after the first processInputChanges in production),
         // so the "unchanged problem statement" optimization in updateMarkdown is active.
@@ -794,7 +881,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         injectSpy.mockClear();
         instance.comp.forceReRenderProblemStatement();
         await new Promise((resolve) => setTimeout(resolve, 10));
-        expect(new Set(injectSpy.mock.calls.map((call) => call[1] as string))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+        expect(new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         instance.comp.ngOnDestroy();
     });
@@ -862,6 +949,46 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         expect(internals(instance.comp).taskComponentRefs).toHaveLength(0);
 
         instance.comp.ngOnDestroy();
+    });
+
+    it('should inject the PlantUML diagram into its own component when two components show the same exercise', async () => {
+        // Regression test for #12439: the exercise details page and the online editor sidebar render the same exercise at the
+        // same time. Both used the container ID plantUml-<exerciseId>-<index>, so document.getElementById always found the
+        // container of the first component and the diagram never appeared in the other one.
+        vi.spyOn(TestBed.inject(ProgrammingExercisePlantUmlService), 'getPlantUmlSvg').mockReturnValue(of('<svg><title>diagram</title></svg>'));
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'getLatestResultWithFeedback').mockReturnValue(of(undefined as unknown as Result));
+
+        const hiddenInstance = createComponentInstance();
+        const visibleInstance = createComponentInstance();
+        const exercise = createExercise(10, exerciseB_problemStatement);
+
+        // TestBed only keeps the root element of the most recently created fixture in the document, but in the application both components are in the DOM at the same time.
+        document.body.append(hiddenInstance.fixture.nativeElement, visibleInstance.fixture.nativeElement);
+
+        for (const { fixture, comp } of [hiddenInstance, visibleInstance]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: 110 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+
+        // The first change detection runs ngOnInit, which loads the result and then renders the markdown and injects the diagrams.
+        hiddenInstance.fixture.detectChanges();
+        visibleInstance.fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        hiddenInstance.fixture.detectChanges();
+        visibleInstance.fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const hiddenContainers = hiddenInstance.fixture.nativeElement.querySelectorAll('[id^="plantUml-"]');
+        const visibleContainers = visibleInstance.fixture.nativeElement.querySelectorAll('[id^="plantUml-"]');
+        expect(hiddenContainers).toHaveLength(1);
+        expect(visibleContainers).toHaveLength(1);
+        expect(hiddenContainers[0].querySelector('svg')).not.toBeNull();
+        expect(visibleContainers[0].querySelector('svg')).not.toBeNull();
+        expect(hiddenContainers[0].id).not.toBe(visibleContainers[0].id);
+
+        hiddenInstance.comp.ngOnDestroy();
+        visibleInstance.comp.ngOnDestroy();
     });
 
     it('should call setExerciseId with the exercise ID before each render', async () => {

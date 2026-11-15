@@ -1,0 +1,5 @@
+# Turns the Gateway API resources on, on top of base-values.yaml, so that their templates are rendered as well.
+gateway:
+  enabled: true
+  hostname: artemis.example.org
+  className: example

@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, model, output, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,7 +25,17 @@ export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; o
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, ArtemisDatePipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TextareaCounterComponent,
+        ArtemisDatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiProgressSpinnerComponent,
+    ],
 })
 export class ComplaintsForTutorComponent implements OnInit {
     private alertService = inject(AlertService);

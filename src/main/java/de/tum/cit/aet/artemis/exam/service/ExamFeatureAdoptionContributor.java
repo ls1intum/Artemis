@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionContributor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionEntry;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.repository.ExamAdoptionRepository;
 
@@ -33,7 +34,7 @@ public class ExamFeatureAdoptionContributor implements FeatureAdoptionContributo
     @Override
     public List<FeatureAdoptionEntry> collectAdoption() {
         long total = adoptionRepository.count();
-        return List.of(new FeatureAdoptionEntry(MODULE, "test-exam", adoptionRepository.countTestExams(), total),
-                new FeatureAdoptionEntry(MODULE, "attendance-check", adoptionRepository.countWithAttendanceCheck(), total));
+        return List.of(new FeatureAdoptionEntry(MODULE, "test-exam", UserFeature.EXAM_TEST_EXAMS, adoptionRepository.countTestExams(), total),
+                new FeatureAdoptionEntry(MODULE, "attendance-check", UserFeature.EXAM_ATTENDANCE, adoptionRepository.countWithAttendanceCheck(), total));
     }
 }

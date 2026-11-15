@@ -1,4 +1,5 @@
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
+import { onUserChange } from 'app/core/auth/user-change.util';
+import { OnDestroy, Service, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SubjectObservablePair } from 'app/foundation/util/rxjs.utils';
@@ -11,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
  * Some components update the course object and can use the {@link updateCourse} method to make the changes available to the entire application.
  * Components that need to be notified about these changes can use the {@link subscribeToCourseUpdates} method.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseStorageService implements OnDestroy {
     private readonly accountService = inject(AccountService);
 
@@ -25,17 +26,10 @@ export class CourseStorageService implements OnDestroy {
 
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {

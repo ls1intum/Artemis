@@ -2,6 +2,7 @@
 id: notifications
 title: Notifications
 sidebar_label: Notifications
+last_reviewed: 2026-11-06
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -63,6 +64,10 @@ Here you can:
 
 ## Push Notifications
 
+For programming builds, the browser can also show optional system notifications while you have the exercise open.
+See [Build Notifications](../exercises/programming-exercise.mdx#build-notifications) for the tab indicators and opt-in control.
+These browser notifications are separate from the native app push notifications described below.
+
 Artemis can send push notifications to the native Artemis iOS and Android apps.
 
 These notifications are encrypted and delivered through Hermes service (https://hermes-prod.artemis.cit.tum.de).
@@ -118,5 +123,6 @@ The table below shows all supported notification types and which channels they s
 | RegisteredToTutorialGroupNotification | X | X | X |
 | TutorialGroupUnassignedNotification | X | X | X |
 | DeregisteredFromTutorialGroupNotification | X | X | X |
+| IrisResponseNotification | X |  |  |
 
 For detailed information about the content sent with each notification, you can look at the examples in the notification settings or refer to the implementation in the `course-notification.service.ts` service and the corresponding localization files in the codebase.

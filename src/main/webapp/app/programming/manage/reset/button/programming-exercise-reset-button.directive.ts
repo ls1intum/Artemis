@@ -3,6 +3,7 @@ import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { tumAetUiButtonClasses } from '@tumaet/ui-angular';
 
 @Directive({ selector: '[jhiProgrammingExerciseResetButton]' })
 export class ProgrammingExerciseResetButtonDirective implements OnInit, OnDestroy {
@@ -15,9 +16,9 @@ export class ProgrammingExerciseResetButtonDirective implements OnInit, OnDestro
     readonly programmingExercise = input.required<ProgrammingExercise>();
 
     ngOnInit() {
-        this.renderer.addClass(this.elementRef.nativeElement, 'btn');
-        this.renderer.addClass(this.elementRef.nativeElement, 'btn-danger');
-        this.renderer.addClass(this.elementRef.nativeElement, 'btn-sm');
+        for (const token of tumAetUiButtonClasses({ severity: 'danger', size: 'small', variant: 'solid' }).split(' ')) {
+            this.renderer.addClass(this.elementRef.nativeElement, token);
+        }
     }
 
     ngOnDestroy() {

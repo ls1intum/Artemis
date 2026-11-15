@@ -1,20 +1,20 @@
+import { PlagiarismCaseHeaderComponent } from 'app/plagiarism/shared/case-header/plagiarism-case-header.component';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
-import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { MetisService } from 'app/communication/service/metis.service';
-import { PageType } from 'app/communication/metis.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { PageType } from 'app/communication/communication.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronDown, faInfo, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { abbreviateString } from 'app/foundation/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -23,59 +23,65 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    NgbDropdown,
-    NgbDropdownItem,
-    NgbDropdownMenu,
-    NgbDropdownToggle,
-    NgbNav,
-    NgbNavContent,
-    NgbNavItem,
-    NgbNavItemRole,
-    NgbNavLink,
-    NgbNavLinkBase,
-    NgbNavOutlet,
-} from '@ng-bootstrap/ng-bootstrap';
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
 import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
-    providers: [MetisService, MetisConversationService, LinkPreviewService, LinkifyService],
+    providers: [CommunicationService, CourseConversationsService, LinkPreviewService, LinkifyService],
     imports: [
+        PlagiarismCaseHeaderComponent,
         TranslateDirective,
-        PlagiarismCaseVerdictComponent,
         FaIconComponent,
         RouterLink,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
         PostingThreadComponent,
         PostCreateEditModalComponent,
-        NgbNav,
-        NgbNavItem,
-        NgbNavItemRole,
-        NgbNavLink,
-        NgbNavLinkBase,
-        NgbNavContent,
         ConfirmAutofocusButtonComponent,
         FormsModule,
-        NgbNavOutlet,
         PlagiarismCaseReviewComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTabComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabsComponent,
     ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
@@ -93,12 +99,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly createdPost = signal<Post>(undefined!);
     currentAccount?: User;
 
-    activeTab = 1;
+    activeTab: number | string | undefined = 1;
 
     getExerciseUrlSegment = getExerciseUrlSegment;
-    getIcon = getIcon;
-    faUser = faUser;
     faPrint = faPrint;
+    faChevronDown = faChevronDown;
     faInfo = faInfo;
     faCheck = faCheck;
 
@@ -116,9 +121,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
                 this.verdictMessage.set(plagiarismCase.verdictMessage ?? '');
                 this.verdictPointDeduction.set(plagiarismCase.verdictPointDeduction ?? 0);
-                this.metisService.setCourse({ id: this.courseId(), title: plagiarismCase.exercise?.courseTitle });
-                this.metisService.setPageType(this.pageType);
-                this.metisService.getFilteredPosts({
+                this.communicationService.setCourse({ id: this.courseId(), title: plagiarismCase.exercise?.courseTitle });
+                this.communicationService.setPageType(this.pageType);
+                this.communicationService.getFilteredPosts({
                     plagiarismCaseId: plagiarismCase.id,
                 });
                 void this.accountService.identity().then((user) => {
@@ -127,7 +132,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 });
             },
         });
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.postsSubscription = this.communicationService.posts.subscribe((posts: Post[]) => {
             const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
 
             // Handle post-deletion case by checking if unfiltered posts are empty.
@@ -246,12 +251,12 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         }
 
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
-        this.metisService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
+        this.communicationService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
     }
 
     /**
      * Creates a post for the student notification.
-     * This method invokes the metis service to create an empty default post (without course-wide context) that is needed for initialization of the modal.
+     * This method invokes the communication service to create an empty default post (without course-wide context) that is needed for initialization of the modal.
      * The plagiarism case is set as context, and an example title and body for the instructor is generated.
      **/
     createEmptyPost(): void {
@@ -262,7 +267,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         const belongsToExam = !!plagiarismCase.exercise?.examId;
         const courseOrExamTitle = abbreviateString((belongsToExam ? plagiarismCase.exercise?.examTitle : plagiarismCase.exercise?.courseTitle) ?? '', 70);
 
-        const createdPost = this.metisService.createEmptyPostForContext(undefined, plagiarismCase); // Note the limit of 1.000 characters for the post's content
+        const createdPost = this.communicationService.createEmptyPostForContext(undefined, plagiarismCase); // Note the limit of 1.000 characters for the post's content
         createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
             exercise: exerciseTitle,
         });

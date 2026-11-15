@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.BEARER_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PERSONAL_ACCESS_TOKEN_PREFIX;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -322,6 +323,12 @@ public class JWTFilter extends GenericFilterBean {
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
         var authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
+        if (isPersonalAccessToken(authHeader)) {
+            // Authenticated by the personal access token filter. It is not a JWT, so it is neither validated nor logged here:
+            // the debug log below prints the request headers, which would write the secret to the log.
+            return null;
+        }
+
         if (cookie == null && authHeader == null) {
             return null;
         }
@@ -346,6 +353,12 @@ public class JWTFilter extends GenericFilterBean {
         }
 
         return new JwtWithSource(jwtToken, source);
+    }
+
+    private static boolean isPersonalAccessToken(@Nullable String authorizationHeader) {
+        // The scheme of an Authorization header is case-insensitive; a token sent as "bearer art_pat_..." must not reach the JWT check, which logs the headers.
+        return authorizationHeader != null && authorizationHeader.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())
+                && authorizationHeader.substring(BEARER_PREFIX.length()).trim().startsWith(PERSONAL_ACCESS_TOKEN_PREFIX);
     }
 
     private static String compactHeaders(HttpServletRequest request) {

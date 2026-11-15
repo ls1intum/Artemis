@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -298,7 +299,7 @@ public class UserTestService {
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
-        final var newAuthorities = Stream.of(Role.TEACHING_ASSISTANT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
+        final var newAuthorities = Stream.of(Role.STUDENT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toSet());
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);
@@ -342,6 +343,21 @@ public class UserTestService {
     }
 
     // Test
+    public void updateUserWithOnlyRetiredRoles() throws Exception {
+        student.setInternal(true);
+        // the global teaching authorities no longer exist, so API clients that still send them must not end up without any role
+        student.setAuthorities(Set.of(new Authority("ROLE_INSTRUCTOR")));
+
+        var managedUserVM = new ManagedUserVM(student, "foobar1234");
+
+        final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
+        assertThat(response).isNotNull();
+
+        final var updatedUserInDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
+    }
+
+    // Test
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
         final var oldPassword = userTestRepository.findById(student.getId()).orElseThrow().getPassword();
@@ -361,6 +377,8 @@ public class UserTestService {
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
+        // Science events are keyed by login, so a rename that skipped them would leave them unreachable for deletion and export.
+        assertThat(scienceEventRepository.findById(scienceEvent.getId()).orElseThrow().getIdentity()).isEqualTo(student.getLogin());
     }
 
     // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
@@ -533,22 +551,28 @@ public class UserTestService {
     }
 
     // Test
-    public void searchUsers_asInstructor_isSuccessful() throws Exception {
+    public void searchUsers_asAdmin_isSuccessful() throws Exception {
         final String loginOrName = TEST_PREFIX + "student1";
-        List<UserDTO> users = request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        List<UserDTO> users = request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
         assertThat(users).hasSize(1); // size([student1]) = 1
+    }
+
+    // Test
+    public void searchUsers_asInstructor_forbidden() throws Exception {
+        final String loginOrName = TEST_PREFIX + "student1";
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asAdmin_badRequest() throws Exception {
         final String loginOrName = "ab"; // too short (needs at least 3 characters)
-        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asTutor_forbidden() throws Exception {
         final String loginOrName = "student";
-        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
@@ -570,9 +594,38 @@ public class UserTestService {
     }
 
     // Test
+    public void getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "2");
+        params.add("searchTerm", TEST_PREFIX);
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER");
+        params.add("origins", "");
+        params.add("status", "");
+        params.add("registrationNumbers", "");
+        params.add("courseIds", "");
+        // Only the first page fits, so the total has to come from the count query
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/account/admin/users").params(params)).andExpect(status().isOk()).andReturn();
+        List<UserDTO> users = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserDTO.class));
+        assertThat(users).hasSize(2);
+        assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS));
+
+        // Teaching roles are course roles, so the users have to be enrolled in a course. Selected roles are combined with AND and mean "at least this role in some course":
+        // tutors, editors and instructors are TAs, but only the instructor is also an instructor
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        params.set("pageSize", "100");
+        params.set("authorities", "TA,INSTRUCTOR");
+        List<UserDTO> instructors = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
+        assertThat(instructors).extracting(UserDTO::getLogin).containsExactly(TEST_PREFIX + "instructor1");
+    }
+
+    // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/account/admin/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_SUPER_ADMIN", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_USER"));
     }
 
     // Test
@@ -607,7 +660,7 @@ public class UserTestService {
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
 
-        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
 
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
@@ -623,7 +676,7 @@ public class UserTestService {
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
 
-        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
 
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
@@ -780,8 +833,8 @@ public class UserTestService {
     public void getAndCreateParticipationVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        // try to get token for non existent participation
-        request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
+        // Normal participation IDs can already exist in the shared test database.
+        request.get("/api/account/participation-vcs-access-token?participationId=" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, String.class);
 
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -801,6 +854,13 @@ public class UserTestService {
         var newToken = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
                 HttpStatus.OK);
         assertThat(newToken).isNotEqualTo(token);
+
+        // creating a second token for the same participation is rejected with a conflict, not an internal server error
+        request.put("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, HttpStatus.CONFLICT);
+
+        // the rejected request left the existing token untouched
+        var tokenAfterConflict = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(tokenAfterConflict).isEqualTo(newToken);
 
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();

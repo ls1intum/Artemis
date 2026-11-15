@@ -1,0 +1,19 @@
+{
+    "artemisApp": {
+        "exerciseDetail": {
+            "types": {
+                "programming": "Programming",
+                "quiz": "Quiz",
+                "text": "Text",
+                "modeling": "Modeling",
+                "file-upload": "File upload"
+            },
+            "moreActions": "More actions",
+            "administration": "Exercise administration",
+            "tools": "Exercise tools",
+            "configuration": "Configuration",
+            "sections": "Exercise sections",
+            "id": "Exercise ID"
+        }
+    }
+}

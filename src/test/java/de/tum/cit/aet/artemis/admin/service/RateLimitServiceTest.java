@@ -74,6 +74,54 @@ class RateLimitServiceTest {
     }
 
     @Test
+    void testEnforcePerMinute_ClientErrorReport_IsEnforcedWhenRateLimitingIsDisabled() throws AddressStringException {
+        // neither the global switch nor the feature toggle is consulted for a limit that cannot be disabled, so they are not stubbed
+        when(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).thenReturn(60);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(false);
+        when(consumptionProbe.getNanosToWaitForRefill()).thenReturn(30_000_000_000L);
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+
+        assertThatThrownBy(() -> rateLimitService.enforcePerMinute(clientId, RateLimitType.CLIENT_ERROR_REPORT)).isInstanceOf(RateLimitExceededException.class);
+
+        verify(configurationService, never()).isRateLimitingEnabled();
+    }
+
+    @Test
+    void testEnforcePerMinute_ClientErrorReport_IsEnforcedWhenTheFeatureIsToggledOff() throws AddressStringException {
+        when(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).thenReturn(60);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(true);
+
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.CLIENT_ERROR_REPORT);
+
+        verify(bucketProxy).tryConsumeAndReturnRemaining(1);
+        verify(featureToggleService, never()).isFeatureEnabled(any());
+    }
+
+    @Test
+    void testEnforcePerMinute_ClientErrorReport_DoesNotLimitAnExemptAddress() throws AddressStringException {
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+        when(configurationService.isExempt(clientId)).thenReturn(true);
+
+        rateLimitService.enforcePerMinute(clientId, RateLimitType.CLIENT_ERROR_REPORT);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
+    void testEnforcePerMinute_OtherTypes_AreNotEnforcedWhenTheFeatureIsToggledOff() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(false);
+
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
     void testEnforcePerMinute_WhenWithinLimit_ShouldSucceed() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
         when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
@@ -100,6 +148,39 @@ class RateLimitServiceTest {
 
         assertThatThrownBy(() -> rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT))
                 .isInstanceOf(RateLimitExceededException.class);
+    }
+
+    @Test
+    void testRefundPerMinute_AddsOneTokenToTheBucketOfTheClient() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        when(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).thenReturn(30);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+
+        rateLimitService.refundPerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
+
+        verify(bucketProxy).addTokens(1);
+    }
+
+    @Test
+    void testRefundPerMinute_WhenRateLimitingDisabled_ShouldDoNothing() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(false);
+
+        rateLimitService.refundPerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
+    void testRefundPerMinute_ForAnExemptAddress_ShouldDoNothing() throws AddressStringException {
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        when(configurationService.isExempt(clientId)).thenReturn(true);
+
+        rateLimitService.refundPerMinute(clientId, RateLimitType.AUTHENTICATION);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
     }
 
     @Test
@@ -140,15 +221,54 @@ class RateLimitServiceTest {
     }
 
     @Test
-    void testResolveClientId_WithXForwardedFor_ShouldUseFirstIp() throws AddressStringException {
+    void testResolveClientId_IgnoresXForwardedFor() throws AddressStringException {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("192.168.1.1, 10.0.0.1");
+            when(httpServletRequest.getRemoteAddr()).thenReturn("203.0.113.7");
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
-            assertThat(clientId).isEqualTo(new IPAddressString("192.168.1.1").toAddress());
+            assertThat(clientId).isEqualTo(new IPAddressString("203.0.113.7").toAddress());
+        }
+    }
+
+    @Test
+    void testResolvePeerId_IgnoresForwardingHeadersSoASenderCannotChooseItsOwnBudget() throws AddressStringException {
+        try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
+            mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
+            when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
+            when(httpServletRequest.getRemoteAddr()).thenReturn("203.0.113.7");
+
+            IPAddress peerId = rateLimitService.resolvePeerId();
+
+            assertThat(peerId).isEqualTo(new IPAddressString("203.0.113.7").toAddress());
+            // no header is read at all, so there is nothing that a sender could set to change the address
+            verify(httpServletRequest, never()).getHeader(anyString());
+        }
+    }
+
+    @Test
+    void testResolvePeerId_WithoutARequestOrAnAddressItCanParse_ShouldReturnNull() {
+        try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
+            mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(null);
+            assertThat(rateLimitService.resolvePeerId()).isNull();
+        }
+        try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
+            mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
+            when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
+            when(httpServletRequest.getRemoteAddr()).thenReturn("not an address");
+            assertThat(rateLimitService.resolvePeerId()).isNull();
+        }
+    }
+
+    @Test
+    void testRejectionIsLoggedExceptForTheLimitThatBoundsTheLog() {
+        assertThat(RateLimitType.CLIENT_ERROR_REPORT.isRejectionLogged()).isFalse();
+        for (RateLimitType type : RateLimitType.values()) {
+            if (type != RateLimitType.CLIENT_ERROR_REPORT) {
+                assertThat(type.isRejectionLogged()).as(type.name()).isTrue();
+            }
         }
     }
 
@@ -157,7 +277,7 @@ class RateLimitServiceTest {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("::1");
+            when(httpServletRequest.getRemoteAddr()).thenReturn("::1");
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
@@ -170,7 +290,7 @@ class RateLimitServiceTest {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("  invalid-ip-format  ");
+            when(httpServletRequest.getRemoteAddr()).thenReturn("  invalid-ip-format  ");
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
@@ -179,16 +299,15 @@ class RateLimitServiceTest {
     }
 
     @Test
-    void testIpCleanup_EmptyStringHeader_ShouldReturnNull() {
+    void testResolveClientId_WithoutAddress_ShouldReturnNull() {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("unknown");
             when(httpServletRequest.getRemoteAddr()).thenReturn(null);
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
-            assertThat(clientId).matches(IPAddress::isLoopback);
+            assertThat(clientId).isNull();
         }
     }
 }

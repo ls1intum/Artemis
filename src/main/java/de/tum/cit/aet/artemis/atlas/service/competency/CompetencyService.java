@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -53,10 +52,9 @@ public class CompetencyService extends CourseCompetencyService {
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, StandardizedCompetencyRepository standardizedCompetencyRepository,
             CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService, LearningObjectImportService learningObjectImportService,
             CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, Optional<AtlasMLService> atlasMLService) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, learningPathService,
-                authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository,
-                atlasMLService);
+                authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository);
         this.competencyRepository = competencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
@@ -147,8 +145,11 @@ public class CompetencyService extends CourseCompetencyService {
         exerciseUnits.forEach(exerciseUnit -> {
             var exercise = exerciseUnit.getExercise();
             List<CompetencyExerciseLink> competencyExerciseLinksForUnit = linksByExerciseId.getOrDefault(exercise.getId(), List.of());
-            Set<CompetencyLectureUnitLink> competencyLectureUnitLinks = competencyExerciseLinksForUnit.stream()
-                    .map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight())).collect(Collectors.toSet());
+            Set<CompetencyLectureUnitLink> competencyLectureUnitLinks = competencyExerciseLinksForUnit.stream().map(link -> {
+                CompetencyLectureUnitLink lectureUnitLink = new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight());
+                lectureUnitLink.setGeneratedByAi(link.isGeneratedByAi());
+                return lectureUnitLink;
+            }).collect(Collectors.toSet());
             competencyExerciseLinksForUnit.forEach(competencyLink -> {
                 if (competencyLink.getCompetency() != null && Hibernate.isInitialized(competencyLink.getCompetency())) {
                     competencyLink.getCompetency().setCourse(null); // Avoid sending the course to the client multiple times in the response to save data

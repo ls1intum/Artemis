@@ -1,34 +1,48 @@
-<div data-testid="exam-mode-picker" class="d-flex align-items-start">
-    <div class="btn-group" [ngClass]="{ disabled: disableInput() }">
-        <div
+<div data-testid="exam-mode-picker" class="flex flex-col items-start gap-3!">
+    <tumaet-ui-button-group>
+        <button
+            tumAetUiButton
+            type="button"
             id="standard-mode"
-            class="btn"
-            [class.btn-success]="exam().examMode === ExamMode.REAL"
-            [class.btn-default]="exam().examMode !== ExamMode.REAL"
-            [class.disabled]="disableInput()"
+            data-testid="real-mode"
+            [severity]="isRealExam() ? 'primary' : 'secondary'"
+            [disabled]="disableInput()"
+            [attr.aria-pressed]="isRealExam()"
             (click)="setExamMode(ExamMode.REAL)"
             jhiTranslate="artemisApp.examManagement.testExam.realExam"
-            [tumUiTooltip]="'artemisApp.examManagement.testExam.realExamTooltip' | artemisTranslate"
-        ></div>
-        <div
+            [tumAetUiTooltip]="'artemisApp.examManagement.testExam.realExamTooltip' | artemisTranslate"
+        ></button>
+        <button
+            tumAetUiButton
+            type="button"
+            id="practice-mode"
             data-testid="test-mode"
-            class="btn"
-            [class.btn-primary]="exam().examMode === ExamMode.TEST"
-            [class.btn-default]="exam().examMode !== ExamMode.TEST"
-            [class.disabled]="disableInput()"
-            (click)="setExamMode(ExamMode.TEST)"
+            [severity]="isRealExam() ? 'secondary' : 'primary'"
+            [disabled]="disableInput()"
+            [attr.aria-pressed]="!isRealExam()"
+            (click)="selectPracticeExam()"
             jhiTranslate="artemisApp.examManagement.testExam.testExam"
-            [tumUiTooltip]="'artemisApp.examManagement.testExam.testExamTooltip' | artemisTranslate"
-        ></div>
-        <div
-            id="test-simulation-mode"
-            class="btn"
-            [class.btn-primary]="exam().examMode === ExamMode.TEST_WITH_SIMULATION"
-            [class.btn-default]="exam().examMode !== ExamMode.TEST_WITH_SIMULATION"
-            [class.disabled]="disableInput()"
-            (click)="setExamMode(ExamMode.TEST_WITH_SIMULATION)"
-            jhiTranslate="artemisApp.examManagement.testExam.testExamWithSimulation"
-            [tumUiTooltip]="'artemisApp.examManagement.testExam.testExamWithSimulationTooltip' | artemisTranslate"
-        ></div>
-    </div>
+            [tumAetUiTooltip]="'artemisApp.examManagement.testExam.testExamTooltip' | artemisTranslate"
+        ></button>
+    </tumaet-ui-button-group>
+    @if (!isRealExam()) {
+        <div class="flex flex-col gap-1" data-testid="supervised-session-option">
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox
+                    inputId="supervised-session"
+                    ariaDescribedBy="supervised-session-description"
+                    data-testid="supervised-session-checkbox"
+                    [checked]="hasSupervisedSession()"
+                    [disabled]="disableInput()"
+                    (checkedChange)="setSupervisedSession($event)"
+                />
+                <label for="supervised-session" jhiTranslate="artemisApp.examManagement.testExam.supervisedSession"></label>
+            </div>
+            <p
+                id="supervised-session-description"
+                class="m-0 max-w-prose text-sm text-muted-color"
+                jhiTranslate="artemisApp.examManagement.testExam.supervisedSessionDescription"
+            ></p>
+        </div>
+    }
 </div>

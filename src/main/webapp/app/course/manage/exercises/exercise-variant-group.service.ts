@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -48,7 +48,7 @@ export interface CreateExerciseVariantGroupDTO {
  * Talks to the {@code ExerciseVariantGroupResource} endpoints. Used by the exercise management view to load and
  * persist course-level variant groups.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVariantGroupService {
     private http = inject(HttpClient);
 

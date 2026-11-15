@@ -100,6 +100,17 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
     }
 
     /**
+     * Removes participant information and repository metadata from the nested submission while preserving the result.
+     *
+     * @return an anonymous result response
+     */
+    public ProgrammingParticipationLatestResultDTO withoutParticipantInformation() {
+        return new ProgrammingParticipationLatestResultDTO(id, exerciseId, completionDate, successful, score, rated,
+                submission == null ? null : submission.withoutParticipantInformation(), feedbacks, assessmentType, correctionRound, hasComplaint, exampleResult, testCaseCount,
+                passedTestCaseCount, codeIssueCount, assessor, assessmentNote);
+    }
+
+    /**
      * The feedback slice nested under {@link ProgrammingParticipationLatestResultDTO}.
      * <p>
      * This is deliberately not {@link ResultDTO.FeedbackDTO}: that record is shared with the websocket surfaces and
@@ -243,6 +254,11 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
 
         private static final String SUBMISSION_EXERCISE_TYPE = "programming";
 
+        private SubmissionRefDTO withoutParticipantInformation() {
+            return new SubmissionRefDTO(id, submissionDate, commitHash, type, submissionExerciseType, submitted, exampleSubmission, buildFailed, empty, durationInMinutes,
+                    buildLogEntries, participation == null ? null : participation.withoutParticipantInformation());
+        }
+
         /**
          * Converts a {@link Submission} into a {@link SubmissionRefDTO}. Only {@link ProgrammingSubmission}s are
          * supported; any other submission type maps to {@code null} (this route only ever serves programming
@@ -306,6 +322,11 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
             String repositoryUri, String buildPlanId, String branch, String userIndependentRepositoryUri, ProgrammingExerciseResponseDTO exercise,
             ProgrammingExerciseResponseDTO programmingExercise) implements Serializable {
 
+        private ParticipationRefDTO withoutParticipantInformation() {
+            return new ParticipationRefDTO(id, type, initializationState, initializationDate, individualDueDate, testRun, attempt, presentationScore, null, null, null, null, null,
+                    null, null, null, exercise, programmingExercise);
+        }
+
         /**
          * Converts a {@link Participation} into a {@link ParticipationRefDTO}.
          *
@@ -368,7 +389,7 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
      * ({@code authorities}, {@code organizations}, {@code savedPosts}, {@code tutorialGroupRegistrations} and
      * {@code learnerProfile}) are absent because they are all lazy and this route's fetch graph never initializes
      * them, so the entity payload dropped them under {@code NON_EMPTY} as well. The special-case scalars
-     * ({@code ltiCreated}, {@code memirisEnabled}, {@code resetDate}, {@code selectedLLMUsage} and its timestamp)
+     * ({@code ltiCreated}, {@code resetDate}, {@code selectedLLMUsage} and its timestamp)
      * moved off the entity into their own tables (#13546) and left the wire with them.
      *
      * @param id                        the user id

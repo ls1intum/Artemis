@@ -82,7 +82,8 @@ File browser tree
                 background-color: var(--code-editor-file-browser-tree-hover);
             }
 
-            .list-group-item:hover .file-icons {
+            .list-group-item:hover .file-icons,
+            .list-group-item:focus-within .file-icons {
                 opacity: 1;
             }
         }
@@ -102,8 +103,9 @@ File browser tree
             }
 
             button {
-                padding: 0;
-                border: none;
+                min-width: 1.5rem;
+                height: 1.5rem;
+                padding: 0.1rem;
                 pointer-events: auto;
 
                 fa-icon {

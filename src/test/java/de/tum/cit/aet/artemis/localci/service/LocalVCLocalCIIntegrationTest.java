@@ -10,10 +10,14 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -22,6 +26,7 @@ import java.util.Optional;
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 
+import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -34,6 +39,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +54,15 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.localvc.service.AuthenticationContext;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -135,7 +145,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFailedAccessVcsAccessLog() {
         // Create participation and ensure it's properly linked to the repository
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -257,6 +267,30 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testVcsAccessLog_sshClientAddressWithHostnameFitsTheColumn() throws UnknownHostException {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // An ssh peer the way a production node sees it: the address carries a reverse-resolved hostname
+        var clientAddress = new InetSocketAddress(InetAddress.getByAddress("host-203-0-113-42.dialup.example.net", new byte[] { (byte) 203, 0, (byte) 113, 42 }), 52134);
+        assertThat(clientAddress.toString()).as("the address the session prints exceeds the ip_address column").hasSizeGreaterThan(45);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(clientAddress);
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        // Storing the printed socket address here failed with "value too long for type character varying(45)", which
+        // lost the entire audit entry
+        var accessLog = new VcsAccessLog(student1, participation, student1.getName(), student1.getEmail(), RepositoryActionType.PULL, AuthenticationMechanism.SSH, "", ipAddress);
+        vcsAccessLogRepository.saveAndFlush(accessLog);
+
+        assertThat(vcsAccessLogRepository.findAllByParticipationId(participation.getId())).hasSize(1);
+        assertThat(ipAddress).isEqualTo("203.0.113.42");
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testVcsAccessLog_userVcsToken_logsCorrectMechanism() {
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -359,7 +393,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Disabled("Submission policy test requires build results to be processed for submission counting")
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPush_studentAssignmentRepository_tooManySubmissions() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -497,7 +531,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testDockerFlagsParsing() {
             String dockerFlags = "{\"network\": \"none\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}";
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
@@ -516,10 +550,40 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
         }
 
+        @ParameterizedTest
+        @ValueSource(booleans = { true, false })
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void retryPreservesPersistedNetworkRestriction(boolean restricted) {
+            createBuildConfig("");
+            var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            if (restricted) {
+                localCITriggerService.triggerRestrictedBuild(participation, null, RepositoryType.TESTS);
+            }
+            else {
+                localCITriggerService.triggerBuild(participation, null, RepositoryType.TESTS);
+            }
+            var initial = queuedJobs.poll();
+            assertThat(initial).isNotNull();
+            assertThat(initial.id().startsWith(LocalCITriggerService.RESTRICTED_BUILD_PREFIX)).isEqualTo(restricted);
+            var persisted = buildJobRepository.findByBuildJobIdElseThrow(initial.id());
+            localCITriggerService.retryBuildJob(persisted, participation);
+            var retry = queuedJobs.poll();
+            assertThat(retry).isNotNull();
+            assertThat(retry.retryCount()).isEqualTo(1);
+            assertThat(retry.id().startsWith(LocalCITriggerService.RESTRICTED_BUILD_PREFIX)).isEqualTo(restricted);
+            assertThat(retry.buildConfig().dockerRunConfig().network()).isEqualTo(restricted ? "none" : null);
+            if (restricted) {
+                assertThat(retry.buildConfig().dockerRunConfig().env()).isEmpty();
+            }
+            else {
+                assertThat(retry.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+            }
+        }
+
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
             // Create build config.
             String dockerFlags = "{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}".formatted(networkName);
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
@@ -545,7 +609,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             localCITriggerService.triggerBuild(studentParticipation, false); // Does not throw.
 
             assertNetworkName(studentParticipation, null);
-            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
             assertThat(runConfig).isNotNull();
             assertThat(runConfig.network()).isEqualTo(null);
         }
@@ -559,7 +623,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             // Does not throw.
 
             assertNetworkName(studentParticipation, "none");
-            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
             assertThat(runConfig).isNotNull();
             assertThat(runConfig.network()).isEqualTo("none");
         }
@@ -577,7 +641,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPhaseBuildPlanBeforeDueDate_excludesAfterDueDatePhases() throws Exception {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                     new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
             buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
@@ -602,7 +666,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPhaseBuildPlanAfterDueDate_includesAfterDueDatePhases() throws Exception {
-            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
             BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                     new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
             buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());

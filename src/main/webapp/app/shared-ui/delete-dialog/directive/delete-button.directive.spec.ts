@@ -1,30 +1,18 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
+import { WritableSignal, inputBinding, signal } from '@angular/core';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Subject } from 'rxjs';
 
-@Component({
-    selector: 'jhi-test-component',
-    template:
-        '<button jhiDeleteButton [renderButtonStyle]="renderStyle" [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
-    imports: [DeleteButtonDirective],
-})
-class TestComponent {
-    actionType = ActionType.Delete;
-    renderStyle = true;
-}
-
 describe('DeleteDialogDirective', () => {
-    let comp: TestComponent;
-    let fixture: ComponentFixture<TestComponent>;
-    let debugElement: DebugElement;
+    let fixture: DirectiveFixture<DeleteButtonDirective>;
+    let actionType: WritableSignal<ActionType>;
+    let renderStyle: WritableSignal<boolean>;
     let deleteDialogService: DeleteDialogService;
     let translateService: TranslateService;
     let translateSpy: ReturnType<typeof vi.spyOn>;
@@ -32,30 +20,35 @@ describe('DeleteDialogDirective', () => {
     const mockDialogRef = {
         onClose: new Subject<void>(),
         close: vi.fn(),
-    } as unknown as DynamicDialogRef;
+    } as unknown as TumAetUiDialogRef;
 
     const mockDialogService = {
         open: vi.fn().mockReturnValue(mockDialogRef),
     };
 
-    beforeEach(() =>
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TestComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: mockDialogService },
+                { provide: TumAetUiDialogService, useValue: mockDialogService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                deleteDialogService = TestBed.inject(DeleteDialogService);
-                translateService = TestBed.inject(TranslateService);
-                translateSpy = vi.spyOn(translateService, 'instant');
-            }),
-    );
+        });
+        actionType = signal(ActionType.Delete);
+        renderStyle = signal(true);
+        fixture = TestBed.createDirective(DeleteButtonDirective, {
+            tagName: 'button',
+            bindings: [
+                inputBinding('renderButtonStyle', renderStyle),
+                inputBinding('actionType', actionType),
+                inputBinding('entityTitle', () => 'title'),
+                inputBinding('deleteQuestion', () => 'question'),
+                inputBinding('deleteConfirmationText', () => 'text'),
+            ],
+        });
+        deleteDialogService = TestBed.inject(DeleteDialogService);
+        translateService = TestBed.inject(TranslateService);
+        translateSpy = vi.spyOn(translateService, 'instant');
+    });
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -67,34 +60,33 @@ describe('DeleteDialogDirective', () => {
         expect(translateSpy).toHaveBeenCalledWith('entity.action.delete');
 
         // Check that button was assigned with proper classes and type.
-        const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
-        expect(deleteButton).not.toBeNull();
+        const deleteButton = fixture.debugElement;
+        expect(deleteButton.nativeElement.tagName).toBe('BUTTON');
+        expect(deleteButton.nativeElement.getAttribute('aria-label')).toContain('entity.action.delete');
         expect(deleteButton.properties['type']).toBe('submit');
 
         // Check that delete text span was added to the DOM.
-        const deleteTextSpan = debugElement.query(By.css('.d-none.d-xl-inline'));
+        const deleteTextSpan = deleteButton.nativeElement.querySelector('span');
         expect(deleteTextSpan).not.toBeNull();
-        expect(deleteTextSpan.nativeElement.textContent).not.toBeNull();
+        expect(deleteTextSpan.textContent).not.toBeNull();
 
-        const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
-        expect(directiveEl).not.toBeNull();
-        const directiveInstance = directiveEl.injector.get(DeleteButtonDirective);
+        const directiveInstance = fixture.directiveInstance;
         // Signal inputs need to be called as functions
         expect(directiveInstance.entityTitle()).toBe('title');
         expect(directiveInstance.deleteQuestion()).toBe('question');
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
     });
 
-    it('should give the PrimeNG-styled (icon-only) button a translated aria-label and no Bootstrap span/classes', () => {
-        comp.renderStyle = false;
+    it('should give an icon-only caller a translated aria-label and no generated label or styles', () => {
+        renderStyle.set(false);
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('.d-none.d-xl-inline'))).toBeNull();
-        expect(debugElement.query(By.css('.btn'))).toBeNull();
+        const button = fixture.nativeElement;
+        expect(button.querySelector('span')).toBeNull();
+        expect(button.classList.contains('tumaet-ui-btn')).toBe(false);
 
         // The icon-only path has no visible text, so the directive must supply an accessible name.
-        const button = debugElement.query(By.css('button[jhiDeleteButton]'));
-        expect(button.nativeElement.getAttribute('aria-label')).toContain('entity.action.delete');
+        expect(button.getAttribute('aria-label')).toContain('entity.action.delete');
     });
 
     it('on click should call delete dialog service', () => {
@@ -102,21 +94,20 @@ describe('DeleteDialogDirective', () => {
         console.error = vi.fn();
         fixture.detectChanges();
         const deleteDialogSpy = vi.spyOn(deleteDialogService, 'openDeleteDialog');
-        const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
-        directiveEl.nativeElement.click();
+        (fixture.nativeElement as HTMLButtonElement).click();
         fixture.detectChanges();
         expect(deleteDialogSpy).toHaveBeenCalledOnce();
     });
 
     it('action type cleanup should change button title', () => {
-        comp.actionType = ActionType.Cleanup;
+        actionType.set(ActionType.Cleanup);
         fixture.detectChanges();
         expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.cleanup');
     });
 
     it('action type reset should change button title', () => {
-        comp.actionType = ActionType.Reset;
+        actionType.set(ActionType.Reset);
         fixture.detectChanges();
         expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.reset');

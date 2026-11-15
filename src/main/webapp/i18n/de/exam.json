@@ -13,6 +13,10 @@
                 "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
                 "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
+                "pdfExampleAlt": "Beispiel-PDF-Seite mit Kopfzeile und zwei Spalten mit Studierendenfotos und Angaben zur Identifizierung",
+                "studentPhotoAlt": "Foto von {{ login }}",
+                "studentPhotoMissingAlt": "Kein Foto für {{ login }} verfügbar",
+                "studentSignatureAlt": "Unterschrift von {{ login }}",
                 "pdfFile": {
                     "label": "PDF-Datei auswählen",
                     "tooltip": "Bitte wähle eine PDF-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
@@ -45,6 +49,7 @@
                     "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
+                    "registeredStudentsUnknown": "Die Anzahl der registrierten Studierenden liegt noch nicht vor oder konnte nicht geladen werden. Du kannst die Studierenden verteilen, sobald sie bekannt ist; falls diese Meldung bleibt, schließe den Dialog und öffne ihn erneut.",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
@@ -82,16 +87,16 @@
                 "review": "Klausureinsicht möglich",
                 "reviewExplanation": "Die Einsicht findet statt bis ",
                 "realExamsHeading": "Klausuren",
-                "testExamsHeading": "Testklausuren",
+                "testExamsHeading": "Übungsklausuren",
                 "noExams": "Keine Klausuren vorhanden",
                 "goToExercises": "Gehe zu Aufgaben",
                 "testExam": {
-                    "upcoming": "Demnächst stattfindende Testklausur",
-                    "imminent": "Die Testklausur beginnt in ",
-                    "imminentExplanation": "Du kannst diese Testklausur bereits öffnen",
-                    "conducting": "Beginne neue Testklausur",
-                    "closed": "Testklausur beendet",
-                    "notSubmitted": "Du hast deine Testklausur nicht rechtzeitig eingereicht!",
+                    "upcoming": "Demnächst stattfindende Übungsklausur",
+                    "imminent": "Die Übungsklausur beginnt in ",
+                    "imminentExplanation": "Du kannst diese Übungsklausur bereits öffnen",
+                    "conducting": "Beginne neue Übungsklausur",
+                    "closed": "Übungsklausur beendet",
+                    "notSubmitted": "Du hast deine Übungsklausur nicht rechtzeitig eingereicht!",
                     "reviewAttempt": "Versuch #{{attempt}}",
                     "resume": "Versuch fortführen",
                     "resumeAttempt": "Versuch #{{attempt}} fortführen",
@@ -106,6 +111,14 @@
                 }
             },
             "examSummary": {
+                "partialTestExamResult": "Dieses Teilergebnis und die theoretische Note berücksichtigen nur automatisch bewertete Aufgaben. Manuell zu bewertende Aufgaben wurden nicht bewertet.",
+                "notAutomaticallyAssessed": "Nicht automatisch bewertet",
+                "theoreticalGrade": "Theoretische Note:",
+                "theoreticalGradeBeforeBonus": "Theoretische Note vor Bonus:",
+                "theoreticalGradeAfterBonus": "Theoretische Note nach Bonus:",
+                "automaticResultsPending": "Die automatische Bewertung läuft noch. Gesamtpunktzahl und theoretische Note werden angezeigt, sobald die Ergebnisse vorliegen.",
+                "bonusResultPending": "Die Bonusquelle wird noch bewertet. Ihre Punktzahl und Note vor Bonus sind verfügbar; die endgültige Note mit Bonus wird angezeigt, sobald die Ergebnisse der Bonusquelle vorliegen.",
+                "automaticResultPending": "Bewertung läuft",
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
@@ -343,8 +356,8 @@
                 "previousButton": "Zurück"
             },
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
-            "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
-            "testExamConcluded": "Diese Testklausur ist abgeschlossen.",
+            "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Übungsklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
+            "testExamConcluded": "Diese Übungsklausur ist abgeschlossen.",
             "testExamAttemptUsedPracticeOpens": "Bitte warte bis zum Ende der Simulationsklausur.",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
             "goToExamManagement": "Zur Klausurverwaltung gehen",
@@ -391,6 +404,7 @@
                 "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
                 "retry": "Erneut versuchen"
             },
+            "programmingActions": "Aktionen der Programmieraufgabe",
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
             "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
@@ -457,7 +471,7 @@
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
-            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur startet",
+            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Übungsklausur startet",
             "individualExamsStatus": "Status der individuellen Klausuren",
             "allExercisesPrepared": "Alle Aufgaben sind für alle individuellen Klausuren vorbereitet",
             "notAllExercisesPrepared": "Nicht alle Aufgaben sind für alle individuellen Klausuren vorbereitet",
@@ -505,6 +519,11 @@
             "title": "Klausuren",
             "createExam": "Erstelle eine neue Klausur",
             "importExam": "Importiere eine Klausur",
+            "empty": {
+                "title": "Noch keine Klausuren",
+                "description": "Erstelle eine Klausur oder importiere eine aus einem anderen Kurs, um zu beginnen.",
+                "documentation": "Mehr über Klausuren erfahren"
+            },
             "editExam": "Bearbeiten",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
@@ -553,12 +572,14 @@
             "testExam": {
                 "realExam": "Klausur",
                 "realExamTooltip": "Studierende müssen vor der Klausur registriert werden. Alle registrierten Studierenden haben einen synchronen Abgabezeitpunkt.",
-                "testExam": "Testklausur",
-                "testExamTooltip": "Keine Registrierung der Studierenden erforderlich. Studierende können innerhalb des Bearbeitungsfensters mehrfach starten und üben.",
-                "testExamWithSimulation": "Testklausur mit Simulation",
-                "testExamWithSimulationTooltip": "Vor dem Startdatum plus Bearbeitungszeit verhält sich die Klausur wie eine echte Klausur: Studierende müssen registriert sein und haben einen synchronen Abgabezeitpunkt. Danach wechselt sie in den Testklausurmodus und ermöglicht unbegrenzte Übungsversuche. Idealerweise findet der Starttermin während einer Vorlesung statt.",
+                "testExam": "Übungsklausur",
+                "testExamTooltip": "Keine Registrierung der Studierenden erforderlich. Studierende können innerhalb des Bearbeitungsfensters beliebig oft starten und üben.",
+                "testExamWithSimulation": "Übungsklausur mit betreuter Sitzung",
+                "testExamWithSimulationTooltip": "Die Übungsklausur beginnt mit einer betreuten Sitzung, zum Beispiel im Hörsaal. Danach können Studierende beliebig oft üben.",
+                "supervisedSession": "Mit einer betreuten Sitzung beginnen",
+                "supervisedSessionDescription": "Ab dem Startdatum verhält sich die Übungsklausur für die Dauer der Bearbeitungszeit wie eine echte Klausur: Studierende müssen registriert sein, haben einen Versuch und denselben Abgabezeitpunkt. Danach können sie bis zum Ende des Bearbeitungsfensters beliebig oft üben. Idealerweise findet der Starttermin während einer Vorlesung statt.",
                 "examMode": "Modus",
-                "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
+                "examModeTooltip": "Übungsklausuren können von Studierenden beliebig oft innerhalb des Bearbeitungsfensters begonnen werden, bei jedem Versuch steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
@@ -583,6 +604,8 @@
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",
+                "workingTimeMinutes": "Bearbeitungszeit Minuten",
+                "workingTimeSeconds": "Bearbeitungszeit Sekunden",
                 "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
@@ -594,6 +617,10 @@
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
                     "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein:"
+                },
+                "empty": {
+                    "title": "Noch keine Testläufe vorhanden",
+                    "description": "Erstelle einen Testlauf, um die Klausur aus der Sicht der Studierenden auszuprobieren."
                 }
             },
             "examStudents": {
@@ -658,11 +685,7 @@
                     "Submitted": "Eingereicht",
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
-                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
-                },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
+                    "AttendanceChecked": "Anwesenheit geprüft"
                 },
                 "menu": {
                     "manageStudents": "Studierende",
@@ -676,6 +699,17 @@
                     "uploadImages": "Bilder hochladen",
                     "distribute": "Studierende verteilen",
                     "verifyAttendance": "Anwesenheit prüfen"
+                },
+                "statisticsFailed": "Die Prüfungsstatistik konnte nicht geladen werden. Lade sie vor der Anmeldung von Studierenden erneut.",
+                "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
+                "registrationAfterGeneration": "Die individuellen Prüfungen wurden bereits generiert. Neu angemeldete Studierende erhalten automatisch eine eigene Prüfung. Falls die Vorbereitung bereits gestartet wurde, werden auch ihre Aufgaben vorbereitet. Fortfahren?",
+                "manualAttendance": {
+                    "checked": "Überprüfung abgeschlossen",
+                    "incomplete": "Überprüfung unvollständig",
+                    "reloadFailed": "Die Anwesenheit konnte nicht aktualisiert werden. Lade die aktuellen Einträge vor weiteren Änderungen erneut.",
+                    "title": "Anwesenheitsentscheidung",
+                    "present": "Anwesend (alle Identitätsprüfungen bestätigt)",
+                    "absent": "Abwesend (alle Identitätsprüfungen zurückgesetzt)"
                 },
                 "addDialog": {
                     "title": "Studierende hinzufügen",
@@ -718,10 +752,15 @@
                 "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
                 "noExerciseGroups": "Es wurden noch keine Aufgabengruppen erstellt.",
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
+                "titleRequired": "Bitte gib einen Titel für die Aufgabengruppe ein.",
+                "titleTooLong": "Der Titel ist zu lang. Bitte gib höchstens 255 Zeichen ein.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
-                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:"
+                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:",
+                    "summary": {
+                        "title": "Was gelöscht wird"
+                    }
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
                 "importModal": {
@@ -758,27 +797,43 @@
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
                 "summary": {
-                    "title": "Klausur-Zusammenfassung",
-                    "numberExerciseGroups": "Anzahl der Aufgabengruppen",
-                    "numberProgrammingExercises": "Anzahl der Programmieraufgaben",
-                    "numberModelingExercises": "Anzahl der Modellierungsaufgaben",
-                    "numberTextExercises": "Anzahl der Textaufgaben",
-                    "numberFileUploadExercises": "Anzahl der Datei-Upload-Aufgaben",
-                    "numberQuizExercises": "Anzahl der Quiz-Aufgaben",
-                    "numberRepositories": "Anzahl der Repositories",
-                    "numberBuilds": "Anzahl der Builds",
-                    "numberRegisteredStudents": "Anzahl der angemeldeten Studierenden",
-                    "numberNotStartedExams": "Anzahl der Klausuren (nicht gestartet)",
-                    "numberStartedExams": "Anzahl der Klausuren",
-                    "numberSubmittedExams": "Anzahl der Klausuren (abgegeben)",
-                    "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberAnswerPosts": "Anzahl der Antwortbeiträge",
-                    "isTestExam": "Testklausur",
-                    "isTestCourse": "Testkurs"
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "structure": "Klausurstruktur",
+                        "students": "Studierende und Klausuren",
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberExerciseGroups": "Aufgabengruppen",
+                    "numberProgrammingExercises": "Programmieraufgaben",
+                    "numberQuizExercises": "Quiz-Aufgaben",
+                    "numberTextExercises": "Textaufgaben",
+                    "numberModelingExercises": "Modellierungsaufgaben",
+                    "numberFileUploadExercises": "Datei-Upload-Aufgaben",
+                    "numberRegisteredStudents": "Angemeldete Studierende",
+                    "numberNotStartedExams": "Klausuren von Studierenden (nicht gestartet)",
+                    "numberStartedExams": "Klausuren von Studierenden (gestartet)",
+                    "numberSubmittedExams": "Klausuren von Studierenden (abgegeben)",
+                    "numberTestRuns": "Testläufe",
+                    "numberExamSessions": "Klausursitzungen",
+                    "numberExamLiveEvents": "Live-Ereignisse und Ankündigungen",
+                    "numberStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberSubmissions": "Abgaben",
+                    "numberResults": "Ergebnisse",
+                    "numberAssessments": "Manuelle Bewertungen",
+                    "numberComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberCommunicationPosts": "Beiträge im Klausurkanal",
+                    "numberAnswerPosts": "Antworten im Klausurkanal",
+                    "numberBuilds": "Build-Jobs",
+                    "numberStudentExamsOfGroup": "Klausuren von Studierenden, die Aufgaben dieser Gruppe enthalten"
                 }
             },
             "reset": {
-                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht und alle angemeldeten Studierenden werden aus der Klausur entfernt. Die Klausur selbst und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
                 "success": "Die Klausur wurde erfolgreich zurückgesetzt."
             },
@@ -793,11 +848,11 @@
                 "status": "Aktueller Status",
                 "goTo": "Seite",
                 "testExam": {
-                    "title": "Checkliste für die Durchführung von Testklausuren",
-                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
-                    "detailsHintForTestExams": "Für Testklausuren gilt",
-                    "studentRegistration": "Studierende werden automatisch für die Testklausur registriert, wenn diese mit der Bearbeitung beginnen",
-                    "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht"
+                    "title": "Checkliste für die Durchführung von Übungsklausuren",
+                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Übungsklausuren",
+                    "detailsHintForTestExams": "Für Übungsklausuren gilt",
+                    "studentRegistration": "Studierende werden automatisch für die Übungsklausur registriert, wenn diese mit der Bearbeitung beginnen",
+                    "instantResults": "Die Ergebnisse der Übungsklausur werden direkt nach dem Einreichen veröffentlicht"
                 },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",
@@ -807,6 +862,7 @@
                     "examDetails": "Ausfüllen aller Klausurdetails",
                     "conductExam": "Abhalten der Klausur",
                     "assessAllSubmissions": "Bewertung aller Abgaben",
+                    "plagiarismCases": "Bearbeitung der Plagiatsfälle",
                     "publishResults": "Veröffentlichung der Ergebnisse",
                     "examReview": "Planung der Klausureinsicht ",
                     "resolveComplaints": "Auflösung aller Beschwerden",
@@ -824,6 +880,7 @@
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
                     "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
+                    "plagiarismCases": "Die Plagiatsfälle der Klausur können eingesehen, die betroffenen Studierenden informiert und ein Urteil für jeden Fall festgelegt werden.",
                     "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Teilnehmenden der Klausur.",
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
@@ -844,6 +901,8 @@
                     "eachexercisegroup": "Jede Aufgabengruppe hat mindestens eine Aufgabe",
                     "pointsexercisegroupequal": "Gleiche Anzahl Punkte in jeder Aufgabe in einer Aufgabengruppe",
                     "totalpointspossible": "Gesamtpunktzahl der Klausur kann mit der aktuellen Aufgabenkonfiguration erreicht werden",
+                    "pointsinexercisegroupnotequal": "Die Aufgaben in dieser Gruppe haben nicht dieselbe Anzahl an maximalen Punkten!",
+                    "nototalpointsduetomismatch": "Die aktuelle Gesamtpunktzahl kann aufgrund unterschiedlicher Punkte innerhalb der Varianten einer Aufgabengruppe nicht berechnet werden.",
                     "hasExercises": "hat",
                     "zeroexercises": "0",
                     "exerciseStart": "Aufgabengruppe",
@@ -867,6 +926,7 @@
                     "points": "Punkte",
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten",
+                    "totalPoints": "Gesamtpunktzahl",
                     "assessmentCheckType": "Check Typ",
                     "assessmentStatus": "Status",
                     "assessmentAction": "Aktion",
@@ -883,6 +943,9 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "announcementCreate": {
+                "history": "Bisherige Ankündigungen",
+                "historyEmpty": "Es wurden noch keine Ankündigungen gesendet.",
+                "historyFailed": "Die bisherigen Ankündigungen konnten nicht geladen werden.",
                 "button": "Ankündigung erstellen",
                 "title": "Klausurweite Ankündigung erstellen",
                 "task": "Gib deine Ankündigung hier ein.",
@@ -983,7 +1046,7 @@
                 "notRegistered": "Keine Studierenden registriert",
                 "prepareExerciseStart": "Bereite Aufgabenstart vor",
                 "testExam": {
-                    "examPreparation": "Testklausur-Vorbereitung",
+                    "examPreparation": "Übungsklausur-Vorbereitung",
                     "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
                     "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein"
                 }
@@ -995,11 +1058,11 @@
                 "submittedExams": "Abgegebene Klausuren",
                 "conductionSuspended": "Studierende können keine Klausur starten!",
                 "testExam": {
-                    "examConduction": "Testklausur-Durchführung",
+                    "examConduction": "Übungsklausur-Durchführung",
                     "numberOfStudents": "Anzahl der Studierenden",
-                    "startedExams": "Begonnene Testklausuren",
-                    "submittedExams": "Abgegebene Testklausuren",
-                    "conductionSuspended": "Studierende können keine Testklausuren starten!"
+                    "startedExams": "Begonnene Übungsklausuren",
+                    "submittedExams": "Abgegebene Übungsklausuren",
+                    "conductionSuspended": "Studierende können keine Übungsklausuren starten!"
                 }
             },
             "correction": {

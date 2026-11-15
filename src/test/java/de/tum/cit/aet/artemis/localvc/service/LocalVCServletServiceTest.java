@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -12,52 +15,55 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
-import java.time.Duration;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Base64;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
+import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
@@ -67,6 +73,9 @@ class LocalVCServletServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
+
+    @Mock
+    private RateLimitService rateLimitService;
 
     @Mock
     private UserTestRepository userRepository;
@@ -87,22 +96,13 @@ class LocalVCServletServiceTest {
     private AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     @Mock
-    private ContinuousIntegrationTriggerService ciTriggerService;
-
-    @Mock
-    private ProgrammingSubmissionService programmingSubmissionService;
-
-    @Mock
-    private ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
-
-    @Mock
-    private ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
-
-    @Mock
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Mock
     private RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository;
+
+    @Mock
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Mock
     private VcsAccessLogService vcsAccessLogService;
@@ -110,34 +110,31 @@ class LocalVCServletServiceTest {
     @Mock
     private UserVcsAccessTokenService userVcsAccessTokenService;
 
-    @Mock
-    private RateLimitService rateLimitService;
+    @Spy
+    private LocalVCRepositoryResolverService repositoryResolver = new LocalVCRepositoryResolverService();
 
     @Mock
-    private ExerciseVersionService exerciseVersionService;
+    private LocalVCAccessLogRecorderService accessLogRecorder;
 
     @Mock
-    private MailSendingService mailSendingService;
+    private LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
 
     @Mock
-    private DistributedDataProvider distributedDataProvider;
+    private PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
 
     @Mock
-    private DistributedMap<Long, Boolean> httpsCloneEmailCache;
+    private BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
-    @InjectMocks
     private LocalVCServletService localVCServletService;
 
     private User testUser;
 
     private ProgrammingExercise testExercise;
 
-    private ProgrammingExerciseStudentParticipation testParticipation;
-
     private LocalVCRepositoryUri testRepositoryUri;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("testuser");
@@ -157,21 +154,19 @@ class LocalVCServletServiceTest {
         testExercise.setCourse(testCourse);
         testExercise.generateAndSetProjectKey();
 
-        testParticipation = new ProgrammingExerciseStudentParticipation();
-        testParticipation.setId(1L);
-
         testRepositoryUri = mock(LocalVCRepositoryUri.class);
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
-        lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
-        lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/test-testuser.git");
+        lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(Path.of("test/repo"));
+        lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/EXERCISE-template.git");
 
-        lenient().when(distributedDataProvider.<Long, Boolean>getExpiringMap(anyString(), any())).thenReturn(httpsCloneEmailCache);
-
-        // Setup the VcsAccessLogService as an Optional containing the mock
-        ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
-
-        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", java.nio.file.Path.of("/tmp/test-repos"));
-        ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create("http://localhost"));
+        // The repositories do not exist on disk, so reading the latest commit of one finds nothing
+        ReflectionTestUtils.setField(repositoryResolver, "localVCBasePath", Path.of("/tmp/test-repos"));
+        ReflectionTestUtils.setField(repositoryResolver, "localVCBaseUri", URI.create("http://localhost"));
+        // The constructor takes the size limits as primitives, which constructor injection of mocks cannot provide, so the service is built explicitly
+        localVCServletService = new LocalVCServletService(authenticationManager, userRepository, programmingExerciseRepository, programmingExerciseBuildConfigRepository,
+                repositoryAccessService, programmingExerciseParticipationService, auxiliaryRepositoryService, Optional.of(vcsAccessLogService),
+                participationVCSAccessTokenRepository, repositoryVCSAccessTokenRepository, authorizationCheckService, rateLimitService, userVcsAccessTokenService,
+                repositoryResolver, accessLogRecorder, buildAgentAuthenticationService, passwordAuthenticationNoticeService, buildAgentNetworkPolicy, 20, 50);
     }
 
     @Test
@@ -205,106 +200,11 @@ class LocalVCServletServiceTest {
 
         AuthenticationContext.Session context = new AuthenticationContext.Session(session);
 
-        // Call the public method directly (no reflection needed)
+        when(accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(any(), eq(testUser), eq(testRepositoryUri))).thenReturn(AuthenticationMechanism.SSH);
+
         localVCServletService.saveFailedAccessVcsAccessLog(context, "student1", testExercise.getId(), testRepositoryUri, testUser, RepositoryActionType.READ);
 
         verify(vcsAccessLogService).saveAccessLog(eq(testUser), any(), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
-    }
-
-    @Test
-    void testResolveAuthenticationMechanismFromSessionOrRequest_withSession() throws Exception {
-        ServerSession session = mock(ServerSession.class);
-        AuthenticationContext.Session context = new AuthenticationContext.Session(session);
-
-        // Use reflection to call the private method for testing
-        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class, LocalVCRepositoryUri.class);
-        method.setAccessible(true);
-
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
-
-        assertThat(result).isEqualTo(AuthenticationMechanism.SSH);
-    }
-
-    @Test
-    void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndMissingHeader() throws Exception {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(null);
-
-        AuthenticationContext.Request context = new AuthenticationContext.Request(request);
-
-        // Use reflection to call the private method for testing
-        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class, LocalVCRepositoryUri.class);
-        method.setAccessible(true);
-
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
-
-        assertThat(result).isEqualTo(AuthenticationMechanism.AUTH_HEADER_MISSING);
-    }
-
-    @Test
-    void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndValidHeader() throws Exception {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString("user:password".getBytes());
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
-
-        AuthenticationContext.Request context = new AuthenticationContext.Request(request);
-
-        // Use reflection to call the private method for testing
-        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class, LocalVCRepositoryUri.class);
-        method.setAccessible(true);
-
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
-
-        assertThat(result).isEqualTo(AuthenticationMechanism.PASSWORD);
-    }
-
-    @Test
-    void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndTokenHeader() throws Exception {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        // Create a valid token with the correct prefix and length (50 characters total)
-        String token = "vcpat-" + "a".repeat(44); // 6 + 44 = 50 characters total
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:" + token).getBytes());
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
-
-        when(userVcsAccessTokenService.findToken(testUser.getId())).thenReturn(token);
-
-        AuthenticationContext.Request context = new AuthenticationContext.Request(request);
-
-        // Use reflection to call the private method for testing
-        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class, LocalVCRepositoryUri.class);
-        method.setAccessible(true);
-
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
-
-        assertThat(result).isEqualTo(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
-    }
-
-    @Test
-    void testResolveAuthenticationMechanismFromSessionOrRequest_withRepositoryToken() throws Exception {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        // A valid token that does NOT match the user-level token, but matches a repository-scoped staff token for the requested repository.
-        String token = "vcpat-" + "b".repeat(44);
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:" + token).getBytes());
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
-
-        RepositoryVCSAccessToken repositoryToken = new RepositoryVCSAccessToken();
-        repositoryToken.setVcsAccessToken(token);
-        when(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(testUser.getId(), "http://localhost/git/TEST/test-testuser.git"))
-                .thenReturn(Optional.of(repositoryToken));
-
-        AuthenticationContext.Request context = new AuthenticationContext.Request(request);
-
-        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class, LocalVCRepositoryUri.class);
-        method.setAccessible(true);
-
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
-
-        assertThat(result).isEqualTo(AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN);
     }
 
     @Test
@@ -324,124 +224,231 @@ class LocalVCServletServiceTest {
         assertThat(RepositoryActionType.CLONE_FAIL).isNotNull();
     }
 
-    @Test
-    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_sendsEmailOnPasswordCloneWhenNotInCache() {
+    private static String basicAuth(String username, String password) {
+        return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String vcsAccessToken(char fill) {
+        return "vcpat-" + String.valueOf(fill).repeat(44);
+    }
+
+    private HttpServletRequest gitFetchRequest(String authorizationHeader) {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
-        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
-        lenient().doReturn(AuthenticationMechanism.PASSWORD).when(request).getAttribute("artemis.authenticationMechanism");
-
-        String password = "plain-password";
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + password).getBytes());
-
-        // putIfAbsent return null, first clone with HTTPS
-        when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenReturn(null);
-
-        // clientOffered == 0 means CLONE operation
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 0);
-
-        verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.httpsCloneTip.title"), eq("mail/httpsCloneTipEmail"), eq(Map.of()));
+        lenient().when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authorizationHeader);
+        return request;
     }
 
     @Test
-    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotSendEmailWhenAlreadyInCache() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
-        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
-        lenient().doReturn(AuthenticationMechanism.PASSWORD).when(request).getAttribute("artemis.authenticationMechanism");
+    void authenticateAndAuthorizeGitRequest_withTheSharedBuildAgentCredential_skipsTheRateLimitAndTheAuthorization() throws Exception {
+        HttpServletRequest request = gitFetchRequest(basicAuth("build-agent", "a-long-shared-secret"));
+        when(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, request.getHeader(HttpHeaders.AUTHORIZATION))).thenReturn(true);
 
-        String password = "plain-password";
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + password).getBytes());
+        assertThatCode(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)).doesNotThrowAnyException();
 
-        when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenReturn(Boolean.TRUE);
-
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 0);
-
-        verify(mailSendingService, never()).buildAndSendAsync(any(), any(), any(), any());
+        verifyNoInteractions(rateLimitService, userRepository, repositoryAccessService);
     }
 
     @Test
-    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotSendEmailWhenUsingToken() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
-        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
-        lenient().doReturn(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).when(request).getAttribute("artemis.authenticationMechanism");
+    void authenticateAndAuthorizeGitRequest_withACredentialTheBuildAgentShortcutsDecline_isHandledLikeAnyOtherCredential() {
+        HttpServletRequest request = gitFetchRequest(basicAuth("build-agent", "another-secret"));
 
-        String token = "vcpat-" + "a".repeat(44);
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + token).getBytes());
-
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 0);
-
-        verifyNoInteractions(mailSendingService);
-        verifyNoInteractions(httpsCloneEmailCache);
+        // not accepted by the shortcuts, so the request goes on to look up the exercise of the repository, which does not exist here
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
     }
 
     @Test
-    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotSendEmailOnPullOperation() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+    void authenticateAndAuthorizeGitRequest_atTheHandshake_spendsTheGitBudgetAndNotTheLoginBudget() {
+        HttpServletRequest request = gitFetchRequest(basicAuth("student", "a-token"));
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/info/refs");
+        when(request.getRemoteAddr()).thenReturn("203.0.113.5");
 
-        String password = "plain-password";
-        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + password).getBytes());
+        // the request goes on to look up the exercise of the repository, which does not exist here
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
 
-        // clientOffered > 0 means a PULL operation instead of clone
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 1);
-
-        verifyNoInteractions(mailSendingService);
-        verifyNoInteractions(httpsCloneEmailCache);
+        // Git has a bucket of its own. Sharing the login bucket meant that a lecture hall pushing at a deadline kept its students from logging in.
+        verify(rateLimitService).enforcePerMinute(any(), eq(RateLimitType.GIT_AUTHENTICATION));
+        verify(rateLimitService, never()).enforcePerMinute(any(), eq(RateLimitType.AUTHENTICATION));
     }
 
     @Test
-    void resolveRepository_withAPathEscapingTheBaseDirectory_isNotFound(@TempDir java.nio.file.Path baseDir) {
-        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+    void authenticateAndAuthorizeGitRequest_forTheDataTransfer_spendsNoBudget() {
+        // git-upload-pack reuses the credentials of the handshake that came before it, so only /info/refs counts
+        HttpServletRequest request = gitFetchRequest(basicAuth("student", "a-token"));
 
-        // A path that climbs out of the base directory must be refused before the file system is touched, not resolved to whatever lies outside.
-        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("../../../../../../etc/passwd"));
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+
+        verifyNoInteractions(rateLimitService);
     }
 
     @Test
-    void resolveRepository_withAPathThatDoesNotExist_isNotFound(@TempDir java.nio.file.Path baseDir) {
-        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+    void authenticateAndAuthorizeGitRequest_forAPush_neverOffersTheBuildAgentShortcuts() {
+        HttpServletRequest request = gitFetchRequest(basicAuth("build-agent", "a-long-shared-secret"));
 
-        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC/abc-exercise.git"));
+        // the shortcuts only grant read access
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+
+        verifyNoInteractions(buildAgentAuthenticationService);
     }
 
     @Test
-    void resolveRepository_withASymlinkLeadingOutOfTheBaseDirectory_isNotFound(@TempDir java.nio.file.Path baseDir, @TempDir java.nio.file.Path outside) throws Exception {
-        // The path itself stays inside the base directory, so only resolving symlinks reveals that the repository is elsewhere.
-        java.nio.file.Files.createDirectories(outside.resolve("escaped.git"));
-        java.nio.file.Path project = java.nio.file.Files.createDirectories(baseDir.resolve("ABC"));
-        java.nio.file.Files.createSymbolicLink(project.resolve("abc-exercise.git"), outside.resolve("escaped.git"));
-        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+    void saveFailedAccessVcsAccessLog_whenTheParticipationCannotBeResolved_writesNoLogAndDoesNotFail() {
+        ServerSession session = mock(ServerSession.class);
+        when(programmingExerciseParticipationService.fetchParticipationByRepository(anyString(), anyString(), anyLong()))
+                .thenThrow(new EntityNotFoundException("participation", 1L));
 
-        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC/abc-exercise.git"));
+        assertThatCode(() -> localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Session(session), "testuser", testExercise.getId(), testRepositoryUri,
+                testUser, RepositoryActionType.WRITE)).doesNotThrowAnyException();
+
+        verifyNoInteractions(vcsAccessLogService);
     }
 
-    @Test
-    void resolveRepository_withCarriageReturnsInThePath_isNotFoundAndLogsNoLineBreak(@TempDir java.nio.file.Path baseDir) {
-        // A repository path comes straight from the request. Logging it unchanged would let a caller forge log lines (CWE-117), so it is sanitised before it is logged.
-        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
-        Logger logger = (Logger) LoggerFactory.getLogger(LocalVCServletService.class);
-        ListAppender<ILoggingEvent> loggedEvents = new ListAppender<>();
-        loggedEvents.start();
-        logger.addAppender(loggedEvents);
+    @Nested
+    class ParticipationVcsAccessTokenAuthentication {
 
-        try {
-            assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC\r\ninjected/abc-exercise.git"));
+        private static final long TEAM_PARTICIPATION_ID = 7L;
 
-            assertThat(loggedEvents.list).as("the failed lookup is logged").isNotEmpty();
-            assertThat(loggedEvents.list).allSatisfy(
-                    event -> assertThat(event.getFormattedMessage()).as("no log line may carry a line break from the request").doesNotContain("\r").doesNotContain("\n"));
-            assertThat(loggedEvents.list).as("the path is still identifiable in the log, with the line breaks replaced")
-                    .anyMatch(event -> event.getFormattedMessage().contains("ABC__injected/abc-exercise.git"));
+        private static final long PRACTICE_PARTICIPATION_ID = 5L;
+
+        private GitRepositoryAccessDTO exerciseOfMode(ExerciseMode mode) {
+            return new GitRepositoryAccessDTO(testExercise.getId(), 1L, mode, null, null, null, null, null, null, null, null);
         }
-        finally {
-            logger.detachAppender(loggedEvents);
+
+        private ProgrammingExerciseStudentParticipation participation(long id, boolean practiceMode) {
+            var participation = new ProgrammingExerciseStudentParticipation();
+            participation.setId(id);
+            participation.setPracticeMode(practiceMode);
+            return participation;
+        }
+
+        private boolean authenticate(String providedToken, GitRepositoryAccessDTO exercise, Supplier<ProgrammingExerciseParticipation> requestedParticipation) throws Exception {
+            Method method = LocalVCServletService.class.getDeclaredMethod("tryAuthenticationWithParticipationVCSAccessToken", User.class, String.class,
+                    GitRepositoryAccessDTO.class, Supplier.class);
+            method.setAccessible(true);
+            return (boolean) method.invoke(localVCServletService, testUser, providedToken, exercise, requestedParticipation);
+        }
+
+        @Test
+        void teamRepository_acceptsTheTokenOfTheTeamParticipationOfTheUser() throws Exception {
+            String token = vcsAccessToken('t');
+            when(programmingExerciseParticipationService.findTeamParticipationByExerciseAndUser(testExercise.getId(), testUser))
+                    .thenReturn(Optional.of(participation(TEAM_PARTICIPATION_ID, false)));
+            when(participationVCSAccessTokenRepository.findTokenByUserIdAndParticipationId(testUser.getId(), TEAM_PARTICIPATION_ID)).thenReturn(Optional.of(token));
+
+            assertThat(authenticate(token, exerciseOfMode(ExerciseMode.TEAM), () -> participation(TEAM_PARTICIPATION_ID, false))).isTrue();
+        }
+
+        @Test
+        void practiceRepositoryOfATeamExercise_acceptsOnlyTheTokenOfThePracticeParticipation() throws Exception {
+            String practiceToken = vcsAccessToken('p');
+            String teamToken = vcsAccessToken('t');
+            when(participationVCSAccessTokenRepository.findTokenByUserIdAndParticipationId(testUser.getId(), PRACTICE_PARTICIPATION_ID)).thenReturn(Optional.of(practiceToken));
+            Supplier<ProgrammingExerciseParticipation> practiceRepository = () -> participation(PRACTICE_PARTICIPATION_ID, true);
+
+            assertThat(authenticate(practiceToken, exerciseOfMode(ExerciseMode.TEAM), practiceRepository)).isTrue();
+            assertThat(authenticate(teamToken, exerciseOfMode(ExerciseMode.TEAM), practiceRepository)).isFalse();
+
+            // the practice repository belongs to the student alone, so the team is never consulted
+            verify(programmingExerciseParticipationService, never()).findTeamParticipationByExerciseAndUser(anyLong(), any(User.class));
+        }
+
+        @Test
+        void individualRepository_acceptsTheTokenOfTheRequestedParticipation() throws Exception {
+            String token = vcsAccessToken('i');
+            when(participationVCSAccessTokenRepository.findTokenByUserIdAndParticipationId(testUser.getId(), 3L)).thenReturn(Optional.of(token));
+
+            assertThat(authenticate(token, exerciseOfMode(ExerciseMode.INDIVIDUAL), () -> participation(3L, false))).isTrue();
+            assertThat(authenticate(vcsAccessToken('x'), exerciseOfMode(ExerciseMode.INDIVIDUAL), () -> participation(3L, false))).isFalse();
+        }
+
+        @Test
+        void teamRepository_withoutATeamOfTheUser_failsTheAuthentication() throws Exception {
+            when(programmingExerciseParticipationService.findTeamParticipationByExerciseAndUser(testExercise.getId(), testUser)).thenThrow(new EntityNotFoundException("team", 1L));
+
+            assertThatThrownBy(() -> authenticate(vcsAccessToken('t'), exerciseOfMode(ExerciseMode.TEAM), () -> participation(TEAM_PARTICIPATION_ID, false)))
+                    .isInstanceOf(InvocationTargetException.class).hasCauseInstanceOf(LocalVCAuthException.class);
+        }
+
+        @Test
+        void aPasswordIsNotLookedUpAsAToken() throws Exception {
+            assertThat(authenticate("a-password", exerciseOfMode(ExerciseMode.TEAM), () -> participation(TEAM_PARTICIPATION_ID, false))).isFalse();
+
+            verifyNoInteractions(participationVCSAccessTokenRepository, programmingExerciseParticipationService);
         }
     }
 
+    @Nested
+    class BranchingAndForcePush {
+
+        private Repository repositoryOfProject(String projectKey) {
+            Repository repository = mock(Repository.class);
+            when(repository.getDirectory()).thenReturn(new File("/tmp/test-repos/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-testuser.git"));
+            return repository;
+        }
+
+        private void configureBranching(boolean allowBranching, String branchRegex) {
+            var buildConfig = new ProgrammingExerciseBuildConfig();
+            buildConfig.setAllowBranching(allowBranching);
+            buildConfig.setBranchRegex(branchRegex);
+            when(programmingExerciseBuildConfigRepository.findAllByProjectKey("TEST")).thenReturn(List.of(buildConfig));
+        }
+
+        @Test
+        void aBranchMatchingTheRegex_isAllowed() {
+            configureBranching(true, "feature/.*");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "feature/login"))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.BRANCH_ALLOWED);
+        }
+
+        @Test
+        void aBranchNotMatchingTheRegex_isRefused() {
+            configureBranching(true, "feature/.*");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "hotfix"))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+        }
+
+        @Test
+        void anInvalidRegexOfTheInstructor_refusesEveryBranch() {
+            configureBranching(true, "feature/[");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "feature/login"))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+        }
+
+        @Test
+        void aBranchNameLongerThanAnyReasonableName_isRefusedWithoutMatching() {
+            configureBranching(true, ".*");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "a".repeat(256)))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "a".repeat(255)))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.BRANCH_ALLOWED);
+        }
+
+        @Test
+        void disabledBranching_refusesEveryBranch() {
+            configureBranching(false, "feature/.*");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "feature/login"))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.BRANCHING_DISABLED);
+        }
+
+        @Test
+        void aProjectWithoutExactlyOneExercise_failsTheBranchCheck() {
+            when(programmingExerciseBuildConfigRepository.findAllByProjectKey("TEST")).thenReturn(List.of());
+            Repository repository = repositoryOfProject("TEST");
+
+            assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.isBranchNameAllowedForRepository(repository, "main"));
+        }
+
+        @Test
+        void aProjectWithoutExercise_failsTheForcePushCheck() {
+            when(programmingExerciseRepository.findOneByProjectKeyOrThrow("TEST", false)).thenThrow(new EntityNotFoundException("exercise", 1L));
+            Repository repository = repositoryOfProject("TEST");
+
+            assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.isUserAllowedToForcePush(testUser, repository));
+        }
+    }
 }

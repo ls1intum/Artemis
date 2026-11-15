@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
@@ -51,15 +51,14 @@ public class ArtemisSuccessfulLoginService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private final GlobalNotificationSettingService globalNotificationSettingService;
 
-    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository, @Value("${server.url}") URL artemisServerUrl,
-            @Value("${artemis.user-management.password-reset.links.en:#{null}}") Optional<String> passwordResetLinkEnUrl,
+    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService, GlobalNotificationSettingService globalNotificationSettingService,
+            @Value("${server.url}") URL artemisServerUrl, @Value("${artemis.user-management.password-reset.links.en:#{null}}") Optional<String> passwordResetLinkEnUrl,
             @Value("${artemis.user-management.password-reset.links.de:#{null}}") Optional<String> passwordResetLinkDeUrl) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.globalNotificationSettingService = globalNotificationSettingService;
         this.artemisServerUrl = artemisServerUrl;
 
         this.passwordResetLinkEnUrl = getResetLinkOrDefault(passwordResetLinkEnUrl);
@@ -117,13 +116,18 @@ public class ArtemisSuccessfulLoginService {
      * </ul>
      * Because the method is async, callers cannot rely on completion before continuing — but no
      * caller actually does (all call sites are fire-and-forget post-login notifications).
+     * <p>
+     * It runs on the {@code mailTaskExecutor}: in production that is the shared task executor, so nothing changes. Under the
+     * {@code test} profile it is synchronous, so the mail is sent before the login call returns. The task ends in the shared
+     * {@code JavaMailSender} spy of the integration tests, and a task that is still running when the next test stubs or resets
+     * that spy corrupts Mockito's state (surfaces as a flaky {@code MockitoException} in a {@code @BeforeEach}).
      *
      * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
      * @param clientEnvironment    the environment information of the client (optional)
      * @see AuthenticationMethod for available authentication methods
      */
-    @Async
+    @Async("mailTaskExecutor")
     public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient;
@@ -135,7 +139,7 @@ public class ArtemisSuccessfulLoginService {
                 recipient = userRepository.getUserByLoginElseThrow(loginOrEmail);
             }
 
-            if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
+            if (!globalNotificationSettingService.isNotificationEnabled(recipient, GlobalNotificationType.NEW_LOGIN)) {
                 return;
             }
 

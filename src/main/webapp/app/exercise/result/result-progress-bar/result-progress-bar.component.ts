@@ -1,3 +1,5 @@
+import { TumAetUiProgressBarComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, OnDestroy, effect, input, signal } from '@angular/core';
 
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -5,12 +7,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-result-progress-bar',
-    imports: [TranslateDirective, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe, FontAwesomeModule, ProgressBarModule, TooltipModule],
+    imports: [TumAetUiTooltipDirective, TumAetUiProgressBarComponent, TranslateDirective, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe, FontAwesomeModule],
     templateUrl: './result-progress-bar.component.html',
 })
 export class ResultProgressBarComponent implements OnDestroy {

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261002172602-01-version-existing-transcriptions" author="bassner">
+        <comment>Give existing completed transcriptions an initial revision so new Iris runs can verify their timestamps.
+            Leave the hash unknown; the next completed transcription establishes it and advances the revision.</comment>
+        <update tableName="lecture_unit_processing_state">
+            <column name="transcription_version" valueNumeric="1"/>
+            <where>transcription_version IS NULL AND EXISTS (
+                SELECT 1 FROM lecture_transcription t
+                WHERE t.lecture_unit_id = lecture_unit_processing_state.lecture_unit_id
+                AND t.transcription_status = 'COMPLETED')</where>
+        </update>
+        <rollback>
+            <!-- Data revision initialization is intentionally retained on application rollback. -->
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

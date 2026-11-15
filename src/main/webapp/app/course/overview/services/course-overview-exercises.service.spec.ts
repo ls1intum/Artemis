@@ -255,6 +255,24 @@ describe('CourseOverviewExercisesService', () => {
         expect(service.dataFor(1)?.exercises[0]).toEqual(updatedExercise);
     });
 
+    it('should keep the individual practice participation when a team assignment replaces the participations of the team', async () => {
+        const oldTeamParticipation = { id: 10, testRun: false } as StudentParticipation;
+        const practiceParticipation = { id: 11, testRun: true } as StudentParticipation;
+        const newTeamParticipation = { id: 12, testRun: false } as StudentParticipation;
+        const teamExercise = { id: 7, studentParticipations: [oldTeamParticipation, practiceParticipation] } as Exercise;
+        const initialData = { ...data, exercises: [teamExercise] };
+        fetchSpy.mockReturnValue(of(initialData));
+        courseStorageService.setCourses([{ id: 1, exercises: initialData.exercises } as Course]);
+        service.load(1).subscribe();
+        await Promise.resolve();
+
+        teamUpdates.next({ exerciseId: 7, teamId: 24, studentParticipations: [newTeamParticipation] });
+
+        const updatedExercise = courseStorageService.getCourse(1)?.exercises?.[0];
+        expect(updatedExercise?.studentAssignedTeamId).toBe(24);
+        expect(updatedExercise?.studentParticipations).toEqual([newTeamParticipation, practiceParticipation]);
+    });
+
     it('should stop applying live updates after the per-visit state is cleared', () => {
         const storedCourse = { id: 1, exercises: [exercise] } as Course;
         courseStorageService.setCourses([storedCourse]);

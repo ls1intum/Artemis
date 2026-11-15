@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -85,6 +87,38 @@ public class QuizSubmission extends Submission {
         this.submittedAnswers.remove(submittedAnswer);
         submittedAnswer.setSubmission(null);
         return this;
+    }
+
+    /**
+     * Makes saving this submission update the stored answers instead of replacing them: every answer takes over the id of the stored answer to the same
+     * question, so that the save writes to that row and neither deletes nor inserts it. Only an answer to a question the stored submission has no answer for
+     * gets inserted, and a stored answer to a question that is no longer answered is removed.
+     * <p>
+     * A submission keeps one answer per question, so of several answers to one question only one is kept, whichever the set yields last. An answer without a stored counterpart
+     * gets no
+     * id, whatever the client sent, so that it cannot write to the answer of another submission.
+     * <p>
+     * The set is rebuilt because the hash of an answer depends on its id.
+     *
+     * @param storedAnswerIdByQuestionId the ids of the stored answers of this submission, by the id of the question they answer
+     */
+    public void adoptIdsOfStoredAnswers(Map<Long, Long> storedAnswerIdByQuestionId) {
+        Map<Long, SubmittedAnswer> lastAnswerByQuestionId = new LinkedHashMap<>();
+        Set<SubmittedAnswer> adoptedAnswers = new HashSet<>();
+        for (SubmittedAnswer answer : submittedAnswers) {
+            if (answer.getQuizQuestion() == null || answer.getQuizQuestion().getId() == null) {
+                answer.setId(null);
+                adoptedAnswers.add(answer);
+            }
+            else {
+                lastAnswerByQuestionId.put(answer.getQuizQuestion().getId(), answer);
+            }
+        }
+        lastAnswerByQuestionId.forEach((questionId, answer) -> {
+            answer.setId(storedAnswerIdByQuestionId.get(questionId));
+            adoptedAnswers.add(answer);
+        });
+        this.submittedAnswers = adoptedAnswers;
     }
 
     /**

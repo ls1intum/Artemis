@@ -67,7 +67,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
         textExercise.setGradingCriteria(Set.of(new GradingCriterion()));
@@ -88,7 +88,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextSubmissionSelectionFromEmpty() {
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of());
         assertThat(submission).isEmpty();
@@ -96,7 +96,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testProgrammingSubmissionSelectionFromEmpty() {
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of());
         assertThat(submission).isEmpty();
@@ -104,7 +104,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSubmissionSelectionFromOneText() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
@@ -113,7 +113,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSubmissionSelectionFromOneProgramming() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("programming", 3, jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.submissionIds").isArray());
@@ -123,7 +123,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextNoSubmissionSelectionFromOne() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", -1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
@@ -132,7 +132,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testProgrammingNoSubmissionSelectionFromOne() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("programming", -1, jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.submissionIds").isArray());
@@ -142,7 +142,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSubmissionSelectionFromTwoText() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId(), textSubmission2.getId()));
@@ -151,7 +151,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSubmissionSelectionFromTwoProgramming() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("programming", 4, jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.submissionIds").isArray());
@@ -161,30 +161,30 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testProgrammingSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTextSubmissionSelectionWithException() {
         athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException("text");
         assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testProgrammingSubmissionSelectionWithException() {
         athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException("programming");
         assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())));

@@ -88,6 +88,7 @@ export abstract class CourseCompetency extends BaseCompetency {
     courseProgress?: CourseCompetencyProgress;
     course?: Course;
     linkedCourseCompetency?: CourseCompetency;
+    generatedByAi?: boolean = false;
 
     public type?: CourseCompetencyType;
 
@@ -109,10 +110,12 @@ export class Competency extends CourseCompetency {
 export class CompetencyLearningObjectLink {
     competency?: CourseCompetency;
     weight: number;
+    generatedByAi?: boolean;
 
-    constructor(competency: CourseCompetency | undefined, weight: number) {
+    constructor(competency: CourseCompetency | undefined, weight: number, generatedByAi = false) {
         this.competency = competency;
         this.weight = weight;
+        this.generatedByAi = generatedByAi;
     }
 }
 
@@ -120,8 +123,8 @@ export class CompetencyLearningObjectLink {
 export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     exercise?: Exercise;
 
-    constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number) {
-        super(competency, weight);
+    constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number, generatedByAi = false) {
+        super(competency, weight, generatedByAi);
         this.exercise = exercise;
     }
 }
@@ -130,8 +133,8 @@ export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
 export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     lectureUnit?: LectureUnit;
 
-    constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number) {
-        super(competency, weight);
+    constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number, generatedByAi = false) {
+        super(competency, weight, generatedByAi);
         this.lectureUnit = lectureUnit;
     }
 }
@@ -143,6 +146,7 @@ export interface CompetencyImportResponseDTO extends BaseEntity {
     taxonomy?: CompetencyTaxonomy;
     masteryThreshold?: number;
     optional?: boolean;
+    generatedByAi?: boolean;
     courseId?: number;
     linkedStandardizedCompetencyId?: number;
 }

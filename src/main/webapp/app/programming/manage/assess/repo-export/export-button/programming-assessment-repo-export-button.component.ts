@@ -13,7 +13,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `
         <jhi-button
             [disabled]="!programmingExercises()"
-            [btnType]="ButtonType.INFO"
+            [btnType]="ButtonType.SECONDARY"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
@@ -51,7 +51,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
         this.buttonPressed.emit();
         event.stopPropagation();
         // Let the dialog own its lifecycle (it is closable / closeOnEscape). It must NOT be tied to this
-        // button's destruction: on the exercise-scores page the button lives inside an export popover that
+        // button's destruction: on the participation page the button lives inside an export popover that
         // closes on press (buttonPressed -> closeExportPopover), destroying this component right after the
         // dialog opens — closing the ref in ngOnDestroy would make the dialog flash and vanish.
         this.dialogService.open(ProgrammingAssessmentRepoExportDialogComponent, {

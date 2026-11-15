@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +23,36 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     void setRepositoryUri(String repositoryUri);
 
+    /**
+     * Stores the canonical URI representation for each programming participation kind.
+     *
+     * @param repositoryUri repository location to store
+     */
+    default void setRepositoryUri(@NonNull LocalVCRepositoryUri repositoryUri) {
+        setRepositoryUri(repositoryUri.getURI().toString());
+    }
+
     String getBuildPlanId();
 
     void setBuildPlanId(String buildPlanId);
 
+    @Nullable
     ProgrammingExercise getProgrammingExercise();
+
+    /**
+     * Resolves the exercise for operations that require a fully loaded programming participation.
+     *
+     * @return the programming exercise
+     * @throws IllegalStateException if the participation has no programming exercise
+     */
+    @JsonIgnore
+    default ProgrammingExercise getProgrammingExerciseElseThrow() {
+        ProgrammingExercise exercise = getProgrammingExercise();
+        if (exercise == null) {
+            throw new IllegalStateException("The programming exercise of the participation cannot be resolved");
+        }
+        return exercise;
+    }
 
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
 

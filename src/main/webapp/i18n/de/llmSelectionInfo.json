@@ -36,7 +36,7 @@
             "cloudSecurity5Title": "Vollständig verschlüsselt:",
             "cloudSecurity5": "Alle Daten werden bei der Übertragung verschlüsselt",
             "localHeader": "Lokale KI (Experimentell)",
-            "localWhatIsIt": "Lokale KI nutzt Open-Source-Modelle wie Gemma und Llama, die vollständig auf den eigenen GPU-Servern der Technischen Universität München laufen. Deine Daten verlassen niemals das Netzwerk der Universität.",
+            "localWhatIsIt": "Lokale KI nutzt Open-Source-Modelle wie Qwen, die vollständig auf den eigenen GPU-Servern der Technischen Universität München laufen. Deine Daten verlassen niemals das Netzwerk der Universität.",
             "localHowDoesItWork": "Die gesamte Verarbeitung findet auf universitätseigener Hardware in unserem Rechenzentrum statt. Es werden dieselben Datentypen wie bei Cloud KI verarbeitet, aber es werden keine Daten an externe Server gesendet.",
             "localDataProcessed": "Dieselben Daten wie bei Cloud KI, aber die Verarbeitung erfolgt vollständig innerhalb der TUM-Infrastruktur.",
             "localBenefit1Title": "Maximaler Datenschutz:",

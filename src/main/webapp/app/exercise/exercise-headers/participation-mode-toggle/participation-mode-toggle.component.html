@@ -5,25 +5,24 @@
         [class.participation-mode--graded]="canToggle() ? mode() === 'graded' : hasGraded()"
     >
         @if (canToggle()) {
-            <p-selectButton
-                id="participation-mode-toggle"
-                [options]="modeOptions"
-                [ngModel]="mode()"
-                (ngModelChange)="selectMode($event)"
-                [allowEmpty]="false"
-                optionLabel="label"
-                optionValue="value"
-                size="small"
-            >
-                <ng-template #item let-option>
-                    <span class="participation-mode__item" [attr.data-testid]="option.value + '-mode-button'" [attr.data-selected]="mode() === option.value">
-                        <fa-icon [icon]="option.icon" />
-                        <span [jhiTranslate]="option.label"></span>
-                    </span>
-                </ng-template>
-            </p-selectButton>
+            <div id="participation-mode-toggle" class="inline-flex gap-1" role="group">
+                @for (option of modeOptions; track option.value) {
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        size="small"
+                        [severity]="mode() === option.value ? 'primary' : 'secondary'"
+                        [attr.aria-pressed]="mode() === option.value"
+                        (click)="selectMode(option.value)"
+                    >
+                        <span class="participation-mode__item" [attr.data-testid]="option.value + '-mode-button'" [attr.data-selected]="mode() === option.value">
+                            <fa-icon [icon]="option.icon" /><span [jhiTranslate]="option.label"></span>
+                        </span>
+                    </button>
+                }
+            </div>
         } @else {
-            <p-tag id="participation-mode-badge" severity="secondary" [rounded]="true">
+            <tumaet-ui-tag id="participation-mode-badge" severity="secondary" [rounded]="true">
                 <span class="participation-mode__item">
                     <fa-icon [icon]="hasPractice() ? faBook : faGraduationCap" />
                     @if (hasPractice()) {
@@ -32,7 +31,7 @@
                         <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
                     }
                 </span>
-            </p-tag>
+            </tumaet-ui-tag>
         }
     </div>
 }

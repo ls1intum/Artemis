@@ -153,6 +153,29 @@ describe('SharingComponent', () => {
         expect(alertService.error).toHaveBeenCalled();
     });
 
+    it('sorts the course table by the column and direction of the clicked header', () => {
+        const component = fixture.componentInstance;
+        const unsorted: Course[] = [
+            { id: 2, title: 'Beta' },
+            { id: 3, title: 'Gamma' },
+            { id: 1, title: 'Alpha' },
+        ];
+        component.courses.set(unsorted);
+
+        component.onSort({ field: 'title', order: 1 });
+
+        expect(component.sortColumn()).toBe('title');
+        expect(component.reverseSorting()).toBe(true);
+        expect(component.courses().map((course) => course.title)).toEqual(['Alpha', 'Beta', 'Gamma']);
+
+        component.onSort({ field: 'id', order: -1 });
+
+        expect(component.sortColumn()).toBe('id');
+        expect(component.reverseSorting()).toBe(false);
+        expect(component.courses().map((course) => course.id)).toEqual([3, 2, 1]);
+        expect(unsorted.map((course) => course.id)).toEqual([2, 3, 1]);
+    });
+
     it('test formatted ExpiryDate', () => {
         const someValidityDate = new Date('1.1.2025 17:30');
         fixture.componentInstance.shoppingBasket.set({

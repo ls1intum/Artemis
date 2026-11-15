@@ -78,6 +78,30 @@ class TextBlockServiceTest {
     }
 
     @Test
+    void doNotSplitInsideNotEqualsOperator() {
+        final TextSubmission submission = new TextSubmission(0L).text("if (a != b) {\n    return;\n}\nx != y");
+        final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+
+        assertThat(textBlocks).hasSize(4).has(textBlock("if (a != b) {")).has(textBlock("return;")).has(textBlock("}")).has(textBlock("x != y"));
+    }
+
+    @Test
+    void doNotFailForTextsAroundNotEqualsBoundaries() {
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text(""))).isEmpty();
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("=")).stream().map(TextBlock::getText)).containsExactly("=");
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("!=")).stream().map(TextBlock::getText)).containsExactly("!=");
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("!= x")).stream().map(TextBlock::getText)).containsExactly("!= x");
+    }
+
+    @Test
+    void stillSplitSentencesEndingWithExclamationMark() {
+        final TextSubmission submission = new TextSubmission(0L).text("Hello World! This is a Test! Really!");
+        final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+
+        assertThat(textBlocks).hasSize(3).has(textBlock("Hello World!")).has(textBlock("This is a Test!")).has(textBlock("Really!"));
+    }
+
+    @Test
     void respectLeadingWhitespace() {
         final var submission = new TextSubmission(0L).text("   Test.");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);

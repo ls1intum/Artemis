@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.TEST_CASES;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -10,8 +12,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +25,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,18 +33,23 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
@@ -47,6 +57,8 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
@@ -69,8 +81,8 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
 
-    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
-            List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
+    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError",
+            "de.tum.in.test.api.util.UnexpectedExceptionError", "de.tum.cit.ase.ares.api.util.UnexpectedExceptionError"));
 
     private static final Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
 
@@ -105,9 +117,23 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final FeedbackMessageService feedbackMessageService;
 
+    private final Optional<HyperionExerciseMutationApi> mutationApi;
+
+    private final GitService gitService;
+
+    private final String defaultBranch;
+
+    private final ProgrammingExerciseBuildConfigRepository buildConfigs;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
+            Optional<HyperionExerciseMutationApi> mutationApi, GitService gitService, ProgrammingExerciseBuildConfigRepository buildConfigs,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+        this.defaultBranch = defaultBranch;
+        this.mutationApi = mutationApi;
+        this.gitService = gitService;
+        this.buildConfigs = buildConfigs;
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -245,17 +271,75 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     public Optional<TestCaseFeedback> createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
             Set<ProgrammingExerciseTestCase> activeTestCases) {
-        var testCase = activeTestCases.stream().filter(test -> testName.equals(test.getTestName())).findAny();
+        String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+        var testCase = activeTestCases.stream().filter(test -> storedTestName.equalsIgnoreCase(test.getTestName())).findAny();
         if (testCase.isEmpty()) {
             // This feedback was created by a test which is not known to Artemis (not part of the solution result), e.g. a test invented by a student.
             log.debug("Ignoring feedback of unknown test case {} for exercise {}", testName, exercise.getId());
             return Optional.empty();
         }
 
-        TestCaseFeedback feedback = new TestCaseFeedback();
-        feedback.setTestCase(testCase.get());
-        feedback.setPositive(successful);
+        return Optional.of(buildTestCaseFeedback(testCase.get(), successful, resolveMessage(testMessages, successful, exercise)));
+    }
 
+    /**
+     * Shows an error that happened outside of any single test, e.g. in a {@code @BeforeAll} method, on the tests it kept from running.
+     * <p>
+     * JUnit reports such an error once for the whole class, as a failed test with a made-up name that matches no test case of the exercise. The tests of the class
+     * never started, so the build says nothing about them, and without this they would only be shown as not executed (or not at all).
+     * <p>
+     * A failed test that matches no test case is treated as such an error only if its class is known and it is the only thing the build reported for that class and the
+     * classes nested in it. Anything else reported there means the class did run, so the failure is just an unknown test (for example one that was renamed before the
+     * solution build registered the new name) and its message does not belong on other tests. The error is then attributed to active test cases that are known to belong to
+     * that class (or to a class nested in it) and have no feedback yet. Without class information, on either side, nothing is attributed and the result stays as it was.
+     *
+     * @param unmatchedFailures failed tests that match no active test case
+     * @param reportedTests     every test the build reported, passed or failed, including the unmatched failures
+     * @param activeTestCases   all active test cases of the exercise
+     * @param result            the result to add the feedback to; it must already hold the feedback of the tests that did run
+     * @param exercise          the connected programming exercise
+     */
+    public void addFeedbackForTestsOfFailedClasses(List<? extends TestCaseBase> unmatchedFailures, List<? extends TestCaseBase> reportedTests,
+            Set<ProgrammingExerciseTestCase> activeTestCases, Result result, ProgrammingExercise exercise) {
+        for (TestCaseBase failure : unmatchedFailures) {
+            String failedClass = ProgrammingExerciseTestCase.normalizeTestClass(failure.testClass());
+            if (failedClass == null || reportedTests.stream().filter(reported -> mayBelongToClass(reported, failedClass, activeTestCases)).count() != 1) {
+                continue;
+            }
+            List<ProgrammingExerciseTestCase> affectedTestCases = activeTestCases.stream()
+                    .filter(testCase -> testCase.isDeclaredInOrBelow(failedClass) && testCase.wasNotExecuted(result)).toList();
+            if (!affectedTestCases.isEmpty()) {
+                // the same text for every test of the class: process and store it once
+                FeedbackMessage message = resolveMessage(failure.testMessages(), false, exercise);
+                affectedTestCases.forEach(testCase -> result.addTestCaseFeedback(buildTestCaseFeedback(testCase, false, message)));
+            }
+        }
+    }
+
+    /**
+     * Whether a reported test may have been run as part of the given class or a class nested in it. A report that names its class answers this itself. A report without a class
+     * can only be ruled out through the class stored for the test case of the same name; a test that is not known, or whose class is not known either, may belong to the class,
+     * so it counts as a test that ran there and keeps the failure from being taken for an error of the whole class.
+     */
+    private static boolean mayBelongToClass(TestCaseBase reported, String failedClass, Set<ProgrammingExerciseTestCase> activeTestCases) {
+        String reportedClass = ProgrammingExerciseTestCase.normalizeTestClass(reported.testClass());
+        if (reportedClass != null) {
+            return ProgrammingExerciseTestCase.isClassInOrBelow(reportedClass, failedClass);
+        }
+        String reportedName = ProgrammingExerciseTestCase.normalizeTestName(reported.name());
+        return activeTestCases.stream().filter(testCase -> reportedName.equalsIgnoreCase(testCase.getTestName())).findAny()
+                .map(testCase -> testCase.getTestClass() == null || testCase.isDeclaredInOrBelow(failedClass)).orElse(true);
+    }
+
+    private TestCaseFeedback buildTestCaseFeedback(ProgrammingExerciseTestCase testCase, boolean successful, FeedbackMessage message) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(successful);
+        feedback.setMessage(message);
+        return feedback;
+    }
+
+    private FeedbackMessage resolveMessage(List<String> testMessages, boolean successful, ProgrammingExercise exercise) {
         final String messageText;
         if (!successful) {
             messageText = testMessages.stream().map(errorString -> processResultErrorMessage(exercise.getProgrammingLanguage(), errorString)).collect(Collectors.joining("\n\n"));
@@ -266,9 +350,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         else {
             messageText = null;
         }
-        feedback.setMessage(feedbackMessageService.getOrCreate(truncateTestMessage(messageText)));
-
-        return Optional.of(feedback);
+        return feedbackMessageService.getOrCreate(truncateTestMessage(messageText));
     }
 
     private String truncateTestMessage(String message) {
@@ -330,12 +412,42 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        if (mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent() && buildResult instanceof BuildResult localResult
+                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId())) {
+            if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
+                return;
+            }
+            boolean synchronizationBuildSuccessful = Integer.valueOf(0).equals(localResult.buildScriptExitCode())
+                    && localResult.jobs().stream().anyMatch(job -> !job.successfulTests().isEmpty()) && localResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
+            boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
+                    synchronizationBuildSuccessful, () -> {
+                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                            return false;
+                        }
+                        extractCurrentTestCases(buildResult, current);
+                        return true;
+                    });
+            if (!synchronizedCases) {
+                log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
+                        exercise.getId());
+            }
+            return;
+        }
+        extractCurrentTestCases(buildResult, exercise);
+    }
+
+    private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
             Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
-            websocketMessagingService.sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCaseDTOs);
+            websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
         }
     }
 
@@ -356,18 +468,19 @@ public class ProgrammingExerciseFeedbackCreationService {
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks,
+                exercise.getProgrammingLanguage());
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
-        setTestCaseType(testCasesToSave, exercise.getProgrammingLanguage());
-
         // Ensure no duplicate TestCase is present: TestCases have to have a unique name per exercise.
         // Just using the uniqueness property of the set is not enough, as the equals/hash functions
         // compares test cases by their id.
         testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
+
+        backfillTestClasses(existingTestCases, buildResult, testCasesToSave);
 
         if (!testCasesToSave.isEmpty()) {
             saveToleratingConcurrentInsert(exercise, testCasesToSave);
@@ -383,19 +496,68 @@ public class ProgrammingExerciseFeedbackCreationService {
         return false;
     }
 
+    /**
+     * Keeps the class of the test cases in line with the latest build, so that a test moved to another (e.g. nested) class is attributed correctly. A name that the build
+     * reports from more than one class is ambiguous: an existing test case keeps its class, and a new one gets none. A name for which the build reports no class is left alone.
+     * A test case that is saved anyway gets the class on that copy; the others are saved on their own, which does not count as a change of the test cases.
+     */
+    private void backfillTestClasses(Set<ProgrammingExerciseTestCase> existingTestCases, BuildResultNotification buildResult, Set<ProgrammingExerciseTestCase> testCasesToSave) {
+        Map<String, Set<String>> reportedClasses = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream())).forEach(test -> {
+            String testClass = ProgrammingExerciseTestCase.normalizeTestClass(test.testClass());
+            if (testClass != null) {
+                reportedClasses.computeIfAbsent(ProgrammingExerciseTestCase.normalizeTestName(test.name()), name -> new HashSet<>()).add(testClass);
+            }
+        });
+        Map<String, String> unambiguousClasses = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        reportedClasses.forEach((name, classes) -> {
+            if (classes.size() == 1) {
+                unambiguousClasses.put(name, classes.iterator().next());
+            }
+        });
+        if (reportedClasses.isEmpty()) {
+            return;
+        }
+        // The duplicate removal above keeps an arbitrary one of several new test cases with the same name, each created with the class it was reported from.
+        // So the class of a new test case is decided here from the complete report: a name reported from several classes belongs to none of them.
+        testCasesToSave.forEach(testCase -> {
+            Set<String> classes = reportedClasses.get(testCase.getTestName());
+            if (classes == null) {
+                return;
+            }
+            if (classes.size() == 1) {
+                testCase.setTestClass(classes.iterator().next());
+            }
+            else if (testCase.getId() == null) {
+                testCase.setTestClass(null);
+            }
+        });
+        Set<Long> savedIds = testCasesToSave.stream().map(ProgrammingExerciseTestCase::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> withNewClass = existingTestCases.stream().filter(existing -> !savedIds.contains(existing.getId())
+                && unambiguousClasses.containsKey(existing.getTestName()) && !unambiguousClasses.get(existing.getTestName()).equals(existing.getTestClass()))
+                .collect(Collectors.toSet());
+        if (!withNewClass.isEmpty()) {
+            withNewClass.forEach(existing -> existing.setTestClass(unambiguousClasses.get(existing.getTestName())));
+            testCaseRepository.saveAll(withNewClass);
+        }
+    }
+
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
-        // We compare the new generated test cases from feedback with the existing test cases from the database
-        return existingTestCases.stream().filter(existing -> {
-            Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore
-            boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
-            // OR was not active before and is now part of the feedback again.
-            boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();
-            return existingTestCaseRemoved || inactiveTestReactivated;
-        }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
-        // If an existing test gets reactivated, we reuse its grading settings (weight, visibility, etc.).
-        // The user should not need to enter these settings again.
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingLanguage programmingLanguage) {
+        Map<String, ProgrammingExerciseTestCaseType> reportedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        testCasesFromFeedbacks.forEach(testCase -> reportedTypes.put(testCase.getTestName(), testCase.getType()));
+        // Reuse the grading settings (weight, visibility, etc.) when an inactive test reappears.
+        return existingTestCases.stream().filter(existing -> reportedTypes.containsKey(existing.getTestName()) != existing.isActive()).map(existing -> {
+            var updated = existing.clone().active(!existing.isActive());
+            // clone() does not copy the type. A disappearing test keeps its type, and a reappearing one uses
+            // the classification of its original CI name rather than the shortened database name.
+            updated.setType(reportedTypes.getOrDefault(existing.getTestName(), existing.getType()));
+            if (!updated.isActive() && updated.getType() == ProgrammingExerciseTestCaseType.DEFAULT) {
+                // Legacy short names may not have been classified yet; known structural types must survive shortening.
+                setTestCaseType(Set.of(updated), programmingLanguage);
+            }
+            return updated;
+        }).collect(Collectors.toSet());
     }
 
     /**
@@ -430,11 +592,18 @@ public class ProgrammingExerciseFeedbackCreationService {
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
 
-        return buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
+        Set<ProgrammingExerciseTestCase> testCases = buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
                 // we use default values for weight, bonus multiplier and bonus points
-                .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
-                        .visibility(defaultVisibility))
-                .collect(Collectors.toSet());
+                .map(testCase -> {
+                    var newTestCase = new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
+                            .visibility(defaultVisibility);
+                    newTestCase.setTestClass(testCase.testClass());
+                    return newTestCase;
+                }).collect(Collectors.toSet());
+        // Structural Java names end in ']'; shortening them before classification would lose that information.
+        setTestCaseType(testCases, exercise.getProgrammingLanguage());
+        testCases.forEach(testCase -> testCase.setTestName(ProgrammingExerciseTestCase.normalizeTestName(testCase.getTestName())));
+        return testCases;
     }
 
     /**

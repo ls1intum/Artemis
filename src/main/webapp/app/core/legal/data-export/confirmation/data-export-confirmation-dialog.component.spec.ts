@@ -46,7 +46,7 @@ describe('DataExportConfirmationDialogComponent', () => {
         comp.expectedLoginOfOtherUser.set('other login');
         comp.visible.set(true);
         fixture.changeDetectorRef.detectChanges();
-        const cancelButton = debugElement.query(By.css('.btn.btn-secondary'));
+        const cancelButton = debugElement.query(By.css('[data-testid="cancel-data-export"]'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
         expect(comp.visible()).toBe(false);
@@ -64,7 +64,7 @@ describe('DataExportConfirmationDialogComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         expect(comp.dataExportConfirmationForm().invalid).toBe(true);
-        let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        let confirmButton = debugElement.query(By.css('#request'));
         expect(confirmButton.nativeElement.disabled).toBe(true);
 
         // User entered incorrect login --> button is disabled
@@ -73,7 +73,7 @@ describe('DataExportConfirmationDialogComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         expect(comp.dataExportConfirmationForm().invalid).toBe(true);
-        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        confirmButton = debugElement.query(By.css('#request'));
         expect(confirmButton.nativeElement.disabled).toBe(true);
 
         // User entered correct login --> button is enabled
@@ -82,7 +82,7 @@ describe('DataExportConfirmationDialogComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         expect(comp.dataExportConfirmationForm().invalid).toBe(false);
-        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        confirmButton = debugElement.query(By.css('#request'));
         expect(confirmButton.nativeElement.disabled).toBe(false);
     });
 
@@ -95,19 +95,19 @@ describe('DataExportConfirmationDialogComponent', () => {
         // detectChanges triggers ngOnInit which subscribes to the dialogError input
         fixture.changeDetectorRef.detectChanges();
 
-        let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        let confirmButton = debugElement.query(By.css('#request'));
         expect(confirmButton.nativeElement.disabled).toBe(false);
 
         // external component request method was executed
         comp.confirmDataExportRequest();
         fixture.changeDetectorRef.detectChanges();
-        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        confirmButton = debugElement.query(By.css('#request'));
         expect(confirmButton.nativeElement.disabled).toBe(true);
 
         // external component emits error to the dialog
         dialogErrorSource.next('example error');
         fixture.changeDetectorRef.detectChanges();
-        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        confirmButton = debugElement.query(By.css('#request'));
         expect(confirmButton.nativeElement.disabled).toBe(false);
 
         // external component completed request method successfully

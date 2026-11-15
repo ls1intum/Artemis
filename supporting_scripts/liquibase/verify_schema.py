@@ -29,6 +29,7 @@ that for you if they are missing).
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import re
 import shutil
@@ -51,7 +52,7 @@ DRIVER_DIR = REPO / "build/liquibase-drivers"
 MASTER = "config/liquibase/master.xml"
 HISTORY_MASTER = "config/liquibase/history/master.xml"
 
-# The contexts an end-to-end stack starts with; see docker/artemis/config/playwright.env.
+# The contexts an end-to-end stack starts with; see deployment/docker/artemis/config/playwright.env.
 SEED_CONTEXTS = "prod,e2e"
 
 # Changesets an upgraded database has recorded that a fresh one never will, because the changelog that
@@ -134,7 +135,7 @@ class Engine:
         if self.name == "postgres":
             argv = ["psql", "-U", "artemis", "-d", "Artemis", "-t", "-A", "-F", "\t", "-c", query]
         else:
-            argv = ["mysql", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
+            argv = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
         result = run(["docker", "exec", container, *argv])
         if result.returncode != 0:
             raise RuntimeError(f"could not read DATABASECHANGELOG: {result.stderr.strip()}")
@@ -150,7 +151,7 @@ class Engine:
         if self.name == "postgres":
             argv = ["psql", "-U", "artemis", "-d", "Artemis", "-t", "-A", "-c", query]
         else:
-            argv = ["mysql", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
+            argv = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--database", "Artemis", "-e", query]
         result = run(["docker", "exec", container, *argv])
         if result.returncode != 0:
             raise RuntimeError(f"could not count rows in {table}: {result.stderr.strip()}")
@@ -236,7 +237,7 @@ class Liquibase:
         self.workspace = workspace
         self.version = gradle_property("liquibase_version")
 
-    def command(self, database: Database, changelog: str, command: str, contexts: str = "prod") -> subprocess.CompletedProcess:
+    def command(self, database: Database, changelog: str, command: str, contexts: str = "prod", command_args: tuple[str, ...] = ()) -> subprocess.CompletedProcess:
         driver = self._driver_for(database.engine)
         argv = [
             "docker", "run", "--rm",
@@ -253,6 +254,7 @@ class Liquibase:
             f"--password={database.engine.password}",
             f"--contexts={contexts}",
             command,
+            *command_args,
         ]
         return run(argv)
 
@@ -533,7 +535,7 @@ def check_upgrade_from_floor(engine: Engine, liquibase: Liquibase, port: int) ->
 
 def seed_expectations() -> list[tuple[str, int]]:
     """
-    Returns (table, row count) for every CSV the seed changelogs load.
+    Returns (table, surviving row count) for every CSV the seed changelogs load.
 
     Parsed, not matched with a regular expression: a pattern anchored on attribute order finds nothing
     the day someone writes tableName before file, and an expectation that quietly disappears turns this
@@ -543,8 +545,14 @@ def seed_expectations() -> list[tuple[str, int]]:
     for changelog in sorted((LIQUIBASE_DIR / "data").glob("*.xml")):
         for element in ElementTree.parse(changelog).getroot().iter(f"{NAMESPACE}loadData"):
             csv_file = REPO / "src/main/resources" / element.get("file")
-            data_lines = [line for line in csv_file.read_text().splitlines()[1:] if line.strip()]
-            expectations.append((element.get("tableName"), len(data_lines)))
+            with csv_file.open(newline="") as source:
+                rows = list(csv.DictReader(source, delimiter=element.get("separator", ",")))
+            table = element.get("tableName")
+            if table == "jhi_user_authority":
+                # The course-authorities migration removes these rows after the historical seed runs. Keep that seed
+                # unchanged for installations that have recorded its checksum, but expect only its surviving authorities.
+                rows = [row for row in rows if row["authority_name"] not in {"ROLE_TA", "ROLE_EDITOR", "ROLE_INSTRUCTOR"}]
+            expectations.append((table, len(rows)))
     return expectations
 
 
@@ -563,7 +571,7 @@ def check_seed(engine: Engine, liquibase: Liquibase, port: int) -> list[str]:
     the schema in its final shape, so the seed has to match that shape.
     """
     with Database(engine, "seed", port) as database:
-        # The contexts an end-to-end stack runs with (docker/artemis/config/playwright.env).
+        # The contexts an end-to-end stack runs with (deployment/docker/artemis/config/playwright.env).
         liquibase.apply(database, HISTORY_MASTER, command="changelog-sync", contexts=SEED_CONTEXTS)
         liquibase.apply(database, MASTER, contexts=SEED_CONTEXTS)
 

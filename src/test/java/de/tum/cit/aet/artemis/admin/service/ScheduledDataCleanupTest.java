@@ -174,7 +174,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         // Eligibility is re-checked at reset time, so the course also has to be past its retention deadline (1 year for
         // a non-grade-relevant course); the fixture course ends far in the future.
         course.setEndDate(ZonedDateTime.now().minusYears(2));
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         scheduleService(false, true, false, false, false, false, false).resetOldCourses();
 
@@ -208,7 +208,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         configuration.setResetWarningSentDate(ZonedDateTime.now().minusDays(40)); // warned > grace (30d) ago -> due
         course.setCourseConfiguration(configuration);
         course.setEndDate(ZonedDateTime.now().minusYears(2));
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         scheduleService(false, true, false, false, false, false, false).resetOldCourses();
 
@@ -262,10 +262,10 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor); // rated
-        Feedback nonLatestFeedback = feedbackRepository.save(new Feedback());
+        Feedback nonLatestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(nonLatestFeedback, nonLatest);
         Result latest = participationUtilService.generateResult(submission, instructor); // rated, newer id -> latest
-        Feedback latestFeedback = feedbackRepository.save(new Feedback());
+        Feedback latestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(latestFeedback, latest);
 
         scheduleService(false, false, true, false, false, false, false).deleteOldFeedback();
@@ -316,7 +316,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         configuration.setGradeRelevant(false);
         configuration.setResetWarningSentDate(ZonedDateTime.now().minusDays(40));
         course.setCourseConfiguration(configuration);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
         return participation;
     }
 
@@ -352,7 +352,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor);
-        Feedback feedback = feedbackRepository.save(new Feedback());
+        Feedback feedback = new Feedback();
         participationUtilService.addFeedbackToResult(feedback, nonLatest);
         // A newer rated result makes the first one non-latest (so its feedback is a deletion candidate).
         participationUtilService.generateResult(submission, instructor);

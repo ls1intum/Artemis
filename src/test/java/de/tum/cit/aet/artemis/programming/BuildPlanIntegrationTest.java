@@ -35,12 +35,11 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         buildConfig.setSequentialTestRuns(false);
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(buildConfig);
 
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, programmingExercise);
 
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "dummy-build-plan");
     }
@@ -55,8 +54,9 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     private void testReadAccess() throws Exception {
-        programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.generateAndSetBuildPlanAccessSecret();
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlanDTO.class);
     }
@@ -76,7 +76,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     @Test
     void testPublicReadAccessWithSecret() throws Exception {
         final String buildPlan = request.get("/api/localci/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret="
-                + programmingExercise.getBuildConfig().getBuildPlanAccessSecret(), HttpStatus.OK, String.class);
+                + programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanAccessSecret(), HttpStatus.OK, String.class);
         assertThat(buildPlan).isNotEmpty();
     }
 
@@ -94,49 +94,49 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testReadAccessForbiddenForStudent() throws Exception {
         testReadAccessForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testWriteAccessForbiddenForStudent() throws Exception {
         testWriteAccessForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testReadAccessForbiddenForTutor() throws Exception {
         testReadAccessForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testWriteAccessForbiddenForTutor() throws Exception {
         testWriteAccessForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testReadAccessForEditor() throws Exception {
         testReadAccess();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testWriteAccessForEditor() throws Exception {
         testWriteAccess();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReadAccessForInstructor() throws Exception {
         testReadAccess();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testWriteAccessForInstructor() throws Exception {
         testWriteAccess();
     }

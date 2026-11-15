@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
@@ -173,10 +174,16 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
-    @JsonIgnoreProperties("programmingExercise")
-    private ProgrammingExerciseBuildConfig buildConfig;
+    /**
+     * Preserves the existing programming title validation on updates, matching creation and import.
+     */
+    @Override
+    public void validateTitle() {
+        super.validateTitle();
+        if (!TITLE_NAME_PATTERN.matcher(getTitle()).matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
+    }
 
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -395,6 +402,40 @@ public class ProgrammingExercise extends Exercise {
         this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
+    /**
+     * Copies the settings that an import caller has to carry itself from the exercise being imported onto this skeleton.
+     * <p>
+     * The import form of the client submits these with its request, but a server-side caller (the import of course material, of an exam or of a variant) builds
+     * its skeleton from nothing, and the programming import service only copies the build configuration and the entities that hang off the exercise. A setting that is
+     * missing here fails the import, or silently falls back to a default.
+     * <p>
+     * Everything the callers decide differently stays with them: title, short name, points, dates, mode, the problem statement and the competency links. The
+     * {@code ProgrammingExerciseImportSettingsTest} lists every field this method does not copy, so a new field has to be copied here or excluded there with a reason.
+     *
+     * @param source the exercise being imported
+     */
+    public void copyImportSettingsFrom(ProgrammingExercise source) {
+        setProgrammingLanguage(source.getProgrammingLanguage());
+        setProjectType(source.getProjectType());
+        setPackageName(source.getPackageName());
+        setAllowOnlineEditor(source.isAllowOnlineEditor());
+        setAllowOfflineIde(source.isAllowOfflineIde());
+        setAllowOnlineIde(source.isAllowOnlineIde());
+        setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
+        setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
+        setShowTestNamesToStudents(source.getShowTestNamesToStudents());
+        setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        // The fields below belong to Exercise. They stay here because the programming import service copies none of them either.
+        setAssessmentType(source.getAssessmentType());
+        setDifficulty(source.getDifficulty());
+        setGradingInstructions(source.getGradingInstructions());
+        setCategories(new HashSet<>(source.getCategories()));
+        setIncludedInOverallScore(source.getIncludedInOverallScore());
+        setPresentationScoreEnabled(source.getPresentationScoreEnabled());
+        setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
+        setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
+    }
+
     @Override
     public ExerciseType getExerciseType() {
         return PROGRAMMING;
@@ -449,14 +490,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         this.submissionPolicy = submissionPolicy;
-    }
-
-    public ProgrammingExerciseBuildConfig getBuildConfig() {
-        return buildConfig;
-    }
-
-    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
     }
 
     /**
@@ -545,7 +578,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnore
     public String getProjectName() {
         // this is the name used for VC service and CI service
-        return getCourseViaExerciseGroupOrCourseMember().getShortName() + " " + this.getTitle();
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Cannot determine the project name of programming exercise " + getId() + " because its course cannot be resolved");
+        }
+        return course.getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore
@@ -633,9 +670,6 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
-            buildConfig.filterSensitiveInformation();
-        }
         super.filterSensitiveInformation();
     }
 
@@ -709,8 +743,10 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateProgrammingSettings() {
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
@@ -735,24 +771,42 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Validates the static code analysis settings of the programming exercise
+     * Validates the static code analysis and sequential test run settings of the programming exercise
      * 1. The flag staticCodeAnalysisEnabled must not be null
      * 2. Static code analysis and sequential test runs can't be active at the same time
-     * 3. Static code analysis can only be enabled for supported programming languages
-     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 5. Static code analysis max penalty must be positive
+     * 3. Sequential test runs can only be enabled for supported programming languages, not for black-box exercises, and need a project type where the language has some
+     * 4. Static code analysis can only be enabled for supported programming languages
+     * 5. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 6. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
         // Check if the static code analysis flag was set
         if (isStaticCodeAnalysisEnabled() == null) {
             throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
+        }
+
+        // Sequential test runs need a build phase template, which only exists for the languages that enable them
+        if (buildConfig.hasSequentialTestRuns() && !programmingLanguageFeature.sequentialTestRuns()) {
+            throw new BadRequestAlertException("Sequential test runs are not supported for this programming language", "Exercise", "sequentialTestRunsNotSupportedForLanguage");
+        }
+
+        // Black-box tests are written in a single DejaGnu suite and cannot be split into a structural and a behavior stage
+        if (buildConfig.hasSequentialTestRuns() && ProjectType.MAVEN_BLACKBOX.equals(getProjectType())) {
+            throw new BadRequestAlertException("Sequential test runs are not supported for black-box exercises", "Exercise", "sequentialTestRunsNotSupportedForBlackbox");
+        }
+
+        // The sequential templates of languages with project types are named after the project type, so a missing type finds no template (Java falls back to Maven)
+        if (buildConfig.hasSequentialTestRuns() && getProjectType() == null && !programmingLanguageFeature.projectTypes().isEmpty()
+                && programmingLanguageFeature.programmingLanguage() != ProgrammingLanguage.JAVA) {
+            throw new BadRequestAlertException("Sequential test runs require a project type for this programming language", "Exercise", "sequentialTestRunsRequireProjectType");
         }
 
         // Check if the programming language supports static code analysis

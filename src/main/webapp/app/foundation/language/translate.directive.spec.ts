@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { inputBinding, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,47 +6,35 @@ import { of } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-@Component({
-    template: '<div jhiTranslate="test"></div>',
-    imports: [TranslateDirective],
-})
-class TestTranslateDirectiveComponent {}
-
-@Component({
-    template: '<div [jhiTranslate]="key()"></div>',
-    imports: [TranslateDirective],
-})
-class TestDynamicKeyTranslateDirectiveComponent {
-    key = signal<string | undefined>(undefined);
-}
-
 describe('TranslateDirective', () => {
     let translateService: TranslateService;
     let spy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TestTranslateDirectiveComponent, TestDynamicKeyTranslateDirectiveComponent],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        });
 
         translateService = TestBed.inject(TranslateService);
         spy = vi.spyOn(translateService, 'get');
     });
 
+    // Create the fixture inside each test: Angular flushes all pending effects application-wide on a single
+    // detectChanges(), so a fixture created in beforeEach would leak its translation effect into the other tests.
+    function createWithKey(key: () => string | undefined) {
+        return TestBed.createDirective(TranslateDirective, { tagName: 'div', bindings: [inputBinding('jhiTranslate', key)] });
+    }
+
     it('should change HTML', () => {
-        // Create the fixture inside the test: Angular flushes all pending effects application-wide on a single
-        // detectChanges(), so a fixture created in beforeEach would leak its translation effect into the other tests.
-        const fixture = TestBed.createComponent(TestTranslateDirectiveComponent);
+        const fixture = createWithKey(() => 'test');
         fixture.detectChanges();
 
         expect(spy).toHaveBeenCalledWith('test', undefined);
     });
 
     it.each([undefined, ''])('should not call translateService.get for an empty key (%p) and should clear the element', (key) => {
-        const dynamicFixture = TestBed.createComponent(TestDynamicKeyTranslateDirectiveComponent);
-        dynamicFixture.componentInstance.key.set(key);
-        const element: HTMLElement = dynamicFixture.nativeElement.querySelector('div');
+        const dynamicFixture = createWithKey(() => key);
+        const element = dynamicFixture.nativeElement;
         element.textContent = 'stale';
 
         // ngx-translate's get() throws synchronously on an empty key; the guard must prevent the call entirely
@@ -56,12 +44,12 @@ describe('TranslateDirective', () => {
     });
 
     it('should translate once a previously empty key becomes non-empty', () => {
-        const dynamicFixture = TestBed.createComponent(TestDynamicKeyTranslateDirectiveComponent);
-        dynamicFixture.componentInstance.key.set(undefined);
+        const key = signal<string | undefined>(undefined);
+        const dynamicFixture = createWithKey(key);
         dynamicFixture.detectChanges();
         expect(spy).not.toHaveBeenCalled();
 
-        dynamicFixture.componentInstance.key.set('test');
+        key.set('test');
         dynamicFixture.detectChanges();
         expect(spy).toHaveBeenCalledWith('test', undefined);
     });
@@ -71,9 +59,9 @@ describe('TranslateDirective', () => {
         // title). ngx-translate does not HTML-escape interpolation params, so the directive must sanitize.
         spy.mockReturnValue(of('Course <img src="x" onerror="alert(1)"><script>alert(2)</script> title') as ReturnType<typeof translateService.get>);
 
-        const fixture = TestBed.createComponent(TestTranslateDirectiveComponent);
+        const fixture = createWithKey(() => 'test');
         fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('div');
+        const element = fixture.nativeElement;
 
         expect(element.innerHTML).not.toContain('onerror');
         expect(element.innerHTML).not.toContain('<script');
@@ -85,9 +73,9 @@ describe('TranslateDirective', () => {
     it('preserves benign inline markup in the translated value', () => {
         spy.mockReturnValue(of('Click <a href="/x"><strong>here</strong></a>') as ReturnType<typeof translateService.get>);
 
-        const fixture = TestBed.createComponent(TestTranslateDirectiveComponent);
+        const fixture = createWithKey(() => 'test');
         fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('div');
+        const element = fixture.nativeElement;
 
         expect(element.innerHTML).toContain('<strong>here</strong>');
         expect(element.innerHTML).toContain('href="/x"');

@@ -68,6 +68,8 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 /*
  *  separate test spec file for sharing aspects of the programming details component. Could be merged into programming-exercise-detail.component.spec.ts on the long run.
@@ -127,6 +129,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 LocalStorageService,

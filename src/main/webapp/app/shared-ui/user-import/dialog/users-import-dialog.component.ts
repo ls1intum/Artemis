@@ -2,8 +2,7 @@ import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal 
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -28,7 +27,17 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        HelpIconComponent,
+        DialogModule,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);

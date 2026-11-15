@@ -18,15 +18,15 @@ import { ScienceService } from 'app/foundation/science/science.service';
     styleUrl: './learning-path-student-nav.component.scss',
 })
 export class LearningPathNavComponent {
+    private learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
+
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faFlag = faFlag;
     protected readonly faSpinner = faSpinner;
     protected readonly faChevronLeft = faChevronLeft;
     protected readonly faChevronRight = faChevronRight;
-
-    private learningPathNavigationService = inject(LearningPathNavigationService);
-    private readonly scienceService = inject(ScienceService);
 
     readonly learningPathId = input.required<number>();
 

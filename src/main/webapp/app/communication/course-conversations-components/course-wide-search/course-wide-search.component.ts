@@ -1,3 +1,4 @@
+import { PostPageRequestState } from 'app/communication/course-conversations-components/post-page-request-state';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -6,9 +7,9 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { NgClass } from '@angular/common';
@@ -29,19 +30,23 @@ import { UserPublicInfoDTO } from 'app/account/user/user.model';
     imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
+    private courseSidebarService = inject(CourseSidebarService);
+    private communicationService = inject(CommunicationService);
+    private courseConversationsService = inject(CourseConversationsService);
+    private formBuilder = inject(FormBuilder);
+
     courseWideSearchConfig = input.required<CourseWideSearchConfig>();
 
     readonly messages = viewChildren<ElementRef>('postingThread');
     readonly messages$ = toObservable(this.messages);
     readonly content = viewChild<ElementRef>('container');
+    private readonly resultContent = viewChild<ElementRef<HTMLElement>>('resultContent');
 
     readonly openThread = output<Post>();
 
     course?: Course;
     currentPostContextFilter?: PostContextFilter;
     readonly isAtLeastTutor = signal(false);
-    // as set for the css class '.posting-infinite-scroll-container'
-    messagesContainerHeight = 700;
 
     readonly faPlus = faPlus;
     readonly faFilter = faFilter;
@@ -54,37 +59,95 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     readonly SortDirection = SortDirection;
     readonly onNavigateToPost = output<Posting>();
-    readonly sortingOrder = signal(SortDirection.ASCENDING);
+    // The list shows the oldest message of a page at the top and starts at its end, so the newest page is requested first.
+    readonly sortingOrder = signal(SortDirection.DESCENDING);
 
     private ngUnsubscribe = new Subject<void>();
     readonly isFetchingPosts = signal(true);
-    totalNumberOfPosts = 0;
+    readonly totalNumberOfPosts = signal(0);
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
-    previousScrollDistanceFromTop = 0;
+    private readonly postPageRequest = new PostPageRequestState();
+    private initialScrollPositioned = false;
+    private scrollFrame: number | undefined;
+    private resizeObserver?: ResizeObserver;
+    // The list starts at its end, but images load after that and push the newest messages out of view, so the end is held
+    // until the user scrolls themselves.
+    private holdsEnd = false;
+    private readonly scrollInputEvents = ['wheel', 'touchmove', 'pointerdown', 'keydown'] as const;
+    /** Release the end for scrolling input, leaving ordinary message interaction and editing alone. */
+    private readonly releaseEnd = (event: Event) => {
+        if (event.defaultPrevented) return;
+        if (event.type === 'keydown') {
+            const key = (event as KeyboardEvent).key;
+            const target = event.target instanceof HTMLElement ? event.target : undefined;
+            if (
+                !['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(key) ||
+                target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') ||
+                (key === ' ' && target?.closest('button, [role="button"]'))
+            ) {
+                return;
+            }
+        } else if (event.type === 'pointerdown') {
+            const container = this.content()?.nativeElement;
+            if (!container || event.target !== container) return;
+            const pointer = event as PointerEvent;
+            const bounds = container.getBoundingClientRect();
+            const contentLeft = bounds.left + container.clientLeft;
+            const contentRight = contentLeft + container.clientWidth;
+            const inScrollbar = pointer.clientX >= bounds.left && pointer.clientX < bounds.right && (pointer.clientX < contentLeft || pointer.clientX >= contentRight);
+            if (pointer.button !== 0 || pointer.clientY < bounds.top || pointer.clientY >= bounds.bottom || !inScrollbar) return;
+        } else if (event.type === 'wheel' && (event as WheelEvent).ctrlKey) {
+            return;
+        }
+        this.holdsEnd = false;
+        // Reader input establishes their own position even if the initial positioning frame has not run yet.
+        this.initialScrollPositioned = true;
+    };
+    /** Keep the newest result visible through delayed layout changes until the reader takes over. */
+    private readonly onContentLoaded = () => {
+        if (this.holdsEnd && !this.isFetchingPosts() && this.postPageRequest.pendingScrollDistance === undefined) {
+            this.scrollToBottomOfMessages();
+        }
+    };
     page = 1;
 
     formGroup!: FormGroup; // set in resetFormGroup() from ngOnInit()
 
     getAsChannel = getAsChannelDTO;
 
-    private courseSidebarService = inject(CourseSidebarService);
-    private metisService = inject(MetisService);
-    private metisConversationService = inject(MetisConversationService);
-    private formBuilder = inject(FormBuilder);
-
     ngOnInit() {
-        this.subscribeToMetis();
-        this.isAtLeastTutor.set(this.metisService.metisUserIsAtLeastTutorInCourse());
+        this.subscribeToPosts();
+        this.isAtLeastTutor.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
         this.resetFormGroup();
-        this.commandMetisToFetchPosts(true);
+        this.fetchPosts(true);
     }
 
+    /** Observe content growth and reader input separately so layout changes preserve the initial end anchor. */
     ngAfterViewInit() {
         this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        const container = this.content()?.nativeElement;
+        // load events do not bubble, so they are caught on their way down to the image
+        container?.addEventListener('load', this.onContentLoaded, true);
+        this.scrollInputEvents.forEach((eventName) => container?.addEventListener(eventName, this.releaseEnd, { passive: true }));
+        const resultContent = this.resultContent()?.nativeElement;
+        if (container && resultContent) {
+            // Rows can grow after their first render, without an image load event. Keep the newest result visible
+            // through those changes and viewport resizing until the reader deliberately scrolls away.
+            this.resizeObserver = new ResizeObserver(this.onContentLoaded);
+            this.resizeObserver.observe(container);
+            this.resizeObserver.observe(resultContent);
+        }
     }
 
+    /** Invalidate pending results and remove layout observers, frames and input listeners owned by this view. */
     ngOnDestroy() {
+        this.postPageRequest.invalidate();
+        this.resizeObserver?.disconnect();
+        if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        const container = this.content()?.nativeElement;
+        container?.removeEventListener('load', this.onContentLoaded, true);
+        this.scrollInputEvents.forEach((eventName) => container?.removeEventListener(eventName, this.releaseEnd));
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -93,33 +156,45 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.courseSidebarService.openSidebar();
     }
 
-    private subscribeToMetis() {
-        this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+    private subscribeToPosts() {
+        this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+            if (this.currentPostContextFilter?.filterToUnresolved) {
+                // Filters the posts if the unresolved filter is active so that the post is removed from the list when it is resolved, but the post itself doesn't get closed.
+                posts = posts.filter((post) => post.resolved === false);
+            }
             this.setPosts(posts);
-            this.isFetchingPosts.set(false);
         });
-        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
-            this.totalNumberOfPosts = totalNumberOfPosts;
+        this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+            this.totalNumberOfPosts.set(totalNumberOfPosts);
         });
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
+        this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.allConversationIds = conversations.map((conversation) => conversation.id!);
         });
     }
 
     setPosts(posts: Post[]): void {
-        if (this.content()) {
-            this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
-        }
         this.posts.set(posts.slice().reverse());
     }
 
+    /** Position the initial newest page; after reader input preserve its distance when older results are prepended. */
     handleScrollOnNewMessage = () => {
-        if (
-            (this.posts().length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
-            this.previousScrollDistanceFromTop === this.messagesContainerHeight
-        ) {
-            this.scrollToBottomOfMessages();
-        }
+        if (this.isFetchingPosts() || this.posts().length === 0 || !this.content()) return;
+        if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        this.scrollFrame = requestAnimationFrame(() => {
+            this.scrollFrame = undefined;
+            const element = this.content()?.nativeElement;
+            if (!element) return;
+            // Initial positioning and an end the reader has not released take precedence over automatic prefetch.
+            if (!this.initialScrollPositioned || this.holdsEnd) {
+                this.postPageRequest.pendingScrollDistance = undefined;
+                this.scrollToBottomOfMessages();
+                this.holdsEnd = true;
+            } else if (this.postPageRequest.pendingScrollDistance !== undefined) {
+                element.scrollTop = element.scrollHeight - this.postPageRequest.pendingScrollDistance;
+                this.postPageRequest.pendingScrollDistance = undefined;
+            }
+            this.initialScrollPositioned = true;
+        });
     };
 
     scrollToBottomOfMessages() {
@@ -128,24 +203,38 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     fetchNextPage() {
-        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
-        if (morePostsAvailable) {
-            this.page += 1;
-            this.commandMetisToFetchPosts();
-        }
-        if (!this.content()) return;
-        this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + 50;
+        if (this.isFetchingPosts() || this.posts().length >= this.totalNumberOfPosts()) return;
+        this.postPageRequest.preserveScrollOnNextPage = true;
+        const previousPage = this.page;
+        this.page += 1;
+        this.fetchPosts(false, previousPage);
     }
 
-    public commandMetisToFetchPosts(forceUpdate = false) {
-        this.refreshMetisConversationPostContextFilter();
+    public fetchPosts(forceUpdate = false, previousPage = this.page) {
+        this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
-            this.isFetchingPosts.set(true); // will be set to false in subscription
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
+            this.isFetchingPosts.set(true);
+            this.communicationService.getFilteredPosts(
+                this.currentPostContextFilter,
+                forceUpdate,
+                undefined,
+                this.postPageRequest.callbacks(
+                    () => this.content()?.nativeElement,
+                    (applied) => {
+                        this.isFetchingPosts.set(false);
+                        if (!applied) {
+                            this.page = previousPage;
+                        }
+                        if (applied) {
+                            this.handleScrollOnNewMessage();
+                        }
+                    },
+                ),
+            );
         }
     }
 
-    private refreshMetisConversationPostContextFilter(): void {
+    private refreshConversationPostContextFilter(): void {
         const searchConfig = this.courseWideSearchConfig();
 
         if (!searchConfig) return;
@@ -179,7 +268,13 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
-        this.commandMetisToFetchPosts(true);
+        if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        this.scrollFrame = undefined;
+        this.page = 1;
+        this.initialScrollPositioned = false;
+        this.postPageRequest.pendingScrollDistance = undefined;
+        this.postPageRequest.preserveScrollOnNextPage = false;
+        this.fetchPosts(true);
     }
 
     /**
@@ -227,7 +322,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.filterToUnverifiedIris = this.isAtLeastTutor() && this.formGroup.get('filterToUnverifiedIris')?.value;
         searchConfig.sortingOrder = this.sortingOrder();
-        this.commandMetisToFetchPosts(true);
+        this.onSearch();
     }
 
     protected onTriggerNavigateToPost(post: Posting) {
@@ -243,5 +338,5 @@ export class CourseWideSearchConfig {
     filterToUnresolved = false;
     filterToAnsweredOrReacted = false;
     filterToUnverifiedIris = false;
-    sortingOrder = SortDirection.ASCENDING;
+    sortingOrder = SortDirection.DESCENDING;
 }

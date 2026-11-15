@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * JSON object persisted for Iris course settings.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
         IrisSupportLevel supportLevel, @Valid @Nullable IrisRateLimitConfiguration rateLimit, @Nullable Boolean proactiveStruggleEnabled,
         @Nullable Boolean legacyBuildTriggersEnabled) implements Serializable {

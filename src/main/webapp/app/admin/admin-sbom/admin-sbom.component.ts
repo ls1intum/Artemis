@@ -26,17 +26,18 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiButtonGroupComponent,
-    TumUiIconFieldComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiIconFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
 } from '@tumaet/ui-angular';
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
@@ -53,6 +54,7 @@ type SbomSource = 'all' | 'server' | 'client';
     templateUrl: './admin-sbom.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FormsModule,
         FaIconComponent,
@@ -60,15 +62,15 @@ type SbomSource = 'all' | 'server' | 'client';
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
         HelpIconComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiButtonGroupComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiInputDirective,
-        TumUiIconFieldComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiIconFieldComponent,
     ],
 })
 export class AdminSbomComponent implements OnInit {
@@ -377,7 +379,7 @@ export class AdminSbomComponent implements OnInit {
         return 'UNKNOWN';
     }
 
-    getSeverityLevel(severity: string): TumUiTagSeverity {
+    getSeverityLevel(severity: string): TumAetUiTagSeverity {
         switch (severity) {
             case 'CRITICAL':
                 return 'danger';
@@ -411,7 +413,7 @@ export class AdminSbomComponent implements OnInit {
      * toggled field/order, so the handler only mirrors that state onto the `sortField`/`sortAscending`
      * signals that drive the client-side sort in `filteredComponents()`.
      */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         const field = event.field;
         if (field === 'name' || field === 'group' || field === 'version' || field === 'type') {
             this.sortField.set(field);

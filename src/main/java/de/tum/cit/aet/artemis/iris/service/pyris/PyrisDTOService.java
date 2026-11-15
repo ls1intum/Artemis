@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -53,12 +55,15 @@ public class PyrisDTOService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final IrisProactiveProperties proactiveProperties;
 
     public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
-            IrisProactiveProperties proactiveProperties) {
+            BuildLogEntryService buildLogEntryService, IrisProactiveProperties proactiveProperties) {
         this.repositoryService = repositoryService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.buildLogEntryService = buildLogEntryService;
         this.proactiveProperties = proactiveProperties;
     }
 
@@ -73,7 +78,7 @@ public class PyrisDTOService {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation()).files();
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation()).files();
 
-        Map<String, String> testsRepositoryContents = Objects.requireNonNullElse(getRepositoryContents(exercise.getVcsTestRepositoryUri()), Map.of());
+        Map<String, String> testsRepositoryContents = getFilteredRepositoryContents(exercise.getVcsTestRepositoryUri(), exercise.getProgrammingLanguage()).files();
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
@@ -112,8 +117,8 @@ public class PyrisDTOService {
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(@NonNull ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
-                .toList();
+        var buildLogEntries = buildLogEntryService.getLatestBuildLogs(submission).stream()
+                .map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog())).toList();
         var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
         var committed = getFilteredRepositoryContents(participation);
         Map<String, String> committedFiles = committed.files();
@@ -122,13 +127,49 @@ public class PyrisDTOService {
         // getFilteredRepositoryContents tolerates a null participation, so every dereference below has to as well,
         // or a submission without one aborts the whole conversion instead of degrading to "nothing readable".
         var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
-        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage, committed.readable());
+        var baseline = withBaselinesOfOmittedFiles(participation, committed, uncommittedFiles, programmingLanguage);
+        Map<String, String> uncommittedWithBaseline = new HashMap<>(uncommittedFiles);
+        uncommittedWithBaseline.keySet().removeAll(baseline.omittedPaths());
+        var submittedRepository = buildSubmittedRepository(baseline.files(), uncommittedWithBaseline, programmingLanguage, baseline.readable());
         // Lets Pyris tell "no code changed since the submission" apart from "the submitted code could not be read",
         // which would otherwise both be an empty map. Taken from the fetch rather than the file count, because a
         // repository holding no file of the exercise language is readable and empty.
-        boolean submittedRepositoryAvailable = committed.readable();
+        boolean submittedRepositoryAvailable = baseline.complete();
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
                 submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+    }
+
+    // The committed contents are bounded in size, so a file the client changed locally can be missing from them because it was left out, not because it is new.
+    // The committed content of such a path is read separately within the same limits, so that an existing file is never sent as an all-added diff. A baseline that
+    // does not fit is not sent at all and the diff counts as incomplete, and so does one that cannot be read, so that no diff is fabricated.
+    private Baseline withBaselinesOfOmittedFiles(@Nullable ProgrammingExerciseParticipation participation, RepositoryContents committed, Map<String, String> uncommittedFiles,
+            @Nullable ProgrammingLanguage language) {
+        if (!committed.readable() || participation == null || participation.getVcsRepositoryUri() == null) {
+            return new Baseline(committed.readable(), committed.files(), Set.of());
+        }
+        Set<String> absentPaths = uncommittedFiles.keySet().stream().filter(path -> !committed.files().containsKey(path))
+                .filter(path -> language == null || language.matchesFileExtension(path)).collect(Collectors.toSet());
+        if (absentPaths.isEmpty()) {
+            return new Baseline(true, committed.files(), Set.of());
+        }
+        try {
+            var restored = repositoryService.getCommittedContentOfPaths(participation.getVcsRepositoryUri(), absentPaths);
+            Map<String, String> files = new HashMap<>(committed.files());
+            files.putAll(restored.files());
+            return new Baseline(true, files, restored.omitted());
+        }
+        catch (IOException e) {
+            log.error("Could not get the committed content of the changed files", e);
+            return new Baseline(false, Map.of(), Set.of());
+        }
+    }
+
+    // The committed files that the diff is made against, whether they could be read, and the changed paths whose committed content does not fit the limits
+    private record Baseline(boolean readable, Map<String, String> files, Set<String> omittedPaths) {
+
+        boolean complete() {
+            return readable && omittedPaths.isEmpty();
+        }
     }
 
     // The committed version of only the code files the client changed locally, so Pyris can diff live against submitted. A changed
@@ -181,13 +222,15 @@ public class PyrisDTOService {
      * the episode it was given in. The tag text is the one channel that carries this, since {@code sent_at} is
      * dropped before the history reaches the model.
      *
-     * @param messages         the chat-history messages, in chronological order
+     * @param allMessages      the chat-history messages, in chronological order; SUMMARY messages are left out
      * @param currentEpisodeId the episode this run belongs to, or null when the caller has none. Null marks
      *                             NOTHING as earlier: with the episode relation unknown, keeping every hint under
      *                             today's tags can only ever suppress a repeat, never license one.
      * @return the converted DTOs with proactive messages outcome-tagged
      */
-    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages, @Nullable String currentEpisodeId) {
+    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> allMessages, @Nullable String currentEpisodeId) {
+        // Summaries are hidden from the student. Left in, one between a hint and the student's reply would hide the reply.
+        var messages = allMessages.stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
         // One reverse pass instead of a forward scan per proactive message: "superseded" only asks whether a LATER
         // proactive message exists, so the index of the last one answers it for every message at once.
         int lastProactiveIndex = -1;
@@ -310,9 +353,17 @@ public class PyrisDTOService {
         if (participation == null) {
             return RepositoryContents.UNREADABLE;
         }
-        var language = participation.getProgrammingExercise().getProgrammingLanguage();
+        var exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return RepositoryContents.UNREADABLE;
+        }
+        return getFilteredRepositoryContents(participation.getVcsRepositoryUri(), exercise.getProgrammingLanguage());
+    }
 
-        var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
+    // Only files of the exercise language are sent, like for every other repository: data sets and resources in a repository are no use as context
+    private RepositoryContents getFilteredRepositoryContents(LocalVCRepositoryUri repositoryUri, ProgrammingLanguage language) {
+        // The filter is applied while the repository is read, so that files of other languages do not use up the size limit of the content
+        var repositoryContents = getRepositoryContents(repositoryUri, language);
         if (repositoryContents == null) {
             return RepositoryContents.UNREADABLE;
         }
@@ -324,12 +375,12 @@ public class PyrisDTOService {
     // repository contents: it returns null if repositoryUri is null or if the repository could not be fetched. This is useful, as the
     // Pyris call should not fail if the repository is not available. null rather than an empty map so callers can tell an unreadable
     // repository apart from an empty one.
-    private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
+    private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri, @Nullable ProgrammingLanguage language) {
         if (repositoryUri == null) {
             return null;
         }
         try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
+            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(repositoryUri, language == null ? null : language::matchesFileExtension, Long.MAX_VALUE);
         }
         catch (IOException e) {
             log.error("Could not get repository content", e);

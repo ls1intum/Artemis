@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, model, signal } from '@angular/core';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -21,13 +22,15 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
     styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent, TumAetUiTableDirective],
 })
 export class GradingKeyTableComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private gradingService = inject(GradingService);
     private bonusService = inject(BonusService);
     private scoresStorageService = inject(ScoresStorageService);
+
+    readonly purpose = input<'student' | 'management'>('student');
 
     readonly faChevronLeft = faChevronLeft;
 
@@ -87,7 +90,7 @@ export class GradingKeyTableComponent implements OnInit {
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
         if (!this.forBonus()) {
-            return this.gradingService.findGradeSteps(courseId, examId);
+            return this.gradingService.findGradeSteps(courseId, examId, this.purpose());
         } else {
             // examId must be present if forBonus is true.
             return this.bonusService.findBonusForExam(courseId, examId!, true).pipe(

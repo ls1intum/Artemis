@@ -3,9 +3,14 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -17,6 +22,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
@@ -128,9 +134,20 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        if (originalResult == null) {
+            throw new BadRequestAlertException("The result you are referring to does not exist", "AssessmentUpdate", "resultnotfound");
+        }
+        // a complaint update may retain the existing feedback, in which case there is nothing new to validate
+        if (assessmentUpdate.feedbacks() != null) {
+            resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        }
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
+        checkManualFeedbackCreditsWithinBoundsElseThrow(assessmentUpdate.feedbacks());
+        // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
+        checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
+        complaintResponseService.checkComplaintResponseBelongsToResultElseThrow(assessmentUpdate.complaintResponse().getId(), originalResult.getId());
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
 
@@ -244,9 +261,9 @@ public class AssessmentService {
      * @return true if the user is allowed to be the assessor, false otherwise
      */
     private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, StudentParticipation participation, User user) {
-        if (exercise.isTeamMode()) {
-            // for team exercises only the team tutor is allowed to be the assessor
-            return participation.getTeam().orElseThrow().isOwner(user);
+        if (exercise.isTeamMode() && participation.getTeam().isPresent()) {
+            // for team exercises only the team tutor is allowed to be the assessor (a practice participation belongs to a student and has no team tutor)
+            return participation.getTeam().get().isOwner(user);
         }
         else if (result != null) {
             // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet
@@ -313,6 +330,18 @@ public class AssessmentService {
             result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
         }
 
+        if (result != null && (result.getSubmission() == null || !result.getSubmission().getId().equals(submission.getId()))) {
+            throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
+        }
+        // an assessment may be saved without any feedback, in which case there is nothing to validate
+        if (feedbackList != null) {
+            resultService.validateGradingInstructions(feedbackList, exerciseId);
+        }
+        checkManualFeedbackCreditsWithinBoundsElseThrow(feedbackList);
+
+        // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
+        checkFeedbackBelongsToResultElseThrow(feedbackList, result);
+
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission, exerciseId);
         }
@@ -350,6 +379,74 @@ public class AssessmentService {
         result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
+    }
+
+    /**
+     * Checks that every feedback given by the assessor has finite credits within {@link Feedback#MAX_MANUAL_CREDITS} in either direction. The client sends type, id, text
+     * and credits, so none of them proves where a feedback comes from. A feedback above the bound is only accepted when the database confirms its credits: a stored automatic
+     * feedback sent as automatic with the same credits, or a feedback linked to a grading instruction whose stored credits are the same.
+     *
+     * @param feedbackList the feedback list sent by the client
+     */
+    protected void checkManualFeedbackCreditsWithinBoundsElseThrow(final Collection<Feedback> feedbackList) {
+        if (feedbackList == null) {
+            return;
+        }
+        List<Feedback> outOfBounds = feedbackList.stream().filter(feedback -> feedback.getCredits() != null
+                && (!Double.isFinite(feedback.getCredits()) || Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS) && !isScoredByServer(feedback)).toList();
+        if (outOfBounds.isEmpty()) {
+            return;
+        }
+        // only read when a feedback exceeds the bounds, which a regular assessment never does
+        Map<Long, Double> instructionCredits = resultService.getGradingInstructionCredits(outOfBounds);
+        Set<Long> feedbackIds = outOfBounds.stream().map(Feedback::getId).filter(id -> id != null && id > 0).collect(Collectors.toSet());
+        Map<Long, Feedback> storedFeedback = feedbackIds.isEmpty() ? Map.of()
+                : feedbackRepository.findAllById(feedbackIds).stream().collect(Collectors.toMap(Feedback::getId, Function.identity()));
+        if (outOfBounds.stream().anyMatch(feedback -> !hasStoredInstructionCredits(feedback, instructionCredits) && !hasStoredAutomaticCredits(feedback, storedFeedback))) {
+            throw new BadRequestAlertException("The points of a feedback must be between -" + Feedback.MAX_MANUAL_CREDITS + " and " + Feedback.MAX_MANUAL_CREDITS, "Feedback",
+                    "feedbackCreditsOutOfBounds", true); // every assessment editor shows this error itself, so the global alert would repeat it
+        }
+    }
+
+    /**
+     * Whether the server computes the points of this feedback itself, so that the credits the client sends for it are not counted. No feedback of a non-programming exercise
+     * is, see the programming subclass.
+     *
+     * @param feedback a feedback sent by the client
+     * @return true if its credits do not count towards the score
+     */
+    protected boolean isScoredByServer(Feedback feedback) {
+        return false;
+    }
+
+    private static boolean hasStoredInstructionCredits(Feedback feedback, Map<Long, Double> instructionCredits) {
+        return feedback.getGradingInstruction() != null && Objects.equals(instructionCredits.get(feedback.getGradingInstruction().getId()), feedback.getCredits());
+    }
+
+    private static boolean hasStoredAutomaticCredits(Feedback feedback, Map<Long, Feedback> storedFeedback) {
+        Feedback stored = feedback.getId() != null ? storedFeedback.get(feedback.getId()) : null;
+        // the request must keep the row automatic, otherwise the save would turn it into a manual feedback with these credits
+        return stored != null && stored.getType() == FeedbackType.AUTOMATIC && feedback.getType() == FeedbackType.AUTOMATIC
+                && Objects.equals(stored.getCredits(), feedback.getCredits());
+    }
+
+    /**
+     * Checks that an assessment only contains feedback of the result it is saved to. A feedback id is the id of a stored row, so an id of another result would be written to this
+     * result instead of being added to it.
+     *
+     * @param feedbackList the feedback list sent by the client
+     * @param result       the result the assessment is saved to, or {@code null} if it does not exist yet
+     */
+    protected void checkFeedbackBelongsToResultElseThrow(final Collection<Feedback> feedbackList, final Result result) {
+        if (feedbackList == null) {
+            return;
+        }
+        // a result that does not exist yet owns no feedback, so any stored feedback id is foreign
+        final Set<Long> ownFeedbackIds = result == null ? Set.of() : result.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // a negative id belongs to a synthesized view of the typed automatic feedback of a programming exercise and not to a stored row
+        if (feedbackList.stream().map(Feedback::getId).anyMatch(id -> id != null && id > 0 && !ownFeedbackIds.contains(id))) {
+            throw new BadRequestAlertException("The assessment contains feedback of another result", "Feedback", "feedbackIdMismatch");
+        }
     }
 
     /**

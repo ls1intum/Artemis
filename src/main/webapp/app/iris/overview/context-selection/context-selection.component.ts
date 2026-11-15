@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faComments, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faComments, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -8,13 +8,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { EXERCISE_TYPE_TO_CHAT_MODE } from 'app/iris/shared/entities/iris-session-context.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { SelectModule } from 'primeng/select';
-import { ChipModule } from 'primeng/chip';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiChipComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { forkJoin } from 'rxjs';
@@ -31,13 +31,6 @@ interface ContextGroup {
     label: string;
     items: ContextOption[];
 }
-
-// Maps exercise types that have Iris chat integration to their ChatServiceMode.
-// To add Iris support for a new exercise type, add a single entry here.
-const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
-    [ExerciseType.TEXT]: ChatServiceMode.TEXT_EXERCISE,
-    [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
-};
 
 /** Icon for a selected context, derived from its mode alone so the chip does not need the entity loaded. */
 function iconForMode(mode: ChatServiceMode): IconDefinition {
@@ -56,7 +49,7 @@ function iconForMode(mode: ChatServiceMode): IconDefinition {
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [SelectModule, ChipModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [SelectModule, TumAetUiChipComponent, TumAetUiTooltipDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
@@ -69,7 +62,6 @@ export class ContextSelectionComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faPlus = faPlus;
-    protected readonly faXmark = faXmark;
 
     readonly disabled = input<boolean>(false);
     readonly contextChanged = output<void>();
@@ -121,6 +113,17 @@ export class ContextSelectionComponent {
     }
 
     /**
+     * Hides the "add context" hint while the dropdown is open: the hint follows hover, so after the opening click it would
+     * otherwise stay over the dropdown, which opens below or above the trigger depending on the space left.
+     */
+    protected readonly isPickerOpen = signal(false);
+
+    protected onPickerShow(): void {
+        this.isPickerOpen.set(true);
+        this.loadContextOptions();
+    }
+
+    /**
      * Loads the pickable lectures and exercises for the course, once per course. Called when the dropdown opens.
      */
     loadContextOptions(): void {
@@ -131,7 +134,7 @@ export class ContextSelectionComponent {
         this.optionsLoadedForCourseId = courseId;
         forkJoin({
             lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
-            exercises: this.exerciseService.getTitlesForCourse(courseId),
+            exercises: this.exerciseService.getTitlesForAccessibleCourse(courseId),
         })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({

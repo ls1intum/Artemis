@@ -1,34 +1,44 @@
+import { PlagiarismCaseHeaderComponent } from 'app/plagiarism/shared/case-header/plagiarism-case-header.component';
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
-import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+
 import { Subscription, combineLatest } from 'rxjs';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { PageType } from 'app/communication/metis.util';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { PageType } from 'app/communication/communication.util';
+
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
     templateUrl: './plagiarism-case-student-detail-view.component.html',
     styleUrls: ['./plagiarism-case-student-detail-view.component.scss'],
-    providers: [MetisService],
-    imports: [TranslateDirective, PlagiarismCaseVerdictComponent, FaIconComponent, RouterLink, PostComponent, ButtonComponent, PlagiarismCaseReviewComponent, ArtemisTranslatePipe],
+    providers: [CommunicationService],
+    imports: [
+        PlagiarismCaseHeaderComponent,
+        TranslateDirective,
+        RouterLink,
+        PostComponent,
+        ButtonComponent,
+        PlagiarismCaseReviewComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+    ],
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private activatedRoute = inject(ActivatedRoute);
 
@@ -41,9 +51,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     private paramSubscription?: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
-
-    getIcon = getIcon;
-    faUser = faUser;
 
     readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
     private postsSubscription?: Subscription;
@@ -78,10 +85,10 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                         this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
                     }
 
-                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle });
+                    this.communicationService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle });
 
-                    this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({
+                    this.communicationService.setPageType(this.pageType);
+                    this.communicationService.getFilteredPosts({
                         plagiarismCaseId: plagiarismCase.id,
                     });
 
@@ -90,7 +97,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                 },
             });
         });
-        this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
+        this.postsSubscription = this.communicationService.posts.pipe().subscribe((posts: Post[]) => {
             this.posts.set(posts);
         });
     }

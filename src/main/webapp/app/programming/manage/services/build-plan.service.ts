@@ -1,11 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BuildPlan } from 'app/programming/shared/entities/build-plan.model';
 
 export type EntityResponseType = HttpResponse<BuildPlan>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BuildPlanService {
     private http = inject(HttpClient);
 

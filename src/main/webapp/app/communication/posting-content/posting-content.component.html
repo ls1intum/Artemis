@@ -1,8 +1,8 @@
 @if (isDeleted()) {
     <span class="posting-content-undo-delete d-inline-flex align-items-center">
-        <span class="text-secondary" jhiTranslate="artemisApp.metis.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds() }"></span>
-        <button class="btn btn-outline-primary btn-sm ms-2 position-relative" (click)="onUndoDeleteEvent.emit()">
-            <span class="post-delete-button-label" jhiTranslate="artemisApp.metis.post.undoDelete"></span>
+        <span class="text-secondary" jhiTranslate="artemisApp.communication.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds() }"></span>
+        <button type="button" class="btn btn-outline-primary btn-sm ms-2 position-relative" (click)="onUndoDeleteEvent.emit()">
+            <span class="post-delete-button-label" jhiTranslate="artemisApp.communication.post.undoDelete"></span>
             <span class="post-delete-button-background"></span>
         </button>
     </span>
@@ -11,20 +11,19 @@
     @if (previewMode()) {
         <div class="pb-1">
             <span class="clickable p-0">
-                <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" [ngStyle]="{ color: '#6a737d' }" (click)="showContent = !showContent" />
+                <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" style="color: #6a737d" (click)="showContent = !showContent" />
             </span>
-            <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.metis.post.collapseContent' : 'artemisApp.metis.post.showContent' }}"></span>
+            <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.communication.post.collapseContent' : 'artemisApp.communication.post.showContent' }}"></span>
             @if (showContent) {
                 <div>
-                    @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
-                        <jhi-posting-content-part
-                            [postingContentPart]="postingContentPart"
-                            (userReferenceClicked)="userReferenceClicked.emit($event)"
-                            (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                        />
-                    }
+                    <jhi-posting-markdown
+                        [markdown]="postingMarkdown()"
+                        [references]="postingContentParts()"
+                        (userReferenceClicked)="userReferenceClicked.emit($event)"
+                        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    />
                     @if (isEdited()) {
-                        <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
+                        <span class="edited-text" jhiTranslate="artemisApp.communication.edited"></span>
                     }
                 </div>
             }
@@ -33,15 +32,14 @@
     <!-- not in preview mode: content always shown -->
     @if (!previewMode()) {
         <div class="pb-1">
-            @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
-                <jhi-posting-content-part
-                    [postingContentPart]="postingContentPart"
-                    (userReferenceClicked)="userReferenceClicked.emit($event)"
-                    (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                />
-            }
+            <jhi-posting-markdown
+                [markdown]="postingMarkdown()"
+                [references]="postingContentParts()"
+                (userReferenceClicked)="userReferenceClicked.emit($event)"
+                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+            />
             @if (isEdited()) {
-                <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
+                <span class="edited-text" jhiTranslate="artemisApp.communication.edited"></span>
             }
             <jhi-link-preview-container [data]="content()" [author]="author()" [posting]="posting()" [isEdited]="isEdited()" [isReply]="isReply()" />
         </div>

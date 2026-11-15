@@ -55,7 +55,6 @@ export class AssessmentLayoutComponent {
     readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises
     readonly highlightDifferences = model(false);
 
-    readonly navigateBack = output();
     readonly save = output();
     readonly onSubmit = output();
     readonly onCancel = output();

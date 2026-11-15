@@ -74,6 +74,7 @@
                     "CREATIVE_DESCRIPTION": "A story carries the task — themed setting, named actors, story-driven examples."
                 },
                 "placement": {
+                    "loadFailed": "The source exercise’s variant group could not be loaded. Try again, or select a standalone variant.",
                     "question": "Where should this variant be placed?",
                     "existingGroup": "Add to group \"{{ title }}\"",
                     "existingGroupHint": "Alongside {{ count }} existing variant(s)",

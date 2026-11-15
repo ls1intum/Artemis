@@ -12,6 +12,7 @@
                     @if (course().startDate) {
                         <div class="d-flex">
                             <button
+                                type="button"
                                 class="btn"
                                 [disabled]="!showLifetimeOverview() && displayedNumberOfWeeks() === 4"
                                 (click)="displayPeriodOverview(4)"
@@ -20,6 +21,7 @@
                                 [translateValues]="{ amount: 4 }"
                             ></button>
                             <button
+                                type="button"
                                 class="btn"
                                 [disabled]="!showLifetimeOverview() && displayedNumberOfWeeks() === 8"
                                 (click)="displayPeriodOverview(8)"
@@ -28,6 +30,7 @@
                                 [translateValues]="{ amount: 8 }"
                             ></button>
                             <button
+                                type="button"
                                 class="btn"
                                 [disabled]="showLifetimeOverview()"
                                 (click)="displayLifetimeOverview()"
@@ -38,10 +41,10 @@
                         <span class="pt-1">|</span>
                     }
                     <div class="d-flex gap-1">
-                        <button class="btn" [disabled]="startDateDisplayed()" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
+                        <button type="button" class="btn" [disabled]="startDateDisplayed()" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
-                        <button class="btn" [disabled]="showsCurrentWeek()" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
+                        <button type="button" class="btn" [disabled]="showsCurrentWeek()" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
                             <fa-icon [icon]="faArrowRight" />
                         </button>
                     </div>
@@ -49,7 +52,7 @@
                 <div class="d-flex mt-1 justify-content-center align-items-center h-99">
                     @if (!loading()) {
                         <div class="active-students-chart" style="height: 320px; width: 100%">
-                            <tum-ui-line-chart
+                            <tumaet-ui-line-chart
                                 [labels]="chartData().labels"
                                 [series]="chartData().series"
                                 [config]="chartConfig()"

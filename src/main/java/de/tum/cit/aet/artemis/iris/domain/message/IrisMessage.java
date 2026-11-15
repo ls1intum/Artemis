@@ -12,15 +12,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,8 +26,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 
 /**
@@ -60,6 +57,15 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
+    /**
+     * The Artemis app a user message was sent from (iOS/Android), resolved from the request {@code User-Agent}.
+     * {@code null} for messages sent from a web browser, from an unrecognized client, or for non-user messages.
+     */
+    @Nullable
+    @Column(name = "sender_origin")
+    @Enumerated(EnumType.STRING)
+    private ArtemisApp senderOrigin;
+
     @Nullable
     @Enumerated(EnumType.STRING)
     @Column(name = "origin")
@@ -88,16 +94,14 @@ public class IrisMessage extends DomainObject {
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "accessed_memories", columnDefinition = "json")
-    private List<MemirisMemoryDTO> accessedMemories = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "created_memories", columnDefinition = "json")
-    private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
-
+    /**
+     * Deliberately not annotated {@code @Lob}. The column is plain text on both databases - Liquibase {@code clob}
+     * becomes {@code longtext} on MySQL and {@code text} on PostgreSQL - whereas a CLOB on PostgreSQL is a large
+     * object: Hibernate binds and extracts the column as an {@code oid}, so reading a row whose {@code tool_activity}
+     * holds the converted JSON fails with "Bad value for type long". Without the annotation the converted JSON is
+     * bound and extracted as a string, which round-trips on both databases.
+     */
     @Nullable
-    @Lob
     @Convert(converter = IrisMessageToolActivityConverter.class)
     @Column(name = "tool_activity")
     private List<PyrisActivityDTO> toolActivity;
@@ -141,6 +145,15 @@ public class IrisMessage extends DomainObject {
 
     public void setSender(IrisMessageSender sender) {
         this.sender = sender;
+    }
+
+    @Nullable
+    public ArtemisApp getSenderOrigin() {
+        return senderOrigin;
+    }
+
+    public void setSenderOrigin(@Nullable ArtemisApp senderOrigin) {
+        this.senderOrigin = senderOrigin;
     }
 
     @Nullable
@@ -192,22 +205,6 @@ public class IrisMessage extends DomainObject {
             messageContent.setMessage(this);
             this.content.add(messageContent);
         }
-    }
-
-    public List<MemirisMemoryDTO> getAccessedMemories() {
-        return accessedMemories;
-    }
-
-    public void setAccessedMemories(List<MemirisMemoryDTO> accessedMemories) {
-        this.accessedMemories = accessedMemories;
-    }
-
-    public List<MemirisMemoryDTO> getCreatedMemories() {
-        return createdMemories;
-    }
-
-    public void setCreatedMemories(List<MemirisMemoryDTO> createdMemories) {
-        this.createdMemories = createdMemories;
     }
 
     @Nullable

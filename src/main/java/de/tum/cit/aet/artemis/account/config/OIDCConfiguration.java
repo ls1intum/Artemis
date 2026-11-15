@@ -1,6 +1,12 @@
 package de.tum.cit.aet.artemis.account.config;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +24,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import de.tum.cit.aet.artemis.account.repository.oidc.DistributedOIDCAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
@@ -33,11 +40,19 @@ import de.tum.cit.aet.artemis.account.security.OIDCService;
 @Conditional(OIDCEnabled.class)
 public class OIDCConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(OIDCConfiguration.class);
+
+    private static final String SCOPE_PROPERTY = "spring.security.oauth2.client.registration.oidc.scope";
+
+    private static final List<String> DEFAULT_SCOPES = List.of("openid", "profile", "email");
+
     private final OIDCService oidcService;
 
     private final OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler;
 
     private final OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler;
+
+    private final DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository;
 
     private final Environment environment;
 
@@ -66,10 +81,12 @@ public class OIDCConfiguration {
     private String usernameClaimKey;
 
     public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler,
-            OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, Environment environment) {
+            OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository,
+            Environment environment) {
         this.oidcService = oidcService;
         this.oidcAuthenticationSuccessHandler = oidcAuthenticationSuccessHandler;
         this.oidcAuthenticationFailureHandler = oidcAuthenticationFailureHandler;
+        this.authorizationRequestRepository = authorizationRequestRepository;
         this.environment = environment;
     }
 
@@ -81,17 +98,28 @@ public class OIDCConfiguration {
      */
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
-        // Fetch scopes from environment
-        String[] configuredScopes = environment.getProperty("spring.security.oauth2.client.registration.oidc.scope", String[].class);
-        if (configuredScopes == null || configuredScopes.length == 0) {
-            configuredScopes = new String[] { "openid", "profile", "email" };
-        }
+        List<String> configuredScopes = resolveScopes();
+        log.info("OIDC login requests the scopes {}", configuredScopes);
         ClientRegistration oidcRegistration = ClientRegistration.withRegistrationId("oidc").clientId(clientId).clientSecret(clientSecret)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE).redirectUri("{baseUrl}/login/oauth2/code/{registrationId}").scope(configuredScopes)
                 .issuerUri(issuerUri).authorizationUri(authorizationUri).tokenUri(tokenUri).userInfoUri(userInfoUri).jwkSetUri(jwkSetUri).userNameAttributeName(usernameClaimKey)
                 .clientName("TUM Login").build();
 
         return new InMemoryClientRegistrationRepository(oidcRegistration);
+    }
+
+    /**
+     * Reads the scopes to request from the identity provider.
+     * <p>
+     * The scopes are bound through a {@link Binder} because {@link Environment#getProperty(String, Class)} only sees a property that exists under exactly this name. It
+     * silently returns nothing for a YAML list and for indexed environment variables such as {@code SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_SCOPE_0}, which would
+     * drop every configured scope, including client-specific ones like the matriculation number scope of TUM Login, and fall back to the default.
+     *
+     * @return the configured scopes, or openid, profile and email if none are configured
+     */
+    private List<String> resolveScopes() {
+        List<String> scopes = Binder.get(environment).bind(SCOPE_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
+        return scopes.isEmpty() ? DEFAULT_SCOPES : scopes;
     }
 
     /**
@@ -107,32 +135,27 @@ public class OIDCConfiguration {
     protected SecurityFilterChain oidcFilterChain(final HttpSecurity http) throws Exception {
         var resolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository(), "/oauth2/authorization");
 
-        // Extract rememberMe & redirect field parameters query and store it into session
+        // Keep the rememberMe, redirect and code challenge parameters with the authorization request, so the node that handles the callback can read them
         resolver.setAuthorizationRequestCustomizer(builder -> {
             var attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 var req = attrs.getRequest();
-                var session = req.getSession(true);
-                session.setAttribute(OIDCConstants.OIDC_REMEMBER_ME_SESSION_KEY, "true".equalsIgnoreCase(req.getParameter("rememberMe")));
-
+                boolean rememberMe = "true".equalsIgnoreCase(req.getParameter("rememberMe"));
                 String redirectTarget = req.getParameter("redirect");
-                if (redirectTarget != null && !redirectTarget.isBlank()) {
-                    session.setAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY, redirectTarget);
-                }
-                else {
-                    session.removeAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY);
-                }
-
                 String codeChallenge = req.getParameter("code_challenge");
                 if (codeChallenge == null || codeChallenge.isBlank()) {
                     codeChallenge = req.getParameter("codeChallenge");
                 }
-                if (codeChallenge != null && !codeChallenge.isBlank()) {
-                    session.setAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY, codeChallenge);
-                }
-                else {
-                    session.removeAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY);
-                }
+                String finalCodeChallenge = codeChallenge;
+                builder.attributes(attributes -> {
+                    attributes.put(OIDCConstants.OIDC_REMEMBER_ME_ATTRIBUTE, rememberMe);
+                    if (redirectTarget != null && !redirectTarget.isBlank()) {
+                        attributes.put(OIDCConstants.OIDC_REDIRECT_TARGET_ATTRIBUTE, redirectTarget);
+                    }
+                    if (finalCodeChallenge != null && !finalCodeChallenge.isBlank()) {
+                        attributes.put(OIDCConstants.OIDC_CODE_CHALLENGE_ATTRIBUTE, finalCodeChallenge);
+                    }
+                });
             }
         });
         // @formatter:off
@@ -141,8 +164,8 @@ public class OIDCConfiguration {
             // /login/oauth2/code/tum-login - when TUM sends the code
             .securityMatcher("/oauth2/authorization/**", "/login/oauth2/code/**")
 
-            // Session for redirects
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            // No HTTP session: it is local to one node, and the callback may reach another one. The authorization request is kept in the distributed store instead.
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().authenticated()
@@ -151,7 +174,7 @@ public class OIDCConfiguration {
             // Activate Spring Security OAuth2 Login
             .oauth2Login(oauth2 -> oauth2
                 .clientRegistrationRepository(clientRegistrationRepository())
-                .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver))
+                .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver).authorizationRequestRepository(authorizationRequestRepository))
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcService))
                 .successHandler(this.oidcAuthenticationSuccessHandler)
                 .failureHandler(this.oidcAuthenticationFailureHandler)

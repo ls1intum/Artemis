@@ -26,14 +26,13 @@ async function selectTaxonomy(page: Page, taxonomy: string) {
 }
 
 async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {
-    const picker = page.locator(`jhi-date-time-picker#${pickerId}`);
+    const picker = page.locator(`tumaet-ui-date-picker#${pickerId}`);
     await expect(picker).toHaveCount(1);
 
-    const input = picker.locator('input#date-input-field');
+    const input = picker.locator(`input#${pickerId}-input`);
     await expect(input).toBeVisible();
 
-    // The CALENDAR-mode p-datepicker renders dates as DD.MM.YYYY. Type the value (the picker ignores
-    // programmatic fills that aren't preceded by a keydown) and tab out to commit it to the form.
+    // The date-only picker renders dates as DD.MM.YYYY. Type the value and tab out to commit it to the form.
     const targetDate = dayjs().add(monthsAhead, 'months').date(day);
     await fillDateTimePicker(input, targetDate, 'DD.MM.YYYY');
 }
@@ -311,11 +310,11 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
     });
 
     test('Filter bar is visible on the competency table', async ({ page }) => {
-        await expect(page.locator('.competency-search-input').first()).toBeVisible();
+        await expect(page.getByTestId('competency-search-input').first()).toBeVisible();
     });
 
     test('Live filter shows only matching rows', async ({ page }) => {
-        const searchInput = page.locator('.competency-search-input').first();
+        const searchInput = page.getByTestId('competency-search-input').first();
         await searchInput.fill(competencyTitles.beta);
 
         await expect(page.getByRole('link', { name: competencyTitles.beta })).toBeVisible({ timeout: 5000 });
@@ -324,7 +323,7 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
     });
 
     test('Empty filter shows all rows again', async ({ page }) => {
-        const searchInput = page.locator('.competency-search-input').first();
+        const searchInput = page.getByTestId('competency-search-input').first();
         await searchInput.fill(competencyTitles.beta);
         await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
 
@@ -335,17 +334,17 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
         await expect(page.getByRole('link', { name: competencyTitles.gamma })).toBeVisible();
     });
 
-    test('No-results row appears when filter matches nothing', async ({ page }) => {
-        const searchInput = page.locator('.competency-search-input').first();
+    test('No-results state appears when filter matches nothing', async ({ page }) => {
+        const searchInput = page.getByTestId('competency-search-input').first();
         await searchInput.fill('ZZZNOMATCH_' + filterSortUid);
 
-        await expect(page.locator('jhi-competency-management-table').first().locator('td[colspan]')).toBeVisible({ timeout: 5000 });
+        await expect(page.locator('jhi-competency-management-table').first().getByTestId('table-empty')).toBeVisible({ timeout: 5000 });
         await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
     });
 
     test('Title column sort: descending then ascending', async ({ page }) => {
-        // Scope to first table — the prerequisites table below has the same jhisortby headers.
-        const titleHeader = page.locator('jhi-competency-management-table').first().locator('th[jhisortby="title"]');
+        // Scope to first table — the prerequisites table below has the same sortable headers.
+        const titleHeader = page.locator('jhi-competency-management-table').first().getByTestId('competency-sort-title');
 
         // The table loads pre-sorted by title ascending, so the first click on the title header toggles
         // to descending — our three competencies appear in reverse alphabetical order gamma, beta, alpha.
@@ -358,8 +357,8 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
     });
 
     test('Taxonomy column sort orders rows by taxonomy and reverses on second click', async ({ page }) => {
-        // Scope to first table — the prerequisites table below has the same jhisortby headers.
-        const taxonomyHeader = page.locator('jhi-competency-management-table').first().locator('th[jhisortby="taxonomy"]');
+        // Scope to first table — the prerequisites table below has the same sortable headers.
+        const taxonomyHeader = page.locator('jhi-competency-management-table').first().getByTestId('competency-sort-taxonomy');
 
         // Sort ascending by Taxonomy — ANALYZE < CREATE < REMEMBER => beta, alpha, gamma (independent of title order).
         await taxonomyHeader.click();

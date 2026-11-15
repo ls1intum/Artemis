@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -104,9 +103,6 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private CourseAthenaConfigRepository courseAthenaConfigRepository;
-
-    @Autowired
-    private AuthorizationCheckService authCheckService;
 
     @Autowired
     private QuizBatchService quizBatchService;
@@ -239,6 +235,37 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = STUDENT, roles = "USER")
+    void details_teamExerciseWithIndividualPracticeParticipation_reportsTeamAndPracticeParticipation() throws Exception {
+        User student = userUtilService.getUserByLogin(STUDENT);
+        User tutor = userUtilService.getUserByLogin(TUTOR);
+
+        Course textCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("team practice wire text", TEST_PREFIX);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(textCourse, TextExercise.class);
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise = exerciseRepository.save(textExercise);
+        Team team = teamUtilService.createTeam(Set.of(student, userUtilService.getUserByLogin(TEST_PREFIX + "student2")), tutor, textExercise, TEST_PREFIX + "practiceteam");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(textExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, STUDENT);
+        TextSubmission practiceSubmission = new TextSubmission();
+        practiceSubmission.setText("practice text");
+        addSubmissionWithResult(practiceParticipation, practiceSubmission, AssessmentType.AUTOMATIC);
+
+        JsonNode response = assertDetailsMatchEntityWire(textExercise.getId());
+
+        JsonNode participations = response.at("/exercise/studentParticipations");
+        assertThat(participations).as("the team participation and the own practice participation").hasSize(2);
+        JsonNode teamNode = StreamSupport.stream(participations.spliterator(), false).filter(node -> !node.path("testRun").asBoolean(false)).findFirst().orElseThrow();
+        JsonNode practiceNode = StreamSupport.stream(participations.spliterator(), false).filter(node -> node.path("testRun").asBoolean(false)).findFirst().orElseThrow();
+        assertThat(teamNode.path("id").asLong()).isEqualTo(teamParticipation.getId());
+        assertThat(teamNode.at("/team/students/0/login").isString()).isTrue();
+        assertThat(practiceNode.path("id").asLong()).isEqualTo(practiceParticipation.getId());
+        assertThat(practiceNode.at("/student/login").asString()).isEqualTo(STUDENT);
+        assertThat(practiceNode.has("team")).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT, roles = "USER")
     void details_programmingExercise_forStudentAndTutor_matchesTheEntityWire() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -270,7 +297,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
 
         userUtilService.changeUser(TUTOR);
         JsonNode tutorResponse = assertDetailsMatchEntityWire(exercise.getId());
-        assertThat(tutorResponse.at("/exercise/testRepositoryUri").asString()).as("tutors keep the test repository").isEqualTo("http://localhost:8080/git/TST/tst-tests.git");
+        assertThat(tutorResponse.at("/exercise").has("testRepositoryUri")).as("the owner details projection also hides the test repository from tutors").isFalse();
     }
 
     @Test
@@ -297,7 +324,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_everyExerciseType_matchTheEntityWire() throws Exception {
         Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         addRichSubmissions(course);
@@ -312,7 +339,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_teamAndProgrammingParticipations_matchTheEntityWire() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -337,7 +364,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_examExerciseParticipation_matchesTheEntityWire() throws Exception {
         TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(examExercise, STUDENT);
@@ -360,7 +387,7 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR, roles = "USER")
     void submissions_doNotQueryPerSubmissionOrResult() throws Exception {
         Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         addRichSubmissions(course);
@@ -489,7 +516,6 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
         User user = userTestRepository.getUserWithAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
         courseAthenaConfigRepository.attachToCourseOf(exercise);
-        boolean isAtLeastTeachingAssistant = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, user.getId());
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
@@ -500,9 +526,8 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
         if (exercise instanceof QuizExercise quizExercise) {
             quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
         }
-        if (!isAtLeastTeachingAssistant) {
-            exercise.filterSensitiveInformation();
-        }
+        // The owner details URL always has the student projection, including for a staff owner.
+        exercise.filterSensitiveInformation();
         ObjectNode wire = objectMapper.createObjectNode();
         wire.set("exercise", objectMapper.valueToTree(exercise));
         plagiarismCaseApi.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).ifPresent(info -> wire.set("plagiarismCaseInfo", objectMapper.valueToTree(info)));

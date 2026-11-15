@@ -2,23 +2,21 @@ import { Locator, Page, expect } from '@playwright/test';
 import { admin, studentOne } from '../../support/users';
 import { test } from '../../support/fixtures';
 import { SEED_COURSES } from '../../support/seedData';
+import { expectInset } from '../../support/layout';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
 /**
- * End-to-end coverage for the split.js -> PrimeNG p-splitter migration. The student exercise details
- * view renders `jhi-resizable-panels` (a p-splitter) splitting the exercise content from the
+ * End-to-end coverage for the reusable exercise split panels. The student exercise details
+ * view renders `jhi-resizable-panels` splitting the exercise content from the
  * problem-statement / discussion tabs. Dragging the gutter must repartition the two panels.
  */
-test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, () => {
-    let textExercise: any;
-
-    test.beforeEach('Create text exercise', async ({ login, exerciseAPIRequests }) => {
+test.describe('Resizable exercise split panel', { tag: '@fast' }, () => {
+    test.beforeEach('Authenticate as admin', async ({ login }) => {
         await login(admin);
-        textExercise = await exerciseAPIRequests.createTextExercise({ course });
     });
 
-    /** Drags the p-splitter gutter horizontally by the given delta. `hover()` ensures the gutter is interactable. */
+    /** Drags the splitter gutter horizontally by the given delta. `hover()` ensures the gutter is interactable. */
     async function dragGutter(page: Page, gutter: Locator, deltaX: number): Promise<void> {
         await gutter.hover();
         const box = (await gutter.boundingBox())!;
@@ -62,11 +60,12 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         );
     }
 
-    test('repartitions the panels by dragging the splitter gutter', async ({ login, page, courseOverview }) => {
+    test('repartitions the panels by dragging the splitter gutter', async ({ login, page, courseOverview, exerciseAPIRequests }) => {
+        const textExercise = await exerciseAPIRequests.createTextExercise({ course });
         await login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
         await courseOverview.startExercise(textExercise.id!);
 
-        const splitter = page.locator('jhi-resizable-panels p-splitter').first();
+        const splitter = page.locator('jhi-resizable-panels').first();
         const gutter = splitter.getByTestId('splitter-gutter').first();
         const leftPanel = splitter.getByTestId('splitter-panel').first();
 
@@ -94,5 +93,28 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
             const width = (await leftPanel.boundingBox())!.width;
             expect(width).toBeLessThan(leftAfterGrow - 60);
         }).toPass({ timeout: 10_000 });
+    });
+
+    test('keeps the first narrow modeling panel flush while secondary tabs retain their gutter', async ({ login, page, courseOverview, exerciseAPIRequests }) => {
+        const modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+        await courseOverview.startExercise(modelingExercise.id!);
+        await page.setViewportSize({ width: 600, height: 800 });
+
+        const panels = page.locator('jhi-resizable-panels').first();
+        const tabs = panels.getByTestId('resizable-panel-tab');
+        const container = panels.getByTestId('resizable-panel-container');
+        const primary = container.getByTestId('resizable-panel-content').first();
+        await tabs.first().click();
+        await expect(container).toHaveCSS('padding', '0px');
+        await expectInset(primary, container, 'left', 0, { name: 'Flush modeling panel' });
+        await expectInset(primary, container, 'right', 0, { name: 'Flush modeling panel', scrollers: [container] });
+
+        await tabs.nth(1).click();
+        await expect(container).toHaveCSS('padding', '8px');
+        await tabs.first().click();
+        await expect(container).toHaveCSS('padding', '0px');
+        await expectInset(primary, container, 'left', 0, { name: 'Reopened modeling panel' });
+        await expectInset(primary, container, 'right', 0, { name: 'Reopened modeling panel', scrollers: [container] });
     });
 });

@@ -21,6 +21,7 @@
                                 @case ('solution') {
                                     <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
                                 }
+                                @default {}
                             }
                             <ng-template #modeBadge let-modeTranslation>
                                 <span class="small">
@@ -133,6 +134,7 @@
                                             }"
                                         />
                                     }
+                                    @default {}
                                 }
                                 <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
                                 <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
@@ -143,6 +145,12 @@
                                         (click)="navigateToQuestion(index)"
                                         [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                         [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
+                                        #keyboardAction142
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction142.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction142.click() : undefined"
                                     >
                                         <b class="fa">{{ abbreviation }}</b>
                                     </span>
@@ -273,7 +281,7 @@
                                 id="refresh-quiz"
                                 (onClick)="refreshQuiz(true)"
                                 [btnSize]="ButtonSize.SMALL"
-                                [btnType]="ButtonType.PRIMARY"
+                                [btnType]="ButtonType.SECONDARY"
                                 [title]="'artemisApp.exercise.refresh'"
                                 [disabled]="refreshingQuiz()"
                                 [icon]="faSync"
@@ -295,9 +303,27 @@
                         </div>
                     }
                 }
-                @if (mode() !== 'practice' && quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
-                    <div class="quiz-submitted-overlay alert alert-success">
+                @if (
+                    mode() !== 'practice' &&
+                    quizExercise()?.quizMode === QuizMode.SYNCHRONIZED &&
+                    !waitingForQuizStart() &&
+                    !showingResult() &&
+                    submission().submitted &&
+                    !submissionConfirmationDismissed()
+                ) {
+                    <div class="quiz-submitted-overlay alert alert-success" role="status" data-testid="quiz-submission-confirmation">
                         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            severity="secondary"
+                            variant="text"
+                            data-testid="dismiss-quiz-submission-confirmation"
+                            (click)="submissionConfirmationDismissed.set(true)"
+                        >
+                            {{ 'entity.action.close' | artemisTranslate }}
+                        </button>
                     </div>
                 }
             </div>
@@ -311,7 +337,7 @@
                                 <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
                                 <span class="text-bold">{{ timeUntilStart() }}</span>
                                 <br />
-                                <span>({{ quizExercise().releaseDate!.format('LT') }})</span>
+                                <span data-testid="quiz-planned-start-time">({{ startDate()!.format('LT') }})</span>
                             </div>
                         }
                     }
@@ -319,7 +345,12 @@
                         @if (quizExercise().quizMode === QuizMode.BATCHED && (quizExercise().remainingNumberOfAttempts ?? 1) > 0) {
                             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
                             <div class="join-batch-row">
-                                <input data-testid="join-patch-password" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
+                                <input
+                                    [attr.aria-label]="'artemisApp.quizExercise.quizInstructions.enterPassword' | artemisTranslate"
+                                    data-testid="join-patch-password"
+                                    [(ngModel)]="password"
+                                    (keyup.enter)="joinBatch()"
+                                />
                                 <jhi-button data-testid="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
                             </div>
                         }

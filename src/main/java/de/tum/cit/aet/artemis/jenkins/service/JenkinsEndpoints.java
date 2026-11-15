@@ -8,6 +8,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.util.UrlUtils;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 public enum JenkinsEndpoints {
 
     // @formatter:off

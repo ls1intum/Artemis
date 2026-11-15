@@ -68,7 +68,7 @@ class GroupNotificationScheduleServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
         exercise.setReleaseDate(now().plus(DELAY_MS, ChronoUnit.MILLIS));
         exerciseRepository.saveAndFlush(exercise);
@@ -78,7 +78,7 @@ class GroupNotificationScheduleServiceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");

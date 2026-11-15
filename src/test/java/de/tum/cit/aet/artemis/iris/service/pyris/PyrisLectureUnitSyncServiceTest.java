@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,10 +18,10 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.api.dtos.LectureUnitSyncOutcome;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -35,8 +37,6 @@ class PyrisLectureUnitSyncServiceTest {
 
     private PyrisConnectorService pyrisConnectorService;
 
-    private IrisSettingsService irisSettingsService;
-
     private VideoSourceResolverService videoSourceResolver;
 
     private PyrisLectureUnitSyncService service;
@@ -44,10 +44,9 @@ class PyrisLectureUnitSyncServiceTest {
     @BeforeEach
     void setUp() {
         pyrisConnectorService = mock(PyrisConnectorService.class);
-        irisSettingsService = mock(IrisSettingsService.class);
         videoSourceResolver = mock(VideoSourceResolverService.class);
 
-        service = new PyrisLectureUnitSyncService(pyrisConnectorService, irisSettingsService, videoSourceResolver);
+        service = new PyrisLectureUnitSyncService(pyrisConnectorService, videoSourceResolver);
         ReflectionTestUtils.setField(service, "artemisBaseUrl", ARTEMIS_BASE_URL);
     }
 
@@ -55,19 +54,22 @@ class PyrisLectureUnitSyncServiceTest {
     void updateLectureUnitMetadataInPyrisSendsLightweightMetadataWithoutReadingAttachmentFile() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         unit.setVideoSource("https://live.rbg.tum.de/watch/1");
-        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
-        when(videoSourceResolver.resolve(unit.getVideoSource())).thenReturn(new ResolvedVideo("https://cdn.example.org/playlist.m3u8", VideoSourceType.TUM_LIVE, null));
+        when(videoSourceResolver.resolve(eq(unit.getVideoSource()), anyLong()))
+                .thenReturn(new ResolvedVideo("https://cdn.example.org/playlist.m3u8", VideoSourceType.TUM_LIVE, null));
 
-        String token = service.updateLectureUnitMetadataInPyris(unit);
+        when(pyrisConnectorService.executeLectureMetadataWebhook(any())).thenReturn(true);
 
-        assertThat(token).isEqualTo("metadata-30");
+        LectureUnitSyncOutcome outcome = service.updateLectureUnitMetadataInPyris(unit);
+
+        assertThat(outcome).isEqualTo(LectureUnitSyncOutcome.DISPATCHED);
         ArgumentCaptor<PyrisLectureUnitMetadataWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitMetadataWebhookDTO.class);
         verify(pyrisConnectorService).executeLectureMetadataWebhook(dtoCaptor.capture());
         PyrisLectureUnitMetadataWebhookDTO dto = dtoCaptor.getValue();
         assertThat(dto.lectureUnitId()).isEqualTo(30L);
         assertThat(dto.lectureUnitName()).isEqualTo("Unit 1");
         // The link the webhook carries is the path the attachment is served under, which is built from the unit and the stored filename without touching the file.
-        assertThat(dto.lectureUnitLink()).isEqualTo(ARTEMIS_BASE_URL + "/attachments/attachment-video-units/30/read.pdf");
+        // The attachment link is relative to the file endpoint, so the full URL carries its prefix
+        assertThat(dto.lectureUnitLink()).isEqualTo(ARTEMIS_BASE_URL + "/api/core/files/attachments/attachment-video-units/30/read.pdf");
         assertThat(dto.lectureId()).isEqualTo(20L);
         assertThat(dto.lectureName()).isEqualTo("Lecture 1");
         assertThat(dto.courseId()).isEqualTo(10L);
@@ -81,8 +83,9 @@ class PyrisLectureUnitSyncServiceTest {
     void updateLectureUnitMetadataInPyrisKeepsLectureUnitLinkEmptyWhenAttachmentLinkIsMissing() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         unit.getAttachment().setLink(null);
-        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
-        when(videoSourceResolver.resolve(unit.getVideoSource())).thenReturn(new ResolvedVideo(null, null, null));
+        // Without a stored PDF, only a supported video makes the unit processable
+        when(videoSourceResolver.isSupportedSource(unit.getVideoSource())).thenReturn(true);
+        when(videoSourceResolver.resolve(eq(unit.getVideoSource()), anyLong())).thenReturn(new ResolvedVideo(null, null, null));
 
         service.updateLectureUnitMetadataInPyris(unit);
 
@@ -92,17 +95,26 @@ class PyrisLectureUnitSyncServiceTest {
     }
 
     @Test
+    void updateLectureUnitMetadataInPyrisSkipsAUnitWhoseOnlyContentIsAnUnsupportedVideo() {
+        AttachmentVideoUnit unit = attachmentVideoUnit();
+        unit.getAttachment().setLink(null);
+        unit.setVideoSource("https://example.com/recording");
+
+        assertThat(service.updateLectureUnitMetadataInPyris(unit)).isEqualTo(LectureUnitSyncOutcome.SKIPPED);
+        verify(pyrisConnectorService, never()).executeLectureMetadataWebhook(any());
+    }
+
+    @Test
     void updateLectureUnitMetadataInPyrisDoesNotResolveVideoForPdfOnlyUnit() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         unit.setVideoSource(null);
-        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
 
         service.updateLectureUnitMetadataInPyris(unit);
 
         ArgumentCaptor<PyrisLectureUnitMetadataWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitMetadataWebhookDTO.class);
         verify(pyrisConnectorService).executeLectureMetadataWebhook(dtoCaptor.capture());
         assertThat(dtoCaptor.getValue().videoLink()).isNull();
-        verify(videoSourceResolver, never()).resolve(any());
+        verify(videoSourceResolver, never()).resolve(any(), anyLong());
     }
 
     @Test
@@ -114,11 +126,12 @@ class PyrisLectureUnitSyncServiceTest {
         unit.getAttachment().setReleaseDate(releaseDate);
         unit.getAttachment().setLink("missing/path/that/must/not/be/read.PDF");
         unit.setVideoSource(null);
-        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
 
-        String token = service.updateLectureUnitVisibilityInPyris(unit, List.of(slide(3, null), slide(1, hiddenUntil), slide(2, null)));
+        when(pyrisConnectorService.executeLectureVisibilityWebhook(any())).thenReturn(true);
 
-        assertThat(token).isEqualTo("visibility-30");
+        LectureUnitSyncOutcome outcome = service.updateLectureUnitVisibilityInPyris(unit, List.of(slide(3, null), slide(1, hiddenUntil), slide(2, null)));
+
+        assertThat(outcome).isEqualTo(LectureUnitSyncOutcome.DISPATCHED);
         ArgumentCaptor<PyrisLectureUnitVisibilityWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitVisibilityWebhookDTO.class);
         verify(pyrisConnectorService).executeLectureVisibilityWebhook(dtoCaptor.capture());
         PyrisLectureUnitVisibilityWebhookDTO dto = dtoCaptor.getValue();
@@ -133,14 +146,16 @@ class PyrisLectureUnitSyncServiceTest {
     }
 
     @Test
-    void updateLectureUnitMetadataInPyrisReturnsNullWhenCourseDisabled() {
+    void updateLectureUnitMetadataInPyrisReportsSkippedWhenTheUnitHasNothingToIngest() {
+        // The course's Iris setting plays no role; only a unit without a PDF and without a supported video is skipped.
         AttachmentVideoUnit unit = attachmentVideoUnit();
-        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(false);
+        unit.setAttachment(null);
+        unit.setVideoSource(null);
 
-        assertThat(service.updateLectureUnitMetadataInPyris(unit)).isNull();
+        assertThat(service.updateLectureUnitMetadataInPyris(unit)).isEqualTo(LectureUnitSyncOutcome.SKIPPED);
 
         verify(pyrisConnectorService, never()).executeLectureMetadataWebhook(any());
-        verify(videoSourceResolver, never()).resolve(any());
+        verify(videoSourceResolver, never()).resolve(any(), anyLong());
     }
 
     private static AttachmentVideoUnit attachmentVideoUnit() {

@@ -99,6 +99,7 @@
     transition: opacity 0.3s; /* Add a smooth transition effect */
 }
 
-.preview-card:hover .close-button {
-    opacity: 1; /* Show the button on hover */
+.preview-card:hover .close-button,
+.preview-card:focus-within .close-button {
+    opacity: 1; /* Show the button on hover or keyboard focus */
 }

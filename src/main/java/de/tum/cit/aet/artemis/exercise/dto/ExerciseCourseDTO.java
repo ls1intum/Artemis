@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * @param unenrollmentEnabled                            whether students may unenroll themselves
  * @param onboardingDone                                 whether the course onboarding was completed
  * @param learningPathsEnabled                           whether learning paths are enabled in the course
+ * @param presentationAssessmentsEnabled                 whether presentation assessments are enabled in the course
  * @param gradeRelevant                                  whether the course counts towards a grade
  * @param dataRetentionHold                              whether the course data is held back from the retention job
  * @param autoOrchestratorEnabled                        whether auto-orchestration is enabled for the course
@@ -92,9 +93,9 @@ public record ExerciseCourseDTO(long id, @Nullable String title, @Nullable Strin
         @Nullable Integer accuracyOfScores, @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxComplaintTextLimit,
         int maxComplaintResponseTextLimit, boolean complaintsEnabled, boolean requestMoreFeedbackEnabled, int maxRequestMoreFeedbackTimeDays, @Nullable Integer presentationScore,
         @Nullable Integer maxPoints, @Nullable String timeZone, @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled,
-        @Nullable String enrollmentConfirmationMessage, boolean unenrollmentEnabled, boolean onboardingDone, boolean learningPathsEnabled, boolean gradeRelevant,
-        boolean dataRetentionHold, boolean autoOrchestratorEnabled, boolean trainingEnabled, @Nullable String courseArchivePath, boolean athenaGradingFeedbackEnabled,
-        boolean athenaFormativeFeedbackEnabled, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        @Nullable String enrollmentConfirmationMessage, boolean unenrollmentEnabled, boolean onboardingDone, boolean learningPathsEnabled, boolean presentationAssessmentsEnabled,
+        boolean gradeRelevant, boolean dataRetentionHold, boolean autoOrchestratorEnabled, boolean trainingEnabled, @Nullable String courseArchivePath,
+        boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
         @Nullable String courseInformationSharingMessagingCodeOfConduct) {
 
     /**
@@ -113,8 +114,8 @@ public record ExerciseCourseDTO(long id, @Nullable String title, @Nullable Strin
                 course.getMaxComplaintTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(),
                 course.getRequestMoreFeedbackEnabled(), course.getMaxRequestMoreFeedbackTimeDays(), course.getPresentationScore(), course.getMaxPoints(), course.getTimeZone(),
                 course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
-                course.isOnboardingDone(), course.getLearningPathsEnabled(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(),
-                course.isTrainingEnabled(), course.getCourseArchivePath(), course.isAthenaGradingFeedbackEnabled(), course.isAthenaFormativeFeedbackEnabled(),
-                course.getCourseInformationSharingConfiguration(), course.getCourseInformationSharingMessagingCodeOfConduct());
+                course.isOnboardingDone(), course.getLearningPathsEnabled(), course.getPresentationAssessmentsEnabled(), course.isGradeRelevant(), course.isDataRetentionHold(),
+                course.getAutoOrchestratorEnabled(), course.isTrainingEnabled(), course.getCourseArchivePath(), course.isAthenaGradingFeedbackEnabled(),
+                course.isAthenaFormativeFeedbackEnabled(), course.getCourseInformationSharingConfiguration(), course.getCourseInformationSharingMessagingCodeOfConduct());
     }
 }

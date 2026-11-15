@@ -151,23 +151,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     Optional<Result> findResultWithFeedbacksById(long resultId);
 
-    /**
-     * Finds the first result by participation ID, including its feedback, ordered by completion date in descending order.
-     * This method avoids in-memory paging by retrieving the first result directly from the database.
-     *
-     * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with feedback, ordered by completion date in descending order,
-     *         or an empty {@code Optional} if no result is found
-     */
-    default Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
-        if (resultOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var id = resultOptional.get().getId();
-        return findResultWithFeedbacksById(id);
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "submission" })
     Optional<Result> findResultWithSubmissionAndFeedbacksById(long resultId);
 
@@ -232,24 +215,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
-     * counts the number of assessments of a course, which are either rated or not rated (excluding test run participations)
-     *
-     * @param exerciseIdsWithManualAssessment - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
-     * @return the number of assessments for the course
-     */
-    @Query("""
-            SELECT COUNT(r)
-            FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-            WHERE r.completionDate IS NOT NULL
-                AND r.assessor IS NOT NULL
-                AND p.testRun = FALSE
-                AND r.exerciseId IN :exerciseIds
-            """)
-    long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
-
-    /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
      *
      * @param resultId the id of the result to load from the database
@@ -302,27 +267,51 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
-     * Counts the number of finished assessments for a set of exercise IDs, ignoring test runs.
-     * Only submissions that have been submitted before the due date (if set) are considered.
+     * Counts the submissions of text, modeling and file upload exercises with at least one finished manual result, ignoring test runs.
+     * Every such submission counts exactly once, no matter whether it was submitted in time or late, whether its result is rated and how many results it has
+     * (e.g. after a complaint response). A participation can contain several submitted submissions, which are counted separately.
+     * This matches how {@code SubmissionRepository#countAllByExerciseIdsSubmittedBeforeDueDate} and {@code SubmissionRepository#countAllByExerciseIdsSubmittedAfterDueDate}
+     * count the submissions of the same exercises.
      *
      * @param exerciseIds set of exercise IDs
-     * @return the number of finished assessments for the given exercise IDs, ignoring test runs
+     * @return the number of assessed submissions for the given exercise IDs, ignoring test runs
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT s)
+            FROM Result r
+                JOIN r.submission s
+                JOIN s.participation p
+                JOIN p.exercise e
+            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+            """)
+    long countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Counts the participations of programming exercises with a submitted submission and at least one finished manual result, ignoring test runs.
+     * A student can have multiple submissions in a programming exercise, so the participations are counted, like
+     * {@code ProgrammingExerciseRepository#countAllSubmissionsByExerciseIdsSubmitted} does for the submissions of the same exercises.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of assessed participations for the given exercise IDs, ignoring test runs
      */
     @Query("""
             SELECT COUNT(DISTINCT p)
-            FROM StudentParticipation p
+            FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
                 JOIN s.results r
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
-                AND r.rated = TRUE
                 AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
-    long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * @param exerciseId id of exercise
@@ -424,6 +413,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -438,6 +428,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -452,6 +443,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
             ORDER BY p.id DESC, s.id DESC, r.id DESC
@@ -467,6 +459,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
             ORDER BY p.id DESC, s.id DESC, r.id DESC
@@ -492,9 +485,25 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
+     * Checks if the given submission has a manual result (manual or semi-automatic) for the given correction round.
+     *
+     * @param submissionId    the ID of the submission to check.
+     * @param correctionRound the correction round of the result.
+     * @return true if the submission has a manual result for the given correction round, false otherwise.
+     */
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Result r
+            WHERE r.submission.id = :submissionId
+                AND r.correctionRound = :correctionRound
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+            """)
+    boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
+
+    /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
-     * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry
+     * Two callers need this. The participation page renders assessment actions per correction round, so it needs one entry
      * per round rather than only the newest result, and the exam score statistics report what the first round scored.
      * Automatic and Athena results are left out because they are not correction rounds, which matches
      * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
@@ -634,7 +643,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     * Given the exercise ids of a course, return the number of assessed submissions for these exercises that have been completed (e.g. no draft!).
+     * This is the counterpart of the submissions counted for the same exercises, i.e. one per submission for text, modeling and file upload exercises
+     * and one per participation for programming exercises, independent of the due date and the rated flag.
      *
      * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
@@ -644,7 +655,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0;
         }
-        return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
+        return countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(exerciseIds) + countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
     /**
@@ -808,19 +819,47 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Get the latest result from the database by participation id together with the list of feedback items.
+     * Finds the id of the latest result a student may see for a participation (the highest visible result id), or empty if none is visible. A result is visible when it is
+     * automatic
+     * (including Athena) or a completed manual assessment whose assessment due date is unset or has passed, mirroring {@link #findLatestResultWithFeedbacksBySubmissionId}.
+     * Selecting
+     * only the id avoids materializing the discarded result history; exam hiding is applied by the caller beforehand.
+     *
+     * @param participationId the participation to load the latest visible result id for
+     * @param dateTime        the reference time compared against the assessment due date (usually now)
+     * @return the latest visible result id, or empty if none is visible
+     */
+    @Query("""
+            SELECT r.id FROM Result r WHERE r.id = (
+                SELECT MAX(r2.id) FROM Result r2
+                    JOIN r2.submission s2 JOIN s2.participation p2 LEFT JOIN p2.exercise e2
+                WHERE p2.id = :participationId AND (
+                    r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    OR (r2.completionDate IS NOT NULL AND (e2.assessmentDueDate IS NULL OR e2.assessmentDueDate < :dateTime))
+                )
+            )
+            """)
+    Optional<Long> findLatestVisibleResultIdForParticipation(@Param("participationId") long participationId, @Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Get the latest result a student may see for a participation, together with the list of feedback items, applying the course release gate.
      *
      * @param participationId the id of the participation to load from the database
      * @param withSubmission  determines whether the submission should also be fetched
+     * @param dateTime        the reference time the assessment due date is compared against (usually now)
      * @return an optional result (might exist or not).
      */
-    default Optional<Result> findLatestResultWithFeedbacksForParticipation(long participationId, boolean withSubmission) {
+    default Optional<Result> findLatestVisibleResultWithFeedbacksForParticipation(long participationId, boolean withSubmission, ZonedDateTime dateTime) {
+        Optional<Long> latestVisibleResultId = findLatestVisibleResultIdForParticipation(participationId, dateTime);
+        if (latestVisibleResultId.isEmpty()) {
+            return Optional.empty();
+        }
+        long id = latestVisibleResultId.get();
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findResultWithSubmissionAndFeedbacksById(id);
         }
-        else {
-            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        }
+        return findResultWithFeedbacksById(id);
     }
 
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
@@ -910,7 +949,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
-                 AND r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
@@ -928,6 +967,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                   WHERE s2.id = :submissionId
                     AND (
                       r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                       OR (
                         r2.completionDate IS NOT NULL
                         AND (

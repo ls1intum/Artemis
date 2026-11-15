@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,7 +25,9 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -130,8 +133,21 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise) {
+        return of(exercise, null);
+    }
+
+    /**
+     * Creates a {@link ProgrammingExerciseResponseDTO} from the given exercise and its build configuration. The
+     * configuration is a row of its own that names the exercise, so the endpoints whose clients read it pass it in;
+     * the others leave it out rather than spend a query on it.
+     *
+     * @param exercise    the exercise to convert (may be {@code null})
+     * @param buildConfig its build configuration, or {@code null} when the response does not carry one
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig) {
         // The entity always put the transient flag on the wire, so the default false is carried rather than dropped.
-        return of(exercise, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed());
+        return of(exercise, buildConfig, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed());
     }
 
     /**
@@ -151,11 +167,12 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * the file is handed to another instance, the import reads none of it, and student work has no business in an
      * exercise export.
      *
-     * @param exercise the exercise to export (may be {@code null})
+     * @param exercise    the exercise to export (may be {@code null})
+     * @param buildConfig its build configuration, which is stored separately and read by the caller
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
-    public static ProgrammingExerciseResponseDTO forExport(ProgrammingExercise exercise) {
-        return of(exercise, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed(), true);
+    public static ProgrammingExerciseResponseDTO forExport(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig) {
+        return of(exercise, buildConfig, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed(), true);
     }
 
     /**
@@ -165,18 +182,40 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * off the entity's transient default.
      *
      * @param exercise                       the exercise to convert (may be {@code null})
+     * @param buildConfig                    its build configuration, or {@code null} when the response does not carry one
      * @param gradingInstructionFeedbackUsed whether structured grading instructions were used in feedback, or
      *                                           {@code null} when the endpoint does not compute it
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
-    public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, Boolean gradingInstructionFeedbackUsed) {
-        return of(exercise, gradingInstructionFeedbackUsed, false);
+    public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfigEntity,
+            Boolean gradingInstructionFeedbackUsed) {
+        return of(exercise, buildConfigEntity, gradingInstructionFeedbackUsed, false);
     }
 
-    private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, Boolean gradingInstructionFeedbackUsed, boolean forExport) {
+    /**
+     * Creates the response for a student: like {@link #of(ProgrammingExercise)}, but with the build time window of the exercise as the only part of the build
+     * configuration, because the students' pages tell them why a push is not built.
+     *
+     * @param exercise        the exercise to convert (may be {@code null})
+     * @param buildTimeWindow the build time window of the exercise, {@code null} if pushes are always built
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ProgrammingExerciseResponseDTO ofForStudent(ProgrammingExercise exercise, @Nullable BuildTimeWindow buildTimeWindow) {
+        return of(exercise, UpdateProgrammingExerciseBuildConfigDTO.ofBuildTimeWindow(buildTimeWindow), exercise == null ? null : exercise.isGradingInstructionFeedbackUsed(),
+                false);
+    }
+
+    private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfigEntity,
+            Boolean gradingInstructionFeedbackUsed, boolean forExport) {
+        return of(exercise, UpdateProgrammingExerciseBuildConfigDTO.of(buildConfigEntity), gradingInstructionFeedbackUsed, forExport);
+    }
+
+    private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable UpdateProgrammingExerciseBuildConfigDTO buildConfigDto,
+            Boolean gradingInstructionFeedbackUsed, boolean forExport) {
         if (exercise == null) {
             return null;
         }
+        UpdateProgrammingExerciseBuildConfigDTO buildConfig = buildConfigDto;
 
         ProgrammingExerciseCourseDTO course = ProgrammingExerciseCourseDTO.ofCourseExercise(exercise);
         ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
@@ -188,7 +227,7 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         List<GradingCriterionDTO> gradingCriteria = null;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriteria = criteria.stream().map(GradingCriterionDTO::of).toList();
+            gradingCriteria = GradingCriterionDTO.ofAll(criteria);
         }
 
         Set<CompetencyLinkDTO> competencyLinks = null;
@@ -221,7 +260,6 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         var submissionPolicyEntity = exercise.getSubmissionPolicy();
         SubmissionPolicyDTO submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity)
                 : null;
-        UpdateProgrammingExerciseBuildConfigDTO buildConfig = UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig());
         TemplateSolutionParticipationDTO templateParticipation = TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation());
         TemplateSolutionParticipationDTO solutionParticipation = TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation());
 

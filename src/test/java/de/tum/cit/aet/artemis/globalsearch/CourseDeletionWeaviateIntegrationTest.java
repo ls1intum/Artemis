@@ -14,11 +14,10 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
@@ -64,6 +64,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "cdweaviateint";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
@@ -100,7 +103,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     @Test
@@ -108,12 +111,13 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesExercisesFromWeaviate() throws Exception {
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(exercise));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, exercise));
+        assertExerciseExistsInWeaviate(weaviateService, exercise);
 
         long exerciseId = exercise.getId();
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, exerciseId));
+        assertExerciseNotInWeaviate(weaviateService, exerciseId);
     }
 
     @Test
@@ -121,12 +125,13 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesLecturesFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
+        assertLectureExistsInWeaviate(weaviateService, lecture);
 
         long lectureId = lecture.getId();
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureNotInWeaviate(weaviateService, lectureId));
+        assertLectureNotInWeaviate(weaviateService, lectureId);
     }
 
     @Test
@@ -135,12 +140,13 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         Lecture lecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
         searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(textUnit));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId()));
+        assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId());
 
         long textUnitId = textUnit.getId();
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureUnitNotInWeaviate(weaviateService, textUnitId));
+        assertLectureUnitNotInWeaviate(weaviateService, textUnitId);
     }
 
     @Test
@@ -148,12 +154,13 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesExamsFromWeaviate() throws Exception {
         Exam exam = examUtilService.addExam(course);
         searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExamExistsInWeaviate(weaviateService, exam.getId()));
+        assertExamExistsInWeaviate(weaviateService, exam.getId());
 
         long examId = exam.getId();
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExamNotInWeaviate(weaviateService, examId));
+        assertExamNotInWeaviate(weaviateService, examId);
     }
 
     @Test
@@ -167,7 +174,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         Faq savedFaq2 = faqRepository.save(faq2);
         searchableEntityWeaviateService.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq2));
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertFaqExistsInWeaviate(weaviateService, savedFaq1.getId());
             assertFaqExistsInWeaviate(weaviateService, savedFaq2.getId());
         });
@@ -175,9 +182,11 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         long faq1Id = savedFaq1.getId();
         long faq2Id = savedFaq2.getId();
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
+
+        awaitIndexing(() -> {
             assertFaqNotInWeaviate(weaviateService, faq1Id);
             assertFaqNotInWeaviate(weaviateService, faq2Id);
         });
@@ -193,23 +202,25 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         channel.setIsAnnouncementChannel(false);
 
         Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertChannelExistsInWeaviate(weaviateService, createdChannel));
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
 
         long channelId = createdChannel.getId();
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertChannelNotInWeaviate(weaviateService, channelId));
+        assertChannelNotInWeaviate(weaviateService, channelId);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesCourseFromWeaviate() throws Exception {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseExistsInWeaviate(weaviateService, course));
+        assertCourseExistsInWeaviate(weaviateService, course);
 
         long courseId = course.getId();
-        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
+        request.delete("/api/admin/courses/" + courseId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(courseId);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseNotInWeaviate(weaviateService, courseId));
+        assertCourseNotInWeaviate(weaviateService, courseId);
     }
 }

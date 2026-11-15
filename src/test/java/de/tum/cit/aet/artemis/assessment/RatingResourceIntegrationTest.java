@@ -93,7 +93,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateRating_asTutor_FORBIDDEN() throws Exception {
         request.post("/api/assessment/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
     }
@@ -107,7 +107,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetRating_asUser_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.get("/api/assessment/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Integer.class);
@@ -140,7 +140,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/assessment/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
@@ -151,7 +151,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetRatingForInstructorDashboard_asInstructor() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
 
@@ -172,7 +172,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetRatingForInstructorDashboard_withPagination() throws Exception {
         // Create a rating
         ratingService.saveRating(result.getId(), rating.getRating());
@@ -185,7 +185,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
@@ -197,7 +197,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }

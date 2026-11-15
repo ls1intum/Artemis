@@ -10,6 +10,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
+import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
@@ -332,7 +333,7 @@ describe('FeedbackComponent', () => {
         fixture.detectChanges();
 
         expect(comp.participation()!.exercise).toBeUndefined();
-        const tagTexts = [...fixture.nativeElement.querySelectorAll('p-tag')].map((tag: Element) => tag.textContent?.trim());
+        const tagTexts = [...fixture.nativeElement.querySelectorAll('tumaet-ui-tag')].map((tag: Element) => tag.textContent?.trim());
         expect(tagTexts).toContain('ARTEMISAPP.RESULT.PRELIMINARY');
     });
 
@@ -517,8 +518,95 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.loadingFailed()).toBe(true);
+        expect(comp.loadingFailed()).toBe(false);
+        expect(comp.buildLogsFailed()).toBe(true);
         expect(comp.isLoading()).toBe(false);
+    });
+
+    it('shows available build logs even while feedback details are still loading', () => {
+        getFeedbackDetailsForResultStub.mockReturnValue(new Subject<HttpResponse<Feedback[]>>());
+        buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Available compiler diagnostic' }]));
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('Available compiler diagnostic');
+        expect(fixture.nativeElement.querySelector('[data-testid="result-detail-spinner"]')).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+    });
+
+    it('keeps feedback visible while failed-build logs are still loading', () => {
+        const logs = new Subject<never[]>();
+        buildlogsStub.mockReturnValue(logs);
+        comp.result().feedbacks = [makeFeedback({ detailText: 'Retain this test feedback' })];
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.feedback-list')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="build-log-spinner"]')).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+    });
+
+    it('keeps feedback visible when logs fail and retries only the logs on request', () => {
+        buildlogsStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp.result().feedbacks = [makeFeedback({ detailText: 'Retain this test feedback' })];
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.feedback-list')).not.toBeNull();
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-build-logs"]') as HTMLButtonElement;
+        expect(retry).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+        buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Compiler diagnostic' }]));
+        retry.click();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('Compiler diagnostic');
+        expect(fixture.nativeElement.querySelector('[data-testid="retry-build-logs"]')).toBeNull();
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+    });
+
+    it('shows a details error instead of the empty state and allows retry', () => {
+        comp.result().submission = generateProgrammingSubmission(false);
+        getFeedbackDetailsForResultStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-feedback-details"]') as HTMLButtonElement;
+        expect(retry).not.toBeNull();
+        getFeedbackDetailsForResultStub.mockReturnValue(of(new HttpResponse({ body: [makeFeedback({ detailText: 'Recovered feedback' })] })));
+        retry.click();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.feedback-list')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="retry-feedback-details"]')).toBeNull();
+    });
+
+    it('loads logs for the selected historical result even when its submission was rebuilt successfully', () => {
+        comp.result().submission = generateProgrammingSubmission(false);
+        comp.result().successful = false;
+        buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Historical compiler diagnostic' }]));
+
+        fixture.detectChanges();
+
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
+        expect(fixture.nativeElement.textContent).toContain('Historical compiler diagnostic');
+    });
+
+    it('should leave a margin below the last build log entry of a timestamp', () => {
+        buildlogsStub.mockReturnValue(
+            of(
+                BuildLogEntryArray.fromBuildLogs([
+                    { time: '2024-01-01T10:00:00Z', log: 'first' },
+                    { time: '2024-01-01T10:00:00Z', log: 'second' },
+                    { time: '2024-01-01T10:00:05Z', log: 'third' },
+                ]),
+            ),
+        );
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const entries: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('dl.buildoutput dd'));
+        expect(entries.map((entry) => entry.classList.contains('mb-4!'))).toEqual([false, true, false]);
     });
 
     it('should not show test details to students', () => {
@@ -557,9 +645,9 @@ describe('FeedbackComponent', () => {
         expect(createSpy).toHaveBeenCalledWith(feedbacks, true);
     });
 
-    describe('when opened via DialogService (inputValues forwarded via setInput)', () => {
+    describe('when opened via TumAetUiDialogService (inputValues forwarded via setInput)', () => {
         it('reads the inputs forwarded by the dialog before initializing feedback', () => {
-            // The standalone-feedback page binds inputs via the template; PrimeNG's DialogService forwards `inputValues`
+            // The standalone-feedback page binds inputs via the template; PrimeNG's TumAetUiDialogService forwards `inputValues`
             // by calling componentRef.setInput on the same signal inputs. This verifies that dialog-forwarded path.
             TestBed.resetTestingModule();
 

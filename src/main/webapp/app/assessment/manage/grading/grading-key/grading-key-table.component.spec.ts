@@ -135,10 +135,16 @@ describe('GradingKeyTableComponent', () => {
             expect(component.isExam).toBe(true);
         });
 
+        it('should pass explicit management purpose to grading service', () => {
+            fixture.componentRef.setInput('purpose', 'management');
+            fixture.detectChanges();
+            expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId, 'management');
+        });
+
         it('should load grade steps from service', () => {
             fixture.detectChanges();
 
-            expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
+            expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId, 'student');
             expect(component.title()).toBe('Test Exam');
             expect(component.gradeSteps()).toHaveLength(2);
             expect(component.isBonus()).toBe(false);

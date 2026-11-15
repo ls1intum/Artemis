@@ -13,11 +13,12 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
     imports: [NgTemplateOutlet, CourseTitleBarTitleComponent],
 })
 export class CourseTitleBarComponent {
+    private courseTitleBarService = inject(CourseTitleBarService);
+
     readonly displayStyle = computed(() => (this.isExamStarted() ? 'none' : 'flex'));
     pageTitle = input('');
     isExamStarted = input(false);
 
-    private courseTitleBarService = inject(CourseTitleBarService);
     readonly customTitleTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
     readonly customActionsTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
     readonly customToolbarTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.toolbarTemplate());

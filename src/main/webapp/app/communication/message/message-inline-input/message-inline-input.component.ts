@@ -2,15 +2,14 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, effect, inject, input,
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { PostContentValidationPattern } from 'app/communication/metis.util';
+import { PostContentValidationPattern } from 'app/communication/communication.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { DraftService } from 'app/communication/message/service/draft-message.service';
+import { DraftMessageInputDirective } from '../draft-message-input.directive';
 import { Subscription } from 'rxjs';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -21,9 +20,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnDestroy {
+export class MessageInlineInputComponent extends DraftMessageInputDirective<Post | AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private draftService = inject(DraftService);
 
     course = input<Course>();
     activeConversation = input<ConversationDTO>();
@@ -81,7 +79,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     /**
-     * invokes the metis service after setting the title and current date as creation date of the new answer post,
+     * invokes the communication service after setting the title and current date as creation date of the new answer post,
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
@@ -94,7 +92,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             }
             const payload = deepClone(posting);
             payload.content = this.formGroup.get('content')?.value;
-            this.metisService.createPost(payload).subscribe({
+            this.communicationService.createPost(payload).subscribe({
                 next: (post: Post) => {
                     this.isLoading.set(false);
                     this.clearDraft();
@@ -108,7 +106,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     /**
-     * invokes the metis service with the updated answer post
+     * invokes the communication service with the updated answer post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
@@ -120,7 +118,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         const payload = deepClone(posting);
         payload.content = this.formGroup.get('content')?.value;
         this.isModalOpen.emit();
-        this.metisService.updatePost(payload).subscribe({
+        this.communicationService.updatePost(payload).subscribe({
             next: () => {
                 this.isLoading.set(false);
                 this.clearDraft();
@@ -131,7 +129,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         });
     }
 
-    private getDraftKey(): string {
+    protected override getDraftKey(): string {
         const userId = this.currentUserId;
         const conversationId = this.activeConversation()?.id;
 
@@ -139,33 +137,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             return '';
         }
         return `${this.DRAFT_KEY_PREFIX}${userId}_${conversationId}`;
-    }
-
-    private saveDraft(content: string): void {
-        const key = this.getDraftKey();
-        if (!key) {
-            return;
-        }
-        this.draftService.saveDraft(key, content);
-    }
-
-    private loadDraft(): void {
-        const key = this.getDraftKey();
-        if (!key) {
-            return;
-        }
-        const draft = this.draftService.loadDraft(key);
-        if (draft && this.posting() && this.formGroup) {
-            this.formGroup.get('content')?.setValue(draft);
-        }
-    }
-
-    private clearDraft(): void {
-        const key = this.getDraftKey();
-        if (!key) {
-            return;
-        }
-        this.draftService.clearDraft(key);
     }
 
     ngOnDestroy(): void {

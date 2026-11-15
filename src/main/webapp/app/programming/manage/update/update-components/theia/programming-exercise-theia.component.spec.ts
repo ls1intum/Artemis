@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
@@ -86,5 +87,25 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         fixture.detectChanges();
         comp.loadTheiaImages();
         expect(comp.programmingExercise().buildConfig?.theiaImage).toMatch('test-url-2');
+    });
+
+    it('should offer every experience level and leave the level unset by default', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const options: HTMLOptionElement[] = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="online-ide-experience-level"] option'));
+        expect(options).toHaveLength(4);
+        expect(comp.experienceLevels).toEqual([OnlineIdeExperienceLevel.BEGINNER, OnlineIdeExperienceLevel.ADVANCED, OnlineIdeExperienceLevel.EXPERT]);
+        expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBeUndefined();
+    });
+
+    it('should store the selected experience level in the build config', () => {
+        fixture.detectChanges();
+
+        comp.onExperienceLevelChange(OnlineIdeExperienceLevel.BEGINNER);
+        expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBe(OnlineIdeExperienceLevel.BEGINNER);
+
+        comp.onExperienceLevelChange(undefined);
+        expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBeUndefined();
     });
 });

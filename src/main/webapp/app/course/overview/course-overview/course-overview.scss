@@ -25,11 +25,6 @@ Course Info Bar
         align-items: center;
         justify-content: flex-end;
         margin-bottom: 20px;
-
-        .chart-text {
-            position: absolute;
-            width: 350px;
-        }
     }
 
     .color-legend-container {
@@ -117,17 +112,6 @@ canvas#complete-chart {
     &:disabled {
         background-color: gray;
     }
-}
-
-/* Default the color to white even on bootstrap 5 */
-.btn-primary,
-.btn-primary:hover,
-.btn-primary:disabled,
-.btn-info,
-.btn-info:hover,
-.btn-success,
-.btn-success:hover {
-    color: #fff;
 }
 
 @media (max-width: 768px) {

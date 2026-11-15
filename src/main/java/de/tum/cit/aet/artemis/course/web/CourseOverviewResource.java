@@ -30,18 +30,26 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
@@ -52,6 +60,8 @@ import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
 import de.tum.cit.aet.artemis.course.service.CourseOverviewExerciseService;
@@ -63,14 +73,19 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for providing courses in the student view.
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("student-view/course-overview")
+@FeatureUsage(UserFeature.COURSE_OVERVIEW)
 @RestController
 @RequestMapping({ "api/course/" })
 public class CourseOverviewResource {
@@ -105,10 +120,19 @@ public class CourseOverviewResource {
 
     private final CourseOverviewExerciseService courseOverviewExerciseService;
 
+    private final Optional<LtiApi> ltiApi;
+
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, Optional<ExamRepositoryApi> examRepositoryApi,
             ComplaintService complaintService, TeamRepository teamRepository, CourseAvailableTabsService courseAvailableTabsService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService, Optional<LtiApi> ltiApi,
+            Optional<TutorialGroupApi> tutorialGroupApi, CourseAthenaConfigRepository courseAthenaConfigRepository, CourseConfigurationRepository courseConfigurationRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -121,6 +145,10 @@ public class CourseOverviewResource {
         this.courseAvailableTabsService = courseAvailableTabsService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
         this.courseOverviewExerciseService = courseOverviewExerciseService;
+        this.ltiApi = ltiApi;
+        this.tutorialGroupApi = tutorialGroupApi;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -225,6 +253,8 @@ public class CourseOverviewResource {
      */
     @GetMapping("courses/for-dropdown")
     @EnforceAtLeastStudent
+    @AllowedScopes(AgentScope.COURSES_READ)
+    @Operation(summary = "List your courses", description = "Returns the id, title and icon of every active course the caller belongs to. Use the ids in the paths of the other operations.")
     public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
         long start = System.nanoTime();
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
@@ -242,6 +272,7 @@ public class CourseOverviewResource {
      *         DTO contains the total scores for the course, the scores per exercise
      *         type for each exercise, and the participation result for each participation.
      */
+    @FeatureUsage(UserFeature.COURSE_DASHBOARD)
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -294,6 +325,8 @@ public class CourseOverviewResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the set of courses (the user has access to)
      */
+    @FeatureUsage(UserFeature.COURSE_NOTIFICATIONS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CourseWithIdDTO>> getCoursesForNotifications() {
@@ -308,33 +341,65 @@ public class CourseOverviewResource {
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    // TODO: this method is invoked quite often as part of course management resolve. However, it might not be necessary to fetch tutorial group configuration and online course
-    // configuration in such cases.
     @GetMapping("courses/{courseId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseManagementDTO> getCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get course {} for students", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
-        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
-        }
-        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        }
-
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            userRepository.setUserCountsForCourse(course);
-        }
-
-        return ResponseEntity.ok(CourseManagementDTO.of(course));
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.STUDENT));
     }
 
+    /**
+     * Returns the course settings and counts required by tutors and editors.
+     *
+     * @param courseId the course to retrieve
+     * @return the fixed tutor projection
+     */
+    @GetMapping("courses/{courseId}/for-tutor")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<CourseManagementDTO> getCourseForTutor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.TUTOR));
+    }
+
+    /**
+     * Returns the complete course management settings for instructors.
+     *
+     * @param courseId the course to retrieve
+     * @return the fixed instructor projection
+     */
+    @GetMapping("courses/{courseId}/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<CourseManagementDTO> getCourseForInstructor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.INSTRUCTOR));
+    }
+
+    private enum CourseProjection {
+        STUDENT, TUTOR, INSTRUCTOR
+    }
+
+    private CourseManagementDTO loadCourse(Long courseId, CourseProjection projection) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        // Each configuration owns its course key and is read only by the projection that needs it.
+        OnlineCourseConfiguration onlineConfiguration = null;
+        TutorialGroupsConfiguration tutorialConfiguration = null;
+        boolean presentationAssessmentsEnabled = false;
+        if (projection == CourseProjection.INSTRUCTOR) {
+            courseAthenaConfigRepository.attachTo(course);
+            courseConfigurationRepository.attachTo(course);
+            presentationAssessmentsEnabled = course.getPresentationAssessmentsEnabled();
+            onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
+        }
+        else if (projection == CourseProjection.TUTOR) {
+            presentationAssessmentsEnabled = courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).orElse(false);
+        }
+        if (projection != CourseProjection.STUDENT) {
+            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
+            userRepository.setUserCountsForCourse(course);
+        }
+        return CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration, presentationAssessmentsEnabled);
+    }
+
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/title")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
         final var title = courseRepository.getCourseTitle(courseId);
@@ -351,8 +416,9 @@ public class CourseOverviewResource {
      * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
+    @FeatureUsage(UserFeature.COMPLAINTS)
     @GetMapping("courses/{courseId}/allowed-complaints")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
         User user = userRepository.getUser();

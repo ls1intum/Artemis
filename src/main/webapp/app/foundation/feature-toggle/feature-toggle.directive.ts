@@ -13,10 +13,10 @@ export class FeatureToggleDirective {
     private featureToggleService = inject(FeatureToggleService);
 
     features = input<FeatureToggle | FeatureToggle[] | undefined>(undefined, { alias: 'jhiFeatureToggle' });
-    overwriteDisabled = input<boolean | null>(null);
+    forceDisabled = input<boolean | null>(null);
     skipFeatureToggle = input<boolean>(false);
     private featureActive = signal(true);
-    disabled = computed(() => this.overwriteDisabled() === true || !this.featureActive());
+    disabled = computed(() => this.forceDisabled() === true || !this.featureActive());
 
     constructor() {
         effect((onCleanup) => {

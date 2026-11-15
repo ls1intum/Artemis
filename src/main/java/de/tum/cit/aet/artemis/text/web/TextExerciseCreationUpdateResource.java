@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.text.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -25,25 +24,30 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -55,13 +59,15 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for creating and updating text exercises.
  */
 @Conditional(TextEnabled.class)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.TEXT_AUTHORING)
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseCreationUpdateResource {
@@ -88,9 +94,13 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final TextExerciseRepository textExerciseRepository;
+
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    private final ExerciseConfigurationService exerciseConfigurationService;
 
     private final UserRepository userRepository;
 
@@ -106,8 +116,12 @@ public class TextExerciseCreationUpdateResource {
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyApi> competencyApi,
-            Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ExerciseVariantGroupService exerciseVariantGroupService) {
+            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -121,7 +135,6 @@ public class TextExerciseCreationUpdateResource {
         this.competencyProgressApi = competencyProgressApi;
         this.competencyApi = competencyApi;
         this.slideApi = slideApi;
-        this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
@@ -136,7 +149,15 @@ public class TextExerciseCreationUpdateResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Create a text exercise", description = """
+            Creates a text exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
+            personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically at releaseDate, \
+            so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            title, maxPoints, includedInOverallScore and courseId are required.""")
+    @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<TextExerciseResponseDTO> createTextExercise(@RequestBody UpdateTextExerciseDTO createTextExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", createTextExerciseDTO);
         if (createTextExerciseDTO.id() != null) {
@@ -158,6 +179,7 @@ public class TextExerciseCreationUpdateResource {
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
+        textExercise.validateTitle();
         // validates general settings: points, dates
         textExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
@@ -167,15 +189,22 @@ public class TextExerciseCreationUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // After the role check, so that a caller who may not create exercises is not told what the dates should be.
+        AgentDraftRules.requireDraftDatesForCreate(textExercise.getReleaseDate(), textExercise.getStartDate());
 
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(textExercise);
         TextExercise savedExercise = textExerciseRepository.save(textExercise);
+        // The configurations hold the key to their exercise, so their permanent rows are created right after the exercise
+        // exists: nothing that can fail in between may leave an exercise without them.
+        exerciseConfigurationService.initialize(savedExercise, textExercise.getTeamAssignmentConfig(), textExercise.getPlagiarismDetectionConfig());
         if (!competencyLinks.isEmpty()) {
+            TextExercise firstSave = savedExercise;
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = textExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
         }
         final TextExercise result = savedExercise;
 
@@ -183,9 +212,6 @@ public class TextExerciseCreationUpdateResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
-
-        // Notify AtlasML about the new text exercise
-        notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
 
         exerciseVersionService.createExerciseVersion(result);
 
@@ -203,7 +229,13 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Update a text exercise", description = """
+            Replaces the editable fields of an existing text exercise, so send the whole exercise. A request with a personal access \
+            token can change only an exercise that students cannot see yet (its releaseDate is in the future), and the change must \
+            keep releaseDate in the future. Published exercises can be changed only in the Artemis web interface.""")
     public ResponseEntity<TextExerciseResponseDTO> updateTextExercise(@RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update TextExercise : {}", updateTextExerciseDTO);
@@ -243,6 +275,11 @@ public class TextExerciseCreationUpdateResource {
             throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
         }
 
+        // A personal access token may only change an exercise that is still a draft, and must not publish it. Checked before
+        // update() applies the DTO to the managed entity.
+        AgentDraftRules.requireStillDraft(originalExercise.getReleaseDate(), originalExercise.getStartDate(), updateTextExerciseDTO.releaseDate(),
+                updateTextExerciseDTO.startDate());
+
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
         ZonedDateTime oldReleaseDate = originalExercise.getReleaseDate();
@@ -265,6 +302,10 @@ public class TextExerciseCreationUpdateResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration and
+        // adds the default row an incomplete creation left out. The plagiarism detection configuration is stored when the update carried one and read otherwise.
+        teamAssignmentConfigRepository.applyTo(persistedExercise, null);
+        plagiarismDetectionConfigRepository.applyTo(persistedExercise, updatedExercise.getPlagiarismDetectionConfig());
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
@@ -275,9 +316,6 @@ public class TextExerciseCreationUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
-
-        // Notify AtlasML about the text exercise update
-        notifyAtlasML(persistedExercise, OperationTypeDTO.UPDATE, "text exercise update");
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
@@ -300,7 +338,7 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<TextExerciseResponseDTO> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate TextExercise : {}", updateTextExerciseDTO);
@@ -322,14 +360,16 @@ public class TextExerciseCreationUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        // Loads the course (or the exercise group with its exam) of the exercise for the logging and notifications below
+        courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
         // Save directly instead of delegating to updateTextExercise() to avoid double side effects.
         TextExercise savedExercise = textExerciseRepository.save(exerciseForReevaluation);
+        teamAssignmentConfigRepository.applyTo(savedExercise, null);
+        plagiarismDetectionConfigRepository.applyTo(savedExercise, exerciseForReevaluation.getPlagiarismDetectionConfig());
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -362,18 +402,7 @@ public class TextExerciseCreationUpdateResource {
         String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
         exercise.setProblemStatement(newProblemStatement);
 
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        dto.applyMetadataTo(exercise);
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
         // A variant group owns its members' timeline, so pin the dates back to the group before validating.
@@ -383,15 +412,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.validateGeneralSettings();
 
         // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        dto.applyAssessmentFlagsTo(exercise);
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // TextExercise specific fields
@@ -415,25 +436,7 @@ public class TextExerciseCreationUpdateResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
-
-        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
-
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
-            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
-            if (criterion == null) {
-                criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-            }
-            else {
-                gcDto.applyTo(criterion);
-            }
-            return criterion;
-        }).collect(Collectors.toSet());
-
-        managedCriteria.clear();
-        managedCriteria.addAll(updated);
+        GradingCriteriaMapper.replace(dto.gradingCriteria(), exercise);
     }
 
     /**
@@ -454,16 +457,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setTitle(dto.title());
         exercise.setShortName(dto.shortName());
         exercise.setProblemStatement(dto.problemStatement());
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        dto.applyMetadataTo(exercise);
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
@@ -478,40 +472,16 @@ public class TextExerciseCreationUpdateResource {
         if (dto.teamAssignmentConfig() != null) {
             exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
         }
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        dto.applyAssessmentFlagsTo(exercise);
 
-        // Attach the submitted plagiarism config (if any) so it is validated and persisted (via cascade) on create.
+        // Attach the submitted plagiarism config (if any) so it is validated on create and stored once the exercise exists.
         PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Transfer grading criteria from the DTO
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            for (var gcDto : dto.gradingCriteria()) {
-                GradingCriterion criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-                exercise.getGradingCriteria().add(criterion);
-            }
-        }
+        exercise.getGradingCriteria().addAll(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
 
         // Transfer competency links from the DTO (extractCompetencyLinksForCreation will handle them)
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            for (var linkDto : dto.competencyLinks()) {
-                if (linkDto == null || linkDto.competency() == null) {
-                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-                }
-                Competency competencyRef = new Competency();
-                competencyRef.setId(linkDto.competency().id());
-                CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-                exercise.getCompetencyLinks().add(link);
-            }
-        }
+        exercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, ENTITY_NAME));
 
         // Set course and/or exercise group references from the ids. The exclusivity invariant (exactly one of the two) is
         // validated downstream by checkCourseAndExerciseGroupExclusivity, so a request carrying both is correctly rejected.
@@ -525,20 +495,5 @@ public class TextExerciseCreationUpdateResource {
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
         }
-    }
-
-    /**
-     * Helper method to notify AtlasML about text exercise changes with consistent
-     * error handling.
-     */
-    private void notifyAtlasML(TextExercise exercise, OperationTypeDTO operationType, String operationDescription) {
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, operationType);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-            }
-        });
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -44,6 +45,42 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     /**
+     * Counts the real exams of the given courses for the public usage dashboard. Test exams (the practice format for students) and exams whose title starts
+     * with "test" or "mock", in any letter case, are demos or trials of instructors and not real exams.
+     *
+     * @param courseIds the courses
+     * @return the number of real exams of these courses
+     */
+    @Query("""
+            SELECT COUNT(e.id)
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+                AND e.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                AND LOWER(e.title) NOT LIKE 'test%'
+                AND LOWER(e.title) NOT LIKE 'mock%'
+            """)
+    long countRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id IN :entityIds
+            """)
+    Set<Long> findExistingExamIds(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id > :afterId
+            ORDER BY exam.id ASC
+            """)
+    List<Long> findExamIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    /**
      * Reads only the schedule and mode that decide whether a submission is in time.
      * <p>
      * The submission gate runs on every autosave of every student and reads nothing from the exam but these
@@ -58,6 +95,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE exam.id = :examId
             """)
     Optional<ExamScheduleDTO> findScheduleById(@Param("examId") long examId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(e.course.id, e.id)
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+            """)
+    List<CourseEntityIdDTO> findExamIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     List<Exam> findByCourseId(long courseId);
 
@@ -271,8 +315,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.plagiarismDetectionConfig",
-            "exerciseGroups.exercises.teamAssignmentConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
@@ -314,8 +357,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
@@ -335,8 +378,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
@@ -353,8 +396,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
             WHERE (
                 CONCAT(e.id, '') = :searchTerm
-                OR e.title LIKE %:searchTerm%
-                OR e.course.title LIKE %:searchTerm%
+                OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
             )
             """)
     Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
@@ -372,8 +415,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
@@ -526,7 +569,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
         List<Long> examIds = exams.stream().map(Exam::getId).toList();
         List<long[]> examIdAndRegisteredUsersCountPairs = countExamUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
-        exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+        // An exam may be deleted after it was listed but before the aggregate query returns its count.
+        exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.getOrDefault(exam.getId(), 0).longValue()));
     }
 
     /**
@@ -726,4 +770,11 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE ex.id = :exerciseId
             """)
     Optional<Exam> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT exam.course.id
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<Long> findCourseIdById(@Param("examId") long examId);
 }

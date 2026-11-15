@@ -23,9 +23,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -43,6 +45,32 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 public interface ConversationMessageRepository extends ArtemisJpaRepository<Post, Long>, CustomPostRepository {
 
     Logger log = LoggerFactory.getLogger(ConversationMessageRepository.class);
+
+    /**
+     * Persist a message and its recipients' unread counters as one unit. A reader must not see the message while
+     * its increment is still pending, or acknowledging that message can be overwritten by the late increment.
+     *
+     * @param message the new conversation message
+     * @return the persisted message
+     */
+    @Transactional // the message and its unread increments must become visible together
+    default Post saveWithUnreadMessages(Post message) {
+        Post saved = save(message);
+        incrementUnreadMessagesCountOfParticipants(saved.getConversation().getId(), saved.getAuthor().getId());
+        return saved;
+    }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant conversationParticipant
+            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id <> :senderId
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
+            """)
+    void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 
     /**
      * Configures the search specifications based on the provided filter criteria.

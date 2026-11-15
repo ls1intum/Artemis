@@ -1,5 +1,6 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -7,9 +8,12 @@ type NavigationDirection = 'next' | 'prev';
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    imports: [TranslateDirective],
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent],
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {
+    // Injected services
+    private readonly renderer = inject(Renderer2);
+
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
@@ -27,9 +31,6 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
 
     //Outputs
     isEnlargedViewOutput = output<boolean>();
-
-    // Injected services
-    private readonly renderer = inject(Renderer2);
 
     ngOnInit() {
         this.currentPage.set(this.initialPage()!);

@@ -25,9 +25,10 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionCountsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
@@ -40,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long> {
+public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>, ExerciseStatisticsRepository {
 
     @Query("""
             SELECT e
@@ -97,7 +98,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
                 LEFT JOIN exercise.exerciseVariantGroup variantGroup
                 LEFT JOIN exercise.course course
-                LEFT JOIN course.athenaConfig athenaConfig
+                LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course = course
             WHERE exercise.course.id = :courseId
                 AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
                 AND (:requireLtiLaunch = FALSE OR EXISTS (
@@ -399,10 +400,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             @Param("maxDate") ZonedDateTime maxDate);
 
     // TODO: we should not load so much data at the same time, consider revising this query
+    // The plagiarism detection configuration only filters here, through a join from its own side; the caller reads the
+    // configurations of the returned exercises with PlagiarismDetectionConfigRepository.attachTo, in one query.
     @Query("""
             SELECT e
             FROM Exercise e
-                LEFT JOIN FETCH e.plagiarismDetectionConfig c
+                JOIN PlagiarismDetectionConfig c ON c.exercise = e
                 LEFT JOIN FETCH e.studentParticipations p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
@@ -528,8 +531,25 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "exerciseVariantGroup" })
-    Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
+    /**
+     * Finds the id and title of an exercise directly assigned to the course.
+     *
+     * @param exerciseId the exercise id
+     * @param courseId   the owning course id
+     * @return the matching exercise's id and title
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseIdAndTitleDTO(
+                exercise.id, exercise.title)
+            FROM Exercise exercise
+            WHERE exercise.id = :exerciseId
+                AND exercise.course.id = :courseId
+                AND exercise.exerciseGroup IS NULL
+            """)
+    Optional<ExerciseIdAndTitleDTO> findIdAndTitleByIdAndCourseId(@Param("exerciseId") long exerciseId, @Param("courseId") long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "exerciseVariantGroup" })
+    Optional<Exercise> findWithEagerCategoriesById(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT e
@@ -565,14 +585,15 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     /**
      * @param courseId - course id of the exercises we want to fetch
      * @return all exercise-ids which belong to the course and have manual assessment enabled, i.e. text, modeling, file upload and programming exercises with manual or
-     *         semi-automatic assessment
+     *         semi-automatic assessment. Only programming exercises can be assessed fully automatically, all other non-quiz exercises always need a manual assessment.
      */
     @Query("""
             SELECT e.id
             FROM Exercise e
             WHERE e.course.id = :courseId
-                AND e.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND TYPE(e) <> de.tum.cit.aet.artemis.quiz.domain.QuizExercise
+                AND (TYPE(e) <> de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise
+                    OR e.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
             """)
     Set<Long> findExerciseIdsWithManualAssessmentByCourseId(@Param("courseId") Long courseId);
 
@@ -639,8 +660,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return the entity
      */
     @NonNull
-    default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
-        return getValueElseThrow(findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId), exerciseId);
+    default Exercise findByIdWithCategoriesElseThrow(Long exerciseId) {
+        return getValueElseThrow(findWithEagerCategoriesById(exerciseId), exerciseId);
     }
 
     /**
@@ -723,11 +744,11 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             SELECT e
             FROM Exercise e
             LEFT JOIN e.course c
-            LEFT JOIN c.athenaConfig ca
+            LEFT JOIN CourseAthenaConfig ca ON ca.course = c
             LEFT JOIN e.exerciseGroup eg
             LEFT JOIN eg.exam exam
             LEFT JOIN exam.course ec
-            LEFT JOIN ec.athenaConfig eca
+            LEFT JOIN CourseAthenaConfig eca ON eca.course = ec
             WHERE e.dueDate > :dueDate
                 AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
                 AND (
@@ -903,17 +924,17 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<ExerciseDeletionInfoDTO> findDeletionInfoByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Fetches all deletion summary statistics for an exercise in a single query.
+     * Fetches the deletion summary statistics of an exercise that are counted together in a single query.
      * This includes participation count, build count (for programming exercises),
      * assessment count (for non-quiz exercises), and post/answer counts from the exercise channel.
+     * The teams, submissions and results are counted with their own repositories.
      *
      * @param exerciseId the id of the exercise
-     * @return an Optional containing the ExerciseDeletionSummaryDTO, or empty if exercise not found
+     * @return an Optional containing the ExerciseDeletionCountsDTO, or empty if exercise not found
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionCountsDTO(
                 (SELECT COUNT(p) FROM StudentParticipation p WHERE p.exercise.id = :exerciseId),
-                (SELECT COUNT(b) FROM BuildJob b WHERE b.exerciseId = :exerciseId),
                 (
                     SELECT COUNT(DISTINCT sp)
                     FROM StudentParticipation sp
@@ -928,14 +949,21 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                         AND r.completionDate IS NOT NULL
                         AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
                 ),
+                (SELECT COUNT(cm) FROM Complaint cm WHERE cm.exerciseId = :exerciseId),
+                (SELECT COUNT(pc) FROM PlagiarismComparison pc WHERE pc.plagiarismResult.exercise.id = :exerciseId),
+                (SELECT COUNT(es) FROM ExampleSubmission es WHERE es.exercise.id = :exerciseId),
+                (SELECT COUNT(b) FROM BuildJob b WHERE b.exerciseId = :exerciseId),
                 (SELECT COUNT(post) FROM Post post WHERE post.conversation.id = c.id),
-                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id)
+                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id),
+                (SELECT COUNT(cl) FROM CompetencyExerciseLink cl WHERE cl.exercise.id = :exerciseId),
+                (SELECT COUNT(u) FROM ExerciseUnit u WHERE u.exercise.id = :exerciseId),
+                (SELECT COUNT(se) FROM StudentExam se JOIN se.exercises sex WHERE sex.id = :exerciseId AND (se.testRun IS NULL OR se.testRun = FALSE))
             )
             FROM Exercise e
                 LEFT JOIN Channel c ON c.exercise.id = e.id
             WHERE e.id = :exerciseId
             """)
-    Optional<ExerciseDeletionSummaryDTO> findDeletionSummaryByExerciseId(@Param("exerciseId") long exerciseId);
+    Optional<ExerciseDeletionCountsDTO> findDeletionCountsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Returns pairs of (exerciseId, exerciseGroupId) for exam exercises matching the given IDs.

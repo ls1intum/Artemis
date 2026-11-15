@@ -114,6 +114,22 @@ public interface AccountDataCleanupRepository extends ArtemisJpaRepository<Condu
             """)
     int deletePasskeyCredentials(@Param("userId") long userId);
 
+    @Query("""
+            SELECT token.userId AS userId, COUNT(token) AS count
+            FROM PersonalAccessToken token
+            WHERE token.userId IN :userIds
+            GROUP BY token.userId
+            """)
+    List<UserReferenceCount> countAgentAccessTokens(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PersonalAccessToken token
+            WHERE token.userId = :userId
+            """)
+    int deleteAgentAccessTokens(@Param("userId") long userId);
+
     @Query(nativeQuery = true, value = """
             SELECT user_id AS userId, COUNT(*) AS count
             FROM jhi_user_authority

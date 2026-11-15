@@ -73,7 +73,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void setupExercise() throws Exception {
-
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 1, 1);
         programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX),
                 ProgrammingExercise.class);
         // Wire LocalVC URIs for base repos and persist so export service can locate them
@@ -82,7 +82,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportWithMissingRepositories() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 0);
         Optional<ProgrammingExercise> progrO = courses.getFirst().getExercises().stream().filter(e -> e instanceof ProgrammingExercise).map(e -> (ProgrammingExercise) e)
@@ -98,13 +98,13 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportWithRepositoriesAsInstructor() throws Exception {
         testExportWithRepositories();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testExportWithRepositoriesAsEditor() throws Exception {
         testExportWithRepositories();
     }
@@ -143,12 +143,12 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportWithRepositoriesAsStudentNotAuthorized() throws Exception {
         requestUtilService
                 .performMvcRequest(
                         post("/api/programming/sharing/export?exerciseId=" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError());
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().isForbidden());
     }
 
     private static MockHttpServletRequestBuilder convertToGetRequestBuilder(String exerciseUrl) throws URISyntaxException {
@@ -164,10 +164,29 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExerciseZipdownloadInvalidToken() throws Exception {
 
         requestUtilService.performMvcRequest(get("/api/programming/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andExpect(status().isUnauthorized());
+    }
+
+    @Autowired
+    private ExerciseSharingService exerciseSharingService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void validExportTokenWithRemovedTemporaryZipReturnsNotFound() throws Exception {
+        var result = requestUtilService.performMvcRequest(post("/api/programming/sharing/export").param("exerciseId", programmingExercise1.getId().toString())
+                .content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        String redirect = objectMapper.readValue(result.getResponse().getContentAsString(), String.class);
+        var redirectParams = URLEncodedUtils.parse(new URI(redirect), StandardCharsets.UTF_8);
+        String url = redirectParams.stream().filter(p -> p.getName().equals("exerciseUrl")).findFirst().orElseThrow().getValue();
+        var uri = new URI(url);
+        String token = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
+        var zip = exerciseSharingService.getExportedExerciseByToken(token).orElseThrow();
+        assertThat(zip).exists();
+        java.nio.file.Files.delete(zip);
+        requestUtilService.performMvcRequest(convertToGetRequestBuilder(url)).andExpect(status().isNotFound()).andExpect(content().string(""));
     }
 
 }

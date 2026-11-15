@@ -49,13 +49,15 @@
         <button type="submit" class="d-none" [disabled]="dataExportConfirmationForm.invalid || submitDisabled()"></button>
     </form>
     <ng-template #footer>
-        <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="submitDisabled()">
+        <button type="button" tumAetUiButton size="small" severity="secondary" data-testid="cancel-data-export" (click)="clear()" [disabled]="submitDisabled()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button
             id="request"
             type="button"
-            class="btn btn-primary"
+            tumAetUiButton
+            size="small"
+            severity="secondary"
             [style.cursor]="dataExportConfirmationForm.invalid || submitDisabled() ? 'not-allowed' : 'pointer'"
             [disabled]="dataExportConfirmationForm.invalid || submitDisabled()"
             (click)="confirmDataExportRequest()"

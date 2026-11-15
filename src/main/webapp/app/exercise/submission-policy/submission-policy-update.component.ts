@@ -1,5 +1,9 @@
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
 import { Component, effect, input, output, signal, untracked } from '@angular/core';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -9,41 +13,40 @@ import { KeyValuePipe } from '@angular/common';
 @Component({
     selector: 'jhi-submission-policy-update',
     template: `
-        <div class="form-group-narrow mb-3">
+        <div class="mb-4! flex flex-col gap-1">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
-            <select
-                #policy="ngModel"
+            <tumaet-ui-select
                 required
-                class="form-select"
+                [options]="[
+                    { value: 'none', label: 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate },
+                    { value: 'lock_repository', label: 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate },
+                    { value: 'submission_penalty', label: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate },
+                ]"
+                optionValue="value"
+                optionLabel="label"
                 [ngModel]="selectedSubmissionPolicyType()"
                 (ngModelChange)="onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
-                id="field_submissionPolicy"
+                inputId="field_submissionPolicy"
                 [disabled]="!editable()"
-            >
-                <option value="none" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.none.optionLabel"></option>
-                <option value="lock_repository" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel"></option>
-                <option value="submission_penalty" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel"></option>
-            </select>
+            />
         </div>
         @if (!isNonePolicy()) {
             <form [formGroup]="form">
-                <div class="row mb-3">
-                    <div class="col">
+                <div class="grid grid-cols-12 gap-6! mb-4!">
+                    <div class="col-span-12 md:col-span-6">
                         <ng-container>
-                            <label
-                                class="label-narrow"
-                                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle"
-                                for="field_submissionLimitExceededPenalty"
+                            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimit"
                                 >Submission limit</label
                             >
                             <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription" />
-                            <div class="input-group">
+                            <div class="flex items-center gap-2">
                                 <input
+                                    tumAetUiInput
                                     required
                                     type="number"
                                     formControlName="submissionLimit"
-                                    class="form-control"
+                                    class=""
                                     step="1"
                                     name="submissionLimit"
                                     id="field_submissionLimit"
@@ -52,14 +55,14 @@ import { KeyValuePipe } from '@angular/common';
                             </div>
                             @for (e of submissionLimitControl.errors! | keyvalue; track e) {
                                 @if (submissionLimitControl.invalid && (submissionLimitControl.dirty || submissionLimitControl.touched)) {
-                                    <div class="alert alert-danger">
+                                    <div class="rounded-md border p-6! border-state-danger text-state-danger bg-state-danger/10">
                                         <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
                                     </div>
                                 }
                             }
                         </ng-container>
                     </div>
-                    <div class="col">
+                    <div class="col-span-12 md:col-span-6">
                         @if (this.isSubmissionPenaltyPolicy) {
                             <label
                                 class="label-narrow"
@@ -68,20 +71,17 @@ import { KeyValuePipe } from '@angular/common';
                                 >Penalty after Exceeding Submission limit</label
                             >
                             <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription" />
-                            <div class="input-group">
-                                <input
+                            <div class="flex items-center gap-2">
+                                <jhi-points-input
                                     required
-                                    type="number"
-                                    class="form-control"
                                     formControlName="exceedingPenalty"
                                     name="submissionLimitExceededPenalty"
-                                    id="field_submissionLimitExceededPenalty"
-                                    (input)="updateExceedingPenalty()"
+                                    inputId="field_submissionLimitExceededPenalty"
                                 />
                             </div>
                             @for (e of exceedingPenaltyControl.errors! | keyvalue; track e) {
                                 @if (exceedingPenaltyControl.invalid && (exceedingPenaltyControl.dirty || exceedingPenaltyControl.touched)) {
-                                    <div class="alert alert-danger">
+                                    <div class="rounded-md border p-6! border-state-danger text-state-danger bg-state-danger/10">
                                         <div
                                             [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"
                                         ></div>
@@ -95,7 +95,17 @@ import { KeyValuePipe } from '@angular/common';
         }
     `,
     styleUrls: ['../../programming/shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, HelpIconComponent, KeyValuePipe],
+    imports: [
+        PointsInputComponent,
+        TumAetUiSelectComponent,
+        ArtemisTranslatePipe,
+        TumAetUiInputDirective,
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        HelpIconComponent,
+        KeyValuePipe,
+    ],
 })
 export class SubmissionPolicyUpdateComponent {
     // Not input.required: the grading page binds [formInvalid]="policyUpdate.invalid" before this
@@ -107,6 +117,12 @@ export class SubmissionPolicyUpdateComponent {
     readonly submissionPolicyTypeChange = output<void>();
 
     form!: FormGroup; // built on the first programmingExercise emission, before the reactive form template renders
+
+    /**
+     * The form, as soon as it exists. Whoever needs to follow the form (for example the grading section, which tracks its validity) cannot rely on the order in which
+     * this component and its observer run their effects, so it reads this signal instead of the plain field.
+     */
+    readonly policyForm = signal<FormGroup | undefined>(undefined);
 
     // Both start as "none" so the reactive form part of the template stays hidden until the
     // exercise input arrives and the effect below initializes the form.
@@ -161,6 +177,20 @@ export class SubmissionPolicyUpdateComponent {
                 }
             });
         });
+        effect((onCleanup) => {
+            const form = this.policyForm();
+            if (!form) {
+                return;
+            }
+            // Keyboard stepping and other CVA changes update the control without a native input event.
+            const subscription = form.get('exceedingPenalty')!.valueChanges.subscribe((value: number | undefined) => {
+                const policy = this.programmingExercise()?.submissionPolicy;
+                if (policy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+                    policy.exceedingPenalty = value ?? undefined;
+                }
+            });
+            onCleanup(() => subscription.unsubscribe());
+        });
     }
 
     /**
@@ -190,7 +220,6 @@ export class SubmissionPolicyUpdateComponent {
             this.policyFormInitialized = false;
         }
         const submissionPolicy = programmingExercise.submissionPolicy;
-        this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.form) {
             this.form = new FormGroup({
                 submissionLimit: new FormControl({ value: submissionPolicy?.submissionLimit, disabled: !this.editable() }, [
@@ -204,6 +233,7 @@ export class SubmissionPolicyUpdateComponent {
             });
             this.submissionLimitControl = this.form.get('submissionLimit')! as FormControl;
             this.exceedingPenaltyControl = this.form.get('exceedingPenalty')! as FormControl;
+            this.policyForm.set(this.form);
         } else {
             // Boxed reset values also re-apply the disabled state: on an exercise switch the editable input
             // can differ from the exercise the form was created for, and a control that stays disabled
@@ -213,6 +243,8 @@ export class SubmissionPolicyUpdateComponent {
                 exceedingPenalty: { value: submissionPolicy?.exceedingPenalty, disabled: !this.editable() },
             });
         }
+        // After the form took the exercise's values: the controls are the fallback for a policy without them.
+        this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (submissionPolicy && submissionPolicy.type !== SubmissionPolicyType.NONE) {
             this.policyFormInitialized = true;
         }
@@ -220,8 +252,8 @@ export class SubmissionPolicyUpdateComponent {
 
     /**
      * A rejected emission still swaps the object behind programmingExercise(), and the parent saves that
-     * object. The controls only write into the model on (input) events, so the preserved on-screen state
-     * has to be copied into the incoming exercise here or saving would silently persist the stale values.
+     * object. Copy the preserved on-screen state into the incoming exercise here so saving cannot persist
+     * stale values before the user edits the controls again.
      */
     private syncFormIntoExercise(programmingExercise: ProgrammingExercise): void {
         if (!this.form) {
@@ -284,35 +316,45 @@ export class SubmissionPolicyUpdateComponent {
             }
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
             const newPolicy = new LockRepositoryPolicy();
-            if (programmingExercise.submissionPolicy) {
-                newPolicy.id = programmingExercise.submissionPolicy.id;
-                newPolicy.active = programmingExercise.submissionPolicy.active;
-                newPolicy.submissionLimit = programmingExercise.submissionPolicy.submissionLimit;
-            }
+            this.carryOverPolicyValues(programmingExercise.submissionPolicy, newPolicy);
             programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
             const newPolicy = new SubmissionPenaltyPolicy();
-            if (programmingExercise.submissionPolicy) {
-                newPolicy.id = programmingExercise.submissionPolicy.id;
-                newPolicy.active = programmingExercise.submissionPolicy.active;
-                newPolicy.submissionLimit = programmingExercise.submissionPolicy.submissionLimit;
-
-                if (programmingExercise.submissionPolicy?.exceedingPenalty) {
-                    newPolicy.exceedingPenalty = programmingExercise.submissionPolicy?.exceedingPenalty;
-                } else if (this.exceedingPenaltyControl) {
-                    // restore value when penalty has been set previously and was valid
-                    if (this.exceedingPenaltyControl.invalid) {
-                        this.exceedingPenaltyControl.setValue(undefined);
-                    } else {
-                        newPolicy.exceedingPenalty = this.exceedingPenaltyControl.value as number;
-                    }
-                }
-            }
+            this.carryOverPolicyValues(programmingExercise.submissionPolicy, newPolicy);
+            newPolicy.exceedingPenalty = this.resolveExceedingPenalty(programmingExercise.submissionPolicy);
             programmingExercise.submissionPolicy = newPolicy;
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
         this.submissionPolicyTypeChange.emit();
         return submissionPolicyType;
+    }
+
+    /**
+     * Seeds a policy created by a type switch. The previous policy is gone once the exercise was saved with
+     * type none (the server deletes it), while the form keeps showing the values the user typed, so the form
+     * controls are the fallback for what the new policy would otherwise lose.
+     */
+    private carryOverPolicyValues(previousPolicy: SubmissionPolicy | undefined, newPolicy: SubmissionPolicy) {
+        if (previousPolicy) {
+            newPolicy.id = previousPolicy.id;
+            newPolicy.active = previousPolicy.active;
+        }
+        newPolicy.submissionLimit = previousPolicy?.submissionLimit ?? this.submissionLimitControl?.value ?? undefined;
+    }
+
+    private resolveExceedingPenalty(previousPolicy: SubmissionPolicy | undefined): number | undefined {
+        if (previousPolicy?.exceedingPenalty) {
+            return previousPolicy.exceedingPenalty;
+        }
+        if (!this.exceedingPenaltyControl) {
+            return undefined;
+        }
+        // restore value when penalty has been set previously and was valid
+        if (this.exceedingPenaltyControl.invalid) {
+            this.exceedingPenaltyControl.setValue(undefined);
+            return undefined;
+        }
+        return (this.exceedingPenaltyControl.value as number | null) ?? undefined;
     }
 
     /**
@@ -340,13 +382,5 @@ export class SubmissionPolicyUpdateComponent {
      */
     updateSubmissionLimit() {
         this.programmingExercise()!.submissionPolicy!.submissionLimit = this.submissionLimitControl.value as number;
-    }
-
-    /**
-     * Ensures synchronization between the submission policy model and the input controller, since
-     * using ngModel with reactive forms has been deprecated in Angular v6
-     */
-    updateExceedingPenalty() {
-        this.programmingExercise()!.submissionPolicy!.exceedingPenalty = this.exceedingPenaltyControl.value as number;
     }
 }

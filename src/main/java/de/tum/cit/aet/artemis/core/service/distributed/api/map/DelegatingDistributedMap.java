@@ -63,6 +63,16 @@ public abstract class DelegatingDistributedMap<K, V> implements DistributedMap<K
     }
 
     @Override
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        return delegate.replace(key, expectedValue, replacementValue);
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        return delegate.refreshTimeToLive(key, timeToLive);
+    }
+
+    @Override
     public V remove(K key) {
         return delegate.remove(key);
     }

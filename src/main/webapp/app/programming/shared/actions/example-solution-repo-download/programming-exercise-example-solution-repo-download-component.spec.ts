@@ -46,4 +46,14 @@ describe('ProgrammingExerciseExampleSolutionRepoDownloadComponent', () => {
         expect(exportExampleSolutionRepositorySpy).toHaveBeenCalledOnce();
         exportExampleSolutionRepositorySpy.mockRestore();
     });
+    it('uses the staff snapshot purpose and preserves includeTests through the inherited service', () => {
+        fixture.componentRef.setInput('exerciseId', 1);
+        fixture.componentRef.setInput('includeTests', true);
+        fixture.componentRef.setInput('forStaff', true);
+        const owner = vi.spyOn(service, 'exportStudentRequestedRepository');
+        const staff = vi.spyOn(service, 'exportSolutionSnapshotForStaff');
+        component.exportRepository();
+        expect(staff).toHaveBeenCalledExactlyOnceWith(1, true);
+        expect(owner).not.toHaveBeenCalled();
+    });
 });

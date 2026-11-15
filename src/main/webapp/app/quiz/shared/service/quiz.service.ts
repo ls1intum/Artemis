@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisQuizService {
     /**
      * Randomize the order of the questions

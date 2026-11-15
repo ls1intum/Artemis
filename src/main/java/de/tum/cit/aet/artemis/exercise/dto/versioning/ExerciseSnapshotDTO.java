@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.exercise.dto.versioning;
 import java.io.Serializable;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -23,10 +25,12 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ExerciseSnapshotDTO(
         // fields of BaseExercise class
         long id, String title, String shortName,
@@ -38,9 +42,9 @@ public record ExerciseSnapshotDTO(
         // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachment, course, exerciseGroup
         Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, IncludedInOverallScore includedInOverallScore,
         String problemStatement, String gradingInstructions, Set<String> categories, TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled,
-        Boolean secondCorrectionEnabled, Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
+        Boolean secondCorrectionEnabled, List<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
         ProgrammingExerciseSnapshotDTO programmingData, TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData,
-        FileUploadExerciseSnapshotDTO fileUploadData
+        FileUploadExerciseSnapshotDTO fileUploadData, Long variantGroupId
 
 ) implements Serializable {
 
@@ -52,14 +56,17 @@ public record ExerciseSnapshotDTO(
      *                                    {@code null} for non-programming exercises
      * @return {@link ExerciseSnapshotDTO}
      */
-    public static ExerciseSnapshotDTO of(Exercise exercise, ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
+    public static ExerciseSnapshotDTO of(Exercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig,
+            ProgrammingExerciseSnapshotDTO.@Nullable CommitHashesDTO programmingCommitHashes) {
 
         var competencyLinks = CollectionUtil.nullIfEmpty(exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()));
-        var gradingCriteria = CollectionUtil.nullIfEmpty(exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()));
+        var gradingCriteria = CollectionUtil.nullIfEmpty(GradingCriterionDTO.ofAll(exercise.getGradingCriteria()));
         var categories = CollectionUtil.nullIfEmpty(exercise.getCategories());
         var plagiarismDetectionConfig = PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
 
-        var programmingData = exercise instanceof ProgrammingExercise programmingExercise ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, programmingCommitHashes) : null;
+        var programmingData = exercise instanceof ProgrammingExercise programmingExercise
+                ? ProgrammingExerciseSnapshotDTO.of(programmingExercise, buildConfig, programmingCommitHashes)
+                : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
         var quizData = exercise instanceof QuizExercise ? QuizExerciseSnapshotDTO.of((QuizExercise) exercise) : null;
@@ -69,10 +76,12 @@ public record ExerciseSnapshotDTO(
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
                 categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
-                gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData, quizData, fileUploadData);
+                gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData, quizData, fileUploadData,
+                exercise.getExerciseVariantGroup() == null ? null : exercise.getExerciseVariantGroup().getId());
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record CompetencyExerciseLinkSnapshotDTO(CompetencyExerciseLink.CompetencyExerciseId competencyId, double weight) implements Serializable {
 
         private static CompetencyExerciseLinkSnapshotDTO of(@Nullable CompetencyExerciseLink link) {
@@ -84,6 +93,7 @@ public record ExerciseSnapshotDTO(
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record TeamAssignmentConfigSnapshotDTO(long id, int minTeamSize, int maxTeamSize) implements Serializable {
 
         private static TeamAssignmentConfigSnapshotDTO of(@Nullable TeamAssignmentConfig config) {
@@ -95,6 +105,7 @@ public record ExerciseSnapshotDTO(
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record PlagiarismDetectionConfigSnapshotDTO(boolean continuousPlagiarismControlEnabled, boolean continuousPlagiarismControlPostDueDateChecksEnabled,
             int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, int similarityThreshold, int minimumScore, int minimumSize) implements Serializable {
 

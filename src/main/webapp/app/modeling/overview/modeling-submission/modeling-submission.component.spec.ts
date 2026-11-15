@@ -1,3 +1,4 @@
+import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { Component, EventEmitter, input, output } from '@angular/core';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -5,6 +6,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,8 +41,9 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { User } from 'app/account/user/user.model';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -77,8 +80,8 @@ class StubModelingEditorComponent {
     importPatch = vi.fn();
 }
 
-vi.mock('@sentry/angular', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@sentry/angular')>()),
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('app/core/error-reporting/capture-exception')>()),
     captureException: vi.fn(),
 }));
 
@@ -108,7 +111,7 @@ describe('ModelingSubmissionComponent', () => {
 
     let mockModelingEditor: Partial<ModelingEditorComponent>;
 
-    function createModelingSubmissionComponent(routeOverride?: ActivatedRoute) {
+    function createModelingSubmissionComponent(routeOverride?: Pick<ActivatedRoute, 'params'>) {
         if (routeOverride) {
             TestBed.overrideProvider(ActivatedRoute, { useValue: routeOverride });
         }
@@ -222,6 +225,143 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission()).toEqual(submission);
         expect(comp.modelingExercise()).toEqual(modelingExercise);
         expect(comp.participation()).toEqual(participation);
+    });
+
+    it('should not treat a participation without owner information as owned by the current user', () => {
+        createModelingSubmissionComponent();
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        const participation = new StudentParticipation();
+        participation.exercise = modelingExercise;
+        participation.id = 1;
+        const submission = new ModelingSubmission();
+        submission.id = 20;
+        submission.submitted = true;
+        submission.participation = participation;
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const isOwnerSpy = vi.spyOn(TestBed.inject(AccountService), 'isOwnerOfParticipation');
+
+        comp.ngOnInit();
+
+        expect(isOwnerSpy).not.toHaveBeenCalled();
+        expect(comp.isOwnerOfParticipation()).toBe(false);
+    });
+
+    it.each([
+        { teamMode: false, testRun: false, expected: false },
+        { teamMode: false, testRun: true, expected: false },
+        { teamMode: true, testRun: false, expected: true },
+        { teamMode: true, testRun: true, expected: false },
+    ])('should enable team collaboration only for the graded participation of a team exercise (%o)', ({ teamMode, testRun, expected }) => {
+        createModelingSubmissionComponent();
+
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.teamMode = teamMode;
+        const participation = new StudentParticipation();
+        participation.testRun = testRun;
+        comp.modelingExercise.set(modelingExercise);
+        comp.participation.set(participation);
+
+        expect(comp.teamCollaborationEnabled()).toBe(expected);
+    });
+
+    describe('team exercise', () => {
+        type TeamModeInternals = { setAutoSaveTimer: () => void; setupSubmissionStreamForTeam: () => void };
+
+        /** Opens the editor for a participation of a team exercise, as the route does, with the timers of both modes stubbed out. */
+        const openTeamExercise = async (testRun: boolean, dueDate: dayjs.Dayjs) => {
+            createModelingSubmissionComponent();
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.id = 22;
+            modelingExercise.teamMode = true;
+            modelingExercise.dueDate = dueDate;
+            const teamParticipation = new StudentParticipation();
+            teamParticipation.id = 1;
+            teamParticipation.testRun = testRun;
+            teamParticipation.exercise = modelingExercise;
+            teamParticipation.initializationDate = dayjs().subtract(2, 'days');
+            const teamSubmission = new ModelingSubmission();
+            teamSubmission.id = 20;
+            teamSubmission.submitted = false;
+            teamSubmission.model = validMockModel;
+            teamSubmission.participation = teamParticipation;
+            vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(teamSubmission));
+            const internals = comp as unknown as TeamModeInternals;
+            const autoSave = vi.spyOn(internals, 'setAutoSaveTimer').mockImplementation(() => {});
+            const teamStream = vi.spyOn(internals, 'setupSubmissionStreamForTeam').mockImplementation(() => {});
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            return { autoSave, teamStream };
+        };
+
+        const editorOf = () => fixture.debugElement.query(By.directive(StubModelingEditorComponent)).componentInstance as StubModelingEditorComponent;
+
+        it('should synchronize the graded participation with the team', async () => {
+            const { autoSave, teamStream } = await openTeamExercise(false, dayjs().add(1, 'day'));
+
+            expect(comp.teamCollaborationEnabled()).toBe(true);
+            expect(teamStream).toHaveBeenCalledOnce();
+            expect(autoSave).not.toHaveBeenCalled();
+            expect(fixture.debugElement.query(By.directive(TeamSubmissionSyncComponent))).not.toBeNull();
+            // the team edits one shared diagram, which has no saved status of its own
+            expect(editorOf().collaborationEnabled()).toBe(true);
+            expect(editorOf().savedStatus()).toBeUndefined();
+        });
+
+        it('should edit the practice participation alone and save it by itself', async () => {
+            const { autoSave, teamStream } = await openTeamExercise(true, dayjs().subtract(1, 'day'));
+
+            expect(comp.teamCollaborationEnabled()).toBe(false);
+            expect(autoSave).toHaveBeenCalledOnce();
+            expect(teamStream).not.toHaveBeenCalled();
+            expect(fixture.debugElement.query(By.directive(TeamSubmissionSyncComponent))).toBeNull();
+            expect(editorOf().collaborationEnabled()).toBe(false);
+            expect(editorOf().savedStatus()).toEqual({ isChanged: false, isSaving: false });
+        });
+
+        it.each([
+            { testRun: false, dueDate: () => dayjs().add(1, 'day'), emits: true },
+            { testRun: true, dueDate: () => dayjs().subtract(1, 'day'), emits: false },
+        ])('should forward a model patch to the team only for the graded participation (practice: $testRun)', async ({ testRun, dueDate, emits }) => {
+            await openTeamExercise(testRun, dueDate());
+            const patches: unknown[] = [];
+            const patchSubscription = comp['submissionPatchObservable'].subscribe((patch) => patches.push(patch));
+
+            comp.onModelPatch('[{"op":"add"}]');
+            patchSubscription.unsubscribe();
+
+            expect(patches).toHaveLength(emits ? 1 : 0);
+        });
+
+        it('should refresh the editor from the saved submission only when the diagram is not shared with the team', async () => {
+            await openTeamExercise(true, dayjs().subtract(1, 'day'));
+            const staleModel = { version: '3.0.0', elements: {}, relationships: {} } as unknown as UMLModel;
+            comp.umlModel.set(staleModel);
+
+            comp['refreshNonCollaborativeEditorFromSavedSubmission']();
+
+            // the saved diagram of the practice participation is imported again, replacing what the editor showed
+            expect(comp.umlModel()).toBeDefined();
+            expect(comp.umlModel()).not.toBe(staleModel);
+        });
+
+        it('should keep the live diagram of the team when the saved submission is shown again', async () => {
+            await openTeamExercise(false, dayjs().add(1, 'day'));
+            const liveModel = { version: '3.0.0', elements: {}, relationships: {} } as unknown as UMLModel;
+            comp.umlModel.set(liveModel);
+
+            comp['refreshNonCollaborativeEditorFromSavedSubmission']();
+
+            // importing the saved snapshot of the team could discard newer edits in the shared document
+            expect(comp.umlModel()).toBe(liveModel);
+        });
+
+        it('should not collaborate before the participation is loaded', () => {
+            createModelingSubmissionComponent();
+
+            expect(comp.teamCollaborationEnabled()).toBe(false);
+        });
     });
 
     it('should initialize with submissionId (Feedback View Mode)', () => {
@@ -350,6 +490,108 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()?.feedbacks).toEqual([olderFeedback]);
     });
 
+    describe('Athena request state after HTTP reload', () => {
+        function serverSubmissionWithAthenaRequest(successful: false | undefined, includeManualResult = true) {
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.assessmentDueDate = dayjs().subtract(1, 'day');
+            modelingExercise.maxPoints = 10;
+            modelingExercise.teamMode = false;
+            const participation = new StudentParticipation();
+            participation.id = 1;
+            participation.exercise = modelingExercise;
+
+            const feedback = { id: 1, detailText: 'Released manual feedback', credits: 5, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+            const manualResult = {
+                id: 99,
+                assessmentType: AssessmentType.MANUAL,
+                completionDate: dayjs().subtract(1, 'hour'),
+                successful: true,
+                score: 50,
+                feedbacks: [feedback],
+            } as Result;
+            const athenaRequest = {
+                id: 100,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: successful === false ? dayjs() : dayjs().add(5, 'minutes'),
+                successful,
+                feedbacks: [],
+            } as Result;
+            const serverSubmission = {
+                id: 20,
+                submitted: true,
+                model: validMockModel,
+                participation,
+                results: includeManualResult ? [athenaRequest, manualResult] : [athenaRequest],
+            } as ModelingSubmission;
+
+            // Flush a JSON payload with wire-format dates through the real submission service conversion.
+            return JSON.parse(JSON.stringify(serverSubmission));
+        }
+
+        it.each([
+            { state: 'pending', successful: undefined, mode: 'standard', submissionId: undefined },
+            { state: 'failed', successful: false, mode: 'standard', submissionId: undefined },
+            { state: 'pending', successful: undefined, mode: 'submission-only feedback', submissionId: 20 },
+            { state: 'failed', successful: false, mode: 'submission-only feedback', submissionId: 20 },
+        ] as const)('should preserve released manual feedback after HTTP reload with a $state Athena request in $mode mode', ({ successful, submissionId }) => {
+            createModelingSubmissionComponent({ params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId }) });
+            const serverSubmission = serverSubmissionWithAthenaRequest(successful);
+            const httpMock = TestBed.inject(HttpTestingController);
+
+            comp.ngOnInit();
+            if (submissionId) {
+                httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/submissions-with-results' }).flush([serverSubmission]);
+            }
+            httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/latest-modeling-submission' }).flush(serverSubmission);
+
+            expect(comp.result()?.id).toBe(99);
+            expect(comp.result()?.assessmentType).toBe(AssessmentType.MANUAL);
+            expect(comp.assessmentResult()?.id).toBe(99);
+            expect(comp.assessmentResult()?.score).toBe(50);
+            expect(comp.assessmentResult()?.feedbacks).toEqual(serverSubmission.results[1].feedbacks);
+            expect(comp.unreferencedFeedback).toEqual(serverSubmission.results[1].feedbacks);
+            expect(comp.totalScore).toBe(5);
+
+            // The header and quota guards still need the newest request, including its pending lease.
+            for (const loadedSubmission of [comp.submission(), comp.participation().submissions![0]]) {
+                expect(loadedSubmission.results?.map((result) => result.id)).toEqual([100, 99]);
+                const request = loadedSubmission.results?.find((result) => result.id === 100);
+                expect(request?.assessmentType).toBe(AssessmentType.AUTOMATIC_ATHENA);
+                expect(request?.successful).toBe(successful);
+                expect(request?.score).toBeUndefined();
+                expect(request?.feedbacks).toEqual([]);
+                expect(dayjs(request?.completionDate).valueOf()).toBe(dayjs(serverSubmission.results[0].completionDate).valueOf());
+            }
+            if (submissionId) {
+                expect(comp.sortedSubmissionHistory()[0].results?.map((result) => result.id)).toEqual([100, 99]);
+                expect(comp.sortedResultHistory().map((result) => result.id)).toEqual([99]);
+            }
+            httpMock.verify();
+        });
+
+        it('should leave assessment empty after HTTP reload with only a pending Athena request', () => {
+            createModelingSubmissionComponent({ params: of({ courseId: 5, exerciseId: 22, participationId: 1 }) });
+            const serverSubmission = serverSubmissionWithAthenaRequest(undefined, false);
+            const httpMock = TestBed.inject(HttpTestingController);
+
+            comp.ngOnInit();
+            httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/1/latest-modeling-submission' }).flush(serverSubmission);
+
+            expect(comp.result()).toBeUndefined();
+            expect(comp.assessmentResult()).toBeUndefined();
+            expect(comp.unreferencedFeedback).toBeUndefined();
+            expect(comp.totalScore).toBe(0);
+            expect(comp['hasAssessmentToShow']()).toBe(false);
+            for (const loadedSubmission of [comp.submission(), comp.participation().submissions![0]]) {
+                expect(loadedSubmission.results).toHaveLength(1);
+                expect(loadedSubmission.results?.[0].id).toBe(100);
+                expect(loadedSubmission.results?.[0].successful).toBeUndefined();
+                expect(dayjs(loadedSubmission.results?.[0].completionDate).isAfter(dayjs())).toBe(true);
+            }
+            httpMock.verify();
+        });
+    });
+
     it('should get inactive as soon as the due date passes the current date', async () => {
         createModelingSubmissionComponent();
 
@@ -440,62 +682,111 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission()).toBe(modelSubmission);
     });
 
-    it('should handle failed Athena assessment appropriately', async () => {
-        const routeOverride = {
-            params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
-        } as any as ActivatedRoute;
-        createModelingSubmissionComponent(routeOverride);
+    it.each([
+        { state: 'pending', successful: undefined, completionDate: () => dayjs().add(5, 'minutes') },
+        { state: 'failed', successful: false, completionDate: () => dayjs() },
+    ])('should preserve displayed feedback for a $state Athena assessment with a completion timestamp', async ({ successful, completionDate }) => {
+        createModelingSubmissionComponent();
 
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
-        const alertServiceSpy = vi.spyOn(alertService, 'error');
+        const errorAlertSpy = vi.spyOn(alertService, 'error');
+        const successAlertSpy = vi.spyOn(alertService, 'success');
+        const infoAlertSpy = vi.spyOn(alertService, 'info');
+
+        const previousFeedback = new Feedback();
+        previousFeedback.id = 1;
+        previousFeedback.detailText = 'Keep this assessment visible';
+        previousFeedback.credits = 5;
+        previousFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
 
         const manualResult = new Result();
+        manualResult.id = 99;
         manualResult.score = 50.0;
         manualResult.assessmentType = AssessmentType.MANUAL;
-        manualResult.submission = submission;
-        manualResult.completionDate = dayjs();
-        manualResult.feedbacks = [];
+        manualResult.completionDate = dayjs().subtract(1, 'hour');
+        manualResult.feedbacks = [previousFeedback];
 
-        const failedAthenaResult = new Result();
-        failedAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
-        failedAthenaResult.submission = submission;
-        failedAthenaResult.completionDate = undefined;
-        failedAthenaResult.successful = false;
-        failedAthenaResult.feedbacks = [];
+        const displayedSubmission = new ModelingSubmission();
+        displayedSubmission.id = 20;
+        displayedSubmission.submitted = true;
+        displayedSubmission.participation = participation;
+        displayedSubmission.model = validMockModel;
+        displayedSubmission.results = [manualResult];
+        displayedSubmission.latestResult = manualResult;
+        manualResult.submission = displayedSubmission;
+
+        const athenaResult = new Result();
+        athenaResult.id = 100;
+        athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        athenaResult.submission = displayedSubmission;
+        // Pending requests persist the lease expiry here; failures also have a completion timestamp.
+        athenaResult.completionDate = completionDate();
+        athenaResult.successful = successful;
+        athenaResult.feedbacks = [];
 
         const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
-        const subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-        submission.model = validMockModel;
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(displayedSubmission));
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+        expect(comp.result()).toBe(manualResult);
+        expect(comp.assessmentResult()).toBe(manualResult);
+        expect(comp.unreferencedFeedback).toEqual([previousFeedback]);
+        expect(comp.totalScore).toBe(5);
 
-        alertServiceSpy.mockClear();
+        errorAlertSpy.mockClear();
+        successAlertSpy.mockClear();
+        infoAlertSpy.mockClear();
 
-        resultSubject.next(failedAthenaResult);
+        resultSubject.next(athenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
+        if (successful === false) {
+            expect(errorAlertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
+        } else {
+            expect(errorAlertSpy).not.toHaveBeenCalled();
+        }
+        expect(successAlertSpy).not.toHaveBeenCalled();
+        expect(infoAlertSpy).not.toHaveBeenCalled();
+        expect(comp.result()).toBe(manualResult);
+        expect(comp.assessmentResult()).toBe(manualResult);
+        expect(comp.unreferencedFeedback).toEqual([previousFeedback]);
+        expect(comp.totalScore).toBe(5);
     });
 
-    it('should handle Athena assessment results separately from manual assessments', async () => {
+    it('should display successful feedback when the same pending Athena result completes', async () => {
         createModelingSubmissionComponent();
 
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceInfoSpy = vi.spyOn(alertService, 'info');
-        const alterServiceSuccessSpy = vi.spyOn(alertService, 'success');
+        const alertServiceSuccessSpy = vi.spyOn(alertService, 'success');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+
+        const newFeedback = new Feedback();
+        newFeedback.id = 2;
+        newFeedback.detailText = 'New Athena feedback';
+        newFeedback.credits = 7.5;
+        newFeedback.type = FeedbackType.AUTOMATIC;
 
         const athenaResult = new Result();
+        athenaResult.id = 100;
         athenaResult.score = 75.0;
         athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
         athenaResult.submission = submission;
         athenaResult.completionDate = dayjs();
         athenaResult.successful = true;
-        athenaResult.feedbacks = [];
+        athenaResult.feedbacks = [newFeedback];
+
+        const pendingAthenaResult = new Result();
+        pendingAthenaResult.id = athenaResult.id;
+        pendingAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        pendingAthenaResult.submission = submission;
+        pendingAthenaResult.completionDate = dayjs().add(5, 'minutes');
+        pendingAthenaResult.successful = undefined;
+        pendingAthenaResult.feedbacks = [];
 
         const manualResult = new Result();
         manualResult.score = 50.0;
@@ -517,11 +808,16 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(manualResult);
         expect(alertServiceInfoSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
 
+        resultSubject.next(pendingAthenaResult);
         resultSubject.next(athenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.assessmentResult()).toEqual(athenaResult);
-        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise()?.title ?? '' });
+        expect(comp.result()).toBe(athenaResult);
+        expect(comp.assessmentResult()).toBe(athenaResult);
+        expect(comp.assessmentResult()?.feedbacks).toEqual([newFeedback]);
+        expect(comp.totalScore).toBe(7.5);
+        expect(alertServiceSuccessSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise()?.title ?? '' });
+        expect(alertServiceErrorSpy).not.toHaveBeenCalled();
     });
 
     it('should set result when new result comes in from websocket', async () => {
@@ -553,26 +849,6 @@ describe('ModelingSubmissionComponent', () => {
 
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.assessmentResult()).toEqual(newResult);
-    });
-
-    it('refreshes a non-collaborative editor from an automatic-submission snapshot', () => {
-        createModelingSubmissionComponent();
-
-        submission.submitted = false;
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-        vi.spyOn(websocketService, 'subscribe');
-        const persistedModel = JSON.stringify({ ...JSON.parse(validMockModel), title: 'Persisted snapshot' });
-        const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: submission.id,
-            model: persistedModel,
-            submitted: true,
-            participation,
-        });
-        fixture.detectChanges();
-        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
-        expect(comp.submission()).toEqual(modelSubmission);
-        expect(comp.umlModel().title).toBe('Persisted snapshot');
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {
@@ -906,7 +1182,7 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.ngOnInit();
 
-        expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123);
+        expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123, 'owner');
         expect(comp.sortedSubmissionHistory()).toEqual(expectedSortedSubmissions);
         comp.sortedResultHistory().forEach((result, index) => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
@@ -1102,5 +1378,30 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.result()).toBeUndefined();
         expect(comp.assessmentResult()).toBeUndefined();
         expect(comp['shouldShowLiveEditor']()).toBe(true);
+    });
+    it.each(['owner', 'staff-preview'] as const)('dispatches the explicit %s modeling editor purpose', (purpose) => {
+        createModelingSubmissionComponent();
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        const load = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        comp.ngOnInit();
+        expect(load).toHaveBeenCalledWith(123, purpose);
+    });
+
+    it.each(['owner', 'staff-preview'] as const)('forwards explicit %s purpose through history and specific-result loading', (purpose) => {
+        createModelingSubmissionComponent(new MockActivatedRoute({ participationId: 123, submissionId: 20, resultId: 100 }));
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        const historicalSubmission = {
+            id: 20,
+            submitted: true,
+            participation,
+            model: validMockModel,
+            results: [{ id: 100, completionDate: dayjs(), assessmentType: AssessmentType.MANUAL }],
+        } as ModelingSubmission;
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(historicalSubmission));
+        const history = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([historicalSubmission]));
+        const assessment = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'getAssessment').mockReturnValue(of({ id: 100, feedbacks: [] }));
+        comp.ngOnInit();
+        expect(history).toHaveBeenCalledWith(123, purpose);
+        expect(assessment).toHaveBeenCalledWith(20, 100, purpose);
     });
 });

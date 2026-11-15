@@ -1,0 +1,7 @@
+.filled-label {
+    transition: clip-path 1s ease-in-out;
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}

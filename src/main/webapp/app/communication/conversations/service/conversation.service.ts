@@ -1,10 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -30,12 +30,12 @@ export enum ConversationMemberSearchFilter {
     STUDENT,
     CHANNEL_MODERATOR, // this is a special role that is only used for channels
 }
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ConversationService {
-    public resourceUrl = '/api/communication/courses/';
-
     private http = inject(HttpClient);
     private translationService = inject(TranslateService);
+
+    public resourceUrl = '/api/communication/courses/';
 
     getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {
@@ -73,6 +73,12 @@ export class ConversationService {
         } else {
             return '';
         }
+    }
+
+    /** Loads up to ten eligible mention recipients from this conversation, ordered by their latest message or reply. */
+    searchMembersForUserMentions(courseId: number, conversationId: number, loginOrName: string): Observable<HttpResponse<UserNameAndLoginDTO[]>> {
+        const params = new HttpParams().set('loginOrName', loginOrName);
+        return this.http.get<UserNameAndLoginDTO[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/mentions`, { observe: 'response', params });
     }
 
     searchMembersOfConversation(

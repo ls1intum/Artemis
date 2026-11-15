@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,16 +7,16 @@ import { EMPTY } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBars } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiCheckboxComponent,
-    TumUiSelectComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
-    TumUiTooltipDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,11 +28,17 @@ import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
+import { programmingExerciseResultWarning } from 'app/programming/manage/status/programming-exercise-result-warning.util';
+import { findLatestResult } from 'app/foundation/util/utils';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { ActionsColumnWidth } from 'app/exercise/exercise-action-bar/actions-column-width';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
 /**
- * Value of the group dropdown's "no group" entry. Not `undefined`, which `tum-ui-select` reads as "nothing
+ * Value of the group dropdown's "no group" entry. Not `undefined`, which `tumaet-ui-select` reads as "nothing
  * selected" and renders as a blank trigger. A negative id cannot collide with a real group id.
  */
 export const NO_GROUP_OPTION_VALUE = -1;
@@ -57,17 +63,18 @@ interface ExerciseRow {
     exercise: Exercise;
     icon: IconProp;
     titleLink: (string | number)[] | undefined;
+    programmingBuildWarning: string | undefined;
     releaseDate: dayjs.Dayjs | undefined;
     dueDate: dayjs.Dayjs | undefined;
     assessmentDueDate: dayjs.Dayjs | undefined;
-    difficultySeverity: TumUiTagSeverity;
+    difficultySeverity: TumAetUiTagSeverity;
     owningGroupId: number | undefined;
     isQuizNonIndividual: boolean;
     nonIndividualQuizTooltip: string | undefined;
     /** i18n key for the quiz status badge, or `undefined` when no badge should be shown. */
     quizStatusLabel: string | undefined;
     /** Severity of the quiz status badge. Only read when {@link quizStatusLabel} is set, so non-quiz rows carry a default. */
-    quizStatusSeverity: TumUiTagSeverity;
+    quizStatusSeverity: TumAetUiTagSeverity;
     /** i18n key for the quiz mode badge, or `undefined` when the quiz has no mode. */
     quizModeKey: string | undefined;
     hasCategories: boolean;
@@ -80,18 +87,19 @@ interface ExerciseRow {
     templateUrl: './exercise-table.component.html',
     styleUrl: './exercise-table.component.scss',
     // Floor the actions column at the widest quiz-button + ellipsis width its rows report, so the main buttons
-    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons.
-    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
+    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons. Size it to the widest
+    // row's buttons, so the leftover width goes to the other columns.
+    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()', '[style.--actions-width]': 'actionsWidthVar()' },
     imports: [
         RouterLink,
         FormsModule,
         FaIconComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiSelectComponent,
-        TumUiCheckboxComponent,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         CdkDropList,
         CdkDrag,
         CdkDragHandle,
@@ -105,9 +113,12 @@ interface ExerciseRow {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseTableComponent {
-    protected readonly faBars = faBars;
-
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+    protected readonly faBars = faBars;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
 
     /** Emits on every language switch, so computeds building translated strings read it to be re-derived. */
     private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
@@ -130,6 +141,7 @@ export class ExerciseTableComponent {
     readonly groupChange = output<TableGroupChange>();
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
     readonly selectionToggle = output<number>();
     readonly selectionAllChange = output<boolean>();
 
@@ -150,8 +162,8 @@ export class ExerciseTableComponent {
                     cmp = (a.title ?? '').localeCompare(b.title ?? '');
                     break;
                 case 'dueDate': {
-                    const da = effectiveDate(a, this.effectiveGroupFor(a), 'dueDate');
-                    const db = effectiveDate(b, this.effectiveGroupFor(b), 'dueDate');
+                    const da = this.sortDate(a);
+                    const db = this.sortDate(b);
                     if (da === undefined || db === undefined) {
                         // Undated exercises sort last in both directions, so pre-negate to cancel the flip below
                         // (mirrors course-exercise-cards.ts).
@@ -185,6 +197,7 @@ export class ExerciseTableComponent {
                 exercise,
                 icon: this.icon(exercise),
                 titleLink: this.titleLink(exercise),
+                programmingBuildWarning: this.programmingBuildWarning(exercise),
                 releaseDate: this.effectiveReleaseDate(exercise),
                 dueDate: this.effectiveDueDate(exercise),
                 assessmentDueDate: this.effectiveAssessmentDueDate(exercise),
@@ -211,6 +224,16 @@ export class ExerciseTableComponent {
         const width = this.maxQuizActionsMinWidth();
         return width > 0 ? `${width}px` : undefined;
     });
+
+    /** Sizes the actions column to the widest current row's buttons. */
+    protected readonly actionsColumn = new ActionsColumnWidth(computed(() => this.rows().map((row) => row.exercise.id!)));
+    /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
+    readonly actionsWidthVar = this.actionsColumn.cssWidth;
+
+    constructor() {
+        // The table fills the host, so the host's width is the one the percentage refers to.
+        afterNextRender(() => this.destroyRef.onDestroy(this.actionsColumn.observe(this.host.nativeElement)));
+    }
 
     onQuizActionsMinWidth(width: number): void {
         if (width > this.maxQuizActionsMinWidth()) {
@@ -267,10 +290,10 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * Applies a sort requested by a `[tumUiSortableColumn]` header. The kit table is controlled: it only reports the
+     * Applies a sort requested by a `[tumAetUiSortableColumn]` header. The kit table is controlled: it only reports the
      * field and order (1 ascending / -1 descending), the state stays here. Its toggle rule mirrors {@link sortBy}.
      */
-    protected onSortChange(event: TumUiTableSortEvent): void {
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
         this.sortColumn.set(event.field as SortColumn);
         this.sortAsc.set(event.order > 0);
     }
@@ -285,6 +308,24 @@ export class ExerciseTableComponent {
 
     urlSegment(exercise: Exercise): string {
         return getExerciseUrlSegment(exercise.type);
+    }
+
+    private programmingBuildWarning(exercise: Exercise): string | undefined {
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            return undefined;
+        }
+        const programming = exercise as ProgrammingExercise;
+        const warnings = [
+            programmingExerciseResultWarning(
+                findLatestResult(getAllResultsOfAllSubmissions(programming.templateParticipation?.submissions)),
+                ProgrammingExerciseParticipationType.TEMPLATE,
+            ),
+            programmingExerciseResultWarning(
+                findLatestResult(getAllResultsOfAllSubmissions(programming.solutionParticipation?.submissions)),
+                ProgrammingExerciseParticipationType.SOLUTION,
+            ),
+        ].filter((warning): warning is string => warning !== undefined);
+        return warnings.length ? warnings.map((warning) => this.translateService.instant(warning)).join(' ') : undefined;
     }
 
     /** Detail-page link for the exercise, or `undefined` for unsaved drafts (RouterLink disables navigation for null/undefined). */
@@ -307,6 +348,12 @@ export class ExerciseTableComponent {
         return this.group() ?? this.owningGroupForExercise(exercise);
     }
 
+    /** Sorts the Dates column by due date, falling back to the effective start and release dates. */
+    private sortDate(exercise: Exercise): dayjs.Dayjs | undefined {
+        const group = this.effectiveGroupFor(exercise);
+        return effectiveDate(exercise, group, 'dueDate') ?? effectiveDate(exercise, group, 'startDate') ?? effectiveDate(exercise, group, 'releaseDate');
+    }
+
     effectiveReleaseDate(exercise: Exercise) {
         return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'releaseDate');
     }
@@ -319,7 +366,7 @@ export class ExerciseTableComponent {
         return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'assessmentDueDate');
     }
 
-    difficultySeverity(exercise: Exercise): TumUiTagSeverity {
+    difficultySeverity(exercise: Exercise): TumAetUiTagSeverity {
         switch (exercise.difficulty) {
             case DifficultyLevel.EASY:
                 return 'success';
@@ -396,7 +443,7 @@ export class ExerciseTableComponent {
      * The practice state shares `info` with the visible state: the kit tag has no `primary`, and its `secondary`
      * default would be indistinguishable from the badges beside it. A quiz has one status, so the two never collide.
      */
-    quizStatusSeverity(exercise: QuizExercise): TumUiTagSeverity {
+    quizStatusSeverity(exercise: QuizExercise): TumAetUiTagSeverity {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
                 return 'secondary';

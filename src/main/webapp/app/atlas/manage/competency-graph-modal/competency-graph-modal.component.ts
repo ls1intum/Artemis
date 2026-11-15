@@ -8,8 +8,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ScienceEventType } from 'app/foundation/science/science.model';
-import { ScienceService } from 'app/foundation/science/science.service';
 
 export interface CompetencyGraphModalData {
     learningPathId: number;
@@ -24,13 +22,12 @@ export interface CompetencyGraphModalData {
     styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
-    protected readonly closeIcon = faXmark;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
-    private readonly scienceService = inject(ScienceService);
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
+
+    protected readonly closeIcon = faXmark;
 
     readonly name = signal<string | undefined>((this.dialogConfig.data as CompetencyGraphModalData).name);
     readonly learningPathId = signal<number>((this.dialogConfig.data as CompetencyGraphModalData).learningPathId);
@@ -41,9 +38,6 @@ export class CompetencyGraphModalComponent {
     constructor() {
         effect(() => {
             const learningPathId = this.learningPathId();
-
-            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
-
             untracked(() => void this.loadCompetencyGraph(learningPathId));
         });
     }

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
@@ -27,7 +27,7 @@ export interface LtiPlatformConfigurationQuery {
     sort?: string[];
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LtiConfigurationService {
     private http = inject(HttpClient);
 
@@ -36,7 +36,7 @@ export class LtiConfigurationService {
      */
     query(req?: LtiPlatformConfigurationQuery): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
         const params: HttpParams = createRequestOption(req);
-        return this.http.get<LtiPlatformConfiguration[]>('api/lti/lti-platforms', {
+        return this.http.get<LtiPlatformConfiguration[]>('api/lti/admin/lti-platforms', {
             params,
             observe: 'response',
         });

@@ -2,13 +2,14 @@
  * Vitest tests for UserManagementComponent.
  * Tests the main user management list view with filtering, sorting, and CRUD operations.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormControl, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -101,10 +102,102 @@ describe('UserManagementComponent', () => {
         httpMock.verify();
     });
 
-    describe('onPageChange (tum-ui paginator)', () => {
+    describe('onPageChange (tumaet-ui paginator)', () => {
         it('converts the 0-indexed paginator page to the 1-indexed page', () => {
             component.onPageChange(2);
             expect(component.page()).toBe(3);
+        });
+    });
+
+    describe('onPageSizeChange (tumaet-ui paginator)', () => {
+        it('applies the new page size, returns to the first page and puts the size in the URL', () => {
+            const router = TestBed.inject(Router);
+            component.page.set(4);
+
+            component.onPageSizeChange(100);
+
+            expect(component.itemsPerPage()).toBe(100);
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1, size: 100 }) }));
+        });
+
+        it.each`
+            size         | expected
+            ${'20'}      | ${20}
+            ${'7'}       | ${50}
+            ${'abc'}     | ${50}
+            ${undefined} | ${50}
+        `('reads the page size $size from the URL as $expected', async ({ size, expected }) => {
+            vi.useFakeTimers();
+            const queryParams = new Map<string, string>([['page', '2']]);
+            if (size !== undefined) {
+                queryParams.set('size', size);
+            }
+            const route = mockRoute as unknown as { queryParamMap: unknown };
+            const originalQueryParamMap = route.queryParamMap;
+            route.queryParamMap = of(queryParams);
+            vi.spyOn(userService, 'query').mockReturnValue(of(new HttpResponse({ body: [new User(1)] })));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+            try {
+                fixture.detectChanges();
+                await vi.advanceTimersByTimeAsync(1000);
+
+                expect(component.itemsPerPage()).toBe(expected);
+                expect(component.page()).toBe(2);
+            } finally {
+                route.queryParamMap = originalQueryParamMap;
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('returning to the first page', () => {
+        let router: Router;
+        let searchSpy: MockInstance;
+
+        beforeEach(() => {
+            router = TestBed.inject(Router);
+            searchSpy = vi.spyOn(component.search, 'next');
+            component.userSearchForm = new FormGroup({ searchControl: new FormControl('') });
+        });
+
+        it('applies filters on the first page when the current page is a later one', () => {
+            component.page.set(6);
+
+            component.applyFilter();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(component.filterModalVisible()).toBe(false);
+        });
+
+        it('reloads directly when filters are applied on the first page', () => {
+            component.applyFilter();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('searches from the first page when the search term changes', () => {
+            component.page.set(6);
+            component.searchControl.setValue('student');
+
+            component.loadAll();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(searchSpy).not.toHaveBeenCalled();
+        });
+
+        it('stays on the current page when the search term is unchanged', () => {
+            component.page.set(6);
+
+            component.loadAll();
+
+            expect(component.page()).toBe(6);
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
         });
     });
 
@@ -781,5 +874,99 @@ describe('UserManagementComponent', () => {
         component.filters().statusFilter.add(StatusFilter.ACTIVATED);
         httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('registrationNumbers', 'WITH_REG_NO').append('status', 'ACTIVATED');
         expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
+    });
+});
+
+describe('UserManagementComponent toolbar', () => {
+    let fixture: ComponentFixture<UserManagementComponent>;
+    let component: UserManagementComponent;
+
+    const mockRoute = {
+        params: of({}),
+        children: [],
+        data: of({ defaultSort: 'id,asc' }),
+        queryParamMap: of(new Map([['page', '1']])),
+    } as unknown as ActivatedRoute;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [UserManagementComponent],
+            providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+                { provide: ActivatedRoute, useValue: mockRoute },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(EventManager),
+            ],
+        }).compileComponents();
+
+        vi.spyOn(TestBed.inject(AdminUserService), 'query').mockReturnValue(
+            of(new HttpResponse<User[]>({ body: [new User(1)], headers: new HttpHeaders({ 'X-Total-Count': '1' }) })),
+        );
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
+        fixture = TestBed.createComponent(UserManagementComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    const element = () => fixture.nativeElement as HTMLElement;
+    const searchInput = () => element().querySelector<HTMLInputElement>('#field_searchTerm')!;
+
+    it('should mark the search input valid and show no error while the search term is acceptable', () => {
+        expect(element().querySelector('[data-testid="search-error"]')).toBeNull();
+        expect(searchInput().getAttribute('aria-invalid')).not.toBe('true');
+        expect(searchInput().hasAttribute('aria-describedby')).toBe(false);
+        expect(searchInput().getAttribute('aria-label')).toBe('artemisApp.userManagement.searchForUser');
+    });
+
+    it('should show an alert linked to the search input when the search term is too short', () => {
+        component.searchControl.setValue('ab');
+        component.loadAll();
+        fixture.detectChanges();
+
+        const error = element().querySelector<HTMLElement>('[data-testid="search-error"]')!;
+        expect(component.searchInvalid()).toBe(true);
+        expect(error).not.toBeNull();
+        expect(error.getAttribute('role')).toBe('alert');
+        expect(error.id).toBe('user-search-error');
+        expect(searchInput().getAttribute('aria-invalid')).toBe('true');
+        expect(searchInput().getAttribute('aria-describedby')).toBe('user-search-error');
+    });
+
+    it('should remove the search error again once the term is long enough', () => {
+        component.searchControl.setValue('ab');
+        component.loadAll();
+        fixture.detectChanges();
+
+        component.searchControl.setValue('abc');
+        component.loadAll();
+        fixture.detectChanges();
+
+        expect(element().querySelector('[data-testid="search-error"]')).toBeNull();
+        expect(searchInput().getAttribute('aria-invalid')).not.toBe('true');
+        expect(searchInput().hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('should label the icon-only toolbar buttons for assistive technology', () => {
+        const label = (testId: string) =>
+            element().querySelector(`[data-testid="${testId}"] button`)?.getAttribute('aria-label') ??
+            element().querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-label');
+
+        expect(label('search-button')).toBe('artemisApp.userManagement.search');
+        expect(label('open-filter-button')).toBe('artemisApp.userManagement.filter.modal.open');
+    });
+
+    it('should render the toolbar form and the footer paginator inside the table layout', () => {
+        expect(element().querySelector('tumaet-ui-table-layout form[tumAetUiTableToolbar] #field_searchTerm')).not.toBeNull();
+        expect(element().querySelector('tumaet-ui-table-layout tumaet-ui-paginator[tumAetUiTableFooter]')).not.toBeNull();
     });
 });

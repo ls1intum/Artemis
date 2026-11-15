@@ -1,10 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { Metrics, NodeInfo, ThreadDump } from './metrics.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MetricsService {
     private http = inject(HttpClient);
 

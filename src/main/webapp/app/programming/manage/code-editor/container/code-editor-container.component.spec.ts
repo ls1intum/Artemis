@@ -24,7 +24,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { WritableSignal, signal } from '@angular/core';
+import { WritableSignal, computed, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
@@ -81,7 +81,7 @@ describe('CodeEditorContainerComponent', () => {
             highlightLines: vi.fn(),
             editor: vi.fn().mockReturnValue({ revealLine: vi.fn() }),
         };
-        gridStub = { toggleCollapse: vi.fn() };
+        gridStub = { toggleCollapse: vi.fn(), expandBottomPanel: vi.fn(), buildOutputIsCollapsed: vi.fn().mockReturnValue(false) };
         (component as any).monacoEditor = () => monacoEditorStub;
         (component as any).grid = () => gridStub;
     });
@@ -95,16 +95,59 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.isProblemStatementVisible()).toBe(true);
     });
 
-    it('should update file badges when feedback suggestions change', () => {
-        fixture.componentRef.setInput('feedbackSuggestions', [
-            { reference: 'file:src/main/App.java_line:3' } as Feedback,
-            { reference: 'file:src/main/App.java_line:10' } as Feedback,
-            { reference: 'file:src/Other.java_line:5' } as Feedback,
+    it('updates a cached cleanliness guard after loading, edits, saves and refreshes', () => {
+        const clean = computed(() => component.canDeactivate() && component.hasCleanRepositoryState());
+        expect(clean()).toBe(false);
+        component.commitState = CommitState.CLEAN;
+        expect(clean()).toBe(true);
+        component.onFileContentChange({ fileName: 'App.java', text: 'unsaved' });
+        expect(clean()).toBe(false);
+        component.commitState = CommitState.CLEAN;
+        expect(clean()).toBe(false);
+        component.unsavedFiles = {};
+        expect(clean()).toBe(true);
+        component.commitState = CommitState.UNCOMMITTED_CHANGES;
+        expect(clean()).toBe(false);
+        component.onRefreshFiles();
+        expect(clean()).toBe(true);
+        component.initializeProperties();
+        expect(clean()).toBe(false);
+    });
+
+    it('should update file badges from all referenced feedback, not only Athena suggestions', () => {
+        fixture.componentRef.setInput('referencedFeedback', [
+            { text: 'FeedbackSuggestion:accepted:1', reference: 'file:src/main/App.java_line:3' } as Feedback,
+            { text: 'FeedbackSuggestion:accepted:2', reference: 'file:src/main/App.java_line:10' } as Feedback,
+            { text: 'FeedbackSuggestion:accepted:3', reference: 'file:src/Other.java_line:5' } as Feedback,
+            // Regular (non-suggestion) feedback must also be counted: the badge's own tooltip is "Number of
+            // feedback in this file/folder", not suggestion-specific.
+            { text: 'Regular manual feedback', reference: 'file:src/Other.java_line:9' } as Feedback,
         ]);
         fixture.detectChanges();
 
         expect(Object.keys(component.fileBadges())).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
         expect(component.fileBadges()['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
+        expect(component.fileBadges()['src/main/App.java'][0].count).toBe(2);
+        expect(component.fileBadges()['src/Other.java'][0].count).toBe(2);
+    });
+
+    it('should fall back to the submission feedback for file badges when referencedFeedback is not bound', () => {
+        fixture.componentRef.setInput('participation', {
+            submissions: [
+                {
+                    results: [
+                        {
+                            feedbacks: [
+                                { text: 'Regular manual feedback', reference: 'file:src/main/App.java_line:3' } as Feedback,
+                                { text: 'FeedbackSuggestion:accepted:1', reference: 'file:src/main/App.java_line:10' } as Feedback,
+                            ],
+                        },
+                    ],
+                },
+            ],
+        } as Participation);
+        fixture.detectChanges();
+
         expect(component.fileBadges()['src/main/App.java'][0].count).toBe(2);
     });
 
@@ -363,11 +406,15 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should clear unsaved files after refresh', () => {
+        const commitStateChanged = vi.fn();
+        component.onCommitStateChange.subscribe(commitStateChanged);
         component.unsavedFiles = { 'src/main/App.java': 'x' };
 
         component.onRefreshFiles();
 
         expect(component.unsavedFiles).toEqual({});
+        expect(component.commitState).toBe(CommitState.CLEAN);
+        expect(commitStateChanged).toHaveBeenCalledWith(CommitState.CLEAN);
     });
 
     it('should keep only files with errors after saving and show alert', () => {
@@ -467,6 +514,23 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('should bypass the unload warning once after an explicit discard confirmation', () => {
+        const event = { preventDefault: vi.fn() } as any;
+        component.unsavedFiles = { 'src/main/App.java': 'x' };
+
+        component.allowNextUnloadWithoutConfirmation();
+
+        expect(component.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+    });
+
+    it.each(Object.values(CommitState))('should report whether %s is a verified clean repository state', (commitState) => {
+        component.commitState = commitState;
+        expect(component.hasCleanRepositoryState()).toBe(commitState === CommitState.CLEAN);
     });
 
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {

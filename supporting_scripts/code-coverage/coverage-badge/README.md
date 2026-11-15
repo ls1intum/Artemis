@@ -4,8 +4,8 @@ Computes the combined server + client coverage figure shown by the `coverage` ba
 `README.md`, replacing the Codacy coverage badge that stopped reporting a value.
 
 `ci.yml`'s `coverage-badge` job runs this on every `develop` push and publishes the result to
-`coverage.json` on the orphan **`badges`** branch, which Shields renders via its endpoint API. The
-full CI contract — triggers, permissions, and why the badge is sticky — is documented in
+`coverage.json` and a locally rendered `coverage.svg` on the orphan **`badges`** branch. GitHub
+serves the SVG directly; no hosted badge API is involved. The full CI contract — triggers, permissions, and why the badge is sticky — is documented in
 [`.github/workflows/README.md`](../../../.github/workflows/README.md#the-coverage-badge).
 
 ## What it measures
@@ -88,6 +88,10 @@ COMMIT=$(git commit-tree "$TREE" -m 'Seed the coverage badge')
 git push origin "$COMMIT":refs/heads/badges
 rm coverage.json
 ```
+
+Then manually dispatch **Publish README Badges** (`publish-badges.yml`) to render `coverage.svg`,
+`latest-version.svg` and `license.svg` from this seed and the current stable Artemis release.
+The renderer and publishing retry contract live in [the badge tooling README](../../badges/README.md).
 
 ## Tests
 

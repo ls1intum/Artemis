@@ -25,14 +25,13 @@ import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExerciseDueDateDTO;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 
 /**
@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_MANAGEMENT_OVERVIEW)
 @RestController
 @RequestMapping("api/course/")
 public class CourseManagementResource {
@@ -86,6 +86,8 @@ public class CourseManagementResource {
 
     private final CourseRepository courseRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final TutorParticipationRepository tutorParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -93,7 +95,8 @@ public class CourseManagementResource {
     public CourseManagementResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
             ExerciseRepository exerciseRepository, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService) {
+            CourseLoadService courseLoadService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -114,7 +117,8 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
      */
     @GetMapping("courses")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<CourseManagementDTO>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all courses the user has access to");
         User user = userRepository.getUserWithAuthorities();
@@ -128,8 +132,10 @@ public class CourseManagementResource {
      * @param search The pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page
      */
+    @FeatureUsage(UserFeature.COURSE_MATERIAL_IMPORT)
     @GetMapping("courses/for-import")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get a list of courses for import.");
         User user = userRepository.getUserWithAuthorities();
@@ -144,7 +150,8 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the list of courses
      */
     @GetMapping("courses/courses-with-quiz")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<CourseForQuizSelectionDTO>> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithAuthorities();
         if (authCheckService.isCurrentUserAdminAccessEnabled()) {
@@ -163,7 +170,8 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body a list of courses (the user has access to)
      */
     @GetMapping("courses/course-management-overview")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<CourseManagementOverviewDTO>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return ResponseEntity.ok(courseOverviewService.getAllCoursesForManagementOverview(onlyActive).stream().map(CourseManagementOverviewDTO::of).toList());
     }
@@ -174,6 +182,7 @@ public class CourseManagementResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/for-assessment-dashboard")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseAssessmentDashboardDTO> getCourseForAssessmentDashboard(@PathVariable long courseId) {
@@ -196,11 +205,13 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/with-exercises")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseWithExercisesDTO> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        // The exercises report their team assignment configuration, which an exercise does not carry by itself: one query
+        // for all of them.
+        teamAssignmentConfigRepository.attachTo(course.getExercises());
         return ResponseEntity.ok(CourseWithExercisesDTO.of(course));
     }
 
@@ -224,11 +235,10 @@ public class CourseManagementResource {
      * @return the course with eagerly loaded organizations
      */
     @GetMapping("courses/{courseId}/with-organizations")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseWithOrganizationsDTO> getCourseWithOrganizations(@PathVariable Long courseId) {
         log.debug("REST request to get a course with its organizations : {}", courseId);
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return ResponseEntity.ok(CourseWithOrganizationsDTO.of(course));
     }
 
@@ -238,13 +248,12 @@ public class CourseManagementResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/locked-submissions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<LockedCourseSubmissionDTO>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
-        Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(courseId);
         for (Submission submission : submissions) {
@@ -262,12 +271,9 @@ public class CourseManagementResource {
      * @return Set of exercises with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/all-exercises-with-due-dates")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Set<CourseExerciseDueDateDTO>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exercises with due dates and categories in course : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
         return ResponseEntity.ok(exercises.stream().map(CourseExerciseDueDateDTO::of).collect(Collectors.toSet()));
     }
@@ -279,12 +285,10 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/categories")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        return ResponseEntity.ok().body(exerciseRepository.findAllCategoryNames(course.getId()));
+        return ResponseEntity.ok().body(exerciseRepository.findAllCategoryNames(courseId));
     }
 
     /**

@@ -10,21 +10,20 @@ import { isRealExam, testExamSimulationEndDate } from 'app/exam/overview/exam.ut
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, switchMap, tap, throttleTime, timeout } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, switchMap, takeUntil, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
-import { NgClass } from '@angular/common';
 import { ExamBarComponent } from '../exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from '../exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { QuizExamSubmissionComponent } from '../exercises/quiz/quiz-exam-submission.component';
@@ -59,15 +58,16 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { Message } from 'primeng/message';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { TumUiMessageComponent } from '@tumaet/ui-angular';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -79,7 +79,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         CdkScrollable,
         TestRunRibbonComponent,
         ExamParticipationCoverComponent,
-        NgClass,
         ExamBarComponent,
         ExamNavigationSidebarComponent,
         QuizExamSubmissionComponent,
@@ -96,9 +95,9 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
-        Message,
-        ButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -106,6 +105,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private examParticipationService = inject(ExamParticipationService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private textSubmissionService = inject(TextSubmissionService);
@@ -120,6 +120,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private examManagementService = inject(ExamManagementService);
     private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
+    /**
+     * Whether the shell around the exam is in its exam layout: true from the start of a real exam until its summary is loaded,
+     * which resets the layout. Only then does a screen have to draw the dividers around its card itself, afterwards it fills the
+     * card of the shell it is shown in.
+     */
+    protected readonly examLayoutActive = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
+
+    /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
+    private isDestroyed = false;
+
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
 
@@ -130,9 +140,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
-
-    // needed for recalculation of exam content height
-    readonly EXAM_HEIGHT_OFFSET = 88;
 
     readonly courseId = signal<number>(undefined!);
     readonly examId = signal<number>(undefined!);
@@ -200,12 +207,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private synchronizationAlert = new Subject<void>();
 
     private programmingSubmissionSubscriptions: Subscription[] = [];
+    private readonly participationStartCancelled = new Subject<void>();
 
     readonly loadingExam = signal<boolean>(undefined!);
     // Render-version signal read by the template-bound isOver()/isGracePeriodOver() getters. Bumped whenever
     // state outside Angular's reactivity changes (wall-clock transitions, in-place submission sync mutations)
     // so the exam view and its default-CD children (e.g. the navigation sidebar icons) re-render under zoneless.
     private readonly wallClockVersion = signal(0);
+    // Text submissions with a save request in flight, see saveTextSubmission.
+    private readonly textSavesInFlight = new WeakSet<Submission>();
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
     readonly noStudentExamMessageKey = signal('artemisApp.examParticipation.noStudentExam');
@@ -277,12 +287,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         }),
                     )
                     .subscribe({
-                        next: (studentExam) => {
-                            this.handleStudentExam(studentExam);
-                        },
-                        error: () => {
-                            this.handleNoStudentExam();
-                        },
+                        next: (studentExam) => this.handleStudentExam(studentExam),
+                        error: () => this.handleNoStudentExam(),
                     });
             }
         });
@@ -391,6 +397,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private resetForNewRoute(): void {
         this.resetForNewLoad();
         this.stopConductionOfPreviousExam();
+        // Right away rather than when the next exam is loaded: if that load stalls or fails, the live events of the previous exam would keep being fetched
+        this.liveEventsService.reset();
         this.exam.set(undefined!);
         this.studentExam.set(undefined!);
         this.examStartConfirmed.set(false);
@@ -407,6 +415,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * one, in the case of a working-time update even reconstructing a student exam that was just dropped (#13317).
      */
     private stopConductionOfPreviousExam(): void {
+        this.participationStartCancelled.next();
+        this.generateParticipationStatus.next('success');
         this.stopAutoSaveTimer();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription = undefined;
@@ -654,6 +664,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+                    if (this.isDestroyed) {
+                        // The student left before the response arrived: the publication above made the live events service handle this exam again
+                        this.liveEventsService.reset();
+                    }
 
                     // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
                     // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
@@ -854,16 +868,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    checkVerticalOverflow(): boolean {
-        // Get the sidebar-content element
-        const sidebarContent = document.querySelector('.content-exam-height');
-        if (sidebarContent) {
-            return sidebarContent.scrollHeight > sidebarContent.clientHeight;
-        }
-        return false;
-    }
-
     ngOnDestroy(): void {
+        this.participationStartCancelled.next();
+        this.participationStartCancelled.complete();
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
@@ -873,6 +880,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
+        this.isDestroyed = true;
+        this.liveEventsService.reset();
         this.stopAutoSaveTimer();
     }
 
@@ -912,7 +921,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.loadAndDisplaySummary();
             }
         } else {
-            // Directly start the exam when we continue from a failed save
+            // INTENDED BEHAVIOR, DECIDED BY THE PRODUCT OWNER - DO NOT CHANGE IT TO MAKE A FLAKY TEST PASS:
+            // After a page reload during an exam the exam is NOT resumed. The student sees the start cover again (examStartConfirmed
+            // is false after a reload), has to type in their name and confirm the exam rules, and doing so creates a NEW exam session
+            // (examStarted is called by the cover). Already saved answers are loaded from the server for that new session.
+            // The ONLY automatic resume is the failed-save path below: if the last save did not reach the server, the unsaved answers
+            // only exist in local storage, so the exam is restored from there and they are re-sent right away, without the cover.
+            // Consequently a reload shows the cover or resumes depending on whether the last save had completed, and a test that
+            // reloads must set up one of the two cases deterministically (see ExamParticipation.spec.ts, "Reloads exam page ...").
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
                 this.examParticipationService
                     .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId())
@@ -1028,6 +1044,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+        this.participationStartCancelled.next();
+        this.generateParticipationStatus.next('success');
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -1072,6 +1090,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             });
         } else {
+            this.generateParticipationStatus.next('success');
             this.activateActiveComponent();
         }
     }
@@ -1080,6 +1099,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExamPage().isOverviewPage = true;
         this.activeExamPage().exercise = undefined;
         this.exerciseIndex.set(-1);
+    }
+
+    /** Retries the active exercise with the same activation and programming submission setup as its initial start. */
+    retryParticipationForExercise(): void {
+        const exercise = this.activeExamPage().exercise;
+        if (this.generateParticipationStatus.value === 'failed' && exercise) {
+            this.initializeExercise(exercise);
+        }
     }
 
     /**
@@ -1138,6 +1165,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(exercise.id!, exercise).pipe(
+            takeUntil(this.participationStartCancelled),
             map((createdParticipation: StudentParticipation) => {
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];
@@ -1213,11 +1241,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
-                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
-                        this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
-                        });
+                        this.saveTextSubmission(submissionToSync.exercise, submissionToSync.submission);
                         break;
                     case ExerciseType.MODELING:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
@@ -1231,7 +1255,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
+                        this.quizSubmissionApi.submitQuizForExam(submissionToSync.exercise.id!, toQuizSubmissionFromLiveClient(submissionToSync.submission)).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
@@ -1250,9 +1274,43 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .forEach((component) => component.updateSubmissionFromView());
     }
 
-    private onSaveSubmissionSuccess(submission: Submission) {
+    /**
+     * Saves a text answer with at most one request in flight per submission.
+     * The server overwrites the stored text with whichever request it commits last, and neither the commit order nor the
+     * response order of overlapping requests is guaranteed to match the send order. Sending the next text only after the
+     * previous response makes the write order equal the send order, so a response can be trusted: the answer is synced
+     * if and only if the text is still the one that request sent. A newer text is not sent while a save is in flight;
+     * the response of that save sends it, so the latest answer is never skipped, including at the end of the exam.
+     */
+    private saveTextSubmission(exercise: Exercise, submission: TextSubmission): void {
+        if (this.textSavesInFlight.has(submission)) {
+            return;
+        }
+        this.textSavesInFlight.add(submission);
+        const savedText = submission.text;
+        this.examParticipationService.setSubmissionSaving(submission, true);
+        this.textSubmissionService.update(submission, exercise.id!).subscribe({
+            next: () => {
+                this.textSavesInFlight.delete(submission);
+                this.onSaveSubmissionSuccess(submission, submission.text === savedText);
+                if (!submission.isSynced) {
+                    // The student kept editing while this request was in flight.
+                    this.saveTextSubmission(exercise, submission);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                // Release the slot so the next autosave can retry. The submission stays unsynced.
+                this.textSavesInFlight.delete(submission);
+                this.onSaveSubmissionError(error, submission);
+            },
+        });
+    }
+
+    private onSaveSubmissionSuccess(submission: Submission, unchangedSinceSave = true) {
         this.examParticipationService.setSubmissionSaving(submission, false);
-        submission.isSynced = true;
+        // A response only confirms the text sent with its request. If the student has since edited it, keep the latest
+        // answer eligible for saving.
+        submission.isSynced = unchangedSinceSave;
         submission.submitted = true;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
         this.examParticipationService.notifySubmissionSyncStateChanged();
@@ -1395,13 +1453,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exercise = this.studentExam().exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
-    }
-
-    /**
-     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
-     * @param newHeight New exam bar height calculated based on the window resizements
-     */
-    updateHeight(newHeight: number) {
-        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight + this.EXAM_HEIGHT_OFFSET}px`);
     }
 }

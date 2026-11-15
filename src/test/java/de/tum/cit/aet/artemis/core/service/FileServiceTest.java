@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.service.FileUtilUnitTest.exportTestRoo
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.verify;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -169,11 +168,31 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTemporaryDirectory_shouldCreateTheDirectoryAndScheduleItForDeletion() throws IOException {
         Path parent = createTempTargetDirectory("testCreateTemporaryDirectory");
 
-        Path temporaryDirectory = fileService.createTemporaryDirectory(parent, "export-", 1);
+        var isolatedFileService = new FileService(null, tempFileUtilService);
+        try {
+            Path temporaryDirectory = isolatedFileService.createTemporaryDirectory(parent, "export-", 60);
 
-        assertThat(temporaryDirectory).isDirectory().hasParent(parent);
-        assertThat(temporaryDirectory.getFileName().toString()).startsWith("export-");
-        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(temporaryDirectory, 1L);
+            assertThat(temporaryDirectory).isDirectory().hasParent(parent);
+            assertThat(temporaryDirectory.getFileName().toString()).startsWith("export-");
+            assertThat(isolatedFileService.pendingDeletions()).as("the created directory has a cancellable cleanup").hasSize(1);
+        }
+        finally {
+            isolatedFileService.destroy();
+        }
+    }
+
+    @Test
+    void testScheduleDeletion_shouldIgnoreNullPaths() {
+        var isolatedFileService = new FileService();
+        try {
+            isolatedFileService.schedulePathForDeletion(null, 0);
+            isolatedFileService.scheduleDirectoryPathForRecursiveDeletion(null, 0);
+
+            assertThat(isolatedFileService.pendingDeletions()).as("null paths do not schedule cleanup tasks").isEmpty();
+        }
+        finally {
+            isolatedFileService.destroy();
+        }
     }
 
     @Test

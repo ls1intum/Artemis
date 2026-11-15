@@ -57,6 +57,17 @@ describe('EditOnlineUnitComponent', () => {
                                         return null;
                                     },
                                 }),
+                                parent: {
+                                    paramMap: of({
+                                        get: (key: string) => {
+                                            switch (key) {
+                                                case 'courseId':
+                                                    return 2;
+                                            }
+                                            return null;
+                                        },
+                                    }),
+                                },
                             },
                         },
                     },

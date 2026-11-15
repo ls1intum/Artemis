@@ -1,14 +1,19 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -23,19 +28,25 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJobType;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitProcessingStateRepositoryApi;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
- * It provides methods for adding, removing, and retrieving Pyris jobs.
- * The class also handles generating job ID tokens and validating tokens from request headers based on these tokens.
+ * It provides methods for adding, removing, and retrieving Pyris jobs, and authenticates the callbacks Pyris sends for them.
+ * <p>
+ * A job is identified by its run id, a random UUID that is not a secret. Callbacks authenticate with a separate signed token,
+ * see {@link PyrisCallbackTokenService}.
  * The jobs live in a distributed map obtained from {@link DistributedDataProvider}, so the provider in use is
  * whatever {@code artemis.distributed-data.provider} selects.
  */
@@ -44,28 +55,35 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
+    private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
+
     /**
-     * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
-     * entropy source on every call.
+     * Versioned because the job key changed from a secret to a plain run id: a node of an older version looks into the old map
+     * and can never find a job of this version by its run id.
      */
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String PYRIS_JOB_MAP_NAME = "pyris-job-map-v2";
+
+    private static final String CHAT_JOB_CLIENT_ID_MAP_NAME = "pyris-chat-job-client-id-map";
 
     private final DistributedDataProvider distributedDataProvider;
 
+    private final Optional<LectureUnitProcessingStateRepositoryApi> processingStateRepositoryApi;
+
+    private final IrisLectureMaterialVersionService materialVersionService;
+
+    private final PyrisCallbackTokenService callbackTokenService;
+
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
+
+    @Nullable
+    private DistributedMap<String, String> chatJobClientIdMap;
 
     @Nullable
     private DistributedMap<String, String> struggleInFlightMap;
 
     @Nullable
     private DistributedMap<String, String> struggleCooldownMap;
-
-    @Value("${server.url}")
-    private String serverUrl;
-
-    @Value("${eureka.instance.instanceId:unknown}")
-    private String instanceId;
 
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
@@ -75,9 +93,13 @@ public class PyrisJobService {
 
     private final IrisProactiveProperties proactiveProperties;
 
-    public PyrisJobService(DistributedDataProvider distributedDataProvider, IrisProactiveProperties proactiveProperties) {
+    public PyrisJobService(DistributedDataProvider distributedDataProvider, Optional<LectureUnitProcessingStateRepositoryApi> processingStateRepositoryApi,
+            IrisProactiveProperties proactiveProperties, IrisLectureMaterialVersionService materialVersionService, PyrisCallbackTokenService callbackTokenService) {
         this.distributedDataProvider = distributedDataProvider;
+        this.processingStateRepositoryApi = processingStateRepositoryApi;
         this.proactiveProperties = proactiveProperties;
+        this.materialVersionService = materialVersionService;
+        this.callbackTokenService = callbackTokenService;
     }
 
     /**
@@ -91,7 +113,7 @@ public class PyrisJobService {
      */
     private DistributedMap<String, PyrisJob> getPyrisJobMap() {
         if (this.jobMap == null) {
-            this.jobMap = this.distributedDataProvider.getExpiringMap("pyris-job-map", Duration.ofSeconds(jobTimeout));
+            this.jobMap = this.distributedDataProvider.getExpiringMap(PYRIS_JOB_MAP_NAME, Duration.ofSeconds(jobTimeout));
         }
         return this.jobMap;
     }
@@ -136,8 +158,8 @@ public class PyrisJobService {
 
     /**
      * Charge the admission cooldown for a trigger about to start a run. A single {@code putIfAbsent} rather than a
-     * read then a write, so two triggers racing on the same key cannot both be admitted. The returned token is what
-     * a later refund has to present.
+     * read then a write, so two triggers racing on the same key cannot both be admitted. The returned value is what
+     * a later refund has to present. It is an internal value, never sent to Pyris or a client.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the student is struggling on
@@ -145,7 +167,7 @@ public class PyrisJobService {
      * @return the token that paid the charge, or empty while a cooldown is running for this key
      */
     public Optional<String> chargeStruggleCooldown(long userId, long exerciseId, @Nullable String intent) {
-        var token = generateJobIdToken();
+        var token = UUID.randomUUID().toString();
         var previous = getStruggleCooldownMap().putIfAbsent(struggleCooldownKey(userId, exerciseId, intent), token, proactiveProperties.getTriggerCooldown());
         return previous == null ? Optional.of(token) : Optional.empty();
     }
@@ -166,24 +188,55 @@ public class PyrisJobService {
     }
 
     /**
-     * Creates a token for an arbitrary job, runs the provided function with the token as an argument,
-     * and stores the job in the job map.
-     *
-     * @param tokenToJobFunction the function to run with the token
-     * @return the generated token
+     * Keeps the browser tab associated with a chat job outside {@link ChatJob}. The job record is part of the persisted distributed-data wire format and changing its components
+     * would make jobs written before an upgrade unreadable. This separate string map can be introduced without changing any existing stored representation.
      */
-    public String createTokenForJob(Function<String, PyrisJob> tokenToJobFunction) {
-        var token = generateJobIdToken();
-        var job = tokenToJobFunction.apply(token);
-        getPyrisJobMap().put(token, job);
-        return token;
+    private DistributedMap<String, String> getChatJobClientIdMap() {
+        if (this.chatJobClientIdMap == null) {
+            this.chatJobClientIdMap = this.distributedDataProvider.getExpiringMap(CHAT_JOB_CLIENT_ID_MAP_NAME, Duration.ofSeconds(jobTimeout));
+        }
+        return this.chatJobClientIdMap;
     }
 
-    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
-        var token = generateJobIdToken();
-        var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null);
-        getPyrisJobMap().put(token, job);
-        return token;
+    /**
+     * Creates a run id for an arbitrary job, runs the provided function with the run id as an argument,
+     * and stores the job in the job map.
+     *
+     * @param runIdToJobFunction the function to run with the run id
+     * @return the run id of the job
+     */
+    public String addJob(Function<String, PyrisJob> runIdToJobFunction) {
+        var runId = newRunId();
+        putNewJob(runId, runIdToJobFunction.apply(runId), Duration.ofSeconds(jobTimeout));
+        return runId;
+    }
+
+    /**
+     * Adds a chat job and separately associates it with the originating browser tab.
+     *
+     * @param courseId      the course id
+     * @param sessionId     the chat session id
+     * @param entityId      the optional entity id
+     * @param userMessageId the optional user message id
+     * @param clientId      the optional id of the originating browser tab
+     * @return the run id of the job
+     */
+    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId, String clientId) {
+        var runId = newRunId();
+        putNewJob(runId, new ChatJob(runId, courseId, sessionId, entityId, null, userMessageId, null), Duration.ofSeconds(jobTimeout));
+        if (clientId != null) {
+            getChatJobClientIdMap().put(runId, clientId);
+        }
+        return runId;
+    }
+
+    /**
+     * @param jobId the chat job whose originating browser tab should be addressed
+     * @return the client id, or {@code null} for jobs created without one or before this association existed
+     */
+    @Nullable
+    public String getChatJobClientId(String jobId) {
+        return getChatJobClientIdMap().get(jobId);
     }
 
     /**
@@ -192,13 +245,12 @@ public class PyrisJobService {
      * @param postId    Id of the post the suggestion is created for
      * @param courseId  Id of the course the post belongs to
      * @param sessionId Id of the session the suggestion is created for
-     * @return the token of the job
+     * @return the run id of the job
      */
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
-        var token = generateJobIdToken();
-        var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null, null, null);
-        getPyrisJobMap().put(token, job);
-        return token;
+        var runId = newRunId();
+        putNewJob(runId, new TutorSuggestionJob(runId, postId, courseId, sessionId, null, null, null), Duration.ofSeconds(jobTimeout));
+        return runId;
     }
 
     /**
@@ -207,13 +259,12 @@ public class PyrisJobService {
      *
      * @param postId   Id of the post being responded to
      * @param courseId Id of the course the post belongs to
-     * @return the token of the job
+     * @return the run id of the job
      */
     public String addAutonomousTutorJob(Long postId, Long courseId) {
-        var token = generateJobIdToken();
-        var job = new AutonomousTutorJob(token, postId, courseId);
-        getPyrisJobMap().put(token, job);
-        return token;
+        var runId = newRunId();
+        putNewJob(runId, new AutonomousTutorJob(runId, postId, courseId), Duration.ofSeconds(jobTimeout));
+        return runId;
     }
 
     /**
@@ -229,11 +280,11 @@ public class PyrisJobService {
      * @param confirmReason   the close-mode discriminator; null unless intent is {@code confirm_close}
      * @param requestToken    the client-minted scoped-cancel UUID; null on legacy paths
      * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped so the callback can enforce Pull; null on legacy paths
-     * @return the minted job token, or empty if a run is already in flight for {@code (userId, exerciseId)}
+     * @return the run id of the new job, or empty if a run is already in flight for {@code (userId, exerciseId)}
      */
     public Optional<String> addStruggleInterventionJobIfNonePending(long courseId, long userId, long exerciseId, @Nullable String intent, @Nullable String episodeId,
             @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
-        var token = generateJobIdToken();
+        var token = newRunId();
         var key = struggleInFlightKey(userId, exerciseId);
         var job = new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode);
         // Reservation through re-stamp is undone as one unit. Nothing here hands the token out, so a caller that
@@ -244,10 +295,10 @@ public class PyrisJobService {
             if (existing != null) {
                 return Optional.empty();
             }
-            // Shares the job map with every other pipeline. The map is only ever read by token, never iterated, so a
-            // build that does not know this record never reads one: the token that would find it is handed out by
+            // Shares the job map with every other pipeline. The map is only ever read by run id, never iterated, so a
+            // build that does not know this record never reads one: the run id that would find it is handed out by
             // this build alone. That is why the new record needs no distributed schema version of its own.
-            getPyrisJobMap().put(token, job);
+            putNewJob(token, job, Duration.ofSeconds(jobTimeout));
             // The marker was written before the job, so it would expire first and the run would outlive the
             // reservation protecting it. Re-stamping keeps the marker's lifetime the longer of the two.
             refreshStruggleInFlightMarker(token, userId, exerciseId);
@@ -282,12 +333,12 @@ public class PyrisJobService {
      * Release a reserved struggle slot and its job on a local send failure, where no callback will arrive.
      * Idempotent and token-conditional, so it cannot wipe a newer reservation for the same pair.
      *
-     * @param token      the reserving job token
+     * @param token      the run id of the reserving job
      * @param userId     the struggling student
      * @param exerciseId the exercise the student is struggling on
      */
     public void releaseStruggleInFlightJob(String token, long userId, long exerciseId) {
-        getPyrisJobMap().remove(token);
+        removeJobWithGeneratedRunId(token);
         getStruggleInFlightMap().remove(struggleInFlightKey(userId, exerciseId), token);
     }
 
@@ -302,7 +353,7 @@ public class PyrisJobService {
      * reservation a newer run has retaken. A refresh that finds no marker is a silent noop: the only normal path
      * that can clear one in that window is a scoped cancel, and that cancel is meant to win.
      *
-     * @param token      the reserving job token
+     * @param token      the run id of the reserving job
      * @param userId     the struggling student
      * @param exerciseId the exercise the student is struggling on
      */
@@ -325,7 +376,7 @@ public class PyrisJobService {
      * callback after {@code handleDecision} has finished: the job entry is removed up front so a trailing duplicate
      * callback 403s, but the marker has to outlive the persist and push, or a second trigger races in.
      *
-     * @param token      the reserving job token
+     * @param token      the run id of the reserving job
      * @param userId     the struggling student
      * @param exerciseId the exercise the student is struggling on
      */
@@ -378,13 +429,73 @@ public class PyrisJobService {
     /**
      * Adds a new global search answer job to the job map.
      * The job stores the requesting user's login so that WebSocket status updates can be routed.
+     * <p>
+     * The client chooses the run id, so it can arrive again. The job is registered only if no job with that id exists, so a
+     * client cannot replace another job, and it gets a fresh invocation id that its callback token carries, so a token of an
+     * earlier request with the same run id is never accepted for this one, also not after the distributed state was lost.
      *
      * @param userLogin the login of the user who initiated the search
      * @param runId     the client-generated UUID that identifies this job and is echoed in WebSocket callbacks
+     * @return the registered job; the caller dispatches exactly this job, never one looked up again by run id
+     * @throws ConflictException if a job with this run id exists
      */
-    public void addGlobalSearchAnswerJob(String userLogin, String runId) {
-        var job = new GlobalSearchAnswerJob(runId, userLogin);
-        getPyrisJobMap().put(runId, job);
+    public GlobalSearchAnswerJob addGlobalSearchAnswerJob(String userLogin, String runId) {
+        var job = new GlobalSearchAnswerJob(runId, userLogin, UUID.randomUUID().toString());
+        // Under the job lock, like every update, removal and finish of an invocation-bound job: their check of the stored invocation and their write
+        // then cannot interleave with a registration, also with a provider whose putIfAbsent does not respect the lock on its own.
+        boolean registered = runWithJobLock(runId, () -> getPyrisJobMap().putIfAbsent(runId, job, Duration.ofSeconds(jobTimeout)) == null);
+        if (!registered) {
+            throw new ConflictException("The run id is already in use", "Job", "runIdInUse");
+        }
+        return job;
+    }
+
+    /**
+     * Captures the material a global search answer may cite, before its request is dispatched to Pyris, so that continuing the answer in the chat pins its citations to
+     * the material the answer was written from, as a chat run does.
+     *
+     * @param userLogin the login of the user who initiated the search
+     * @param runId     the global search answer run
+     * @param courseIds the courses the answer is scoped to
+     */
+    public void captureGlobalSearchMaterialVersions(String userLogin, String runId, Collection<Long> courseIds) {
+        materialVersionService.captureForGlobalSearch(runId, userLogin, courseIds);
+    }
+
+    /**
+     * Removes a finished global search answer job. An answer that can be continued in the chat keeps the material versions of the lecture units it cites; any other
+     * ending drops them.
+     *
+     * @param job       the finished job
+     * @param sources   the lecture sources of the answer
+     * @param hasAnswer whether the run ended with an answer that can be continued in the chat
+     */
+    public void finishGlobalSearchAnswerJob(GlobalSearchAnswerJob job, @Nullable List<PyrisLectureSearchResultDTO> sources, boolean hasAnswer) {
+        // A finished request whose run id already belongs to a newer request must leave that request's job and material alone.
+        runWithJobLock(job.jobId(), () -> {
+            if (isCurrentInvocation(job)) {
+                finishCurrentGlobalSearchAnswerJob(job, sources, hasAnswer);
+            }
+            return null;
+        });
+    }
+
+    private void finishCurrentGlobalSearchAnswerJob(GlobalSearchAnswerJob job, @Nullable List<PyrisLectureSearchResultDTO> sources, boolean hasAnswer) {
+        var citedSources = sources == null ? List.<PyrisLectureSearchResultDTO>of()
+                : sources.stream().filter(Objects::nonNull).filter(source -> source.lectureUnit() != null && source.course() != null).toList();
+        if (hasAnswer && !citedSources.isEmpty()) {
+            materialVersionService.keepCitedForGlobalSearch(job.jobId(), job.userLogin(), citedSources.stream().map(source -> source.lectureUnit().id()).toList());
+        }
+        else {
+            materialVersionService.removeGlobalSearch(job.jobId(), job.userLogin());
+        }
+        getPyrisJobMap().remove(job.jobId());
+    }
+
+    // Whether the job map still holds this invocation of the job's run.
+    private boolean isCurrentInvocation(PyrisJob job) {
+        var current = getPyrisJobMap().get(job.jobId());
+        return current != null && isSameInvocation(current, job);
     }
 
     /**
@@ -393,13 +504,12 @@ public class PyrisJobService {
      * @param courseId      the ID of the course associated with the webhook job
      * @param lectureId     the ID of the lecture associated with the webhook job
      * @param lectureUnitId the ID of the lecture unit associated with the webhook job
-     * @return a unique token identifying the created webhook job
+     * @return the run id of the created webhook job
      */
     public String addLectureIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
-        var token = generateJobIdToken();
-        var job = new LectureIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        getPyrisJobMap().put(token, job, Duration.ofSeconds(ingestionJobTimeout));
-        return token;
+        var runId = newRunId();
+        putNewJob(runId, new LectureIngestionWebhookJob(runId, courseId, lectureId, lectureUnitId), Duration.ofSeconds(ingestionJobTimeout));
+        return runId;
     }
 
     /**
@@ -407,22 +517,55 @@ public class PyrisJobService {
      *
      * @param courseId the ID of the course associated with the webhook job
      * @param faqId    the ID of the faq associated with the webhook job
-     * @return a unique token identifying the created webhook job
+     * @return the run id of the created webhook job
      */
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
-        var token = generateJobIdToken();
-        var job = new FaqIngestionWebhookJob(token, courseId, faqId);
-        getPyrisJobMap().put(token, job, Duration.ofSeconds(ingestionJobTimeout));
-        return token;
+        var runId = newRunId();
+        putNewJob(runId, new FaqIngestionWebhookJob(runId, courseId, faqId), Duration.ofSeconds(ingestionJobTimeout));
+        return runId;
     }
 
     /**
-     * Remove a job from the job map.
+     * Remove a job from the job map. Only the stored entry of the same invocation is removed: a client can register a global search
+     * request under the run id of an expired job, and a callback for the expired job must leave that request alone.
      *
      * @param job the job to remove
      */
     public void removeJob(PyrisJob job) {
-        getPyrisJobMap().remove(job.jobId());
+        runWithJobLock(job.jobId(), () -> {
+            var current = getPyrisJobMap().get(job.jobId());
+            if (current != null && isSameInvocation(current, job)) {
+                getPyrisJobMap().remove(job.jobId());
+            }
+            return null;
+        });
+        if (job instanceof ChatJob) {
+            getChatJobClientIdMap().remove(job.jobId());
+            materialVersionService.remove(job.jobId());
+        }
+    }
+
+    /**
+     * Remove a job from the job map by its run id alone, for a caller that registered the job but never
+     * built (or no longer holds) the {@link PyrisJob} object itself — e.g. releasing a prepared job whose
+     * claim lapsed before it could be handed to a worker.
+     *
+     * @param runId the run id of the job to remove
+     */
+    public void removeJobByRunId(String runId) {
+        removeJobWithGeneratedRunId(runId);
+    }
+
+    // Removes the job of a run id Artemis generated. Once that job expired, a client can register a global search request under the same run id;
+    // such a job carries an invocation id and is left alone.
+    private void removeJobWithGeneratedRunId(String runId) {
+        runWithJobLock(runId, () -> {
+            var current = getPyrisJobMap().get(runId);
+            if (current != null && current.invocationId() == null) {
+                getPyrisJobMap().remove(runId);
+            }
+            return null;
+        });
     }
 
     /**
@@ -433,7 +576,28 @@ public class PyrisJobService {
      */
     public void updateJob(PyrisJob job) {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
-        getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
+        boolean stored = runWithJobLock(job.jobId(), () -> {
+            var current = getPyrisJobMap().get(job.jobId());
+            // A run id that belongs to another invocation by now is left alone, and an invocation-bound job that expired is not
+            // brought back, because a later request may take its run id at any time.
+            if (current == null ? job.invocationId() != null : !isSameInvocation(current, job)) {
+                return false;
+            }
+            getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
+            return true;
+        });
+        if (stored && job instanceof ChatJob) {
+            materialVersionService.refresh(job.jobId());
+            var clientId = getChatJobClientIdMap().get(job.jobId());
+            if (clientId != null) {
+                getChatJobClientIdMap().put(job.jobId(), clientId, Duration.ofSeconds(ttl));
+            }
+        }
+    }
+
+    // Whether two jobs for the same run id are the same invocation: both without an invocation id (run ids Artemis generates), or with the same one.
+    private static boolean isSameInvocation(PyrisJob stored, PyrisJob job) {
+        return Objects.equals(stored.invocationId(), job.invocationId());
     }
 
     /**
@@ -456,37 +620,48 @@ public class PyrisJobService {
     }
 
     /**
-     * Get the job of a token.
+     * Get the job of a run.
      *
-     * @param token the token
-     * @return the job
+     * @param runId the run id
+     * @return the job, or null if no such job is registered
      */
-    public PyrisJob getJob(String token) {
-        return getPyrisJobMap().get(token);
+    public PyrisJob getJob(String runId) {
+        return getPyrisJobMap().get(runId);
     }
 
     /**
-     * This method is used to authenticate an incoming request from Pyris.
-     * 1. Reads the authentication token from the request headers.
-     * 2. Retrieves the PyrisJob object associated with the provided token.
-     * 3. Throws an AccessForbiddenException if the token is invalid or not provided.
-     * <p>
-     * The token was previously generated via {@link #createTokenForJob(Function)}
+     * Authenticates a callback from Pyris and returns the job it reports on.
+     * <ol>
+     * <li>The {@code Authorization} header must carry a Bearer token that {@link PyrisCallbackTokenService} verifies.
+     * Anything else, including a plain run id, is rejected: the run id is not a secret.</li>
+     * <li>The run id in the URL must be the run the token was issued for.</li>
+     * <li>The job is looked up by that run id, for a lecture ingestion run also in the processing state, and must be of
+     * the kind and, where it has one, the invocation the token was issued for, and of the expected class.</li>
+     * </ol>
      *
      * @param request  the HttpServletRequest object representing the incoming request
+     * @param runId    the run id from the callback URL
      * @param jobClass the class of the PyrisJob object to cast the retrieved job to
      * @param <Job>    the type of the PyrisJob object
-     * @return the PyrisJob object associated with the token
-     * @throws AccessForbiddenException if the token is invalid or not provided
+     * @return the authenticated job
+     * @throws AccessForbiddenException if the token is missing or invalid, or the job is gone or of another kind
+     * @throws ConflictException        if the URL names another run than the token, or the job is not of the expected class
      */
-    public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
+    public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, String runId, Class<Job> jobClass) {
         var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!authHeader.startsWith(Constants.BEARER_PREFIX)) {
+        if (authHeader == null || !authHeader.startsWith(Constants.BEARER_PREFIX)) {
             throw new AccessForbiddenException("No valid token provided");
         }
-        var token = authHeader.substring(7);
-        var job = getJob(token);
-        if (job == null) {
+        var verified = callbackTokenService.verify(authHeader.substring(Constants.BEARER_PREFIX.length()))
+                .orElseThrow(() -> new AccessForbiddenException("No valid token provided"));
+        if (!verified.runId().equals(runId)) {
+            throw new ConflictException("Run ID in URL does not match the authenticated run", "Job", "runIdMismatch");
+        }
+        PyrisJob job = getJob(verified.runId());
+        if (job == null && verified.type() == PyrisJobType.LECTURE_INGESTION) {
+            job = recoverIngestionJobFromDatabase(verified.runId());
+        }
+        if (job == null || PyrisJobType.of(job) != verified.type() || !Objects.equals(job.invocationId(), verified.invocationId())) {
             throw new AccessForbiddenException("No valid token provided");
         }
         if (!jobClass.isInstance(job)) {
@@ -496,32 +671,33 @@ public class PyrisJobService {
     }
 
     /**
-     * Generates a unique job ID token.
-     * The token is generated by combining the server URL, instance ID, current timestamp, and a random string.
+     * Reconstruct a lecture ingestion job from the processing state that still carries its run id.
+     * <p>
+     * The distributed job map entry expires after a TTL, but an ingestion run can legitimately outlive it.
+     * The processing state row keeps the run id for as long as the job is in flight, so a late callback for a
+     * job Artemis still tracks is accepted from the database instead of being rejected with a 403.
+     * A run id that was already cleared (job superseded, recovered, or completed) finds nothing.
+     * The caller has already verified a token issued for this run id; the run id alone authenticates nothing.
      *
-     * @return the generated (URL-safe) job token
+     * @param runId the run id from the verified callback token
+     * @return the reconstructed job, or null if no processing state carries this run id
      */
-    private String generateJobIdToken() {
-        // Include instance name, node id, timestamp and random string
-        var randomStringBuilder = new StringBuilder();
-        randomStringBuilder.append(serverUrl);
-        randomStringBuilder.append('-');
-        randomStringBuilder.append(instanceId);
-        randomStringBuilder.append('-');
-        randomStringBuilder.append(System.currentTimeMillis());
-        randomStringBuilder.append('-');
-        for (int i = 0; i < 10; i++) {
-            var randomChar = SECURE_RANDOM.nextInt(62);
-            if (randomChar < 10) {
-                randomStringBuilder.append(randomChar);
-            }
-            else if (randomChar < 36) {
-                randomStringBuilder.append((char) (randomChar - 10 + 'a'));
-            }
-            else {
-                randomStringBuilder.append((char) (randomChar - 36 + 'A'));
-            }
+    @Nullable
+    private PyrisJob recoverIngestionJobFromDatabase(String runId) {
+        return processingStateRepositoryApi.flatMap(api -> api.findIngestionJobIdentityByToken(runId)).map(identity -> {
+            log.info("Authenticated ingestion callback for unit {} from the processing state after job map expiry", identity.lectureUnitId());
+            return (PyrisJob) new LectureIngestionWebhookJob(runId, identity.courseId(), identity.lectureId(), identity.lectureUnitId());
+        }).orElse(null);
+    }
+
+    private static String newRunId() {
+        return UUID.randomUUID().toString();
+    }
+
+    // Registers a job under a fresh run id. putIfAbsent rather than put, so that registering a job can never replace another one.
+    private void putNewJob(String runId, PyrisJob job, Duration timeToLive) {
+        if (getPyrisJobMap().putIfAbsent(runId, job, timeToLive) != null) {
+            throw new IllegalStateException("A Pyris job with run id " + runId + " already exists");
         }
-        return randomStringBuilder.toString().replace("https://", "").replace("http://", "").replace(":", "_").replace(".", "_").replace("/", "_");
     }
 }

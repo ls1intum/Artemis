@@ -54,7 +54,8 @@ public final class WeaviateTestContainerFactory {
                 return null;
             }
             String image = "cr.weaviate.io/semitechnologies/weaviate:" + version;
-            WeaviateContainer container = new WeaviateContainer(image);
+            // text2vec-openai only lets tests create a collection in the layout of earlier Artemis versions; nothing calls it.
+            WeaviateContainer container = new WeaviateContainer(image).withEnv("ENABLE_MODULES", "text2vec-openai");
             container.start();
             log.info("Weaviate Testcontainer started successfully on ports HTTP={}, gRPC={}", container.getMappedPort(8080), container.getMappedPort(50051));
             return container;

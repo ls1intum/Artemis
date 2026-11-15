@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.JpaSort;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 public class PageUtil {
 
@@ -115,12 +116,19 @@ public class PageUtil {
      * @param search        The {@link PageableSearchDTO} containing pagination and sorting parameters (e.g., page number, page size, sorted column, and sorting order).
      * @param columnMapping The {@link ColumnMapping} object used to map the sorted column name from the DTO to the actual database column.
      * @return A {@link PageRequest} object containing the pagination and sorting options based on the search and column mapping.
-     * @throws IllegalArgumentException if any of the parameters are invalid or missing.
+     * @throws BadRequestAlertException if the page is below 1, the page size is below 1, or the sorted column is missing or unknown for the mapping.
      * @throws NullPointerException     if the search or columnMapping parameters are null.
      */
     @NonNull
     public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
-        String mappedColumn = columnMapping.getMappedColumnName(search.getSortedColumn());
+        if (search.getPage() < 1 || search.getPageSize() < 1) {
+            throw new BadRequestAlertException("The page and the page size of a search must be at least 1", "pageableSearch", "invalidPage");
+        }
+        String sortedColumn = search.getSortedColumn();
+        String mappedColumn = sortedColumn == null ? null : columnMapping.getMappedColumnName(sortedColumn);
+        if (mappedColumn == null) {
+            throw new BadRequestAlertException("The sorted column of a search is missing or not supported", "pageableSearch", "invalidSortedColumn");
+        }
 
         var sortOptions = mappedColumn.contains("(") ? JpaSort.unsafe(mappedColumn) : Sort.by(mappedColumn);
 

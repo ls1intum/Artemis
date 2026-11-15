@@ -1,3 +1,4 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -16,7 +17,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import * as utils from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -82,7 +83,7 @@ const participationServiceMock = {
 describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let router: Router;
 
     beforeEach(async () => {
@@ -101,7 +102,7 @@ describe('ResultComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ResultComponent],
             providers: [
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ParticipationService, useValue: participationServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -126,7 +127,7 @@ describe('ResultComponent', () => {
 
         fixture = TestBed.createComponent(ResultComponent);
         comp = fixture.componentInstance;
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         router = TestBed.inject(Router);
 
         participationServiceMock.downloadArtifact = vi.fn();
@@ -137,6 +138,37 @@ describe('ResultComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         (global as any).URL.revokeObjectURL = vi.fn();
+    });
+
+    it.each([false, true])('only exposes result details when actionable (missing: %s)', (missing) => {
+        fixture.componentRef.setInput('exercise', mockExercise);
+        fixture.componentRef.setInput('participation', mockParticipation);
+        fixture.componentRef.setInput('result', mockResult);
+        if (missing) {
+            fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+        }
+        fixture.componentRef.setInput('isInSidebarCard', true);
+        fixture.detectChanges();
+        const result = fixture.nativeElement.querySelector(missing ? '[jhiTranslate="artemisApp.result.missing.viewPrevious"]' : '#result-score') as HTMLElement;
+        const showDetails = vi.spyOn(comp, 'showDetails').mockImplementation(() => {});
+        expect(result.hasAttribute('role')).toBe(false);
+        expect(result.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            result.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(showDetails).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('isInSidebarCard', false);
+        fixture.detectChanges();
+        expect(result.getAttribute('role')).toBe('button');
+        expect(result.tabIndex).toBe(0);
+        result.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(showDetails).toHaveBeenCalledOnce();
     });
 
     it('should set the template status to IS_BUILDING when isBuilding is true, regardless of participation/result', () => {
@@ -229,6 +261,27 @@ describe('ResultComponent', () => {
             expect(comp.resultIconClass()).toBe(faCheckCircle);
         });
 
+        describe('exercises that carry no course', () => {
+            const resultWithManyDecimals: Result = { id: 8, score: 42.4567, rated: true, completionDate: dayjs().subtract(1, 'hour'), submission: { id: 22 } };
+            const exerciseWithoutCourse = { id: 4, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('exercise', exerciseWithoutCourse);
+                fixture.componentRef.setInput('result', resultWithManyDecimals);
+                fixture.componentRef.setInput('short', true);
+            });
+
+            it('rounds the score to the accuracy of the passed course', () => {
+                const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+                fixture.componentRef.setInput('course', { accuracyOfScores: 3 });
+                fixture.detectChanges();
+
+                comp.resultString();
+
+                expect(instantSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+            });
+        });
+
         describe('results that belong to no participation', () => {
             const exampleSubmissionResult: Result = {
                 id: 7,
@@ -293,17 +346,11 @@ describe('ResultComponent', () => {
                 FeedbackComponent,
                 expect.objectContaining({
                     header: 'artemisApp.result.detail.feedback',
-                    width: '80rem',
-                    breakpoints: {
-                        '1400px': '75vw',
-                        '1200px': '85vw',
-                        '992px': '95vw',
-                    },
-                    modal: true,
+                    size: 'large',
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    focusOnShow: false,
+                    autoFocus: 'dialog',
                     inputValues: expect.objectContaining({
                         exercise: preparedFeedback.exercise,
                         result: preparedFeedback.result,
@@ -360,6 +407,61 @@ describe('ResultComponent', () => {
             'result',
             mockResult.id,
         ]);
+    });
+
+    describe('a result the viewer does not own', () => {
+        // #13921: the tutor and instructor pages render the badge for a participation that is not the viewer's. The
+        // text/modeling deep link is the student exercise page, which 403s for an exam exercise and swaps in the
+        // viewer's own participation in a course, so the badge must not offer it there.
+        // Without a due date the result is simply graded; with `mockExercise`'s past one it would render as LATE,
+        // which is a different, never-clickable branch of the template.
+        const gradedExercise = (type: ExerciseType) => ({ ...mockExercise, type, dueDate: undefined });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('does not link a %s result to the student submission view', (type) => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.componentRef.setInput('exercise', gradedExercise(type));
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isOwnParticipation', false);
+            fixture.detectChanges();
+
+            expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+            expect(comp.canShowDetails()).toBe(false);
+            const badge = fixture.debugElement.nativeElement.querySelector('#result-score');
+            expect(badge.classList).not.toContain('clickable-result');
+
+            badge.dispatchEvent(new Event('click'));
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('still links a %s result to it for the participation owner', (type) => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.componentRef.setInput('exercise', gradedExercise(type));
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.detectChanges();
+
+            expect(comp.canShowDetails()).toBe(true);
+            fixture.debugElement.nativeElement.querySelector('#result-score').dispatchEvent(new Event('click'));
+
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('still opens the feedback dialog for a programming result, which renders any participation', () => {
+            const openModalSpy = vi.spyOn(dialogService, 'open');
+            vi.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
+            fixture.componentRef.setInput('exercise', mockExercise);
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isOwnParticipation', false);
+            fixture.detectChanges();
+
+            expect(comp.canShowDetails()).toBe(true);
+            fixture.debugElement.nativeElement.querySelector('#result-score').dispatchEvent(new Event('click'));
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
+        });
     });
 
     it('should open the details only when isInSidebarCard is false', () => {

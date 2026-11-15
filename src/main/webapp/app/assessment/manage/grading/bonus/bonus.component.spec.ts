@@ -2,7 +2,7 @@ import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'v
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/assessment/manage/grading/bonus/bonus.service';
@@ -17,9 +17,10 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
@@ -257,7 +258,7 @@ describe('BonusComponent', () => {
             imports: [
                 FormsModule,
                 ReactiveFormsModule,
-                MockModule(NgbTooltipModule),
+                MockDirective(TumAetUiTooltipDirective),
                 BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),
@@ -323,7 +324,7 @@ describe('BonusComponent', () => {
         expect(findWithBonusSpy).toHaveBeenCalledWith(state);
 
         expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
-        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
+        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId, 'management');
 
         expect(component.isLoading()).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
@@ -601,6 +602,33 @@ describe('BonusComponent', () => {
 
         expect(bonusFinalGradeSpy).toHaveBeenCalledTimes(1);
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
+    });
+
+    it('should calculate the dynamic example with the typed fractional points of the exam and the bonus source', async () => {
+        const bonusFinalGradeSpy = vi.spyOn(bonusService, 'calculateFinalGrade');
+
+        fixture.changeDetectorRef.detectChanges();
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
+        component.examples.set(bonusExamples);
+        for (let round = 0; round < 3; round++) {
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+        }
+
+        const [targetInput, sourceInput] = Array.from(fixture.nativeElement.querySelectorAll('jhi-points-input.dynamic-example input')) as HTMLInputElement[];
+        expect(targetInput).toBeDefined();
+        expect(sourceInput).toBeDefined();
+
+        typeIntoInputNumber(targetInput, '12,5');
+        expect(component.dynamicExample.studentPointsOfBonusTo).toBe(12.5);
+        expect(bonusFinalGradeSpy).toHaveBeenLastCalledWith(component.dynamicExample, component.bonus, examGradeSteps);
+
+        typeIntoInputNumber(sourceInput, '97.5');
+        expect(component.dynamicExample.studentPointsOfBonusSource).toBe(97.5);
+        expect(bonusFinalGradeSpy).toHaveBeenLastCalledWith(component.dynamicExample, component.bonus, examGradeSteps);
+
+        typeIntoInputNumber(sourceInput, '');
+        expect(component.dynamicExample.studentPointsOfBonusSource).toBeUndefined();
     });
 
     it('should refresh dynamic example on weight change only if previously calculated', () => {

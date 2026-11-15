@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -25,12 +27,14 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -74,7 +78,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     public static final int TESTCOURSE_PRIORITY_PENALTY = 5;
 
+    // The durable job identifier preserves the restricted policy when a missing job is reconstructed from the database.
+    static final String RESTRICTED_BUILD_PREFIX = "hyperion-sync-";
+
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+
+    /**
+     * How many queued jobs each build slot is allowed to have before a bulk trigger waits, see {@link LocalCIBulkTriggerThrottle}. 0 disables the wait.
+     */
+    private final int bulkTriggerMaxQueuedJobsPerBuildSlot;
+
+    /**
+     * The longest a single bulk trigger waits for room in the queue in total, after which it queues the rest without waiting.
+     */
+    private final int bulkTriggerMaxWaitMinutes;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -125,7 +142,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
-            BuildPhaseEvaluationService buildPhaseEvaluationService, BuildJobCloneTokenService buildJobCloneTokenService) {
+            BuildPhaseEvaluationService buildPhaseEvaluationService, BuildJobCloneTokenService buildJobCloneTokenService,
+            @Value("${artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot:2}") int bulkTriggerMaxQueuedJobsPerBuildSlot,
+            @Value("${artemis.continuous-integration.bulk-trigger.max-wait-minutes:180}") int bulkTriggerMaxWaitMinutes) {
+        // Only 0 switches the wait off. A negative value would do so (limit) or silently remove the pacing (wait time) by accident.
+        if (bulkTriggerMaxQueuedJobsPerBuildSlot < 0) {
+            throw new IllegalArgumentException(
+                    "artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot must not be negative, use 0 to turn the wait off, but was "
+                            + bulkTriggerMaxQueuedJobsPerBuildSlot);
+        }
+        if (bulkTriggerMaxWaitMinutes < 0) {
+            throw new IllegalArgumentException(
+                    "artemis.continuous-integration.bulk-trigger.max-wait-minutes must not be negative, use max-queued-jobs-per-build-slot: 0 to turn the wait off, but was "
+                            + bulkTriggerMaxWaitMinutes);
+        }
+        this.bulkTriggerMaxQueuedJobsPerBuildSlot = bulkTriggerMaxQueuedJobsPerBuildSlot;
+        this.bulkTriggerMaxWaitMinutes = bulkTriggerMaxWaitMinutes;
         this.buildJobCloneTokenService = buildJobCloneTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
@@ -170,7 +202,21 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
-        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise));
+        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise), loadBuildConfig(exercise));
+    }
+
+    /**
+     * Creates the throttle that keeps one bulk run from queueing more builds than the build agents can work off, see
+     * {@link LocalCIBulkTriggerThrottle}. A limit of 0 jobs per build slot switches the throttle off.
+     *
+     * @return a throttle for one run, or one that never waits if the throttle is switched off
+     */
+    @Override
+    public BulkTriggerThrottle createBulkTriggerThrottle() {
+        if (bulkTriggerMaxQueuedJobsPerBuildSlot <= 0) {
+            return BulkTriggerThrottle.NONE;
+        }
+        return new LocalCIBulkTriggerThrottle(distributedDataAccessService, bulkTriggerMaxQueuedJobsPerBuildSlot, Duration.ofMinutes(bulkTriggerMaxWaitMinutes));
     }
 
     /**
@@ -183,12 +229,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE, false);
+    }
+
+    @Override
+    public void triggerRestrictedBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE, true);
     }
 
     public void retryBuildJob(BuildJob buildJob, ProgrammingExerciseParticipation participation) throws LocalCIException {
         log.info("Retrying build for missing build job with id {} (retry count: {})", buildJob.getBuildJobId(), buildJob.getRetryCount() + 1);
-        triggerBuild(participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(), buildJob.getRetryCount() + 1);
+        triggerBuild(participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(), false, buildJob.getRetryCount() + 1, SharedBuildTriggerData.NONE,
+                buildJob.getBuildJobId().startsWith(RESTRICTED_BUILD_PREFIX));
     }
 
     /**
@@ -206,6 +258,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount,
             SharedBuildTriggerData sharedData) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, triggerAll, retryCount, sharedData, false);
+    }
+
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount,
+            SharedBuildTriggerData sharedData, boolean restricted) throws LocalCIException {
 
         log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
 
@@ -244,17 +301,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        long courseId = course.getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
         int priority = determinePriority(programmingExercise, participation, triggerAll);
-        priority = addPenaltyIfTestCourse(programmingExercise, priority);
+        priority = addPenaltyIfTestCourse(course, priority);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
-        String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
+        String buildJobId = (restricted ? RESTRICTED_BUILD_PREFIX : "") + participation.getId() + submissionDate.toInstant().toEpochMilli();
 
-        var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+        var programmingExerciseBuildConfig = sharedData.resolved() ? sharedData.buildConfig() : loadBuildConfig(programmingExercise);
 
         var buildStatistics = sharedData.resolved() ? sharedData.buildStatistics() : loadBuildStatistics(programmingExercise);
 
@@ -265,7 +323,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig, restricted);
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
@@ -344,9 +402,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             }
         }
 
-        String repositoryTypeOrUserName = participation.getVcsRepositoryUri().repositoryNameWithoutProjectKey();
+        LocalVCRepositoryUri vcsRepositoryUri = participation.getVcsRepositoryUri();
+        if (vcsRepositoryUri == null) {
+            throw new LocalCIException("The repository uri of participation " + participation.getId() + " is missing or invalid");
+        }
 
-        String repositoryName = participation.getVcsRepositoryUri().repositorySlug();
+        String repositoryTypeOrUserName = vcsRepositoryUri.repositoryNameWithoutProjectKey();
+
+        String repositoryName = vcsRepositoryUri.repositorySlug();
 
         RepositoryType repositoryType;
         // Only template, solution and user repositories are build
@@ -371,7 +434,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
-            ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
+            ProgrammingExerciseBuildConfig buildConfig, boolean restricted) throws LocalCIException {
         String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -379,9 +442,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
+        if (restricted) {
+            dockerRunConfig = restrictedRunConfig(dockerRunConfig);
+        }
 
-        programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
             buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
@@ -390,7 +455,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
         }
 
-        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig)
                 : buildPlanPhasesDTO.phases();
         final String dockerImage = buildPlanPhasesDTO.dockerImage() == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
                 : buildPlanPhasesDTO.dockerImage();
@@ -400,11 +465,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
 
-        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
                 buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+    }
+
+    static DockerRunConfig restrictedRunConfig(@Nullable DockerRunConfig original) {
+        return original == null ? new DockerRunConfig(List.of(), "none", 0, 0, 0)
+                : new DockerRunConfig(List.of(), "none", original.cpuCount(), original.memory(), original.memorySwap());
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {
@@ -414,7 +484,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
-        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+        return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
     }
 
     /**
@@ -427,7 +497,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         if (sharedData.resolved()) {
             return sharedData.testCommitHash();
         }
-        return getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+        return getCommitHashOrNull(participation.getProgrammingExerciseElseThrow().getVcsTestRepositoryUri(), "test repository");
     }
 
     private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {
@@ -473,11 +543,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         return PRIORITY_NORMAL;
     }
 
-    private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
-        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
-            return priority + TESTCOURSE_PRIORITY_PENALTY;
-        }
-        return priority;
+    private int addPenaltyIfTestCourse(Course course, int priority) {
+        return course.isTestCourse() ? priority + TESTCOURSE_PRIORITY_PENALTY : priority;
     }
 
     /**

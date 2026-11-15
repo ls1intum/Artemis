@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
@@ -11,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
-    imports: [TranslateDirective, DetailOverviewListComponent, RouterLink, FaIconComponent],
+    imports: [TumAetUiButtonDirective, TranslateDirective, DetailOverviewListComponent, RouterLink, FaIconComponent],
 })
 export class LectureDetailComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

@@ -13,12 +13,16 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -32,6 +36,8 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -401,9 +407,10 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
     private BuildAgentDockerService.MyPullImageResultCallback pullImageCallback;
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @Order(3)
-    void testCheckUsableDiskSpaceThenCleanUp() {
+    void testCheckUsableDiskSpaceThenCleanUp(boolean cleanupRequired) throws IOException {
         // Mock dockerClient.infoCmd().exec()
         InfoCmd infoCmd = mock(InfoCmd.class);
         Info info = mock(Info.class);
@@ -417,10 +424,17 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
         dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 
-        buildAgentDockerService.checkUsableDiskSpaceThenCleanUp();
+        FileStore fileStore = mock(FileStore.class);
+        when(fileStore.getUsableSpace()).thenReturn(cleanupRequired ? 0L : Long.MAX_VALUE, Long.MAX_VALUE);
+        // Control disk pressure independently of the runner, and count only this invocation's cleanup.
+        try (var files = mockStatic(Files.class)) {
+            files.when(() -> Files.getFileStore(Path.of("/"))).thenReturn(fileStore);
+            clearInvocations(dockerClient);
 
-        // Verify that removeImageCmd() was called.
-        verify(dockerClient, times(2)).removeImageCmd("test-image-name");
+            buildAgentDockerService.checkUsableDiskSpaceThenCleanUp();
+
+            verify(dockerClient, times(cleanupRequired ? 1 : 0)).removeImageCmd("test-image-name");
+        }
     }
 
     @Test

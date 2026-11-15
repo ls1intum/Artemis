@@ -5,11 +5,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-lti-initializer-modal',
     templateUrl: './lti-initializer-modal.component.html',
-    imports: [TranslateDirective, FormsModule, CopyToClipboardButtonComponent, RouterLink, DialogModule],
+    imports: [TranslateDirective, FormsModule, CopyToClipboardButtonComponent, RouterLink, DialogModule, ArtemisTranslatePipe],
 })
 export class LtiInitializerModalComponent {
     private alertService = inject(AlertService);

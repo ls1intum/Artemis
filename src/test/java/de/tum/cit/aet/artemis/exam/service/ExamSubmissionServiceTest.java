@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -145,6 +146,29 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_testExamNotStartedIsRejected() {
+        exam.setExamMode(ExamMode.TEST);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
+        examRepository.save(exam);
+        // the service reads the exam through the exercise, so it has to be a test exam there as well
+        exercise.getExerciseGroup().getExam().setExamMode(ExamMode.TEST);
+        // the working time of a test exam counts from the moment the student started it, so there is no end date yet
+        assertThat(studentExam.getStartedDate()).isNull();
+
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isFalse();
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, true)).isFalse();
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+
+        // once the student has started the test exam, the submission is allowed again
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(studentExam);
+
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isTrue();
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, true)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_allowedToSubmitToExercise() {
         // Should fail if there is no student exam for user
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
@@ -167,7 +191,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckSubmissionAllowance_testRun() {
         final var instructor = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         studentExam.setTestRun(true);

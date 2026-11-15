@@ -20,6 +20,7 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ResultComponent } from '../result.component';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -38,6 +39,8 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
 
     readonly exercise = input<Exercise>(undefined!);
+    /** Forwarded to {@link ResultComponent.course}, for an exercise that carries no course. */
+    readonly course = input<CourseScoreAccuracy>();
     readonly participation = input<StudentParticipation>(undefined!);
     readonly short = input(true);
     readonly showUngradedResults = input(false);
@@ -45,6 +48,8 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
     readonly showIcon = input(true);
     readonly isInSidebarCard = input(false);
     readonly showCompletion = input(true);
+    /** Forwarded to {@link ResultComponent.isOwnParticipation}; every current caller shows the viewer their own. */
+    readonly isOwnParticipation = input(true);
     readonly showProgressBar = input(false);
     readonly showProgressBarBorder = input(false);
     readonly showResult = output<void>();

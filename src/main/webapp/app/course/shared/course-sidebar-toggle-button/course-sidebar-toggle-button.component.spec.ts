@@ -24,23 +24,23 @@ describe('CourseSidebarToggleButtonComponent', () => {
         const emitSpy = vi.spyOn(fixture.componentInstance.toggleSidebar, 'emit');
         fixture.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should apply the collapsed class when the sidebar is collapsed', () => {
+    it('announces that the sidebar is collapsed', () => {
         fixture.componentRef.setInput('isCollapsed', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('button').getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should apply the communication class for communication module sidebars', () => {
         fixture.componentRef.setInput('isCommunicationModule', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-communication-module']).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).classes['is-communication-module']).toBeTruthy();
     });
 
     it('should render the sidebar and chevron icons', () => {

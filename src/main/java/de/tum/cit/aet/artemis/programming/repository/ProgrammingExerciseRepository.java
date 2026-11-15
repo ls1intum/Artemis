@@ -37,9 +37,13 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ExerciseAndCourseTitlesDTO;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
@@ -53,21 +57,86 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
-    Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
+    /**
+     * Commits draft preparation before its authoring job can be dispatched.
+     * The callback validates the source and claims coordination; repository copies and builds run after commit.
+     *
+     * @param prepareAndReserve draft initialization followed by its exclusive authoring reservation
+     * @param <T>               prepared authoring result
+     * @return the prepared result after commit
+     */
+    @Transactional
+    default <T> T prepareAuthoringDraft(java.util.function.Supplier<T> prepareAndReserve) {
+        return prepareAndReserve.get();
+    }
 
     /**
-     * Loads a programming exercise with everything the build trigger reads off it.
-     * <p>
-     * The trigger otherwise resolves the build config and the auxiliary repositories with a query each, per push, for
-     * what are per-exercise values. Both of their loaders return the association when it is already initialized, so one
-     * load here removes both queries without introducing anything that has to be invalidated.
+     * Checks whether an exercise is outside whole-exercise generation's course-only scope.
      *
-     * @param exerciseId the id of the programming exercise
-     * @return the exercise with its build config and auxiliary repositories
+     * @param exerciseId exercise to inspect
+     * @return whether the exercise belongs to an exam
      */
-    @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
-    Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+    boolean existsByIdAndExerciseGroupIsNotNull(long exerciseId);
+
+    /**
+     * Atomically couples the metadata compare-and-set with its database-only task synchronization.
+     *
+     * @param exerciseId               the exercise to update
+     * @param targetProblemStatement   new statement
+     * @param targetTitle              new title
+     * @param expectedProblemStatement expected current statement
+     * @param expectedTitle            expected current title
+     * @param synchronizeTasks         database-only task update, run only after a matching compare-and-set
+     * @return zero on a stale expected value, otherwise one
+     */
+    @Transactional
+    default int updateProblemStatementAndTitleIfUnchanged(long exerciseId, String targetProblemStatement, String targetTitle, String expectedProblemStatement, String expectedTitle,
+            Runnable synchronizeTasks) {
+        int updated = updateProblemStatementAndTitleIfUnchanged(exerciseId, targetProblemStatement, targetTitle, expectedProblemStatement, expectedTitle);
+        if (updated == 1) {
+            synchronizeTasks.run();
+        }
+        return updated;
+    }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise pe
+            SET pe.problemStatement = :targetProblemStatement,
+                pe.title = :targetTitle
+            WHERE pe.id = :exerciseId
+                AND (
+                    (
+                        (pe.problemStatement = :expectedProblemStatement OR (:expectedProblemStatement IS NULL AND pe.problemStatement IS NULL))
+                        AND (pe.title = :expectedTitle OR (:expectedTitle IS NULL AND pe.title IS NULL))
+                    )
+                    OR (
+                        (pe.problemStatement = :targetProblemStatement OR (:targetProblemStatement IS NULL AND pe.problemStatement IS NULL))
+                        AND (pe.title = :targetTitle OR (:targetTitle IS NULL AND pe.title IS NULL))
+                    )
+                )
+            """)
+    int updateProblemStatementAndTitleIfUnchanged(@Param("exerciseId") long exerciseId, @Param("targetProblemStatement") String targetProblemStatement,
+            @Param("targetTitle") String targetTitle, @Param("expectedProblemStatement") String expectedProblemStatement, @Param("expectedTitle") String expectedTitle);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(pe) > 0 THEN TRUE ELSE FALSE END
+            FROM ProgrammingExercise pe
+            WHERE pe.id = :exerciseId
+                AND pe.course IS NOT NULL
+                AND pe.exerciseGroup IS NULL
+                AND (pe.releaseDate IS NULL OR pe.releaseDate > CURRENT_TIMESTAMP)
+                AND NOT EXISTS (
+                    SELECT participation.id
+                    FROM ProgrammingExerciseStudentParticipation participation
+                    WHERE participation.exercise.id = pe.id
+                )
+            """)
+    boolean isUnreleasedAndWithoutStudentParticipations(@Param("exerciseId") long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
 
     /**
      * Returns the values of the exercise's submission policy, without the exercise the policy points back at.
@@ -121,40 +190,24 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     int updateTestCasesChanged(@Param("exerciseId") long exerciseId, @Param("testCasesChanged") boolean testCasesChanged);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "categories", "auxiliaryRepositories", "submissionPolicy" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationCategoriesById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "categories", "competencyLinks.competency", "auxiliaryRepositories",
             "submissionPolicy" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(long exerciseId);
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationCategoriesAndCompetenciesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
-            "submissionPolicy", "buildConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "buildConfig", "exerciseVariantGroup" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig", "exerciseVariantGroup" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
-            long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "categories", "competencyLinks.competency", "auxiliaryRepositories",
+            "submissionPolicy", "exerciseVariantGroup" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "buildConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigById(long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
-
-    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
+    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExerciseBuildConfig bc WHERE bc.programmingExercise.id = :exerciseId")
     Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
@@ -164,49 +217,48 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @param exerciseId of the programming exercise
      * @return the programming exercise without its grading criteria and competency links
      */
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig", "submissionPolicy" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "categories", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
+            "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "submissionPolicy" })
     Optional<ProgrammingExercise> findForCreationMainGraphById(long exerciseId);
 
     /**
-     * Internal part of {@link #findForCreationById}: the grading criteria with their structured instructions.
+     * Initializes the managed grading-criteria collection and its instructions without replacing its orphan-removal wrapper.
      *
-     * @param exerciseId of the programming exercise
-     * @return the programming exercise with its grading criteria initialized
+     * @param exerciseId programming exercise
+     * @return exercise with initialized grading criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria", "gradingCriteria.structuredGradingInstructions" })
-    Optional<ProgrammingExercise> findWithGradingCriteriaAndInstructionsById(long exerciseId);
+    Optional<ProgrammingExercise> findForCreationGradingCriteriaById(long exerciseId);
 
     /**
-     * Internal part of {@link #findForCreationById}: the competency links with their competencies.
+     * Initializes the managed competency links and their competencies in the creation transaction.
      *
-     * @param exerciseId of the programming exercise
-     * @return the programming exercise with its competency links initialized
+     * @param exerciseId programming exercise
+     * @return exercise with initialized competency links
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency" })
-    Optional<ProgrammingExercise> findWithCompetencyLinksAndCompetenciesById(long exerciseId);
+    Optional<ProgrammingExercise> findForCreationCompetencyLinksById(long exerciseId);
 
     /**
      * Finds a programming exercise by its id with the whole graph a freshly created (or imported) exercise needs:
      * template and solution participation (with submissions and results), team assignment config, categories, auxiliary
-     * repositories, plagiarism detection config, build config, submission policy, grading criteria (with their
+     * repositories, plagiarism detection config, submission policy, grading criteria (with their
      * structured instructions) and competency links.
      * <p>
-     * The graph is assembled from three queries instead of one. Join-fetching the grading criteria and the competency
-     * links together with the categories, auxiliary repositories and participation submissions would multiply the result
-     * set - one row per combination of all of them - and each of those rows repeats every exercise column, including the
-     * problem statement. Two extra lookups by primary key are cheaper than that product, and callers still see a single
-     * method returning a fully initialized exercise.
+     * Three queries initialize the main graph, grading criteria and competency links separately. This avoids a Cartesian
+     * product between independent collections and preserves managed collection wrappers. The queries share a persistence
+     * context and initialize its managed collections, including when this read joins an import's write transaction.
      *
      * @param exerciseId of the programming exercise
      * @return the programming exercise with its complete creation graph initialized
      */
+    @Transactional(readOnly = true) // ok because it only reads; the queries share a persistence context and initialize managed collections
     default Optional<ProgrammingExercise> findForCreationById(long exerciseId) {
         Optional<ProgrammingExercise> optionalExercise = findForCreationMainGraphById(exerciseId);
-        optionalExercise.ifPresent(exercise -> {
-            findWithGradingCriteriaAndInstructionsById(exerciseId).ifPresent(withCriteria -> exercise.setGradingCriteria(withCriteria.getGradingCriteria()));
-            findWithCompetencyLinksAndCompetenciesById(exerciseId).ifPresent(withLinks -> exercise.setCompetencyLinks(withLinks.getCompetencyLinks()));
-        });
+        if (optionalExercise.isPresent()) {
+            findForCreationGradingCriteriaById(exerciseId);
+            findForCreationCompetencyLinksById(exerciseId);
+        }
         return optionalExercise;
     }
 
@@ -216,15 +268,12 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
-            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "categories",
+            "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
-    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
@@ -281,6 +330,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 pe.startDate,
                 pe.releaseDate,
                 pe.dueDate,
+                pe.assessmentType,
                 e.id,
                 e.startDate,
                 e.examMode)
@@ -293,42 +343,25 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<GitRepositoryAccessDTO> findAccessProjectionByProjectKey(@Param("projectKey") String projectKey);
 
-    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
-    List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "buildConfig" })
-    List<ProgrammingExercise> findWithSubmissionPolicyAndBuildConfigByProjectKey(String projectKey);
-
     /**
-     * Finds one programming exercise including its submission policy by the exercise's project key.
+     * Reads the titles of an exercise and of its course, for messages that name the exercise a user accessed. As for the access projection, the course is taken from the
+     * exercise group's exam when there is one.
      *
-     * @param projectKey           the project key of the programming exercise.
-     * @param withSubmissionPolicy whether the submission policy should be included in the result.
-     * @param withBuildConfig      whether the build policy should be included in the result.
-     * @return the programming exercise.
-     * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
+     * @param exerciseId the exercise
+     * @return the titles, or empty if the exercise does not exist
      */
-    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy, boolean withBuildConfig) throws EntityNotFoundException {
-        List<ProgrammingExercise> exercises;
-
-        if (withSubmissionPolicy && withBuildConfig) {
-            exercises = findWithSubmissionPolicyAndBuildConfigByProjectKey(projectKey);
-        }
-        else if (withSubmissionPolicy) {
-            exercises = findWithSubmissionPolicyByProjectKey(projectKey);
-        }
-        else if (withBuildConfig) {
-            exercises = findWithBuildConfigByProjectKey(projectKey);
-        }
-        else {
-            exercises = findAllByProjectKey(projectKey);
-        }
-
-        if (exercises.size() != 1) {
-            throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
-        }
-        return exercises.getFirst();
-    }
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ExerciseAndCourseTitlesDTO(
+                pe.title,
+                CASE WHEN eg.id IS NOT NULL THEN ec.title ELSE c.title END)
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam e
+                LEFT JOIN e.course ec
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ExerciseAndCourseTitlesDTO> findExerciseAndCourseTitlesById(@Param("exerciseId") long exerciseId);
 
     /**
      * Finds a ProgrammingExercise with all data necessary for exercise versioning.
@@ -342,12 +375,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * Hibernate then de-duplicates in memory. That made this the dominant application slow query.
      * <p>
      * Instead, the large independent collections (testCases, tasks with their test cases, staticCodeAnalysisCategories)
-     * are each loaded with their own query and merged into the base exercise in Java. This avoids the Cartesian product
-     * entirely and is portable across MySQL and PostgreSQL as it only uses standard JPA {@code @EntityGraph} fetches.
+     * are each selected on their own, by the id of the exercise, and put on the base exercise in Java. This avoids the
+     * Cartesian product entirely, and the exercise and its course are not read again for every collection. The queries
+     * run in one read-only transaction, so that what the collections point back at is found in the session. It is
+     * portable across MySQL and PostgreSQL as it only uses standard JPQL.
      *
      * @param exerciseId the id of the exercise to be found
      * @return the programming exercise
      */
+    @Transactional(readOnly = true) // ok because it only reads, and the queries share one session so that the exercise and its course are read once
     default Optional<ProgrammingExercise> findForVersioningById(long exerciseId) {
         // Base query loads the exercise, all to-one associations and the small collections whose mutual product stays
         // small (aux repositories, competency links, categories, grading criteria).
@@ -356,26 +392,63 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             return exerciseOptional;
         }
         ProgrammingExercise exercise = exerciseOptional.get();
-        // Load each large independent collection with a separate query and merge it into the base exercise. Merging in
+        // Select each large independent collection with a query of its own and put it on the base exercise. Merging in
         // Java keeps every query free of a Cartesian product between independent collections.
-        findForVersioningTestCasesById(exerciseId).ifPresent(fetched -> exercise.setTestCases(fetched.getTestCases()));
-        findForVersioningTasksById(exerciseId).ifPresent(fetched -> exercise.setTasks(fetched.getTasks()));
-        findForVersioningStaticCodeAnalysisCategoriesById(exerciseId).ifPresent(fetched -> exercise.setStaticCodeAnalysisCategories(fetched.getStaticCodeAnalysisCategories()));
+        exercise.setTestCases(findTestCasesByExerciseId(exerciseId));
+        exercise.setTasks(findTasksWithTestCasesByExerciseId(exerciseId));
+        exercise.setStaticCodeAnalysisCategories(findStaticCodeAnalysisCategoriesByExerciseId(exerciseId));
         return Optional.of(exercise);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "submissionPolicy", "buildConfig", "teamAssignmentConfig",
-            "plagiarismDetectionConfig", "auxiliaryRepositories", "competencyLinks", "categories", "gradingCriteria" })
-    Optional<ProgrammingExercise> findForVersioningBaseById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = "testCases")
-    Optional<ProgrammingExercise> findForVersioningTestCasesById(long exerciseId);
+    /**
+     * Loads the complete import source in one persistence context.
+     *
+     * @param exerciseId protected source exercise
+     * @return the initialized source, if it exists
+     */
+    @Transactional(readOnly = true)
+    default Optional<ProgrammingExercise> findForAuthoringImportById(long exerciseId) {
+        var source = findForVersioningBaseById(exerciseId);
+        if (source.isPresent()) {
+            // Import joins a write transaction: initialize managed collections without replacing orphan-removal wrappers.
+            findWithTestCasesById(exerciseId);
+            findForAuthoringTasksById(exerciseId);
+            findForAuthoringStaticCodeAnalysisCategoriesById(exerciseId);
+        }
+        return source;
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "tasks", "tasks.testCases" })
-    Optional<ProgrammingExercise> findForVersioningTasksById(long exerciseId);
+    Optional<ProgrammingExercise> findForAuthoringTasksById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "staticCodeAnalysisCategories")
-    Optional<ProgrammingExercise> findForVersioningStaticCodeAnalysisCategoriesById(long exerciseId);
+    Optional<ProgrammingExercise> findForAuthoringStaticCodeAnalysisCategoriesById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "course", "templateParticipation", "solutionParticipation", "submissionPolicy", "auxiliaryRepositories", "competencyLinks",
+            "categories", "gradingCriteria" })
+    Optional<ProgrammingExercise> findForVersioningBaseById(long exerciseId);
+
+    @Query("""
+            SELECT testCase
+            FROM ProgrammingExerciseTestCase testCase
+            WHERE testCase.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseTestCase> findTestCasesByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT task
+            FROM ProgrammingExerciseTask task
+                LEFT JOIN FETCH task.testCases
+            WHERE task.exercise.id = :exerciseId
+            """)
+    List<ProgrammingExerciseTask> findTasksWithTestCasesByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT category
+            FROM StaticCodeAnalysisCategory category
+            WHERE category.exercise.id = :exerciseId
+            """)
+    Set<StaticCodeAnalysisCategory> findStaticCodeAnalysisCategoriesByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
@@ -529,8 +602,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
-    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
+    Optional<ProgrammingExercise> findWithAllParticipationsById(long exerciseId);
 
     @Query("""
             SELECT pe
@@ -546,31 +619,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.templateParticipation.id = :participationId
             """)
     Optional<ProgrammingExercise> findByTemplateParticipationId(@Param("participationId") long participationId);
-
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.buildConfig
-            WHERE pe.solutionParticipation.id = :participationId
-            """)
-    Optional<ProgrammingExercise> findBySolutionParticipationIdWithBuildConfig(@Param("participationId") long participationId);
-
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.studentParticipations spep
-                LEFT JOIN FETCH pe.buildConfig
-            WHERE spep.id = :participationId
-            """)
-    Optional<ProgrammingExercise> findByStudentParticipationIdWithBuildConfig(@Param("participationId") long participationId);
-
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.buildConfig
-            WHERE pe.templateParticipation.id = :participationId
-            """)
-    Optional<ProgrammingExercise> findByTemplateParticipationIdWithBuildConfig(@Param("participationId") long participationId);
 
     @Query("""
             SELECT pe
@@ -596,11 +644,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.categories
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndCategories(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -611,11 +658,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -626,8 +672,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH p.buildConfig
-                LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
@@ -687,6 +731,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findWithEagerCourseAndExamById(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Loads authorization context for a bounded set of destinations in one query, without participation or repository data.
+     *
+     * @param exerciseIds destination ids
+     * @return exercises with course and exam ownership loaded
+     */
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.id IN :exerciseIds
+            """)
+    List<ProgrammingExercise> findAllWithEagerCourseAndExamByIdIn(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -805,16 +865,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT p.id
-            FROM ProgrammingExercise p
-            WHERE p.exerciseGroup.exam.id = :examId
-            """)
-    Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
-    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
-
     /**
      * Defines the default entity graph for loading programming exercises along with related configurations.
      * <p>
@@ -825,8 +875,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return an {@link Optional} containing the programming exercise with all related configurations if found,
      *         or an empty {@link Optional} otherwise
      */
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria", "categories" })
-    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria", "categories" })
+    Optional<ProgrammingExercise> findWithGradingCriteriaAndCategoriesById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 
@@ -835,6 +885,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
 
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
+
+    /**
+     * Counts the exercises already using a project key. The project key is derived from the course and exercise short names and identifies the exercise's projects and
+     * repositories instance-wide, so this is the instance-wide counterpart to the course-scoped short-name checks above.
+     *
+     * @param projectKey the project key to look for, in the upper-case form {@link ProgrammingExercise#generateAndSetProjectKey()} produces
+     * @return how many programming exercises already carry that project key
+     */
+    long countByProjectKey(String projectKey);
 
     /**
      * Finds the branch for the given exercise id.
@@ -900,29 +959,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id and fetch related plagiarism detection config, team config and grading criteria.
+     * Find a programming exercise by its id and fetch related grading criteria and categories.
      * Throws an EntityNotFoundException if the exercise cannot be found.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
     @NonNull
-    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExerciseId), programmingExerciseId);
-    }
-
-    /**
-     * Find a programming exercise by its id and fetch related plagiarism detection config,
-     * team config, build config, grading criteria, and categories.
-     * Throws an EntityNotFoundException if the exercise cannot be found.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     */
-    @NonNull
-    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(long programmingExerciseId)
-            throws EntityNotFoundException {
-        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithGradingCriteriaAndCategoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithGradingCriteriaAndCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -937,7 +982,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise with auxiliary repositories competencies, and buildConfig by its id and throw an {@link EntityNotFoundException} if it cannot be found
+     * Find a programming exercise with auxiliary repositories and competencies by its id and throw an {@link EntityNotFoundException} if it cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -960,7 +1005,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     /**
      * Find a programming exercise by its id, including template and solution but without results.
-     * TODO: we should remove this method later on and use 'findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow' in all places,
+     * TODO: we should remove this method later on and use 'findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow' in all places,
      * they have same functionality.
      *
      * @param programmingExerciseId of the programming exercise.
@@ -970,21 +1015,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NonNull
     // TODO: rename, this method does more than it promises
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
-     * Find a programming exercise by its id, including its template participation and its build config. Prefer this over
-     * calling a template-participation loader and {@link #findBranchByExerciseId} in sequence: both read the same
-     * exercise, so one query answers what used to take two.
+     * Find a programming exercise by its id, including its template participation.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NonNull
-    default ProgrammingExercise findByIdWithTemplateParticipationAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateParticipationAndBuildConfigById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateParticipationById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -1001,16 +1044,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, including auxiliary repositories, template and solution participation,
-     * their latest results and build config.
+     * Find a programming exercise by its id, including auxiliary repositories, template and solution participation and
+     * their latest results.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NonNull
-    default ProgrammingExercise findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigById(programmingExerciseId);
+    default ProgrammingExercise findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId);
         return getValueElseThrow(programmingExercise, programmingExerciseId);
     }
 
@@ -1052,44 +1095,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NonNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
-    /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment config, categories and build config
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
     @NonNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(long programmingExerciseId)
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateAndSolutionParticipationCategoriesAndCompetenciesById(programmingExerciseId), programmingExerciseId);
+    }
+
+    @NonNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupById(programmingExerciseId);
         return getValueElseThrow(programmingExercise, programmingExerciseId);
-    }
-
-    @NonNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(long programmingExerciseId)
-            throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId), programmingExerciseId);
-    }
-
-    @NonNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(long programmingExerciseId)
-            throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(
-                programmingExerciseId);
-        return getValueElseThrow(programmingExercise, programmingExerciseId);
-    }
-
-    @NonNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
-            long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(
-                findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(programmingExerciseId),
-                programmingExerciseId);
     }
 
     /**
@@ -1106,6 +1125,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     default ProgrammingExercise findForCreationByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findForCreationById(programmingExerciseId), programmingExerciseId);
     }
+
+    /**
+     * Attaches the newly inserted base participations and test repository to a new exercise without merging and
+     * reloading its entire graph. The project key and auxiliary URLs are already stored by the initial insert.
+     *
+     * @param exercise the newly stored exercise with its initialized repository metadata
+     */
+    @Modifying
+    @Transactional // ok because the update attaches the base repositories atomically
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testRepositoryUri = :#{#exercise.testRepositoryUri},
+                exercise.templateParticipation = :#{#exercise.templateParticipation},
+                exercise.solutionParticipation = :#{#exercise.solutionParticipation}
+            WHERE exercise.id = :#{#exercise.id}
+            """)
+    void updateRepositoryMetadataForCreation(@Param("exercise") ProgrammingExercise exercise);
 
     /**
      * Saves the given programming exercise to the database.
@@ -1141,35 +1177,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationId(participationId);
                 case SolutionProgrammingExerciseParticipation ignored -> findBySolutionParticipationId(participationId);
                 case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationId(participationId);
-                default -> Optional.empty();
-            };
-            if (optionalProgrammingExercise.isEmpty()) {
-                return null;
-            }
-            participation.setProgrammingExercise(optionalProgrammingExercise.get());
-        }
-        return participation.getProgrammingExercise();
-    }
-
-    /**
-     * Retrieves the associated ProgrammingExercise with the build config for a given ProgrammingExerciseParticipation.
-     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
-     * to the specified participation. This method handles different types of participation
-     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
-     *
-     * @param participation the programming exercise participation object; must not be null
-     * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
-     */
-    default ProgrammingExercise getProgrammingExerciseWithBuildConfigFromParticipation(ProgrammingExerciseParticipation participation) {
-        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
-        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            // Find the programming exercise for the given participation
-            // NOTE: we use different methods to find the programming exercise based on the participation type on purpose to avoid slow database queries
-            long participationId = participation.getId();
-            Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
-                case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationIdWithBuildConfig(participationId);
-                case SolutionProgrammingExerciseParticipation ignored -> findBySolutionParticipationIdWithBuildConfig(participationId);
-                case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationIdWithBuildConfig(participationId);
                 default -> Optional.empty();
             };
             if (optionalProgrammingExercise.isEmpty()) {
@@ -1336,7 +1343,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
         // @formatter:off
         Categories(Exercise_.CATEGORIES),
-        TeamAssignmentConfig(Exercise_.TEAM_ASSIGNMENT_CONFIG),
         AuxiliaryRepositories(ProgrammingExercise_.AUXILIARY_REPOSITORIES),
         GradingCriteria(Exercise_.GRADING_CRITERIA),
         StudentParticipations(ProgrammingExercise_.STUDENT_PARTICIPATIONS),
@@ -1350,8 +1356,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
         ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
-        PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
-        PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);
+        PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES);
         // @formatter:on
 
         private final String fetchPath;
@@ -1390,14 +1395,4 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
     }
 
-    /**
-     * Find a programming exercise by its id, including its build config, and throw an Exception if it cannot be found.
-     *
-     * @param exerciseId of the programming exercise.
-     * @return The programming exercise with the associated build config related to the given id.
-     * @throws EntityNotFoundException if the programming exercise with the given id cannot be found.
-     */
-    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithBuildConfigById(exerciseId), exerciseId);
-    }
 }

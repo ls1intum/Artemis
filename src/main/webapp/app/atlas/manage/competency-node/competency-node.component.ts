@@ -18,6 +18,8 @@ export interface SizeUpdate {
     styleUrl: './competency-node.component.scss',
 })
 export class CompetencyNodeComponent implements AfterViewInit {
+    private readonly element = inject(ElementRef);
+
     protected readonly CompetencyGraphNodeValueType = CompetencyGraphNodeValueType;
     // height of node element in pixels
     private readonly nodeHeight = 45.59;
@@ -27,7 +29,6 @@ export class CompetencyNodeComponent implements AfterViewInit {
 
     readonly value = computed(() => this.competencyNode().value);
 
-    private readonly element = inject(ElementRef);
     readonly onSizeSet = output<SizeUpdate>();
 
     ngAfterViewInit(): void {

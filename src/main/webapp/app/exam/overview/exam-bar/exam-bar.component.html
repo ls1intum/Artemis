@@ -1,29 +1,42 @@
-<div class="h5 module-bg exam-bar mt-0 px-3 py-2 rounded rounded-3 sticky-top" [ngClass]="{ 'end-view': isEndView(), 'mx-3': !isEndView() && !isTestRun() }">
-    <div class="d-flex justify-content-between">
-        <h3 class="align-self-center mb-0 me-3">
-            {{ examTitle() }}
-        </h3>
-        @if (!examTimeLineView()) {
-            <div class="d-flex justify-content-between align-items-center">
-                <jhi-exam-timer
-                    class="me-3"
-                    [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
-                    [endDate]="endDate()"
-                    [isEndView]="isEndView()"
-                    (timerAboutToEnd)="triggerExamAboutToEnd()"
-                />
-                <jhi-exam-live-events-button [examStartDate]="examStartDate()" />
-                @if (!isEndView()) {
-                    <button data-testid="hand-in-early" class="btn btn-sm btn-danger ms-2" aria-label="Hand In Early" (click)="handInEarly()">
-                        <div class="d-flex justify-content-between">
-                            <span>
-                                <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
-                                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
-                            </span>
-                        </div>
-                    </button>
-                }
-            </div>
+<div
+    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4! rounded-lg bg-(--module-bg) px-3!"
+    data-testid="exam-bar"
+    [class]="isEndView() ? 'mx-auto w-full max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : ''"
+>
+    <div class="flex min-w-0 items-center gap-2">
+        <h3 class="m-0! truncate text-base! leading-tight! font-semibold!" data-testid="exam-bar-title">{{ examTitle() }}</h3>
+        @if (isTestRun()) {
+            <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
+                <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+            </tumaet-ui-tag>
         }
     </div>
+    @if (!examTimeLineView()) {
+        <!-- Every button of the bar is 30px high like the buttons of a title row (see jhi-exam-exercise-header): 4px padding, a 20px line and the border. The important spelling beats the padding of the kit. -->
+        <div class="flex shrink-0 items-center gap-4! [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!">
+            <jhi-exam-timer
+                [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
+                [endDate]="endDate()"
+                [isEndView]="isEndView()"
+                (timerAboutToEnd)="triggerExamAboutToEnd()"
+            />
+            <jhi-exam-live-events-button [examStartDate]="examStartDate()" />
+            @if (!isEndView()) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    severity="danger"
+                    size="small"
+                    data-testid="hand-in-early"
+                    [attr.aria-label]="'artemisApp.examParticipation.handInEarly' | artemisTranslate"
+                    (click)="handInEarly()"
+                >
+                    <span>
+                        <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
+                        <span class="hidden sm:inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
+                    </span>
+                </button>
+            }
+        </div>
+    }
 </div>

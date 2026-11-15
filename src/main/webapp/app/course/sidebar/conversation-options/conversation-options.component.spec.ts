@@ -15,9 +15,9 @@ import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.co
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideRouter } from '@angular/router';
@@ -55,10 +55,10 @@ examples.forEach((conversation) => {
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                     MockProvider(ConversationService),
-                    MockProvider(MetisConversationService),
+                    MockProvider(CourseConversationsService),
                     MockProvider(AlertService),
                     MockProvider(DialogService),
-                    { provide: MetisService, useClass: MockMetisService },
+                    { provide: CommunicationService, useClass: MockCommunicationService },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
@@ -81,6 +81,27 @@ examples.forEach((conversation) => {
 
         it('should create', () => {
             expect(component).toBeTruthy();
+        });
+
+        // jsdom cannot compute layout, so the alignment is asserted through the structure that guarantees it:
+        // the favorite and the options button are siblings in one flex row with a common cross-axis alignment
+        it('should align the favorite and the options button in one centered flex row', () => {
+            const nativeElement: HTMLElement = fixture.debugElement.nativeElement;
+            const optionButtons = nativeElement.querySelector('.option-buttons');
+            const favoriteButton = optionButtons?.querySelector('.favorite');
+            const dropdown = optionButtons?.querySelector('div[ngbDropdown]');
+            expect(optionButtons).not.toBeNull();
+            expect(favoriteButton).not.toBeNull();
+            expect(dropdown).not.toBeNull();
+
+            expect(optionButtons!.classList).toContain('flex');
+            expect(optionButtons!.classList).toContain('items-center');
+            expect(favoriteButton!.parentElement).toBe(optionButtons);
+            expect(dropdown!.parentElement).toBe(optionButtons);
+            // an inline-block wrapper would put the options button on the text baseline instead of centering it
+            expect(dropdown!.classList).not.toContain('d-inline-block');
+            expect(dropdown!.classList).toContain('flex');
+            expect(dropdown!.classList).toContain('items-center');
         });
 
         it('should remove conversation from favorites when hidden', async () => {

@@ -15,9 +15,11 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
@@ -25,6 +27,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { EntityDeletionStatus } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsComponent>, exercise: Exercise) => {
     fixture.componentRef.setInput('exercise', exercise);
@@ -44,8 +50,13 @@ describe('ExamExerciseRowButtonsComponent', () => {
     const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
     const quizExercise = { id: 345, type: ExerciseType.QUIZ } as QuizExercise;
     const fileUploadExercise = { id: 456, type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
-    const programmingExercise = { id: 963, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-    const quizResponse = { body: { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise };
+    const programmingExercise = {
+        id: 963,
+        type: ExerciseType.PROGRAMMING,
+        programmingLanguage: ProgrammingLanguage.JAVA,
+        projectType: ProjectType.PLAIN_GRADLE,
+    } as ProgrammingExercise;
+    const loadedQuiz = { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise;
 
     let deleteTextExerciseStub: ReturnType<typeof vi.spyOn>;
     let deleteModelingExerciseStub: ReturnType<typeof vi.spyOn>;
@@ -64,6 +75,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExamExerciseRowButtonsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
                 MockProvider(ProgrammingExerciseService),
@@ -71,6 +83,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(ExerciseService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: GenerationCapabilityRequestsService, useValue: { describe: () => of({ canCreateVariant: true }) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
             ],
@@ -92,10 +105,10 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
         deleteTextExerciseStub = vi.spyOn(textExerciseService, 'delete');
         deleteModelingExerciseStub = vi.spyOn(modelingExerciseService, 'delete');
-        deleteQuizExerciseStub = vi.spyOn(quizExerciseService, 'delete');
+        deleteQuizExerciseStub = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise');
         deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete');
         deleteProgrammingExerciseStub = vi.spyOn(programmingExerciseService, 'delete');
-        quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'find');
+        quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'findForExam');
         onDeleteExerciseEmitSpy = vi.spyOn(component.onDeleteExercise, 'emit');
         quizExerciseExportSpy = vi.spyOn(quizExerciseService, 'exportQuiz');
     });
@@ -147,21 +160,39 @@ describe('ExamExerciseRowButtonsComponent', () => {
         const idsFor = (exercise: Exercise, roles: { editor?: boolean; instructor?: boolean } = {}): string[] => {
             fixture.componentRef.setInput('course', courseWith(roles));
             setExerciseInput(fixture, exercise);
+            TestBed.tick();
             return component.mainActions().map((action) => action.id);
         };
 
-        it('offers participations, scores and delete only to instructors', () => {
+        it('offers participations and delete only to instructors', () => {
             const asInstructor = idsFor(textExercise, { instructor: true, editor: true });
-            expect(asInstructor).toEqual(expect.arrayContaining(['participations', 'scores', 'delete']));
+            expect(asInstructor).toEqual(expect.arrayContaining(['participations', 'delete']));
 
             const asEditor = idsFor(textExercise, { instructor: false, editor: true });
-            expect(asEditor).not.toEqual(expect.arrayContaining(['participations', 'scores', 'delete']));
+            expect(asEditor).not.toEqual(expect.arrayContaining(['participations', 'delete']));
         });
 
         it('adds grading and edit-in-editor only for programming exercises with editor rights', () => {
             expect(idsFor(programmingExercise, { editor: true })).toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
             expect(idsFor(programmingExercise, { editor: false })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
             expect(idsFor(textExercise, { editor: true })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+        });
+
+        it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
+            expect(idsFor(programmingExercise, { editor: true })).not.toContain('create-variant-ai');
+
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
+            fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('exam', exam);
+            fixture.componentRef.setInput('exerciseGroupId', 5);
+            TestBed.tick();
+            expect(idsFor(programmingExercise, { editor: true })).toContain('create-variant-ai');
+            component.mainActions().find((action) => action.id === 'create-variant-ai')!.onClick!();
+            expect(component.aiVariantModalVisible()).toBe(true);
+            expect(idsFor(programmingExercise, { editor: false })).not.toContain('create-variant-ai');
         });
 
         it('adds example submissions for text and modeling but not for quiz, programming or file upload', () => {
@@ -287,6 +318,23 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
                 expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
             });
+            it('should keep the exercise when the background deletion failed', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+            it('should ask the table to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+                const unknownEmitSpy = vi.spyOn(component.deletionOutcomeUnknown, 'emit');
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(unknownEmitSpy).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
             it('should handle error for textexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
                 deleteTextExerciseStub.mockReturnValue(throwError(() => error));
@@ -367,14 +415,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
     });
     describe('exportQuizById', () => {
         it('should export Quiz, exportAll true', () => {
-            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
             setExerciseInput(fixture, quizExercise);
             component.exportQuizById(true);
             expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
             expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, true, quizExercise.title);
         });
         it('should export Quiz, exportAll false', () => {
-            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
             setExerciseInput(fixture, quizExercise);
             component.exportQuizById(false);
             expect(quizExerciseExportSpy).toHaveBeenCalledOnce();

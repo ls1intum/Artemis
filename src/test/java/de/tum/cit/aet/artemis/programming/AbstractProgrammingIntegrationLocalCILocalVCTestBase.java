@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.mockito.Mockito.lenient;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +27,8 @@ import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIMissingJobService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIResultService;
 import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCBuildAgentAuthenticationService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -63,11 +63,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @BeforeEach
     protected void mockBuildAgentServices() {
-        // Use lenient stubbing to avoid Mockito concurrency issues when tests run in parallel.
-        // Standard doReturn().when() can cause "WrongTypeOfReturnValue" errors when multiple tests
-        // simultaneously stub the same spy bean.
-        lenient().doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
-        lenient().doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
+        // The shared buildAgentConfiguration spy must not be stubbed here: scheduled and build threads call it while this runs, see BuildAgentConfigurationOverrides.
+        buildAgentConfigurationOverrides.useDockerClient(dockerClientMock);
         this.dockerClient = dockerClientMock;
     }
 
@@ -109,6 +106,12 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected LocalVCServletService localVCServletService;
+
+    @Autowired
+    protected LocalVCPushProcessingService localVCPushProcessingService;
+
+    @Autowired
+    protected LocalVCBuildAgentAuthenticationService localVCBuildAgentAuthenticationService;
 
     @Autowired
     protected LocalCITriggerService localCITriggerService;
@@ -200,14 +203,16 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-tests.git");
-        var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        // The configuration is a row of its own, so it is read before it is changed.
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig);
         var defaultDockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
         var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        buildConfig.setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         // Capture the managed entity returned by merge() to avoid stale detached entity issues
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);
 
         // Set the correct repository URIs for the template and the solution participation.

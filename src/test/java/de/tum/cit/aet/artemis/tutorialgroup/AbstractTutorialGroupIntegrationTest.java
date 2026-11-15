@@ -45,12 +45,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupsConfigurationTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -69,7 +69,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     protected TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
 
     @Autowired
-    protected TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+    protected TutorialGroupsConfigurationTestRepository tutorialGroupsConfigurationRepository;
 
     @Autowired
     protected TutorialGroupRegistrationTestRepository tutorialGroupRegistrationTestRepository;
@@ -461,7 +461,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     Channel asserTutorialGroupChannelIsCorrectlyConfigured(TutorialGroup tutorialGroup) {
-        var configuration = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(tutorialGroup.getCourse().getId()).getTutorialGroupsConfiguration();
+        var configuration = tutorialGroupsConfigurationRepository.findByCourseId(tutorialGroup.getCourse().getId()).orElseThrow();
 
         Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase(Locale.ROOT);

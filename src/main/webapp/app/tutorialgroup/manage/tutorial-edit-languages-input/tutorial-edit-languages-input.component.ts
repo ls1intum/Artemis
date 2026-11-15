@@ -5,32 +5,20 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo, faFlag } from '@fortawesome/free-solid-svg-icons';
-import { TumUiInputDirective, TumUiInputGroupAddonComponent, TumUiInputGroupComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
-    imports: [
-        FaIconComponent,
-        TumUiInputDirective,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
-        TumUiTooltipDirective,
-        FormsModule,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-    ],
+    imports: [TumAetUiFormFieldComponent, TumAetUiInputDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './tutorial-edit-languages-input.component.html',
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
 export class TutorialEditLanguagesInputComponent implements OnDestroy {
-    protected readonly TutorialEditValidationStatus = ValidationStatus;
-    protected readonly faFlag = faFlag;
-    protected readonly faCircleInfo = faCircleInfo;
     private overlay = inject(Overlay);
-    private overlayRef: OverlayRef | undefined = undefined;
     private viewContainerRef = inject(ViewContainerRef);
+
+    protected readonly TutorialEditValidationStatus = ValidationStatus;
+    private overlayRef: OverlayRef | undefined = undefined;
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
     private languageValidationResultInternal = computed<Validation>(() => this.computeLanguageValidation());

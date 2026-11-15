@@ -1,3 +1,5 @@
+import { PasswordValidationErrorsComponent } from 'app/account/shared/password-validation-errors/password-validation-errors.component';
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,7 +11,7 @@ import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the password change form controls.
@@ -30,16 +32,17 @@ interface PasswordForm {
     selector: 'jhi-password',
     templateUrl: './password.component.html',
     imports: [
+        PasswordValidationErrorsComponent,
         TranslateDirective,
         FormsModule,
         ReactiveFormsModule,
         PasswordStrengthBarComponent,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiCheckboxComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -52,7 +55,7 @@ export class PasswordComponent implements OnInit {
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     /** Maximum allowed password length exposed for template validation messages */
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
-
+    /** Maximum UTF-8 byte length supported by BCrypt. */
     /** Indicates the new password and confirmation do not match */
     readonly doNotMatch = signal(false);
     /** Indicates an error occurred during password change */
@@ -80,7 +83,7 @@ export class PasswordComponent implements OnInit {
         currentPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
         newPassword: new FormControl('', {
             nonNullable: true,
-            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator],
         }),
         confirmPassword: new FormControl('', {
             nonNullable: true,
@@ -148,6 +151,11 @@ export class PasswordComponent implements OnInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
+            return;
+        }
+
+        if (this.passwordForm.invalid) {
+            this.passwordForm.markAllAsTouched();
             return;
         }
 

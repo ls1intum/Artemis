@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,11 +20,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -39,10 +43,12 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -74,6 +80,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Autowired
     private TempFileUtilService tempFileUtilService;
 
+    @Autowired
+    private IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
+
     private AttachmentVideoUnit testAttachmentVideoUnit;
 
     private PDDocument testDocument;
@@ -93,7 +102,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_BasicFunction() {
         // Clear existing slides for this attachment video unit
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
@@ -116,12 +125,70 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     /**
+     * The update request tells Iris the visibility it expects the asynchronous split to produce. Once the split has run, Iris is told the visibility of the slides that are
+     * actually saved.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void splitJobMarksIrisVisibilityDirtyFromSavedSlides() {
+        long unitId = testAttachmentVideoUnit.getId();
+        irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId).ifPresent(irisLectureUnitSyncStateRepository::delete);
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join();
+
+        await().untilAsserted(() -> assertThat(irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId)).get().extracting(IrisLectureUnitSyncState::getVisibilityHash)
+                .isEqualTo(expectedVisibilityHash(unitId)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void failedSplitJobMarksIrisVisibilityDirtyFromSavedSlides() throws IOException {
+        long unitId = testAttachmentVideoUnit.getId();
+        irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId).ifPresent(irisLectureUnitSyncStateRepository::delete);
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+        // A file that is not a PDF makes the split fail after the job has started.
+        FileUtils.writeStringToFile(unit.getAttachment().fileLocation().orElseThrow().path().toFile(), "not a pdf", StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join())
+                .isInstanceOf(CompletionException.class);
+
+        await().untilAsserted(() -> assertThat(irisLectureUnitSyncStateRepository.findByLectureUnitId(unitId)).get().extracting(IrisLectureUnitSyncState::getVisibilityHash)
+                .isEqualTo(expectedVisibilityHash(unitId)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void splitJobRegeneratesTheStudentVersionFromTheNewSlides() {
+        long unitId = testAttachmentVideoUnit.getId();
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+        // A student version built while the split was pending, from the previous slides
+        attachmentRepository.updateStudentVersionIfUnchangedSince(unit.getAttachment().getId(), "built-from-previous-slides.pdf", unit.getAttachment().getVersion(),
+                unit.getAttachment().getSha256Hash(), null);
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join();
+
+        // Every new slide records the file it was split from
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(unitId)).isNotEmpty()
+                .allMatch(slide -> slide.belongsToRevision(unit.getAttachment().getVersion(), unit.getAttachment().getSha256Hash()));
+        // The new slides hide nothing, so the regeneration after the split removes it
+        await().untilAsserted(() -> assertThat(attachmentRepository.findById(unit.getAttachment().getId()).orElseThrow().getStudentVersion()).isNull());
+    }
+
+    private String expectedVisibilityHash(long unitId) {
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+        var snapshot = new LectureContentUpdateSnapshot(unitId, null, null, null, null, null, null, null, unit.resolveReleaseDate(),
+                SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(unitId)));
+        return IrisLectureUnitSyncService.visibilityHash(snapshot);
+    }
+
+    /**
      * Re-uploading a file replaces the deck rather than adding a second copy of it. This path creates a slide per page
      * unconditionally, so without superseding the previous set the unit would carry both: a three page file uploaded
      * twice left six slides in the deck, each page present twice, and nothing in the UI to tell them apart.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void repeatedBasicSlideSplitReplacesTheDeckWithUniqueImagePaths() {
         slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
 
@@ -147,7 +214,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 
@@ -199,10 +266,31 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(firstSlide.getHidden()).isNotNull();
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
+        // Reordered existing slides and new ones alike now belong to the stored file
+        assertThat(slides).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash)
+                .containsOnly(tuple(testAttachmentVideoUnit.getAttachment().getVersion(), testAttachmentVideoUnit.getAttachment().getSha256Hash()));
+    }
+
+    /**
+     * The instructor replaced every page: the page order holds only new pages. The previous slides must leave the deck instead of staying current next to the new ones.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void pageOrderWithOnlyNewPagesSupersedesEveryPreviousSlide() {
+        Set<Long> previousSlideIds = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
+        assertThat(previousSlideIds).isNotEmpty();
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO("temp_first", 1), new SlideOrderDTO("temp_second", 2));
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", List.of(), pageOrder);
+
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        assertThat(currentSlides).hasSize(2).extracting(Slide::getId).doesNotContainAnyElementsOf(previousSlideIds);
+        assertThat(currentSlides).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash)
+                .containsOnly(tuple(testAttachmentVideoUnit.getAttachment().getVersion(), testAttachmentVideoUnit.getAttachment().getSha256Hash()));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithNewSlideInPageOrder() throws IOException {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -255,7 +343,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_CleanupRemovedSlides() throws IOException {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -314,7 +402,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 
@@ -363,7 +451,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void updateSlideVisibilityDoesNotRebuildSlideContent() {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide hiddenSlide = slides.getFirst();
@@ -384,7 +472,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void slideSplitRollbackKeepsPreviousImagesAndRemovesReplacementFiles() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide firstSlide = slides.get(0);
@@ -396,6 +484,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Path secondSlideOriginalFile = slideDirectory.resolve(String.valueOf(secondSlide.getSlideNumber())).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
         firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
         secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
+        // Split from the previous file
+        firstSlide.setAttachmentRevision(-7, "previous-file");
+        secondSlide.setAttachmentRevision(-7, "previous-file");
         slideRepository.saveAll(List.of(firstSlide, secondSlide));
         String firstSlideOriginalImagePath = firstSlide.getSlideImagePath();
         Files.delete(secondSlideOriginalFile);
@@ -411,6 +502,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         Slide unchangedFirstSlide = slideRepository.findById(firstSlide.getId()).orElseThrow();
         assertThat(unchangedFirstSlide.getSlideImagePath()).isEqualTo(firstSlideOriginalImagePath);
+        // The revision is only recorded once the whole deck is saved, so the slide saved before the failure never belonged to the new file
+        assertThat(slideRepository.findAllById(List.of(firstSlide.getId(), secondSlide.getId()))).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash)
+                .containsOnly(tuple(-7, "previous-file"));
         assertThat(firstSlideOriginalFile).exists();
         try (var files = Files.walk(attachmentDirectory)) {
             assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBeforeFailedSplit);
@@ -428,7 +522,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
      * mechanism that replaced a transaction, so it has to be verified against something that can actually persist.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void slideSplitRollbackRemovesSlidesCreatedBeforeTheFailure() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide brokenSlide = slides.getFirst();
@@ -458,7 +552,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUpdateExistingSlideImage() throws IOException {
         // Arrange
         // Clear existing slides
@@ -550,7 +644,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUpdateExistingSlideImage_NullPath() {
         // This test verifies that a slide with a null image path doesn't cause errors
         // when processed by updateExistingSlideImage
@@ -592,7 +686,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUpdateExistingSlideImage_FileNotFound() {
         // This test verifies the behavior when a slide has a valid path but the file doesn't exist
 
@@ -648,7 +742,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
         Exercise testExercise = createAndSaveExercise("Test Exercise for Mixed Slides");
 
@@ -756,7 +850,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     // For tests that use String parameters instead of DTOs
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 
@@ -865,7 +959,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithInvalidFilePath() {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -893,7 +987,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithEmptyPageOrder() throws IOException {
         // Arrange
         List<HiddenPageInfoDTO> hiddenPagesList = List.of();
@@ -919,7 +1013,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testObsoleteAttachmentRevisionIsIgnoredWhenSplitJobsExecuteInReverseOrder() {
         List<Slide> originalSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(originalSlides).hasSize(3);
@@ -951,7 +1045,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
         Exercise testExercise = createAndSaveExercise("Test Exercise");
 

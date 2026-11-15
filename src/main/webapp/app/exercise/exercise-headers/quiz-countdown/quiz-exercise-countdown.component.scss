@@ -10,7 +10,7 @@
     @include title-bar-box;
 
     &__label {
-        color: var(--bs-secondary-color);
+        color: var(--tumaet-ui-muted-color);
     }
 
     &__value {

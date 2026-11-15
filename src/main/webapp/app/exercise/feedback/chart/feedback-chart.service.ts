@@ -2,11 +2,11 @@ import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeedbackChartService {
     create = (feedbackNodes: FeedbackNode[], exercise: Exercise): FeedbackChartData => {
         const summarizedNodes = this.summarizePoints(feedbackNodes);
@@ -19,7 +19,7 @@ export class FeedbackChartService {
                 })),
             },
         ];
-        const colors = summarizedNodes.map((node) => `var(--bs-${node.color})`);
+        const colors = summarizedNodes.map((node) => this.segmentColor(node.color));
 
         return {
             xScaleMax: 100,
@@ -107,4 +107,20 @@ export class FeedbackChartService {
         const appliedCredits = this.capCredits(node.credits ?? 0, node.maxCredits);
         return roundScorePercentSpecifiedByCourseSettings(appliedCredits / exercise.maxPoints!, getCourseFromExercise(exercise));
     };
+    private segmentColor(color: string | undefined): string {
+        switch (color) {
+            case 'success':
+                return 'var(--success)';
+            case 'info':
+                return 'var(--info)';
+            case 'warning':
+                return 'var(--warning)';
+            case 'danger':
+                return 'var(--danger)';
+            case 'primary':
+                return 'var(--tumaet-ui-primary-color)';
+            default:
+                return 'var(--tumaet-ui-muted-color)';
+        }
+    }
 }

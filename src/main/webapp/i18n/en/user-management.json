@@ -1,5 +1,9 @@
 {
     "artemisApp": {
+        "managedUserVM": {
+            "email": "Email",
+            "password": "Password"
+        },
         "userManagement": {
             "batch": {
                 "all": "All",
@@ -76,6 +80,45 @@
             "detail": {
                 "title": "User"
             },
+            "courseRoles": {
+                "title": "Course Roles",
+                "loadError": "The course roles of this user could not be loaded.",
+                "empty": {
+                    "title": "No course roles",
+                    "description": "This user does not have a role in any course."
+                },
+                "roles": {
+                    "instructor": "Instructors",
+                    "editor": "Editors",
+                    "tutor": "Tutors",
+                    "student": "Students"
+                },
+                "immediateHint": "Changes to the course roles are saved immediately, independent of the Save button below.",
+                "role": {
+                    "instructor": "Instructor",
+                    "editor": "Editor",
+                    "tutor": "Tutor",
+                    "student": "Student"
+                },
+                "add": {
+                    "title": "Add to a course",
+                    "course": "Course",
+                    "coursePlaceholder": "Search by title or short name",
+                    "noCourseFound": "No course found",
+                    "role": "Role",
+                    "alreadyHasRole": "The user already has this role in the selected course.",
+                    "success": "{{ login }} now has the role {{ role }} in {{ course }}."
+                },
+                "remove": {
+                    "label": "Remove {{ role }} role in {{ course }}",
+                    "header": "Remove course role",
+                    "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course.",
+                    "accept": "Remove",
+                    "success": "{{ login }} no longer has the role {{ role }} in {{ course }}."
+                },
+                "retry": "Try again",
+                "courseCount": "Courses: {{ count }}"
+            },
             "login": "Login",
             "firstName": "First name",
             "lastName": "Last name",
@@ -97,9 +140,6 @@
             "roles": {
                 "superAdmin": "Super Admin",
                 "admin": "Admin",
-                "instructor": "Instructor",
-                "editor": "Editor",
-                "tutor": "Tutor",
                 "user": "Student"
             },
             "langKey": "Language",
@@ -110,9 +150,8 @@
             "createdDate": "Created date",
             "lastModifiedBy": "Modified by",
             "lastModifiedDate": "Modified date",
-            "searchForUser": "Search for User: ",
+            "searchForUser": "Search for user",
             "search": "Search",
-            "loading": "Loading...",
             "searchError": "Search term must be empty or contain at least 3 characters.",
             "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>.",
             "profilePicture": "Profile Picture",

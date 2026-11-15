@@ -1,0 +1,26 @@
+<div class="tumaet-ui-chart-layout" [attr.data-legend]="legendPosition() ?? 'none'">
+    <svg #canvas tumAetUiChartCanvas [ariaLabel]="ariaLabel()" [ariaLabelledBy]="ariaLabelledBy()">
+        @for (slice of slices(); track slice.key) {
+            <path
+                class="tumaet-ui-doughnut-chart-slice"
+                [class.tumaet-ui-doughnut-chart-slice-interactive]="interactive()"
+                [attr.d]="slice.path"
+                [attr.fill]="slice.color"
+                (mouseenter)="onSliceEnter(slice, $event)"
+                (mousemove)="onSliceEnter(slice, $event)"
+                (mouseleave)="onSliceLeave()"
+                (click)="onSliceSelect(slice)"
+            />
+        }
+    </svg>
+
+    @if (legendPosition() && legendItems().length) {
+        <tumaet-ui-chart-legend [items]="legendItems()" [position]="legendPosition()!" (toggleEntry)="onLegendToggle($event)" />
+    }
+</div>
+
+@if (tooltip(); as tooltipView) {
+    <tumaet-ui-chart-tooltip [title]="tooltipView.title" [lines]="tooltipView.lines" [x]="tooltipView.x" [y]="tooltipView.y" [below]="tooltipView.below" />
+}
+
+<tumaet-ui-chart-data-table [caption]="ariaLabel()" [rows]="accessibleRows()" />

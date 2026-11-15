@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 /**
  * Template test class for JenkinsLocalVC tests - runs actual Maven/Gradle builds.
  * This class is in a separate bucket because template tests are slow (they run real builds).
@@ -34,7 +35,7 @@ import org.springframework.test.context.TestPropertySource;
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_template", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
         // Use separate paths for parallel bucket execution
-        "artemis.repo-clone-path=./local/server-integration-test-template/repos",
+        "artemis.failed-build-logs-path=./local/server-integration-test-template/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-template/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-template/local-vcs-repos", "artemis.lti.enabled=true", "artemis.athena.enabled=true",
         "artemis.apollon.enabled=true" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTemplateTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {

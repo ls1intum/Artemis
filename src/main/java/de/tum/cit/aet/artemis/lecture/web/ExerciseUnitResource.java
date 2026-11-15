@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Conditional(LectureEnabled.class)
 @Lazy
-@FeatureUsage("units/exercise-units")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/lecture/")
 public class ExerciseUnitResource {

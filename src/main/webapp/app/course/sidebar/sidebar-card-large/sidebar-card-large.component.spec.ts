@@ -46,7 +46,7 @@ describe('SidebarCardLargeComponent', () => {
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         element.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id, expect.any(MouseEvent));
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
@@ -57,7 +57,7 @@ describe('SidebarCardLargeComponent', () => {
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId', expect.any(MouseEvent));
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['./testId']);
@@ -70,7 +70,7 @@ describe('SidebarCardLargeComponent', () => {
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId', expect.any(MouseEvent));
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['', 'testId']);

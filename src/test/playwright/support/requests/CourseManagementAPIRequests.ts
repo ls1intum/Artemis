@@ -8,6 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
+import { awaitCourseDeletion } from '../deletion';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -59,6 +60,8 @@ export class CourseManagementAPIRequests {
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
      *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
+     *   - presentationAssessmentsEnabled: whether presentation assessments are enabled in the course (default: false)
+     *   - testCourse: whether the course is a test course (default: true); exams of test courses are left out of the admin overview of upcoming exams
      * @returns Promise<Course> representing the course created
      */
     async createCourse(
@@ -73,6 +76,8 @@ export class CourseManagementAPIRequests {
             allowCommunication?: boolean;
             allowMessaging?: boolean;
             timeZone?: string;
+            presentationAssessmentsEnabled?: boolean;
+            testCourse?: boolean;
         } = {},
     ): Promise<Course> {
         const {
@@ -88,16 +93,19 @@ export class CourseManagementAPIRequests {
             allowCommunication = true,
             allowMessaging = true,
             timeZone,
+            presentationAssessmentsEnabled = false,
+            testCourse = true,
         } = options;
 
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
-        course.testCourse = true;
+        course.testCourse = testCourse;
         course.startDate = asModelDate(start);
         course.endDate = asModelDate(end);
         course.semester = semester;
         course.timeZone = timeZone;
+        course.presentationAssessmentsEnabled = presentationAssessmentsEnabled;
 
         if (allowCommunication && allowMessaging) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -163,6 +171,14 @@ export class CourseManagementAPIRequests {
         let lastUrl: string | undefined;
         while (Date.now() - startTime < timeout) {
             const response = await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
+            if (response.status() === 202) {
+                // The server deletes the course in the background: wait until it is really gone, and report a deletion that failed.
+                const outcome = await awaitCourseDeletion(this.page.request, course.id!);
+                if (outcome.failed) {
+                    throw new Error(`Failed to delete course ${course.id}: ${outcome.errorMessage}`);
+                }
+                return;
+            }
             if (response.ok() || response.status() === 404) {
                 return;
             }
@@ -179,7 +195,7 @@ export class CourseManagementAPIRequests {
      * Useful for tests that file complaints on shared seed courses.
      */
     async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
-        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}/for-instructor`);
         const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.maxComplaints = maxComplaints;
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
@@ -204,7 +220,7 @@ export class CourseManagementAPIRequests {
      * @param end      the new end date, by default one hour ago
      */
     async setCourseEndDate(courseId: number, end: dayjs.Dayjs = dayjs().subtract(1, 'hour')) {
-        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}/for-instructor`);
         const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.endDate = end.toISOString();
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
@@ -395,6 +411,9 @@ export class CourseManagementAPIRequests {
             workingTime: 1080,
         };
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create test run for exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -568,6 +587,7 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         unenrollmentEnabled: course.unenrollmentEnabled,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
         learningPathsEnabled: course.learningPathsEnabled,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,

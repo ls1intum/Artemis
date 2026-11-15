@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -11,8 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -23,6 +26,10 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.service.FaqService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -38,13 +45,13 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
-import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
+import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
 
 /**
  * Service for deleting a course and all its associated elements.
@@ -58,7 +65,7 @@ public class CourseDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseDeletionService.class);
 
-    private static final int TOTAL_DELETE_STEPS = 14;
+    public static final int TOTAL_DELETE_STEPS = 14;
 
     private final ExerciseDeletionService exerciseDeletionService;
 
@@ -82,7 +89,7 @@ public class CourseDeletionService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final Optional<PyrisFaqApi> pyrisFaqApi;
+    private final FaqService faqService;
 
     private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
@@ -116,17 +123,22 @@ public class CourseDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final Optional<GocastBindingApi> gocastBindingApi;
+
+    private final FileService fileService;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
-            Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<PyrisFaqApi> pyrisFaqApi,
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, FaqService faqService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationRepository courseNotificationRepository,
             ConversationRepository conversationRepository, FaqRepository faqRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            Optional<GocastBindingApi> gocastBindingApi, FileService fileService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.lectureApi = lectureApi;
@@ -138,7 +150,7 @@ public class CourseDeletionService {
         this.prerequisitesApi = prerequisitesApi;
         this.learnerProfileApi = learnerProfileApi;
         this.irisSettingsApi = irisSettingsApi;
-        this.pyrisFaqApi = pyrisFaqApi;
+        this.faqService = faqService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.courseNotificationRepository = courseNotificationRepository;
         this.conversationRepository = conversationRepository;
@@ -155,6 +167,8 @@ public class CourseDeletionService {
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.gocastBindingApi = gocastBindingApi;
+        this.fileService = fileService;
     }
 
     /**
@@ -169,40 +183,64 @@ public class CourseDeletionService {
      * <li>All Iris course settings and chat sessions</li>
      * <li>All LLM token usage traces</li>
      * <li>All learner profiles for the course</li>
+     * <li>The TUM.Live course connection, after revoking its access in TUM.Live</li>
      * </ul>
      * Progress is reported via WebSocket for real-time UI updates using weighted progress
      * that accounts for the complexity of each operation (e.g., programming exercises take longer).
+     * <p>
+     * The deletion runs in the background. The caller takes the claim with {@link #startDeletion(long)} in its request, so a conflicting operation is refused there,
+     * and hands it over. The claim is released when the deletion ended, however it ended. The result is only reported as progress.
+     *
+     * @param courseId       the ID of the course to be deleted
+     * @param courseIcon     the stored icon of the course, which is scheduled for deletion once the course is gone, or null if there is none
+     * @param operationClaim the claim acquired by {@link #startDeletion(long)} before crossing the asynchronous boundary
+     * @param administrator  the administrator who requested the deletion, with the authorities loaded, on whose behalf the background deletion runs
+     */
+    @Async("entityDeletionExecutor")
+    public void deleteAsync(long courseId, String courseIcon, CourseOperationClaim operationClaim, User administrator) {
+        // The worker thread has no caller to inherit an authentication from, but the services behind the deletion resolve the acting user from it, for example to audit the
+        // deletion of the exams. The administrator was checked and audited in the request, and keeps acting as before the deletion ran in the background.
+        SecurityUtils.runAs(administrator, () -> deleteClaimed(courseId, courseIcon, operationClaim));
+    }
+
+    /**
+     * Claims the deletion of the course and announces it. This is done in the request of the administrator, so that another running operation on the course is refused with
+     * a conflict before anything is deleted.
      *
      * @param courseId the ID of the course to be deleted
+     * @return the claim that has to be handed to {@link #deleteAsync(long, String, CourseOperationClaim, User)}, which releases it
      */
-    public void delete(long courseId) {
+    public CourseOperationClaim startDeletion(long courseId) {
+        return progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS, ZonedDateTime.now(ZoneId.systemDefault()));
+    }
+
+    private void deleteClaimed(long courseId, String courseIcon, CourseOperationClaim operationClaim) {
         log.debug("Request to delete Course with id: {}", courseId);
-        ZonedDateTime startedAt = ZonedDateTime.now();
         int stepsCompleted = 0;
         int failed = 0;
 
-        // Calculate weighted progress based on course content
-        CourseSummaryDTO summary = courseAdminService.getCourseSummary(courseId);
-
-        // Calculate actual exam weight based on real exam data (student exams, programming exercises)
-        List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
-        double actualExamWeight = examInfoList.stream().mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount()))
-                .sum();
-
-        double totalWeight = CourseOperationWeights.calculateDeletionTotalWeight(summary, actualExamWeight);
+        double totalWeight = 0;
         double completedWeight = 0;
+        boolean finished = false;
 
         try {
-            progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS);
+            // Calculate weighted progress based on course content
+            CourseSummaryDTO summary = courseAdminService.getCourseSummary(courseId);
+
+            // Calculate actual exam weight based on real exam data (student exams, programming exercises)
+            List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
+            double actualExamWeight = examInfoList.stream()
+                    .mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount())).sum();
+
+            totalWeight = CourseOperationWeights.calculateDeletionTotalWeight(summary, actualExamWeight);
 
             // Step 1: Delete exercises (with per-exercise progress updates)
-            completedWeight = deleteExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight);
+            completedWeight = deleteExercisesWithWeightedProgress(courseId, stepsCompleted, operationClaim, completedWeight, totalWeight);
             stepsCompleted++;
 
             // Step 2: Delete lectures
             double lectureWeight = summary.numberOfLectures() * CourseOperationWeights.getWeightPerLecture();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting lectures", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting lectures", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteLecturesOfCourse(courseId);
             completedWeight += lectureWeight;
             stepsCompleted++;
@@ -210,16 +248,14 @@ public class CourseDeletionService {
             // Step 3: Delete competencies
             double competencyWeight = summary.numberOfCompetencies() * CourseOperationWeights.getWeightPerCompetency()
                     + summary.numberOfCompetencyProgress() * CourseOperationWeights.getWeightPerCompetencyProgress();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting competencies", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting competencies", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteCompetenciesOfCourse(courseId);
             completedWeight += competencyWeight;
             stepsCompleted++;
 
             // Step 4: Delete tutorial groups
             double tutorialGroupWeight = summary.numberOfTutorialGroups() * CourseOperationWeights.getWeightPerTutorialGroup();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting tutorial groups", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting tutorial groups", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteTutorialGroupsOfCourse(courseId);
             completedWeight += tutorialGroupWeight;
             stepsCompleted++;
@@ -227,21 +263,19 @@ public class CourseDeletionService {
             // Step 5: Delete conversations
             double conversationWeight = summary.numberOfConversations() * CourseOperationWeights.getWeightPerConversation()
                     + summary.numberOfPosts() * CourseOperationWeights.getWeightPerPost() + summary.numberOfAnswerPosts() * CourseOperationWeights.getWeightPerAnswer();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting conversations", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting conversations", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteConversationsOfCourse(courseId);
             completedWeight += conversationWeight;
             stepsCompleted++;
 
             // Step 6: Delete notifications
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting notifications", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting notifications", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteNotificationsOfCourse(courseId);
             completedWeight += CourseOperationWeights.getWeightNotifications();
             stepsCompleted++;
 
             // Step 7: Delete notification presets
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting notification settings", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
+            progressService.updateProgress(operationClaim, "Deleting notification settings", stepsCompleted, TOTAL_DELETE_STEPS,
                     calculateProgressPercent(completedWeight, totalWeight));
             deleteNotificationsPresetsOfCourse(courseId);
             userCourseNotificationSettingSpecificationRepository.deleteAllByCourseId(courseId);
@@ -249,35 +283,31 @@ public class CourseDeletionService {
             stepsCompleted++;
 
             // Step 8: Delete exams (with per-exam progress updates)
-            completedWeight = deleteExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, startedAt, completedWeight, totalWeight);
+            completedWeight = deleteExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, operationClaim, completedWeight, totalWeight);
             stepsCompleted++;
 
             // Step 9: Delete grading scale
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting grading scale", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting grading scale", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteGradingScaleOfCourse(courseId);
             completedWeight += CourseOperationWeights.getWeightGradingScale();
             stepsCompleted++;
 
             // Step 10: Delete FAQs
             double faqWeight = summary.numberOfFaqs() * CourseOperationWeights.getWeightPerFaq();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting FAQs", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting FAQs", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteFaqsOfCourse(courseId);
             completedWeight += faqWeight;
             stepsCompleted++;
 
             // Step 11: Delete course requests
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course requests", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting course requests", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteCourseRequests(courseId);
             completedWeight += CourseOperationWeights.getWeightCourseRequests();
             stepsCompleted++;
 
             // Step 12: Delete Iris data
             double irisWeight = summary.numberOfIrisChatSessions() * CourseOperationWeights.getWeightPerIrisSession();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting Iris data", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting Iris data", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteIrisData(courseId);
             completedWeight += irisWeight;
             stepsCompleted++;
@@ -285,8 +315,7 @@ public class CourseDeletionService {
             // Step 13: Delete LLM token usage traces and learner profiles
             double aiDataWeight = summary.numberOfLLMTraces() * CourseOperationWeights.getWeightPerLlmTrace()
                     + summary.numberOfLearnerProfiles() * CourseOperationWeights.getWeightPerLearnerProfile();
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting AI usage data", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting AI usage data", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             deleteLLMTokenUsageTraces(courseId);
             learnerProfileApi.ifPresent(api -> api.deleteAllForCourseId(courseId));
             completedWeight += aiDataWeight;
@@ -295,20 +324,51 @@ public class CourseDeletionService {
             // Step 14a: Clean up all Weaviate rows for the course (exercises, lectures, etc.) — async, no stepsCompleted increment
             searchableEntityWeaviateService.ifPresent(service -> service.deleteAllForCourseAsync(courseId));
 
+            // Step 14b: Revoke the TUM.Live access while the connection still exists — no stepsCompleted increment
+            gocastBindingApi.ifPresent(api -> api.disconnectBeforeCourseDeletion(courseId));
+
             // Step 14: Delete the course itself (cascades user_course_role rows via FK onDelete=CASCADE)
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, calculateProgressPercent(completedWeight, totalWeight));
             courseRepository.deleteById(courseId);
             stepsCompleted++;
 
-            progressService.completeOperation(courseId, CourseOperationType.DELETE, TOTAL_DELETE_STEPS, failed, startedAt);
+            progressService.completeOperation(operationClaim, TOTAL_DELETE_STEPS, failed);
+            finished = true;
             log.debug("Successfully deleted course with id {}.", courseId);
+            scheduleIconDeletion(courseIcon);
         }
         catch (Exception e) {
+            // There is no caller to pass the exception to, the instructors learn about it from the progress.
             log.error("Failed to delete course {}", courseId, e);
-            progressService.failOperation(courseId, CourseOperationType.DELETE, "Deletion failed", stepsCompleted, TOTAL_DELETE_STEPS, failed, startedAt, e.getMessage(),
+            progressService.failOperation(operationClaim, "Deletion failed", stepsCompleted, TOTAL_DELETE_STEPS, failed, e.getMessage(),
                     calculateProgressPercent(completedWeight, totalWeight));
-            throw e;
+            finished = true;
+        }
+        finally {
+            try {
+                if (!finished) {
+                    // The deletion ended with an Error, which is not caught here and goes on after the cleanup. The clients still have to learn that it failed.
+                    log.error("The deletion of course {} ended abnormally", courseId);
+                    progressService.failOperation(operationClaim, "Deletion failed", stepsCompleted, TOTAL_DELETE_STEPS, failed, "The deletion ended unexpectedly",
+                            calculateProgressPercent(completedWeight, totalWeight));
+                }
+            }
+            finally {
+                progressService.releaseOperationClaim(operationClaim);
+            }
+        }
+    }
+
+    private void scheduleIconDeletion(String courseIcon) {
+        if (courseIcon == null) {
+            return;
+        }
+        try {
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(courseIcon).path(), 0);
+        }
+        catch (RuntimeException e) {
+            // The course is gone and reported as deleted, a file that stays behind must not turn that into a failed deletion.
+            log.warn("Could not schedule the icon {} of a deleted course for deletion", courseIcon, e);
         }
     }
 
@@ -326,12 +386,12 @@ public class CourseDeletionService {
      *
      * @param courseId        the course ID
      * @param stepsCompleted  the number of steps completed so far
-     * @param startedAt       when the operation started
+     * @param operationClaim  the claim that owns the delete operation
      * @param completedWeight the weight of already completed operations
      * @param totalWeight     the total weight for the entire deletion
      * @return the updated completed weight after deleting all exercises
      */
-    private double deleteExercisesWithWeightedProgress(long courseId, int stepsCompleted, ZonedDateTime startedAt, double completedWeight, double totalWeight) {
+    private double deleteExercisesWithWeightedProgress(long courseId, int stepsCompleted, CourseOperationClaim operationClaim, double completedWeight, double totalWeight) {
         Set<ExerciseDeletionInfoDTO> exercises = exerciseRepository.findDeletionInfoByCourseId(courseId);
         int totalExercises = exercises.size();
         int processed = 0;
@@ -350,15 +410,15 @@ public class CourseDeletionService {
             }
 
             // Report progress before deleting this exercise
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting exercise: " + exercise.title(), stepsCompleted, TOTAL_DELETE_STEPS, processed,
-                    totalExercises, 0, startedAt, calculateProgressPercent(completedWeight, totalWeight));
+            progressService.updateProgress(operationClaim, "Deleting exercise: " + exercise.title(), stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExercises, 0,
+                    calculateProgressPercent(completedWeight, totalWeight));
 
             exerciseDeletionService.delete(exercise.id(), true);
             completedWeight += exerciseWeight;
             processed++;
 
             // Report progress after deleting (for responsive UI updates)
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting exercises", stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExercises, 0, startedAt,
+            progressService.updateProgress(operationClaim, "Deleting exercises", stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExercises, 0,
                     calculateProgressPercent(completedWeight, totalWeight));
         }
 
@@ -372,13 +432,13 @@ public class CourseDeletionService {
      * @param courseId        the course ID
      * @param examInfoList    pre-fetched exam deletion info (to avoid redundant queries)
      * @param stepsCompleted  the number of steps completed so far
-     * @param startedAt       when the operation started
+     * @param operationClaim  the claim that owns the delete operation
      * @param completedWeight the weight of already completed operations
      * @param totalWeight     the total weight for the entire deletion
      * @return the updated completed weight after deleting all exams
      */
-    private double deleteExamsWithWeightedProgress(long courseId, List<ExamDeletionInfoDTO> examInfoList, int stepsCompleted, ZonedDateTime startedAt, double completedWeight,
-            double totalWeight) {
+    private double deleteExamsWithWeightedProgress(long courseId, List<ExamDeletionInfoDTO> examInfoList, int stepsCompleted, CourseOperationClaim operationClaim,
+            double completedWeight, double totalWeight) {
         if (examDeletionApi.isEmpty()) {
             return completedWeight;
         }
@@ -390,7 +450,7 @@ public class CourseDeletionService {
             double examWeight = CourseOperationWeights.calculateExamWeight(examInfo.studentExamCount(), examInfo.programmingExerciseCount());
 
             // Report progress before deleting this exam
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting exam", stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExams, 0, startedAt,
+            progressService.updateProgress(operationClaim, "Deleting exam", stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExams, 0,
                     calculateProgressPercent(completedWeight, totalWeight));
 
             examDeletionApi.get().delete(examInfo.examId());
@@ -398,7 +458,7 @@ public class CourseDeletionService {
             processed++;
 
             // Report progress after deleting
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting exams", stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExams, 0, startedAt,
+            progressService.updateProgress(operationClaim, "Deleting exams", stepsCompleted, TOTAL_DELETE_STEPS, processed, totalExams, 0,
                     calculateProgressPercent(completedWeight, totalWeight));
         }
 
@@ -508,9 +568,9 @@ public class CourseDeletionService {
         // 2. Provide a single REST endpoint to delete all ingested data for a course at once (preferred)
         // See: https://github.com/ls1intum/edutelligence/blob/main/iris/src/iris/pipeline/faq_ingestion_pipeline.py
         var faqs = faqRepository.findAllByCourseId(courseId);
-        pyrisFaqApi.ifPresent(api -> faqs.forEach(api::deleteFaq));
         searchableEntityWeaviateService.ifPresent(service -> faqs.forEach(faq -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faq.getId())));
         faqRepository.deleteAllByCourseId(courseId);
+        faqs.forEach(faq -> faqService.deleteFaqInPyris(faq.getId(), courseId));
     }
 
     /**

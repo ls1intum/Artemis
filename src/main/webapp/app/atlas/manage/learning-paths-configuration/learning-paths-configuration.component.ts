@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -9,19 +10,20 @@ import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, TranslateDirective, HelpIconComponent],
+    imports: [TumAetUiButtonDirective, FontAwesomeModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
     templateUrl: './learning-paths-configuration.component.html',
     styleUrls: ['../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsConfigurationComponent {
-    protected readonly faSpinner = faSpinner;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
+
+    protected readonly faSpinner = faSpinner;
 
     readonly courseId = input.required<number>();
 

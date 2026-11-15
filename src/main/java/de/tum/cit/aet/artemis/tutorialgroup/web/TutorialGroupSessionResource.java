@@ -31,9 +31,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -52,7 +54,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
-@FeatureUsage("management/sessions")
+@FeatureUsage(UserFeature.TUTORIAL_GROUP_SESSIONS)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupSessionResource {
@@ -103,13 +105,14 @@ public class TutorialGroupSessionResource {
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<TutorialGroupSessionDTO> createSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid CreateOrUpdateTutorialGroupSessionRequestDTO createTutorialGroupSessionRequestDTO) {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", createTutorialGroupSessionRequestDTO, tutorialGroupId);
         User user = userRepository.getUserWithAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user) && authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can create sessions.");
@@ -141,13 +144,14 @@ public class TutorialGroupSessionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<TutorialGroupSessionDTO> updateSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid CreateOrUpdateTutorialGroupSessionRequestDTO updateTutorialGroupSessionRequestDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user) && authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can update sessions.");
@@ -193,12 +197,13 @@ public class TutorialGroupSessionResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user) && authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can delete sessions.");
@@ -218,16 +223,17 @@ public class TutorialGroupSessionResource {
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
      * @param sessionId       the id of the session to cancel
      * @param explanation     the explanation for the cancellation
-     * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
+     * @return ResponseEntity with status 204 (NO_CONTENT)
      */
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> cancelSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestParam(required = false) String explanation) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user) && authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can cancel sessions.");
@@ -253,15 +259,16 @@ public class TutorialGroupSessionResource {
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
      * @param sessionId       the id of the session to activate
-     * @return ResponseEntity with status 200 (OK) and in the body the activated tutorial group session
+     * @return ResponseEntity with status 204 (NO_CONTENT)
      */
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> activateSession(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user) && authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId, user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can activate sessions.");
@@ -306,7 +313,7 @@ public class TutorialGroupSessionResource {
         }
     }
 
-    private ZoneId validateTutorialGroupConfiguration(@PathVariable Long courseId) {
+    private ZoneId validateTutorialGroupConfiguration(Long courseId) {
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
         if (configuration.getCourse().getTimeZone() == null) {

@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
@@ -45,14 +45,14 @@ public class AccountSecurityNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private final GlobalNotificationSettingService globalNotificationSettingService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public AccountSecurityNotificationService(MailSendingService mailSendingService, GlobalNotificationSettingRepository globalNotificationSettingRepository,
+    public AccountSecurityNotificationService(MailSendingService mailSendingService, GlobalNotificationSettingService globalNotificationSettingService,
             AuditEventRepository auditEventRepository) {
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.globalNotificationSettingService = globalNotificationSettingService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -143,7 +143,7 @@ public class AccountSecurityNotificationService {
      */
     private void sendIfEnabled(User user, GlobalNotificationType type, String subjectKey, String template, Map<String, Object> variables) {
         try {
-            if (globalNotificationSettingRepository.isNotificationEnabled(user.getId(), type)) {
+            if (globalNotificationSettingService.isNotificationEnabled(user, type)) {
                 mailSendingService.buildAndSendAsync(MailRecipientDTO.from(user), subjectKey, template, variables);
             }
         }

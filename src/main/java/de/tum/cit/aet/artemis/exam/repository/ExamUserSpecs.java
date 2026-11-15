@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.exam.repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -22,9 +22,12 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession_;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser_;
+import de.tum.cit.aet.artemis.exam.domain.Exam_;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam_;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
@@ -41,11 +44,6 @@ public final class ExamUserSpecs {
     @NonNull
     private static Specification<ExamUser> noOp() {
         return (root, query, builder) -> builder.conjunction();
-    }
-
-    /** LIKE-escape for user input. Escapes backslash, percent, and underscore so they are treated literally. */
-    private static String escapeForLike(String term) {
-        return term.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     /**
@@ -127,12 +125,21 @@ public final class ExamUserSpecs {
         };
     }
 
-    /** Matches exam users who have a signing image and all attendance checks completed. */
+    /** Matches exam users with all attendance checks completed and a signature, or completed checks after the exam ended. */
     @NonNull
     private static Specification<ExamUser> isAttendanceChecked() {
-        return (root, query, builder) -> builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
-                builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)), builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)),
-                builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
+        return (root, query, builder) -> attendanceChecked(root, builder);
+    }
+
+    private static Predicate attendanceChecked(Root<ExamUser> root, CriteriaBuilder builder) {
+        Predicate hasSignature = builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""));
+        Predicate examEnded = builder.lessThanOrEqualTo(root.get(ExamUser_.EXAM).get(Exam_.END_DATE), builder.currentTimestamp());
+        return builder.and(allAttendanceChecksCompleted(root, builder), builder.or(hasSignature, examEnded));
+    }
+
+    private static Predicate allAttendanceChecksCompleted(Root<ExamUser> root, CriteriaBuilder builder) {
+        return builder.and(builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)),
+                builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)), builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
     }
 
     /** Matches exam users whose non-test-run StudentExam was started but attendance checks are incomplete. */
@@ -145,17 +152,14 @@ public final class ExamUserSpecs {
             sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                     builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN))), builder.isTrue(se.get(StudentExam_.STARTED))));
             Predicate hasStarted = builder.exists(sub);
-            Predicate checkIncomplete = builder.or(builder.isNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.equal(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
-                    builder.isFalse(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isFalse(root.get(ExamUser_.DID_CHECK_NAME)), builder.isFalse(root.get(ExamUser_.DID_CHECK_LOGIN)),
-                    builder.isFalse(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
-            return builder.and(hasStarted, checkIncomplete);
+            return builder.and(hasStarted, builder.not(attendanceChecked(root, builder)));
         };
     }
 
-    /** Matches exam users who never started the exam: either no student exam was generated (ExamMissing) or the student exam was not started (NotStarted). */
+    /** Matches exam users whose attendance has not been confirmed by all four checks. */
     @NonNull
     private static Specification<ExamUser> isDidNotAttend() {
-        return Specification.where(isExamMissing()).or(isNotStarted());
+        return (root, query, builder) -> builder.not(allAttendanceChecksCompleted(root, builder));
     }
 
     /**
@@ -191,7 +195,7 @@ public final class ExamUserSpecs {
             Expression<String> fullName = builder
                     .lower(builder.concat(builder.concat(builder.coalesce(userJoin.get(User_.FIRST_NAME), ""), " "), builder.coalesce(userJoin.get(User_.LAST_NAME), "")));
             List<Predicate> tokenPredicates = tokens.stream().map(token -> {
-                String pattern = "%" + escapeForLike(token) + "%";
+                String pattern = "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
                 return builder.or(builder.like(builder.lower(userJoin.get(User_.LOGIN)), pattern, '\\'), builder.like(fullName, pattern, '\\'));
             }).toList();
             return builder.or(tokenPredicates.toArray(new Predicate[0]));
@@ -251,12 +255,14 @@ public final class ExamUserSpecs {
                     sub.select(se.get(StudentExam_.WORKING_TIME));
                     sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), user), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                             builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));
+                    // Missing working times stay last in both directions, independently of database defaults.
+                    orders.add(builder.asc(builder.<Integer>selectCase().when(builder.isNull(sub), 1).otherwise(0)));
                     orders.add(asc ? builder.asc(sub) : builder.desc(sub));
                 }
                 case "numberOfExamSessions" -> {
                     Subquery<Long> sub = query.subquery(Long.class);
                     Root<ExamSession> sess = sub.from(ExamSession.class);
-                    Path<StudentExam> se = sess.get("studentExam");
+                    Path<StudentExam> se = sess.get(ExamSession_.STUDENT_EXAM);
                     sub.select(builder.count(sess));
                     sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), user), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                             builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));

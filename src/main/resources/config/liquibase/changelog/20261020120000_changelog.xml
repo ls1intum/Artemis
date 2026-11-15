@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261020120000-01-add-version-to-quiz-question-pool-item" author="reyers">
+        <addColumn tableName="quiz_question_pool_item">
+            <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20261020120000-02-unique-cell-index-on-quiz-question-pool-item" author="reyers">
+        <addUniqueConstraint tableName="quiz_question_pool_item" constraintName="uc_quiz_question_pool_item_cell_index"
+                             columnNames="course_id, competency_id, lecture_unit_id, language, question_type, difficulty, item_index"/>
+    </changeSet>
+</databaseChangeLog>

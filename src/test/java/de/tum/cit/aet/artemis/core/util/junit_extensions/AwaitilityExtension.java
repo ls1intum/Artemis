@@ -7,7 +7,8 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * A JUnit 5 extension that configures {@link Awaitility} to use a different default poll delay, interval and timeout.
+ * A JUnit 5 extension that configures {@link Awaitility} to use a different default poll delay, interval and timeout,
+ * and to ignore uncaught exceptions of threads the awaiting test did not start.
  * <p>
  * By default, {@link Awaitility} would use a poll delay and interval of 100ms, which makes tests run slower.
  */
@@ -42,6 +43,13 @@ public class AwaitilityExtension implements BeforeAllCallback {
             Awaitility.setDefaultTimeout(DEFAULT_TIMEOUT);
             Awaitility.setDefaultPollDelay(DEFAULT_POLL_DELAY);
             Awaitility.setDefaultPollInterval((pollCount, previousDuration) -> pollCount == 1 ? POLL_INTERVAL_START : previousDuration.multipliedBy(POLL_INTERVAL_MULTIPLIER));
+            // By default every await() installs a JVM-wide uncaught exception handler and rethrows whatever dies on ANY
+            // thread while it waits. The test JVM is shared by many cached Spring contexts, and a background thread of an
+            // unrelated one dies now and then while it shuts down (for example the SSH server's channel group with
+            // "IllegalStateException: Executor has been shut down"). Whichever test happened to sit in an await() at that
+            // moment then failed with an exception it has nothing to do with, so the same test passed on a rerun.
+            // A condition that depends on a dying thread still fails, because it is never met and times out.
+            Awaitility.doNotCatchUncaughtExceptionsByDefault();
         }
     }
 }

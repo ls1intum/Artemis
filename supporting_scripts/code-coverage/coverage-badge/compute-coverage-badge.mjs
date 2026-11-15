@@ -47,7 +47,7 @@ import { pathToFileURL } from 'url';
  */
 export const MIN_TOTAL_RATIO = 0.5;
 
-/** Shields badge colours, highest threshold first. */
+/** Badge colours, highest threshold first. */
 const COLOR_THRESHOLDS = [
     { min: 90, color: 'brightgreen' },
     { min: 80, color: 'green' },
@@ -58,9 +58,9 @@ const COLOR_THRESHOLDS = [
 ];
 
 /**
- * Picks the Shields colour for a coverage percentage.
+ * Picks the badge colour for a coverage percentage.
  * @param {number} pct coverage percentage in [0, 100]
- * @returns {string} a Shields colour name
+ * @returns {string} a badge colour name
  */
 export function colorFor(pct) {
     return COLOR_THRESHOLDS.find((threshold) => pct >= threshold.min).color;
@@ -136,7 +136,7 @@ export function parseVitestLines(summary) {
  * Decides whether to publish a new badge value, applying the stability guards.
  *
  * Every rejection keeps the previously published value, which is what makes the badge stable across
- * a flaky run: the caller simply does not commit, and Shields keeps serving the last good file.
+ * a flaky run: the caller simply does not commit, and GitHub keeps serving the last good SVG.
  *
  * @param {object} options
  * @param {string} [options.jacocoXml] the aggregated JaCoCo XML report, absent when the artifact is missing

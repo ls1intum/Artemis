@@ -3,8 +3,9 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { CourseOnboardingComponent } from './course-onboarding.component';
 import { CourseManagementService } from '../services/course-management.service';
@@ -106,6 +107,43 @@ describe('CourseOnboardingComponent', () => {
         }
     }
 
+    it('temporarily disables step activation while saving without suppressing scrolling', () => {
+        fixture.detectChanges();
+        comp.isSaving.set(true);
+        fixture.detectChanges();
+        const step = fixture.nativeElement.querySelector('[data-testid="onboarding-step"]') as HTMLElement;
+        const navigate = vi.spyOn(comp, 'goToStep');
+        expect(step.getAttribute('aria-disabled')).toBe('true');
+        expect(step.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            step.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(navigate).not.toHaveBeenCalled();
+        comp.isSaving.set(false);
+        fixture.detectChanges();
+        expect(step.getAttribute('aria-disabled')).toBe('false');
+        expect(step.tabIndex).toBe(0);
+    });
+
+    it('announces the current step after keyboard navigation', () => {
+        vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        fixture.detectChanges();
+        const steps = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="onboarding-step"]')) as HTMLElement[];
+        expect(steps[0].getAttribute('aria-current')).toBe('step');
+        expect(steps[1].getAttribute('aria-current')).toBeNull();
+        steps[1].dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(comp.activeStep()).toBe(1);
+        expect(steps[0].getAttribute('aria-current')).toBeNull();
+        expect(steps[1].getAttribute('aria-current')).toBe('step');
+    });
+
     describe('ngOnInit', () => {
         it('should load course from route data', () => {
             comp.ngOnInit();
@@ -177,6 +215,91 @@ describe('CourseOnboardingComponent', () => {
 
             expect(updateSpy).not.toHaveBeenCalled();
             expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should neither save nor advance while a date picker of the general settings holds text that is not a date', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const generalSettings = () => fixture.debugElement.query(By.css('jhi-onboarding-general-settings'));
+            generalSettings().triggerEventHandler('dateTextValidityChange', false);
+            expect(comp.generalSettingsDateTextValid()).toBe(false);
+            comp.nextStep();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(0);
+
+            generalSettings().triggerEventHandler('dateTextValidityChange', true);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            comp.nextStep();
+
+            expect(comp.activeStep()).toBe(1);
+        });
+    });
+
+    describe('enrollment date text validation', () => {
+        const enrollment = () => fixture.debugElement.query(By.css('jhi-onboarding-enrollment'));
+
+        beforeEach(() => {
+            course.enrollmentEnabled = true;
+            course.enrollmentStartDate = dayjs().subtract(1, 'week');
+            course.enrollmentEndDate = dayjs().add(1, 'week');
+            comp.ngOnInit();
+            comp.activeStep.set(1);
+            fixture.detectChanges();
+        });
+
+        it('should neither save nor advance while an enrollment date picker holds text that is not a date', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+            comp.nextStep();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should advance and save once the text of the enrollment pickers is a date again', () => {
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+            enrollment().triggerEventHandler('dateTextValidityChange', true);
+            const updateSpy = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+
+            comp.nextStep();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(comp.activeStep()).toBe(2);
+        });
+
+        it('should not save the retained dates when leaving the step backwards or through the step indicator', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+
+            comp.previousStep();
+            comp.goToStep(0);
+            comp.goToStep(2);
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should not carry invalid text over when the step changes through the URL', () => {
+            const queryParams = new Subject<Record<string, string>>();
+            (TestBed.inject(ActivatedRoute) as any).queryParams = queryParams;
+            comp.ngOnInit();
+            enrollment().triggerEventHandler('dateTextValidityChange', false);
+
+            // The browser back button leaves the step without a save.
+            queryParams.next({ step: '0' });
+            queryParams.next({ step: '1' });
+
+            expect(comp.validateCurrentStep()).toBe(true);
         });
     });
 

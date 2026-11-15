@@ -27,10 +27,6 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
     /**
      * Updates the status of multiple user course notifications for a specific user.
      *
-     * <p>
-     * Important: Does not invalidate cache by itself. Use {@link CourseNotificationCacheService} for that.
-     * </p>
-     *
      * @param courseNotificationIds the list of course notification IDs to update
      * @param userId                the ID of the user
      * @param status                the new status to set
@@ -47,11 +43,28 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
             @Param("status") UserCourseNotificationStatusType status);
 
     /**
-     * Updates the status of multiple user course notifications for a specific user.
+     * Marks displayed notifications as seen only while they are still unseen, preserving concurrent archives.
      *
-     * <p>
-     * Important: Does not invalidate cache by itself. Use {@link CourseNotificationCacheService} for that.
-     * </p>
+     * @param courseNotificationIds the IDs of the displayed notifications
+     * @param userId                the ID of the user who displayed them
+     * @param courseId              the ID of the course whose notifications were displayed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE UserCourseNotificationStatus ucns
+            SET ucns.status = de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType.SEEN
+            WHERE ucns.user.id = :userId
+                AND ucns.status = 0
+                AND ucns.courseNotification.id IN :courseNotificationIds
+                AND ucns.courseNotification.id IN (
+                    SELECT cn.id FROM CourseNotification cn WHERE cn.course.id = :courseId
+                )
+            """)
+    void markUnseenNotificationsAsSeen(@Param("courseNotificationIds") List<Long> courseNotificationIds, @Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Updates the status of multiple user course notifications for a specific user.
      *
      * @param userId   the ID of the user
      * @param courseId the ID of the course

@@ -1,5 +1,10 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXAM_EVENTS;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.STUDENT_EXAM_EVENTS;
+
+import java.util.List;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -13,6 +18,7 @@ import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -36,16 +42,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Service
 public class ExamLiveEventsService {
-
-    /**
-     * The name of the topic for notifying the client about events specific to a student exam.
-     */
-    public static final String STUDENT_EXAM_EVENT = "/topic/exam-participation/studentExam/%s/events";
-
-    /**
-     * The name of the topic for notifying the client about events specific to an entire exam.
-     */
-    public static final String EXAM_EVENT = "/topic/exam-participation/exam/%s/events";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -77,6 +73,14 @@ public class ExamLiveEventsService {
         event.setTextContent(message);
 
         return this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * @param examId the exam whose announcement history should be returned
+     * @return the exam-wide announcements in reverse chronological order
+     */
+    public List<ExamWideAnnouncementEventDTO> getAnnouncements(long examId) {
+        return examLiveEventRepository.findAnnouncementsByExamId(examId).stream().map(ExamWideAnnouncementEvent::asDTO).toList();
     }
 
     /**
@@ -146,7 +150,7 @@ public class ExamLiveEventsService {
      * @param message  The message to send
      */
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
-        Exam exam = exercise.getExam();
+        Exam exam = exercise.getExamElseThrow();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
                 .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message));
     }
@@ -186,12 +190,12 @@ public class ExamLiveEventsService {
 
         // If the event is for a specific student exam, only send it to that student exam.
         if (event.getStudentExamId() != null) {
-            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENT.formatted(storedEvent.getStudentExamId()), storedEvent.asDTO());
+            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENTS.at(storedEvent.getStudentExamId()), storedEvent.asDTO());
             return storedEvent;
         }
 
         // Otherwise, send it to all student exams of the exam.
-        websocketMessagingService.sendMessage(EXAM_EVENT.formatted(storedEvent.getExamId()), storedEvent.asDTO());
+        websocketMessagingService.sendMessage(EXAM_EVENTS.at(storedEvent.getExamId()), storedEvent.asDTO());
 
         return storedEvent;
     }

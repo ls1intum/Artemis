@@ -1,3 +1,4 @@
+import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posting-banner.component';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -20,10 +21,10 @@ import { PostingDirective } from 'app/communication/directive/posting.directive'
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TextareaModule } from 'primeng/textarea';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -33,10 +34,10 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -48,9 +49,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./answer-post.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        SavedPostingBannerComponent,
         NgClass,
         FormsModule,
-        ButtonModule,
+        TumAetUiButtonDirective,
         TextareaModule,
         FaIconComponent,
         TranslateDirective,
@@ -59,7 +61,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         PostingContentComponent,
         PostingReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
-        NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
         EmojiPickerComponent,
@@ -106,7 +107,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     constructor() {
         super();
-        this.course.set(this.metisService.getCourse());
+        this.course.set(this.communicationService.getCourse());
         // Normalise the bound posting to an AnswerPost instance whenever it changes.
         //
         // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): `posting` is a two-way
@@ -197,7 +198,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
     get mayVerify(): boolean {
-        return this.metisService.metisUserIsAtLeastTutorInCourse();
+        return this.communicationService.currentUserIsAtLeastTutorInCourse();
     }
 
     /**
@@ -210,7 +211,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying.set(true);
-        this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+        this.communicationService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
             next: (verified) => {
                 // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
                 // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
@@ -247,7 +248,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying.set(true);
-        this.metisService.deleteAnswerPost(posting).subscribe({
+        this.communicationService.deleteAnswerPost(posting).subscribe({
             next: () => {
                 this.isVerifying.set(false);
             },
@@ -283,26 +284,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition.set({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            this.showDropdown.set(true);
-            this.adjustDropdownPosition();
+            this.openDropdownAt(event);
             this.disableBodyScroll();
-        }
-    }
-
-    /**
-     * Adjusts dropdown position if it would overflow the screen.
-     */
-    adjustDropdownPosition() {
-        const dropdownWidth = 200;
-        const screenWidth = window.innerWidth;
-
-        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 

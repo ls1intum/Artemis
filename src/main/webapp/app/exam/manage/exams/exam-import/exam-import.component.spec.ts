@@ -1,7 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -12,15 +11,13 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,13 +25,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
-    let dialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let importedSpy: Mock<(exerciseGroups: ExerciseGroup[]) => void>;
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
     let profileService: ProfileService;
@@ -51,12 +47,6 @@ describe('Exam Import Component', () => {
     const exam1WithExercises = { id: 1, exerciseGroups: [exerciseGroup1] } as Exam;
 
     beforeEach(async () => {
-        dialogRefCloseSpy = vi.fn();
-        dialogRef = {
-            close: dialogRefCloseSpy,
-            onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-
         await TestBed.configureTestingModule({
             imports: [
                 FormsModule,
@@ -64,16 +54,12 @@ describe('Exam Import Component', () => {
                 ExamImportComponent,
                 ExamExerciseImportComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockComponent(ButtonComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(DifficultyBadgeComponent),
             ],
             providers: [
                 MockProvider(SortService),
-                MockProvider(ExamImportPagingService),
-                { provide: DynamicDialogRef, useValue: dialogRef },
+                MockProvider(ExamImportPagingService, { search: () => of({ resultsOnPage: [], numberOfPages: 0 }) }),
                 MockProvider(ExamManagementService),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -87,6 +73,8 @@ describe('Exam Import Component', () => {
 
         fixture = TestBed.createComponent(ExamImportComponent);
         component = fixture.componentInstance;
+        importedSpy = vi.fn<(exerciseGroups: ExerciseGroup[]) => void>();
+        component.imported.subscribe(importedSpy);
         examManagementService = TestBed.inject(ExamManagementService);
         alertService = TestBed.inject(AlertService);
 
@@ -98,6 +86,16 @@ describe('Exam Import Component', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should emit the chosen exam when the exam is imported without a subsequent exercise group selection', () => {
+        const examSelectedSpy = vi.fn();
+        component.examSelected.subscribe(examSelectedSpy);
+
+        component.selectImport(exam1);
+
+        expect(examSelectedSpy).toHaveBeenCalledOnce();
+        expect(examSelectedSpy).toHaveBeenCalledWith(exam1);
     });
 
     it('should correctly open the exercise selection', () => {
@@ -120,24 +118,24 @@ describe('Exam Import Component', () => {
     it('should only perform input of exercise groups if prerequisites are met', () => {
         const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup');
         const alertSpy = vi.spyOn(alertService, 'error');
-        component.subsequentExerciseGroupSelection.set(false);
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', false);
         component.performImportOfExerciseGroups();
 
-        component.subsequentExerciseGroupSelection.set(true);
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
         component.exam.set(undefined);
         component.performImportOfExerciseGroups();
 
         component.exam.set(exam1WithExercises);
-        component.targetExamId.set(undefined);
+        fixture.componentRef.setInput('targetExamId', undefined);
         component.performImportOfExerciseGroups();
 
-        component.targetExamId.set(1);
-        component.targetCourseId.set(undefined);
+        fixture.componentRef.setInput('targetExamId', 1);
+        fixture.componentRef.setInput('targetCourseId', undefined);
         component.performImportOfExerciseGroups();
 
         expect(importSpy).not.toHaveBeenCalled();
         expect(alertSpy).not.toHaveBeenCalled();
-        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        expect(importedSpy).not.toHaveBeenCalled();
     });
 
     it('should perform import of exercise groups successfully', async () => {
@@ -147,8 +145,8 @@ describe('Exam Import Component', () => {
         // The progress dialog resolves with the import result once the user dismisses it
         await performImport(importSpy, { resolve: new HttpResponse({ status: 200, body: { exerciseGroups: [exerciseGroup1] } }) });
         expect(alertSpy).not.toHaveBeenCalled();
-        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith([exerciseGroup1]);
+        expect(importedSpy).toHaveBeenCalledOnce();
+        expect(importedSpy).toHaveBeenCalledWith([exerciseGroup1]);
     });
 
     it('should trigger an alarm for a wrong user input', () => {
@@ -162,19 +160,19 @@ describe('Exam Import Component', () => {
         );
         const alertSpy = vi.spyOn(alertService, 'error');
 
-        component.subsequentExerciseGroupSelection.set(true);
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
         const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
         const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
         component.exam.set({ id: 1, exerciseGroups: [exerciseGroup2] } as Exam);
-        component.targetCourseId.set(1);
-        component.targetExamId.set(3);
+        fixture.componentRef.setInput('targetCourseId', 1);
+        fixture.componentRef.setInput('targetExamId', 3);
         fixture.detectChanges();
         component.performImportOfExerciseGroups();
         expect(importSpy).not.toHaveBeenCalled();
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        expect(importedSpy).not.toHaveBeenCalled();
     });
 
     it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
@@ -194,7 +192,7 @@ describe('Exam Import Component', () => {
             } else {
                 expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
             }
-            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+            expect(importedSpy).not.toHaveBeenCalled();
         },
     );
 
@@ -207,8 +205,97 @@ describe('Exam Import Component', () => {
         await performImport(importSpy, { reject: error });
 
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        expect(importedSpy).not.toHaveBeenCalled();
     });
+
+    it.each(['invalidKey', 'duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle'])(
+        'keeps multiple rejected groups editable and supports retry after %s',
+        async (errorKey) => {
+            const originalGroups: ExerciseGroup[] = [
+                { id: 10, title: 'First group', exercises: [createProgrammingExercise(101, 'First program', 'firstProg')] },
+                { id: 20, title: 'Second group', exercises: [createProgrammingExercise(102, 'Second program', 'secondProg')] },
+            ];
+            component.exam.set({ id: 1, exerciseGroups: originalGroups });
+            fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
+            fixture.componentRef.setInput('targetCourseId', 1);
+            fixture.componentRef.setInput('targetExamId', 2);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of(new HttpResponse({ body: { exerciseGroups: [] } })));
+            const progressSpy = vi.spyOn(component.examImportProgressDialog(), 'runImport');
+            const alertSpy = vi.spyOn(alertService, 'error');
+            const warnSpy = vi.spyOn(console, 'warn');
+            const child = component.examExerciseImportComponent();
+
+            for (let attempt = 0; attempt < 2; attempt++) {
+                // Every rejection contains fresh, idless groups, as returned by the server.
+                const rejectedGroups: ExerciseGroup[] = [
+                    { title: 'First group', exercises: [createProgrammingExercise(101)] },
+                    { title: 'Second group', exercises: [createProgrammingExercise(102)] },
+                ];
+                const rejection = new HttpErrorResponse({ status: 400, error: { errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: rejectedGroups } } });
+                progressSpy.mockRejectedValueOnce(rejection);
+                component.performImportOfExerciseGroups();
+                await Promise.resolve();
+                await Promise.resolve();
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(component.isImportingExercises()).toBe(false);
+                expect(importedSpy).not.toHaveBeenCalled();
+                expect(child.mapSelectedExercisesToExerciseGroups()).toEqual(rejectedGroups);
+                expect(child.selectedExercises.has(originalGroups[0])).toBe(false);
+                const rows: NodeListOf<HTMLTableRowElement> = fixture.nativeElement.querySelectorAll('jhi-exam-exercise-import > table > tbody > tr');
+                expect(rows).toHaveLength(2);
+                const groupTitles: HTMLInputElement[] = Array.from(fixture.nativeElement.querySelectorAll('input[id^="exerciseGroup-"][id$="-title"]'));
+                expect(new Set(groupTitles.map((input) => input.id)).size).toBe(2);
+                expect(warnSpy.mock.calls.flat().join(' ')).not.toContain('NG0955');
+                for (const [index, group] of rejectedGroups.entries()) {
+                    const exercise = group.exercises![0];
+                    expect(child.exerciseIsSelected(exercise, group)).toBe(true);
+                    const title: HTMLInputElement = fixture.nativeElement.querySelector(`#exercise-${exercise.id}-title`);
+                    const shortName: HTMLInputElement = fixture.nativeElement.querySelector(`#programming-exercise-${exercise.id}-shortName`);
+                    expect(title.value).toBe('');
+                    expect(shortName.value).toBe('');
+                    if (errorKey === 'invalidKey' && attempt === 0) {
+                        expect(title.placeholder).toBe(originalGroups[index].exercises![0].title);
+                        expect(shortName.placeholder).toBe(originalGroups[index].exercises![0].shortName);
+                    }
+                    for (const [input, value] of [
+                        [groupTitles[index], `Renamed group ${index}`],
+                        [title, `Retry program ${attempt} ${index}`],
+                        [shortName, `retry${attempt}${index}`],
+                    ] as const) {
+                        input.value = value;
+                        input.dispatchEvent(new Event('input'));
+                        input.dispatchEvent(new Event('change'));
+                    }
+                }
+                await fixture.whenStable();
+                expect(rejectedGroups.map((group) => group.title)).toEqual(['Renamed group 0', 'Renamed group 1']);
+                expect(child.validateUserInput()).toBe(true);
+            }
+
+            const correctedGroups = child.mapSelectedExercisesToExerciseGroups();
+            progressSpy.mockResolvedValueOnce(new HttpResponse({ body: { exerciseGroups: correctedGroups } }));
+            component.performImportOfExerciseGroups();
+            await Promise.resolve();
+            await Promise.resolve();
+            expect(importSpy).toHaveBeenCalledTimes(3);
+            expect(importSpy).toHaveBeenLastCalledWith(1, 2, correctedGroups, 'test-import-id');
+            expect(alertSpy).toHaveBeenCalledTimes(2);
+            expect(importedSpy).toHaveBeenCalledWith(correctedGroups);
+        },
+    );
+
+    function createProgrammingExercise(id: number, title?: string, shortName?: string): ProgrammingExercise {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = id;
+        exercise.title = title;
+        exercise.shortName = shortName;
+        return exercise;
+    }
 
     /**
      * Drives a group import: sets up the selection state, stubs the import id, and mocks the progress dialog's runImport
@@ -216,9 +303,9 @@ describe('Exam Import Component', () => {
      */
     async function performImport(importSpy: ReturnType<typeof vi.spyOn>, outcome: { resolve?: HttpResponse<ExerciseGroupImportResultDTO>; reject?: unknown }): Promise<void> {
         component.exam.set(exam1WithExercises);
-        component.subsequentExerciseGroupSelection.set(true);
-        component.targetCourseId.set(1);
-        component.targetExamId.set(2);
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
+        fixture.componentRef.setInput('targetCourseId', 1);
+        fixture.componentRef.setInput('targetExamId', 2);
         fixture.detectChanges();
         vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
         if (outcome.reject !== undefined) {

@@ -72,8 +72,8 @@ public abstract class QuizQuestion extends DomainObject {
     @Column(name = "invalid")
     private Boolean invalid = false;
 
-    @ManyToOne
-    @JoinColumn(name = "exercise_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false)
     @JsonIgnore
     @Parent
     private QuizExercise exercise;

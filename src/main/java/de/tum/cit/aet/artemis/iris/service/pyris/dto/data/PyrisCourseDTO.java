@@ -10,13 +10,16 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisCourseDTO(long id, String name, String description, @Nullable Instant startTime, @Nullable Instant endTime,
         @Nullable ProgrammingLanguage defaultProgrammingLanguage, @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, @Nullable Integer maxComplaintTimeDays,
         @Nullable Integer maxRequestMoreFeedbackTimeDays, @Nullable Integer maxPoints, @Nullable Integer presentationScore,
-        @Nullable List<PyrisExerciseWithStudentSubmissionsDTO> exercises, @Nullable List<PyrisExamDTO> exams, @Nullable List<PyrisCompetencyDTO> competencies) {
+        @Nullable List<PyrisExerciseWithStudentSubmissionsDTO> exercises, @Nullable List<PyrisExamDTO> exams, @Nullable List<PyrisCompetencyDTO> competencies,
+        @Nullable List<PyrisLectureDTO> lectures) {
 
     /**
      * Create a basic PyrisCourseDTO with only id, name, and description.
@@ -24,12 +27,12 @@ public record PyrisCourseDTO(long id, String name, String description, @Nullable
      * @param course The course
      */
     public PyrisCourseDTO(Course course) {
-        this(course.getId(), course.getTitle(), course.getDescription(), null, null, null, null, null, null, null, null, null, null, null, null);
+        this(course.getId(), course.getTitle(), course.getDescription(), null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
      * Create a fully populated PyrisCourseDTO with all extended fields.
-     * Requires the course to have exercises, exams, and competencies loaded.
+     * Requires the course to have exercises, exams, lectures with lecture units, and competencies loaded.
      *
      * @param course The course with all associations loaded
      * @return The fully populated DTO
@@ -38,9 +41,18 @@ public record PyrisCourseDTO(long id, String name, String description, @Nullable
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::of).toList();
         List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::of).toList();
         List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::of).toList();
+        List<PyrisLectureDTO> lectures = course.getLectures().stream().map(lecture -> toLectureDTO(lecture, course.getId())).toList();
 
         return new PyrisCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
                 course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies);
+                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies, lectures);
+    }
+
+    private static PyrisLectureDTO toLectureDTO(Lecture lecture, long courseId) {
+        // A lecture without released units stays in the list: it remains a valid context switch target,
+        // only the names of unreleased units must not reach the student through the agent.
+        List<PyrisLectureUnitDTO> visibleUnits = lecture.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents)
+                .map(unit -> new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), null)).toList();
+        return new PyrisLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), visibleUnits);
     }
 }

@@ -37,3 +37,12 @@ export class ExerciseCategory {
  * {@link ExerciseCategory} instance from it.
  */
 export type SerializedExerciseCategory = Pick<ExerciseCategory, 'category' | 'color'>;
+
+/**
+ * @returns whether both categories have the same name, ignoring case and surrounding whitespace; the color is not considered,
+ * so a category used with different colors or capitalizations counts as one entry in filters
+ */
+export function haveSameCategoryName(category: ExerciseCategory, otherCategory: ExerciseCategory): boolean {
+    const normalize = (name?: string) => (name ?? '').trim().toLowerCase();
+    return normalize(category.category) === normalize(otherCategory.category);
+}

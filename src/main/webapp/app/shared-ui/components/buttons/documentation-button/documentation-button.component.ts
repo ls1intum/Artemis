@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 // The routes here are used to build the link to the documentation.
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
@@ -38,11 +38,20 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     selector: 'jhi-documentation-button',
     styleUrls: ['./documentation-button.component.scss'],
     template: `
-        <a class="text-primary documentation-button ms-1" href="{{ BASE_URL + DocumentationLinks[this.type()] }}" target="_blank" rel="noopener noreferrer">
-            <fa-icon [icon]="faCircleInfo" [pTooltip]="getTooltipForType()" />
+        @let tooltip = getTooltipForType();
+        <a
+            class="text-primary documentation-button ms-1"
+            href="{{ BASE_URL + DocumentationLinks[this.type()] }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.aria-label]="tooltip"
+            [tumAetUiTooltip]="tooltip"
+            tumAetUiTooltipDescribesHost="false"
+        >
+            <fa-icon [icon]="faCircleInfo" />
         </a>
     `,
-    imports: [FaIconComponent, TooltipModule],
+    imports: [FaIconComponent, TumAetUiTooltipDirective],
 })
 export class DocumentationButtonComponent {
     private translateService = inject(TranslateService);

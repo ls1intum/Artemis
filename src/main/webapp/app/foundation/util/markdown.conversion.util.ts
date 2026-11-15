@@ -75,7 +75,7 @@ const markdownItHighlightjs: MarkdownItPlugin = (md) => {
  * Only caches the default instance (no custom extensions) since custom extensions
  * may have different identities across test runs or component instances.
  */
-let defaultMarkdownItCache: { lineBreaks: boolean; instance: MarkdownItInstance } | undefined;
+let defaultMarkdownItCache: { lineBreaks: boolean; allowHtml: boolean; instance: MarkdownItInstance } | undefined;
 
 /**
  * Gets or creates a cached MarkdownIt instance with the specified configuration.
@@ -85,16 +85,16 @@ let defaultMarkdownItCache: { lineBreaks: boolean; instance: MarkdownItInstance 
  * Note: Only caches when no custom extensions are provided, since custom extensions
  * may hold state or have different identities in test environments.
  */
-function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boolean): MarkdownItInstance {
+function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boolean, allowHtml: boolean): MarkdownItInstance {
     // Only use caching when no custom extensions are provided
     // Custom extensions may have different instance identities (e.g., in tests)
     if (extensions.length === 0) {
-        if (defaultMarkdownItCache && defaultMarkdownItCache.lineBreaks === lineBreaks) {
+        if (defaultMarkdownItCache && defaultMarkdownItCache.lineBreaks === lineBreaks && defaultMarkdownItCache.allowHtml === allowHtml) {
             return defaultMarkdownItCache.instance;
         }
 
         const markdownIt = MarkdownIt({
-            html: true,
+            html: allowHtml,
             linkify: true,
             breaks: lineBreaks,
         });
@@ -111,14 +111,14 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
                 table: 'table',
             });
 
-        defaultMarkdownItCache = { lineBreaks, instance: markdownIt };
+        defaultMarkdownItCache = { lineBreaks, allowHtml, instance: markdownIt };
         return markdownIt;
     }
 
     // For custom extensions, create a fresh instance each time
     // This ensures the correct extension instances are used (important for tests)
     const markdownIt = MarkdownIt({
-        html: true,
+        html: allowHtml,
         linkify: true,
         breaks: lineBreaks,
     });
@@ -148,6 +148,70 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
 }
 
 /**
+ * Elements that rendered markdown never needs: embedded style sheets, form controls and document level elements.
+ * Authors keep all formatting, tables, code, formulas and images.
+ */
+const MARKDOWN_FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'legend', 'link', 'meta', 'base', 'object', 'embed'];
+
+/** Attributes that only make sense on form controls or that retarget a request. */
+const MARKDOWN_FORBIDDEN_ATTRIBUTES = ['form', 'formaction', 'action', 'formmethod', 'formtarget'];
+
+/** The style properties KaTeX uses to place and decorate its glyphs, each with the values it writes. */
+const FORMULA_STYLE_LENGTH = /^-?\d*\.?\d+(em|ex|px|%)?$/;
+const FORMULA_STYLE_COLOR = /^(#[0-9a-f]{3,8}|[a-z]+|rgba?\([\d\s.,%]+\))$/i;
+const FORMULA_STYLE_VALUES = new Map<string, RegExp>([
+    ...[
+        'height',
+        'width',
+        'min-width',
+        'top',
+        'bottom',
+        'left',
+        'vertical-align',
+        'margin-left',
+        'margin-right',
+        'padding-left',
+        'border-width',
+        'border-bottom-width',
+        'border-top-width',
+        'border-right-width',
+    ].map((property): [string, RegExp] => [property, FORMULA_STYLE_LENGTH]),
+    ['color', FORMULA_STYLE_COLOR],
+    ['background-color', FORMULA_STYLE_COLOR],
+    ['border-style', /^solid$/],
+    ['position', /^relative$/],
+]);
+
+/** The declarations of a style attribute that a formula needs, so that the class of an element is not trusted to carry arbitrary styles. */
+function formulaStyle(style: string): string {
+    return style
+        .split(';')
+        .map((declaration) => declaration.split(':').map((part) => part.trim()))
+        .filter(([property, value]) => FORMULA_STYLE_VALUES.get(property.toLowerCase())?.test(value ?? '') === true)
+        .map(([property, value]) => `${property}:${value}`)
+        .join(';');
+}
+
+/**
+ * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its glyphs with it, and even there only the
+ * placement properties with plain lengths. It is also kept where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so
+ * the address of the page does not reach the image host.
+ */
+export function restrictRenderedAttributes(node: Element, keepStyle = false): void {
+    if (!keepStyle && node.hasAttribute?.('style')) {
+        const allowedStyle = node.closest?.('[class*="katex"]') ? formulaStyle(node.getAttribute('style') ?? '') : '';
+        if (allowedStyle) {
+            node.setAttribute('style', allowedStyle);
+        } else {
+            node.removeAttribute('style');
+        }
+    }
+    if (node.tagName === 'IMG') {
+        node.setAttribute('referrerpolicy', 'no-referrer');
+    }
+}
+
+/**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
  *
@@ -156,7 +220,8 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
  * @param {string[]} allowedHtmlTags to allow during sanitization
  * @param {string[]} allowedHtmlAttributes to allow during sanitization
  * @param {boolean} lineBreaks to indicate if line breaks should be added
- * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
+ * @param {boolean} allowHtml whether raw HTML in the markdown source is rendered
+ * @returns {string} sanitised HTML; callers must use a safe binding when inserting it into the template
  */
 export function htmlForMarkdown(
     markdownText?: string,
@@ -164,13 +229,14 @@ export function htmlForMarkdown(
     allowedHtmlTags: string[] | undefined = undefined,
     allowedHtmlAttributes: string[] | undefined = undefined,
     lineBreaks: boolean = false,
+    allowHtml: boolean = true,
 ): string {
     if (!markdownText || markdownText === '') {
         return '';
     }
 
     // Use cached MarkdownIt instance for better performance
-    const markdownIt = getOrCreateMarkdownIt(extensions, lineBreaks);
+    const markdownIt = getOrCreateMarkdownIt(extensions, lineBreaks, allowHtml);
 
     let markdownRender = markdownIt.render(markdownText);
     if (markdownRender.endsWith('\n')) {
@@ -182,13 +248,22 @@ export function htmlForMarkdown(
     const purifyParameters: Config = {};
     // Prevents sanitizer from deleting <testid>id</testid>
     purifyParameters['ADD_TAGS'] = ['testid'];
+    purifyParameters['FORBID_TAGS'] = MARKDOWN_FORBIDDEN_TAGS;
+    purifyParameters['FORBID_ATTR'] = MARKDOWN_FORBIDDEN_ATTRIBUTES;
     if (allowedHtmlTags) {
         purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(markdownRender, purifyParameters);
+    const keepStyle = !!allowedHtmlAttributes?.includes('style');
+    const hook = (node: Element) => restrictRenderedAttributes(node, keepStyle);
+    DOMPurify.addHook('afterSanitizeAttributes', hook);
+    try {
+        return DOMPurify.sanitize(markdownRender, purifyParameters);
+    } finally {
+        DOMPurify.removeHook('afterSanitizeAttributes', hook);
+    }
 }
 
 export function markdownForHtml(htmlText: string): string {

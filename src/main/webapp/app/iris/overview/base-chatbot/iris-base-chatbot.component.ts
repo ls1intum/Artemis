@@ -17,32 +17,12 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TooltipModule } from 'primeng/tooltip';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    Component,
-    DestroyRef,
-    ElementRef,
-    HostListener,
-    computed,
-    effect,
-    inject,
-    input,
-    output,
-    signal,
-    untracked,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -74,8 +54,6 @@ import { AsPipe } from 'app/foundation/pipes/as.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { formatDate } from '@angular/common';
-import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
@@ -85,15 +63,31 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
-import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
-import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
+import { IrisPointOutMarkerComponent } from 'app/iris/overview/point-out-marker/iris-point-out-marker.component';
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
+interface SessionMenuGroup {
+    /** Translation key of the group heading. */
+    labelKey: string;
+    items: { session: IrisSessionDTO; label: string; isActive: boolean }[];
+}
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -117,11 +111,6 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
 const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
 const LIVE_DRAFT_CATCH_UP_MS = 400;
 
-// Number of decimals the activity trail duration is rendered with.
-const ACTIVITY_DURATION_DECIMALS = 1;
-// Shortest activity trail duration (in s) still worth showing: anything below this rounds away to "0.0s" at one decimal.
-const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_DECIMALS;
-
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
@@ -135,11 +124,10 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         IrisLogoComponent,
         RouterLink,
         FaIconComponent,
-        TooltipModule,
+        TumAetUiTooltipDirective,
         TranslateDirective,
         ChatStatusBarComponent,
         FormsModule,
-        ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
         MarkdownDirective,
@@ -148,29 +136,28 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
-        IrisChatMemoriesIndicatorComponent,
         IrisActivityFeedComponent,
-        ConfirmDialogModule,
-        MenuModule,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        AboutIrisModalComponent,
         ContextSelectionComponent,
         IrisContextSwitchDividerComponent,
+        IrisPointOutMarkerComponent,
         CourseSidebarToggleButtonComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
     ],
-    providers: [ConfirmationService],
+    providers: [TumAetUiConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
-    private readonly dialogService = inject(DialogService);
-    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
-    private readonly confirmationService = inject(ConfirmationService);
-
-    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
-    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
-    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
-    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -179,6 +166,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+
+    private readonly reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    protected readonly reducedMotion = signal(this.reducedMotionQuery?.matches ?? false);
+
+    /** Below this width the open history (260px next to the course navigation) leaves the chat itself only a sliver, so it starts as the icon rail. */
+    private readonly narrowViewportQuery = window.matchMedia?.('(max-width: 767.98px)');
+
+    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
+    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
+    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
+    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -274,7 +272,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // UI state signals
     readonly newMessageTextContent = signal('');
     readonly isLoading = signal(false);
-    readonly isChatHistoryOpen = signal(true);
+    readonly isChatHistoryOpen = signal(!(this.narrowViewportQuery?.matches ?? false));
     readonly searchValue = signal('');
     readonly filteredSessions = computed(() => {
         const search = this.searchValue();
@@ -307,7 +305,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.awaitingAnswer(),
     );
-    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    // Without a session there is nothing to send to: the chat service rejects the message, so sending while the session
+    // is still loading would only lose what the user typed.
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled() || this.currentSessionId() === undefined);
     readonly canShowSuggestions = computed(
         () =>
             !!this.suggestions()?.length &&
@@ -344,7 +344,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     private copyResetTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
     protected readonly activeSuggestionChips = createActiveSuggestionChips(this.currentChatMode);
@@ -361,7 +360,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
-    readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /**
+     * Whether the user may change the chat topic from the input row. When false, the context selector
+     * (the "+" dropdown and the chip showing the active context) is not rendered, so the session keeps
+     * whatever context its host pinned. The CTXSWAP dividers in the message list stay visible either
+     * way, so the student still sees which topic the chat is on.
+     */
+    readonly isContextSelectionAvailable = input<boolean>(true);
     /** Optional function provider that returns a list of context objects for the current message */
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
@@ -370,45 +375,29 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
-    readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+    // read: the TUM AET UI button is a component, so the reference alone would resolve to its instance, not the element.
+    readonly acceptButton = viewChild('acceptButton', { read: ElementRef<HTMLButtonElement> });
 
     // Session switcher (widget layout)
     readonly sessionMenuOpen = signal(false);
-    readonly sessionMenuItems = computed(() => {
+    readonly aboutIrisModalVisible = signal(false);
+    /** The sessions of the switcher menu, in the time groups of the chat history; empty groups are left out. */
+    readonly sessionMenuGroups = computed<SessionMenuGroup[]>(() => {
         const currentId = this.currentSessionId();
         const newChatLabel = this.newChatTitle();
-        const items: MenuItem[] = [];
-
-        const addGroup = (label: string, groupSessions: IrisSessionDTO[]) => {
-            if (groupSessions.length === 0) {
-                return;
-            }
-            items.push({
-                label,
-                disabled: true,
-                styleClass: 'session-menu-group-label',
-            });
-            for (const session of groupSessions) {
-                const isActive = session.id === currentId;
-                items.push({
-                    label: this.getSessionMenuLabel(session, newChatLabel),
-                    styleClass: isActive ? 'session-menu-item-active' : undefined,
-                    data: { isActive },
-                    command: () => {
-                        this.onSessionClick(session);
-                        this.onSessionMenuHide();
-                    },
-                });
-            }
-        };
-
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.today'), this.todaySessions());
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.yesterday'), this.yesterdaySessions());
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.last7Days'), this.last7DaysSessions());
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.last30Days'), this.last30DaysSessions());
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.older'), this.olderSessions());
-
-        return items;
+        const groups: [string, IrisSessionDTO[]][] = [
+            ['artemisApp.iris.chatHistory.today', this.todaySessions()],
+            ['artemisApp.iris.chatHistory.yesterday', this.yesterdaySessions()],
+            ['artemisApp.iris.chatHistory.last7Days', this.last7DaysSessions()],
+            ['artemisApp.iris.chatHistory.last30Days', this.last30DaysSessions()],
+            ['artemisApp.iris.chatHistory.older', this.olderSessions()],
+        ];
+        return groups
+            .filter(([, groupSessions]) => groupSessions.length > 0)
+            .map(([labelKey, groupSessions]) => ({
+                labelKey,
+                items: groupSessions.map((session) => ({ session, label: this.getSessionMenuLabel(session, newChatLabel), isActive: session.id === currentId })),
+            }));
     });
     readonly currentSessionTitle = computed(() => {
         const currentId = this.currentSessionId();
@@ -496,37 +485,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return this.translateService.instant('artemisApp.exerciseChatbot.inputMessage');
     });
 
-    protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
-        return message.accessedMemories ?? [];
-    }
-
-    protected getCreatedMemories(message: IrisMessage): MemirisMemory[] {
-        return message.createdMemories ?? [];
-    }
-
-    protected hasMemories(message: IrisMessage): boolean {
-        return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
-    }
-
     protected getActivities(message: IrisMessage): IrisActivityItem[] {
         return message.sender === IrisSender.LLM ? (message.activities ?? []) : [];
-    }
-
-    protected activityTrailSummary(activities: IrisActivityItem[]): string {
-        const totalDurationMillis = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
-        const totalDurationSeconds = totalDurationMillis / 1000;
-        // A single activity reads as "1 tool used", more than one as "n tools used", so the plural form picks the key.
-        const pluralSuffix = activities.length === 1 ? 'Singular' : 'Plural';
-        // Durations that round away to "0.0s" add noise rather than information, so the time is omitted entirely.
-        if (totalDurationSeconds < MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS) {
-            return this.translateService.instant(`artemisApp.iris.activities.trailSummaryWithoutDuration${pluralSuffix}`, {
-                count: activities.length,
-            });
-        }
-        return this.translateService.instant(`artemisApp.iris.activities.trailSummary${pluralSuffix}`, {
-            count: activities.length,
-            duration: totalDurationSeconds.toFixed(ACTIVITY_DURATION_DECIMALS),
-        });
     }
 
     private startCycling(): void {
@@ -567,6 +527,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     constructor() {
+        const onMotionPreferenceChange = (event: MediaQueryListEvent) => {
+            this.reducedMotion.set(event.matches);
+            if (event.matches) {
+                this.stopLiveAssistantDraftAnimationLoop();
+                this.displayedLiveAssistantDraftText.set(this.liveAssistantDraftTargetText);
+            }
+        };
+        this.reducedMotionQuery?.addEventListener('change', onMotionPreferenceChange);
+        this.destroyRef.onDestroy(() => this.reducedMotionQuery?.removeEventListener('change', onMotionPreferenceChange));
+
+        // Shrinking the window (or rotating a phone) past the breakpoint collapses an open history. Growing past it again
+        // leaves the state alone: the user may have collapsed it on purpose.
+        const onViewportWidthChange = (event: MediaQueryListEvent) => {
+            if (event.matches) {
+                this.setChatHistoryVisibility(false);
+            }
+        };
+        this.narrowViewportQuery?.addEventListener('change', onViewportWidthChange);
+        this.destroyRef.onDestroy(() => this.narrowViewportQuery?.removeEventListener('change', onViewportWidthChange));
+
         // Initialize user acceptance state
         this.checkIfUserAcceptedLLMUsage();
 
@@ -649,7 +629,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
                     this.scrollToBottom('smooth');
                 }
-                const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                const timeoutId = setTimeout(() => this.focusChatInput(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
             // Track new messages for animation (compare against previous IDs, not current).
@@ -720,15 +700,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
 
         // Focus on message textarea after initialization
-        const focusTimeoutId = setTimeout(() => {
-            const textarea = this.messageTextarea();
-            const acceptBtn = this.acceptButton();
-            if (textarea) {
-                textarea.nativeElement.focus();
-            } else if (acceptBtn) {
-                acceptBtn.nativeElement.focus();
-            }
-        }, 150);
+        const focusTimeoutId = setTimeout(() => this.focusChatInput(), 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
@@ -759,9 +731,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             if (this.dayTickIntervalId) {
                 clearInterval(this.dayTickIntervalId);
             }
-        });
-        this.destroyRef.onDestroy(() => {
-            this.aboutIrisDialogRef?.close();
         });
 
         // Placeholder cycling lifecycle
@@ -838,7 +807,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return deepClone(rawMessages);
     }
 
-    private isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
+    protected isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
         return message?.sender === IrisSender.LLM && message.final === false;
     }
 
@@ -883,13 +852,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private focusInputAfterAcceptance() {
-        setTimeout(() => {
-            if (this.messageTextarea()) {
-                this.messageTextarea()!.nativeElement.focus();
-            } else if (this.acceptButton()) {
-                this.acceptButton()!.nativeElement.focus();
-            }
-        }, 150);
+        setTimeout(() => this.focusChatInput(), 150);
+    }
+
+    private focusChatInput(): void {
+        const input = this.messageTextarea()?.nativeElement ?? this.acceptButton()?.nativeElement;
+        // CDK dialogs hide the page from assistive technology. A delayed chat update must not take
+        // focus back from the welcome dialog (or another modal) into that hidden page.
+        if (input && !input.closest('[aria-hidden="true"]')) {
+            input.focus();
+        }
     }
 
     /**
@@ -898,7 +870,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     onSend(): void {
         this.chatService.messagesRead();
         const content = this.newMessageTextContent().trim();
-        if (content) {
+        // Enter and the suggestion chips reach here without passing the disabled send button, so keep the text for a retry
+        if (content && this.currentSessionId() !== undefined) {
             this.isLoading.set(true);
             const provider = this.contextProvider();
             const context = provider ? provider() : undefined;
@@ -1128,6 +1101,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         }
 
+        if (this.reducedMotion()) {
+            this.stopLiveAssistantDraftAnimationLoop();
+            this.displayedLiveAssistantDraftText.set(this.liveAssistantDraftTargetText);
+            return;
+        }
+
         if (Array.from(this.liveAssistantDraftTargetText).length > Array.from(this.displayedLiveAssistantDraftText()).length) {
             this.ensureLiveAssistantDraftAnimationLoop();
         } else {
@@ -1189,7 +1168,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.updateExchangeSpacer();
         container.scrollTo({
             top: this.getAnchorTop(container, anchorElement),
-            behavior: 'smooth',
+            behavior: this.reducedMotion() ? 'instant' : 'smooth',
         });
     }
 
@@ -1236,7 +1215,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             if (!messagesElement) return;
             messagesElement.scrollTo({
                 top: messagesElement.scrollHeight,
-                behavior: behavior,
+                behavior: this.reducedMotion() ? 'instant' : behavior,
             });
         });
     }
@@ -1446,8 +1425,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
             acceptLabel: this.translateService.instant('entity.action.delete'),
             rejectLabel: this.translateService.instant('entity.action.cancel'),
-            acceptButtonStyleClass: 'p-button-danger',
-            rejectButtonStyleClass: 'p-button-secondary',
+            acceptSeverity: 'danger',
             accept: () => {
                 this.chatService
                     .deleteSession(session.id)
@@ -1530,20 +1508,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
     }
 
-    toggleSessionMenu(event: Event) {
-        event.stopPropagation();
-        this.sessionMenuOpen.update((open) => !open);
-    }
-
-    onSessionMenuHide() {
-        this.sessionMenuOpen.set(false);
-    }
-
-    @HostListener('document:click')
-    onDocumentClick() {
-        this.onSessionMenuHide();
-    }
-
     openNewSession() {
         // startFreshChat() re-applies the lecture/exercise page context itself once the new session
         // loads, so we no longer stage it here — see the JSDoc on IrisChatService.startFreshChat.
@@ -1554,20 +1518,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (this.onboardingService.currentStep() === 3) {
             this.onboardingService.onboardingEvent$.next({ type: 'aboutIrisOpened' });
         }
-        // The About dialog always uses PrimeNG's DynamicDialog. It is portaled to <body>, so it
-        // escapes the stacking context of the floating chat widget (itself a DynamicDialog) and
-        // renders above it regardless of the host layout (sidebar, lecture sidebar, or widget).
-        this.aboutIrisDialogRef?.close();
-        this.aboutIrisDialogRef =
-            this.dialogService.open(AboutIrisModalComponent, {
-                modal: true,
-                closable: false,
-                showHeader: false,
-                styleClass: 'about-iris-dialog',
-                maskStyleClass: 'about-iris-dialog',
-                width: '40rem',
-                breakpoints: { '640px': '95vw' },
-            }) ?? undefined;
+        this.aboutIrisModalVisible.set(true);
     }
 
     setSearchValue(searchValue: string) {

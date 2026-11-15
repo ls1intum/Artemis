@@ -7,6 +7,10 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    public static final String HYPERION_LIVE_SAVE_COORDINATION_MAP = "hyperion-live-save-coordination";
+
+    public static final String HYPERION_GENERATION_JOBS_MAP = "hyperion-exercise-generation-jobs";
+
     // NOTE: those 4 values have to be the same as in app.constants.ts
     public static final int USERNAME_MIN_LENGTH = 4;
 
@@ -15,6 +19,9 @@ public final class Constants {
     public static final int PASSWORD_MIN_LENGTH = 8;
 
     public static final int PASSWORD_MAX_LENGTH = 100;
+
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    public static final int PASSWORD_MAX_BYTES = 72;
 
     public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
 
@@ -66,19 +73,7 @@ public final class Constants {
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
-    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
-
-    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
-
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
-
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
-
-    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
-
-    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 
@@ -114,12 +109,11 @@ public final class Constants {
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks
-    // (\p{M}, for decomposed accented characters), numbers (\p{N}), underscore, hyphen and whitespace. Titles are
-    // display-only and never used to derive VCS/CI artifacts (those come from the ASCII-validated short name), so
-    // allowing international letters here is safe. Previously this was ASCII-only, which rejected legitimate titles such
-    // as "Lärche" on edit while create/import accepted them.
+    // Keep existing programming exercise title restrictions separate from non-programming display titles.
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s]*");
+
+    // Non-programming exercise display titles additionally allow periods, e.g. "Strategy vs. bridge pattern".
+    public static final Pattern EXERCISE_DISPLAY_TITLE_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s.]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
@@ -151,10 +145,10 @@ public final class Constants {
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5L * 1024 * 1024; // 5 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
+    public static final long MAX_SUBMISSION_FILE_SIZE = 8L * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final int MAX_SUBMISSION_TEXT_LENGTH = 30_000; // 30.000 characters
@@ -175,6 +169,8 @@ public final class Constants {
     public static final long SYNTHETIC_FEEDBACK_ID_STRIDE = 2L;
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+
+    public static final int MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255; // Keep in sync with MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH in input.constants.ts
 
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
     public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
@@ -245,6 +241,8 @@ public final class Constants {
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
 
+    public static final String UPDATE_EXAM_ATTENDANCE = "UPDATE_EXAM_ATTENDANCE";
+
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
@@ -311,6 +309,8 @@ public final class Constants {
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
+
+    public static final String MAIL_CONFIGURED = "mailConfigured";
 
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 
@@ -396,11 +396,17 @@ public final class Constants {
      */
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
+    /**
+     * The name of the Spring profile used to run isolated AI Worker jobs.
+     */
+    public static final String PROFILE_AIWORKER = "aiworker";
+
     public static final String PROFILE_TEST_BUILDAGENT = "buildagent-test";
 
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove the jenkins profile constant with Jenkins support
     public static final String PROFILE_JENKINS = "jenkins";
 
     /**
@@ -412,6 +418,13 @@ public final class Constants {
      * The name of the Spring profile used for Artemis core functionality.
      */
     public static final String PROFILE_CORE = "core";
+
+    /**
+     * The name of the Spring profile used for seeding a demo course on startup.
+     * NOTE: this profile is opt-in and intended for demo and manual testing instances only. It must never be activated on a production instance,
+     * because the seeding routine writes demo courses, users and content directly into the database.
+     */
+    public static final String PROFILE_DEMO = "demo";
 
     /**
      * The name of the Spring profile used for activating the scheduling functionality.
@@ -429,6 +442,13 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for seeding the demo course, which must happen exactly once per database.
+     * Multiple nodes run {@link #PROFILE_CORE} (see the node1/node2 deployment configurations), so gating the seeding on {@link #PROFILE_SCHEDULING} as well restricts it to the
+     * primary node. Without this, every core node would seed concurrently on startup and could create the demo data more than once.
+     */
+    public static final String PROFILE_DEMO_AND_SCHEDULING = PROFILE_DEMO + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the module feature used for Theia as an external online IDE.
@@ -466,14 +486,22 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
-     * The name of the module feature used for AtlasML functionality.
+     * The name of the module feature used for the LLM-backed part of Atlas.
      */
-    public static final String MODULE_FEATURE_ATLASML = "atlasml";
+    public static final String MODULE_FEATURE_ATLASLLM = "atlasllm";
 
     /**
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
+     * The name of the module feature used for whole-exercise generation.
+     */
+    public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
 
     /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
@@ -551,6 +579,20 @@ public final class Constants {
     public static final String MODULE_FEATURE_SAML2 = "saml2";
 
     /**
+     * The name of the module feature used for the global search (Weaviate) integration. It is published to the client
+     * when {@link #WEAVIATE_ENABLED_PROPERTY_NAME} is enabled, so the client can gate global-search admin surfaces.
+     */
+    public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
+
+    /**
+     * The name of the module feature for agent access (personal access tokens). It is published to the client when
+     * {@link #AGENT_ACCESS_ENABLED_PROPERTY_NAME} is enabled, so the client can hide the token settings otherwise.
+     */
+    public static final String MODULE_FEATURE_AGENT_ACCESS = "agent-access";
+
+    public static final String AGENT_ACCESS_ENABLED_PROPERTY_NAME = "artemis.agent-access.enabled";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
@@ -561,14 +603,24 @@ public final class Constants {
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
 
     /**
-     * The name of the property used to enable or disable AtlasML functionality.
+     * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous
+     * competency orchestrator, and the tool surfaces they call. Disabled by default, because none of it can work
+     * without a configured chat model, and every bean behind it is dead weight on an installation that has none.
      */
-    public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
+    public static final String ATLASLLM_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasllm.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    /**
+     * The name of the property used to enable or disable whole-exercise generation.
+     */
+    public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.
@@ -735,13 +787,16 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
-    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]++(?:/[\\w-]++)*+$");
 
     public static final String JWT_COOKIE_NAME = "jwt";
 
     public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
     public static final String BEARER_PREFIX = "Bearer ";
+
+    /** The start of every personal access token secret, which tells it apart from a JWT in an Authorization header. */
+    public static final String PERSONAL_ACCESS_TOKEN_PREFIX = "art_pat_";
 
     public static final String HAZELCAST = "Hazelcast";
 

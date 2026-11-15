@@ -1,3 +1,4 @@
+import { computed } from '@angular/core';
 import { ReviewCommentWidgetManager, ReviewCommentWidgetManagerConfig } from 'app/exercise/review/review-comment-widget-manager';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
@@ -59,6 +60,7 @@ describe('ReviewCommentWidgetManager', () => {
             submittedSubscription,
             cancelSubscription,
             location: { nativeElement: document.createElement('div') },
+            componentType: ReviewCommentDraftWidgetComponent,
             setInput: vi.fn(),
             destroy: vi.fn(),
         } as any;
@@ -75,6 +77,7 @@ describe('ReviewCommentWidgetManager', () => {
         return {
             instance,
             location: { nativeElement: document.createElement('div') },
+            componentType: ReviewCommentThreadWidgetComponent,
             setInput: vi.fn(),
             destroy: vi.fn(),
         } as any;
@@ -104,7 +107,6 @@ describe('ReviewCommentWidgetManager', () => {
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
         onAdd: vi.fn(),
         showLocationWarning: () => false,
-        showFeedbackAction: () => false,
         ...overrides,
     });
 
@@ -127,17 +129,20 @@ describe('ReviewCommentWidgetManager', () => {
         expect(editor.clearLineDecorationsHoverButton).toHaveBeenCalled();
     });
 
-    it('should add and remove draft widgets incrementally', () => {
+    it('should update a cached draft check through add, cancel, clear and disposal', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
         const onAdd = vi.fn();
         const config = createConfig({ onAdd });
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
+        const hasDrafts = computed(() => manager.hasDrafts());
+        expect(hasDrafts()).toBe(false);
         manager.updateHoverButton();
         const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
         addCallback(5);
 
+        expect(hasDrafts()).toBe(true);
         expect(editor.addLineWidget).toHaveBeenCalledWith(5, expect.stringContaining('review-comment-'), expect.any(HTMLElement));
         expect(onAdd).toHaveBeenCalledWith({ lineNumber: 5, fileName: 'file.java' });
 
@@ -146,6 +151,17 @@ describe('ReviewCommentWidgetManager', () => {
 
         expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-'));
         expect(draftRef.destroy).toHaveBeenCalled();
+        expect(hasDrafts()).toBe(false);
+
+        addCallback(5);
+        expect(hasDrafts()).toBe(true);
+        manager.clearDrafts();
+        expect(hasDrafts()).toBe(false);
+
+        addCallback(6);
+        expect(hasDrafts()).toBe(true);
+        manager.disposeAll();
+        expect(hasDrafts()).toBe(false);
     });
 
     it('should not create duplicate draft widgets when adding the same line twice', () => {

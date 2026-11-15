@@ -176,10 +176,10 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 AND (
                     (gs.course IS NOT NULL
                         AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = gs.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
-                        AND gs.course.title LIKE %:partialTitle%)
+                        AND LOWER(gs.course.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%'))
                     OR (gs.exam IS NOT NULL
                         AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = gs.exam.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
-                        AND gs.exam.title LIKE %:partialTitle%)
+                        AND LOWER(gs.exam.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%'))
                 )
             """)
     // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
@@ -202,7 +202,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 LEFT JOIN gs.course
                 LEFT JOIN gs.exam
             WHERE gs.gradeType = de.tum.cit.aet.artemis.assessment.domain.GradeType.BONUS
-                AND (gs.course.title LIKE %:partialTitle% OR gs.exam.title LIKE %:partialTitle%)
+                AND (LOWER(gs.course.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%') OR LOWER(gs.exam.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%'))
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 

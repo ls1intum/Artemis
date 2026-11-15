@@ -109,12 +109,12 @@ $triangle-offset-right: 0.2rem;
     right: 0;
     display: none;
     background-color: var(--module-bg);
-    color: var(--bs-body-color);
-    border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+    color: var(--tumaet-ui-text-color);
+    border: 1px solid var(--tumaet-ui-border-color);
     border-radius: 0.3rem;
     width: $overlay-width;
     padding: $padding;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--tumaet-ui-shadow-md);
 }
 
 .course-notification-overview-overlay.is-shown {
@@ -137,7 +137,7 @@ $triangle-offset-right: 0.2rem;
 }
 
 .course-notification-overview-notification-container::-webkit-scrollbar-thumb {
-    background-color: lightgray;
+    background-color: var(--tumaet-ui-border-color);
     border-radius: 5rem;
     border: 0.25rem solid transparent;
     background-clip: content-box;

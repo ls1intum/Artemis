@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 class HyperionProgrammingExerciseContextRendererServiceTest {
@@ -64,6 +67,23 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result).contains("Implement a sorting algorithm");
+    }
+
+    @Test
+    void renderContext_readsOnlyTheFilesThatTheLanguageFilterKeepsAndWithinItsSizeLimit() throws IOException {
+        // Files that the filter drops (build output, large files) must not use up the limit of the total size before the source files are read
+        var participation = new TemplateProgrammingExerciseParticipation();
+        participation.setRepositoryUri("http://localhost:8080/git/ABC/abc-exercise.git");
+        exercise.setTemplateParticipation(participation);
+        Predicate<String> pathFilter = path -> path.startsWith("src/");
+        when(languageFilter.pathFilterFor(ProgrammingLanguage.JAVA)).thenReturn(pathFilter);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), eq(pathFilter),
+                eq(HyperionProgrammingLanguageContextFilterService.MAX_FILE_SIZE_BYTES))).thenReturn(Map.of("src/Main.java", "class Main {}"));
+        when(languageFilter.filter(any(), eq(ProgrammingLanguage.JAVA))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        String result = contextRendererService.renderContext(exercise);
+
+        assertThat(result).contains("class Main {}");
     }
 
     @Test
@@ -197,4 +217,93 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
         assertThat(result).contains("... [truncated]");
         assertThat(result).doesNotContain("x".repeat(4100));
     }
+
+    @Test
+    void repositoryStructureSortsDirectoriesBeforeFilesAndSkipsGeneratedArtifacts() throws Exception {
+        Files.createDirectories(tempDir.resolve("z/sub"));
+        Files.createDirectories(tempDir.resolve("a"));
+        Files.createDirectories(tempDir.resolve("target"));
+        FileUtils.writeStringToFile(tempDir.resolve("z/sub/B.java").toFile(), "class B {}", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("README.md").toFile(), "readme", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve(".DS_Store").toFile(), "ignored", StandardCharsets.UTF_8);
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getRepositoryStructure(repository);
+
+        assertThat(result).isEqualTo(tempDir.getFileName() + "/\n├── a/\n├── z/\n│   └── sub/\n│       └── B.java\n└── README.md\n");
+    }
+
+    @Test
+    void repositoryStructureAndBuildContextHandleMissingAndNonDirectoryRoots() throws Exception {
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir.resolve("missing"));
+        assertThat(contextRendererService.getRepositoryStructure(repository)).isEqualTo("Repository structure could not be determined.");
+        assertThat(contextRendererService.getBuildEnvironmentContext(repository)).isEqualTo("No build environment files found.");
+        FileUtils.writeStringToFile(tempDir.resolve("plain-file").toFile(), "text", StandardCharsets.UTF_8);
+        when(repository.getLocalPath()).thenReturn(tempDir.resolve("plain-file"));
+        assertThat(contextRendererService.getRepositoryStructure(repository)).isEqualTo("Repository structure could not be determined.");
+        assertThat(contextRendererService.getBuildEnvironmentContext(repository)).isEqualTo("No build environment files found.");
+        assertThat(contextRendererService.getBuildEnvironmentContext(null)).isEqualTo("No build environment files found.");
+        when(repository.getLocalPath()).thenReturn(null);
+        assertThat(contextRendererService.getBuildEnvironmentContext(repository)).isEqualTo("No build environment files found.");
+        assertThat(contextRendererService.getRepositoryStructure(repository)).isEqualTo("Repository structure could not be determined due to an error.");
+    }
+
+    @Test
+    void solutionCodeIncludesOnlyJavaUnderSourceRootAndReportsMissingCheckout() throws Exception {
+        ProgrammingExercise withRepository = spy(exercise);
+        when(withRepository.getVcsSolutionRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        assertThat(contextRendererService.getExistingSolutionCode(withRepository, gitService))
+                .isEqualTo("Solution repository not accessible. Please refer to the problem statement.");
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        assertThat(contextRendererService.getExistingSolutionCode(withRepository, gitService)).isEqualTo("No solution code found. Please refer to the problem statement.");
+        Files.createDirectories(tempDir.resolve("src/main"));
+        FileUtils.writeStringToFile(tempDir.resolve("src/main/Solver.java").toFile(), "class Solver {}", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("TopLevel.java").toFile(), "ignored", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("src/main/readme.txt").toFile(), "ignored", StandardCharsets.UTF_8);
+        assertThat(contextRendererService.getExistingSolutionCode(withRepository, gitService)).isEqualTo("// File: src/main/Solver.java\nclass Solver {}\n\n");
+        when(repository.getLocalPath()).thenReturn(tempDir.resolve("absent"));
+        assertThat(contextRendererService.getExistingSolutionCode(withRepository, gitService)).isEqualTo("Failed to read solution code. Please refer to the problem statement.");
+    }
+
+    @Test
+    void checkoutFailuresFailSolutionRequestsButTestContextFallsBack() throws Exception {
+        ProgrammingExercise withRepository = spy(exercise);
+        when(withRepository.getVcsSolutionRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        when(withRepository.getVcsTestRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenThrow(new IllegalStateException("checkout failed"));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> contextRendererService.getExistingSolutionCode(withRepository, gitService))
+                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.NetworkingException.class).hasMessage("Failed to access solution repository")
+                .hasRootCauseMessage("checkout failed");
+        assertThat(contextRendererService.getExistingTestCode(withRepository, gitService)).isEqualTo("No tests available yet.");
+    }
+
+    @Test
+    void testContextIgnoresSymlinksAndNonSourcesAndHandlesEmptyCheckout() throws Exception {
+        ProgrammingExercise withRepository = spy(exercise);
+        when(withRepository.getVcsTestRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        assertThat(contextRendererService.getExistingTestCode(withRepository, gitService)).isEqualTo("No tests available yet.");
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        FileUtils.writeStringToFile(tempDir.resolve("notes.txt").toFile(), "ignored", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(externalTempDir.resolve("secret.java").toFile(), "secret", StandardCharsets.UTF_8);
+        Files.createSymbolicLink(tempDir.resolve("Linked.java"), externalTempDir.resolve("secret.java"));
+        assertThat(contextRendererService.getExistingTestCode(withRepository, gitService)).isEqualTo("No tests available yet.");
+    }
+
+    @Test
+    void buildEnvironmentIgnoresHiddenDirectoriesAndIncludesHiddenToolchainFiles() throws Exception {
+        Files.createDirectories(tempDir.resolve(".private"));
+        FileUtils.writeStringToFile(tempDir.resolve(".private/pom.xml").toFile(), "secret", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve(".java-version").toFile(), "25", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("unrelated.txt").toFile(), "ignore", StandardCharsets.UTF_8);
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+        assertThat(contextRendererService.getBuildEnvironmentContext(repository)).contains(".java-version", "1 | 25").doesNotContain("secret", "unrelated.txt");
+    }
+
 }

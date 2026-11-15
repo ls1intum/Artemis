@@ -4,7 +4,7 @@ import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor
 import { ValueItem } from 'app/editor/markdown-editor/value-item.model';
 import { TextEditor } from './adapter/text-editor.interface';
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
-import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
+import { TextEditorCompletionItem } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 
 /**
  * Action to insert a test case into the editor. It also registers a completion item provider offers all possible test cases as completion items to the user.
@@ -30,7 +30,7 @@ export class TestCaseAction extends TextEditorDomainActionWithOptions {
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
             editor,
             () => Promise.resolve(this.values),
-            (item: ValueItem, range: TextEditorRange) => new TextEditorCompletionItem(item.value, 'Test', item.value, TextEditorCompletionItemKind.Default, range),
+            (item: ValueItem, range: TextEditorRange) => new TextEditorCompletionItem(item.value, 'Test', item.value, range),
         );
     }
 

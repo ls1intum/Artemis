@@ -1,0 +1,41 @@
+{
+    "artemisApp": {
+        "deletionProgress": {
+            "title": {
+                "inProgress": "Deleting {{ title }}",
+                "completed": "{{ title }} was deleted",
+                "failed": "Deleting {{ title }} failed"
+            },
+            "preparing": "Preparing the deletion…",
+            "progressLabel": "Deletion progress",
+            "steps": "Step {{ current }} of {{ total }}",
+            "remaining": "About {{ time }} remaining",
+            "items": "{{ processed }} of {{ total }} done",
+            "currentItem": "Currently deleting: {{ title }}",
+            "backgroundHint": "The server deletes in the background and keeps going if you close this window or the browser tab.",
+            "continueInBackground": "Continue in background",
+            "failedHint": "The deletion was stopped. Parts of it may already be deleted. Please check what is left before you try again.",
+            "dismiss": "Close",
+            "bulkStarted": "Deleting {{ count }} exercises in the background. The list updates when they are gone.",
+            "step": {
+                "channel": "Removing the communication channel",
+                "plagiarism": "Removing plagiarism results",
+                "participations": "Deleting student participations, submissions and results",
+                "exampleSubmissions": "Deleting example submissions",
+                "studentExams": "Removing the exercise from the student exams",
+                "irisSessions": "Deleting Iris chat sessions",
+                "programmingArtifacts": "Deleting repositories and build plans",
+                "exercise": "Deleting the exercise",
+                "cleanup": "Cleaning up",
+                "testRuns": "Deleting test runs",
+                "exercises": "Deleting the exercises",
+                "gradingScale": "Deleting the grading scale",
+                "exam": "Deleting the exam",
+                "exerciseGroup": "Deleting the exercise group"
+            },
+            "otherDeletionRunning": "An exercise group of this exam is being deleted in the background.",
+            "failedInBackground": "Deleting {{ title }} failed. Parts of it may already be deleted. {{ error }}",
+            "requestRejected": "The deletion of {{ title }} could not be started."
+        }
+    }
+}

@@ -43,7 +43,6 @@ public class DeimosLlmConfiguration {
      * @return a configured {@link OpenAiChatModel} for Deimos
      */
     @Bean
-    @Qualifier("deimosChatModel")
     @Lazy
     public OpenAiChatModel deimosChatModel(@Value("${artemis.deimos.llm.base-url}") String baseUrl, @Value("${artemis.deimos.llm.api-key}") String apiKey,
             @Value("${artemis.deimos.llm.completions-path:/api/chat/completions}") String completionsPath, @Value("${artemis.deimos.llm.model}") String model,
@@ -63,7 +62,6 @@ public class DeimosLlmConfiguration {
      * @return a configured {@link ChatClient} for Deimos
      */
     @Bean
-    @Qualifier("deimosChatClient")
     @Lazy
     public ChatClient deimosChatClient(@Qualifier("deimosChatModel") OpenAiChatModel chatModel) {
         log.info("Configuring Deimos ChatClient");

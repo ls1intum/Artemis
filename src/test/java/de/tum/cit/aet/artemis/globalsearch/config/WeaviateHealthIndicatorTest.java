@@ -28,7 +28,7 @@ class WeaviateHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "Artemis_", "none", null, null, null, null);
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "Artemis_", "none", null, null, null, null, null);
         healthIndicator = new WeaviateHealthIndicator(client, properties);
     }
 

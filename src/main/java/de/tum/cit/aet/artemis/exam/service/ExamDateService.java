@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -208,6 +207,7 @@ public class ExamDateService {
      * @param originalExamDuration the exam duration in seconds before the change
      * @param workingTimeChange    the change to the exam duration in seconds (may be negative)
      * @return the working time in seconds the student exam will have after the change
+     * @throws ArithmeticException if the time adjustment or resulting working time exceeds the supported integer range
      */
     public static int projectWorkingTimeAfterDurationChange(int currentWorkingTime, int originalExamDuration, int workingTimeChange) {
         if (workingTimeChange == 0) {
@@ -221,7 +221,7 @@ public class ExamDateService {
         double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
         int newNormalWorkingTime = originalExamDuration + workingTimeChange;
         int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-        return Math.max(newNormalWorkingTime + timeAdjustment, 0);
+        return Math.max(Math.addExact(newNormalWorkingTime, timeAdjustment), 0);
     }
 
     /**
@@ -244,13 +244,9 @@ public class ExamDateService {
      * If no student exams are available, an empty set returned.
      *
      * @param exam the exam
-     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     * @return a set of all end dates. May return an empty set, if student exams cannot be found.
      */
-    @Nullable
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Exam exam) {
-        if (exam.getStartDate() == null) {
-            return null;
-        }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }

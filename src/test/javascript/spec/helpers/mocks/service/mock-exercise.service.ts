@@ -9,6 +9,14 @@ export class MockExerciseService {
         return MockExerciseService.response({ id: exerciseId } as Exercise);
     }
 
+    findForStaff(exerciseId: number) {
+        return MockExerciseService.response({ id: exerciseId } as Exercise);
+    }
+
+    findForExamManagement(exerciseId: number) {
+        return MockExerciseService.response({ id: exerciseId } as Exercise);
+    }
+
     getUpcomingExercises() {
         return MockExerciseService.response([{ id: 1 } as Exercise, { id: 2 } as Exercise]);
     }

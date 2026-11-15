@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -32,8 +32,8 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-ed
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonComponent,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
         UpdatingResultComponent,
         ProgrammingExerciseBuildConfigurationComponent,

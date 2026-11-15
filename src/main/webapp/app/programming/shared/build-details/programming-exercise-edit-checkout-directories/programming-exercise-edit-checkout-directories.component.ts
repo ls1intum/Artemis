@@ -7,10 +7,11 @@ import { Subject } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
-    imports: [HelpIconComponent, TranslateDirective, FormsModule],
+    imports: [HelpIconComponent, TranslateDirective, FormsModule, ArtemisTranslatePipe],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })

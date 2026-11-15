@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { WebsocketNode } from 'app/admin/websocket/websocket-node.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class WebsocketAdminService {
     private readonly http = inject(HttpClient);
     private readonly resourceUrl = 'api/admin/websocket';

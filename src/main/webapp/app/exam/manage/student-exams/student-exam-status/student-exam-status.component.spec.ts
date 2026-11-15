@@ -32,10 +32,11 @@ describe('StudentExamStatusComponent', () => {
         fixture.componentRef.setInput('hasStudentsWithoutExam', false);
         fixture.detectChanges();
 
-        const tag = fixture.debugElement.query(By.css('p-tag'));
+        const tag = fixture.debugElement.query(By.css('tumaet-ui-tag'));
         expect(tag).not.toBeNull();
         expect(tag.nativeElement.textContent).toContain('artemisApp.studentExams.studentExamStatusTestExam');
-        const icon = fixture.debugElement.query(By.css('.pi-info-circle'));
+        expect(tag.nativeElement.querySelector('[data-severity]').getAttribute('data-severity')).toBe('info');
+        const icon = fixture.debugElement.query(By.css('svg[data-icon="circle-info"]'));
         expect(icon).not.toBeNull();
     });
 
@@ -44,10 +45,11 @@ describe('StudentExamStatusComponent', () => {
         fixture.componentRef.setInput('hasStudentsWithoutExam', true);
         fixture.detectChanges();
 
-        const tag = fixture.debugElement.query(By.css('p-tag'));
+        const tag = fixture.debugElement.query(By.css('tumaet-ui-tag'));
         expect(tag).not.toBeNull();
         expect(tag.nativeElement.textContent).toContain('artemisApp.studentExams.studentExamStatusWarning');
-        const icon = fixture.debugElement.query(By.css('.pi-exclamation-triangle'));
+        expect(tag.nativeElement.querySelector('[data-severity]').getAttribute('data-severity')).toBe('warn');
+        const icon = fixture.debugElement.query(By.css('svg[data-icon="triangle-exclamation"]'));
         expect(icon).not.toBeNull();
     });
 
@@ -56,10 +58,11 @@ describe('StudentExamStatusComponent', () => {
         fixture.componentRef.setInput('hasStudentsWithoutExam', false);
         fixture.detectChanges();
 
-        const tag = fixture.debugElement.query(By.css('p-tag'));
+        const tag = fixture.debugElement.query(By.css('tumaet-ui-tag'));
         expect(tag).not.toBeNull();
         expect(tag.nativeElement.textContent).toContain('artemisApp.studentExams.studentExamStatusSuccess');
-        const icon = fixture.debugElement.query(By.css('.pi-check'));
+        expect(tag.nativeElement.querySelector('[data-severity]').getAttribute('data-severity')).toBe('success');
+        const icon = fixture.debugElement.query(By.css('svg[data-icon="check"]'));
         expect(icon).not.toBeNull();
     });
 });

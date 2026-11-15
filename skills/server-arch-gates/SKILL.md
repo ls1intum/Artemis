@@ -1,14 +1,12 @@
 ---
 name: server-arch-gates
-description: Check Artemis server code against the architectural rules the build enforces, before pushing. Use when writing or changing Java under src/main/java, adding a service, repository, REST resource, DTO, cache, or cross-node state, or when an ArchUnit test fails and the message does not make the rule obvious. Gives the rule, the reason, and the exact local command that proves it.
+description: Apply Artemis architecture rules when changing server Java or diagnosing an ArchUnit failure.
 ---
 
 # Server architecture gates
 
-Artemis enforces its server conventions with a large ArchUnit suite under `src/test/java`, most of
-it module-scoped subclasses of a handful of abstract rule bases. They are not style preferences. Each one exists because the pattern it forbids
-produced a production bug. The failure messages are often terse, so this skill maps a change to the
-rules it is subject to and to the reason behind each.
+Artemis enforces server conventions with ArchUnit tests under `src/test/java`. This skill maps
+server changes to those checks and explains rules whose failure messages lack context.
 
 ## Run them locally
 
@@ -36,10 +34,13 @@ A single class while iterating:
 | A repository                           | Transactions, raw JDBC                              |
 | A DTO record                           | DTO conventions                                     |
 | Anything holding state across requests | Caching, distributed data                           |
-| An entity or an association            | Caching, entity conventions                         |
+| An entity or an association            | Caching, entity conventions, column mapping         |
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
-| Anything that serializes JSON          | Jackson version                                      |
+| Anything that serializes JSON          | Jackson version                                     |
+| A websocket topic or message handler   | Websocket topics                                    |
+| An endpoint a coding agent should call | Endpoints opted in to access tokens                 |
+| A quiz endpoint or a DTO it uses       | Quiz OpenAPI specification                          |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -53,6 +54,18 @@ The one exception is `com.fasterxml.jackson.annotation`: `jackson-annotations` n
 not be "fixed". Mappers are immutable in Jackson 3 — derive one with `JsonMapper.builder()` or
 `rebuild()`, never `configure()` or `registerModule()` on a built instance — and its exceptions are
 unchecked, so a `catch (IOException)` no longer catches a parse failure.
+
+## Configuration lifecycle
+
+Course and exercise settings use permanent default rows. Create courses with
+`CourseRepository.saveWithDefaultConfigurations`; this initializes settings even when an optional module is disabled.
+Every path that stores a new exercise (creation, every kind of import, copies) calls
+`ExerciseConfigurationService.initialize` right after the first save; it inserts the team and plagiarism rows with a plain
+INSERT after an unlocked existence read, and applies the request's settings in place, and nothing creates a missing row later. Programming
+creation/import also persists build settings.
+Use modifying queries for feature switches and settings endpoints, preserving configuration ids. Do not recreate or
+remove settings when disabling a feature. Backfill existing owners with the Liquibase migration skill. See
+[database](../../documentation/docs/developer/guidelines/database.mdx#permanent-configuration-rows).
 
 ## The rules most often broken
 
@@ -71,11 +84,9 @@ with `nativeQuery = true` where there is no entity to name. Enforced by
 `shouldNotUseEntityManagerDirectly` and `shouldNotUseRawJdbcDirectly` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
 
-Three classes sit on that rule's exception list, carrying a TODO to refactor them away. One of them
-is `TitleCacheEvictionService`, which holds an `EntityManagerFactory` purely to reach the Hibernate
-`EventListenerRegistry` and register itself as a listener. So when the caching section below calls
-it the canonical eviction pattern, copy its eviction logic, not its constructor: a new class doing
-the same thing fails the rule, because the list is grandfathering rather than permission. Raw JDBC
+Two classes, `RepositoryImpl` and `CustomPostRepositoryImpl`, sit on that rule's exception list,
+carrying a TODO to refactor them away. A new class doing the same thing fails the rule, because the
+list is grandfathering rather than permission. Raw JDBC
 has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 
 **Never touch Hazelcast or Redis directly.** All cross-node state goes through
@@ -83,6 +94,12 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
 The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
+
+**No `@Lob`.** A CLOB on PostgreSQL is a large object, so the value lands in `pg_largeobject` and the
+column keeps only its id - while the long text columns here are Liquibase `longtext` or `clob`, both
+`text` on PostgreSQL, holding the text itself. A `String` or a converted attribute needs no
+annotation at all; for a structured value use `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column.
+Enforced by `testNoLobAnnotation` in `ArchitectureTest.java`.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection
@@ -96,6 +113,38 @@ default locale, so the same input gives a different answer depending on where th
 `Locale.ROOT` for machine-facing values and `Locale.ENGLISH` only where the surrounding code already
 does for that kind of value. Enforced by `testNoLocaleLessCaseConversion` in `ArchitectureTest.java`,
 over production and test classes both.
+
+**Every websocket destination is a declared topic.** Declare a `WebsocketTopic` with its
+`WebsocketTopicAccess` rule, or a `WebsocketUserTopic` for data of one user, as a `public static final`
+constant of the module's `web/<Module>WebsocketTopics` class, and send with
+`websocketMessagingService.sendMessage(TOPIC.at(id), dto)`. A subscription to an undeclared destination
+is rejected, so a topic that is sent but not declared silently reaches nobody. Clients send only to
+`/app/...` destinations handled by `@MessageMapping` methods, which check the sender themselves.
+Enforced by `WebsocketTopicArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`.
+
+**JSON through records, never the tree model.** Production code does not use `JsonNode`, `ObjectNode`, `ArrayNode` or the
+other classes of `tools.jackson.databind.node`, and does not call `readTree`, `valueToTree`, `treeToValue`, `createObjectNode`,
+`createArrayNode` or `readValueAsTree`. Model the JSON as a record and use `readValue` and `writeValueAsString`; there are no
+exceptions. Enforced by `JacksonTreeModelArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`, over production classes only.
+
+**Endpoints opted in to access tokens.** Opting an endpoint in with `@AllowedScopes` makes it reachable by a coding agent that
+holds a personal access token, so it needs an `@EnforceAtLeast...` annotation, DTOs only in its request body and response, an
+`@Operation` summary, and an entry in the committed agent specification
+(`./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp`). Exercise and lecture-unit endpoints with the
+draft-date contract also call `AgentDraftRules`; announcements, competencies and lecture metadata are immediately visible.
+No architecture test checks the draft guard, so add an endpoint test that a token cannot publish through a draft-capable endpoint.
+The other rules are enforced by `AllowedScopesArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`. See
+[agent access](../../documentation/docs/developer/agent-access.mdx).
+
+**Quiz OpenAPI specification.** The generated Angular client is built from the committed `config/openapi/openapi.yaml`, so a
+quiz endpoint or DTO change must regenerate it (`./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp`, then
+`./gradlew openApiGenerate -x webapp`) and commit the specification with `src/main/webapp/app/openapi`. Enforced by
+`QuizOpenApiSpecificationArchitectureTest` in `src/test/java/de/tum/cit/aet/artemis/quiz/architecture/`, which compares the
+operations under `/api/quiz/`, their parameters and every DTO schema they use with the committed file. See
+[OpenAPI](../../documentation/docs/developer/openapi.mdx).
 
 ## Before adding a cache
 

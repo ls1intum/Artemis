@@ -61,6 +61,8 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
     public isActiveQuiz?: boolean;
     public isPracticeModeAvailable?: boolean;
     public isEditable?: boolean;
+    /** Set by the server on the instructor detail view: whether the evaluate action is accepted right now. */
+    public canBeEvaluated?: boolean;
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.QUIZ);

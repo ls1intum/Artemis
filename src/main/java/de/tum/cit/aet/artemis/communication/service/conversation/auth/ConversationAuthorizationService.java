@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -47,7 +48,7 @@ public class ConversationAuthorizationService {
         }
         var userToCheck = user;
         var persistenceUtil = Persistence.getPersistenceUtil();
-        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || userToCheck.getAuthorities() == null) {
+        if (!persistenceUtil.isLoaded(userToCheck, User_.AUTHORITIES) || userToCheck.getAuthorities() == null) {
             userToCheck = userRepository.getUserWithAuthorities(user.getLogin());
         }
         return userToCheck;

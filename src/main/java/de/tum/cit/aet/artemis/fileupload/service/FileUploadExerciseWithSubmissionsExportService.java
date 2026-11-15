@@ -10,8 +10,12 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -25,8 +29,10 @@ import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
 @Service
 public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public FileUploadExerciseWithSubmissionsExportService(FileUploadSubmissionExportService fileUploadSubmissionExportService, JsonMapper objectMapper) {
-        super(objectMapper, fileUploadSubmissionExportService);
+    public FileUploadExerciseWithSubmissionsExportService(FileUploadSubmissionExportService fileUploadSubmissionExportService, JsonMapper objectMapper,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, FileService fileService,
+            ZipFileService zipFileService) {
+        super(objectMapper, fileUploadSubmissionExportService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository, fileService, zipFileService);
     }
 
     /**

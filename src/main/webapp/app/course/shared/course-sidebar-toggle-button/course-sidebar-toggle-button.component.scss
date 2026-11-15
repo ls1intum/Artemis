@@ -2,16 +2,16 @@
     display: inline-flex;
 }
 
-.btn-sidebar-collapse {
+.sidebar-toggle {
     --sidebar-toggle-chevron-rotation: -180deg;
 
-    color: var(--bs-tertiary-color);
+    color: var(--tumaet-ui-muted-color);
     position: relative;
     overflow: hidden;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--link-item-bg);
+    background-color: var(--tumaet-ui-control-background);
     transition:
         background-color 0.18s ease-in-out,
         color 0.18s ease-in-out,
@@ -23,11 +23,11 @@
 
     &:hover,
     &:focus-visible {
-        background-color: var(--sidebar-card-selected-bg);
+        background-color: var(--tumaet-ui-hover-background);
     }
 
     &:active {
-        background-color: var(--sidebar-card-selected-bg);
+        background-color: var(--tumaet-ui-hover-background);
     }
 
     &.is-collapsed {
@@ -35,19 +35,19 @@
     }
 }
 
-.btn-sidebar-collapse-chevron-start {
+.sidebar-toggle-chevron-start {
     margin-right: -0.7rem;
 }
 
-.btn-sidebar-collapse-icon,
-.btn-sidebar-collapse-chevron fa-icon {
+.sidebar-toggle-icon,
+.sidebar-toggle-chevron fa-icon {
     color: currentcolor;
     transition:
         color 0.18s ease-in-out,
         transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.btn-sidebar-collapse-chevron {
+.sidebar-toggle-chevron {
     display: inline-flex;
     align-items: center;
     overflow: hidden;
@@ -58,16 +58,16 @@
         transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.btn-sidebar-collapse:hover .btn-sidebar-collapse-chevron,
-.btn-sidebar-collapse:focus-visible .btn-sidebar-collapse-chevron {
+.sidebar-toggle:hover .sidebar-toggle-chevron,
+.sidebar-toggle:focus-visible .sidebar-toggle-chevron {
     transform: rotate(var(--sidebar-toggle-chevron-rotation));
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .btn-sidebar-collapse,
-    .btn-sidebar-collapse-icon,
-    .btn-sidebar-collapse-chevron,
-    .btn-sidebar-collapse-chevron fa-icon {
+    .sidebar-toggle,
+    .sidebar-toggle-icon,
+    .sidebar-toggle-chevron,
+    .sidebar-toggle-chevron fa-icon {
         transition: none;
     }
 }

@@ -7,6 +7,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 describe('SearchResultItemComponent', () => {
     let component: SearchResultItemComponent;
@@ -28,6 +30,35 @@ describe('SearchResultItemComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    describe('tags beside the title', () => {
+        const tag = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
+
+        it('shows no tag for an ordinary result', () => {
+            expect(tag('search-result-exam-tag')).toBeNull();
+            expect(tag('search-result-reply-tag')).toBeNull();
+        });
+
+        it('marks an exam exercise with a warning tag', () => {
+            fixture.componentRef.setInput('result', { id: '1', title: 'Exam task', type: 'exercise', metadata: { examId: 7 } } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const examTag = tag('search-result-exam-tag');
+            expect(examTag).not.toBeNull();
+            expect(examTag!.querySelector('[data-severity]')?.getAttribute('data-severity')).toBe('warn');
+            expect(tag('search-result-reply-tag')).toBeNull();
+        });
+
+        it('marks a reply with an info tag', () => {
+            fixture.componentRef.setInput('result', { id: '1', title: 'Answer', type: 'message', metadata: { isReply: true } } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const replyTag = tag('search-result-reply-tag');
+            expect(replyTag).not.toBeNull();
+            expect(replyTag!.querySelector('[data-severity]')?.getAttribute('data-severity')).toBe('info');
+            expect(tag('search-result-exam-tag')).toBeNull();
+        });
     });
 
     it('should compute metadata correctly', () => {
@@ -99,14 +130,16 @@ describe('SearchResultItemComponent', () => {
         } as GlobalSearchResult);
         fixture.detectChanges();
 
-        const descriptionEl: HTMLElement = fixture.nativeElement.querySelector('.result-description');
-        expect(descriptionEl).toBeTruthy();
+        const markdownElement = fixture.debugElement.query(By.directive(MarkdownDirective));
+        expect(markdownElement).toBeTruthy();
+        const descriptionEl: HTMLElement = markdownElement.nativeElement;
 
-        // The link text should be visible (markdown is rendered asynchronously via the lazy [jhiMarkdown] directive).
-        await vi.waitFor(() => {
-            fixture.detectChanges();
-            expect(descriptionEl.textContent).toContain('docs');
+        // Await the real lazy conversion instead of imposing a separate polling deadline on chunk loading.
+        await new Promise<void>((resolve) => {
+            markdownElement.injector.get(MarkdownDirective).markdownRendered.subscribe(resolve);
         });
+        fixture.detectChanges();
+        expect(descriptionEl.textContent).toContain('docs');
 
         // But no <a> element should be present
         const anchor = descriptionEl.querySelector('a');

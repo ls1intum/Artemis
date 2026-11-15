@@ -1,17 +1,22 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.AIWORKER_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
-import static de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
@@ -21,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Helper class for property configuration, in particular for determining conditions
@@ -71,23 +77,43 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the AtlasML submodule is enabled.
+     * Check if the LLM-backed part of Atlas is enabled: the chat agent, the autonomous competency orchestrator, and the
+     * tool surfaces they call. Requires the Atlas module itself, since it operates on competencies.
      *
      * @param environment the Spring environment
-     * @return true if the AtlasML module is enabled, false otherwise
+     * @return true if the AtlasLLM submodule is enabled, false otherwise
      */
-    public boolean isAtlasMLEnabled(Environment environment) {
-        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASML_ENABLED_PROPERTY_NAME, environment);
+    public boolean isAtlasLLMEnabled(Environment environment) {
+        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASLLM_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
-     * Check if the Hyperion module is enabled.
+     * Check if the Hyperion module is enabled on a core node. Worker-only nodes cannot load its server services.
      *
      * @param environment the Spring environment
      * @return true if the Hyperion module is enabled, false otherwise
      */
     public boolean isHyperionEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+        return environment.acceptsProfiles(Profiles.of(PROFILE_CORE)) && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether core may coordinate opt-in generation using LocalVC and LocalCI
+     */
+    public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
+        return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                && environment.acceptsProfiles(Profiles.of(PROFILE_CORE + " & " + PROFILE_LOCALCI + " & " + PROFILE_LOCALVC));
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether this core node coordinates AI Workers for generation or an explicitly enabled workload
+     */
+    public boolean isAiWorkerEnabled(Environment environment) {
+        return environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Constants.PROFILE_CORE))
+                && (environment.getProperty(AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                        || (environment.getProperty(HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false) && isHyperionExerciseGenerationEnabled(environment)));
     }
 
     /**
@@ -237,7 +263,7 @@ public class ArtemisConfigHelper {
      * @return true if OIDC is enabled, false otherwise
      */
     public boolean isOIDCEnabled(Environment environment) {
-        return environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
+        return !isWorkerOnly(environment) && environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
@@ -259,7 +285,7 @@ public class ArtemisConfigHelper {
      */
     public boolean isWeaviateEnabled(Environment environment) {
         // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
-        return environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
+        return !isWorkerOnly(environment) && environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
@@ -274,11 +300,17 @@ public class ArtemisConfigHelper {
         if (isAtlasEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_ATLAS);
         }
-        if (isAtlasMLEnabled(environment)) {
-            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASML);
+        if (isAtlasLLMEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASLLM);
         }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isHyperionExerciseGenerationEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+        }
+        if (isAiWorkerEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AIWORKER);
         }
         if (isDeimosEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
@@ -334,11 +366,34 @@ public class ArtemisConfigHelper {
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
         }
+        if (isWeaviateEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
+        }
+        if (isAgentAccessEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AGENT_ACCESS);
+        }
 
         return enabledFeatures;
     }
 
+    /**
+     * Check if agent access (personal access tokens and the endpoints built on them) is enabled. Off unless explicitly configured.
+     *
+     * @param environment the Spring environment
+     * @return true if {@code artemis.agent-access.enabled} is true on a node that serves the core application
+     */
+    public boolean isAgentAccessEnabled(Environment environment) {
+        return !isWorkerOnly(environment) && Boolean.TRUE.equals(environment.getProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, Boolean.class));
+    }
+
+    private boolean isWorkerOnly(Environment environment) {
+        return environment.matchesProfiles(Constants.PROFILE_AIWORKER + " & !" + PROFILE_CORE);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
+        if (isWorkerOnly(environment)) {
+            return false;
+        }
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
             throw new RuntimeException(

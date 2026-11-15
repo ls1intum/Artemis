@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -219,7 +220,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldSendOnlyTheAdminSnapshotWhenNoCourseTopicIsWatched() {
-        withOnlySubscriberTo(LocalCIWebsocketMessagingService.ADMIN_QUEUED_JOBS_TOPIC);
+        withOnlySubscriberTo(LocalCIWebsocketTopics.ADMIN_QUEUED_JOBS.at().value());
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
 
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
@@ -231,7 +232,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldDecideWhoIsWatchingFromTheCoursesItDrained() {
-        withOnlySubscriberTo(LocalCIWebsocketMessagingService.queuedJobsTopicForCourse(COURSE_ID));
+        withOnlySubscriberTo(LocalCIWebsocketTopics.COURSE_QUEUED_JOBS.at(COURSE_ID).value());
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"), queuedJobOfOtherCourse("2"))));
 
         // one watched course and one nobody is looking at, in the same run: the watched one must still be sent, and the

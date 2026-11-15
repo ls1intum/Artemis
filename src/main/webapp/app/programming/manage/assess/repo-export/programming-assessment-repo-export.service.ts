@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -14,7 +14,7 @@ export type RepositoryExportOptions = {
     normalizeCodeStyle: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingAssessmentRepoExportService {
     private http = inject(HttpClient);
 
@@ -43,6 +43,12 @@ export class ProgrammingAssessmentRepoExportService {
     exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
         const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${String(participationIds)}`;
         return this.http.post(url, repositoryExportOptions, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+    exportIdentifiedReposByParticipations(exerciseId: number, participationIds: number[], options: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${String(participationIds)}/for-instructor`, options, {
             observe: 'response',
             responseType: 'blob',
         });

@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -56,6 +57,9 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "examstarttest";
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -131,7 +135,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercisesWithTextExercise() throws Exception {
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
@@ -156,7 +160,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercisesForSimulationExamWithTextExercise() throws Exception {
         exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
@@ -185,7 +189,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercisesWithModelingExercise() throws Exception {
         // creating exercise
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().getFirst());
@@ -209,7 +213,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExerciseWithProgrammingExercise() throws Exception {
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
@@ -240,7 +244,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @ParameterizedTest(name = "{displayName} [{index}]")
     @ArgumentsSource(ExamStartDateSource.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExerciseWithProgrammingExercise_participationUnlocked(ZonedDateTime startDate) throws Exception {
         exam.setVisibleDate(ZonedDateTime.now().minusHours(2));
         exam.setStartDate(startDate);
@@ -278,8 +282,9 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private ProgrammingExercise createProgrammingExercise() {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().getFirst());
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
+        // The configuration is a row of its own that names the exercise, and starting a participation reads the branch off it.
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         exam.getExerciseGroups().getFirst().addExercise(programmingExercise);
         exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());

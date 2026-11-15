@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 
@@ -60,12 +60,13 @@ public class ExerciseReviewVersionChangeService {
 
     private final CommentRepository commentRepository;
 
-    private final GitService gitService;
+    private final BareGitRepositoryService bareGitRepositoryService;
 
-    public ExerciseReviewVersionChangeService(CommentThreadRepository commentThreadRepository, CommentRepository commentRepository, GitService gitService) {
+    public ExerciseReviewVersionChangeService(CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
+            BareGitRepositoryService bareGitRepositoryService) {
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
-        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
     }
 
     /**
@@ -475,7 +476,7 @@ public class ExerciseReviewVersionChangeService {
             filePlans.put(requiredFilePath, FileMappingPlan.unchanged());
         }
 
-        try (Repository repository = gitService.getBareRepository(repoDiffKey.repositoryUri(), false);
+        try (Repository repository = bareGitRepositoryService.getBareRepository(repoDiffKey.repositoryUri(), false);
                 ObjectReader reader = repository.newObjectReader();
                 DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
             diffFormatter.setRepository(repository);

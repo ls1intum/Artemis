@@ -54,6 +54,14 @@ export interface FilterMenuOption {
  */
 export const FILTER_MENU_LISTBOX_ID = 'global-search-filter-menu';
 
+/** DOM id of the results listbox, which the input controls while results are shown. */
+export const SEARCH_RESULTS_LISTBOX_ID = 'global-search-results';
+
+/** DOM id for one row of the results list (the slides-and-videos row counts as row 0 when shown). */
+export function searchResultOptionDomId(index: number): string {
+    return `gs-result-option-${index}`;
+}
+
 /** DOM id for a single menu option, referenced by the input's `aria-activedescendant`. */
 export function filterOptionDomId(optionId: string): string {
     return `gs-filter-option-${optionId}`;

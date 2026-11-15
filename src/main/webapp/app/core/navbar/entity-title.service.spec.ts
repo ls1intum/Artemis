@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import 'app/foundation/util/map.extension';
 
-vi.mock('@sentry/angular', async (importOriginal) => {
-    const originalModule = await importOriginal<typeof import('@sentry/angular')>();
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => {
+    const originalModule = await importOriginal<typeof import('app/core/error-reporting/capture-exception')>();
     return {
         ...originalModule,
         captureException: vi.fn(),
@@ -12,13 +12,14 @@ vi.mock('@sentry/angular', async (importOriginal) => {
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import * as Sentry from '@sentry/angular';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;
@@ -77,6 +78,41 @@ describe('EntityTitleService', () => {
         subscription.unsubscribe();
     });
 
+    it('fetches a tutorial group title as plain text through the generated API', () => {
+        vi.useFakeTimers();
+        try {
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+
+            const http = TestBed.inject(HttpTestingController);
+            const request = http.expectOne('/api/tutorialgroup/tutorial-groups/17/title');
+            expect(request.request.method).toBe('GET');
+            expect(request.request.responseType).toBe('text');
+            request.flush('Tutorial title');
+            expect(titles).toEqual(['Tutorial title']);
+            http.verify();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('does not overwrite a renamed tutorial group with an older fallback response', () => {
+        vi.useFakeTimers();
+        try {
+            const response = new Subject<string>();
+            vi.spyOn(TestBed.inject(TutorialGroupApi), 'getTitle').mockReturnValue(response);
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+            service.setTitle(EntityType.TUTORIAL_GROUP, [17], 'Renamed group');
+            response.next('Previous group title');
+            expect(titles).toEqual(['Renamed group']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('waits for a title to be set if not present and does not fire the request if it arrives within 3 seconds', async () => {
         const http = TestBed.inject(HttpClient);
         const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Test Hint' })));
@@ -113,7 +149,7 @@ describe('EntityTitleService', () => {
         { type: undefined, ids: [] },
     ])('captures an exception if invalid parameters are supplied to getTitle', async ({ type, ids }) => {
         // Re-mock to get reference because direct import doesn't work here
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
 
         // @ts-ignore we want to test invalid params
@@ -137,7 +173,7 @@ describe('EntityTitleService', () => {
         { type: undefined, ids: [], title: undefined },
     ])('captures an exception if invalid parameters are supplied to setTitle', ({ type, ids, title }) => {
         // Re-mock to get reference because direct import doesn't work here
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
 
         // @ts-ignore we want to test invalid params
@@ -194,6 +230,25 @@ describe('EntityTitleService - authentication state changes', () => {
         scoped = TestBed.inject(EntityTitleService);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should cancel pending title fetches when the injector is destroyed', () => {
+        vi.useFakeTimers();
+        const http = TestBed.inject(HttpClient);
+        const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Late Title' })));
+
+        scoped.getTitle(EntityType.COURSE, [1]).subscribe();
+
+        // Destroys the injector, like the TestBed teardown after each test
+        TestBed.resetTestingModule();
+        vi.advanceTimersByTime(3000);
+
+        expect(httpSpy).not.toHaveBeenCalled();
+    });
+
     it('should clear cached titles on logout', async () => {
         scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
         const before = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
@@ -229,13 +284,28 @@ describe('EntityTitleService - authentication state changes', () => {
         expect(result).toBe('Course Title');
     });
 
+    it('ignores a tutorial group title response after logout', () => {
+        vi.useFakeTimers();
+        scoped.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe();
+        vi.advanceTimersByTime(3000);
+        const request = TestBed.inject(HttpTestingController).expectOne('/api/tutorialgroup/tutorial-groups/17/title');
+
+        authState.next(undefined);
+        request.flush('Previous user title');
+
+        const titles: string[] = [];
+        const subscription = scoped.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+        expect(titles).toEqual([]);
+        subscription.unsubscribe();
+        TestBed.inject(HttpTestingController).verify();
+    });
+
     it('should ignore in-flight title fetches that resolve after a logout', () => {
         const http = TestBed.inject(HttpClient);
         const inFlight = new Subject<HttpResponse<string>>();
         vi.spyOn(http, 'get').mockReturnValue(inFlight.asObservable());
 
-        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test
-        // synchronous and immune to injector teardown between tests.
+        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test synchronous.
         (scoped as unknown as { fetchTitle: (type: EntityType, ids: number[]) => void }).fetchTitle(EntityType.COURSE, [1]);
 
         authState.next(undefined);

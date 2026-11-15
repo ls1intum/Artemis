@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
@@ -8,6 +8,7 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/foundation/util/utils';
@@ -69,12 +70,13 @@ export interface IProgrammingSubmissionService {
     getResultEtaInMs: () => Observable<number>;
     triggerBuild: (participationId: number) => Observable<object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
-    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
+    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<SelectedBuildRun>;
+    getSelectedBuildRunStatus: (exerciseId: number, runId: string) => Observable<SelectedBuildRunStatus>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
     unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
     private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);
@@ -225,7 +227,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Fetch the latest pending submission for a participation, which means:
      * - Submission is the newest one (by submissionDate)
      * - Submission does not have a result (yet)
-     * - Submission is not older than DEFAULT_EXPECTED_RESULT_ETA (in this case it could be that never a result will come due to an error)
+     * - Running submissions remain pending even when they exceed the fallback result wait
      *
      * This method is private on purpose as subscribers should not try to load initial data!
      * A separate initial fetch is not necessary as this service takes care of it and provides a BehaviorSubject.
@@ -233,9 +235,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      */
     private fetchLatestPendingSubmissionByParticipationId(participationId: number): Observable<ProgrammingSubmission | undefined> {
-        return this.http
-            .get<ProgrammingSubmission>('api/programming/programming-exercise-participations/' + participationId + '/latest-pending-submission')
-            .pipe(catchError(() => of(undefined)));
+        return this.http.get<ProgrammingSubmission>('api/programming/programming-exercise-participations/' + participationId + '/latest-pending-submission');
     }
 
     /**
@@ -369,7 +369,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             }
 
                             this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, submission, buildTimingInfo);
-                            this.startResultWaitingTimer(submissionParticipationId);
+                            this.startResultWaitingTimer(
+                                submissionParticipationId,
+                                this.isLocalCIEnabled ? this.getExpectedRemainingTimeForBuild(programmingSubmission, buildTimingInfo) : undefined,
+                            );
                         }),
                     )
                     .subscribe();
@@ -443,7 +446,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             this.resetQueueEstimateTimer(submissionParticipationId);
                             this.emitBuildingSubmission(submissionParticipationId, exerciseId, programmingSubmission, buildTimingInfo);
 
-                            this.startResultWaitingTimer(submissionParticipationId);
+                            this.startResultWaitingTimer(submissionParticipationId, this.getExpectedRemainingTimeForBuild(programmingSubmission, buildTimingInfo));
                         }),
                     )
                     .subscribe();
@@ -474,7 +477,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Waits for a new result to come in while a pending submission exists.
-     * Will stop waiting after the timer subject has emitted a value.
+     * Rechecks local CI processing when the timer expires, and stops once a result arrives or the build is no longer active.
      *
      * @param participationId that is connected to the result.
      * @param exerciseId that is connected to the participation.
@@ -494,36 +497,83 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
         );
 
-        // If the timer runs out and the fallback fails we will emit an error as we assume the result is lost
-        const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
-            // Fallback: Try to fetch the latest result from the server as the websocket connection might have failed
-            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
-            tap((result: Result | undefined) => {
-                if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
-                    // Notify all result subscribers with the latest result if it belongs to the latest submission
-                    // This will also trigger the resultObservable above, which emits that the submission is no longer pending
-                    this.participationWebsocketService.notifyAllResultSubscribers(result);
-                } else {
-                    // Otherwise, notify that submission subscribers that the result could not be retrieved
-                    this.emitFailedSubmission(participationId, exerciseId);
-                }
-            }),
-            catchError(() => {
-                this.emitFailedSubmission(participationId, exerciseId);
-                return of(undefined);
-            }),
-        );
+        // Estimates are not build deadlines. A local CI build may legitimately outlive both the estimate and
+        // the fallback wait; consult the server's processing state before declaring its result missing.
+        const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(switchMap(() => this.checkForMissingResult(participationId, exerciseId)));
 
         this.resultSubscriptions[participationId] = merge(timerObservable, resultObservable)
             .pipe(
                 filter(() => !!this.exerciseBuildState[exerciseId][participationId]),
                 tap(() => {
-                    // We reset the timer when a new result came through OR the timer ran out. The stream will then be inactive until the next submission comes in.
+                    // A result or a terminal fallback clears the timers. An active-build recheck keeps its renewed timer running.
                     this.resetQueueEstimateTimer(participationId);
                     this.resetResultWaitingTimer(participationId);
                 }),
             )
             .subscribe();
+    }
+
+    private checkForMissingResult(participationId: number, exerciseId: number): Observable<undefined> {
+        const submissionId = this.exerciseBuildState[exerciseId]?.[participationId]?.submission?.id;
+        if (submissionId === undefined) {
+            return EMPTY;
+        }
+        // Each renewed build wait has a new timer, even when the submission ID stays the same.
+        const waitingTimer = this.resultTimerSubscriptions[participationId];
+        const isStillWaiting = () => {
+            const current = this.exerciseBuildState[exerciseId]?.[participationId];
+            return (
+                this.resultTimerSubscriptions[participationId] === waitingTimer &&
+                current?.submission?.id === submissionId &&
+                current?.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION
+            );
+        };
+        return this.participationService.getLatestResultWithFeedback(participationId).pipe(
+            filter(isStillWaiting),
+            switchMap((result) => {
+                if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
+                    this.participationWebsocketService.notifyAllResultSubscribers(result);
+                    return of(undefined);
+                }
+                if (!this.isLocalCIEnabled) {
+                    this.emitFailedSubmission(participationId, exerciseId);
+                    return of(undefined);
+                }
+                return this.fetchLatestPendingSubmissionByParticipationId(participationId).pipe(
+                    filter(isStillWaiting),
+                    switchMap((submission) => {
+                        if (submission && submission.id === submissionId && submission.isProcessing) {
+                            const buildTimingInfo = { buildStartDate: submission.buildStartDate, estimatedCompletionDate: submission.estimatedCompletionDate };
+                            this.emitBuildingSubmission(participationId, exerciseId, submission, buildTimingInfo);
+                            this.startResultWaitingTimer(participationId, this.getExpectedRemainingTimeForBuild(submission));
+                            // Do not let the terminal-state handler cancel the renewed timer.
+                            return EMPTY;
+                        }
+                        // Processing ends before the queued result is persisted. Allow one fallback interval for that handoff.
+                        return timer(this.currentExpectedResultETA).pipe(
+                            filter(isStillWaiting),
+                            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
+                            filter(isStillWaiting),
+                            tap((finalResult) => {
+                                if (this.isResultOfLatestSubmission(finalResult, exerciseId, participationId)) {
+                                    this.participationWebsocketService.notifyAllResultSubscribers(finalResult);
+                                } else {
+                                    this.emitFailedSubmission(participationId, exerciseId);
+                                }
+                            }),
+                            map(() => undefined),
+                        );
+                    }),
+                );
+            }),
+            catchError(() => {
+                if (isStillWaiting()) {
+                    // A failed request cannot confirm a missing result. Keep the build pending and retry later.
+                    this.startResultWaitingTimer(participationId);
+                }
+                return EMPTY;
+            }),
+        );
     }
 
     private isResultOfLatestSubmission(result: Result | undefined, exerciseId: number, participationId: number): result is Result {
@@ -593,9 +643,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Check how much time is still left for the build.
      *
      * @param submission for which to check the passed build time.
+     * @param buildTimingInfo timing received separately through the processing websocket.
      * @return the expected rest time to wait for the build.
      */
-    private getExpectedRemainingTimeForBuild(submission: ProgrammingSubmission): number {
+    private getExpectedRemainingTimeForBuild(submission: ProgrammingSubmission, buildTimingInfo?: BuildTimingInfo): number {
+        if (this.isLocalCIEnabled && (submission.isProcessing || buildTimingInfo?.buildStartDate)) {
+            const estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate ?? submission.estimatedCompletionDate;
+            const remainingEstimate = estimatedCompletionDate ? dayjs(estimatedCompletionDate).valueOf() - Date.now() : 0;
+            // A confirmed running build gets a fresh fallback interval even when its estimate has elapsed.
+            // Its queue wait must not consume the time allowed for execution.
+            return Math.max(this.currentExpectedResultETA, remainingEstimate);
+        }
         return this.currentExpectedResultETA - (Date.now() - dayjs(submission.submissionDate).valueOf());
     }
 
@@ -637,7 +695,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             })
             .forEach((exercise) => {
                 const participation = exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
-                const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
+                const latestSubmission = participation.submissions!.reduce(
+                    (current, next) => (current.id! > next.id! ? current : next),
+                    participation.submissions![0],
+                ) as ProgrammingSubmission;
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
 
@@ -657,7 +718,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * A latest pending submission is characterized by the following properties:
      * - Submission is the newest one (by submissionDate)
      * - Submission does not have a result (yet)
-     * - Submission is not older than DEFAULT_EXPECTED_RESULT_ETA (in this case it could be that never a result will come due to an error)
+     * - Running submissions remain pending even when they exceed the fallback result wait
      *
      * Will emit:
      * - A submission if a last pending submission exists.
@@ -715,7 +776,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
         if (fetchPending) {
             this.fetchLatestPendingSubmissionByParticipationId(participationId)
-                .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)))
+                .pipe(
+                    catchError(() => of(undefined)),
+                    switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)),
+                )
                 .subscribe();
         } else {
             // only process, but do not try to fetchPending the latest one, e.g. because it was already downloaded shortly before (example: exam start)
@@ -783,6 +847,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.http.post<object>(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
+    public triggerInstructorBuild(exerciseId: number, participationId: number, baseRepository: boolean): Observable<object> {
+        const command = baseRepository ? 'trigger-editor-build' : 'trigger-instructor-build';
+        return this.http.post<object>(`${this.PROGRAMMING_EXERCISE_RESOURCE_URL}${exerciseId}/participations/${participationId}/${command}`, {});
+    }
+
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
         const params = new HttpParams().set('lastGraded', lastGraded.toString());
         return this.http.post(`api/programming/participations/${participationId}/trigger-failed-build`, {}, { params, observe: 'response' });
@@ -793,7 +862,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerInstructorBuildForParticipationsOfExercise(exerciseId: number, participationIds: number[]) {
-        return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', participationIds);
+        return this.http.post<SelectedBuildRun>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', participationIds);
+    }
+
+    /**
+     * Ask the server whether a run that queues the builds of selected participations has ended, for a client that may have missed the message that announces it.
+     *
+     * @param exerciseId the programming exercise the run belongs to
+     * @param runId the run, as returned by the request that started it
+     */
+    public getSelectedBuildRunStatus(exerciseId: number, runId: string) {
+        return this.http.get<SelectedBuildRunStatus>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/selected-build-runs/' + encodeURIComponent(runId));
     }
 
     /**
@@ -846,16 +925,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }
                     } else {
-                        let buildTimingInfo: BuildTimingInfo | undefined = {
+                        const buildTimingInfo = this.startedProcessingCache.get(submission.commitHash!) ?? {
                             estimatedCompletionDate: submission.estimatedCompletionDate,
                             buildStartDate: submission.buildStartDate,
                         };
-                        buildTimingInfo = buildTimingInfo ?? this.startedProcessingCache.get(submission.commitHash!);
                         this.removeSubmissionFromProcessingCache(submission.commitHash!);
-                        const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
-                        if (remainingTime > 0) {
+                        const remainingTime = this.getExpectedRemainingTimeForBuild(submission, buildTimingInfo);
+                        // The exercise-wide endpoint omits processing metadata. Recheck an expired submission
+                        // before reporting failure, since its build may still be running.
+                        if (remainingTime > 0 || (this.isLocalCIEnabled && submission.isProcessing === undefined)) {
                             this.emitBuildingSubmission(participationId, exerciseId, submission, buildTimingInfo);
-                            this.startResultWaitingTimer(participationId, remainingTime);
+                            this.startResultWaitingTimer(participationId, Math.max(0, remainingTime));
                             return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }
                     }

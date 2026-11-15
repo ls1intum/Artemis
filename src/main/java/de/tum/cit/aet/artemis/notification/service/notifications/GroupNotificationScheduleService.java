@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -25,11 +26,14 @@ public class GroupNotificationScheduleService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final ChannelService channelService;
+
     public GroupNotificationScheduleService(SingleUserNotificationService singleUserNotificationService, InstanceMessageSendService instanceMessageSendService,
-            GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, ChannelService channelService) {
         this.singleUserNotificationService = singleUserNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.groupNotificationService = groupNotificationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -40,6 +44,7 @@ public class GroupNotificationScheduleService {
      * @param notificationText     holds the custom change message for the notification process
      */
     public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText) {
+        channelService.notifyExerciseChannelOfDateChange(exerciseBeforeUpdate.getReleaseDate(), exerciseAfterUpdate);
 
         // send exercise update notification
         groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
@@ -61,6 +66,7 @@ public class GroupNotificationScheduleService {
      */
     public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, Exercise exerciseAfterUpdate,
             String notificationText) {
+        channelService.notifyExerciseChannelOfDateChange(originalReleaseDate, exerciseAfterUpdate);
 
         groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 

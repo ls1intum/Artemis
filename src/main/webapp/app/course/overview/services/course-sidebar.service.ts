@@ -1,8 +1,6 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { EventEmitter, Service } from '@angular/core';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseSidebarService {
     public closeSidebar$: EventEmitter<void> = new EventEmitter();
     public openSidebar$: EventEmitter<void> = new EventEmitter();

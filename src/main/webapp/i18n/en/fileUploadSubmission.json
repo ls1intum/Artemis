@@ -27,6 +27,10 @@
             "submittedFile": "Submitted file {{ filename }} as a solution for the exercise",
             "download": "Download file",
             "selectFile": "Please first select a file and then submit it.",
+            "examSelectOrDrop": "Drop your file here or select a file",
+            "examAutomaticUpload": "Your file uploads automatically after selection.",
+            "examUploading": "Uploading file…",
+            "examRetry": "Retry upload",
             "forExercise": "for Exercise"
         }
     }

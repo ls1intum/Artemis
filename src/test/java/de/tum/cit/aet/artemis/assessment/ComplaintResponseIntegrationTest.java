@@ -132,7 +132,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     // === TESTING CREATE LOCK ===
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void createLock_noFailureCondition_shouldCreateEmptyComplaintResponse() throws Exception {
         request.postWithoutLocation("/api/assessment/complaints/" + complaint.getId() + "/response", null, HttpStatus.CREATED, null);
         Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseTestRepository.findByComplaintId(complaint.getId());
@@ -146,21 +146,21 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createLock_sameAsAssessor_shouldThrowAccessForbiddenException() throws Exception {
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
         request.patch("/api/assessment/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void createLock_complaintDoesNotExistInDb_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
         request.patch("/api/assessment/complaints/" + 0 + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void createLock_alreadyResolved_shouldThrowIllegalArgumentException() throws Exception {
         complaint.setAccepted(true);
         complaint = complaintRepository.saveAndFlush(complaint);
@@ -169,7 +169,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void createLock_alreadyConnectedToComplaintResponse_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
@@ -181,7 +181,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     // === TESTING REFRESH LOCK ===
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void refreshLock_noFailureCondition_shouldRefreshLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -193,7 +193,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void refreshLock_LockActiveBUTInstructor_shouldRefreshLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -203,7 +203,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void refreshLock_LockActiveBUTInitialCreatorOfLock_shouldRefreshLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -226,7 +226,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void refreshLock_LockStillActive_shouldThrowComplaintResponseLockedException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -238,14 +238,14 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void refreshLock_noinitialLockComplaintResponseExists_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/assessment/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void refreshLock_complaintDoesNotExist_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -255,7 +255,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void refreshLock_complaintAlreadyResolved_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -267,7 +267,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void refreshLock_sameAsAssessor_shouldThrowAccessForbiddenException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -277,7 +277,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void refreshLock_complaintResponseAlreadySubmitted_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -291,7 +291,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     // === TESTING REMOVE LOCK ===
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void removeLock_creatorAndLockActive_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -300,7 +300,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void removeLock_creatorAndLockInactive_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -309,7 +309,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void removeLock_notCreatorAndLockActive_shouldThrowComplaintResponseLockedException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -318,7 +318,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void removeLock_notCreatorAndLockNotActive_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -327,7 +327,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void removeLock_ComplaintNotFoundInDatabase_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -336,7 +336,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void removeLock_complaintIsAlreadyHandled_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -347,13 +347,13 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void removeLock_noComplaintResponseExists_shouldThrowIllegalArgumentException() throws Exception {
         request.delete("/api/assessment/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void removeLock_complaintResponseIsAlreadySubmitted_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -364,7 +364,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void removeLock_IsAssessor_shouldThrowAccessForbiddenException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor1", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -373,7 +373,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void removeLock_asInstructor_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -384,7 +384,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     // === TESTING RESOLVE COMPLAINT ===
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveComplaint_noFailureCondition_shouldResolveComplaint() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -396,7 +396,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void resolveMoreFeedback_assessor_shouldResolve() throws Exception {
         complaint.setComplaintType(ComplaintType.MORE_FEEDBACK);
         complaintRepository.saveAndFlush(complaint);
@@ -410,7 +410,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveComplaint_emptyComplaintResponseNotFoundInDatabase_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -425,7 +425,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveComplaint_complaintResponseInDatabaseNotEmpty_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -439,7 +439,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveComplaint_complaintAlreadyAnswered_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -452,7 +452,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveComplaint_noDecisionMade_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -463,7 +463,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void resolveComplaint_assessor_shouldThrowAccessForbiddenException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
@@ -474,7 +474,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveMoreFeedBackRequest_NOTassessor_shouldThrowAccessForbiddenException() throws Exception {
         complaint.setComplaintType(ComplaintType.MORE_FEEDBACK);
         complaintRepository.saveAndFlush(complaint);
@@ -487,7 +487,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void resolveComplaint_LockActive_shouldThrowComplaintResponseLockedException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -498,7 +498,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void resolveComplaint_LockActiveBUTInstructor_shouldResolve() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
@@ -510,7 +510,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void resolveComplaint_LockActiveBUTCreatorOfLock_shouldResolve() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();

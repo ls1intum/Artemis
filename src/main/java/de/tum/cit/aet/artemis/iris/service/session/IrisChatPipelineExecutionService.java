@@ -18,8 +18,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -95,11 +98,13 @@ public class IrisChatPipelineExecutionService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final AuthorizationCheckService authCheckService;
+
     public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisSettingsService irisSettingsService,
-            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
+            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -112,6 +117,7 @@ public class IrisChatPipelineExecutionService {
         this.irisSettingsService = irisSettingsService;
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -127,6 +133,23 @@ public class IrisChatPipelineExecutionService {
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
             Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
+        execute(session, event, settings, latestSubmission, uncommittedFiles, context, null);
+    }
+
+    /**
+     * Executes the Iris chat pipeline for a run started from a specific browser tab.
+     *
+     * @param session          the chat session whose id is used to reload the full session state
+     * @param event            optional event type triggering the pipeline (e.g. build failure)
+     * @param settings         optional pre-resolved course settings; otherwise loaded from the session's course
+     * @param latestSubmission optional programming submission already resolved by the caller
+     * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
+     * @param context          list of context information (e.g. current page, video timestamp, fullscreen mode) sent to Pyris for contextual responses
+     * @param clientId         identifies the browser tab that started the run, so a command Iris issues mid-pipeline is addressed back to that tab instead of all of the user's
+     *                             tabs. Null for runs nobody is waiting in front of, such as the event-triggered ones.
+     */
+    public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
+            Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
         IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (loadedSession == null) {
             throw new EntityNotFoundException("IrisSession", session.getId());
@@ -148,7 +171,7 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event,
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
                         latestSubmission, uncommittedFiles, context));
     }
@@ -167,6 +190,12 @@ public class IrisChatPipelineExecutionService {
         // Base data shared across all chat modes (course chat is the baseline)
         long courseLoadStart = System.nanoTime();
         var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
+        // Students are only told about what they can see: unreleased exercises, exams and lecture units stay out of the data sent to Pyris
+        boolean isStaff = authCheckService.isAtLeastTeachingAssistantInCourse(fullCourse, user);
+        if (!isStaff) {
+            fullCourse.setExercises(fullCourse.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet()));
+            fullCourse.setExams(fullCourse.getExams().stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet()));
+        }
         PyrisCourseDTO courseDto = PyrisCourseDTO.of(fullCourse);
         log.debug("Iris chat DTO base data loaded: course {} ms", (System.nanoTime() - courseLoadStart) / 1_000_000);
 
@@ -183,7 +212,8 @@ public class IrisChatPipelineExecutionService {
         switch (chatMode) {
             case PROGRAMMING_EXERCISE_CHAT -> {
                 var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
-                programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
+                // The chat pipelines work on the problem statement and on the submission of the student, so the template, solution and test repositories stay home
+                programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseMetadataDTO(progExercise);
                 // Reload via the eager graph instead of trusting the caller-supplied entity: latestSubmission may be an event
                 // payload handed off across a thread boundary (e.g. CompletableFuture.runAsync) with no Hibernate session,
                 // so its lazy buildLogEntries/results associations would throw LazyInitializationException otherwise.
@@ -193,7 +223,7 @@ public class IrisChatPipelineExecutionService {
             }
             case TEXT_EXERCISE_CHAT -> {
                 var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getEntityId());
-                textExercise = PyrisTextExerciseDTO.of(exercise);
+                textExercise = PyrisTextExerciseDTO.withoutExampleSolution(exercise);
                 // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
                 // Try practice participation (testRun=true) first, then fall back to graded participation (testRun=false)
                 var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), true)
@@ -205,13 +235,15 @@ public class IrisChatPipelineExecutionService {
                 var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
                 var lecture = api.findByIdWithLectureUnitsElseThrow(session.getEntityId());
                 Long courseId = course.getId();
-                List<PyrisLectureUnitDTO> lectureUnits = lecture.getLectureUnits() == null ? List.of() : lecture.getLectureUnits().stream().map(unit -> {
-                    Integer attachmentVersion = null;
-                    if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getVersion() != null) {
-                        attachmentVersion = attachmentUnit.getAttachment().getVersion();
-                    }
-                    return new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), attachmentVersion);
-                }).toList();
+                List<PyrisLectureUnitDTO> lectureUnits = lecture.getLectureUnits() == null ? List.of()
+                        : lecture.getLectureUnits().stream().filter(unit -> isStaff || unit.isVisibleToStudents()).map(unit -> {
+                            Integer attachmentVersion = null;
+                            if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null
+                                    && attachmentUnit.getAttachment().getVersion() != null) {
+                                attachmentVersion = attachmentUnit.getAttachment().getVersion();
+                            }
+                            return new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), attachmentVersion);
+                        }).toList();
                 lectureDto = new PyrisLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lectureUnits);
 
                 // Only forward context whose lectureUnitId belongs to this session's lecture.

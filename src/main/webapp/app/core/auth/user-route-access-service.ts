@@ -1,11 +1,11 @@
-import { Injectable, inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { Service, inject } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class UserRouteAccessService implements CanActivate {
     private router = inject(Router);
     private accountService = inject(AccountService);
@@ -16,9 +16,9 @@ export class UserRouteAccessService implements CanActivate {
      * Check if the client can activate a route.
      * @param route The ActivatedRouteSnapshot of the route to activate.
      * @param state The current RouterStateSnapshot.
-     * @return True if user is logged in, false otherwise.
+     * @return Whether the navigation is allowed, or a denial redirect when the initial page cannot be activated.
      */
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
+    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean | UrlTree> {
         const ltiRedirectUrl = this.handleLTIRedirect(route, state);
         const urlToStore = ltiRedirectUrl ?? state.url;
 
@@ -39,7 +39,13 @@ export class UserRouteAccessService implements CanActivate {
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
-        return this.checkLogin(authorities, urlToStore);
+        return this.checkLogin(authorities, urlToStore).then((allowed) => {
+            // An initial cancellation leaves both the page and navbar outlets empty. Render the denial page instead.
+            if (!allowed && this.router.lastSuccessfulNavigation() === null && this.accountService.isAuthenticated()) {
+                return this.router.createUrlTree(['/accessdenied']);
+            }
+            return allowed;
+        });
     }
 
     /**
@@ -81,12 +87,16 @@ export class UserRouteAccessService implements CanActivate {
                     });
                 }
 
+                // The user is not logged in.
                 this.sessionStorageService.store('previousUrl', url);
+                // Two navigations in sequence: the user sees the access denied page and is then sent to the sign-in
+                // page, and both stay in the browser history. A redirect returned from a guard has exactly one target,
+                // so replacing this with a redirect to the sign-in page would drop the access denied page and its
+                // history entry. It therefore stays imperative until that change is decided on its own.
+                // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- first of two chained navigations, see above
                 void this.router.navigate(['accessdenied']).then(() => {
-                    // only show the login dialog, if the user hasn't logged in yet
-                    if (!account) {
-                        void this.router.navigate(['/sign-in']);
-                    }
+                    // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- runs after the access denied navigation has finished
+                    void this.router.navigate(['/sign-in']);
                 });
                 return false;
             }),

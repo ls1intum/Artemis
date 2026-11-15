@@ -26,7 +26,10 @@ public class ComplaintResponseLockedException extends BadRequestAlertException {
     private static Map<String, Object> getParameters(@NonNull ComplaintResponse complaintResponse) {
         Map<String, Object> params = new HashMap<>();
         params.put("user", complaintResponse.getReviewer().getLogin());
-        params.put("lockEnd", complaintResponse.lockEndDate().toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm")));
+        var lockEndDate = complaintResponse.lockEndDate();
+        if (lockEndDate != null) {
+            params.put("lockEnd", lockEndDate.toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm")));
+        }
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("skipAlert", true);
         parameters.put("message", "artemisApp.errors." + ERROR_KEY);

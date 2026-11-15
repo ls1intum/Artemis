@@ -1,3 +1,5 @@
+import { PanelModule } from 'primeng/panel';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -18,6 +20,20 @@ import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-detail
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import { RouterLink } from '@angular/router';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/team-practice-hint/team-practice-hint.component';
 
 class ResizeObserverMock {
     observe = vi.fn();
@@ -170,6 +186,7 @@ describe('ExerciseSplitPanelComponent', () => {
         beforeEach(() => {
             router = TestBed.inject(Router);
             route = TestBed.inject(ActivatedRoute);
+            (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'live' }], paramMap: convertToParamMap({}) } };
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.QUIZ } as Exercise);
             fixture.detectChanges();
             vi.mocked(router.navigate).mockClear();
@@ -180,14 +197,14 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should start the first practice attempt when toggling to practice without an existing participation', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should start a fresh attempt rather than reopen a graded participation surfaced as a fallback', () => {
@@ -196,8 +213,8 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
-            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent, replaceUrl: false });
+            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should not re-navigate while a fresh practice attempt is in progress (bare practice route)', () => {
@@ -407,5 +424,120 @@ describe('ExerciseSplitPanelComponent', () => {
         component.onOutletDeactivate();
         component.onOutletActivate({ submitExercise: () => {} });
         expect(component.canSubmit()).toBe(true);
+    });
+});
+
+describe('ExerciseSplitPanelComponent details panel with its real template', () => {
+    const TEAM_HINT = 'artemisApp.exerciseActions.practiceMode.teamHint';
+    const TEAM_NOTE = 'artemisApp.exerciseActions.practiceMode.teamNote';
+
+    let fixture: ComponentFixture<ExerciseSplitPanelComponent>;
+
+    const pastDueDate = () => dayjs().subtract(1, 'hour');
+    const gradedParticipation = { id: 1, testRun: false } as StudentParticipation;
+    const practiceParticipation = { id: 2, testRun: true } as StudentParticipation;
+
+    const hint = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="team-practice-hint"]');
+
+    beforeEach(async () => {
+        vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+        await TestBed.configureTestingModule({
+            imports: [ExerciseSplitPanelComponent],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
+                { provide: ActivatedRoute, useValue: { parent: {}, firstChild: undefined } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                ChildrenOutletContexts,
+            ],
+        })
+            .overrideComponent(ExerciseSplitPanelComponent, {
+                set: {
+                    imports: [
+                        RouterOutlet,
+                        RouterLink,
+                        ResizablePanelsComponent,
+                        PanelDirective,
+                        TeamPracticeHintComponent,
+                        PanelModule,
+                        MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                        MockComponent(ExerciseHeadersInformationComponent),
+                        MockComponent(ProblemStatementComponent),
+                        MockComponent(CompetencyContributionComponent),
+                        MockComponent(IrisBaseChatbotComponent),
+                        MockComponent(IrisLogoComponent),
+                        MockComponent(ResetRepoButtonComponent),
+                        MockComponent(DiscussionSectionComponent),
+                        MockComponent(LtiInitializerComponent),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe, (key: string) => key),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseSplitPanelComponent);
+        fixture.componentRef.setInput('courseId', 1);
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    const render = (exercise: Partial<Exercise>, mode: 'graded' | 'practice', practice?: StudentParticipation) => {
+        fixture.componentRef.setInput('exercise', { id: 1, dueDate: pastDueDate(), ...exercise } as Exercise);
+        fixture.componentRef.setInput('participationMode', mode);
+        fixture.componentRef.setInput('gradedStudentParticipation', gradedParticipation);
+        fixture.componentRef.setInput('practiceParticipation', practice);
+        fixture.detectChanges();
+    };
+
+    it.each([false, true])('passes the known course staff purpose %s to both snapshot downloads', (isAtLeastTutor) => {
+        fixture.componentRef.setInput('exampleSolutionInfo', {
+            exampleSolutionPublished: true,
+            programmingExercise: { releaseTestsWithExampleSolution: true },
+        });
+        render({ type: ExerciseType.PROGRAMMING, isAtLeastTutor }, 'graded');
+        const downloads = fixture.debugElement.queryAll(By.directive(ProgrammingExerciseExampleSolutionRepoDownloadComponent));
+        expect(downloads).toHaveLength(2);
+        for (const download of downloads) {
+            expect(download.componentInstance.forStaff()).toBe(isAtLeastTutor);
+        }
+        expect(downloads[1].componentInstance.includeTests()).toBe(true);
+    });
+
+    it('should explain at the top of the details of a team exercise that practice is individual', () => {
+        render({ type: ExerciseType.TEXT, teamMode: true }, 'graded');
+
+        expect(hint()).not.toBeNull();
+        expect(hint()!.textContent?.trim()).toBe(TEAM_HINT);
+        // the hint leads the panel, so it comes before the information about the exercise
+        const information = fixture.nativeElement.querySelector('jhi-exercise-headers-information');
+        expect(information).not.toBeNull();
+        expect(hint()!.compareDocumentPosition(information) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('should remind the student in the practice view of a team exercise that the work is their own', () => {
+        render({ type: ExerciseType.TEXT, teamMode: true }, 'practice', practiceParticipation);
+
+        expect(hint()!.textContent?.trim()).toBe(TEAM_NOTE);
+    });
+
+    it('should stop offering the hint when the practice participation of the student exists', () => {
+        render({ type: ExerciseType.TEXT, teamMode: true }, 'graded', practiceParticipation);
+
+        expect(hint()).toBeNull();
+    });
+
+    it.each([ExerciseType.TEXT, ExerciseType.PROGRAMMING, ExerciseType.MODELING])('should not mention team practice for an individual %s exercise', (type) => {
+        render({ type, teamMode: false }, 'graded');
+        expect(hint()).toBeNull();
+
+        fixture.componentRef.setInput('participationMode', 'practice');
+        fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+        fixture.detectChanges();
+        expect(hint()).toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('practiceMode.team');
     });
 });

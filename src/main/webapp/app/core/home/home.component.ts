@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, Renderer2, inject, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -14,13 +14,17 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
+import { LtiLoginContinuationService } from 'app/lti/overview/lti13-exercise-launch/lti-login-continuation.service';
+
+// Keep aligned with Constants.SIMPLE_EMAIL_REGEX, used by SecurityUtils.isEmail on the server.
+const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
 
 @Component({
     selector: 'jhi-home',
@@ -32,24 +36,19 @@ import { NgTemplateOutlet } from '@angular/common';
         RouterLink,
         FaIconComponent,
         Saml2LoginComponent,
-        TumUiButtonComponent,
-        TumUiInputDirective,
-        TumUiCheckboxComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
         NgTemplateOutlet,
     ],
 })
 export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faKey = faKey;
-    protected readonly faArrowLeft = faArrowLeft;
-
     private readonly router = inject(Router);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly accountService = inject(AccountService);
     private readonly loginService = inject(LoginService);
     private readonly sessionStorageService = inject(SessionStorageService);
-    private readonly renderer = inject(Renderer2);
     private readonly eventManager = inject(EventManager);
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
@@ -57,11 +56,17 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly webauthnService = inject(WebauthnService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly http = inject(HttpClient);
+    private readonly ltiLoginContinuation = inject(LtiLoginContinuationService);
+
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faKey = faKey;
+    protected readonly faArrowLeft = faArrowLeft;
 
     readonly usernameInput = viewChild<ElementRef<HTMLInputElement>>('usernameInput');
     readonly passwordInput = viewChild<ElementRef<HTMLInputElement>>('passwordInput');
 
     private isUsingFallbackIdpName = false;
+    private hasHandledLtiLogin = false;
 
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
@@ -91,6 +96,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     readonly usernamePlaceholderTranslated = signal('Login or email'); // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
     readonly usernameRegexPattern = signal<RegExp>(/^[a-zA-Z0-9.@_-]{4,50}$/); // default (at least 4, at most 50 characters), might be overridden
+    /** Accept server-recognized emails as well as every configured username, including usernames containing @. */
+    readonly identifierRegexPattern = computed(() => new RegExp(`(?:${this.usernameRegexPattern().source})|(?:${SIMPLE_EMAIL_REGEX})`, this.usernameRegexPattern().flags));
     readonly errorMessageUsername = signal('home.errors.usernameIncorrect'); // default, might be overridden
     readonly accountName = signal<string | undefined>(undefined); // additional information in the welcome message
 
@@ -167,7 +174,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private refocusUsernameFieldForPasskeyAutofill(): void {
         // Allow one event-loop tick so the browser fully registers the conditional mediation.
         setTimeout(() => {
-            const usernameInput = this.renderer.selectRootElement('#username', true);
+            // The field is gone when the user already continued to the next stage or left the page, which is no error.
+            const usernameInput = this.usernameInput()?.nativeElement;
             if (!usernameInput) {
                 return;
             }
@@ -392,6 +400,15 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     currentUserCallback(account: User) {
         this.account.set(account);
         if (account) {
+            // Both the initial identity lookup and the login event can finish after navigation. The first
+            // successful handoff owns the redirect; a cancelled pending launch remains eligible for retry.
+            if (this.hasHandledLtiLogin && !this.ltiLoginContinuation.hasPendingLaunch()) {
+                return;
+            }
+            if (this.ltiLoginContinuation.resume()) {
+                this.hasHandledLtiLogin = true;
+                return;
+            }
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
             // since login is successful, go to the stored previousState and clear the previousState
             const redirect = this.sessionStorageService.retrieve<string>('previousUrl');
@@ -415,12 +432,12 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     /**
-     * Validates if the currently entered username or email satisfies both
-     * the length constraints and the dynamic regular expression pattern.
+     * Accepts identifiers matching either the configured username pattern or the server email pattern,
+     * subject to the existing length constraints.
      */
     checkIdentifierValidity() {
         const meetsLength = this.username !== undefined && this.username.length >= this.USERNAME_MIN_LENGTH && this.username.length <= this.USERNAME_MAX_LENGTH;
 
-        this.isIdentifierValid.set(meetsLength && this.usernameRegexPattern().test(this.username));
+        this.isIdentifierValid.set(meetsLength && this.identifierRegexPattern().test(this.username));
     }
 }

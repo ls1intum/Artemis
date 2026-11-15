@@ -1,5 +1,6 @@
 <div class="form-group">
     <select
+        [attr.aria-label]="'accessibility.theiaImage' | artemisTranslate"
         #select="ngModel"
         required
         class="form-select"
@@ -16,6 +17,23 @@
             <option [value]="undefined" disabled>
                 <div jhiTranslate="artemisApp.programmingExercise.theiaImage.noImageAvailable"></div>
             </option>
+        }
+    </select>
+</div>
+<div class="form-group">
+    <label class="label-narrow" for="field_onlineIdeExperienceLevel" jhiTranslate="artemisApp.programmingExercise.onlineIdeExperienceLevel.title"></label>
+    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.onlineIdeExperienceLevel.description" />
+    <select
+        class="form-select"
+        [ngModel]="programmingExercise().buildConfig?.onlineIdeExperienceLevel"
+        (ngModelChange)="onExperienceLevelChange($event)"
+        name="onlineIdeExperienceLevel"
+        id="field_onlineIdeExperienceLevel"
+        data-testid="online-ide-experience-level"
+    >
+        <option [ngValue]="undefined" jhiTranslate="artemisApp.programmingExercise.onlineIdeExperienceLevel.notSet"></option>
+        @for (level of experienceLevels; track level) {
+            <option [ngValue]="level" [jhiTranslate]="'artemisApp.programmingExercise.onlineIdeExperienceLevel.levels.' + level"></option>
         }
     </select>
 </div>

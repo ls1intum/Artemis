@@ -1,3 +1,4 @@
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Component, input } from '@angular/core';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -9,6 +10,7 @@ import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-subm
     imports: [ModelingSubmissionComponent],
 })
 export class ModelingExamSummaryComponent {
+    readonly viewingPurpose = input<EditorViewingPurpose>('owner');
     readonly exercise = input<ModelingExercise>(undefined!);
     readonly submission = input<ModelingSubmission>(undefined!);
     readonly isPrinting = input(false);

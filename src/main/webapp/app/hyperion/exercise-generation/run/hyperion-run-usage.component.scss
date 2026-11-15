@@ -1,0 +1,25 @@
+.hyperion-spend-title {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: var(--font-weight-semibold);
+    color: inherit;
+}
+
+/* The docked panel is a smaller surface class: its L3 is `text-xs`, which on a page would be a fourth type size. */
+.hyperion-spend-title-compact {
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+}
+
+.hyperion-spend-accounting {
+    transition:
+        color var(--default-transition-duration) var(--default-transition-timing-function),
+        background-color var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hyperion-spend-accounting {
+        transition-duration: 150ms;
+    }
+}

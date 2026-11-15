@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -53,12 +54,12 @@ class LocalVCRepositoryCopyTest {
 
     @BeforeEach
     void setUp() {
-        GitService gitService = new GitService();
-        ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        BareGitRepositoryService bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
         // Spring injects this in production, and the copy writes the repository configuration and HEAD from it.
-        ReflectionTestUtils.setField(gitService, "defaultBranch", DEFAULT_BRANCH);
+        ReflectionTestUtils.setField(bareGitRepositoryService, "defaultBranch", DEFAULT_BRANCH);
         // The copy under test touches neither the URI service nor any repository, so passing null for them keeps the test free of a Spring context.
-        localVCService = new LocalVCService(null, gitService, null, null, null, null);
+        localVCService = new LocalVCService(null, bareGitRepositoryService, null, null, null, null);
         ReflectionTestUtils.setField(localVCService, "localVCBasePath", baseDir);
         ReflectionTestUtils.setField(localVCService, "localVCBaseUri", BASE_URI);
         executor = Executors.newFixedThreadPool(2);
@@ -75,7 +76,7 @@ class LocalVCRepositoryCopyTest {
         CyclicBarrier bothRequestsReady = new CyclicBarrier(2);
         Callable<LocalVCRepositoryUri> startExercise = () -> {
             bothRequestsReady.await(10, TimeUnit.SECONDS);
-            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of());
         };
 
         List<Future<LocalVCRepositoryUri>> responses = executor.invokeAll(List.of(startExercise, startExercise));
@@ -92,7 +93,7 @@ class LocalVCRepositoryCopyTest {
         seedRepository("abc-exercise", "template");
         seedRepository("abc-student1", "work the student already pushed");
 
-        LocalVCRepositoryUri repositoryUri = localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+        LocalVCRepositoryUri repositoryUri = localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of());
 
         assertThat(repositoryUri.toString()).as("the repository that is already there is handed back").isEqualTo(uriFor("abc-student1").toString());
         assertThat(readFileFromBranchHead("abc-student1")).as("a repository that was already copied is never copied over").isEqualTo("work the student already pushed");
@@ -107,7 +108,7 @@ class LocalVCRepositoryCopyTest {
         Files.createDirectories(unborn);
         Git.init().setDirectory(unborn.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().close();
 
-        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of());
 
         assertThat(readFileFromBranchHead("abc-student1")).as("the broken leftover is replaced by a working copy of the template").isEqualTo("template");
     }
@@ -123,7 +124,7 @@ class LocalVCRepositoryCopyTest {
         CyclicBarrier bothRequestsReady = new CyclicBarrier(2);
         Callable<LocalVCRepositoryUri> startExercise = () -> {
             bothRequestsReady.await(10, TimeUnit.SECONDS);
-            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of());
         };
 
         List<Future<LocalVCRepositoryUri>> responses = executor.invokeAll(List.of(startExercise, startExercise));
@@ -141,7 +142,7 @@ class LocalVCRepositoryCopyTest {
         Files.createDirectories(corrupt.resolve("refs").resolve("heads"));
         Files.createDirectories(corrupt.resolve("objects"));
 
-        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null);
+        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of());
 
         try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
             assertThat(entries.map(entry -> entry.getFileName().toString())).as("the repository moved aside is removed rather than left next to the repaired one")

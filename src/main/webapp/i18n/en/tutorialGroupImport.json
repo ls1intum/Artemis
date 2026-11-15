@@ -27,6 +27,7 @@
                 "isOnline": "is Online, ist Online, isonline -> Is Online"
             },
             "errorMessages": {
+                "invalidIsOnline": "The Is Online value must be true or false in the following rows: ",
                 "genericErrorMessage": "Import of tutorial groups failed!",
                 "withoutTitle": "The following rows miss a tutorial group title: ",
                 "invalidTitle": "The following rows have an invalid tutorial group title (Titles may only contain letters, numbers, spaces and hyphens and max 19 characters): ",

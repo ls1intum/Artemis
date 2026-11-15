@@ -42,7 +42,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupsChecklistComponent);
                 component = fixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
-                getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(
+                getCourseSpy = vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: course,
@@ -51,14 +51,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                     ),
                 );
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                getOneOfCourseSpy = vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: generateExampleTutorialGroupsConfigurationDTO({}),
-                            status: 200,
-                        }),
-                    ),
-                );
+                getOneOfCourseSpy = vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({})));
             });
     });
 

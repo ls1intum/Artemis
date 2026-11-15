@@ -23,7 +23,6 @@ export class User extends Account {
     public vcsAccessTokenExpiryDate?: string;
     public selectedLLMUsage?: LLMSelectionDecision;
     public selectedLLMUsageTimestamp?: dayjs.Dayjs;
-    public memirisEnabled?: boolean;
     /** Marks accounts used only for testing/QA. Test users are excluded from usage statistics. */
     public isTestUser?: boolean;
     /**
@@ -61,7 +60,6 @@ export class User extends Account {
         vcsAccessTokenExpiryDate?: string,
         selectedLLMUsage?: LLMSelectionDecision,
         LLMSelectionDecisionDate?: dayjs.Dayjs,
-        memirisEnabled?: boolean,
         askToSetupPasskey?: boolean,
         loggedInWithPasskey?: boolean,
         passkeySuperAdminApproved?: boolean,
@@ -77,7 +75,6 @@ export class User extends Account {
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.selectedLLMUsage = selectedLLMUsage;
         this.selectedLLMUsageTimestamp = LLMSelectionDecisionDate;
-        this.memirisEnabled = memirisEnabled;
         this.askToSetupPasskey = askToSetupPasskey;
         this.loggedInWithPasskey = loggedInWithPasskey;
         this.passkeySuperAdminApproved = passkeySuperAdminApproved;

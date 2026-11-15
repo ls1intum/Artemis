@@ -52,6 +52,13 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private ngUnsubscribe = new Subject<void>();
@@ -90,13 +97,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
-
-    private accountService = inject(AccountService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
-    private channelService = inject(ChannelService);
-    private groupChatService = inject(GroupChatService);
-    private alertService = inject(AlertService);
 
     ngOnInit(): void {
         if (this.conversationMember() && this.activeConversation()) {
@@ -137,44 +137,25 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openGrantChannelModeratorRoleDialog(event: MouseEvent) {
-        event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation());
-        if (!channel) {
-            return;
-        }
-        const translationKeys = {
-            titleKey: 'artemisApp.dialogs.grantChannelModerator.title',
-            questionKey: 'artemisApp.dialogs.grantChannelModerator.question',
-            descriptionKey: 'artemisApp.dialogs.grantChannelModerator.description',
-            confirmButtonKey: 'artemisApp.dialogs.grantChannelModerator.confirmButton',
-        };
-        const translationParams = {
-            channelName: channel.name!,
-            userName: this.userLabel(),
-        };
-        const confirmedCallback = () => {
-            const courseId = this.course?.()?.id;
-            const channelId = channel?.id;
-            const memberLogin = this.conversationMember?.()?.login;
-            if (!courseId || !channelId || !memberLogin) {
-                throw new Error('Required parameters are missing');
-            }
-            return this.channelService.grantChannelModeratorRole(courseId, channelId, [memberLogin]);
-        };
-        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+        this.openChannelModeratorRoleDialog(event, true);
     }
 
     openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
+        this.openChannelModeratorRoleDialog(event, false);
+    }
+
+    private openChannelModeratorRoleDialog(event: MouseEvent, grant: boolean) {
         event.stopPropagation();
         const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
+        const baseKey = `artemisApp.dialogs.${grant ? 'grant' : 'revoke'}ChannelModerator`;
         const translationKeys = {
-            titleKey: 'artemisApp.dialogs.revokeChannelModerator.title',
-            questionKey: 'artemisApp.dialogs.revokeChannelModerator.question',
-            descriptionKey: 'artemisApp.dialogs.revokeChannelModerator.description',
-            confirmButtonKey: 'artemisApp.dialogs.revokeChannelModerator.confirmButton',
+            titleKey: `${baseKey}.title`,
+            questionKey: `${baseKey}.question`,
+            descriptionKey: `${baseKey}.description`,
+            confirmButtonKey: `${baseKey}.confirmButton`,
         };
         const translationParams = {
             channelName: channel.name!,
@@ -187,7 +168,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             if (!courseId || !channelId || !memberLogin) {
                 throw new Error('Required parameters are missing');
             }
-            return this.channelService.revokeChannelModeratorRole(courseId, channelId, [memberLogin]);
+            return grant
+                ? this.channelService.grantChannelModeratorRole(courseId, channelId, [memberLogin])
+                : this.channelService.revokeChannelModeratorRole(courseId, channelId, [memberLogin]);
         };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
@@ -303,7 +286,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     setUserAuthorityIconAndTooltip(): void {
-        const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
+        const toolTipTranslationPath = 'artemisApp.communication.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember()?.isInstructor) {
             this.userIcon.set(faUserGraduate);

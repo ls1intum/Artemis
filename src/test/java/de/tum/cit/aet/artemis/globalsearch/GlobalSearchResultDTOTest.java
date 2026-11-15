@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 class GlobalSearchResultDTOTest {
 
     private static GlobalSearchResultDTO fromProperties(Map<String, Object> properties) {
-        return GlobalSearchResultDTO.fromSearchableItemProperties(properties, Map.of(), Map.of(), Set.of(), Set.of(), Map.of());
+        return GlobalSearchResultDTO.fromSearchableItemProperties(properties, Map.of(), Map.of(), Set.of(), Set.of());
     }
 
     private static Map<String, Object> row(String type) {
@@ -121,8 +121,6 @@ class GlobalSearchResultDTOTest {
         assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.FAQ)).badgeKey()).isEqualTo("faq");
         assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.CHANNEL)).badgeKey()).isEqualTo("channel");
         assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.COURSE)).badgeKey()).isEqualTo("course");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.POST)).badgeKey()).isEqualTo("message");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.ANSWER_POST)).badgeKey()).isEqualTo("message");
     }
 
     @Test
@@ -132,8 +130,16 @@ class GlobalSearchResultDTOTest {
         assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.FAQ)).badge()).isEqualTo("FAQ");
         assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.CHANNEL)).badge()).isEqualTo("Channel");
         assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.COURSE)).badge()).isEqualTo("Course");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.POST)).badge()).isEqualTo("Message");
-        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.ANSWER_POST)).badge()).isEqualTo("Message");
+    }
+
+    /**
+     * Posts and answer posts are still indexed but not searchable. The access filter already keeps their rows out of every
+     * search, and the mapping drops one that reached it anyway rather than rendering a stale message.
+     */
+    @Test
+    void postAndAnswerPostRowsAreNeverMappedToAResult() {
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.POST))).isNull();
+        assertThat(fromProperties(row(SearchableEntitySchema.TypeValues.ANSWER_POST))).isNull();
     }
 
     /**
@@ -145,7 +151,7 @@ class GlobalSearchResultDTOTest {
     void everyEmittableBadgeKeyHasAnEnglishAndGermanLabel() throws IOException {
         // Exercise keys are derived from the enum so a newly added ExerciseType without a matching i18n label fails here.
         List<String> emittableKeys = new ArrayList<>(Arrays.stream(ExerciseType.values()).map(ExerciseType::getValue).toList());
-        emittableKeys.addAll(List.of("exercise", "exam", "test-exam", "lecture", "lecture-unit", "faq", "channel", "course", "message"));
+        emittableKeys.addAll(List.of("exercise", "exam", "test-exam", "lecture", "lecture-unit", "faq", "channel", "course"));
 
         assertThat(badgeLabels("en")).containsKeys(emittableKeys.toArray(new String[0]));
         assertThat(badgeLabels("de")).containsKeys(emittableKeys.toArray(new String[0]));

@@ -15,9 +15,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.channel.ChannelExec;
+import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.session.ClientSession;
@@ -58,7 +61,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     private int sshPort;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPushCommandWithoutSession() {
 
         // this command arrives at the ssh server if you would manually push from the command line
@@ -70,7 +73,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDirectlyAuthenticateOverSsh() throws IOException, GeneralSecurityException {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -111,7 +114,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailureBecauseKeyHasExpired() throws IOException, GeneralSecurityException {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -137,7 +140,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * account state rather than from the key.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailureBecauseTheAccountIsDeactivated() throws IOException, GeneralSecurityException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
@@ -163,7 +166,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * account is the state an administrator leaves behind when removing a user, and it must close the SSH path too.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailureBecauseTheAccountIsSoftDeleted() throws IOException, GeneralSecurityException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
@@ -197,7 +200,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailure() {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = generateKeyPair();
@@ -214,7 +217,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testConnectOverSshAndReceivePack() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
@@ -248,8 +251,40 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }
     }
 
+    /**
+     * Every git command shuts down the executor it was given when it ends. The commands share one pool, so each of them needs a wrapper of its own, otherwise the first command
+     * that ends makes every later command of the server fail. This goes through a real SSH session and real channels, one after the other.
+     */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSeveralGitCommandsOneAfterTheOtherOverTheSshServer() throws IOException, GeneralSecurityException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+        try (SshClient client = SshClient.setUpDefaultClient()) {
+            client.start();
+            try (ClientSession session = connect(client, user, keyPair)) {
+                for (int command = 1; command <= 3; command++) {
+                    try (ChannelExec channel = session.createExecChannel("git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'")) {
+                        ByteArrayOutputStream output = new ByteArrayOutputStream();
+                        ByteArrayOutputStream errors = new ByteArrayOutputStream();
+                        channel.setIn(new ByteArrayInputStream(new byte[0]));
+                        channel.setOut(output);
+                        channel.setErr(errors);
+                        channel.open().verify(10, TimeUnit.SECONDS);
+                        assertThat(channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(20))).as("command %d ends, errors: %s", command, errors)
+                                .contains(ClientChannelEvent.CLOSED);
+
+                        assertThat(output.size()).as("the advertisement of the refs of command %d, errors: %s", command, errors).isGreaterThan(0);
+                        assertThat(errors.toString()).as("errors of command %d", command).doesNotContain("shut down").doesNotContain("busy");
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSshGitCommand_testsRepo_handlesEmptyParticipationGracefully() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();

@@ -30,13 +30,12 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -106,7 +105,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private RepositoryAccessService repositoryAccessService;
 
     @Mock
-    private LocalVCServletService localVCServletService;
+    private LocalVCPushProcessingService localVCPushProcessingService;
 
     @Mock
     private RepositoryParticipationService repositoryParticipationService;
@@ -126,7 +125,8 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void setUp() {
         resource = new RepositoryProgrammingExerciseParticipationResource(userRepository, authCheckService, participationAuthCheckService, gitService, repositoryService,
                 participationService, programmingExerciseRepository, participationRepository, buildLogService, programmingSubmissionRepository, submissionPolicyRepository,
-                repositoryAccessService, Optional.of(localVCServletService), repositoryParticipationService);
+                repositoryAccessService, Optional.of(localVCPushProcessingService), repositoryParticipationService,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         participation = new ProgrammingExerciseStudentParticipation();
@@ -145,6 +145,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private void withAccessibleParticipation() throws Exception {
         lenient().when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation)).thenReturn(exercise);
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         lenient().when(userRepository.getUserWithAuthorities()).thenReturn(user);
         lenient().when(repositoryParticipationService.getRepositoryFromGitService(anyBoolean(), any())).thenReturn(repository);
     }
@@ -264,7 +265,6 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
-        doThrow(new AccessForbiddenException("not an editor")).when(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", PARTICIPATION_ID, RepositoryType.SOLUTION));
 
@@ -378,6 +378,21 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
+    void pullChangesAllowsReadOnlyAccessToTheSolutionRepository() throws Exception {
+        withAccessibleParticipation();
+        var solution = new SolutionProgrammingExerciseParticipation();
+        solution.setProgrammingExercise(exercise);
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(solution);
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(solution)).thenReturn(exercise);
+        lenient().doThrow(new AccessForbiddenException()).when(repositoryAccessService).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.WRITE);
+
+        assertThat(resource.pullChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(repositoryService).pullChanges(repository);
+        verify(repositoryAccessService, never()).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.WRITE);
+        verify(repositoryAccessService, org.mockito.Mockito.times(2)).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.READ);
+    }
+
+    @Test
     void commitChanges_commitsAndLetsTheServerProcessThePush() throws Exception {
         withAccessibleParticipation();
         when(userRepository.getUser()).thenReturn(user);
@@ -385,7 +400,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, PARTICIPATION_ID)).thenReturn(Optional.empty());
 
         assertThat(resource.commitChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(localVCServletService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
+        verify(localVCPushProcessingService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
     }
 
     @Test
@@ -513,7 +528,35 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "an older failure"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(earlier);
-        when(buildLogService.getLatestBuildLogs(earlier)).thenReturn(logs);
+        when(buildLogService.getBuildLogs(earlier, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAFailedResultAfterASuccessfulRebuild_returnsTheFailedResultLogs() {
+        // A successful rebuild changes the submission's current flag, but an explicit result request still addresses the retained failed-result log.
+        participation.setSubmissions(Set.of(submissionWithResult(50L, 90L, false)));
+        var submissionWithFailedResult = submissionWithResult(50L, 80L, false);
+        submissionWithFailedResult.setParticipation(participation);
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.parse("2026-09-19T10:15:30+02:00"), "the earlier build failed"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(submissionWithFailedResult);
+        when(buildLogService.getBuildLogs(submissionWithFailedResult, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAnEarlierResultOfTheLatestSubmission_returnsThatResultsLogs() {
+        var submission = submissionWithResult(50L, 90L, true);
+        var earlierResult = new Result();
+        earlierResult.setId(80L);
+        submission.setResults(Set.of(earlierResult, submission.getLatestResult()));
+        participation.setSubmissions(Set.of(submission));
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "the earlier failure of the same submission"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(buildLogService.getBuildLogs(submission, 80L)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }

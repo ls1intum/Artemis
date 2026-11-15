@@ -28,7 +28,7 @@ public interface TutorParticipationRepository extends ArtemisJpaRepository<Tutor
     @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
     TutorParticipation findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
-    Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
+    boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
 
     @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
     List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);

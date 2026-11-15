@@ -3,11 +3,10 @@ package de.tum.cit.aet.artemis.globalsearch;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExamExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExamDatesInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExamProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +66,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExam_indexesExamInWeaviate() throws Exception {
         Exam exam = ExamFactory.generateExam(course, "weaviate-create-test");
         exam.setTitle("Weaviate Create Test Exam");
@@ -77,7 +76,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         assertThat(createdExam.getId()).isNotNull();
         assertExamExistsInWeaviate(weaviateService, createdExam.getId());
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExamProperties(weaviateService, createdExam.getId());
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Weaviate Create Test Exam");
@@ -85,7 +84,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_updatesExamInWeaviate() throws Exception {
         Exam exam = examUtilService.addExam(course);
         examUtilService.addExamChannel(exam, "weaviate-update-test");
@@ -105,7 +104,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
         Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(createdExam), Exam.class, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExamProperties(weaviateService, updatedExam.getId());
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Updated Weaviate Exam Title");
@@ -113,7 +112,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_updatesExamInWeaviate() throws Exception {
         // Create exam via API so it gets indexed
         Exam exam = ExamFactory.generateExam(course, "weaviate-wt-test");
@@ -128,7 +127,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
         assertThat(updatedExam.getEndDate()).isAfter(originalEndDate);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExamProperties(weaviateService, updatedExam.getId());
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(createdExam.getTitle());
@@ -136,7 +135,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_updatesExerciseExamDatesInWeaviate() throws Exception {
         // Create an exam with exercises via util and seed them in Weaviate
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
@@ -146,7 +145,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
                 .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam)).toList(), exam.getId());
 
         // Verify exercises are initially indexed with original exam dates
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExistsInWeaviate(weaviateService, exercise);
@@ -161,7 +160,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
                 HttpStatus.OK);
 
         // Verify exercises now reflect the updated exam end date
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
@@ -171,7 +170,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamDates_updatesExerciseExamDatesInWeaviate() throws Exception {
         // Create an exam with exercises via util and seed them in Weaviate
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
@@ -180,7 +179,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         searchableEntityWeaviateService.updateExercisesAsync(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                 .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam)).toList(), exam.getId());
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExistsInWeaviate(weaviateService, exercise);
@@ -197,7 +196,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.OK);
 
         // Verify exercises now reflect the updated exam dates
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);

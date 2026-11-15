@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.springframework.context.annotation.Lazy;
@@ -82,15 +83,15 @@ public class AuxiliaryRepositoryService {
     private void validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise,
             List<AuxiliaryRepository> updatedAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
         // Get all repositories that are unchanged and are still present in the updated exercise
-        List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(
-                Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
-                        .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))
-                                && updatedExercise.getAuxiliaryRepositories().stream().anyMatch(updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))
-                        .toList());
+        var existingAuxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), Set.<AuxiliaryRepository>of());
+        List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(existingAuxiliaryRepositories.stream()
+                .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))
+                        && updatedExercise.getAuxiliaryRepositories().stream().anyMatch(updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))
+                .toList());
 
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
             validateAuxiliaryRepository(programmingExercise.getProgrammingLanguage(), repo, auxiliaryRepositories,
-                    programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
+                    existingAuxiliaryRepositories.stream().noneMatch(existingRepo -> Objects.equals(existingRepo.getId(), repo.getId())));
             auxiliaryRepositories.add(repo);
         }
         updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>());

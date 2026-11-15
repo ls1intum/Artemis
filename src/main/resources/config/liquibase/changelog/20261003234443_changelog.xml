@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    A tutorial groups configuration had no key of its own. The course pointed at it through a nullable column, so nothing
+    tied the configuration to the course it configures and deleting the course could leave the row, and the free periods
+    below it, behind for good.
+
+    The configuration now holds the key. A deleted course takes its configuration with it, and a configuration that
+    belongs to no course can no longer be written.
+    -->
+
+    <changeSet id="20261003234443-01-tutorial-groups-configuration-owns-its-course-key" author="krusche">
+        <!-- Two courses cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT tutorial_groups_configuration_id FROM course WHERE tutorial_groups_configuration_id IS NOT NULL
+                GROUP BY tutorial_groups_configuration_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
+        </preConditions>
+        <comment>Move the course key onto the tutorial groups configuration, so that it cannot outlive the course it configures.</comment>
+        <addColumn tableName="tutorial_groups_configuration">
+            <column name="course_id" type="BIGINT"/>
+        </addColumn>
+        <sql>UPDATE tutorial_groups_configuration SET course_id =
+            (SELECT MIN(course.id) FROM course WHERE course.tutorial_groups_configuration_id = tutorial_groups_configuration.id);</sql>
+        <rollback>
+            <dropColumn tableName="tutorial_groups_configuration" columnName="course_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261003234443-02-remove-tutorial-groups-configurations-no-course-points-at" author="krusche">
+        <comment>Remove the configurations that no course points at, together with their free periods.</comment>
+        <!--
+        A configuration no course points at configures nothing. It carried no key of its own, and nothing lists one except
+        through the course that named it, so it has been unreachable from the moment the course stopped naming it. Its free
+        periods hang off it alone and go with it. A session that was cancelled because of one of those free periods keeps
+        existing under its tutorial group and merely loses the reference to the period.
+        -->
+        <sql>UPDATE tutorial_group_session SET tutorial_group_free_period_id = NULL
+            WHERE tutorial_group_free_period_id IN (
+                SELECT period.id FROM tutorial_group_free_period period
+                WHERE period.tutorial_groups_configuration_id IN (SELECT config.id FROM tutorial_groups_configuration config WHERE config.course_id IS NULL));</sql>
+        <sql>DELETE FROM tutorial_group_free_period
+            WHERE tutorial_groups_configuration_id IN (SELECT config.id FROM tutorial_groups_configuration config WHERE config.course_id IS NULL);</sql>
+        <sql>DELETE FROM tutorial_groups_configuration WHERE course_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261003234443-03-tutorial-groups-configuration-course-constraints" author="krusche">
+        <addNotNullConstraint tableName="tutorial_groups_configuration" columnName="course_id" columnDataType="BIGINT"/>
+        <addUniqueConstraint tableName="tutorial_groups_configuration" columnNames="course_id" constraintName="UK_TUTORIAL_GROUPS_CONFIGURATION_COURSE"/>
+        <addForeignKeyConstraint baseTableName="tutorial_groups_configuration" baseColumnNames="course_id" constraintName="FK_TUTORIAL_GROUPS_CONFIGURATION_COURSE"
+                                 referencedTableName="course" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="tutorial_groups_configuration" constraintName="FK_TUTORIAL_GROUPS_CONFIGURATION_COURSE"/>
+            <dropUniqueConstraint tableName="tutorial_groups_configuration" constraintName="UK_TUTORIAL_GROUPS_CONFIGURATION_COURSE"/>
+            <dropNotNullConstraint tableName="tutorial_groups_configuration" columnName="course_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261003234443-04-free-periods-go-with-their-configuration" author="krusche">
+        <comment>A free period has no meaning without its configuration, so deleting the configuration, which a deleted course now does, deletes its free periods too.</comment>
+        <dropForeignKeyConstraint baseTableName="tutorial_group_free_period" constraintName="fk_tutorial_group_free_period_tutorial_groups_configuration_id"/>
+        <addForeignKeyConstraint baseTableName="tutorial_group_free_period" baseColumnNames="tutorial_groups_configuration_id"
+                                 constraintName="fk_tutorial_group_free_period_tutorial_groups_configuration_id"
+                                 referencedTableName="tutorial_groups_configuration" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="tutorial_group_free_period" constraintName="fk_tutorial_group_free_period_tutorial_groups_configuration_id"/>
+            <addForeignKeyConstraint baseTableName="tutorial_group_free_period" baseColumnNames="tutorial_groups_configuration_id"
+                                     constraintName="fk_tutorial_group_free_period_tutorial_groups_configuration_id"
+                                     referencedTableName="tutorial_groups_configuration" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261003234443-05-courses-stop-pointing-at-their-tutorial-groups-configuration" author="krusche">
+        <comment>The configuration holds the key, so the course no longer points at it.</comment>
+        <dropForeignKeyConstraint baseTableName="course" constraintName="fk_course_tutorial_groups_configuration_id"/>
+        <dropColumn tableName="course" columnName="tutorial_groups_configuration_id"/>
+        <rollback>
+            <addColumn tableName="course">
+                <column name="tutorial_groups_configuration_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE course SET tutorial_groups_configuration_id =
+                (SELECT config.id FROM tutorial_groups_configuration config WHERE config.course_id = course.id);</sql>
+            <addForeignKeyConstraint baseTableName="course" baseColumnNames="tutorial_groups_configuration_id" constraintName="fk_course_tutorial_groups_configuration_id"
+                                     referencedTableName="tutorial_groups_configuration" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

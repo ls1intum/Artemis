@@ -55,4 +55,17 @@ describe('ProgrammingExerciseStudentRepoDownloadComponent', () => {
         comp.exportRepository();
         expect(exportSpy).toHaveBeenCalledExactlyOnceWith(10, 20);
     });
+    it.each([
+        ['tutor', false],
+        ['instructor', true],
+    ])('uses known %s purpose for a foreign participation', (audience, identified) => {
+        fixture.componentRef.setInput('exerciseId', 10);
+        fixture.componentRef.setInput('participationId', 20);
+        fixture.componentRef.setInput('audience', audience);
+        const owner = vi.spyOn(programmingExerciseService, 'exportStudentRepository');
+        const staff = vi.spyOn(programmingExerciseService, 'exportStudentRepositoryForStaff');
+        comp.exportRepository();
+        expect(staff).toHaveBeenCalledExactlyOnceWith(10, 20, identified);
+        expect(owner).not.toHaveBeenCalled();
+    });
 });

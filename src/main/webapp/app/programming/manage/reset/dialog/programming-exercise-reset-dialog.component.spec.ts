@@ -14,6 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
@@ -41,6 +42,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                 { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
                 { provide: DynamicDialogConfig, useValue: { data: { programmingExercise } } },
                 provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         // Ignore console errors
@@ -71,7 +73,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
     it('resetProgrammingExercise should make the correct service call and call handleResetResponse()', () => {
         const resetResponse = of('');
-        vi.spyOn(programmingExerciseService, 'reset').mockReturnValue(resetResponse);
+        vi.spyOn(programmingExerciseService, 'resetParticipations').mockReturnValue(resetResponse);
         vi.spyOn(comp, 'handleResetResponse').mockImplementation(() => {});
 
         comp.programmingExercise.id = exerciseId;
@@ -81,8 +83,18 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         };
         comp.resetProgrammingExercise();
 
-        expect(programmingExerciseService.reset).toHaveBeenCalledWith(exerciseId, comp.programmingExerciseResetOptions);
+        expect(programmingExerciseService.resetParticipations).toHaveBeenCalledWith(exerciseId, comp.programmingExerciseResetOptions);
         expect(comp.handleResetResponse).toHaveBeenCalled();
+    });
+
+    it('sends a destructive reset to the instructor operation with the exact selected options', () => {
+        comp.programmingExerciseResetOptions = { deleteParticipationsSubmissionsAndResults: true, recreateBuildPlans: false };
+        comp.resetProgrammingExercise();
+        const http = TestBed.inject(HttpTestingController);
+        const req = http.expectOne({ method: 'PUT', url: `api/programming/programming-exercises/${exerciseId}/reset-participations` });
+        expect(req.request.body).toEqual(comp.programmingExerciseResetOptions);
+        req.flush('');
+        http.verify();
     });
 
     describe('handleResetResponse', () => {
@@ -107,7 +119,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
-            vi.spyOn(programmingExerciseService, 'reset').mockReturnValue(errorResponse);
+            vi.spyOn(programmingExerciseService, 'resetParticipations').mockReturnValue(errorResponse);
             vi.spyOn(comp, 'handleResetResponse').mockImplementation(() => {});
 
             comp.resetProgrammingExercise();

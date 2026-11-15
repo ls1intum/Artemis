@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
+import { SidebarCardComponent } from 'app/course/sidebar/sidebar-card/sidebar-card.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ActivatedRoute, NavigationEnd, Params, Router, RouterModule, RouterOutlet, provideRouter } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import { EventEmitter } from '@angular/core';
@@ -23,8 +23,8 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Component } from '@angular/core';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -40,7 +40,7 @@ describe('SidebarComponent', () => {
     let fixture: ComponentFixture<SidebarComponent>;
     let router: MockRouter;
     let activatedRoute: MockActivatedRoute;
-    let modalService: NgbModal;
+    let modalService: TumAetUiDialogService;
 
     beforeEach(() => {
         router = new MockRouter();
@@ -56,14 +56,14 @@ describe('SidebarComponent', () => {
                 SidebarComponent,
                 SidebarCardMediumComponent,
                 SidebarCardItemComponent,
-                SidebarCardDirective,
+                SidebarCardComponent,
                 SearchFilterPipe,
                 SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
             ],
             providers: [
-                MockProvider(NgbModal),
+                MockProvider(TumAetUiDialogService),
                 { provide: ActivatedRoute, useValue: activatedRoute },
                 { provide: Router, useValue: router },
                 provideHttpClient(),
@@ -75,13 +75,47 @@ describe('SidebarComponent', () => {
 
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
+        modalService = TestBed.inject(TumAetUiDialogService);
 
         fixture.componentRef.setInput('sidebarData', {
             sidebarType: 'default',
         } as SidebarData);
         fixture.componentRef.setInput('collapseState', {});
         fixture.componentRef.setInput('sidebarItemAlwaysShow', {});
+    });
+
+    it('should only enable container-height layout when requested', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+
+        fixture.componentRef.setInput('fitContainerHeight', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(true);
+
+        fixture.componentRef.setInput('fitContainerHeight', false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+    });
+
+    describe('inline filter checkbox', () => {
+        it('should not render the checkbox without a label', () => {
+            fixture.changeDetectorRef.detectChanges();
+            expect(fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'))).toBeNull();
+        });
+
+        it('should render the checkbox with a label and reflect its changes', () => {
+            fixture.componentRef.setInput('inlineFilterLabel', 'artemisApp.courseOverview.sidebar.freeSpotsOnly');
+            fixture.changeDetectorRef.detectChanges();
+
+            const checkbox = fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'));
+            expect(checkbox).not.toBeNull();
+            expect(component.inlineFilterActive()).toBe(false);
+
+            checkbox.componentInstance.checked.set(true);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.inlineFilterActive()).toBe(true);
+        });
     });
 
     describe('selected entity params', () => {
@@ -138,7 +172,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeTruthy();
     });
 
     it('should hide the sidebar collapse button in the sidebar header while collapsed', () => {
@@ -147,7 +181,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
     });
 
     it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
@@ -157,7 +191,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.changeDetectorRef.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -196,6 +230,20 @@ describe('SidebarComponent', () => {
         expect(noDataMessageElement).toBeTruthy();
         const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
         expect(directiveInstance.jhiTranslate()).toBe('artemisApp.courseOverview.general.noDataFound');
+    });
+
+    it('should not show an empty state when only pinned cards exist', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: false,
+            ungroupedData: [],
+            pinnedData: [{ title: 'Pinned presentation', id: 1, size: 'M' }],
+        });
+        fixture.changeDetectorRef.detectChanges();
+        const emptyMessages = fixture.debugElement.queryAll(By.directive(TranslateDirective)).filter((element) => {
+            const key = element.injector.get(TranslateDirective).jhiTranslate();
+            return key === 'artemisApp.courseOverview.general.noDataFound' || key === 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter';
+        });
+        expect(emptyMessages).toHaveLength(0);
     });
 
     it('should give the correct size for exercises', () => {
@@ -248,6 +296,7 @@ describe('SidebarComponent', () => {
             const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
 
             expect(filterLink).toBeTruthy();
+            expect(filterLink.nativeElement.getAttribute('aria-label')).toBe('artemisApp.exercise.filter');
         });
 
         it('should NOT display the filter link when sidebarType is NOT exercise', () => {
@@ -267,7 +316,7 @@ describe('SidebarComponent', () => {
                     exerciseFilters: {},
                     filterApplied: filterAppliedMock,
                 },
-            } as NgbModalRef;
+            } as TumAetUiDialogRef;
             const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
             const openFilterExercisesDialogSpy = vi.spyOn(component, 'openFilterExercisesDialog');
             const initFilterOptionsSpy = vi.spyOn(component, 'initializeFilterOptions');
@@ -277,7 +326,12 @@ describe('SidebarComponent', () => {
 
             expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
             expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
-            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, {
+                size: 'large',
+                showHeader: false,
+                ariaLabel: 'artemisApp.courseOverview.exerciseFilter.modalTitle',
+                dismissableMask: false,
+            });
         });
     });
 
@@ -322,12 +376,12 @@ describe('SidebarComponent', () => {
     describe('openFilterExercisesDialog', () => {
         it('should subscribe to filterApplied from modal', () => {
             const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
-            const mockModalRef: Partial<NgbModalRef> = {
+            const mockModalRef: Partial<TumAetUiDialogRef> = {
                 componentInstance: {
                     filterApplied: filterAppliedEmitter,
                 },
             };
-            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as TumAetUiDialogRef);
             const subscribeSpy = vi.spyOn(filterAppliedEmitter, 'subscribe');
 
             component.openFilterExercisesDialog();
@@ -338,12 +392,12 @@ describe('SidebarComponent', () => {
 
         it('should update variables correctly when filterApplied is emitted', () => {
             const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
-            const mockModalRef: Partial<NgbModalRef> = {
+            const mockModalRef: Partial<TumAetUiDialogRef> = {
                 componentInstance: {
                     filterApplied: filterAppliedEmitter,
                 },
             };
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as TumAetUiDialogRef);
 
             const mockFilterResults: ExerciseFilterResults = {
                 filteredSidebarData: {
@@ -488,10 +542,10 @@ describe('SidebarComponent variant group selection', () => {
                 ]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(NgbModal),
+                MockProvider(TumAetUiDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         }).compileComponents();
 

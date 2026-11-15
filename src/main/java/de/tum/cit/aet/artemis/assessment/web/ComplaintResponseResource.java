@@ -29,15 +29,17 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing complaints.
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("complaints/complaint-responses")
+@FeatureUsage(UserFeature.COMPLAINTS)
 @RestController
 @RequestMapping("api/assessment/")
 public class ComplaintResponseResource {
@@ -65,7 +67,8 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("complaints/{complaintId}/response")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ComplaintResponseDTO> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -82,7 +85,8 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("complaints/{complaintId}/response")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -99,7 +103,8 @@ public class ComplaintResponseResource {
      *         if action is RESOLVE_COMPLAINT: the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
     @PatchMapping("complaints/{complaintId}/response")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ComplaintResponseDTO> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
         if (complaintResponseUpdate.action() == null) {
             throw new BadRequestAlertException("A complaint response action can not be null.", ENTITY_NAME, "complaintResponseUpdateActionIsNull");

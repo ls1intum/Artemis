@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiTableDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
@@ -25,10 +25,10 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
         RouterLink,
         ArtemisDatePipe,
         FaIconComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        TumUiTableDirective,
+        TumAetUiTableDirective,
         ExamModeBadgeComponent,
     ],
 })

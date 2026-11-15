@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgClass } from '@angular/common';
@@ -10,7 +11,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
     selector: 'jhi-medium-sidebar-card',
     templateUrl: './sidebar-card-medium.component.html',
     styleUrls: ['./sidebar-card-medium.component.scss'],
-    imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive],
+    imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive, ProgrammingExerciseStudentTriggerBuildButtonComponent],
 })
 export class SidebarCardMediumComponent {
     private sidebarEventService = inject(SidebarEventService);
@@ -18,6 +19,7 @@ export class SidebarCardMediumComponent {
     private route = inject(ActivatedRoute);
 
     protected readonly DifficultyLevel = DifficultyLevel;
+    protected readonly ExerciseType = ExerciseType;
 
     readonly sidebarItem = input.required<SidebarCardElement>();
     readonly sidebarType = input<SidebarTypes>();
@@ -25,7 +27,7 @@ export class SidebarCardMediumComponent {
     readonly pageChange = output<string | number>();
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
-    /** Id of the entity the detail route currently shows, set by {@link SidebarCardDirective}. */
+    /** Id of the entity the detail route currently shows, set by {@link SidebarCardComponent}. */
     readonly activeItemId = input<number>();
 
     /**
@@ -43,7 +45,16 @@ export class SidebarCardMediumComponent {
         return activeItemId !== undefined && !!this.sidebarItem().groupedItems?.some((member) => member.id === activeItemId);
     });
 
-    onNonExamCardClicked() {
+    onNonExamCardClicked(event?: MouseEvent) {
+        // Explicit links own their navigation; do not trigger the legacy refresh/event path.
+        if (this.sidebarItem().routerLink) {
+            return;
+        }
+        // Leave modified clicks to the native link (for example, opening a card in a new tab).
+        if (event && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) {
+            return;
+        }
+
         this.storeTargetComponentSubRoute();
         if (this.itemSelected()) {
             this.refreshChildComponent();

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
@@ -12,7 +12,9 @@ import {
     faDumbbell,
     faFileAlt,
     faList,
+    faListCheck,
     faNetworkWired,
+    faPersonChalkboard,
     faPuzzlePiece,
     faQuestion,
     faRobot,
@@ -20,14 +22,15 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
+
+import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 /**
  * Service for creating common sidebar items used in both course overview and course management components
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseSidebarItemService {
     getManagementDefaultItems(courseId: number): SidebarItem[] {
         return [
@@ -241,12 +244,46 @@ export class CourseSidebarItemService {
         };
     }
 
+    getQuizQuestionPoolItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/smart-quizzes`,
+            icon: faListCheck,
+            title: 'Smart Quizzes',
+            translation: 'artemisApp.hyperion.quizQuestionPool.sidebarTitle',
+            testId: 'smart-quizzes',
+            hidden: false,
+        };
+    }
+
+    getAthenaSettingsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/athena-settings`,
+            iconImage: ATHENA_LOGO_PATH,
+            title: 'Athena Settings',
+            translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+            testId: 'athena-settings',
+            hidden: false,
+        };
+    }
+
     getAssessmentDashboardItem(courseId: number): SidebarItem {
         return {
             routerLink: `${courseId}/assessment-dashboard`,
             icon: faUserCheck,
             title: 'Assessment Dashboard',
             translation: 'entity.action.assessmentDashboard',
+            hidden: false,
+        };
+    }
+
+    getPresentationAssessmentsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/presentations`,
+            icon: faPersonChalkboard,
+            iconColor: 'var(--primary)',
+            title: 'Presentations',
+            translation: 'artemisApp.presentationAssessment.home.title',
+            testId: 'presentations',
             hidden: false,
         };
     }
@@ -278,6 +315,17 @@ export class CourseSidebarItemService {
             title: 'LTI Configuration',
             translation: 'global.menu.admin.lti',
             testId: 'lti-settings',
+            hidden: false,
+        };
+    }
+
+    getGocastBindingItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/gocast-binding`,
+            icon: faVideo,
+            title: 'TUM.Live',
+            translation: 'artemisApp.gocast.title',
+            testId: 'gocast-binding',
             hidden: false,
         };
     }

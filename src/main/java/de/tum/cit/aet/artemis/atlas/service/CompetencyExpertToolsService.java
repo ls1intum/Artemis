@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentCompetencyDTO;
@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class CompetencyExpertToolsService {
 
     /**
@@ -328,6 +328,7 @@ public class CompetencyExpertToolsService {
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
                     competency.setCourse(course);
+                    competency.setGeneratedByAi(true);
                     competencyRepository.save(competency);
                     comp.setCompetencyId(competency.getId());
                     createCount++;

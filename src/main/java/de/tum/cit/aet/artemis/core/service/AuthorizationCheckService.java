@@ -203,7 +203,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorForExercise(@NonNull Exercise exercise) {
-        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
     }
 
     /**
@@ -216,7 +216,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorForExercise(@NonNull Exercise exercise, @Nullable User user) {
-        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -293,7 +293,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantForExercise(@NonNull Exercise exercise) {
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), null);
     }
 
     /**
@@ -307,7 +307,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantForExercise(@NonNull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -331,7 +331,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentForExercise(@NonNull Exercise exercise, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
+        return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
     /**
@@ -432,7 +432,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorForExercise(@NonNull Exercise exercise, @Nullable User user) {
-        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -467,7 +467,7 @@ public class AuthorizationCheckService {
      * @param user     the user whose permissions should be checked
      */
     public void checkHasAtLeastRoleForExerciseElseThrow(@NonNull Role role, @NonNull Exercise exercise, @Nullable User user) {
-        checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        checkHasAtLeastRoleInCourseElseThrow(role, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
     }
 
     /**
@@ -707,7 +707,7 @@ public class AuthorizationCheckService {
         if (hasAdminAccess(user)) {
             return true;
         }
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
@@ -912,23 +912,24 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the currently logged-in user is allowed to retrieve the given result.
-     * The user is allowed to retrieve the result if they are an instructor of the course, or they are at least a student in the corresponding course, the
-     * submission is their submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
-     * Instructors are allowed to retrieve the results for test runs.
+     * Checks result eligibility for an explicitly selected owner or instructor view.
+     * The user is allowed to retrieve the result if they are at least a student in the corresponding course, the submission is their submission (or, in the
+     * instructor view, they are an instructor of the course), the assessment due date of the corresponding exercise is in the past (or not set) and the
+     * result is finished. In the instructor view, instructors are also allowed to retrieve the results of test runs at any time.
      *
-     * @param exercise      the corresponding exercise
-     * @param participation the participation the result belongs to
-     * @param result        the result that should be sent to the client
-     * @return true if the user is allowed to retrieve the given result, false otherwise
+     * @param exercise       the owning exercise
+     * @param participation  the owning participation
+     * @param result         the requested result
+     * @param instructorView whether the endpoint permits instructor access beyond ownership
+     * @return whether the result is visible in this view
      */
     @CheckReturnValue
-    public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
-        if (isAtLeastInstructorForExercise(exercise) && participation.isTestRun()) {
+    public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result, boolean instructorView) {
+        if (instructorView && isAtLeastInstructorForExercise(exercise) && participation.isTestRun()) {
             return true;
         }
 
-        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
+        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || instructorView && isAtLeastInstructorForExercise(exercise))
                 && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 

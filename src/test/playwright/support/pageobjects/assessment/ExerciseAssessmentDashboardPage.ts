@@ -42,6 +42,6 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     async toggleSecondCorrectionRound() {
-        await this.page.getByTestId('toggle-second-correction').click();
+        await this.page.getByTestId('toggle-second-correction').getByRole('switch').click();
     }
 }

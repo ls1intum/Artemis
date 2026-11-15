@@ -8,17 +8,17 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiCheckboxComponent,
-    TumUiChipComponent,
-    TumUiDialogComponent,
-    TumUiFormFieldComponent,
-    TumUiInputDirective,
-    TumUiSelectComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiChipComponent,
+    TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiSelectComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -34,6 +34,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
+import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -43,20 +45,21 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiCheckboxComponent,
-        TumUiSelectComponent,
-        TumUiChipComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiDialogComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiSelectComponent,
+        TumAetUiChipComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
         OrganizationSelectorComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
+        UserCourseRolesComponent,
     ],
 })
 export class UserManagementUpdateComponent implements OnInit {
@@ -85,6 +88,7 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
     readonly EMAIL_MIN_LENGTH = 5;
     readonly EMAIL_MAX_LENGTH = 100;
     readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
@@ -107,15 +111,12 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
 
-    /** Sorted authorities by role hierarchy (super admin > admin > instructor > editor > tutor) */
+    /** Sorted authorities by role hierarchy (super admin > admin > user) */
     readonly sortedAuthorities = computed(() => {
         const roleOrder: Record<string, number> = {
             ROLE_SUPER_ADMIN: 0,
             ROLE_ADMIN: 1,
-            ROLE_INSTRUCTOR: 2,
-            ROLE_EDITOR: 3,
-            ROLE_TA: 4,
-            ROLE_USER: 5,
+            ROLE_USER: 2,
         };
         return [...this.authorities()].sort((a, b) => {
             const orderA = roleOrder[a] ?? 999;
@@ -131,9 +132,6 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly authorityTranslationKeys: Record<string, string> = {
         ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
         ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
-        ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
-        ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',
-        ROLE_TA: 'artemisApp.userManagement.roles.tutor',
         ROLE_USER: 'artemisApp.userManagement.roles.user',
     };
 
@@ -143,7 +141,11 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Original login for detecting changes */
     private oldLogin?: string;
 
+    /** The login the server knows the edited user by. Unlike the login field of the form, it does not change while typing, so it identifies the user in course role requests. */
+    readonly persistedLogin = signal<string | undefined>(undefined);
+
     /** Whether Jenkins profile is active */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove isJenkins and the login-change warning that uses it
     private isJenkins = false;
 
     /**
@@ -156,6 +158,8 @@ export class UserManagementUpdateComponent implements OnInit {
             if (user) {
                 this.user.set(user.body ? user.body : user);
                 this.oldLogin = this.user().login;
+                // A user who is being created has no login on the server yet.
+                this.persistedLogin.set(this.user().id === undefined ? undefined : this.oldLogin);
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
                     this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
@@ -192,9 +196,18 @@ export class UserManagementUpdateComponent implements OnInit {
      * Shows a warning for Jenkins users when login changes.
      */
     async save(): Promise<void> {
+        const passwordControl = this.editForm.get('password')!;
+        if (passwordControl.invalid) {
+            passwordControl.markAsTouched();
+            return;
+        }
+
         // temporarily store the user organizations because they are not part of the edit form
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
+        // An omitted password generates a random one for new users and keeps it unchanged for existing users.
+        // The form clears the control to an empty string, which the server rejects as a too-short password.
+        updatedUser.password = updatedUser.password || undefined;
         updatedUser.organizations = userOrganizations;
         if (updatedUser.id) {
             updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();
@@ -299,7 +312,7 @@ export class UserManagementUpdateComponent implements OnInit {
         if (!passwordControl) {
             return;
         }
-        const lengthRules = [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)];
+        const lengthRules = [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator];
         const passwordApplies = !!this.editForm.get('internal')?.value && !this.useRandomPassword();
         passwordControl.setValidators(passwordApplies ? [Validators.required, ...lengthRules] : lengthRules);
         if (clearTypedValue || !passwordApplies) {
@@ -319,8 +332,8 @@ export class UserManagementUpdateComponent implements OnInit {
             login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
             firstName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
             lastName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
+            password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator]],
+            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH), Validators.email]],
             visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
             activated: [''],
             isTestUser: [''],

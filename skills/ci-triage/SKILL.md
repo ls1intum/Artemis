@@ -1,76 +1,146 @@
 ---
 name: ci-triage
-description: Work out why an Artemis pull request is red before changing any code. Use when CI fails, a check is stuck or missing, a test looks flaky, or someone asks to fix a failing build. Distinguishes real defects from the known infrastructure and harness failures that look identical to them, and gives the correct way to re-run each job.
+description: Diagnose failed, stuck, or missing Artemis CI checks and distinguish test defects from infrastructure failures.
 ---
 
 # Triage a red Artemis build
 
-Most red builds on this repository are real. A meaningful minority are not, and the ones that are
-not look exactly like the ones that are. Classify first, then debug. Changing code in response to a
-harness failure wastes a full CI cycle and adds a confusing commit to the history.
+## Keep completed implementations available for CI and review
 
-## Step 1: find out what is actually red
+Use drafts only while the implementation is unfinished. Once implementation is complete, open the PR
+as non-draft or mark it ready for review immediately. Draft `pull_request` runs defer the entire
+`ci-test.yml` workflow (server, client and AI worker sandbox tests), E2E, CodeQL and review bots.
+Relevant style, lint, architecture and type checks still run on public runners. Test TypeScript
+compilation runs in **Quality / Client Compilation** for drafts; the WAR and draft test-server image builds
+remain available. Integration-test feedback arrives after ready-for-review or a manual full run.
+Pending or failing CI, reviews and test-server validation do not by themselves require draft status.
+Keep unverified checklist items open and require passing checks and approvals before merge; follow
+[PR readiness](../../documentation/docs/developer/development-process.mdx#pull-request-readiness).
+
+## Identify the failing check
 
 ```bash
 gh pr checks <pr-number>
 gh run view <run-id> --log-failed
 ```
 
-The only check that gates a merge is the aggregate **All required CI Passed**
-(`.github/workflows/ci.yml`). Individual advisory checks going red does not block anything, so
-establish whether the failing job is inside that gate before treating it as urgent. Report PR
-Coverage is deliberately outside it.
+The aggregate **All required CI Passed** is defined in `.github/workflows/ci.yml`.
+Trace the failing check through its called workflow; job names are prefixed by the caller
+(for example, `Quality / Server Code Style`). Check the repository's required-check settings
+before claiming that an advisory failure blocks merging.
 
-The workflows and the jobs they contain. `ci.yml` calls each one under a shorter caller name (for
-example `Build`, `Quality`, `Test`), so a check named `Quality / Server Code Style` is the
-`server-style` job of `ci-quality.yml`:
+Draft runs report **Draft checks passed (tests deferred)** instead of the required
+**All required CI Passed** check. A green draft run therefore does not validate its untested head
+for merge. The `ready_for_review` event starts a normal run, including when the head SHA is unchanged;
+wait for its required checks before marking the PR ready to merge.
 
-| Workflow                                       | Jobs                                                                                                                                                                    |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/ci-quality.yml`             | Server Code Style, Client Code Style, Client Compilation, Server Code Quality, Query Quality Check                                                                      |
-| `.github/workflows/ci-test.yml`                | Server Tests (PostgreSQL), Client Tests                                                                                                                                 |
-| `.github/workflows/ci-e2e.yml`                 | Determine Relevant Tests; Phase 1: Relevant E2E Tests; Phase 2: Remaining E2E Tests; Run All E2E Tests (PR); Run All E2E Tests (Non-PR); Report E2E Overall Status      |
-| `.github/workflows/ci-build.yml`               | Build .war artifact, Upload Release Artifact, Build and Push Docker Image (PR, amd64), Build and Push Docker Image, Save Docker Image Tag, Sign and Attest Docker Image |
-| `.github/workflows/ci-bean-instantiations.yml` | Bean Instantiation Check                                                                                                                                                |
-| `.github/workflows/ci-skills.yml`              | Skill Path References                                                                                                                                                   |
+PR and non-PR E2E jobs can use different topologies: a pull request runs one node, develop runs three
+nodes with Redis (Valkey) as distributed data provider. Compare their definitions in
+`.github/workflows/ci-e2e.yml` before treating a develop-only failure as flaky.
 
-Note that `Run All E2E Tests (Non-PR)` is the job that runs on develop. A spec can fail there and
-pass in a pull request's phased run, because the two do not use the same topology.
+## Check the validation scope
 
-## Step 2: match against the known patterns
+Ready pull requests run explicit affected server class plans and related client specs. The server planner's
+summary lists its class count and modules; mandatory architecture and source-scanning guards remain included,
+as does the Gocast handler guard. The client job prints every selected spec, including filesystem-reading
+guardrails whose source reads have no import edges. Every changed client graph seed must have related tests;
+guardrails cannot hide an untested seed. Shared leaf utilities use the import graph. Shared contracts,
+configuration, missing history and ambiguous dependencies fall back to the full suite. Check the
+actual planner/helper output rather than assuming a PR always ran a subset.
 
-Read `reference/known-failure-patterns.md` before reading the logs as though they describe a
-defect. It covers, with the tell for each:
+The two Stylelint entry points, `config/stylelint/stylelint.config.json` and
+`config/stylelint/stylelint.config.js`, are client-only inputs. A PR confined to those files skips
+server tests; when mixed with Java changes, they do not expand the affected server class plan.
+Other configuration and server disk-input changes retain the conservative fallback.
 
-- Server Tests reporting no failures alongside a timeout
-- one ArchUnit violation turning two separate jobs red
-- a pull request that starts no CI at all
-- checks that never appear after a push
-- the counted gates that are at their limit, where an unrelated change trips them
-- the genuinely flaky areas of the Server Tests suite
+Affected runs keep test results but omit whole-project coverage gates and artifacts. The PR coverage
+section states the scope and result; a selected green run does not prove full-suite coverage. E2E
+selects mapped modules plus declared cross-module consumers, changed specs, and login/logout/health smoke
+tests. Its dependency contract must account for all discovered specs. Ordinary eligible PRs intentionally
+skip Phase 2; full callers retain the disjoint complement. Documentation and unit tests accompanying source
+changes do not force full E2E. Shared runtime, configuration, helpers and unknown inputs require the full
+suite; missing expected results still fail.
 
-## Step 3: re-run correctly
+Pushes to develop/main/release branches, merge-group events, releases and manual CI runs use full
+suites when the Test stage is selected. To validate the complete PR branch before merging, dispatch **CI** with that branch and
+**Bypass change detection and run every job** enabled. Without that override, area filtering can skip
+an irrelevant Test stage, including on a draft branch. Re-running a ready PR event preserves its affected scope; re-running
+a draft PR event keeps tests deferred. A merge group only provides pre-merge full validation when
+the repository uses it.
 
-Re-running the wrong way wastes a full CI cycle and produces a confusing result.
+The current-revision check runs immediately as a step inside **Detect Changed Areas**, using
+`.github/scripts/pr-ready.js` and the job's existing checkout. It adds no separate runner or
+checkout. API failures fail the required gate closed. Obsolete revisions skip expensive work
+and are superseded by the new PR run.
+
+## Classify before changing code
+
+Use `reference/known-failure-patterns.md` to distinguish timeouts, architecture gates,
+missing workflow runs, and known harness failures from application defects. A single failure
+is not evidence of flakiness; compare logs and execution conditions.
+
+A latest PR run that is pending with no jobs can be waiting for an obsolete run to release its
+concurrency slot. Follow the cancellation entry in the reference before rerunning or cancelling jobs.
+
+## Re-run when justified
 
 - **Server Tests: never use `gh run rerun --failed`.** The suite's sharding and reporting mean a
   partial re-run does not reproduce the original conditions. Use a full re-run:
   `gh run rerun <run-id>`.
 - **No run started at all**: this is not something a re-run fixes. See the "no CI at all" and
   "dropped event" entries in the reference file.
-- **A workflow file changed in the branch**: pushing it needs the `workflow` token scope, and the
-  run uses the workflow definition from the branch, not from develop.
+- **A workflow file changed in the branch**: classic PATs need the `workflow` scope to push it.
+  Check the triggering event and checked-out revision when identifying the workflow version.
 
-## Step 4: only now, debug
+## Sonar badges stay unchanged after a merge
 
-Once the failure is classified as real, treat it normally. Reproduce it locally before fixing it:
-the local commands for each check are in `skills/server-arch-gates/SKILL.md` for architecture and
-style gates, and `skills/write-tests/SKILL.md` for the test suites.
+Compare `api/project_analyses/search?project=ls1intum_Artemis` with the merged SHA, then inspect the
+actual **Build and analyze** step. A scan that exits before publication leaves the previous analysis
+and badges unchanged. Scanner 6+ has a separate JVM; `SONAR_SCANNER_JAVA_OPTS` sizes its heap,
+while `org.gradle.jvmargs` sizes Gradle. The workflow assigns the scanner 6 GiB.
 
-## What not to do
+Sonar is required on relevant ready PRs and is included in **All required CI Passed**. Scanner,
+upload and server-side quality-gate failures block merging. Both PR and branch scans wait for the
+server verdict. To test a repaired workflow and refresh the actual default branch before merging it:
 
-- Do not re-run a job repeatedly hoping it goes green. If it is flaky, say so and name the pattern.
-  If it is not, re-running changes nothing.
-- Do not raise a timeout to make a test pass. See `skills/e2e-pr-check/SKILL.md`.
-- Do not conclude "flaky" from a single failure. A deterministic failure that only happens in CI is
-  common in this repository and is usually an environment difference, not chance.
+```bash
+gh workflow run ci-sonar.yml --ref <workflow-fix-branch> -f analyze_default_branch=true
+```
+
+Leave that option false to analyze the selected branch itself. Check the job summary's analyzed
+branch/SHA and the completed Sonar analysis revision. Coverage lookup requires that exact SHA,
+both complete artifacts and successful full test jobs; unrelated CI failures do not invalidate it.
+The required scanner waits for the server verdict; still confirm the published source revision
+when diagnosing badges or a manually dispatched recovery. See [workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
+
+Affected tests emit separate **Sonar Client Coverage** (selected-spec LCOV) and **Sonar Server
+Coverage** (selected execution data). Sonar generates Java XML on a GitHub-hosted runner. These
+partial reports never feed full-project badges or Codacy; no test suite is rerun for analysis.
+Missing or failed producer data cannot be imported as successful coverage.
+
+Fork and token-restricted PRs (including Dependabot) use a secretless exact-head/source-branch/target/public-gate verifier. A maintainer must
+review the exact commit, promote it to internal `chore/sonar/pr-<number>`, dispatch the trusted default
+branch's **Sonar** workflow with `pull_request_number=<number>`, then rerun only the original Sonar
+verification job. Never automatically execute fork build scripts with the token. See the workflow
+policy for the promotion procedure. Head or target changes invalidate evidence. Metadata-only
+edits neither replace canonical validation nor cancel active coverage reporting.
+
+## Investigate Scorecard findings
+
+Read the published report at
+`https://api.securityscorecards.dev/projects/github.com/ls1intum/Artemis` and check its
+date and commit before comparing it with the working tree. Branch-protection findings
+cover release branches as well as `develop`; missing release signatures refer to release
+assets, not just GitHub's attestation store.
+
+Pin every external action, including `actions/*` and `github/*`, to a full commit SHA
+with a `# vX.Y.Z` comment. Resolve the upstream tag to its commit rather than guessing
+the hash. Renovate's `helpers:pinGitHubActionDigests` preset maintains these references.
+See `.github/workflows/README.md` for the workflow policy. Run `actionlint -shellcheck=`
+after editing workflows.
+
+## Reproduce a defect
+
+Use `skills/server-arch-gates/SKILL.md` for architecture and style checks,
+`skills/write-tests/SKILL.md` for JUnit and Vitest, and `skills/e2e-pr-check/SKILL.md`
+for Playwright. Do not mask an unexplained failure with retries or a larger timeout.

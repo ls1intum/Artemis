@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,7 +11,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TextSubmissionService {
     private http = inject(HttpClient);
     private submissionService = inject(SubmissionService);
@@ -34,16 +35,29 @@ export class TextSubmissionService {
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 
-    getTextSubmission(submissionId: number): Observable<TextSubmission> {
+    getTextSubmission(submissionId: number, purpose: EditorViewingPurpose = 'owner'): Observable<TextSubmission> {
         return this.http
-            .get<TextSubmission>(`api/text/text-submissions/${submissionId}`, {
+            .get<TextSubmission>(`api/text/text-submissions/${submissionId}${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
-        const url = `api/text/exercises/${exerciseId}/text-submissions`;
+    /** Lists submissions with participant identities; requires instructor access. */
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
+        return this.getSubmissionList(`api/text/exercises/${exerciseId}/text-submissions`, req, correctionRound);
+    }
+
+    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
+    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
+        return this.getSubmissionList(`api/text/exercises/${exerciseId}/text-submissions/assessed-by-me`, undefined, correctionRound);
+    }
+
+    private getSubmissionList(
+        url: string,
+        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
+        correctionRound: number,
+    ): Observable<HttpResponse<TextSubmission[]>> {
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());

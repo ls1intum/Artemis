@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,8 +46,14 @@ class ConfigurationValidatorTest {
 
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
             String vectorizerModule, String openAiBaseUrl, String gpuApiKey) {
+        return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule, openAiBaseUrl, gpuApiKey, "test-embedding-model");
+    }
+
+    private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
+            String vectorizerModule, String openAiBaseUrl, String gpuApiKey, String embeddingModel) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+        when(mockEnvironment.getProperty("artemis.weaviate.open-ai-embedding-model")).thenReturn(embeddingModel);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
                 openAiBaseUrl, gpuApiKey, false, "http://localhost");
     }
@@ -63,6 +72,48 @@ class ConfigurationValidatorTest {
         when(mockEnvironment.getProperty("artemis.version-control.build-agent-git-password")).thenReturn(buildAgentGitPassword);
         return new ConfigurationValidator(mockEnvironment, false, internalAdminUsername, internalAdminPassword, false, null, VALID_HTTP_PORT, VALID_GRPC_PORT, null, null, null,
                 null, false, "http://localhost");
+    }
+
+    @Nested
+    class AthenaSecretTest {
+
+        private ConfigurationValidator createAthenaValidator(boolean productionProfileActive, boolean athenaEnabled, String athenaSecret) {
+            Environment mockEnvironment = mock(Environment.class);
+            when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+            when(mockEnvironment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)).thenReturn(productionProfileActive);
+            when(mockEnvironment.getProperty("jhipster.security.authentication.jwt.base64-secret"))
+                    .thenReturn(Base64.getEncoder().encodeToString("k".repeat(64).getBytes(StandardCharsets.UTF_8)));
+            when(mockEnvironment.getProperty("artemis.athena.enabled", Boolean.class)).thenReturn(athenaEnabled);
+            when(mockEnvironment.getProperty("artemis.athena.secret")).thenReturn(athenaSecret);
+            return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, VALID_HTTP_PORT, VALID_GRPC_PORT, null, null, null, null, false, "http://localhost");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "abcdef12345", "abcdefg12345", "CHANGE_ME_ATHENA_SECRET", "CHANGE_ME_other" })
+        void testShippedAthenaSecretIsRejectedUnderProdProfile(String secret) {
+            ConfigurationValidator validator = createAthenaValidator(true, true, secret);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("artemis.athena.secret");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "", "   " })
+        void testBlankAthenaSecretIsRejectedUnderProdProfile(String secret) {
+            ConfigurationValidator validator = createAthenaValidator(true, true, secret);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("no shared secret");
+        }
+
+        @Test
+        void testShippedAthenaSecretIsToleratedWhenAthenaIsDisabledOrOutsideProd() {
+            assertThatCode(createAthenaValidator(true, false, "abcdef12345")::validateConfigurations).doesNotThrowAnyException();
+            assertThatCode(createAthenaValidator(false, true, "abcdef12345")::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @Test
+        void testUniqueAthenaSecretIsAcceptedUnderProdProfile() {
+            assertThatCode(createAthenaValidator(true, true, "4f9a8c1e7b2d44e0a6c3d5f7")::validateConfigurations).doesNotThrowAnyException();
+        }
     }
 
     @Nested
@@ -340,9 +391,29 @@ class ConfigurationValidatorTest {
             }
 
             @Test
-            void testText2vecTransformersShouldPassValidation() {
+            void testRemovedText2vecTransformersShouldFailWithMigrationHint() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue());
+                        SupportedVectorizer.REMOVED_TEXT2VEC_TRANSFORMERS);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("is no longer supported")
+                        .hasMessageContaining("text2vec-openai");
+            }
+
+            @ParameterizedTest
+            @NullAndEmptySource
+            @ValueSource(strings = { " " })
+            void testText2vecOpenAiWithoutEmbeddingModelShouldFailValidation(String embeddingModel) {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), "http://localhost:11434", "dummy", embeddingModel);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                        .hasMessageContaining("artemis.weaviate.open-ai-embedding-model");
+            }
+
+            @Test
+            void testNoneDoesNotRequireEmbeddingModel() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.DEFAULT_VECTORIZER_MODULE, null, null, null);
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
             }

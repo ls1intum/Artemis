@@ -15,17 +15,19 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaType;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleAttribute;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleConstructor;
+import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.StructureOracleEntry.OracleMethod;
 
 /**
  * This generator is used to parse the structure of a programming exercise to be then assessed from Artemis.
@@ -66,7 +68,12 @@ public class OracleGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(OracleGenerator.class);
 
-    private static final JsonMapper mapper = JsonObjectMapper.get();
+    /**
+     * The shared mapper, except that it omits only {@code null} values. The structural tests distinguish an absent key from an empty array, so an empty list has to stay in the
+     * oracle while an optional section that does not apply is left out.
+     */
+    private static final JsonMapper mapper = JsonObjectMapper.get().rebuild()
+            .changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL)).build();
 
     /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
@@ -79,50 +86,47 @@ public class OracleGenerator {
         log.debug("Generating the Oracle for the following projects:\nSolution project: {}\nTemplate project: {}\n", solutionProjectPath, templateProjectPath);
 
         Map<JavaClass, JavaClass> solutionToTemplateMapping = generateSolutionToTemplateMapping(solutionProjectPath, templateProjectPath);
-        ArrayNode structureOracleJSON = mapper.createArrayNode();
 
-        solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffJSON(entry.getKey(), entry.getValue())).filter(Optional::isPresent).map(Optional::get)
-                .forEach(structureOracleJSON::add);
+        List<StructureOracleEntry> structureOracle = solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffEntry(entry.getKey(), entry.getValue()))
+                .filter(Optional::isPresent).map(Optional::get).toList();
 
-        return prettyPrint(structureOracleJSON);
+        return prettyPrint(structureOracle);
     }
 
-    private static Optional<ObjectNode> generateDiffJSON(JavaClass solutionType, JavaClass templateType) {
+    /**
+     * This method generates the oracle entry of a type by diffing the type of the solution against its counterpart in the template.
+     *
+     * @param solutionType The type declared in the solution project.
+     * @param templateType The type with the same name declared in the template project, or null if the template does not declare it.
+     * @return The oracle entry describing what the solution adds to the template, or empty if the type is equal or ignored.
+     */
+    private static Optional<StructureOracleEntry> generateDiffEntry(JavaClass solutionType, JavaClass templateType) {
         JavaClassDiff javaClassDiff = new JavaClassDiff(solutionType, templateType);
         if (javaClassDiff.classesAreEqual() || JavaClassDiffSerializer.isElementToIgnore(solutionType)) {
             return Optional.empty();
         }
 
-        ObjectNode diffJSON = mapper.createObjectNode();
         JavaClassDiffSerializer serializer = new JavaClassDiffSerializer(javaClassDiff);
-        diffJSON.set("class", serializer.serializeClassProperties());
-
-        if (!javaClassDiff.methodsDiff.isEmpty()) {
-            diffJSON.set("methods", serializer.serializeMethods());
-        }
-        if (!javaClassDiff.attributesDiff.isEmpty()) {
-            diffJSON.set("attributes", serializer.serializeAttributes());
-        }
-        if (!javaClassDiff.enumsDiff.isEmpty()) {
-            diffJSON.set("enumValues", serializer.serializeEnums());
-        }
-        if (!javaClassDiff.constructorsDiff.isEmpty()) {
-            diffJSON.set("constructors", serializer.serializeConstructors());
-        }
+        // A section is part of the entry as soon as the diff contains elements, even when all of them are ignored and the serialized list is empty.
+        List<OracleMethod> methods = javaClassDiff.methodsDiff.isEmpty() ? null : serializer.serializeMethods();
+        List<OracleAttribute> attributes = javaClassDiff.attributesDiff.isEmpty() ? null : serializer.serializeAttributes();
+        List<String> enumValues = javaClassDiff.enumsDiff.isEmpty() ? null : serializer.serializeEnums();
+        List<OracleConstructor> constructors = javaClassDiff.constructorsDiff.isEmpty() ? null : serializer.serializeConstructors();
+        StructureOracleEntry diffEntry = new StructureOracleEntry(serializer.serializeClassProperties(), methods, attributes, enumValues, constructors);
 
         log.debug("Generated JSON for '{}'.", solutionType.getCanonicalName());
-        return Optional.of(diffJSON);
+        return Optional.of(diffEntry);
     }
 
     /**
-     * This method pretty prints a given JSON array.
+     * This method pretty prints a given structure oracle.
      *
-     * @param jsonArray The JSON array that needs to get pretty printed.
+     * @param structureOracle The oracle entries that need to get pretty printed.
      * @return The pretty printed JSON array in its string representation.
      */
-    private static String prettyPrint(ArrayNode jsonArray) {
+    private static String prettyPrint(List<StructureOracleEntry> structureOracle) {
         try {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonArray);
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(structureOracle);
         }
         catch (JacksonException e) {
             var error = "Error pretty printing JSON";

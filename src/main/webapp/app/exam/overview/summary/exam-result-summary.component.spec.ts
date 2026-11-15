@@ -1,3 +1,5 @@
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -34,22 +36,25 @@ import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
+import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { provideHttpClient } from '@angular/common/http';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -169,7 +174,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
     },
 };
 
-function sharedSetup(url: string[]) {
+function sharedSetup(url: string[], renderScoreHeaders = false) {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultSummaryComponent],
@@ -209,13 +214,18 @@ function sharedSetup(url: string[]) {
                         FaIconComponent,
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
-                        NgClass,
                         RouterLink,
-                        NgbTooltip,
+                        TumAetUiButtonDirective,
+                        TumAetUiMessageComponent,
+                        TumAetUiTagComponent,
+                        MockDirective(TumAetUiTooltipDirective),
+                        ExamExerciseHeaderComponent,
+                        MockComponent(ExamRequestAiFeedbackButtonComponent),
+                        MockComponent(CourseSidebarToggleButtonComponent),
                         MockComponent(ExamGeneralInformationComponent),
                         MockComponent(ExamResultOverviewComponent),
-                        MockComponent(CollapsibleCardComponent),
-                        MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
+                        renderScoreHeaders ? CollapsibleCardComponent : MockComponent(CollapsibleCardComponent),
+                        renderScoreHeaders ? ExamResultSummaryExerciseCardHeaderComponent : MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
                         MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
                         MockComponent(ExampleSolutionComponent),
                         MockComponent(TextExamSummaryComponent),
@@ -224,7 +234,6 @@ function sharedSetup(url: string[]) {
                         MockComponent(FileUploadExamSummaryComponent),
                         MockComponent(ComplaintsStudentViewComponent),
                         MockComponent(ProgrammingExamSummaryComponent),
-                        MockComponent(TestRunRibbonComponent),
                     ],
                 },
             })
@@ -250,6 +259,7 @@ describe('ExamResultSummaryComponent', () => {
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
 
         expect(exportToPDFButton).not.toBeNull();
+        expect(exportToPDFButton.nativeElement.getAttribute('data-testid')).toBe('exam-summary-export-button');
 
         component.exerciseInfos()[1].isCollapsed = true;
         component.exerciseInfos()[2].isCollapsed = true;
@@ -268,6 +278,354 @@ describe('ExamResultSummaryComponent', () => {
         printStub.mockRestore();
     });
 
+    it('should use supplied management grade info without a second request', () => {
+        fixture.componentRef.setInput('instructorView', true);
+        fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo });
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find');
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(management).not.toHaveBeenCalled();
+        expect(owner).not.toHaveBeenCalled();
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
+    });
+
+    it('should load management grades through the existing instructor detail API', () => {
+        fixture.componentRef.setInput('instructorView', true);
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...gradeInfo } })));
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(management).toHaveBeenCalledWith(1, studentExam.exam!.id, studentExam.id);
+        expect(owner).not.toHaveBeenCalled();
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
+    });
+
+    it('should load the grade overview for a submitted test exam without a publication date', () => {
+        const submittedTestExam = { ...studentExamForTestExam, submitted: true };
+        fixture.componentRef.setInput('studentExam', submittedTestExam);
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
+        fixture.detectChanges();
+        expect(owner).toHaveBeenCalledWith(1, testExam.id, submittedTestExam.id);
+        expect(component.studentExamGradeInfoDTO()).toBeDefined();
+    });
+
+    it.each([0, 500, 503])('recovers an initial owner grade request with status %s into pending polling', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, overallPointsAchieved: 16 } };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValue(of(completed));
+            fixture.detectChanges();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(2000);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-summary-result-overview"]')).not.toBeNull();
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.studentResult.overallPointsAchieved).toBe(16);
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledTimes(3);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('backs off initial transient failures and recovers a published real-exam summary', async () => {
+        vi.useFakeTimers();
+        try {
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(6000);
+            expect(load).toHaveBeenCalledTimes(4);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(load).toHaveBeenCalledTimes(4);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(load).toHaveBeenCalledTimes(5);
+            await vi.advanceTimersByTimeAsync(24000);
+            expect(load).toHaveBeenCalledTimes(7);
+            await vi.advanceTimersByTimeAsync(30000);
+            expect(load).toHaveBeenCalledTimes(8);
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+            load.mockReturnValue(of({ ...gradeInfo }));
+            await vi.advanceTimersByTimeAsync(29999);
+            expect(load).toHaveBeenCalledTimes(8);
+            await vi.advanceTimersByTimeAsync(1);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-summary-result-overview"]')).not.toBeNull();
+            await vi.advanceTimersByTimeAsync(90000);
+            expect(load).toHaveBeenCalledTimes(9);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403])('does not retry an initial owner request with permanent status %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['attempt change', 'destroy'])('cancels an initial owner retry timer on %s', async (cancellation) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+            fixture.detectChanges();
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+                fixture.detectChanges();
+            }
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['attempt change', 'destroy'])('unsubscribes an in-flight initial owner retry on %s', async (cancellation) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const retryRequest = new Subject<StudentExamWithGradeDTO>();
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(retryRequest);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(retryRequest.observed).toBe(true);
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+                fixture.detectChanges();
+            }
+            expect(retryRequest.observed).toBe(false);
+            retryRequest.next({ ...gradeInfo });
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledTimes(2);
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('refreshes pending automatic results and stops after completion', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, overallPointsAchieved: 16 } };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValueOnce(of(pending)).mockReturnValue(of(completed));
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toEqual([programmingExercise.id!]);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.studentResult.overallPointsAchieved).toBe(16);
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('backs off while automatic results stay pending', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of(pending));
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(6000);
+        expect(load).toHaveBeenCalledTimes(4);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(load).toHaveBeenCalledTimes(4);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(load).toHaveBeenCalledTimes(5);
+        vi.useRealTimers();
+    });
+
+    it.each([true, false])('refreshes a pending bonus source and stops after completion (test exam: %s)', async (testExam) => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', testExam ? { ...studentExamForTestExam, submitted: true } : studentExam);
+        const pending = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: true } } };
+        const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: false, finalGrade: '1.0' } } };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValueOnce(of(pending)).mockReturnValue(of(completed));
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.pending).toBe(true);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.finalGrade).toBe('1.0');
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('does not poll a completed zero-point bonus source', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(
+            of({
+                ...gradeInfo,
+                studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: false, studentPointsOfBonusSource: 0, bonusGrade: 0, finalGrade: '3.0' } },
+            }),
+        );
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(load).toHaveBeenCalledOnce();
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.studentPointsOfBonusSource).toBe(0);
+        vi.useRealTimers();
+    });
+
+    it('recovers from a failed pending-result refresh', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const completed = { ...gradeInfo, pendingExerciseIds: [] };
+        const load = vi
+            .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+            .mockReturnValueOnce(of(pending))
+            .mockReturnValueOnce(throwError(() => new Error('offline')))
+            .mockReturnValue(of(completed));
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+        expect(load).toHaveBeenCalledTimes(3);
+        vi.useRealTimers();
+    });
+
+    it.each([400, 401, 403, 404, 409])('stops pending owner refreshes after a permanent HTTP %s response', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toEqual([programmingExercise.id!]);
+            await vi.advanceTimersByTimeAsync(120000);
+            expect(load).toHaveBeenCalledTimes(2);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403])('stops pending instructor refreshes after HTTP %s without querying owner grades', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            fixture.componentRef.setInput('instructorView', true);
+            fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] });
+            const load = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(122000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(owner).not.toHaveBeenCalled();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([0, 500, 503])('recovers pending owner grades after transient HTTP %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                .mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [] }));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+            await vi.advanceTimersByTimeAsync(120000);
+            expect(load).toHaveBeenCalledTimes(3);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('refreshes supplied pending management grades through the instructor API', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        fixture.componentRef.setInput('instructorView', true);
+        fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] });
+        vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...gradeInfo, pendingExerciseIds: [] } })));
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+        expect(owner).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
+    it('does not apply an old attempt refresh after the summary input changes', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] }));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('cancels pending-result polling when the summary is destroyed', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] }));
+        fixture.detectChanges();
+        fixture.destroy();
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('never starts polling unpublished real-exam results', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExam, exam: { ...exam, publishResultsDate: dayjs().add(1, 'day') } });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
+    it('should not request grades while a test exam is still being conducted', () => {
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: false });
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(owner).not.toHaveBeenCalled();
+    });
+
     it('should retrieve grade info correctly', () => {
         const serviceSpy = vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
 
@@ -276,7 +634,7 @@ describe('ExamResultSummaryComponent', () => {
         const courseId = 1;
         expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id);
         expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
@@ -600,6 +958,149 @@ describe('ExamResultSummaryComponent', () => {
         });
     });
 
+    describe('page frame', () => {
+        const element = (selector: string): HTMLElement | null => fixture.nativeElement.querySelector(selector);
+        const header = (): HTMLElement => element('#exam-results-title [data-testid="exam-exercise-header"]')!;
+        const title = (): HTMLElement => element('#exam-results-title [data-testid="exam-exercise-title"]')!;
+        const actions = (): HTMLElement => header().lastElementChild as HTMLElement;
+        const submittedExam = (overrides: Partial<Exam> = {}): StudentExam => ({ ...studentExam, submitted: true, exam: { ...exam, ...overrides } as Exam }) as StudentExam;
+
+        it('shows the page title in the shared 40px title row that holds the export button', () => {
+            fixture.detectChanges();
+
+            expect(header().classList).toContain('h-10');
+            expect(title().textContent).toContain('artemisApp.exam.examSummary.examResults');
+            // the id the "back to overview" scroll falls back to stays on the title row
+            expect(element('#exam-results-title')!.contains(title())).toBe(true);
+            expect(actions().querySelector('#exportToPDFButton')).not.toBeNull();
+        });
+
+        it('lays out the actions in the title row without floats: the AI feedback button first, the export button last, both small', () => {
+            fixture.detectChanges();
+
+            const children = [...actions().children];
+            expect(children.map((child) => child.id || child.tagName.toLowerCase())).toEqual(['jhi-exam-request-ai-feedback-button', 'exportToPDFButton']);
+            const exportButton = children[1];
+            // the small size is 34px, so the button fits the 40px row
+            expect(exportButton.classList).toContain('tumaet:text-sm');
+            expect(exportButton.classList).not.toContain('tumaet:text-base');
+            expect(exportButton.classList).not.toContain('float-right');
+            // the host of a button that is not shown must not leave an empty flex item (and an extra gap) behind
+            expect(children[0].classList).toContain('contents');
+        });
+
+        it('puts the toggle of a collapsed sidebar in front of the title inside the same row, and forwards its click', () => {
+            fixture.detectChanges();
+            expect(element('jhi-course-sidebar-toggle-button')).toBeNull();
+
+            fixture.componentRef.setInput('isSidebarCollapsed', true);
+            fixture.detectChanges();
+
+            expect(title().previousElementSibling?.tagName.toLowerCase()).toBe('jhi-course-sidebar-toggle-button');
+            expect(actions().querySelector('jhi-course-sidebar-toggle-button')).toBeNull();
+
+            const toggled = vi.fn();
+            component.toggleSidebar.subscribe(toggled);
+            fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent)).componentInstance.toggleSidebar.emit();
+            expect(toggled).toHaveBeenCalledOnce();
+        });
+
+        it('marks a test run with a tag next to the title instead of the diagonal ribbon', () => {
+            fixture.detectChanges();
+            expect(element('#testRunRibbon')).toBeNull();
+
+            component.isTestRun.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const tag = element('#testRunRibbon')!;
+            expect(tag.tagName.toLowerCase()).toBe('tumaet-ui-tag');
+            expect(title().nextElementSibling).toBe(tag);
+            expect(element('jhi-test-run-ribbon')).toBeNull();
+        });
+
+        it('shows only the AI feedback button, aligned to the right edge, when an instructor looks at a test run', () => {
+            fixture.componentRef.setInput('instructorView', true);
+            fixture.detectChanges();
+            component.isTestRun.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(element('#exam-results-title')).toBeNull();
+            expect(element('#testRunRibbon')).toBeNull();
+            const aiButton = element('jhi-exam-request-ai-feedback-button')!;
+            expect(aiButton.parentElement!.classList).toContain('justify-end');
+            // the old float and the extra right margin left the button 8px short of the edge
+            expect(aiButton.classList).not.toContain('float-right');
+            expect(aiButton.classList).not.toContain('mr-2!');
+        });
+
+        it('makes the back-to-overview button a small one', () => {
+            fixture.detectChanges();
+
+            const button = element('#back-to-overview-button')!;
+            expect(button.getAttribute('data-testid')).toBe('exam-summary-back-button');
+            expect(button.classList).toContain('tumaet:text-sm');
+            expect(button.classList).not.toContain('tumaet:text-base');
+        });
+
+        it('styles the exercises heading like a section heading and keeps the note about unpublished results apart from it', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ publishResultsDate: dayjs().add(2, 'hours') }));
+            fixture.detectChanges();
+
+            const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-base!');
+            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');
+            expect(heading.classList).toContain('mb-3!');
+            expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-6!');
+        });
+
+        it('adds no margins around the complaint area that would open an empty line above it', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ examStudentReviewStart: dayjs().subtract(1, 'hour'), examStudentReviewEnd: dayjs().add(1, 'hour') }));
+            fixture.detectChanges();
+
+            const complaintView = element('jhi-complaint-student-view')!;
+            expect(complaintView).not.toBeNull();
+            expect(complaintView.classList.length).toBe(0);
+        });
+
+        it.each([false, true])('lets the complaint area read the complaint as staff only in the instructor view (%s)', (instructorView) => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ examStudentReviewStart: dayjs().subtract(1, 'hour'), examStudentReviewEnd: dayjs().add(1, 'hour') }));
+            fixture.componentRef.setInput('instructorView', instructorView);
+            fixture.detectChanges();
+
+            const complaintView = fixture.debugElement.query(By.directive(ComplaintsStudentViewComponent));
+            expect(complaintView).not.toBeNull();
+            expect(complaintView.componentInstance.forStaff()).toBe(instructorView);
+        });
+
+        it('caps the problem statement panel of every exercise card at 45% of the card, but not in the printout', () => {
+            fixture.detectChanges();
+
+            const content = element('.collapsible-content')!;
+            expect(content.style.getPropertyValue('--resizeable-container-right-max-width')).toBe('45%');
+
+            component.isPrinting.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(content.style.getPropertyValue('--resizeable-container-right-max-width')).toBe('none');
+        });
+
+        it('makes the plagiarism case link and the example solution toggle small buttons', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ exampleSolutionPublicationDate: dayjs().subtract(1, 'hour') }));
+            fixture.detectChanges();
+            component.plagiarismCaseInfos.set({ [textExercise.id!]: { id: 5, verdict: PlagiarismVerdict.PLAGIARISM } });
+            fixture.changeDetectorRef.detectChanges();
+
+            const link = fixture.debugElement.query(By.css('a[tumAetUiButton]')).nativeElement as HTMLElement;
+            const toggle = element(`#show-sample-solution-button-${textExercise.id}`)!;
+            for (const button of [link, toggle]) {
+                expect(button.classList).toContain('tumaet:text-sm');
+                expect(button.classList).not.toContain('tumaet:text-base');
+            }
+        });
+    });
+
     describe('toggleShowSampleSolution', () => {
         it('should be called on button click', () => {
             component.exerciseInfos.set({
@@ -616,5 +1117,89 @@ describe('ExamResultSummaryComponent', () => {
             button.click();
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
+    });
+    it.each([false, true])('passes explicit management purpose %s to the example-solution download', (instructorView) => {
+        fixture.componentRef.setInput('studentExam', { ...studentExam, exam: { ...exam, exampleSolutionPublicationDate: dayjs().subtract(1, 'hour') } });
+        fixture.componentRef.setInput('instructorView', instructorView);
+        fixture.detectChanges();
+        const download = fixture.debugElement.query(By.directive(ProgrammingExerciseExampleSolutionRepoDownloadComponent));
+        expect(download).not.toBeNull();
+        expect(download.componentInstance.forStaff()).toBe(instructorView);
+    });
+
+    it.each([
+        { testRun: false, instructorView: false, purpose: 'owner' },
+        { testRun: true, instructorView: false, purpose: 'staff-preview' },
+        { testRun: false, instructorView: true, purpose: 'staff-preview' },
+    ])('derives reusable editor purpose from explicit context $purpose, test run $testRun, management $instructorView', ({ testRun, instructorView, purpose }) => {
+        const fileSubmission = { id: 5, submitted: true } as FileUploadSubmission;
+        const fileParticipation = { id: 5, student: user, submissions: [fileSubmission] } as StudentParticipation;
+        const fileExercise = { id: 5, type: ExerciseType.FILE_UPLOAD, studentParticipations: [fileParticipation], exerciseGroup } as FileUploadExercise;
+        fixture.componentRef.setInput('studentExam', { ...studentExam, exercises: [...exercises, fileExercise] });
+        fixture.detectChanges();
+        component.isTestRun.set(testRun);
+        fixture.componentRef.setInput('instructorView', instructorView);
+        component.exerciseInfos.set({
+            ...component.exerciseInfos(),
+            1: { participation: textParticipation, submission: textSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
+            3: { participation: modelingParticipation, submission: modelingSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
+            5: { participation: fileParticipation, submission: fileSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
+        });
+        fixture.changeDetectorRef.detectChanges();
+        for (const editorType of [TextExamSummaryComponent, ModelingExamSummaryComponent, FileUploadExamSummaryComponent]) {
+            const editor = fixture.debugElement.query(By.directive(editorType)).componentInstance;
+            expect(editor.viewingPurpose()).toBe(purpose);
+        }
+    });
+});
+
+describe.each([
+    { name: 'published real exam', url: ['', ''], testRun: false },
+    { name: 'genuine test run before real publication', url: ['', 'test-runs', '', 'summary'], testRun: true },
+])('ExamResultSummary supplied management scores: $name', ({ url, testRun }) => {
+    sharedSetup(url, true);
+
+    function setScoredAttempt() {
+        const scoredAttempt: StudentExam = {
+            ...studentExam,
+            testRun,
+            exam: { ...exam, publishResultsDate: testRun ? dayjs().add(1, 'day') : publishResultsDate },
+            exercises: [{ ...textExercise, maxPoints: 10 }],
+        };
+        fixture.componentRef.setInput('studentExam', scoredAttempt);
+        fixture.componentRef.setInput('instructorView', true);
+        return { ...gradeInfo, achievedPointsPerExercise: { 1: 6 } };
+    }
+
+    function expectEarnedScore() {
+        expect.soft(component.exerciseInfos()[1].achievedPoints).toBe(6);
+        expect.soft(component.exerciseInfos()[1].achievedPercentage).toBe(60);
+        const score = fixture.nativeElement.querySelector('[data-testid="exercise-result-score"]') as HTMLElement;
+        expect(score).not.toBeNull();
+        expect.soft(score.textContent).toContain('[6 / 10');
+        expect.soft(score.querySelector('[data-testid="achieved-percentage"]')?.textContent ?? '').toContain('60%');
+    }
+
+    it('keeps supplied nonzero points in final state and the real rendered score header without another request', () => {
+        const supplied = setScoredAttempt();
+        fixture.componentRef.setInput('managementGradeInfo', supplied);
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find');
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(management).not.toHaveBeenCalled();
+        expect(owner).not.toHaveBeenCalled();
+        expectEarnedScore();
+    });
+
+    it('retains asynchronously loaded management scores in the real header', () => {
+        const supplied = setScoredAttempt();
+        const response = new Subject<HttpResponse<StudentExamWithGradeDTO>>();
+        vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(response);
+        fixture.detectChanges();
+        expect(component.exerciseInfos()[1].achievedPoints).toBeUndefined();
+        response.next(new HttpResponse({ body: supplied }));
+        fixture.detectChanges();
+        expectEarnedScore();
+        response.complete();
     });
 });

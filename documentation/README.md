@@ -5,6 +5,7 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 ## Installation
 
 ```bash
+npm install --global corepack   # one-time: Node.js 25+ no longer bundles Corepack
 corepack enable          # one-time: activate the pnpm version pinned in package.json
 pnpm install
 ```
@@ -31,8 +32,8 @@ To test the build locally, you can run:
 pnpm run serve
 ```
 
-To build and serve the complete deployed site, including the TUM UI Storybook at
-`/developer/tum-ui/`, run from the repository root:
+To build and serve the complete deployed site, including the TUM AET UI Storybook at
+`/developer/tum-aet-ui/`, run from the repository root:
 
 ```bash
 pnpm install --frozen-lockfile

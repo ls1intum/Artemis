@@ -207,7 +207,7 @@ public class CourseService {
      * @return a set of {@link Course} objects where the user is an instructor, related to the specified LTI platform.
      */
     public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
-        return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
+        return courseRepository.findOnlineCoursesWithRegistrationId(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
                 .collect(Collectors.toSet());
     }
 
@@ -227,10 +227,26 @@ public class CourseService {
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            Course course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            Course course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
             exercise.setCourse(course);
             return course;
         }
+    }
+
+    /**
+     * Returns the course of an exercise that was read from the database, for an update that does not trust the course the client names.
+     * <p>
+     * An exercise is loaded together with its course, so a course exercise already carries what {@link #retrieveCourseOverExerciseGroupOrCourseId(Exercise)} would read a second
+     * time. Only call this with an exercise loaded by the server; one built from a request has just the id of a course, which is what the other method is for.
+     *
+     * @param loadedExercise an exercise read from the database, with its course
+     * @return the course of the exercise
+     */
+    public Course retrieveCourseOfLoadedExercise(Exercise loadedExercise) {
+        if (loadedExercise.isExamExercise()) {
+            return retrieveCourseOverExerciseGroupOrCourseId(loadedExercise);
+        }
+        return loadedExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
     }
 
     /**

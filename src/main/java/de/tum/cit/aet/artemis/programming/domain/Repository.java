@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
@@ -16,8 +19,12 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
+    /** The hooks directory of every repository: below the null device no hook can exist, so that git finds none. This relies on a POSIX file system. */
+    private static final String NO_HOOKS_PATH = "/dev/null";
+
     private ProgrammingExerciseParticipation participation;
 
+    @Nullable
     private Path localPath;
 
     private final LocalVCRepositoryUri remoteRepositoryUri;
@@ -50,15 +57,35 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
             return false;
         }
 
-        if (file.isDirectory() && file.getName().equals(".git")) {
+        // Compare the name only, ignoring its case.
+        if (".git".equalsIgnoreCase(file.getName())) {
             return false;
         }
 
-        if (file.equals(this.localPath.toFile())) {
+        if (this.localPath != null && file.equals(this.localPath.toFile())) {
             return true;
         }
 
         return isValidFile(file.getParentFile());
+    }
+
+    /**
+     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them.
+     * The hooks directory is set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
+     * As they are part of the configuration, a configuration file that is saved contains them as well.
+     *
+     * @return the configuration of this repository
+     */
+    @Override
+    public FileBasedConfig getConfig() {
+        FileBasedConfig config = super.getConfig();
+        if (!NO_HOOKS_PATH.equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH))) {
+            config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH, NO_HOOKS_PATH);
+        }
+        for (String filterDriver : config.getSubsections(ConfigConstants.CONFIG_FILTER_SECTION)) {
+            config.unsetSection(ConfigConstants.CONFIG_FILTER_SECTION, filterDriver);
+        }
+        return config;
     }
 
     public ProgrammingExerciseParticipation getParticipation() {

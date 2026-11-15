@@ -17,8 +17,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -34,8 +32,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -85,9 +83,7 @@ describe('CourseExercisesComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(SortByDirective),
                 TranslatePipeMock,
-                MockDirective(SortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockTranslateValuesDirective,
@@ -100,7 +96,7 @@ describe('CourseExercisesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 {
                     provide: ParticipationWebsocketService,
                     useValue: {
@@ -321,6 +317,17 @@ describe('CourseExercisesComponent', () => {
         expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
         expect(exerciseServiceStub).toHaveBeenCalledWith(1);
         expect(exerciseServiceStub).toHaveBeenCalledWith(2);
+    });
+
+    it('should hand the sidebar cards the accuracy of the scores of the course, because its exercises carry no course', () => {
+        course.accuracyOfScores = 2;
+        (component as any)._course.set(course);
+
+        component.processExercises(course.exercises!);
+
+        const cards = (component as any)._sidebarExercises() as { course?: { accuracyOfScores?: number } }[];
+        expect(cards.length).toBeGreaterThan(0);
+        expect(cards.every((card) => card.course?.accuracyOfScores === 2)).toBe(true);
     });
 
     it('should update sidebar participation data when a websocket participation change is received', () => {

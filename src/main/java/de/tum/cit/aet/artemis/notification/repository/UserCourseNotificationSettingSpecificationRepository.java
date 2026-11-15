@@ -118,6 +118,21 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      */
     List<UserCourseNotificationSettingSpecification> findAllByUserId(long userId);
 
+    /**
+     * Checks whether the user with the given login has explicitly switched the e-mail channel on for at least one notification
+     * type in at least one course.
+     *
+     * @param login the login of the user
+     * @return true if a specification of the user enables e-mail
+     */
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM UserCourseNotificationSettingSpecification s
+            WHERE s.email = TRUE
+                AND s.user.login = :login
+            """)
+    boolean existsEmailEnabledByUserLogin(@Param("login") String login);
+
     // NOTE: we need to clear all cached entries because we don't know which users had a specification for the course
     @Transactional // OK because of delete
     @Modifying

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.security.SAML2Service;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
@@ -50,6 +52,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
@@ -57,7 +60,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authentication/jwt-tokens")
+@FeatureUsage(UserFeature.SIGN_IN)
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {
@@ -74,8 +77,11 @@ public class PublicUserJwtResource {
 
     private final Optional<SAML2Service> saml2Service;
 
+    private final RateLimitService rateLimitService;
+
     public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            Optional<SAML2Service> saml2Service, Optional<OIDCExchangeCodeService> oidcExchangeCodeService) {
+            Optional<SAML2Service> saml2Service, Optional<OIDCExchangeCodeService> oidcExchangeCodeService, RateLimitService rateLimitService) {
+        this.rateLimitService = rateLimitService;
         this.jwtCookieService = jwtCookieService;
         this.oidcExchangeCodeService = oidcExchangeCodeService;
         this.authenticationManager = authenticationManager;
@@ -94,7 +100,9 @@ public class PublicUserJwtResource {
      * @return if successful a map with the access_token information and status 200 (ok). Every credential that the
      *         authentication manager refuses answers an empty body with status 401 (unauthorized) - the same status for all
      *         of them, so that the response does not say which check refused. A malformed request still answers 400 and an
-     *         exhausted rate limit 429, both before the credentials are looked at, and a system problem behind
+     *         exhausted rate limit 429, both before the credentials are looked at. The rate limit also holds for one login name: once it has had
+     *         {@link RateLimitType#FAILED_LOGIN} wrong passwords in a minute, further logins for it are answered with 429 until the budget refills, whatever the
+     *         client address. A system problem behind
      *         authentication (an unreachable directory, for instance) stays a 500.
      */
     @PostMapping("authenticate")
@@ -108,16 +116,22 @@ public class PublicUserJwtResource {
         SecurityUtils.checkUsernameAndPasswordValidity(username, password);
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        String failedLoginKey = username.trim().toLowerCase(Locale.ROOT);
+        rateLimitService.enforceBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
 
+        boolean reservationHeld = true;
         try {
             authenticationToken.setDetails(Pair.of("userAgent", userAgent));
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            reservationHeld = false;
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
+            // The resolved login rather than what was typed: a login with an email address or an alias of it would not find the user again
+            artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
@@ -142,7 +156,19 @@ public class PublicUserJwtResource {
             // be processed - a directory that is unreachable, a repository that failed - and answering that with 401 would
             // hide an outage behind "wrong credentials". It stays a 500, which is what it is.
             log.warn("Login for user {} was refused ({}): {}", loginVM.getUsername(), ex.getClass().getSimpleName(), ex.getMessage());
+            // An unknown login ends here as ProviderNotFoundException and keeps the reserved token, so that trying names is throttled like trying passwords
+            if (!(ex instanceof ProviderNotFoundException)) {
+                rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        catch (RuntimeException ex) {
+            // The login failed for a reason that is not about the credentials, so it does not count against the budget. A reservation that the successful
+            // authentication gave back already is not given back a second time, which would restore a token that another request used.
+            if (reservationHeld) {
+                rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            }
+            throw ex;
         }
     }
 

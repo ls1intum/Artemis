@@ -3,9 +3,9 @@
 <div class="flex items-center justify-end gap-2">
     @if (isAtLeastInstructor() || group.isUserTutor) {
         <a
-            tumUiButton
+            tumAetUiButton
             size="small"
-            severity="secondary"
+            severity="primary"
             variant="outlined"
             [id]="'registrations-' + group.id"
             [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'registrations']"
@@ -17,9 +17,9 @@
     }
     @if (isAtLeastInstructor()) {
         <a
-            tumUiButton
+            tumAetUiButton
             size="small"
-            severity="secondary"
+            severity="warn"
             variant="outlined"
             [id]="'edit-' + group.id"
             [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'edit']"
@@ -28,7 +28,8 @@
             <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
         </a>
         <button
-            tumUiButton
+            type="button"
+            tumAetUiButton
             size="small"
             severity="danger"
             variant="outlined"

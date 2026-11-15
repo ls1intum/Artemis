@@ -4,17 +4,27 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.ZipFile;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -34,10 +44,14 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -48,6 +62,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -67,6 +82,15 @@ public class ExerciseUtilService {
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -110,6 +134,55 @@ public class ExerciseUtilService {
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    @Autowired
+    private JsonMapper objectMapper;
+
+    /**
+     * The content of an exported exercise definition zip.
+     *
+     * @param entries the files in the zip by their entry name
+     * @param details the parsed exercise details file
+     */
+    public record ExportedExercise(Map<String, byte[]> entries, Map<String, Object> details) {
+    }
+
+    /**
+     * Reads the zip of an exercise definition export and checks that it contains exactly one exercise details file.
+     *
+     * @param zipFile the downloaded zip file
+     * @return the files of the zip and the parsed exercise details
+     * @throws IOException if the zip cannot be read
+     */
+    public ExportedExercise readExerciseExport(File zipFile) throws IOException {
+        Map<String, byte[]> entries = new HashMap<>();
+        try (var zip = new ZipFile(zipFile)) {
+            for (var entry : Collections.list(zip.entries())) {
+                if (!entry.isDirectory()) {
+                    entries.put(entry.getName(), zip.getInputStream(entry).readAllBytes());
+                }
+            }
+        }
+        var detailsFiles = entries.keySet().stream().filter(name -> name.startsWith("Exercise-Details-") && name.endsWith(".json")).toList();
+        assertThat(detailsFiles).as("exactly one exercise details file").hasSize(1);
+        return new ExportedExercise(entries, objectMapper.readValue(entries.get(detailsFiles.getFirst()), new TypeReference<>() {
+        }));
+    }
+
+    /**
+     * Checks that the exported grading criteria and their instructions are present and carry no ids.
+     *
+     * @param details the parsed exercise details of an export
+     */
+    @SuppressWarnings("unchecked")
+    public static void assertExportedGradingCriteriaWithoutIds(Map<String, Object> details) {
+        var criteria = (List<Map<String, Object>>) details.get("gradingCriteria");
+        assertThat(criteria).isNotEmpty().allSatisfy(criterion -> {
+            assertThat(criterion).doesNotContainKey("id");
+            var instructions = (List<Map<String, Object>>) criterion.getOrDefault("structuredGradingInstructions", List.of());
+            assertThat(instructions).allSatisfy(instruction -> assertThat(instruction).doesNotContainKey("id"));
+        });
+    }
+
     /**
      * Sets the max points of an exercise to 100 and sets bonus points to 10. IncludedInOverallScore of the exercise is set to INCLUDED_COMPLETELY.
      *
@@ -120,7 +193,9 @@ public class ExerciseUtilService {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
-        return exerciseTestRepository.save(exercise);
+        var savedExercise = exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -335,6 +410,7 @@ public class ExerciseUtilService {
             ((ProgrammingExercise) exercise).setBuildAndTestStudentSubmissionsAfterDueDate(newDueDate);
         }
         exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**
@@ -348,6 +424,7 @@ public class ExerciseUtilService {
                 .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setAssessmentDueDate(newDueDate);
         exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**
@@ -488,5 +565,85 @@ public class ExerciseUtilService {
             plagiarismCase.setVerdictPointDeduction(1);
         }
         plagiarismCaseRepository.save(plagiarismCase);
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows, as the flows that create exercises do, and
+     * applies the given team settings to its row. The rows hold the key to their exercise and the exercise carries no mapped
+     * association to them, so saving an exercise through its repository does not create them. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param config   the team settings to apply, or null to keep the stored ones (the defaults for a new row)
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E saveTeamAssignmentConfig(E exercise, TeamAssignmentConfig config) {
+        exerciseConfigurationService.initialize(exercise, config, null);
+        return exercise;
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows with the default settings, exactly as the
+     * flows that create exercises do. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slots now carry the stored configurations
+     */
+    public <E extends Exercise> E initializeConfigurations(E exercise) {
+        exerciseConfigurationService.initialize(exercise);
+        return exercise;
+    }
+
+    /**
+     * Asserts that an exercise created or imported through the application owns its permanent configuration rows: one team
+     * assignment configuration and one plagiarism detection configuration, whatever its type and mode.
+     *
+     * @param exerciseId the id of the created or imported exercise
+     */
+    public void assertHasPermanentConfigurations(long exerciseId) {
+        assertThat(teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("team assignment configuration rows of exercise " + exerciseId).hasSize(1);
+        assertThat(plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("plagiarism detection configuration rows of exercise " + exerciseId)
+                .hasSize(1);
+    }
+
+    /**
+     * Reads the stored team assignment configuration of an exercise onto it, as the flows that report it do. An exercise read
+     * from the database does not carry it.
+     *
+     * @param exercise the exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E attachTeamAssignmentConfig(E exercise) {
+        teamAssignmentConfigRepository.attachTo(exercise);
+        return exercise;
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows, as the flows that create exercises do, and
+     * applies the given plagiarism detection settings to its row. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param config   the plagiarism detection settings to apply, or null to keep the stored ones (the defaults for a new row)
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E savePlagiarismDetectionConfig(E exercise, PlagiarismDetectionConfig config) {
+        exerciseConfigurationService.initialize(exercise, null, config);
+        return exercise;
+    }
+
+    /**
+     * Reads the stored plagiarism detection configuration of an exercise onto it, as the flows that report it do. An exercise
+     * read from the database does not carry it.
+     *
+     * @param exercise the exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E attachPlagiarismDetectionConfig(E exercise) {
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+        return exercise;
     }
 }

@@ -1,4 +1,5 @@
 import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
+import { SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { EMPTY, Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -13,7 +14,8 @@ export class MockProgrammingSubmissionService implements IProgrammingSubmissionS
     unsubscribeForLatestSubmissionOfParticipation = (participationId: number) => of(null);
     getResultEtaInMs!: () => Observable<number>;
     triggerInstructorBuildForAllParticipationsOfExercise!: (exerciseId: number) => Observable<void>;
-    triggerInstructorBuildForParticipationsOfExercise!: (exerciseId: number, participationIds: number[]) => Observable<void>;
+    triggerInstructorBuildForParticipationsOfExercise!: (exerciseId: number, participationIds: number[]) => Observable<SelectedBuildRun>;
+    getSelectedBuildRunStatus!: (exerciseId: number, runId: string) => Observable<SelectedBuildRunStatus>;
     getIsLocalCIProfile = () => false;
     fetchQueueReleaseDateEstimationByParticipationId: (participationId: number) => Observable<dayjs.Dayjs | undefined> = () => of(undefined);
 }

@@ -4,16 +4,16 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import {
-    TumUiAutoCompleteComponent,
-    TumUiAutoCompleteSearchEvent,
-    TumUiButtonComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiRadioButtonComponent,
+    TumAetUiAutoCompleteComponent,
+    TumAetUiAutoCompleteSearchEvent,
+    TumAetUiButtonComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiRadioButtonComponent,
 } from '@tumaet/ui-angular';
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -122,13 +122,13 @@ export enum FinishedBuildJobFilterKey {
     imports: [
         ArtemisTranslatePipe,
         TranslateDirective,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         FormsModule,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiInputDirective,
-        TumUiRadioButtonComponent,
-        TumUiAutoCompleteComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiRadioButtonComponent,
+        TumAetUiAutoCompleteComponent,
     ],
     templateUrl: './finished-builds-filter-modal.component.html',
     styleUrl: './finished-builds-filter-modal.component.scss',
@@ -173,6 +173,13 @@ export class FinishedBuildsFilterModalComponent {
     /** Available status values for the status filter dropdown */
     readonly buildStatusFilterValues: string[] = Object.values(BuildJobStatusFilter);
 
+    /**
+     * Whether the text typed into each date picker is a date. A picker keeps its last valid date while its text is not one,
+     * so an invalid text is tracked here and dropped from the filter when it is applied.
+     */
+    protected readonly isFromTextValid = signal(true);
+    protected readonly isToTextValid = signal(true);
+
     /** Suggestions shown in the build agent address autocomplete dropdown */
     readonly buildAgentAddressSuggestions = signal<string[]>([]);
 
@@ -213,7 +220,7 @@ export class FinishedBuildsFilterModalComponent {
      * Called by the autocomplete on each keystroke to populate the build agent address suggestions.
      * @param event the autocomplete complete event carrying the current query
      */
-    searchBuildAgentAddresses(event: TumUiAutoCompleteSearchEvent): void {
+    searchBuildAgentAddresses(event: TumAetUiAutoCompleteSearchEvent): void {
         const term = event.query;
         const buildAgentAddresses = this.buildAgentAddresses;
         const filtered = (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10);
@@ -244,6 +251,18 @@ export class FinishedBuildsFilterModalComponent {
             this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildAgentAddress);
         }
         this.commitFinishedBuildJobFilter();
+    }
+
+    /** Takes over the date picked in the from picker; no date means it was cleared. */
+    onFromDateChange(date: dayjs.Dayjs | undefined) {
+        this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = date;
+        this.filterDateChanged();
+    }
+
+    /** Takes over the date picked in the to picker; no date means it was cleared. */
+    onToDateChange(date: dayjs.Dayjs | undefined) {
+        this.finishedBuildJobFilter.buildSubmissionDateFilterTo = date;
+        this.filterDateChanged();
     }
 
     /**
@@ -301,6 +320,14 @@ export class FinishedBuildsFilterModalComponent {
     }
 
     confirm() {
+        // A date whose text is not a date is no filter: the picker still holds its previous date, which must not be applied.
+        if (!this.isFromTextValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = undefined;
+        }
+        if (!this.isToTextValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterTo = undefined;
+        }
+        this.filterDateChanged();
         this.confirmed.emit(this.finishedBuildJobFilter);
         this.visible.set(false);
     }

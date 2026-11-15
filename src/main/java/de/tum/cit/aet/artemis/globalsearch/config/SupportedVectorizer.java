@@ -2,36 +2,33 @@ package de.tum.cit.aet.artemis.globalsearch.config;
 
 import java.util.Arrays;
 
-import io.weaviate.client6.v1.api.collections.VectorConfig;
-
 /**
- * Vectorizer modules supported by the Weaviate integration.
- * Each entry maps to a {@link VectorConfig.Kind} value used by the Weaviate client library.
+ * Embedding modes of global search, selected by {@code artemis.weaviate.vectorizer-module}.
+ * <ul>
+ * <li>{@code none}: keyword (BM25) search only, no vectors.</li>
+ * <li>{@code text2vec-openai}: Artemis computes one vector per chunk of every entity through an OpenAI-compatible
+ * embedding endpoint ({@code open-ai-base-url}, {@code open-ai-embedding-model}, {@code gpu-api-key}) and searches
+ * hybrid. The value keeps the name of the Weaviate module that used to compute the vectors, so existing
+ * configurations stay valid.</li>
+ * </ul>
  */
 public enum SupportedVectorizer {
 
-    NONE(VectorConfig.Kind.NONE), TEXT2VEC_TRANSFORMERS(VectorConfig.Kind.TEXT2VEC_TRANSFORMERS), TEXT2VEC_OPENAI(VectorConfig.Kind.TEXT2VEC_OPENAI);
+    NONE("none"), TEXT2VEC_OPENAI("text2vec-openai");
 
-    private final VectorConfig.Kind vectorConfigKind;
+    /**
+     * The former mode in which Weaviate computed vectors with a local transformers container; no longer supported.
+     */
+    public static final String REMOVED_TEXT2VEC_TRANSFORMERS = "text2vec-transformers";
 
     private final String configValue;
 
-    SupportedVectorizer(VectorConfig.Kind kind) {
-        this.vectorConfigKind = kind;
-        this.configValue = kind.jsonValue();
+    SupportedVectorizer(String configValue) {
+        this.configValue = configValue;
     }
 
     /**
-     * Returns the {@link VectorConfig.Kind} associated with this vectorizer.
-     *
-     * @return the vector config kind
-     */
-    public VectorConfig.Kind vectorConfigKind() {
-        return vectorConfigKind;
-    }
-
-    /**
-     * Returns the configuration string value as expected by Weaviate (e.g. "none", "text2vec-transformers").
+     * Returns the configuration value (e.g. "none", "text2vec-openai").
      *
      * @return the config value string
      */
@@ -40,22 +37,10 @@ public enum SupportedVectorizer {
     }
 
     /**
-     * Resolves a configuration value to the matching {@link SupportedVectorizer}.
+     * Checks whether the given configuration value matches a supported mode.
      *
      * @param value the vectorizer module string from configuration
-     * @return the matching vectorizer
-     * @throws IllegalArgumentException if the value does not match any supported vectorizer
-     */
-    public static SupportedVectorizer fromConfigValue(String value) {
-        return Arrays.stream(values()).filter(vectorizer -> vectorizer.configValue.equals(value)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported vectorizer module: " + value));
-    }
-
-    /**
-     * Checks whether the given configuration value matches a supported vectorizer.
-     *
-     * @param value the vectorizer module string from configuration
-     * @return {@code true} if the value matches any supported vectorizer
+     * @return {@code true} if the value matches a supported mode
      */
     public static boolean isSupported(String value) {
         return Arrays.stream(values()).anyMatch(vectorizer -> vectorizer.configValue.equals(value));

@@ -15,6 +15,10 @@ Instructions wrapper styles
         height: 100%;
 
         &__markdown {
+            width: 100%;
+            max-width: 90ch; // keep in sync with .stepwizard-container
+            min-width: 0;
+            margin-inline: auto;
             height: inherit;
             overflow: auto;
             padding: 1rem;

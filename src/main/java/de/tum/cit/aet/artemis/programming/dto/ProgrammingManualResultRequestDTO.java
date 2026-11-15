@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
  * feedback"). Unknown properties are ignored so the client can keep posting the full result object graph
  * (submission, participation, assessor, ...) it holds; the server takes those from the database instead.
  *
- * @param id             the id of the result being written; the server overwrites it with the locked result's id
+ * @param id             the id of the loaded manual result the assessment is written to; without it the most recent manual result of the participation is written
  * @param score          the score in percent computed by the client
  * @param successful     whether the result is successful; derived from the score when a score is present
  * @param rated          whether the result counts towards the score; the server rejects an unrated result

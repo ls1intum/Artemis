@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, finalize, of, shareReplay, tap } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -17,7 +17,7 @@ type InFlightTabRequest<T> = { courseId: number; observable: Observable<T> };
  * them. It is scoped to that single navigation: selecting the tab again — which is how a student refreshes — asks the
  * server, so a lecture that was published or an exam that became visible appears without a page reload.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseOverviewTabDataService {
     private readonly lectureService = inject(LectureService);
     private readonly examParticipationService = inject(ExamParticipationService);

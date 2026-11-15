@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
@@ -16,12 +16,14 @@ import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
-import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { buildExamDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
+import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
@@ -31,7 +33,6 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
-import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
@@ -39,7 +40,7 @@ import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model'
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamManagementService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
@@ -83,6 +84,17 @@ export class ExamManagementService {
         return this.http
             .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/working-time`, workingTimeChange, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    getAnnouncements(courseId: number, examId: number): Observable<ExamWideAnnouncementEvent[]> {
+        return this.http.get<ExamWideAnnouncementEvent[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`).pipe(
+            map((events) => {
+                for (const event of events) {
+                    event.createdDate = convertDateFromServer(event.createdDate)!;
+                }
+                return events;
+            }),
+        );
     }
 
     createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
@@ -191,8 +203,9 @@ export class ExamManagementService {
      * @param courseId The id of the course.
      * @param examId The id of the exam.
      */
-    getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
-        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
+    getExamStatistics(courseId: number, examId: number, audience: 'tutor' | 'instructor' = 'tutor'): Observable<HttpResponse<ExamChecklist>> {
+        const suffix = audience === 'instructor' ? '/for-instructor' : '';
+        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics${suffix}`, { observe: 'response' });
     }
 
     /**
@@ -260,12 +273,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns a summary for the exam providing information potentially relevant for the deletion.
+     * Returns what is deleted together with the exam, grouped into categories for the delete dialog.
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    getDeletionSummary(courseId: number, examId: number): Observable<HttpResponse<ExamDeletionSummaryDTO>> {
-        return this.http.get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' });
+    getDeletionSummary(courseId: number, examId: number): Observable<EntitySummaryCategory[]> {
+        return this.http
+            .get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' })
+            .pipe(map((response) => (response.body ? buildExamDeletionSummary(response.body) : [])));
     }
 
     /**
@@ -295,7 +310,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<HttpResponse<void>>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, {}, { observe: 'response' });
     }
 
     /**
@@ -378,13 +393,18 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns exam users who started the exam but have not yet submitted a signed attendance record.
+     * Returns exam users who started the exam and whose attendance checks are incomplete.
      * @param courseId The course id.
      * @param examId The exam id.
-     * @returns Exam users with incomplete attendance check data.
+     * @param includeAll Include all registered exam users for attendance correction.
+     * @returns Exam users with incomplete attendance check data, or all registered users when requested.
      */
-    verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
-        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
+    verifyExamUserAttendance(courseId: number, examId: number, includeAll = false): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
+        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response', params: { includeAll } });
+    }
+
+    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users/${examUserId}/attendance`, { attended });
     }
 
     /**
@@ -528,7 +548,7 @@ export class ExamManagementService {
     }
 
     /**
-     * Resets an Exam with examId by deleting all its studentExams and participations.
+     * Resets an Exam with examId by deleting all its studentExams and participations and unregistering all its students.
      * @param courseId The course id.
      * @param examId The exam id.
      */
@@ -544,35 +564,11 @@ export class ExamManagementService {
      * @param courseId The target course id
      */
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
-        return {
-            title: exam.title,
-            examMode: exam.examMode ?? ExamMode.REAL,
-            examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
-            visibleDate: convertDateFromClient(exam.visibleDate),
-            startDate: convertDateFromClient(exam.startDate),
-            endDate: convertDateFromClient(exam.endDate),
-            publishResultsDate: convertDateFromClient(exam.publishResultsDate),
-            examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
-            examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
-            gracePeriod: exam.gracePeriod,
-            workingTime: exam.workingTime ?? 0,
-            startText: exam.startText,
-            endText: exam.endText,
-            confirmationStartText: exam.confirmationStartText,
-            confirmationEndText: exam.confirmationEndText,
-            examMaxPoints: exam.examMaxPoints,
-            randomizeExerciseOrder: exam.randomizeExerciseOrder,
-            numberOfExercisesInExam: exam.numberOfExercisesInExam,
-            numberOfCorrectionRoundsInExam: exam.numberOfCorrectionRoundsInExam,
-            examiner: exam.examiner,
-            moduleNumber: exam.moduleNumber,
-            courseName: exam.courseName,
-            exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
-            examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
-            channelName: exam.channelName,
-            courseId: courseId,
+        const { id, ...editableFields } = toExamUpdateDTO(exam);
+        return cloneWith(editableFields, {
+            courseId,
             exerciseGroups: exam.exerciseGroups && ExamManagementService.convertExerciseGroupsToImportDTOs(exam.exerciseGroups),
-        };
+        });
     }
 
     /**
@@ -616,6 +612,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.exampleSolutionPublicationDate = convertDateFromServer(exam.exampleSolutionPublicationDate);
         exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
 
         if (exam.course) {
@@ -704,32 +701,8 @@ interface ExerciseGroupImportDTO {
     exercises?: ExerciseImportDTO[];
 }
 
-interface ExamImportDTO {
+interface ExamImportDTO extends Omit<ExamUpdateDTO, 'id' | 'title'> {
     title?: string;
-    examMode: ExamMode;
-    examWithAttendanceCheck: boolean;
-    visibleDate?: string;
-    startDate?: string;
-    endDate?: string;
-    publishResultsDate?: string;
-    examStudentReviewStart?: string;
-    examStudentReviewEnd?: string;
-    gracePeriod?: number;
-    workingTime: number;
-    startText?: string;
-    endText?: string;
-    confirmationStartText?: string;
-    confirmationEndText?: string;
-    examMaxPoints?: number;
-    randomizeExerciseOrder?: boolean;
-    numberOfExercisesInExam?: number;
-    numberOfCorrectionRoundsInExam?: number;
-    examiner?: string;
-    moduleNumber?: string;
-    courseName?: string;
-    exampleSolutionPublicationDate?: string;
-    examSummaryPublicationDate?: string;
-    channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
 }

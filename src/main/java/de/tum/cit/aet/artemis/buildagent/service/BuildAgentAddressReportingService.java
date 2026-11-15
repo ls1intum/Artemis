@@ -24,6 +24,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 
 /**
  * Publishes the address a core node sees this build agent at, so that its clones can be bound to it.
@@ -132,7 +133,8 @@ public class BuildAgentAddressReportingService {
             log.warn("Asking {} for the address it sees this build agent at returned {}", uri, response.statusCode());
             return null;
         }
-        return objectMapper.readTree(response.body()).path("address").asString(null);
+        ObservedClientAddressDTO observed = objectMapper.readValue(response.body(), ObservedClientAddressDTO.class);
+        return observed == null ? null : observed.address();
     }
 
     /**

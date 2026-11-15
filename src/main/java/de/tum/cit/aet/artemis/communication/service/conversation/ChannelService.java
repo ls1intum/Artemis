@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -26,7 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.errors.ChannelNameDuplicateException;
@@ -189,8 +191,8 @@ public class ChannelService {
             conversationParticipantOfRequestingUser.setIsModerator(true);
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
-            savedChannel = channelRepository.save(savedChannel);
-            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
+            // The participant owns the relationship and was already inserted; updating the inverse collection needs no channel merge.
+            conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         syncChannelWithWeaviate(savedChannel);
         return savedChannel;
@@ -215,7 +217,7 @@ public class ChannelService {
             Channel channel) {
         Set<User> usersToRegister = new HashSet<>();
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
-        usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister));
+        usersToRegister.addAll(conversationService.findCourseUsersInDatabase(course, usersLoginsToRegister));
         conversationService.registerUsersToConversation(course, usersToRegister, channel, Optional.empty());
         return usersToRegister;
     }
@@ -330,7 +332,7 @@ public class ChannelService {
         channelRepository.saveAll(channelsToCreate);
         conversationParticipantRepository.saveAll(conversationParticipants);
         channelsToCreate.forEach(channel -> {
-            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator));
+            conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, channel, Set.of(creator));
             syncChannelWithWeaviate(channel);
         });
     }
@@ -415,6 +417,42 @@ public class ChannelService {
             return null;
         }
         return updateChannelName(channel, updatedExercise.getChannelName());
+    }
+
+    /**
+     * Refreshes the channel after an exercise's changed release date has been saved.
+     *
+     * @param originalReleaseDate the date before the update
+     * @param updatedExercise     the exercise with its persisted date
+     */
+    public void notifyExerciseChannelOfDateChange(@Nullable ZonedDateTime originalReleaseDate, Exercise updatedExercise) {
+        if (updatedExercise.getId() == null || !updatedExercise.isCourseExercise() || sameInstant(originalReleaseDate, updatedExercise.getReleaseDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(updatedExercise.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    /**
+     * Refreshes the channel after an exam's changed visible date has been saved.
+     *
+     * @param originalVisibleDate the date before the update
+     * @param updatedExam         the exam with its persisted date
+     */
+    public void notifyExamChannelOfDateChange(@Nullable ZonedDateTime originalVisibleDate, Exam updatedExam) {
+        if (sameInstant(originalVisibleDate, updatedExam.getVisibleDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExamId(updatedExam.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    private static boolean sameInstant(@Nullable ZonedDateTime first, @Nullable ZonedDateTime second) {
+        return Objects.equals(first == null ? null : first.toInstant(), second == null ? null : second.toInstant());
     }
 
     /**
@@ -583,5 +621,25 @@ public class ChannelService {
      */
     public void createDefaultChannels(Course course) {
         Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(course, channelType));
+    }
+
+    /**
+     * Finds the announcement channel an announcement should be posted to.
+     *
+     * @param courseId  the course the announcement belongs to
+     * @param channelId the requested announcement channel, or null for the course's default announcement channel
+     * @return the id of the announcement channel
+     * @throws BadRequestAlertException if the requested channel is not an announcement channel of the course, or the course has no
+     *                                      default announcement channel
+     */
+    public long findAnnouncementChannelIdElseThrow(long courseId, @Nullable Long channelId) {
+        List<Channel> announcementChannels = channelRepository.findChannelsByCourseId(courseId).stream().filter(Channel::getIsAnnouncementChannel).toList();
+        if (channelId != null) {
+            return announcementChannels.stream().filter(channel -> channelId.equals(channel.getId())).findFirst().map(Channel::getId)
+                    .orElseThrow(() -> new BadRequestAlertException("The channel is not an announcement channel of this course", CHANNEL_ENTITY_NAME, "notAnAnnouncementChannel"));
+        }
+        return announcementChannels.stream().filter(channel -> DefaultChannelType.ANNOUNCEMENT.getName().equals(channel.getName())).findFirst().map(Channel::getId)
+                .orElseThrow(() -> new BadRequestAlertException("The course has no default announcement channel, so a channelId is required", CHANNEL_ENTITY_NAME,
+                        "noDefaultAnnouncementChannel"));
     }
 }

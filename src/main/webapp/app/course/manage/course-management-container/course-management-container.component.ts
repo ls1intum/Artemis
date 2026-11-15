@@ -4,9 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 import {
     faChartBar,
@@ -35,7 +36,7 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -43,7 +44,7 @@ import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.compo
 import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
-import { CourseOperationProgressDTO, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
+import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import { CourseOperationProgressComponent } from 'app/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -51,12 +52,13 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
 import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
+import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-container',
     templateUrl: './course-management-container.component.html',
     styleUrls: ['course-management-container.component.scss'],
-    providers: [MetisConversationService],
+    providers: [CourseConversationsService],
     imports: [
         CdkScrollable,
         NgClass,
@@ -79,6 +81,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private readonly sidebarItemService = inject(CourseSidebarItemService);
     private readonly courseAdminService = inject(CourseAdminService);
     private readonly websocketService = inject(WebsocketService);
+    private readonly accountService = inject(AccountService);
     private readonly autoOrchestrationNotificationService = inject(AutoOrchestrationNotificationService);
 
     private autoOrchestrationCourseId?: number;
@@ -112,8 +115,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private eventSubscriber?: Subscription;
 
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
+    // The course whose completed deletion was already announced to the course lists
+    private announcedDeletionOfCourseId?: number;
 
     private learningPathsActive = signal(false);
+    gocastEnabled = false;
+    private presentationAssessmentsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -128,6 +135,17 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     readonly removePadding = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.includes('test-runs') && currentUrl.includes('conduction'))), {
         initialValue: this.router.url.includes('test-runs') && this.router.url.includes('conduction'),
     });
+    readonly hasTransparentCourseBody = toSignal(this.finalizedUrl$.pipe(map(() => this.activeRouteHasData('transparentCourseBody'))), {
+        initialValue: this.activeRouteHasData('transparentCourseBody'),
+    });
+
+    private activeRouteHasData(dataKey: string): boolean {
+        let activeRoute = this.route.snapshot;
+        while (activeRoute.firstChild) {
+            activeRoute = activeRoute.firstChild;
+        }
+        return activeRoute.data?.[dataKey] === true;
+    }
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -135,7 +153,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
-    override async ngOnInit() {
+    override ngOnInit() {
+        void this.initializeCourseManagementContainerComponent();
+    }
+
+    private async initializeCourseManagementContainerComponent(): Promise<void> {
+        this.gocastEnabled = this.profileService.isGocastEnabled();
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
@@ -150,20 +173,31 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             });
 
         this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.PresentationAssessments)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.presentationAssessmentsActive.set(isActive);
+                this.sidebarItems.set(this.getSidebarItems());
+            });
+
+        this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.AtlasAgent)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
-                this.autoOrchestrationActive = isActive;
+                // The runtime toggle alone is not enough. Auto orchestration runs only where AtlasLLM is configured,
+                // and without it nothing ever publishes to the topic, so subscribing would open a channel that stays
+                // silent forever.
+                this.autoOrchestrationActive = isActive && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
                 const currentCourseId = this.courseId();
-                if (isActive && currentCourseId !== undefined) {
+                if (this.autoOrchestrationActive && currentCourseId !== undefined) {
                     this.subscribeToAutoOrchestrationNotifications(currentCourseId);
-                } else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                } else if (!this.autoOrchestrationActive && this.autoOrchestrationCourseId !== undefined) {
                     this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
                     this.autoOrchestrationCourseId = undefined;
                 }
             });
 
-        await super.ngOnInit();
+        await super.initializeBaseCourseContainerComponent();
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
@@ -212,7 +246,52 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 progress.startedAt = convertDateFromServer(progress.startedAt);
             }
             this.operationProgress.set(progress);
+            this.announceCompletedDeletion(courseId, progress);
         });
+        this.recoverRunningDeletion(courseId);
+    }
+
+    /**
+     * The course is deleted in the background, so the course lists are told about it when the server reports the end of the
+     * deletion, not when the request was accepted. This is announced once per course, however many progress messages arrive.
+     */
+    private announceCompletedDeletion(courseId: number, progress: CourseOperationProgressDTO): void {
+        if (progress.operationType !== CourseOperationType.DELETE || progress.status !== CourseOperationStatus.COMPLETED || this.announcedDeletionOfCourseId === courseId) {
+            return;
+        }
+        this.announcedDeletionOfCourseId = courseId;
+        this.eventManager.broadcast({
+            name: 'courseListModification',
+            content: 'artemisApp.course.deleted',
+        });
+    }
+
+    /**
+     * Shows the progress of a course deletion that is already running when the page is loaded, e.g. after a reload during the deletion.
+     * The status endpoint is only open to administrators, who are the only ones who can delete a course. Nothing is shown, and no error
+     * is reported, when there is no running deletion or the status cannot be read.
+     */
+    private recoverRunningDeletion(courseId: number): void {
+        if (!this.accountService.hasAdministratorAccess()) {
+            return;
+        }
+        this.courseAdminService
+            .getOperationProgress(courseId)
+            .pipe(
+                catchError(() => of(undefined)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((response) => {
+                const progress = response?.body;
+                if (
+                    progress?.operationType === CourseOperationType.DELETE &&
+                    progress.status === CourseOperationStatus.IN_PROGRESS &&
+                    courseId === this.courseId() &&
+                    !this.operationProgress()
+                ) {
+                    this.operationProgress.set(progress);
+                }
+            });
     }
 
     closeProgress() {
@@ -225,7 +304,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private subscribeToCourseUpdates(courseId: number) {
         this.courseSub?.unsubscribe();
-        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseSub = this.courseManagementService.findForManagement(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
                 this.storeCourseIfAbsent(courseResponse.body);
                 this.course.set(courseResponse.body);
@@ -237,7 +316,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     loadCourse(): Observable<void> {
         // The management shell only needs the course record. It used to take it from the course dashboard, which also
         // loads every exercise, participation, submission and result for the requesting instructor and discards them.
-        return this.courseManagementService.find(this.courseId()).pipe(
+        return this.courseManagementService.findForManagement(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.storeCourseIfAbsent(res.body);
@@ -315,6 +394,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
+        if (currentCourse.isAtLeastTutor && this.presentationAssessmentsActive() && currentCourse.presentationAssessmentsEnabled) {
+            sidebarItems.push(this.sidebarItemService.getPresentationAssessmentsItem(courseId));
+        }
         sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));
         sidebarItems.push(this.sidebarItemService.getExamsItem(courseId));
         if (this.atlasEnabled && isEditor) {
@@ -323,9 +405,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
 
         // 8+. Other management items
+        if (this.atlasEnabled && this.hyperionEnabled && isEditor) {
+            sidebarItems.push(this.sidebarItemService.getQuizQuestionPoolItem(courseId));
+        }
         sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
-            sidebarItems.push(...this.getIrisSettingsItem());
+            sidebarItems.push(...this.getIrisSettingsItem(), ...this.getAthenaSettingsItem());
         }
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(courseId));
         if (this.atlasEnabled && isEditor && this.learningPathsActive()) {
@@ -338,6 +423,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (isInstructor) {
             if (this.localCIActive) {
                 sidebarItems.push(this.sidebarItemService.getBuildQueueItem(courseId));
+            }
+            if (this.gocastEnabled) {
+                sidebarItems.push(this.sidebarItemService.getGocastBindingItem(courseId));
             }
             if (this.ltiEnabled && currentCourse.onlineCourse) {
                 sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));
@@ -370,6 +458,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             irisItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
         return irisItems;
+    }
+
+    private getAthenaSettingsItem() {
+        const athenaItems: SidebarItem[] = [];
+        if (this.athenaEnabled) {
+            athenaItems.push(this.sidebarItemService.getAthenaSettingsItem(this.courseId()));
+        }
+        return athenaItems;
     }
 
     override ngOnDestroy() {
@@ -485,13 +581,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     deleteCourse(courseId: number) {
         this.courseAdminService.delete(courseId).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'courseListModification',
-                    content: 'artemisApp.course.deleted',
-                });
+                // The server accepted the deletion and runs it in the background. This only ends the confirmation dialog: the progress
+                // overlay shows the live progress, the course lists are told when the deletion is completed (see announceCompletedDeletion),
+                // and the user is taken to the courses when the overlay is closed.
                 this.dialogErrorSource.next('');
-                // Don't navigate immediately - let the progress overlay show
-                // Navigation will happen when user closes the progress overlay
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

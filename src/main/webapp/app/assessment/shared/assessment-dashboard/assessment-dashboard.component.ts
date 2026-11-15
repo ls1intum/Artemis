@@ -1,3 +1,15 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,7 +29,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faArrowUpRightFromSquare, faCircleInfo, faClipboard, faHeartBroken, faShieldAlt, faTable, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faClipboard, faHeartBroken, faShieldAlt, faTable, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -42,24 +54,13 @@ import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import dayjs from 'dayjs/esm';
-import {
-    TumUiButtonDirective,
-    TumUiCheckboxComponent,
-    TumUiMessageComponent,
-    TumUiPanelComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
-} from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
     providers: [CourseManagementService],
     imports: [
-        TumUiMessageComponent,
+        TumAetUiMessageComponent,
         RouterLink,
         FaIconComponent,
         TranslateDirective,
@@ -77,15 +78,16 @@ import {
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
         DeimosDateRangeModalComponent,
         FeatureToggleHideDirective,
-        TumUiCheckboxComponent,
-        TumUiPanelComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPanelComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -149,7 +151,6 @@ export class AssessmentDashboardComponent implements OnInit {
     protected deimosSubmitting = signal(false);
 
     // Icons
-    faCircleInfo = faCircleInfo;
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;
@@ -424,7 +425,7 @@ export class AssessmentDashboardComponent implements OnInit {
 
     private hasUnfinishedAssessments(exercise: Exercise): boolean {
         return (
-            exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, cur) => acc || cur) ||
+            exercise.numberOfAssessmentsOfCorrectionRounds?.some((round) => round.inTime !== exercise.numberOfSubmissions?.inTime) ||
             exercise.totalNumberOfAssessments !== exercise.numberOfSubmissions?.inTime
         );
     }
@@ -470,7 +471,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.currentlyShownExercises.set(sorted);
     }
 
-    onExerciseSortChange(event: TumUiTableSortEvent): void {
+    onExerciseSortChange(event: TumAetUiTableSortEvent): void {
         this.exercisesSortingPredicate.set(event.field);
         this.exercisesReverseOrder.set(event.order > 0);
         this.sortRows();

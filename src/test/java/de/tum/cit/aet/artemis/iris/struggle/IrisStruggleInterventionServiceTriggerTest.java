@@ -177,6 +177,18 @@ class IrisStruggleInterventionServiceTriggerTest {
     }
 
     @Test
+    void exerciseWithoutResolvableCourse_failsInsteadOfReadingSettings() {
+        // Neither a course nor an exercise group: the settings lookup has no course to be made for.
+        exercise.setCourse(null);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null))
+                .withMessageContaining(String.valueOf(EX));
+
+        verify(irisSettingsService, never()).getSettingsForCourse(any(Course.class));
+        verifyNoInteractions(irisRateLimitService, pyrisJobService);
+    }
+
+    @Test
     void cancelOutstandingStruggleJob_matchingToken_removesJob() {
         service.cancelOutstandingStruggleJob(user, EX, "tok-A");
         verify(pyrisJobService).removeStruggleJobIfTokenMatches(USER_ID, EX, "tok-A");
@@ -310,7 +322,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         var result = service.prepareTrigger(EX, user, null, null, null, null, null);
 
         assertThat(result.accepted()).isTrue();
-        assertThat(result.trigger().jobToken()).isEqualTo("tok");
+        assertThat(result.trigger().runId()).isEqualTo("tok");
         verify(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(eq(Role.STUDENT), eq(exercise), eq(user));
     }
 

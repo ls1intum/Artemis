@@ -10,9 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -33,6 +35,12 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private ExampleSubmissionTestRepository exampleSubmissionRepository;
+
     private TextExercise textExercise;
 
     @BeforeEach
@@ -43,7 +51,7 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteSubmissionOfParticipation() throws Exception {
         Submission submissionWithResult = participationUtilService.addSubmission(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
         submissionWithResult = participationUtilService.addResultToSubmission(submissionWithResult, null);
@@ -67,17 +75,64 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteParticipation_forbidden_student() throws Exception {
-        request.delete("/api/exercise/submissions/" + 1, HttpStatus.FORBIDDEN);
+        assertSubmissionDeletionForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void deleteParticipation_forbidden_tutor() throws Exception {
-        request.delete("/api/exercise/submissions/" + 1, HttpStatus.FORBIDDEN);
+        assertSubmissionDeletionForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "foreigninstructor", roles = "USER")
+    void deleteSubmission_forbidden_instructorOfAnotherCourse() throws Exception {
+        Course otherCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Other", TEST_PREFIX + "other");
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "foreigninstructor", otherCourse);
+
+        assertSubmissionDeletionForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteExampleSubmissionWithoutParticipation_notFound() throws Exception {
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Example text", textExercise, true));
+        Submission submission = participationUtilService.addResultToSubmission(example.getSubmission(), null, textExercise.getId());
+        Long submissionId = submission.getId();
+        Long resultId = submission.getLatestResult().getId();
+        assertThat(submission.getParticipation()).isNull();
+
+        request.delete("/api/exercise/submissions/" + submissionId, HttpStatus.NOT_FOUND);
+
+        var storedExample = exampleSubmissionRepository.findById(example.getId()).orElseThrow();
+        assertThat(storedExample.getExercise().getId()).isEqualTo(textExercise.getId());
+        assertThat(storedExample.getSubmission().getId()).isEqualTo(submissionId);
+        Submission storedSubmission = submissionRepository.findWithEagerResultsAndAssessorById(submissionId).orElseThrow();
+        assertThat(storedSubmission.getParticipation()).isNull();
+        assertThat(storedSubmission.isExampleSubmission()).isTrue();
+        assertThat(storedSubmission.getResults()).extracting(result -> result.getId()).containsExactly(resultId);
+        assertThat(resultRepository.findById(resultId).orElseThrow().getSubmission().getId()).isEqualTo(submissionId);
+    }
+
+    private void assertSubmissionDeletionForbidden() throws Exception {
+        Submission submission = participationUtilService.addSubmission(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
+        submission = participationUtilService.addResultToSubmission(submission, null);
+        Long submissionId = submission.getId();
+        Long participationId = submission.getParticipation().getId();
+        Long resultId = submission.getLatestResult().getId();
+
+        request.delete("/api/exercise/submissions/" + submissionId, HttpStatus.FORBIDDEN);
+
+        Submission storedSubmission = submissionRepository.findWithEagerResultsAndAssessorById(submissionId).orElseThrow();
+        assertThat(storedSubmission.getParticipation().getId()).isEqualTo(participationId);
+        assertThat(storedSubmission.getResults()).extracting(result -> result.getId()).containsExactly(resultId);
+        assertThat(resultRepository.findById(resultId).orElseThrow().getSubmission().getId()).isEqualTo(submissionId);
+        assertThat(studentParticipationRepository.findById(participationId).orElseThrow().getExercise().getId()).isEqualTo(textExercise.getId());
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).extracting(Submission::getId).containsExactly(submissionId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteParticipation_notFound() throws Exception {
         request.delete("/api/exercise/submissions/" + -1, HttpStatus.NOT_FOUND);
     }

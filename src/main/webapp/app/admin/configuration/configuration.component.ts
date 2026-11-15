@@ -5,8 +5,16 @@ import { Bean, PropertySource } from './configuration.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiInputDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiInputDirective,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+} from '@tumaet/ui-angular';
 /**
  * Component for viewing application configuration.
  * Displays beans and property sources with filtering and sorting.
@@ -16,15 +24,17 @@ import { TumUiInputDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTab
     templateUrl: './configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FormsModule,
         JsonPipe,
+        ArtemisTranslatePipe,
         KeyValuePipe,
         AdminTitleBarTitleDirective,
-        TumUiInputDirective,
-        TumUiTagComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class ConfigurationComponent implements OnInit {
@@ -52,6 +62,9 @@ export class ConfigurationComponent implements OnInit {
             .sort((a, b) => (a.prefix < b.prefix ? ascendingMultiplier : descendingMultiplier));
     });
 
+    /** True once the beans arrived, so the empty state does not flash while loading. */
+    readonly beansLoaded = signal(false);
+
     /** Property sources from configuration */
     readonly propertySources = signal<PropertySource[]>([]);
 
@@ -61,6 +74,7 @@ export class ConfigurationComponent implements OnInit {
     ngOnInit(): void {
         this.configurationService.getBeans().subscribe((beans) => {
             this.allBeans.set(beans);
+            this.beansLoaded.set(true);
         });
 
         this.configurationService.getPropertySources().subscribe((propertySources) => {
@@ -81,7 +95,7 @@ export class ConfigurationComponent implements OnInit {
      * the single `prefix` field, so the handler just mirrors the resolved order onto the
      * `beansAscending` signal that drives the client-side sort in `beans()`.
      */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         this.beansAscending.set(event.order === 1);
     }
 }

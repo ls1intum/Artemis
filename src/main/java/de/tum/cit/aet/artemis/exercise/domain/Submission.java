@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -142,7 +141,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
+        Result latestResult = results.stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -152,17 +151,37 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * Returns the most recent result that has been completed, i.e. has a non-null completion date.
+     * Returns the highest-id result eligible for grading selection, excluding pending and failed Athena requests.
+     * Ordinary failed automatic results and manual drafts keep their existing ordering and publication checks in callers.
+     * The complete result history remains available through {@link #getResults()} and {@link #getLatestResult()}.
+     *
+     * @return the latest grade-relevant result, or {@code null} if none exists
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestGradingResult() {
+        Result latestResult = results.stream().filter(Objects::nonNull).filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(BY_ID)
+                .orElse(null);
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
+        }
+        return latestResult;
+    }
+
+    /**
+     * Returns the most recent completed assessment or successfully generated Athena feedback.
      * This ignores draft results that might exist when an assessment lock was created but not
-     * finished.
+     * finished. Pending Athena requests use a future completion date as their lease, and failed requests have a
+     * terminal timestamp too; neither is an assessed score.
      *
      * @return the latest completed {@link Result} or {@code null} if none exists
      */
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
+        Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null)
+                .filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID))
+                .orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -273,7 +292,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (results == null || results.isEmpty()) {
+        if (results.isEmpty()) {
             return null;
         }
         return results.stream().filter(Objects::nonNull).min(BY_ID).orElse(null);
@@ -289,9 +308,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     public Result getFirstManualResult() {
         // The earliest manual result, which is the one of the first correction round. Guard on the manual results, not
         // on all results: a submission can carry only automatic or Athena results and then there is none.
-        if (results == null) {
-            return null;
-        }
         return getManualResults().stream().min(BY_ID).orElse(null);
     }
 
@@ -308,9 +324,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestManualResult() {
         // The most recent manual result, which is the one of the highest correction round.
-        if (results == null) {
-            return null;
-        }
         return getManualResults().stream().max(BY_ID).orElse(null);
     }
 

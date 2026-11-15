@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
+import { Component, DebugElement } from '@angular/core';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -21,7 +21,14 @@ describe('ButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FontAwesomeTestingModule, ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
+            imports: [
+                MockDirective(TumAetUiTooltipDirective),
+                FontAwesomeTestingModule,
+                ButtonComponent,
+                FeatureToggleDirective,
+                TranslatePipeMock,
+                MockDirective(TranslateDirective),
+            ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
@@ -146,5 +153,23 @@ describe('ButtonComponent', () => {
         button.click();
 
         expect(clickSpy).not.toHaveBeenCalled();
+    });
+
+    describe('static title attribute on the host', () => {
+        @Component({
+            template: '<jhi-button title="entity.action.select" />',
+            imports: [ButtonComponent],
+        })
+        class StaticTitleHostComponent {}
+
+        it('should not leak the translation key as a native tooltip on the host element', () => {
+            const hostFixture = TestBed.createComponent(StaticTitleHostComponent);
+            hostFixture.detectChanges();
+
+            const buttonHost: HTMLElement = hostFixture.debugElement.query(By.directive(ButtonComponent)).nativeElement;
+
+            expect(buttonHost.hasAttribute('title')).toBe(false);
+            expect(buttonHost.querySelector('.jhi-btn__title')).not.toBeNull();
+        });
     });
 });

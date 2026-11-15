@@ -21,8 +21,9 @@ export class UserManagementAPIRequests {
      * @param username the username of the new user
      * @param password the password of the new user
      * @param role the role of the new user
+     * @param registrationNumber the registration number (matriculation number) of the new user, which has to be unique
      */
-    async createUser(username: string, password: string, role: UserRole): Promise<APIResponse> {
+    async createUser(username: string, password: string, role: UserRole, registrationNumber?: string): Promise<APIResponse> {
         return await this.page.request.post(`api/account/admin/users`, {
             data: {
                 login: username,
@@ -32,6 +33,7 @@ export class UserManagementAPIRequests {
                 email: username + '@example.com',
                 authorities: [role],
                 internal: true,
+                ...(registrationNumber ? { visibleRegistrationNumber: registrationNumber } : {}),
             },
         });
     }

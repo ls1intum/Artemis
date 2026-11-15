@@ -71,7 +71,7 @@ describe('ApollonDiagramList Component', () => {
         const courseResponse: HttpResponse<Course> = new HttpResponse({ body: course });
 
         vi.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(diagramResponse));
-        vi.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(courseResponse));
 
         fixture.detectChanges();
         expect(isEqual(fixture.componentInstance.apollonDiagrams(), apollonDiagrams)).toBeTruthy();
@@ -134,7 +134,7 @@ describe('ApollonDiagramList Component', () => {
         const sortSpy = vi.spyOn(sortService, 'sortByProperty');
         const apollonDiagrams: ApollonDiagram[] = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!)];
         vi.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(new HttpResponse({ body: apollonDiagrams })));
-        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture.detectChanges();
 

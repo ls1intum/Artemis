@@ -1,7 +1,8 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading/grading-key-overview/grading-key-helper';
@@ -14,12 +15,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-grade-key-overview',
     templateUrl: './grading-key-overview.component.html',
     styleUrls: ['./grading-key-overview.scss'],
-    imports: [TranslateDirective, GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class GradingKeyOverviewComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private themeService = inject(ThemeService);
+
+    readonly purpose: 'student' | 'management' = this.route.snapshot.data['gradingKeyPurpose'] === 'management' ? 'management' : 'student';
 
     readonly faChevronLeft = faChevronLeft;
     readonly faPrint = faPrint;
@@ -52,11 +55,13 @@ export class GradingKeyOverviewComponent implements OnInit {
      * Navigates to the previous page (back button on the browser)
      */
     previousState() {
-        const fallbackUrl = ['courses', this.courseId!.toString()];
+        const courseId = this.courseId!.toString();
+        let fallbackUrl = ['courses', courseId, 'statistics'];
         if (this.isExam()) {
-            fallbackUrl.push('exams', this.examId!.toString());
-        } else {
-            fallbackUrl.push('statistics');
+            const examId = this.examId!.toString();
+            const studentExamId = findParamInRouteHierarchy(this.route, 'studentExamId');
+            // Instructor grading-key routes carry the student exam whose management summary opened the key.
+            fallbackUrl = studentExamId ? ['course-management', courseId, 'exams', examId, 'student-exams', studentExamId, 'summary'] : ['courses', courseId, 'exams', examId];
         }
         this.navigationUtilService.navigateBack(fallbackUrl);
     }

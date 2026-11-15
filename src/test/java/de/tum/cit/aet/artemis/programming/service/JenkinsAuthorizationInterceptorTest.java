@@ -50,7 +50,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorSetCrumbCorrectly() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
@@ -74,7 +74,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorCrumbNotSet() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
@@ -92,7 +92,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorCrumbException() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();

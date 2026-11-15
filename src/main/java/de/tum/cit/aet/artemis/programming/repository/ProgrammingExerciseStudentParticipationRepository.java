@@ -38,7 +38,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * <p>
      * Includes results if:
      * <ul>
-     * <li>they are automatic,</li>
+     * <li>they are automatic (including Athena automatic feedback),</li>
      * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
      * <li>no result exists yet.</li>
      * </ul>
@@ -60,6 +60,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id = :participationId
                 AND (
                     r.assessmentType = 'AUTOMATIC'
+                    OR r.assessmentType = 'AUTOMATIC_ATHENA'
                     OR (r.completionDate IS NOT NULL AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime))
                     OR r.id IS NULL
                     )
@@ -99,6 +100,23 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
+
+    /**
+     * The id of the student participation a repository uri belongs to.
+     *
+     * <p>
+     * Reads one column and loads no entity, for callers that only have to point at the participation, such as an access
+     * log entry being attributed to a repository.
+     *
+     * @param repositoryUri the uri of the repository, without the git service suffix
+     * @return the id of the participation, or empty if no repository has that uri
+     */
+    @Query("""
+            SELECT participation.id
+            FROM ProgrammingExerciseStudentParticipation participation
+            WHERE participation.repositoryUri = :repositoryUri
+            """)
+    Optional<Long> findIdByRepositoryUri(@Param("repositoryUri") String repositoryUri);
 
     @Query("""
             SELECT DISTINCT participation

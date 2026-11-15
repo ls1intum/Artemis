@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        When each ledger row was last checked against the database, as opposed to when it was last written.
+
+        The drift pass always takes the least recently verified rows, which is what makes it a rolling sweep with
+        no position of its own to remember. Reusing synced_at for this would have quietly redefined it from "last
+        written" to "last looked at", losing the ability to tell a row that keeps changing from one that is simply
+        checked often.
+
+        Existing rows are backfilled from synced_at: the dispatcher had just confirmed their content when it wrote
+        them, so that is genuinely when they were last known correct.
+    -->
+    <changeSet id="20260826004015-1" author="nayerkotry">
+        <addColumn tableName="searchable_entity_sync_state">
+            <column name="verified_at" type="datetime"/>
+        </addColumn>
+        <update tableName="searchable_entity_sync_state">
+            <column name="verified_at" valueComputed="synced_at"/>
+        </update>
+        <addNotNullConstraint tableName="searchable_entity_sync_state" columnName="verified_at" columnDataType="datetime"/>
+        <!-- The pass reads rows in this order every tick, so it should not sort the whole table to do it. -->
+        <createIndex indexName="idx_searchable_entity_sync_state_verified_at" tableName="searchable_entity_sync_state">
+            <column name="verified_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

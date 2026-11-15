@@ -1,4 +1,5 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { onUserChange } from 'app/core/auth/user-change.util';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
  * The method {@link CourseManagementService#findAllForDashboard} retrieves the scores and participation results in addition to the {@link Course} objects and saves the scores and participation results in this service.
  * This way, multiple components that need the scores and participation results can access them without having to retrieve them again from the server.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ScoresStorageService implements OnDestroy {
     private readonly accountService = inject(AccountService);
 
@@ -36,17 +37,10 @@ export class ScoresStorageService implements OnDestroy {
      */
     private storedAchievedPointsPerVariantGroup: Map<number, Map<number, number>> = new Map();
 
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {

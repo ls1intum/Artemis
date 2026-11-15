@@ -60,18 +60,19 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/language-table-cell/language-table-cell.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -254,7 +255,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
-        { provide: DialogService, useClass: MockDialogService },
+        { provide: TumAetUiDialogService, useClass: MockDialogService },
         provideHttpClient(),
         provideHttpClientTesting(),
     ];
@@ -287,11 +288,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
         comp.exerciseId.set(modelingExercise.id!);
         modelingSubmissionStubWithoutAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
-        modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissions');
+        modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getMyAssessedSubmissions');
         textSubmissionStubWithoutAssessment = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
-        textSubmissionStubWithAssessment = vi.spyOn(textSubmissionService, 'getSubmissions');
+        textSubmissionStubWithAssessment = vi.spyOn(textSubmissionService, 'getMyAssessedSubmissions');
         fileUploadSubmissionStubWithoutAssessment = vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
-        fileUploadSubmissionStubWithAssessment = vi.spyOn(fileUploadSubmissionService, 'getSubmissions');
+        fileUploadSubmissionStubWithAssessment = vi.spyOn(fileUploadSubmissionService, 'getMyAssessedSubmissions');
         programmingSubmissionStubWithoutAssessment = vi.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
         programmingSubmissionStubWithAssessment = vi.spyOn(programmingSubmissionService, 'getSubmissions');
         textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
@@ -304,11 +305,26 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
         comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
         translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each([false, true])('chooses the complaint queue from known exercise roles, instructor=%s', (isInstructor) => {
+        accountService.userIdentity.set({ id: 10, login: isInstructor ? 'instructor1' : 'tutor1' } as User);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(isInstructor);
+        comp.ngOnInit();
+        if (isInstructor) {
+            const req = TestBed.inject(HttpTestingController).expectOne(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`);
+            expect(req.request.method).toBe('GET');
+            req.flush([]);
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).not.toHaveBeenCalled();
+        } else {
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).toHaveBeenCalledExactlyOnceWith(modelingExercise.id);
+        }
     });
 
     it('should initialize', () => {
@@ -326,6 +342,91 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         translateService.use('en'); // Change language.
         expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should hide the complaints shortcut when the course has complaints disabled', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(
+            of(new HttpResponse({ body: { ...stats, complaintsEnabled: false } as StatsForDashboard, headers: new HttpHeaders() })),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.complaintsEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]')).toBeNull();
+    });
+
+    it('should show the complaints shortcut when the course has complaints enabled', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(
+            of(new HttpResponse({ body: { ...stats, complaintsEnabled: true } as StatsForDashboard, headers: new HttpHeaders() })),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.complaintsEnabled()).toBe(true);
+        const complaintsLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]') as HTMLAnchorElement;
+        expect(complaintsLink).not.toBeNull();
+        expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
+    });
+
+    it.each([
+        [AssessmentType.SEMI_AUTOMATIC, true, undefined],
+        [AssessmentType.AUTOMATIC, false, 'artemisApp.assessmentUpload.notPossible.automaticAssessment'],
+    ])('should enable the manual assessment upload only when %s allows it', (assessmentType, expectedEnabled, expectedReason) => {
+        // The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is. It stays visible when it is not allowed,
+        // with the reason, rather than disappearing without explanation.
+        setUpProgrammingExerciseForUpload({ assessmentType, dueDate: dayjs().subtract(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canOfferManualAssessmentUpload()).toBe(true);
+        expect(comp.canUploadManualAssessments()).toBe(expectedEnabled);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe(expectedReason);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]')).not.toBeNull();
+    });
+
+    it('should disable the manual assessment upload until the due date has passed, naming that reason', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().add(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canUploadManualAssessments()).toBe(false);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe('artemisApp.assessmentUpload.notPossible.beforeDueDate');
+    });
+
+    it('should not open the upload dialog when the upload is not allowed', () => {
+        // The disabled button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(false);
+    });
+
+    function setUpProgrammingExerciseForUpload(overrides: Partial<ProgrammingExercise>): void {
+        const exerciseForUpload = { ...programmingExercise, isAtLeastInstructor: true, ...overrides } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForUpload, headers: new HttpHeaders() })));
+        comp.exerciseId.set(exerciseForUpload.id!);
+    }
+
+    it('should open the manual assessment upload dialog', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+        expect(comp['uploadDialogVisible']()).toBe(false);
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(true);
+    });
+
+    it('should reload the dashboard data after manual assessments were uploaded', () => {
+        const loadAllSpy = vi.spyOn(comp, 'loadAll').mockImplementation(() => {});
+
+        comp.onAssessmentsUploaded();
+
+        expect(loadAllSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize with tutor leaderboard entry', () => {
@@ -492,6 +593,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('test calls for all exercise types', () => {
+        it.each([
+            ['text', () => textExercise, () => textSubmissionService, () => textSubmissionAssessed],
+            ['modeling', () => modelingExercise, () => modelingSubmissionService, () => modelingSubmissionAssessed],
+            ['fileupload', () => fileUploadExercise, () => fileUploadSubmissionService, () => fileUploadSubmissionAssessed],
+        ] as const)('uses the instructor self filter for %s instructors', (_type, getExercise, getService, getSubmission) => {
+            vi.mocked(accountService.isAtLeastInstructorForExercise).mockReturnValue(true);
+            const listSpy = vi.spyOn(getService(), 'getSubmissions').mockReturnValue(of(new HttpResponse({ body: [getSubmission()] })));
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: getExercise() })));
+
+            comp.loadAll();
+
+            expect(listSpy).toHaveBeenCalledWith(comp.exerciseId(), { assessedByMe: true }, 0);
+            expect(listSpy).toHaveBeenCalledWith(comp.exerciseId(), { assessedByMe: true }, 1);
+        });
+
         it('fileuploadSubmission', () => {
             modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
             modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
@@ -692,6 +808,35 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
+    it('keeps locked complaint and feedback evaluation links out of keyboard navigation until unlocked', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.isExamMode.set(false);
+        const submission = { id: 123, participation: { id: 456 }, results: [{ assessmentType: AssessmentType.MANUAL }] } as Submission;
+        const complaint = { result: { submission }, complaintType: ComplaintType.COMPLAINT } as Complaint;
+        comp.submissionsWithComplaints.set([{ submission, complaint }]);
+        comp.submissionsWithMoreFeedbackRequests.set([{ submission, complaint: { ...complaint, complaintType: ComplaintType.MORE_FEEDBACK } }]);
+        const lockedSpy = vi.spyOn(comp, 'isComplaintLocked').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const links = Array.from(fixture.nativeElement.querySelectorAll('a.pointer-events-none')) as HTMLAnchorElement[];
+        expect(links).toHaveLength(2);
+        for (const link of links) {
+            expect(link.getAttribute('href')).toBeNull();
+            expect(link.getAttribute('aria-disabled')).toBe('true');
+            expect(link.tabIndex).toBe(-1);
+        }
+
+        lockedSpy.mockReturnValue(false);
+        fixture.changeDetectorRef.markForCheck();
+        fixture.detectChanges();
+        for (const link of links) {
+            expect(link.getAttribute('href')).toContain('/submissions/123/assessment');
+            expect(link.getAttribute('aria-disabled')).toBeNull();
+            expect(link.tabIndex).toBe(0);
+        }
+    });
+
     describe('openExampleSubmission', () => {
         const courseId = 4;
 
@@ -701,6 +846,22 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(navigateSpy).not.toHaveBeenCalled();
         });
 
+        it('should carry the known exam source into the training route', () => {
+            comp.exercise.set({ ...exercise, type: ExerciseType.TEXT, exerciseGroup: { id: 8, exam: { id: 9, course: { id: courseId } } } });
+            comp.courseId.set(courseId);
+            comp.openExampleSubmission(12, false, true);
+            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/exams/9/exercise-groups/8/text-exercises/${exercise.id}/example-submissions/12`], {
+                queryParams: { toComplete: true },
+            });
+        });
+
+        it('should preserve the course source for course training', () => {
+            comp.exercise.set({ ...exercise, type: ExerciseType.TEXT, exerciseGroup: undefined });
+            comp.courseId.set(courseId);
+            comp.openExampleSubmission(12, true, false);
+            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/text-exercises/${exercise.id}/example-submissions/12`], { queryParams: { readOnly: true } });
+        });
+
         it('should openExampleSubmission', () => {
             comp.exercise.set(exercise);
             comp.exercise().type = ExerciseType.PROGRAMMING;
@@ -708,9 +869,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.set(exercise);
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id, true, true);
-            expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`], {
-                queryParams: { readOnly: true, toComplete: true },
-            });
+            expect(navigateSpy).toHaveBeenCalledWith(
+                [
+                    `/course-management/${courseId}/exams/${exerciseGroup.exam!.id}/exercise-groups/${exerciseGroup.id}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`,
+                ],
+                {
+                    queryParams: { readOnly: true, toComplete: true },
+                },
+            );
         });
     });
 
@@ -738,6 +904,50 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.togglingSecondCorrectionButton()).toBe(false);
         expect(comp.secondCorrectionEnabled()).toBe(secondCorrectionEnabled);
         expect(comp.numberOfCorrectionRoundsEnabled()).toBe(2);
+    });
+
+    it('should place the second correction toggle in the second correction round', () => {
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+        comp.numberOfAssessmentsOfCorrectionRounds.update((correctionRounds) => correctionRounds.slice(0, 1));
+        fixture.detectChanges();
+
+        const firstCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-0"]');
+        const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+        const secondCorrectionToggles = fixture.nativeElement.querySelectorAll('[data-testid="toggle-second-correction"]');
+
+        expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
+        expect(secondCorrectionToggles).toHaveLength(1);
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
+        const header = secondCorrectionRound.querySelector('[data-testid="correction-round-header"]');
+        expect(header?.contains(secondCorrectionToggles[0])).toBe(true);
+    });
+
+    it('should show the second correction toggle before the instructor participates', () => {
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        instructorExercise.tutorParticipations = [{ status: TutorParticipationStatus.NOT_PARTICIPATED }];
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+
+        const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
+    });
+
+    it('should not add configured correction rounds to test runs', () => {
+        comp.exam.set(exam);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((correctionRounds) => correctionRounds.slice(0, 1));
+
+        expect(comp.correctionRoundIndices()).toEqual([0, 1]);
+
+        comp.isTestRun.set(true);
+
+        expect(comp.correctionRoundIndices()).toEqual([0]);
     });
 
     it('should check if complaint locked', () => {
@@ -791,6 +1001,69 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.sortMoreFeedbackRows();
 
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+    });
+
+    it('should apply a column header sort of the assessed submissions of a correction round', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const firstSubmission = { id: 2 } as Submission;
+        const secondSubmission = { id: 1 } as Submission;
+        comp.assessedSubmissionsByRound.set([[], [firstSubmission, secondSubmission]]);
+
+        comp['onSubmissionSort'](1, { field: 'id', order: 1 });
+
+        expect(comp.sortPredicates[0]).toBe('id');
+        expect(comp.reverseOrders[0]).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenCalledExactlyOnceWith(expect.any(Array), 'id', true);
+        // Only the rows of the given correction round are re-sorted (on a copy).
+        expect(sortByPropertySpy.mock.calls[0][0]).toEqual([firstSubmission, secondSubmission]);
+        expect(comp.assessedSubmissionsByRound()[0]).toEqual([]);
+
+        comp['onSubmissionSort'](1, { field: 'id', order: -1 });
+
+        expect(comp.reverseOrders[0]).toBe(false);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(expect.any(Array), 'id', false);
+        expect(sortByPropertySpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should apply a column header sort of the complaints', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+
+        comp['onComplaintSort']({ field: 'complaint.submittedTime', order: -1 });
+
+        expect(comp.sortPredicates[1]).toBe('complaint.submittedTime');
+        expect(comp.reverseOrders[1]).toBe(false);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(comp.submissionsWithComplaints(), 'complaint.submittedTime', false);
+
+        comp['onComplaintSort']({ field: 'responseTime', order: 1 });
+
+        expect(comp.sortPredicates[1]).toBe('responseTime');
+        expect(comp.reverseOrders[1]).toBe(true);
+        expect(sortByFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithComplaints(), expect.any(Function), true);
+        // The other tables keep their own sort state.
+        expect(comp.sortPredicates[2]).toBe('complaint.accepted');
+        expect(comp.reverseOrders[2]).toBe(false);
+    });
+
+    it('should apply a column header sort of the more feedback requests', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+
+        comp['onMoreFeedbackSort']({ field: 'complaint.accepted', order: 1 });
+
+        expect(comp.sortPredicates[2]).toBe('complaint.accepted');
+        expect(comp.reverseOrders[2]).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(comp.submissionsWithMoreFeedbackRequests(), 'complaint.accepted', true);
+
+        comp['onMoreFeedbackSort']({ field: 'responseTime', order: -1 });
+
+        expect(comp.sortPredicates[2]).toBe('responseTime');
+        expect(comp.reverseOrders[2]).toBe(false);
+        expect(sortByFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+        expect(comp.sortPredicates[1]).toBe('complaint.accepted');
     });
 
     it('should return submission language', () => {
@@ -908,8 +1181,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             const continueAssessment = fixture.nativeElement.querySelector('#continue-assessment');
             expect(continueAssessment).not.toBeNull();
-            expect(continueAssessment.classList).toContain('disabled');
-            // the disabled class only stops mouse clicks, so the route must be gone and the link out of the tab order
+            // Disabled links have no route and are excluded from keyboard navigation.
             expect(continueAssessment.getAttribute('href')).toBeNull();
             expect(continueAssessment.getAttribute('aria-disabled')).toBe('true');
             expect(continueAssessment.getAttribute('tabindex')).toBe('-1');
@@ -952,5 +1224,25 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
             expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
         });
+    });
+    it.each([false, true])('reports a failed complaint queue without changing audience, instructor=%s', (isInstructor) => {
+        accountService.userIdentity.set({ id: 10, login: 'assessor' } as User);
+        vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(isInstructor);
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submissionsWithComplaints.set([]);
+        if (!isInstructor) {
+            vi.mocked(submissionService.getSubmissionsWithComplaintsForTutor).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        }
+
+        comp.ngOnInit();
+        if (isInstructor) {
+            const http = TestBed.inject(HttpTestingController);
+            http.expectOne(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`).flush({}, { status: 403, statusText: 'Forbidden' });
+            expect(submissionService.getSubmissionsWithComplaintsForTutor).not.toHaveBeenCalled();
+        } else {
+            TestBed.inject(HttpTestingController).expectNone(`api/exercise/exercises/${modelingExercise.id}/submissions-with-complaints/for-instructor`);
+        }
+        expect(alert).toHaveBeenCalledExactlyOnceWith('error.http.403');
+        expect(comp.submissionsWithComplaints()).toEqual([]);
     });
 });

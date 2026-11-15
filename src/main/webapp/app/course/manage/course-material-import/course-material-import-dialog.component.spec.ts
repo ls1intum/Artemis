@@ -13,7 +13,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -69,7 +70,8 @@ describe('CourseMaterialImportDialogComponent', () => {
                 CourseMaterialImportDialogComponent,
                 FormsModule,
                 MockModule(DialogModule),
-                MockModule(ButtonModule),
+                TumAetUiButtonDirective,
+                FaIconComponent,
                 MockModule(CheckboxModule),
                 MockModule(TableModule),
                 MockModule(InputTextModule),
@@ -88,7 +90,8 @@ describe('CourseMaterialImportDialogComponent', () => {
                     imports: [
                         FormsModule,
                         MockModule(DialogModule),
-                        MockModule(ButtonModule),
+                        TumAetUiButtonDirective,
+                        FaIconComponent,
                         MockModule(CheckboxModule),
                         MockModule(TableModule),
                         MockModule(InputTextModule),
@@ -331,6 +334,36 @@ describe('CourseMaterialImportDialogComponent', () => {
             expect(emitSpy).toHaveBeenCalled();
         });
 
+        it('should warn instead of reporting success when the server reports failed items', async () => {
+            vi.spyOn(importService, 'importMaterial').mockReturnValue(
+                of({
+                    exercisesImported: 1,
+                    lecturesImported: 0,
+                    examsImported: 0,
+                    competenciesImported: 0,
+                    tutorialGroupsImported: 0,
+                    faqsImported: 0,
+                    errors: ["Failed to import exercise 'Sorting': boom", "Failed to import exercise 'Trees': bang"],
+                }),
+            );
+            const successSpy = vi.spyOn(alertService, 'success');
+            const warningSpy = vi.spyOn(alertService, 'warning');
+            const closeSpy = vi.spyOn(component, 'close');
+            const emitSpy = vi.spyOn(component.importStarted, 'emit');
+
+            component.importExercises.set(true);
+            await component.executeImport();
+
+            expect(warningSpy).toHaveBeenCalledOnce();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.course.import.partialSuccess', {
+                errors: "Failed to import exercise 'Sorting': boom; Failed to import exercise 'Trees': bang",
+            });
+            expect(successSpy).not.toHaveBeenCalled();
+            // Whatever was imported must still refresh the course, so the dialog closes and announces the import.
+            expect(closeSpy).toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalled();
+        });
+
         it('should not execute import when canImport is false', async () => {
             vi.spyOn(importService, 'importMaterial');
 
@@ -371,7 +404,7 @@ describe('CourseMaterialImportDialogComponent', () => {
         });
 
         it('should update pagination on page change', async () => {
-            component.onPageChange({ first: 10, rows: 10 });
+            component.onPageChange(1);
             await fixture.whenStable();
 
             expect(component.first()).toBe(10);

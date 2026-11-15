@@ -1,8 +1,13 @@
-import { Injectable } from '@angular/core';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { Service } from '@angular/core';
 import { parseJson } from 'app/foundation/util/json.util';
 
-@Injectable({ providedIn: 'root' })
+/** Earliest date on which the setup passkey modal reminds the user again. Kept across logouts, see {@link LocalStorageService.clear}. */
+export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
+
+/** Per-user browser preferences, retained through logout without retaining authentication or exercise data. */
+export const BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX = 'buildNotifications.';
+
+@Service()
 export class LocalStorageService {
     /**
      * Stores a value in the local storage under the specified key.
@@ -55,6 +60,7 @@ export class LocalStorageService {
     clear() {
         // Keys that should persist across logouts (user preferences, reminders, etc.)
         const KEYS_TO_PRESERVE = [EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY];
+        KEYS_TO_PRESERVE.push(...Object.keys(localStorage).filter((key) => key.startsWith(BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX)));
 
         this.clearExcept(KEYS_TO_PRESERVE);
     }

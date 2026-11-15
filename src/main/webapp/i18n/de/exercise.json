@@ -27,12 +27,29 @@
                 "testCourse": "Testkurses",
                 "realCourse": "echten Kurses",
                 "summary": {
-                    "title": "Aufgaben-Zusammenfassung",
-                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
-                    "numberOfAssessments": "Anzahl der Bewertungen",
-                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberOfAnswerPosts": "Anzahl der Antworten",
-                    "numberOfBuilds": "Anzahl der Builds"
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "content": "Aufgabeninhalte und Verknüpfungen",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberOfStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Abgaben",
+                    "numberOfStudentExams": "Klausuren von Studierenden, die diese Aufgabe enthalten",
+                    "numberOfResults": "Ergebnisse",
+                    "numberOfAssessments": "Manuelle Bewertungen",
+                    "numberOfComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberOfPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberOfCommunicationPosts": "Beiträge im Aufgabenkanal",
+                    "numberOfAnswerPosts": "Antworten im Aufgabenkanal",
+                    "numberOfExampleSubmissions": "Beispielabgaben",
+                    "numberOfCompetencyLinks": "Verknüpfte Kompetenzen",
+                    "numberOfLectureUnitLinks": "Verknüpfte Vorlesungseinheiten",
+                    "numberOfBuilds": "Build-Jobs"
                 }
             },
             "reset": {
@@ -66,6 +83,12 @@
                 "loading": "Lade...",
                 "searchInCourses": "Suche in Kursen?",
                 "searchInExams": "Suche in Klausuren?",
+                "preview": {
+                    "title": "Vorschau: {{ title }}",
+                    "buttonLabel": "Vorschau von {{ title }}",
+                    "backToList": "Zurück zur Liste",
+                    "loadFailed": "Die Vorschau konnte nicht geladen werden."
+                },
                 "table": {
                     "title": "Titel",
                     "language": "Sprache",
@@ -77,8 +100,17 @@
                 "tabTitle": "Von dieser Instanz"
             },
             "importFromFile": {
-                "notSupportedExerciseType": "Der Import von Dateien wird für den Aufgabentyp {{ exerciseType }} nicht unterstützt.",
-                "tabTitle": "Aus einer Datei"
+                "tabTitle": "Aus einer Datei",
+                "description": "Wähle eine Zip-Datei, die du mit Exportieren in der Aufgabenübersicht eines Kurses heruntergeladen hast. Artemis öffnet dann den Aufgabeneditor mit den Einstellungen aus der Datei, sodass du sie vor dem Speichern prüfen kannst.",
+                "uploadForImport": "Aufgabe aus Datei importieren",
+                "fileCountError": "Wähle genau eine Datei.",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
+                "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
+                "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
+                "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
+                "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."
             },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",
@@ -108,9 +140,9 @@
             "limit": "Begrenzung",
             "dragDropInstruction": "Drag-and-Drop Bewertungsanweisung zum Feedback-Element",
             "gradingScale": "Skala",
-            "instructionDescription": "Beschreibung",
+            "instructionDescription": "Beschreibung (Tutor:innen)",
             "credits": "Credits",
-            "feedback": "Feedback",
+            "feedback": "Feedback (Studierende)",
             "editText": "Als Text bearbeiten",
             "assessmentCriteriaGeneration": {
                 "generate": "Bewertungskriterien generieren",
@@ -127,9 +159,13 @@
             },
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden.",
             "creditsHint": "Diese Zahl gibt die Punktzahl für diese Bewertungsanweisung an.",
-            "gradingScaleHint": "Die Skala beschreibt das Leistungsniveau für die Anweisung. Einige Beispiele hierfür sind: ausgezeichnet, gut, durchschnittlich, schlecht.",
-            "descriptionHint": "Die Beschreibung einer bestimmten Leistungsstufe kann zusätzliche Hinweise dazu enthalten, wann diese Anweisung anzuwenden ist.",
+            "gradingScaleHint": "Kurzes Label für diese Leistungsstufe, vergleichbar mit einer Likert-Stufe. Beispiele: ausgezeichnet, gut, durchschnittlich, schlecht. Nur Tutor:innen sehen dies, Studierende nicht.",
+            "descriptionHint": "Hinweise nur für Tutor:innen, wann diese Skalenstufe anzuwenden ist. Studierende sehen dies nicht.",
             "feedbackHint": "Das Feedback ist ein erläuternder Text an Studierende, um ihr Leistungsniveau besser zu verstehen.",
+            "gradingScalePlaceholder": "z. B. Gut",
+            "criterionTitlePlaceholder": "Kriteriumstitel",
+            "descriptionPlaceholder": "Wann soll ein:e Tutor:in diese Stufe anwenden?",
+            "feedbackPlaceholder": "Was soll die oder der Studierende lesen?",
             "title": "Titel",
             "shortName": "Kurzname",
             "release": "Veröffentlichung",
@@ -173,7 +209,6 @@
             "no": "Nein",
             "createAction": "Erstellen",
             "importAction": "Importieren",
-            "exportAction": "Exportieren",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
             "easy": "Leicht",
@@ -197,6 +232,7 @@
             "participations": "Teilnahmen",
             "submissions": "Einreichungen",
             "teams": "Teams",
+            "complaints": "Beschwerden",
             "export": {
                 "options": "Exportoptionen:",
                 "names": "Namen exportieren",
@@ -311,8 +347,11 @@
                         "timeoutSeconds": "Timeout (Sekunden)",
                         "dockerFlags": "Docker-Flags",
                         "theiaImage": "Theia-Image",
+                        "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
                         "allowBranching": "Branching erlauben",
-                        "branchRegex": "Branch-Regex"
+                        "branchRegex": "Branch-Regex",
+                        "buildTimeWindowStart": "Beginn des Build-Zeitfensters",
+                        "buildTimeWindowEnd": "Ende des Build-Zeitfensters"
                     }
                 }
             },

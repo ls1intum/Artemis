@@ -10,7 +10,7 @@ import { SearchCourseOptionsService } from './search-course-options.service';
 import { MenuCourse } from '../models/search-menu.util';
 
 describe('SearchCourseOptionsService', () => {
-    const URL = 'api/course/courses/for-dropdown';
+    const URL = 'api/search/course-options';
 
     let service: SearchCourseOptionsService;
     let httpMock: HttpTestingController;
@@ -41,9 +41,17 @@ describe('SearchCourseOptionsService', () => {
         const received: MenuCourse[][] = [];
         service.getCourses().subscribe((courses) => received.push(courses));
 
-        httpMock.expectOne(URL).flush([{ id: 7, title: 'Databases' }]);
+        httpMock.expectOne(URL).flush([
+            { id: 7, title: 'Databases', active: true },
+            { id: 3, title: 'Compilers', active: false },
+        ]);
 
-        expect(received).toEqual([[{ id: 7, title: 'Databases' }]]);
+        expect(received).toEqual([
+            [
+                { id: 7, title: 'Databases', active: true },
+                { id: 3, title: 'Compilers', active: false },
+            ],
+        ]);
     });
 
     it('issues one request however many callers ask, including while it is still in flight', () => {

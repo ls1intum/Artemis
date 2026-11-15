@@ -55,7 +55,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
         athenaConfig.setGradingFeedbackEnabled(gradingFeedbackEnabled);
         athenaConfig.setFormativeFeedbackEnabled(formativeFeedbackEnabled);
         persisted.setAthenaConfig(athenaConfig);
-        courseRepository.save(persisted);
+        courseUtilService.saveWithConfigurations(persisted);
     }
 
     private CourseAthenaConfigDTO storedConfig() {
@@ -63,7 +63,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAthenaConfig_returnsPersistedFlags() throws Exception {
         persistAthenaConfig(true, false);
 
@@ -73,15 +73,15 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getAthenaConfig_courseWithoutConfig_returnsBothDisabled() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getAthenaConfig_newCourse_returnsBothDisabled() throws Exception {
         var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
 
         assertThat(config).isEqualTo(new CourseAthenaConfigDTO(false, false));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_persistsBothFlags() throws Exception {
         persistAthenaConfig(false, false);
 
@@ -92,8 +92,8 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAthenaConfig_courseWithoutConfig_createsIt() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateAthenaConfig_newCourse_updatesItsDefaults() throws Exception {
         var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(false, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
         assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, true));
@@ -101,7 +101,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_switchingOneFlagKeepsTheOther() throws Exception {
         persistAthenaConfig(true, false);
 
@@ -111,7 +111,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_omittedFlagIsNotWritten() throws Exception {
         persistAthenaConfig(true, true);
 
@@ -124,7 +124,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_emptyUpdate_changesNothing() throws Exception {
         persistAthenaConfig(true, false);
 
@@ -135,7 +135,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_concurrentSwitchesOfDifferentFeaturesBothSurvive() throws Exception {
         persistAthenaConfig(false, false);
 
@@ -165,42 +165,19 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void ensureAthenaConfigExists_concurrentFirstUpdates_shareOneConfiguration() throws Exception {
-        // A course from before the configuration existed has a null athena_config_id, so two instructors switching a
-        // feature at the same time both reach the create path. Without the course-row lock each created its own
-        // configuration and they raced to point the course at it, leaving the loser's toggle in a row nothing
-        // references any more - answered with 200, stored nowhere the course can see.
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
-
-        var barrier = new CyclicBarrier(2);
-        Callable<Long> initialize = () -> {
-            barrier.await();
-            return courseAthenaConfigRepository.ensureAthenaConfigExists(course.getId());
-        };
-
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try {
-            List<Future<Long>> results = executor.invokeAll(List.of(initialize, initialize));
-            long firstConfigId = results.get(0).get();
-            long secondConfigId = results.get(1).get();
-
-            assertThat(firstConfigId).isEqualTo(secondConfigId);
-            assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).contains(firstConfigId);
-        }
-        finally {
-            executor.shutdownNow();
-        }
+    void newCourseAlreadyHasDisabledAthenaSettings() {
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isPresent();
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, false));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAthenaConfig_asTutor_isForbidden() throws Exception {
         request.get(configPath, HttpStatus.FORBIDDEN, CourseAthenaConfigDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateAthenaConfig_asTutor_isForbidden() throws Exception {
         request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true), CourseAthenaConfigDTO.class, HttpStatus.FORBIDDEN);
     }

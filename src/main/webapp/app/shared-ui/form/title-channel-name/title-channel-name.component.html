@@ -1,14 +1,21 @@
-<div class="row">
+<div class="grid grid-cols-1 gap-4! lg:grid-cols-2">
     @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
-        <div class="form-group col-12" [class.col-lg-6]="isChannelFieldDisplayed()">
+        <div class="min-w-0" [class.lg:col-span-2]="!isChannelFieldDisplayed()">
             @if (!hideTitleLabel()) {
                 <div>
-                    <label [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+                    <label class="mb-1 inline-block" [class.font-semibold]="emphasizeLabels()" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
                     @if (showRequiredMarker()) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     @if (titleHelpIconText()) {
-                        <jhi-help-icon [text]="titleHelpIconText()!" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="ms-1 text-muted-color"
+                            role="img"
+                            tabindex="0"
+                            [attr.aria-label]="titleHelpIconText()! | artemisTranslate"
+                            [tumAetUiTooltip]="titleHelpIconText()! | artemisTranslate"
+                        />
                     }
                 </div>
             }
@@ -19,7 +26,10 @@
                 [maxlength]="maxTitleLength() ?? null"
                 [pattern]="titlePattern() ?? ''"
                 type="text"
-                class="form-control"
+                tumAetUiInput
+                [tumAetUiInputInvalid]="!!field_title.invalid && (field_title.dirty || field_title.touched)"
+                [tumAetUiInputDescribedBy]="field_title.control.errors?.disallowedValue ? titleErrorId : undefined"
+                class="w-full"
                 name="title"
                 id="field_title"
                 [ngModel]="title()"
@@ -28,24 +38,27 @@
                 [disallowedValues]="alreadyUsedTitles()"
             />
             @if (field_title?.control?.errors?.disallowedValue) {
-                <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
+                <div [id]="titleErrorId" role="alert" class="mt-1 text-state-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
             }
         </div>
     }
     @if (isChannelFieldDisplayed()) {
-        <div class="form-group col-lg-6">
+        <div class="min-w-0">
             @if (!hideChannelNameLabel()) {
                 <div>
-                    <label
-                        [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')"
-                        jhiTranslate="artemisApp.lecture.channelName"
-                        for="field_channel_name"
-                    ></label>
+                    <label class="mb-1 inline-block" [class.font-semibold]="emphasizeLabels()" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"></label>
                     @if (showRequiredMarker()) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     @if (channelNameHelpIconText()) {
-                        <jhi-help-icon [text]="channelNameHelpIconText()!" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="ms-1 text-muted-color"
+                            role="img"
+                            tabindex="0"
+                            [attr.aria-label]="channelNameHelpIconText()! | artemisTranslate"
+                            [tumAetUiTooltip]="channelNameHelpIconText()! | artemisTranslate"
+                        />
                     }
                 </div>
             }
@@ -53,7 +66,9 @@
                 #field_channel_name="ngModel"
                 required
                 type="text"
-                class="form-control"
+                tumAetUiInput
+                [tumAetUiInputInvalid]="!!field_channel_name.invalid && (field_channel_name.dirty || field_channel_name.touched)"
+                class="w-full"
                 name="channelName"
                 id="field_channel_name"
                 [ngModel]="channelName()"

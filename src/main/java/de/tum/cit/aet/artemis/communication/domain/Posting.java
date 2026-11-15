@@ -100,9 +100,13 @@ public abstract class Posting extends DomainObject {
 
     public abstract void setReactions(Set<Reaction> reactions);
 
-    public abstract void addReaction(Reaction reaction);
+    public void addReaction(Reaction reaction) {
+        getReactions().add(reaction);
+    }
 
-    public abstract void removeReaction(Reaction reaction);
+    public void removeReaction(Reaction reaction) {
+        getReactions().remove(reaction);
+    }
 
     @Transient
     @Nullable

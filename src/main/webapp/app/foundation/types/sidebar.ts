@@ -1,6 +1,7 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -12,7 +13,7 @@ export type TutorialGroupCategory = 'allGroups' | 'registeredGroups' | 'furtherG
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<
     TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
-    { entityData: SidebarCardElement[]; isHideCount?: boolean }
+    { entityData: SidebarCardElement[]; isHideCount?: boolean; translationKey?: string }
 >;
 export type ChannelGroupCategory =
     | 'unreadMessages'
@@ -40,6 +41,8 @@ export interface SidebarData {
     sidebarType?: SidebarTypes;
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
+    /** Items rendered above accordion groups, e.g. an overview entry. */
+    pinnedData?: SidebarCardElement[];
     storageId?: string;
     showAccordionLeadingIcon?: boolean;
     messagingEnabled?: boolean;
@@ -109,6 +112,11 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
+    /**
+     * Set for Exercises of a course. The exercises of the course overview carry no course, but the result shown on the card needs the accuracy of its scores. It is not the
+     * course itself, because every card is cloned and the course would be cloned with all of its exercises.
+     */
+    course?: CourseScoreAccuracy;
     /**
      * Set For Exam, this is a string which may define an icon for the status of the exam.
      * It has to be a valid FontAwesome icon name and will be displayed in the
@@ -184,7 +192,7 @@ export interface SidebarCardElement {
     /** Optional icon shown before {@link subtitleLeft}, e.g. a warning triangle. */
     subtitleLeftIcon?: IconProp;
 
-    /** Optional CSS class(es) applied to {@link subtitleLeft}, e.g. 'text-warning'. */
+    /** Optional CSS class(es) applied to {@link subtitleLeft}, e.g. 'text-state-warning'. */
     subtitleLeftClass?: string;
 
     /** Optional tooltip (native title) for {@link subtitleLeft}. */

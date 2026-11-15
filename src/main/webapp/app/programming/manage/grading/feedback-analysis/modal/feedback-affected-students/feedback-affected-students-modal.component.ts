@@ -1,3 +1,4 @@
+import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
@@ -6,15 +7,19 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgTemplateOutlet } from '@angular/common';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-affected-students-modal',
     templateUrl: './feedback-affected-students-modal.component.html',
-    imports: [CodeButtonComponent, TranslateDirective, NgTemplateOutlet],
+    imports: [CodeButtonComponent, TranslateDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent],
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {
+    activeModal = inject(NgbActiveModal);
+    feedbackService = inject(FeedbackAnalysisService);
+    alertService = inject(AlertService);
+
     courseId = input.required<number>();
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
@@ -22,11 +27,8 @@ export class AffectedStudentsModalComponent {
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 
     readonly faSpinner = faSpinner;
+    protected readonly RepositoryType = RepositoryType;
     readonly isLoading = signal<boolean>(false);
-
-    activeModal = inject(NgbActiveModal);
-    feedbackService = inject(FeedbackAnalysisService);
-    alertService = inject(AlertService);
 
     constructor() {
         effect(() => {

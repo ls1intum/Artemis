@@ -1,11 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { Observable } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class SuspiciousSessionsService {
     private http = inject(HttpClient);
 
@@ -14,7 +12,7 @@ export class SuspiciousSessionsService {
             .set('differentStudentExamsSameIPAddress', options.sameIpAddressDifferentStudentExams.toString())
             .set('differentStudentExamsSameBrowserFingerprint', options.sameBrowserFingerprintDifferentStudentExams.toString())
             .set('sameStudentExamDifferentIPAddresses', options.differentIpAddressesSameStudentExam.toString())
-            .set('sameStudentExamDifferentBrowserFingerprints', options.differentIpAddressesSameStudentExam.toString())
+            .set('sameStudentExamDifferentBrowserFingerprints', options.differentBrowserFingerprintsSameStudentExam.toString())
             .set('ipOutsideOfRange', options.ipAddressOutsideOfRange.toString());
 
         // If subnet is provided, add it to the params

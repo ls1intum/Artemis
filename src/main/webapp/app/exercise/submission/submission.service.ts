@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -30,7 +30,7 @@ interface SubmissionWithComplaintResponseDTO {
     complaint: ComplaintDTO;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SubmissionService {
     private http = inject(HttpClient);
     private complaintService = inject(ComplaintService);
@@ -73,6 +73,13 @@ export class SubmissionService {
     getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
             .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
+    /** Find all complained-about assessments for the instructor's exercise review queue. */
+    getSubmissionsWithComplaintsForInstructor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
+        return this.http
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints/for-instructor`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 

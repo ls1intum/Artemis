@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CanMatchFn, Route, UrlSegment } from '@angular/router';
+import { CanMatchFn, Route, Routes, UrlSegment } from '@angular/router';
 import { examManagementRoutes } from 'app/exam/manage/exam-management.route';
+import { courseManagementRoutes } from 'app/course/manage/course-management.route';
+import appRoutes from 'app/app.routes';
+import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 describe('examManagementRoutes', () => {
     const TEXT_EXERCISE_PATH = ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId';
@@ -14,6 +18,32 @@ describe('examManagementRoutes', () => {
      * The full-width workspaces are matched before the shell, so anything they claim never reaches the shell's own
      * children. These guards keep that ordering from swallowing ordinary exam pages.
      */
+    it('keeps the post-exam tutor training routes outside editor guards and resolvers', async () => {
+        const root = appRoutes.find((route) => route.path === 'course-management' && !!route.loadChildren)!;
+        const container = courseManagementRoutes.find((route) => route.path === '' && !!route.children)!;
+        const examMount = container.children!.find((route) => route.path === ':courseId/exams')!;
+        for (const ancestor of [root, container, examMount]) {
+            expect(ancestor.canActivate).toBeUndefined();
+            expect(ancestor.resolve).toBeUndefined();
+        }
+        expect(examMount.data?.['authorities']).toEqual(IS_AT_LEAST_TUTOR);
+        const modeling = standaloneRoutes.find(
+            (route) => route.path === ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        )!;
+        expect(modeling.resolve).toBeUndefined();
+        expect(modeling.data?.['authorities']).toEqual(IS_AT_LEAST_TUTOR);
+        expect(modeling.canActivate).toEqual([UserRouteAccessService]);
+        const text = standaloneRoutes.find(
+            (route) => route.path === ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        )!;
+        expect(text.resolve).toBeUndefined();
+        expect(text.canActivate).toBeUndefined();
+        const children = await (text.loadChildren as () => Promise<Routes>)();
+        expect(children[0].resolve).toBeUndefined();
+        expect(children[0].data?.['authorities']).toEqual(IS_AT_LEAST_TUTOR);
+        expect(children[0].canActivate).toEqual([UserRouteAccessService]);
+    });
+
     it('matches the full-width workspaces before the shell', () => {
         expect(shellRoute).toBeDefined();
         expect(examManagementRoutes.indexOf(shellRoute!)).toBe(examManagementRoutes.length - 1);

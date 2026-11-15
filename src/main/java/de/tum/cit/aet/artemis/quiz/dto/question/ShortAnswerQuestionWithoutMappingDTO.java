@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
@@ -9,6 +10,7 @@ import de.tum.cit.aet.artemis.quiz.dto.ShortAnswerSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.ShortAnswerSpotDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ShortAnswerQuestionWithoutMappingDTO(List<ShortAnswerSpotDTO> spots, List<ShortAnswerSolutionDTO> solutions, Integer similarityValue, Boolean matchLetterCase) {
 
     /**
@@ -25,6 +27,18 @@ public record ShortAnswerQuestionWithoutMappingDTO(List<ShortAnswerSpotDTO> spot
         // Use null for empty lists to match JSON round-trip behavior with @JsonInclude(NON_EMPTY)
         return new ShortAnswerQuestionWithoutMappingDTO(spots.isEmpty() ? null : spots, solutions.isEmpty() ? null : solutions, question.getSimilarityValue(),
                 question.getMatchLetterCase());
+    }
+
+    /**
+     * Creates a DTO from the given question for use while a quiz is conducted: the spots and matching settings are
+     * included, the list of solutions is not.
+     *
+     * @param question the short answer question
+     * @return the DTO without solutions
+     */
+    public static ShortAnswerQuestionWithoutMappingDTO ofWithoutSolutions(ShortAnswerQuestion question) {
+        var spots = question.getSpots() == null ? List.<ShortAnswerSpotDTO>of() : question.getSpots().stream().map(ShortAnswerSpotDTO::of).toList();
+        return new ShortAnswerQuestionWithoutMappingDTO(spots.isEmpty() ? null : spots, null, question.getSimilarityValue(), question.getMatchLetterCase());
     }
 
 }

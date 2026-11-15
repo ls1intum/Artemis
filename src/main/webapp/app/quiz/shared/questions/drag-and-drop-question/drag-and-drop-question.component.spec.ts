@@ -13,7 +13,8 @@ import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
+import { By } from '@angular/platform-browser';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -220,6 +221,39 @@ describe('DragAndDropQuestionComponent', () => {
     it('should change loading with given value', () => {
         comp.changeLoading('loading');
         expect(comp.loadingState()).toBe('loading');
+    });
+
+    it('should not hard-code the color of the invalid hint icon, so it stays readable in the dark theme', () => {
+        const { dropLocation } = getDropLocationMappingAndItem();
+        dropLocation.invalid = true;
+        dropLocation.posX = 0;
+        dropLocation.posY = 0;
+        dropLocation.width = 10;
+        dropLocation.height = 10;
+        comp.dragAndDropQuestion().dropLocations = [dropLocation];
+        fixture.componentRef.setInput('showResult', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const icon: HTMLElement | null = fixture.nativeElement.querySelector('.drop-location.results .invalid fa-icon');
+        expect(icon).toBeTruthy();
+        expect(icon!.getAttribute('style') ?? '').not.toContain('color');
+    });
+
+    it('should not let the CDK reorder the drag item list or a drop location while an item is dragged', () => {
+        // Neither order carries meaning, and the sorting moved the items of the wrapped list up and down while the view scrolled.
+        const { dropLocation, dragItem } = getDropLocationMappingAndItem();
+        dropLocation.posX = 0;
+        dropLocation.posY = 0;
+        dropLocation.width = 10;
+        dropLocation.height = 10;
+        comp.dragAndDropQuestion().dropLocations = [dropLocation];
+        comp.dragAndDropQuestion().dragItems = [dragItem];
+        fixture.changeDetectorRef.detectChanges();
+
+        const dropLists = fixture.debugElement.queryAll(By.directive(CdkDropList)).map((element) => element.injector.get(CdkDropList));
+        // the drop location and the list of unassigned drag items
+        expect(dropLists).toHaveLength(2);
+        expect(dropLists.map((dropList) => dropList.sortingDisabled)).toEqual([true, true]);
     });
 
     it('should set drop allowed to true when dragged', () => {

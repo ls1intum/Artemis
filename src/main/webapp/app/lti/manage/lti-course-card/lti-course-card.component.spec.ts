@@ -11,6 +11,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MockDirective } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import enCourse from '../../../../i18n/en/course.json';
+import deCourse from '../../../../i18n/de/course.json';
 
 describe('LtiCourseCardComponent', () => {
     let component: LtiCourseCardComponent;
@@ -74,7 +76,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-body').textContent).toContain('ID: 123');
+        expect(compiled.querySelector('[data-testid="lti-course-card-body"]').textContent).toContain('ID: 123');
     });
 
     it('should display number of students', () => {
@@ -89,7 +91,30 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-body').textContent).toContain('42');
+        expect(compiled.querySelector('[data-testid="lti-course-card-body"]').textContent).toContain('42');
+    });
+
+    it('should only use translation keys that exist in the English and German course translations', () => {
+        const testCourse = {
+            id: 1,
+            shortName: 'test',
+            title: 'Test',
+            numberOfStudents: 42,
+            startDate: dayjs('2023-01-01'),
+            endDate: dayjs('2023-12-31'),
+        };
+
+        fixture.componentRef.setInput('course', testCourse);
+        fixture.detectChanges();
+
+        const keys = Array.from(fixture.nativeElement.querySelectorAll('[jhiTranslate]'), (element) => (element as HTMLElement).getAttribute('jhiTranslate') as string);
+        expect(keys).toContain('artemisApp.course.delete.summary.numberOfStudents');
+
+        const resolve = (translations: object, key: string) => key.split('.').reduce<unknown>((node, part) => (node as Record<string, unknown> | undefined)?.[part], translations);
+        for (const key of keys) {
+            expect(resolve(enCourse, key), `missing English translation for ${key}`).toBeTypeOf('string');
+            expect(resolve(deCourse, key), `missing German translation for ${key}`).toBeTypeOf('string');
+        }
     });
 
     it('should display description when available', () => {
@@ -105,7 +130,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-body').textContent).toContain(testDescription);
+        expect(compiled.querySelector('[data-testid="lti-course-card-body"]').textContent).toContain(testDescription);
     });
 
     it('should compute contrasting text color for dark background', () => {
@@ -137,7 +162,7 @@ describe('LtiCourseCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.card-header').textContent).toContain('My Test Course Title');
+        expect(compiled.querySelector('[data-testid="lti-course-card-header"]').textContent).toContain('My Test Course Title');
     });
 
     it('should handle course with dates', () => {

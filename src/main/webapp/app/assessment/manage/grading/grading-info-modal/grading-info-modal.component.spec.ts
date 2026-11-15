@@ -45,7 +45,7 @@ describe('GradingInfoModalComponent', () => {
         });
 
         it('should have an accessible aria-label on the open button', () => {
-            const button = fixture.debugElement.nativeElement.querySelector('button[tumUiButton]');
+            const button = fixture.debugElement.nativeElement.querySelector('button[tumAetUiButton]');
             expect(button).not.toBeNull();
             expect(button.getAttribute('aria-label')).toBe('artemisApp.gradingSystem.info.title');
         });
@@ -99,5 +99,21 @@ describe('GradingInfoModalComponent', () => {
             component.open();
             expect(component.visible()).toBe(true);
         });
+    });
+    it('renders a named modal and restores the trigger focus when Escape dismisses it', async () => {
+        const trigger = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        trigger.focus();
+        trigger.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const dialog = document.querySelector('[role="dialog"]') as HTMLElement;
+        expect(dialog).not.toBeNull();
+        expect(dialog.textContent).toContain('entity.action.close');
+        dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.visible()).toBe(false);
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(document.activeElement).toBe(trigger);
     });
 });

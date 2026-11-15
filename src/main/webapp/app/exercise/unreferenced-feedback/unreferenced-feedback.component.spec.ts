@@ -1,3 +1,4 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -9,7 +10,7 @@ import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from 'test/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { TranslateService } from '@ngx-translate/core';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -26,7 +27,7 @@ describe('UnreferencedFeedbackComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: TumAetUiDialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .overrideComponent(UnreferencedFeedbackComponent, {
                 remove: { imports: [TranslateDirective, UnreferencedFeedbackDetailComponent] },
@@ -92,6 +93,17 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].text).toBe(feedback.text);
     });
 
+    it('should update unreferenced feedback by id even when the emitted object is a different reference (e.g. long feedback hydration)', () => {
+        const feedback = { id: 42, text: 'NewFeedback', credits: 3 } as Feedback;
+        comp.unreferencedFeedback = [feedback];
+
+        const hydratedFeedback = { ...feedback, detailText: 'loaded long feedback text' } as Feedback;
+        comp.updateFeedback(hydratedFeedback);
+
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].detailText).toBe('loaded long feedback text');
+    });
+
     it('should delete unreferenced feedback', () => {
         const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];
@@ -115,20 +127,6 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
     });
 
-    it('should convert an accepted feedback suggestion to a marked manual feedback', () => {
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions.set([suggestion]);
-        comp.acceptSuggestion(suggestion);
-        expect(comp.feedbackSuggestions()).toHaveLength(0);
-        expect(comp.unreferencedFeedback).toEqual([
-            {
-                text: 'FeedbackSuggestion:accepted:',
-                detailText: 'test',
-                type: FeedbackType.MANUAL_UNREFERENCED,
-            },
-        ]);
-    });
-
     it('should only replace feedback on drop, not add another one', () => {
         vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {});
         comp.createAssessmentOnDrop(new Event(''));
@@ -147,13 +145,6 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
         // do not propagate the event to the parent component
         expect(createAssessmentOnDropStub).not.toHaveBeenCalled();
-    });
-
-    it('should remove discarded suggestions', () => {
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions.set([suggestion]);
-        comp.discardSuggestion(suggestion);
-        expect(comp.feedbackSuggestions()).toHaveLength(0);
     });
 
     describe('grading instruction selection', () => {
@@ -216,14 +207,14 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
-        it('should group the feedback by criterion, with uncategorized feedback last', () => {
+        it('should group feedback in the instructor criterion order, with uncategorized feedback last', () => {
             comp.applyInstruction(cameraInstruction);
             comp.applyInstruction(documentationInstruction);
             comp.addUnreferencedFeedback();
 
             const groups = comp.feedbackGroups();
-            expect(groups.map((group) => group.title)).toEqual(['Camera', 'Documentation', 'artemisApp.assessment.detail.otherFeedback']);
-            expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
+            expect(groups.map((group) => group.title)).toEqual(['Documentation', 'Camera', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups.map((group) => group.points)).toEqual([4, -2, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
         });

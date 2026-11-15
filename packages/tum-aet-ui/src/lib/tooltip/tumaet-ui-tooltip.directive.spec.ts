@@ -1,0 +1,393 @@
+import { ApplicationRef, Binding, Component, WritableSignal, inputBinding, signal } from '@angular/core';
+import { ComponentFixture, DirectiveFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { TumAetUiTooltipDirective } from './tumaet-ui-tooltip.directive';
+
+/** Applies the tooltip to a <button> with both delays at zero, plus the given bindings. */
+function createTooltip(bindings: Binding[]): DirectiveFixture<TumAetUiTooltipDirective> {
+    return TestBed.createDirective(TumAetUiTooltipDirective, {
+        tagName: 'button',
+        bindings: [inputBinding('showDelayMs', () => 0), inputBinding('hideDelayMs', () => 0), ...bindings],
+    });
+}
+
+describe('TumAetUiTooltipDirective', () => {
+    let fixture: DirectiveFixture<TumAetUiTooltipDirective>;
+    let text: WritableSignal<string | readonly string[]>;
+    let button: HTMLButtonElement;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        text = signal<string | readonly string[]>('Help text');
+        fixture = createTooltip([inputBinding('tumAetUiTooltip', text)]);
+        fixture.detectChanges();
+        button = fixture.nativeElement as HTMLButtonElement;
+        // The last input kind is tracked per document across tests; start each from keyboard input.
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    function bubble(): HTMLElement | null {
+        return document.querySelector('.tumaet-ui-tooltip-bubble');
+    }
+
+    function arrow(): HTMLElement | null {
+        return bubble()?.querySelector('span[aria-hidden="true"]') ?? null;
+    }
+
+    describe('arrow placement', () => {
+        // The overlay is created with withPush, so a bubble near the viewport edge is shoved sideways. An arrow
+        // centred on the bubble then points beside the host instead of at it.
+        //
+        // The geometry goes on the prototype rather than on the two elements: the bubble does not exist until the
+        // tooltip is shown, so spying on it afterwards would leave the measurement inside `show()` reading jsdom's
+        // zero-sized rectangle, and the assertion would depend on a later reposition happening to run.
+        function showWithGeometry(host: DOMRect, bubbleRect: DOMRect): void {
+            const measure = Element.prototype.getBoundingClientRect;
+            vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+                if (this === button) {
+                    return host;
+                }
+                if (this.classList.contains('tumaet-ui-tooltip-bubble')) {
+                    return bubbleRect;
+                }
+                return measure.call(this);
+            });
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+            // The bubble is an overlay, outside the fixture's own view, so the offset reaches its style only once the
+            // application is ticked. Without this the assertion reads an empty style and passes for the wrong reason.
+            TestBed.inject(ApplicationRef).tick();
+        }
+
+        it('points the arrow at the host when the bubble has been pushed sideways', () => {
+            // Host centred on 520; the bubble was pushed left so it spans 110..670, whose middle is 390.
+            showWithGeometry(new DOMRect(490, 100, 60, 30), new DOMRect(110, 40, 560, 60));
+
+            // 520 - 110 = 410 from the bubble's left edge, not the 280 a centred arrow would use.
+            expect(arrow()!.style.left).toBe('410px');
+        });
+
+        it('keeps the arrow clear of the corner when the host sits beyond the bubble', () => {
+            // Host far to the right of a bubble that could not follow it.
+            showWithGeometry(new DOMRect(900, 100, 60, 30), new DOMRect(110, 40, 200, 60));
+
+            expect(arrow()!.style.left).toBe('188px');
+        });
+    });
+
+    it('attaches the tooltip overlay and wires aria-describedby on mouseenter', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeTruthy();
+    });
+
+    it('removes the tooltip and aria-describedby on mouseleave', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+
+    it('stays visible while the pointer moves from the trigger into the tooltip', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        const tooltip = bubble()!;
+
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.spyOn(tooltip, 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 10, 100, 40));
+        document.dispatchEvent(new MouseEvent('pointermove', { clientX: 40, clientY: 30 }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBe(tooltip);
+
+        document.dispatchEvent(new MouseEvent('pointermove', { clientX: 200, clientY: 100 }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('does not postpone hiding as the pointer keeps moving outside the bubble', () => {
+        fixture.destroy();
+        fixture = createTooltip([inputBinding('tumAetUiTooltip', text), inputBinding('hideDelayMs', () => 100)]);
+        fixture.detectChanges();
+        button = fixture.nativeElement as HTMLButtonElement;
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        vi.spyOn(bubble()!, 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 10, 100, 40));
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        for (let i = 0; i < 3; i++) {
+            vi.advanceTimersByTime(30);
+            document.dispatchEvent(new MouseEvent('pointermove', { clientX: 200 + i, clientY: 100 }));
+        }
+        vi.advanceTimersByTime(11);
+        expect(bubble()).toBeNull();
+    });
+
+    it('clears geometric hover when the pointer leaves the document', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        vi.spyOn(bubble()!, 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 10, 100, 40));
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        document.dispatchEvent(new MouseEvent('pointermove', { clientX: 40, clientY: 30 }));
+        document.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('dismisses a focused tooltip when its window loses focus', () => {
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        window.dispatchEvent(new Event('blur'));
+        expect(bubble()).toBeNull();
+    });
+
+    it('dismisses on pointer down without consuming the underlying control action', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        const action = new MouseEvent('pointerdown', { bubbles: true, cancelable: true });
+
+        document.dispatchEvent(action);
+
+        expect(bubble()).toBeNull();
+        expect(action.defaultPrevented).toBe(false);
+    });
+
+    it('hides the tooltip on Escape', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        expect(bubble()).toBeNull();
+    });
+
+    it('does not stack overlays when mouseenter and focusin arrive within the show delay', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(document.querySelectorAll('.tumaet-ui-tooltip-bubble')).toHaveLength(1);
+    });
+
+    it('stays visible when the mouse leaves but keyboard focus is still active', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        button.dispatchEvent(new Event('focusout', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('ignores focus handed back by code after a pointer interaction elsewhere', () => {
+        // e.g. a popover closed by a click returns focus to its trigger; the pointer has already moved on.
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('shows on focus handed back by code after a key press', () => {
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        // e.g. the popover was closed with Escape.
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+    });
+
+    it('hides on mouseleave when the trigger was clicked, since the click focused it', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        button.dispatchEvent(new MouseEvent('mousedown'));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('stays visible when focus leaves but the mouse is still hovering', () => {
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        button.dispatchEvent(new Event('focusout', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('updates the visible tooltip text when the content input changes while shown', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+        expect(bubble()?.textContent).toContain('Help text');
+        text.set('Updated help text');
+        appRef.tick();
+        appRef.tick();
+        expect(bubble()?.textContent).toContain('Updated help text');
+    });
+
+    it('hides the tooltip when the content is cleared to empty while shown', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+        expect(bubble()).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeTruthy();
+        text.set('');
+        appRef.tick();
+        expect(bubble()).toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+
+    it('renders several reasons as a list and clamps wider than the one-line form', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        text.set(['First reason', 'Second reason']);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+
+        const items = Array.from(bubble()!.querySelectorAll('li')).map((item) => item.textContent?.trim());
+        expect(items).toEqual(['First reason', 'Second reason']);
+        expect(bubble()!.className).toContain('max-w-100');
+    });
+
+    it('stays hidden when the content is an empty list', () => {
+        text.set([]);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+
+        expect(bubble()).toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+
+    it('preserves a pre-existing aria-describedby token and restores it on hide', () => {
+        button.setAttribute('aria-describedby', 'external-desc');
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(button.getAttribute('aria-describedby')).toContain('external-desc');
+        expect(button.getAttribute('aria-describedby')?.split(' ').length).toBe(2);
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+});
+
+describe('TumAetUiTooltipDirective with tumAetUiTooltipDescribesHost false', () => {
+    let button: HTMLButtonElement;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        const reasons = ['First reason', 'Second reason'];
+        const fixture = createTooltip([inputBinding('tumAetUiTooltip', () => reasons), inputBinding('tumAetUiTooltipDescribesHost', () => false)]);
+        button = fixture.nativeElement as HTMLButtonElement;
+        // The directive reads the host's aria-describedby only while showing and hiding, so setting it before the
+        // first change detection is equivalent to writing it in a template.
+        button.setAttribute('aria-describedby', 'external-desc');
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('shows the tooltip without adding itself to aria-describedby', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+
+        expect(document.querySelector('.tumaet-ui-tooltip-bubble')).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+
+    it('leaves the external aria-describedby in place when it hides', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+});
+
+describe('TumAetUiTooltipDirective when tumAetUiTooltipDescribesHost changes while open', () => {
+    let fixture: DirectiveFixture<TumAetUiTooltipDirective>;
+    let describes: WritableSignal<boolean>;
+    let button: HTMLButtonElement;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        describes = signal(true);
+        fixture = createTooltip([inputBinding('tumAetUiTooltip', () => 'Help text'), inputBinding('tumAetUiTooltipDescribesHost', describes)]);
+        fixture.detectChanges();
+        button = fixture.nativeElement as HTMLButtonElement;
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('takes its own id back off the host when it hides', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(button.getAttribute('aria-describedby')).toBeTruthy();
+
+        describes.set(false);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+
+        // The bubble is disposed, so a surviving token would point at nothing.
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+});
+
+@Component({
+    template: `<ng-template #help
+            ><strong>Grading guidance</strong><span>{{ score() }} points</span></ng-template
+        >
+        <button [tumAetUiTooltip]="help" [showDelayMs]="0">Help</button>`,
+    imports: [TumAetUiTooltipDirective],
+})
+class TemplateTooltipHostComponent {
+    readonly score = signal(5);
+}
+
+describe('Template tooltip content', () => {
+    it('renders and updates a consumer template while preserving its bindings', () => {
+        vi.useFakeTimers();
+        let fixture: ComponentFixture<TemplateTooltipHostComponent> | undefined;
+        try {
+            fixture = TestBed.createComponent(TemplateTooltipHostComponent);
+            fixture.detectChanges();
+            const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+            TestBed.inject(ApplicationRef).tick();
+            expect(document.querySelector('[role="tooltip"] strong')?.textContent).toBe('Grading guidance');
+            fixture.componentInstance.score.set(8);
+            TestBed.inject(ApplicationRef).tick();
+            expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('8 points');
+        } finally {
+            fixture?.destroy();
+            vi.useRealTimers();
+        }
+    });
+});

@@ -108,8 +108,8 @@ describe('Team Submission Sync Component', () => {
         expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
         expect(textSubmissionWithParticipation?.participation?.submissions).toHaveLength(0);
         expect(websocketSendSpy).toHaveBeenCalledTimes(2);
-        expect(websocketSendSpy).toHaveBeenNthCalledWith(1, expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
-        expect(websocketSendSpy.mock.calls[1][0]).toBe(expectedWebsocketTopic + '/patch');
+        expect(websocketSendSpy).toHaveBeenNthCalledWith(1, '/app/participations/3/team/text-submissions/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy.mock.calls[1][0]).toBe('/app/participations/3/team/text-submissions/patch');
         expect(websocketSendSpy.mock.calls[1][1]).toBeInstanceOf(SubmissionPatch);
     });
 
@@ -138,7 +138,7 @@ describe('Team Submission Sync Component', () => {
         fixture.componentRef.setInput('submissionPatchObservable', mockEmitter);
         component.ngOnInit();
 
-        const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
+        const expectedTopic = '/app/participations/3/team/text-submissions/patch';
         const patch: SubmissionPatch = { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) };
         mockEmitter.next(patch);
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
@@ -146,7 +146,7 @@ describe('Team Submission Sync Component', () => {
 
     it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', () => {
         const mock = websocketService as unknown as MockWebsocketService;
-        const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
+        const expectedTopic = '/app/participations/3/team/text-submissions/patch';
         const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
         const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
@@ -189,7 +189,7 @@ describe('Team Submission Sync Component', () => {
         // modeling sends a second patch carrying the initial awareness sync, on the first connect and on every reconnect.
         const mock = websocketService as unknown as MockWebsocketService;
         fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
-        const expectedTopic = '/topic/participations/3/team/modeling-submissions/patch';
+        const expectedTopic = '/app/participations/3/team/modeling-submissions/patch';
         const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
         const generateInitialAwarenessSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
         fixture.componentRef.setInput('submissionObservable', undefined);

@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { onError } from 'app/foundation/util/global.utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -30,7 +30,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
  */
 @Component({
     selector: 'jhi-build-job-statistics',
-    imports: [TranslateDirective, TumUiDoughnutChartComponent, HelpIconComponent, SelectButtonModule, FormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiDoughnutChartComponent, HelpIconComponent, TumAetUiSelectButtonComponent, FormsModule, ArtemisTranslatePipe],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -90,7 +90,7 @@ export class BuildJobStatisticsComponent implements OnInit {
 
     /** Colors of the pie chart segments: green (success), red (failed), yellow (cancelled), blue (timeout), grey (missing) */
     readonly chartData = computed(() => singleSeriesChart(this.pieChartData(), [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.GREY]));
-    readonly chartConfig: TumUiDoughnutChartConfig = { arcWidth: 0.4, legend: false };
+    readonly chartConfig: TumAetUiDoughnutChartConfig = { arcWidth: 0.4, legend: false };
 
     /**
      * Determines the context and fetches appropriate statistics.

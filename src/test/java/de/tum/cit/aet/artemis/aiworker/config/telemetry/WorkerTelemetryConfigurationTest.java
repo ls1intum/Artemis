@@ -1,0 +1,111 @@
+package de.tum.cit.aet.artemis.aiworker.config.telemetry;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.observation.ChatModelObservationContext;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
+import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
+import org.springframework.boot.micrometer.tracing.autoconfigure.MicrometerTracingAutoConfiguration;
+import org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.OpenTelemetryTracingAutoConfiguration;
+import org.springframework.boot.opentelemetry.autoconfigure.OpenTelemetrySdkAutoConfiguration;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+
+import de.tum.cit.aet.artemis.core.config.ChatModelCompletionContentObservationFilter;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.sdk.common.CompletableResultCode;
+import io.opentelemetry.sdk.trace.SpanProcessor;
+import io.opentelemetry.sdk.trace.data.SpanData;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
+
+class WorkerTelemetryConfigurationTest {
+
+    @ParameterizedTest
+    @MethodSource("telemetryProfiles")
+    void bootExportsParentedChatSpansAndHonorsTheContentOptIn(String profiles, boolean langfuse, Boolean captureContent) {
+        var spans = new ArrayList<SpanData>();
+        SpanExporter exporter = new SpanExporter() {
+
+            @Override
+            public CompletableResultCode export(java.util.Collection<SpanData> batch) {
+                spans.addAll(batch);
+                return CompletableResultCode.ofSuccess();
+            }
+
+            @Override
+            public CompletableResultCode flush() {
+                return CompletableResultCode.ofSuccess();
+            }
+
+            @Override
+            public CompletableResultCode shutdown() {
+                return CompletableResultCode.ofSuccess();
+            }
+        };
+        boolean worker = List.of(profiles.split(",")).contains("aiworker");
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.isEmpty() ? new String[0] : profiles.split(",")))
+                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, MicrometerTracingAutoConfiguration.class,
+                        OpenTelemetryTracingAutoConfiguration.class, OpenTelemetrySdkAutoConfiguration.class))
+                .withUserConfiguration(WorkerTelemetryConfiguration.class, ChatModelCompletionContentObservationFilter.class)
+                .withBean(SpanProcessor.class, () -> SimpleSpanProcessor.create(exporter))
+                .withPropertyValues("management.tracing.sampling.probability=1.0", "management.langfuse.enabled=" + langfuse)
+                .withPropertyValues(captureContent == null ? new String[0] : new String[] { "artemis.telemetry.gen-ai.capture-content=" + captureContent }).run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBeansOfType(ChatModelCompletionContentObservationFilter.class)).hasSize(!worker && langfuse ? 1 : 0);
+                    assertThat(context.getBeansOfType(ChatModelContentObservationFilter.class)).hasSize(worker ? 1 : 0);
+                    var registry = context.getBean(ObservationRegistry.class);
+                    var chat = ChatModelObservationContext.builder().prompt(new Prompt("private teaching brief")).provider("openai").build();
+                    chat.setResponse(new ChatResponse(List.of(new Generation(new AssistantMessage("private generated solution")))));
+                    Observation.createNotStarted("hyperion.generation", registry).highCardinalityKeyValue("artemis.hyperion.job.id", "job")
+                            .observe(() -> Observation.createNotStarted("gen_ai.client.operation", () -> chat, registry).observe(() -> {
+                            }));
+
+                    assertThat(spans).hasSize(2);
+                    SpanData child = spans.getFirst();
+                    SpanData parent = spans.getLast();
+                    assertThat(child.getParentSpanId()).isEqualTo(parent.getSpanId());
+                    assertThat(child.getTraceId()).isEqualTo(parent.getTraceId());
+                    assertThat(parent.getAttributes().get(AttributeKey.stringKey("artemis.hyperion.job.id"))).isEqualTo("job");
+                    assertThat(child.getAttributes().get(AttributeKey.stringKey("ai.span"))).isEqualTo(worker || langfuse ? "true" : null);
+                    String content = child.getAttributes().get(AttributeKey.stringKey("gen_ai.input.messages"));
+                    if (worker && Boolean.TRUE.equals(captureContent)) {
+                        assertThat(content).contains("private teaching brief");
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.output.messages"))).contains("private generated solution");
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("artemis.gen_ai.content.complete"))).isEqualTo("true");
+                    }
+                    else if (!worker && langfuse) {
+                        assertThat(content).isNull();
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.prompt"))).contains("private teaching brief");
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.completion"))).contains("private generated solution");
+                    }
+                    else {
+                        assertThat(content).isNull();
+                        assertThat(spans).allSatisfy(span -> {
+                            assertThat(span.getAttributes().get(AttributeKey.stringKey("gen_ai.prompt"))).isNull();
+                            assertThat(span.getAttributes().get(AttributeKey.stringKey("gen_ai.completion"))).isNull();
+                            assertThat(span.getAttributes().asMap().values())
+                                    .noneMatch(value -> value.toString().contains("private teaching brief") || value.toString().contains("private generated solution"));
+                        });
+                    }
+                });
+    }
+
+    private static Stream<Arguments> telemetryProfiles() {
+        return Stream.of("", "core", "prod,core", "aiworker", "prod,aiworker", "core,aiworker", "buildagent")
+                .flatMap(profiles -> Stream.of(false, true).flatMap(langfuse -> Stream.of(null, false, true).map(capture -> Arguments.of(profiles, langfuse, capture))));
+    }
+}

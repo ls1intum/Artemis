@@ -237,42 +237,16 @@
         }
 
         .question-action-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
             width: 2.75rem;
             height: 2.75rem;
             padding: 0;
             font-size: 1.35rem;
-            border: 1px solid var(--bs-border-color);
-            border-radius: 0.5rem;
-            background: transparent;
-            color: var(--bs-body-color);
-            cursor: pointer;
-            transition: all 0.2s ease;
             flex-shrink: 0;
 
             fa-icon {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-            }
-
-            &:hover {
-                background: var(--bs-tertiary-bg);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            }
-
-            &.question-action-btn--delete:hover {
-                background: rgba(var(--bs-danger-rgb), 0.15);
-                border-color: var(--bs-danger);
-                color: var(--bs-danger);
-            }
-
-            &.question-action-btn--refine:hover {
-                background: color-mix(in srgb, var(--blue) 15%, transparent);
-                border-color: var(--blue);
-                color: var(--blue);
             }
         }
 

@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnInit, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable } from 'rxjs';
@@ -14,7 +15,7 @@ import { DialogModule } from 'primeng/dialog';
 @Component({
     selector: 'jhi-data-export-confirmation-dialog',
     templateUrl: './data-export-confirmation-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, TypeAheadUserSearchFieldComponent, ConfirmEntityNameComponent, FaIconComponent, DialogModule],
+    imports: [TumAetUiButtonDirective, FormsModule, TranslateDirective, TypeAheadUserSearchFieldComponent, ConfirmEntityNameComponent, FaIconComponent, DialogModule],
 })
 export class DataExportConfirmationDialogComponent implements OnInit {
     private readonly alertService = inject(AlertService);

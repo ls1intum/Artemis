@@ -8,7 +8,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
-import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -44,7 +44,7 @@ describe('OrganizationSelectorComponent', () => {
     it('should load organizations via paginated endpoint', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
-        component.loadOrganizations({} as TumUiTableQueryEvent);
+        component.loadOrganizations({} as TumAetUiTableQueryEvent);
 
         expect(component).toBeTruthy();
         expect(component.isLoading()).toBe(false);
@@ -55,7 +55,7 @@ describe('OrganizationSelectorComponent', () => {
     it('should call getOrganizations without withCounts (uses default false)', () => {
         const spy = vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-        component.loadOrganizations({} as TumUiTableQueryEvent);
+        component.loadOrganizations({} as TumAetUiTableQueryEvent);
 
         // No second argument means the service default (false) is used — no counts requested
         expect(spy).toHaveBeenCalledOnce();
@@ -71,7 +71,7 @@ describe('OrganizationSelectorComponent', () => {
     it('should handle error when loading organizations', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
 
-        component.loadOrganizations({} as TumUiTableQueryEvent);
+        component.loadOrganizations({} as TumAetUiTableQueryEvent);
 
         expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(0);

@@ -159,6 +159,11 @@ describe('LectureUnitService', () => {
         httpMock.expectOne({ method: 'DELETE', url: 'api/lecture/lectures/5/lecture-units/37' });
     });
 
+    it('should delete a lecture unit with its video uploaded to TUM.Live', async () => {
+        service.delete(37, 5, true).subscribe();
+        httpMock.expectOne({ method: 'DELETE', url: 'api/lecture/lectures/5/lecture-units/37?deleteTumLiveRecordings=true' });
+    });
+
     it('should call setCompletion endpoint', async () => {
         service.setCompletion(42, 5, true).subscribe();
         httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=true' });
@@ -190,17 +195,6 @@ describe('LectureUnitService', () => {
         const result = service.convertLectureUnitDatesFromClient(textUnit);
         expect(result).toBeDefined();
         expect(result.id).toBe(23);
-    });
-
-    it('should convert lecture unit array dates from client', () => {
-        const units = [attachmentVideoUnit, textUnit, exerciseUnit];
-        const result = service.convertLectureUnitArrayDatesFromClient(units);
-        expect(result).toHaveLength(3);
-    });
-
-    it('should handle empty array when converting dates from client', () => {
-        const result = service.convertLectureUnitArrayDatesFromClient([]);
-        expect(result).toHaveLength(0);
     });
 
     it('should convert lecture unit response dates from server for attachment video unit', () => {

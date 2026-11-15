@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,6 +28,7 @@ import {
     faQuestion,
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('GlobalSearchNavigationViewComponent', () => {
     let component: GlobalSearchNavigationViewComponent;
@@ -102,6 +104,22 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(preventDefaultSpy).toHaveBeenCalled();
             });
 
+            it('leaves Enter on a focused button to the button', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('selectedIndex', 0);
+                fixture.detectChanges();
+                const button = document.createElement('button');
+                document.body.appendChild(button);
+                const event = new KeyboardEvent('keydown', { key: 'Enter' });
+                Object.defineProperty(event, 'target', { value: button });
+
+                component.handleKeydown(event);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                button.remove();
+            });
+
             it('should navigate to the result at the selected index on Enter', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
@@ -112,6 +130,56 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component.handleKeydown(event);
 
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'exercises', '123']);
+            });
+        });
+
+        describe('Slides and videos row', () => {
+            const hits = [
+                { id: 'a', type: 'lecture_content', metadata: { lectureName: 'Graphs' } },
+                { id: 'b', type: 'lecture_content', metadata: { lectureName: 'Sorting' } },
+                { id: 'c', type: 'lecture_content', metadata: { lectureName: 'Graphs' } },
+            ] as GlobalSearchResult[];
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('contentPreview', hits);
+                fixture.detectChanges();
+            });
+
+            it('shows the row as the first selectable item and names the distinct lectures', () => {
+                expect(fixture.debugElement.query(By.css('[data-testid="global-search-content-hits-row"]'))).not.toBeNull();
+                expect(component.itemCount()).toBe(2);
+                expect(component['contentLectureNames']()).toBe('Graphs, Sorting');
+            });
+
+            it('switches to the slides-and-videos search on Enter when the row is selected', () => {
+                const emitted = vi.fn();
+                component.showContentHits.subscribe(emitted);
+                fixture.componentRef.setInput('selectedIndex', 0);
+                fixture.detectChanges();
+
+                component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+                expect(emitted).toHaveBeenCalledOnce();
+                expect(router.navigate).not.toHaveBeenCalled();
+            });
+
+            it('opens the first result one position after the row', () => {
+                fixture.componentRef.setInput('selectedIndex', 1);
+                fixture.detectChanges();
+
+                component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'exercises', '123']);
+            });
+
+            it('hides the row while the slides-and-videos search is active', () => {
+                fixture.componentRef.setInput('contentSearchActive', true);
+                fixture.detectChanges();
+
+                expect(fixture.debugElement.query(By.css('[data-testid="global-search-content-hits-row"]'))).toBeNull();
+                expect(component.itemCount()).toBe(1);
             });
         });
 
@@ -136,6 +204,27 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('navigateToResult', () => {
+            it('navigates to a course without lecture deep-link state', () => {
+                component['navigateToResult']({ type: 'course', id: '10', metadata: { courseId: 10 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10]);
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
+            it('preserves the discussion target when navigating to a post', () => {
+                component['navigateToResult']({ type: 'post', id: '5', metadata: { courseId: 10, channelId: 20 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 20, focusPostId: '5' } });
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
+            it('preserves the discussion target when navigating to a reply', () => {
+                component['navigateToResult']({ type: 'answer_post', id: '6', metadata: { courseId: 10, channelId: 20, postId: 5 } } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 20, messageId: 5, focusReplyId: '6' } });
+                expect(overlay.close).toHaveBeenCalledOnce();
+            });
+
             it('should close overlay if courseId is missing', () => {
                 component['navigateToResult']({ type: 'exercise', id: '1' } as GlobalSearchResult);
                 expect(overlay.close).toHaveBeenCalled();
@@ -194,9 +283,21 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', '2']);
             });
 
-            it('should navigate to lecture unit', () => {
+            it('should open the lecture at the lecture unit', () => {
                 component['navigateToResult']({ type: 'lecture_unit', id: '3', metadata: { courseId: 10, lectureId: 20 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20], { queryParams: { unit: '3' }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            });
+
+            it('should navigate to lecture content with a marked deep-link navigation', () => {
+                component['navigateToResult']({
+                    type: 'lecture_content',
+                    metadata: { link: '/courses/10/lectures/20', queryParams: { unit: 3, page: 4 } },
+                } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses/10/lectures/20'], {
+                    queryParams: { unit: 3, page: 4 },
+                    state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+                });
             });
 
             it('should navigate to student exam view when user is a student', () => {
@@ -222,14 +323,31 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', '4', 'assessment-dashboard']);
             });
 
-            it('should navigate to faq', () => {
+            it('should open the faq page at the faq', () => {
+                component['navigateToResult']({ type: 'faq', id: '8', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq'], { queryParams: { faqId: '8' } });
+            });
+
+            it('should open the faq page when the faq id is missing', () => {
                 component['navigateToResult']({ type: 'faq', metadata: { courseId: 10 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq']);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq'], undefined);
             });
 
             it('should navigate to channel', () => {
                 component['navigateToResult']({ type: 'channel', id: '5', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: '5' } });
+            });
+
+            it('should navigate to a post in its channel', () => {
+                component['navigateToResult']({ type: 'post', id: '6', metadata: { courseId: 10, channelId: 5 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: 5, focusPostId: '6' } });
+            });
+
+            it('should navigate to an answer post in its channel', () => {
+                component['navigateToResult']({ type: 'answer_post', id: '7', metadata: { courseId: 10, channelId: 5, postId: 6 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], {
+                    queryParams: { conversationId: 5, messageId: 6, focusReplyId: '7' },
+                });
             });
         });
 
@@ -248,6 +366,28 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 fixture.detectChanges();
                 const items = fixture.nativeElement.querySelectorAll('jhi-global-search-result-item');
                 expect(items.length).toBe(1);
+            });
+
+            it('should not add top margin to the results list when the iris card is not occupying space', () => {
+                // The mocked iris-answer child's default occupiesSpace() reports nothing to show.
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
+                fixture.detectChanges();
+                const list = fixture.nativeElement.querySelector('.search-results-list');
+                expect(list.classList).not.toContain('mt-3');
+            });
+
+            it('should add top margin to the results list only while the iris card actually occupies space', () => {
+                // A margin conditioned on `irisEnabled` alone would stay reserved even after a dismissed
+                // "nothing relevant" card has collapsed to nothing, leaving exactly the gap collapsing
+                // the card was meant to give back.
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
+                const irisChild = fixture.debugElement.query(By.directive(GlobalSearchIrisAnswerComponent)).componentInstance;
+                (irisChild as unknown as { occupiesSpace: () => boolean }).occupiesSpace = () => true;
+                fixture.detectChanges();
+                const list = fixture.nativeElement.querySelector('.search-results-list');
+                expect(list.classList).toContain('mt-3');
             });
 
             it('should render no results state', () => {

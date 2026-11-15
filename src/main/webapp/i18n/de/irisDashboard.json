@@ -5,6 +5,7 @@
             "loading": "Wird geladen...",
             "error": "Dashboard-Daten konnten nicht geladen werden. Bitte erneut versuchen.",
             "timeSpanSelectorAriaLabel": "Im Dashboard angezeigter Zeitraum",
+            "aiSelectionSelectorAriaLabel": "KI-Auswahl der im Dashboard angezeigten Benutzer",
             "refresh": "Aktualisieren",
             "totalSessions": "Sitzungen gesamt",
             "activeSessions": "Aktive Sitzungen",
@@ -56,6 +57,12 @@
                 "week": "Woche",
                 "month": "Monat",
                 "quarter": "Quartal"
+            },
+            "aiSelection": {
+                "all": "Alle Benutzer",
+                "cloud": "Nur Cloud-KI",
+                "local": "Nur lokale KI",
+                "hint": "Gezählt werden nur Benutzer mit dieser aktuellen KI-Auswahl. Artemis speichert nicht, welche KI für eine Nachricht genutzt wurde. Wer die Auswahl geändert hat, wird daher für alle Sitzungen, Nachrichten und Token-Kosten unter der aktuellen Auswahl gezählt."
             }
         }
     }

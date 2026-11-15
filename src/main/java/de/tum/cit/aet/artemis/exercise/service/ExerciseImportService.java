@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
@@ -18,10 +19,15 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
+import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseImportSettingsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
@@ -35,14 +41,43 @@ public abstract class ExerciseImportService {
 
     private final FeedbackService feedbackService;
 
+    protected final ExerciseConfigurationService exerciseConfigurationService;
+
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
     protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FeedbackService feedbackService) {
+            FeedbackService feedbackService, ExerciseConfigurationService exerciseConfigurationService) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
+        this.exerciseConfigurationService = exerciseConfigurationService;
+    }
+
+    /**
+     * Prepares import-owned criteria and competency references, then resolves the destination parents in request order.
+     * Course/group exclusivity and authorization remain the caller's subsequent checks.
+     *
+     * @param dto              submitted import references
+     * @param exercise         transient import target
+     * @param courseRepository course lookup
+     * @param exerciseGroupApi optional exam group lookup
+     * @param entityName       name used by competency input errors
+     */
+    public static void applyImportReferences(ExerciseImportSettingsDTO dto, Exercise exercise, CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi,
+            String entityName) {
+        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
+            exercise.setGradingCriteria(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
+        }
+        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
+            exercise.setCompetencyLinks(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, entityName));
+        }
+        if (dto.courseId() != null) {
+            exercise.setCourse(courseRepository.findByIdElseThrow(dto.courseId()));
+        }
+        if (dto.exerciseGroupId() != null) {
+            exercise.setExerciseGroup(exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId()));
+        }
     }
 
     /**
@@ -124,10 +159,17 @@ public abstract class ExerciseImportService {
         // edit form or a bulk skeleton), never from the foreign source. Rebuild them so they point at the new exercise.
         Set<CompetencyExerciseLink> copiedLinks = new HashSet<>();
         for (CompetencyExerciseLink link : newExercise.getCompetencyLinks()) {
-            copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
+            CompetencyExerciseLink copiedLink = new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight());
+            copiedLink.setGeneratedByAi(link.isGeneratedByAi());
+            copiedLinks.add(copiedLink);
         }
         newExercise.setCompetencyLinks(copiedLinks);
 
+        // The source comes straight from a query, which does not carry the configuration: read it explicitly, and only
+        // here, because only an exercise that brought none of its own needs it.
+        if (!hasPlagiarismDetectionConfig(newExercise)) {
+            exerciseConfigurationService.attachPlagiarismDetectionConfig(sourceExercise);
+        }
         Exercise plagiarismSource = hasPlagiarismDetectionConfig(newExercise) ? newExercise : sourceExercise;
         if (hasPlagiarismDetectionConfig(plagiarismSource)) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(plagiarismSource.getPlagiarismDetectionConfig()));
@@ -145,10 +187,15 @@ public abstract class ExerciseImportService {
                 newExercise.setCategories(new HashSet<>(categoriesSource.getCategories()));
             }
             if (newExercise.getMode() == ExerciseMode.TEAM) {
+                // The source comes straight from a query, which does not carry the configuration: read it explicitly, and
+                // only here, because only a team exercise that brought none of its own needs it.
+                if (!hasTeamAssignmentConfig(newExercise)) {
+                    exerciseConfigurationService.attachTeamAssignmentConfig(sourceExercise);
+                }
                 Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
                 if (hasTeamAssignmentConfig(teamConfigSource)) {
                     // Always a fresh copy: a caller-supplied configuration may still carry the source's id.
-                    newExercise.setTeamAssignmentConfig(teamConfigSource.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+                    newExercise.setTeamAssignmentConfig(teamConfigSource.getStoredTeamAssignmentConfig().copyTeamAssignmentConfig());
                 }
             }
             else {
@@ -176,11 +223,23 @@ public abstract class ExerciseImportService {
     }
 
     private static boolean hasPlagiarismDetectionConfig(Exercise exercise) {
-        return Hibernate.isPropertyInitialized(exercise, "plagiarismDetectionConfig") && exercise.getPlagiarismDetectionConfig() != null;
+        return exercise.getPlagiarismDetectionConfig() != null;
     }
 
     private static boolean hasTeamAssignmentConfig(Exercise exercise) {
-        return Hibernate.isPropertyInitialized(exercise, "teamAssignmentConfig") && exercise.getTeamAssignmentConfig() != null;
+        return exercise.getStoredTeamAssignmentConfig() != null;
+    }
+
+    /**
+     * Gives the saved copy its permanent configuration rows and applies the settings {@link #copyExerciseBasis} left on
+     * {@code newExercise}: the rows hold the key to their exercise, so they can only be written once it is saved. Call it for
+     * every exercise this service saved as a new one.
+     *
+     * @param persistedExercise the saved exercise that the caller goes on to return
+     * @param newExercise       the exercise {@link #copyExerciseBasis} prepared, which carries the settings to apply
+     */
+    protected void initializeConfigurations(Exercise persistedExercise, Exercise newExercise) {
+        exerciseConfigurationService.initialize(persistedExercise, newExercise.getStoredTeamAssignmentConfig(), newExercise.getPlagiarismDetectionConfig());
     }
 
     /**

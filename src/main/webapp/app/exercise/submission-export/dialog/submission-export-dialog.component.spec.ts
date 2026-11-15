@@ -8,8 +8,9 @@ import { SubmissionExportOptions, SubmissionExportService } from 'app/exercise/s
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as DownloadUtil from 'app/foundation/util/download.util';
-import { Subject, of } from 'rxjs';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject, of, throwError } from 'rxjs';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import dayjs from 'dayjs/esm';
 
 describe('Submission Export Dialog Component', () => {
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;
@@ -46,7 +47,7 @@ describe('Submission Export Dialog Component', () => {
                 { provide: SubmissionExportService, useValue: submissionExportService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AlertService, useValue: alertService },
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy, onClose: new Subject<unknown>() } as unknown as DynamicDialogRef },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy, dismiss: dialogRefCloseSpy, onClose: new Subject<unknown>() } as unknown as TumAetUiDialogRef },
             ],
         })
             .overrideTemplate(SubmissionExportDialogComponent, '')
@@ -65,7 +66,7 @@ describe('Submission Export Dialog Component', () => {
     });
 
     it('should initialize', () => {
-        const findSpy = vi.spyOn(exerciseService, 'find');
+        const findSpy = vi.spyOn(exerciseService, 'findForStaff');
         component.ngOnInit();
 
         expect(component.isLoading()).toBe(false);
@@ -74,6 +75,16 @@ describe('Submission Export Dialog Component', () => {
         expect(component.exercise()).toEqual({ id: exerciseId } as Exercise);
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(exerciseId);
+    });
+
+    it('should select exam management before loading the export exercise', () => {
+        fixture.componentRef.setInput('examExercise', true);
+        const exam = vi.spyOn(exerciseService, 'findForExamManagement');
+        const course = vi.spyOn(exerciseService, 'findForStaff');
+        component.ngOnInit();
+        expect(exam).toHaveBeenCalledExactlyOnceWith(exerciseId);
+        expect(course).not.toHaveBeenCalled();
+        expect(component.exercise()?.id).toBe(exerciseId);
     });
 
     it('should handle export response', () => {
@@ -90,6 +101,29 @@ describe('Submission Export Dialog Component', () => {
         expect(component.exportInProgress()).toBe(false);
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(response);
+    });
+
+    describe('late submissions date', () => {
+        it('should take over the date of the picker and map no date to null', () => {
+            const date = dayjs('2030-06-01T12:00:00');
+
+            component.onFilterLateSubmissionsDateChange(date);
+            expect(component.submissionExportOptions().filterLateSubmissionsDate).toBe(date);
+
+            component.onFilterLateSubmissionsDateChange(undefined);
+            expect(component.submissionExportOptions().filterLateSubmissionsDate).toBeNull();
+        });
+
+        it('should only block the export for text that is not a date while the late submissions filter is on', () => {
+            component.isFilterDateTextValid.set(false);
+            expect(component.hasInvalidFilterDate()).toBe(false);
+
+            component.filterLateSubmissions.set(true);
+            expect(component.hasInvalidFilterDate()).toBe(true);
+
+            component.isFilterDateTextValid.set(true);
+            expect(component.hasInvalidFilterDate()).toBe(false);
+        });
     });
 
     it('should clear dialog', () => {
@@ -146,5 +180,22 @@ describe('Submission Export Dialog Component', () => {
             expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, invalidExerciseType, submissionExportOptions);
             expect(handleExportResponseMock).not.toHaveBeenCalled();
         });
+    });
+    it('closes a failed exercise load and clears the loading state', () => {
+        const error = new Error('Exercise unavailable');
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(throwError(() => error));
+        component.ngOnInit();
+        expect(alertService.error).toHaveBeenCalledExactlyOnceWith(error);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith('cancel');
+        expect(component.isLoading()).toBe(false);
+        expect(component.exercise()).toBeUndefined();
+    });
+
+    it('allows another export after the export request fails', () => {
+        vi.spyOn(submissionExportService, 'exportSubmissions').mockReturnValue(throwError(() => new Error('Export failed')));
+        component.exportSubmissions(exerciseId);
+        expect(component.exportInProgress()).toBe(false);
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        expect(alertService.success).not.toHaveBeenCalled();
     });
 });

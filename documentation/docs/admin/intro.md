@@ -2,6 +2,7 @@
 id: intro
 title: Welcome to the Administrator Guide
 sidebar_label: Introduction
+last_reviewed: 2026-11-03
 ---
 
 Welcome to the Artemis **Administrator Guide**, designed for system administrators who deploy and manage Artemis instances.
@@ -13,6 +14,7 @@ This documentation covers:
 - Hyperion AI-assisted exercise authoring setup
 - Managing SSH access and network routing
 - Monitoring, scaling, and integrating external services
+- [Agent Access](./agent-access.mdx), which lets instructors give coding agents limited access
 
 Begin with the **[Security Configuration](./production-setup/security.mdx)** section to ensure your deployment follows secure setup practices.
 

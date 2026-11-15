@@ -17,13 +17,17 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * Tests what the git path records, and above all that it cannot break the git operation it measures.
@@ -35,16 +39,19 @@ class LocalVCUsageTrackingServiceTest {
 
     private FeatureUsageCollector collector;
 
-    private LocalVCServletService servletService;
+    private LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
+
+    private LocalVCRepositoryResolverService repositoryResolver;
 
     private LocalVCUsageTrackingService service;
 
     @BeforeEach
     void init() {
         collector = mock(FeatureUsageCollector.class);
-        servletService = mock(LocalVCServletService.class);
+        buildAgentAuthenticationService = mock(LocalVCBuildAgentAuthenticationService.class);
+        repositoryResolver = mock(LocalVCRepositoryResolverService.class);
         when(collector.isEnabled()).thenReturn(true);
-        service = new LocalVCUsageTrackingService(Optional.of(collector), servletService);
+        service = new LocalVCUsageTrackingService(Optional.of(collector), buildAgentAuthenticationService, repositoryResolver);
     }
 
     @Test
@@ -53,7 +60,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordPush(postRequest(), 12, false);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("push/tests"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("push/tests"), eq(UserFeature.PROGRAMMING_REPOSITORY_EDITING), eq(FeatureInteraction.ACTION),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     /**
@@ -67,7 +75,26 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, false);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(UserFeature.PROGRAMMING_LOCAL_IDE), eq(FeatureInteraction.VIEW),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
+    }
+
+    /**
+     * Every build clones the assignment and the test repository. Counted like a person's clone, those would make the local
+     * IDE and repository editing features look used on every instance that runs builds.
+     */
+    @Test
+    void shouldRecordACloneForABuildAsASystemCallOfTheBuild() {
+        givenRepositoryPath("/git/COURSE1EX1/course1ex1-ge12abc.git");
+        MockHttpServletRequest request = postRequest();
+        when(buildAgentAuthenticationService.isBuildAgentClone(request)).thenReturn(true);
+
+        service.recordFetch(request, 5, false);
+
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("build-agent-fetch/assignment"), eq(UserFeature.PROGRAMMING_RESULTS), eq(FeatureInteraction.SYSTEM),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), eq("fetch/assignment"), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
     }
 
     @Test
@@ -76,7 +103,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, true);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(UserFeature.PROGRAMMING_LOCAL_IDE), eq(FeatureInteraction.VIEW),
+                eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     /**
@@ -89,16 +117,18 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(handshake, 3, false);
 
-        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(Role.class), anyBoolean(), anyLong());
+        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
     }
 
     @Test
     void shouldReportAnUnparsableUriAsOneBoundedUnknownFeature() {
-        when(servletService.parseRepositoryUri(any())).thenThrow(new IllegalArgumentException("not a repository path"));
+        when(repositoryResolver.parseRepositoryUri(any(HttpServletRequest.class))).thenThrow(new IllegalArgumentException("not a repository path"));
 
         service.recordFetch(postRequest(), 5, false);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/unknown"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/unknown"), eq(UserFeature.PROGRAMMING_LOCAL_IDE), eq(FeatureInteraction.VIEW),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     /**
@@ -118,7 +148,7 @@ class LocalVCUsageTrackingServiceTest {
     @Test
     void shouldNotLetAFailingRecordingBreakTheGitOperation() {
         givenRepositoryPath("/git/COURSE1EX1/course1ex1-ge12abc.git");
-        doThrow(new IllegalStateException("boom")).when(collector).recordUsage(any(), anyString(), anyString(), any(), anyBoolean(), anyLong());
+        doThrow(new IllegalStateException("boom")).when(collector).recordUsage(any(), anyString(), anyString(), any(), any(), any(), anyBoolean(), anyLong());
 
         assertThatCode(() -> service.recordFetch(postRequest(), 5, false)).doesNotThrowAnyException();
     }
@@ -129,19 +159,20 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, false);
 
-        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(Role.class), anyBoolean(), anyLong());
+        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
     }
 
     @Test
     void shouldRecordNothingWhenThereIsNoCollectorAtAll() {
-        var withoutCollector = new LocalVCUsageTrackingService(Optional.empty(), servletService);
+        var withoutCollector = new LocalVCUsageTrackingService(Optional.empty(), buildAgentAuthenticationService, repositoryResolver);
 
         assertThatCode(() -> withoutCollector.recordFetch(postRequest(), 5, false)).doesNotThrowAnyException();
         assertThat(Optional.empty()).isEmpty();
     }
 
     private void givenRepositoryPath(String path) {
-        when(servletService.parseRepositoryUri(any())).thenReturn(new LocalVCRepositoryUri(URI.create("http://localhost:8080"), Path.of(path)));
+        when(repositoryResolver.parseRepositoryUri(any(HttpServletRequest.class))).thenReturn(new LocalVCRepositoryUri(URI.create("http://localhost:8080"), Path.of(path)));
     }
 
     private static MockHttpServletRequest postRequest() {

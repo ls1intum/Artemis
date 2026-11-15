@@ -6,6 +6,8 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BuildConfigAdvancedSettings } from 'app/programming/shared/entities/programming-exercise-build-advanced-settings';
 /**
  * DTO for auxiliary repository
  */
@@ -33,8 +35,37 @@ export interface UpdateProgrammingExerciseBuildConfigDTO {
     timeoutSeconds: number;
     dockerFlags?: string;
     theiaImage?: string;
+    onlineIdeExperienceLevel?: OnlineIdeExperienceLevel;
     allowBranching: boolean;
     branchRegex?: string;
+    advancedSettings?: BuildConfigAdvancedSettingsDTO;
+}
+
+/**
+ * DTO for the time window in which pushes to student repositories are built. The bounds are ISO-8601 date-times and either may be missing.
+ */
+export interface BuildTimeWindowDTO {
+    start?: string;
+    end?: string;
+}
+
+/**
+ * DTO for the advanced settings of a build config. Matches the server-side BuildConfigAdvancedSettingsDTO record.
+ */
+export interface BuildConfigAdvancedSettingsDTO {
+    buildTimeWindow?: BuildTimeWindowDTO;
+}
+
+/**
+ * Converts the advanced settings of a build config to the DTO sent to the server.
+ * Returns undefined when no window is set, so that the property is omitted and the server stores no window.
+ *
+ * @param advancedSettings the advanced settings of the build config
+ */
+export function toBuildConfigAdvancedSettingsDTO(advancedSettings: BuildConfigAdvancedSettings | undefined): BuildConfigAdvancedSettingsDTO | undefined {
+    const start = convertDateFromClient(advancedSettings?.buildTimeWindow?.start);
+    const end = convertDateFromClient(advancedSettings?.buildTimeWindow?.end);
+    return start || end ? { buildTimeWindow: { start, end } } : undefined;
 }
 
 /**
@@ -154,8 +185,10 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
               timeoutSeconds: exercise.buildConfig.timeoutSeconds ?? 120,
               dockerFlags: exercise.buildConfig.dockerFlags,
               theiaImage: exercise.buildConfig.theiaImage,
+              onlineIdeExperienceLevel: exercise.buildConfig.onlineIdeExperienceLevel,
               allowBranching: exercise.buildConfig.allowBranching ?? false,
               branchRegex: exercise.buildConfig.branchRegex,
+              advancedSettings: toBuildConfigAdvancedSettingsDTO(exercise.buildConfig.advancedSettings),
           }
         : undefined;
 

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261106113100-01-backfill-is-favorite" author="krusche">
+        <comment>Normalize unset conversation preferences to false before enforcing the primitive boolean invariant.</comment>
+        <update tableName="conversation_participant">
+            <column name="is_favorite" valueBoolean="false"/>
+            <where>is_favorite IS NULL</where>
+        </update>
+        <rollback><empty/></rollback>
+    </changeSet>
+    <changeSet id="20261106113100-02-is-favorite-not-null" author="krusche">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE is_favorite IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="conversation_participant" columnName="is_favorite" columnDataType="boolean"/>
+    </changeSet>
+
+    <changeSet id="20261106113100-03-backfill-is-hidden" author="krusche">
+        <comment>Normalize unset conversation preferences to false before enforcing the primitive boolean invariant.</comment>
+        <update tableName="conversation_participant">
+            <column name="is_hidden" valueBoolean="false"/>
+            <where>is_hidden IS NULL</where>
+        </update>
+        <rollback><empty/></rollback>
+    </changeSet>
+    <changeSet id="20261106113100-04-is-hidden-not-null" author="krusche">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE is_hidden IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="conversation_participant" columnName="is_hidden" columnDataType="boolean"/>
+    </changeSet>
+</databaseChangeLog>

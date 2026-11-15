@@ -4,7 +4,7 @@ import { DebugElement } from '@angular/core';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from 'test/helpers/mocks/service/mock-team.service';
@@ -60,8 +60,8 @@ describe('TeamUpdateDialogComponent', () => {
                 { provide: TeamService, useClass: MockTeamService },
                 LocalStorageService,
                 SessionStorageService,
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfig },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -74,6 +74,22 @@ describe('TeamUpdateDialogComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('associates the owner and student labels with their search inputs', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges(false);
+        await fixture.whenStable();
+
+        const root = fixture.nativeElement as HTMLElement;
+        for (const id of ['teamOwnerInput', 'teamStudentsInput']) {
+            const label = root.querySelector(`label[for="${id}"]`) as HTMLLabelElement;
+            const input = root.querySelector(`input#${id}`);
+            expect(input).not.toBeNull();
+            expect(label.control).toBe(input);
+        }
+
+        fixture.destroy();
     });
 
     it('Team Update Dialog can be canceled via cancel button', async () => {

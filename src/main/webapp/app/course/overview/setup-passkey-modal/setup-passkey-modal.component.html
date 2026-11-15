@@ -1,4 +1,4 @@
-<tum-ui-dialog [(visible)]="visible" [closable]="false" [closeOnEscape]="false" [dismissableMask]="false" size="medium">
+<tumaet-ui-dialog [(visible)]="visible" [closable]="false" [closeOnEscape]="false" [dismissableMask]="false" size="medium">
     <ng-template #header>
         <div class="flex items-center gap-2">
             <fa-icon [icon]="faShieldHalved" />
@@ -16,9 +16,9 @@
             </div>
         </div>
 
-        <div class="flex flex-col gap-3 bg-surface-card p-4 rounded-2xl border border-surface">
+        <div class="flex flex-col gap-3 bg-(--module-bg) p-4 rounded-2xl border border-surface">
             <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-(--module-bg) border border-surface text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faBolt" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
@@ -28,7 +28,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-(--module-bg) border border-surface text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faLock" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
@@ -38,7 +38,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-(--module-bg) border border-surface text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faShieldHalved" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
@@ -51,7 +51,7 @@
 
     <ng-template #footer>
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-2">
-            <tum-ui-button
+            <tumaet-ui-button
                 severity="secondary"
                 variant="outlined"
                 size="small"
@@ -59,10 +59,10 @@
                 [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days' | translate"
             >
                 <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ms-auto">
-                <tum-ui-button
+                <tumaet-ui-button
                     severity="secondary"
                     variant="text"
                     size="small"
@@ -70,8 +70,8 @@
                     [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupLater' | translate"
                 >
                     <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"></span>
-                </tum-ui-button>
-                <tum-ui-button
+                </tumaet-ui-button>
+                <tumaet-ui-button
                     severity="primary"
                     size="small"
                     [icon]="faKey"
@@ -79,8 +79,8 @@
                     [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupPasskey' | translate"
                 >
                     <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         </div>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

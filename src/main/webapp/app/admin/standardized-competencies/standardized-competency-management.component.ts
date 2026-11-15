@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faGripLinesVertical, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -14,7 +14,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiProgressSpinnerComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -52,16 +52,16 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         StandardizedCompetencyFilterComponent,
         KnowledgeAreaTreeComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiProgressSpinnerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
         ResizableDirective,
     ],
 })
@@ -108,7 +108,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faEye = faEye;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
-    protected readonly faGripLinesVertical = faGripLinesVertical;
     // Other constants for template
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';

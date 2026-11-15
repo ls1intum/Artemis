@@ -3,19 +3,19 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faGear, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faPlus, faUmbrellaBeach, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     CellTemplateRef,
     ColumnDef,
-    TumUiButtonDirective,
-    TumUiMessageComponent,
-    TumUiSearchFieldComponent,
-    TumUiTableComponent,
-    TumUiTableQueryEvent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiEmptyStateComponent,
+    TumAetUiSearchFieldComponent,
+    TumAetUiTableComponent,
+    TumAetUiTableQueryEvent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -26,8 +26,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { TutorialGroupManagementService } from 'app/tutorialgroup/manage/service/tutorial-group-management.service';
 import { tutorialGroupUtilization } from 'app/tutorialgroup/shared/util/tutorial-group-utilization';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
@@ -127,11 +126,11 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
         ArtemisTranslatePipe,
         MeetingPatternPipe,
         CourseTitleBarActionsDirective,
-        TumUiTableComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
-        TumUiSearchFieldComponent,
-        TumUiTooltipDirective,
+        TumAetUiTableComponent,
+        TumAetUiButtonDirective,
+        TumAetUiEmptyStateComponent,
+        TumAetUiSearchFieldComponent,
+        TumAetUiTooltipDirective,
         TutorialGroupsImportButtonComponent,
         TutorialGroupsExportButtonComponent,
         TutorialGroupRowButtonsComponent,
@@ -139,7 +138,7 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
     ],
 })
 export class TutorialGroupsManagementComponent {
-    private readonly tutorialGroupApiService = inject(TutorialGroupApi);
+    private readonly tutorialGroupApiService = inject(TutorialGroupManagementService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
@@ -155,8 +154,8 @@ export class TutorialGroupsManagementComponent {
     readonly tutorialGroups = signal<TutorialGroup[]>([]);
     readonly searchTerm = signal('');
 
-    private readonly table = viewChild(TumUiTableComponent<TutorialGroupRow>);
-    private readonly query = signal<TumUiTableQueryEvent | undefined>(undefined);
+    private readonly table = viewChild(TumAetUiTableComponent<TutorialGroupRow>);
+    private readonly query = signal<TumAetUiTableQueryEvent | undefined>(undefined);
 
     private readonly titleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('titleColumn');
     private readonly tutorColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('tutorColumn');
@@ -187,8 +186,6 @@ export class TutorialGroupsManagementComponent {
             field: 'registrations',
             headerKey: 'artemisApp.entities.tutorialGroup.registrationsWithCapacity',
             sort: true,
-            // "Registrations / Capacity" is far wider than the "0 / 15" beneath it, so it wraps rather than setting the floor.
-            wrapHeader: true,
             templateRef: this.registrationsColumn(),
         },
         // Last to appear and the one most often empty, so it waits for the width that fits every other column comfortably.
@@ -240,7 +237,17 @@ export class TutorialGroupsManagementComponent {
     // TutorialGroup.id is optional, and two rows sharing an undefined key would be NG0955 plus lost row reuse.
     protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (index, row) => row.group.id ?? index;
 
+    // The list shows every group in the course, so highlighting the ones the user tutors helps pick them out -
+    // but only when that distinguishes some rows. When the user tutors all of them the tint would cover the whole
+    // table and just hide the striping, so skip it then.
+    private readonly userTutorsEveryGroup = computed(() => {
+        const groups = this.tutorialGroups();
+        return groups.length > 0 && groups.every((group) => group.isUserTutor === true);
+    });
+    protected readonly isOwnGroup = (row: TutorialGroupRow) => !this.userTutorsEveryGroup() && row.group.isUserTutor === true;
+
     protected readonly faPlus = faPlus;
+    protected readonly faUsers = faUsers;
     protected readonly faGear = faGear;
     protected readonly faUmbrellaBeach = faUmbrellaBeach;
 
@@ -262,7 +269,6 @@ export class TutorialGroupsManagementComponent {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
             .pipe(
-                map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)),
                 finalize(() => this.isLoading.set(false)),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -278,7 +284,7 @@ export class TutorialGroupsManagementComponent {
         this.table()?.resetPage();
     }
 
-    protected onDataRequest(event: TumUiTableQueryEvent): void {
+    protected onDataRequest(event: TumAetUiTableQueryEvent): void {
         this.query.set(event);
     }
 }

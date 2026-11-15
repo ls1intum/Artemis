@@ -15,16 +15,20 @@ export class CourseChatbotComponent {
 
     readonly courseId = input<number>();
 
+    /** An existing session to open instead of the course's current one, e.g. the chat a global search answer was continued in. */
+    readonly sessionId = input<number>();
+
     readonly isChatHistoryOpen = computed<boolean>(() => this.irisBaseChatbot()?.isChatHistoryOpen() ?? true);
 
     constructor() {
         effect(() => {
             const courseId = this.courseId();
+            const sessionId = this.sessionId();
             if (courseId !== undefined) {
                 // Use untracked to avoid re-running this effect when chatService state changes
                 untracked(() => {
                     this.chatService.setCourseId(courseId);
-                    this.chatService.openChat(ChatServiceMode.COURSE, courseId);
+                    this.chatService.openChat(ChatServiceMode.COURSE, courseId, sessionId);
                 });
             }
         });

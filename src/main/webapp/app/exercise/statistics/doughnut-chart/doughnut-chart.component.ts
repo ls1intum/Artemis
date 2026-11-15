@@ -6,12 +6,13 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 
@@ -19,17 +20,18 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
     styleUrls: ['./doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, TumUiDoughnutChartComponent, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {
-    protected readonly faSpinner = faSpinner;
-
     private readonly router = inject(Router);
+
+    protected readonly faSpinner = faSpinner;
 
     readonly course = input<Course>(undefined!);
     readonly contentType = input<DoughnutChartType>(undefined!);
     readonly exerciseId = input<number>(undefined!);
     readonly exerciseType = input<ExerciseType>(undefined!);
+    readonly exerciseGroup = input<ExerciseGroup>();
     readonly currentPercentage = input<number>();
     readonly currentAbsolute = input<number>();
     readonly currentMax = input<number>();
@@ -46,7 +48,7 @@ export class DoughnutChartComponent implements OnInit {
     ]);
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]));
-    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
         legend: false,
         tooltip: { label: (item) => `${this.valueFormatting({ value: item.value })}` },
     }));
@@ -78,13 +80,13 @@ export class DoughnutChartComponent implements OnInit {
     ngOnInit(): void {
         switch (this.contentType()) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
-                this.doughnutChartTitle.set('averageScore');
-                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`]);
+            case DoughnutChartType.PARTICIPATIONS: {
+                this.doughnutChartTitle.set(this.contentType() === DoughnutChartType.AVERAGE_EXERCISE_SCORE ? 'averageScore' : 'participationRate');
+                const group = this.exerciseGroup();
+                const examPath = group?.exam ? `/exams/${group.exam.id}/exercise-groups/${group.id}` : '';
+                this.titleLink.set([`/course-management/${this.course().id}${examPath}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
                 break;
-            case DoughnutChartType.PARTICIPATIONS:
-                this.doughnutChartTitle.set('participationRate');
-                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
-                break;
+            }
             case DoughnutChartType.QUESTIONS:
                 this.doughnutChartTitle.set('resolved_posts');
                 this.titleLink.set([`/courses/${this.course().id}/exercises/${this.exerciseId()}`]);

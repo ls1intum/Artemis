@@ -54,7 +54,8 @@
                     "roomName": "Raumname",
                     "building": "Gebäude",
                     "defaultCapacity": "Standardkapazität",
-                    "maxCapacity": "Maximale Kapazität"
+                    "maxCapacity": "Maximale Kapazität",
+                    "empty": "Keine Klausurräume verfügbar"
                 }
             }
         }

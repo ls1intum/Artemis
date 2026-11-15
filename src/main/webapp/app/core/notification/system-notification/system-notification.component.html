@@ -1,22 +1,36 @@
 @for (notification of notificationsToDisplay(); track notification) {
     <div class="system-notification" [ngClass]="{ info: (notification.type || INFO) === INFO, warning: notification.type === WARNING }">
         <div class="notification-text">
-            <span class="notification-title">
-                @if ((notification.type || INFO) === INFO) {
-                    <fa-icon [icon]="faInfoCircle" class="left-slide-in" />
-                }
-                @if (notification.type === WARNING) {
-                    <fa-icon [icon]="faExclamationTriangle" class="left-slide-in" />
-                }
-                <span class="left-slide-in"
-                    >{{ notification.title }}
-                    @if (notification.text) {
-                        <span>:</span>
-                    }
-                </span>
-            </span>
-            <span class="notification-content left-slide-in">{{ notification.text }}</span>
+            @if ((notification.type || INFO) === INFO) {
+                <fa-icon [icon]="faInfoCircle" class="notification-icon left-slide-in" />
+            }
+            @if (notification.type === WARNING) {
+                <fa-icon [icon]="faExclamationTriangle" class="notification-icon left-slide-in" />
+            }
+            <button
+                type="button"
+                class="notification-message left-slide-in"
+                data-testid="system-notification-message"
+                [tumAetUiTooltip]="notificationDetails.isOpen() ? undefined : notificationPreview"
+                [tumAetUiPopoverTrigger]="notificationDetails"
+                tumAetUiTooltipPlacement="bottom"
+                [tumAetUiTooltipDescribesHost]="false"
+            >
+                <span class="notification-title">{{ notification.title }}{{ notification.text ? ':' : '' }}</span>
+                <span class="notification-content">{{ notification.text ? ' ' + notification.text : '' }}</span>
+            </button>
+            <ng-template #notificationPreview>
+                <div class="notification-preview">{{ notification.title }}{{ notification.text ? ': ' + notification.text : '' }}</div>
+            </ng-template>
+            <tumaet-ui-popover #notificationDetails [ariaLabel]="notification.title ?? ''">
+                <div class="notification-details" tabindex="0" data-testid="system-notification-details">
+                    <h4>{{ notification.title }}</h4>
+                    <p>{{ notification.text }}</p>
+                </div>
+            </tumaet-ui-popover>
         </div>
-        <fa-icon class="notification-close" [icon]="faTimes" (click)="close(notification)" />
+        <button type="button" class="notification-close" (click)="close(notification)" [attr.aria-label]="'entity.action.close' | artemisTranslate">
+            <fa-icon [icon]="faTimes" />
+        </button>
     </div>
 }

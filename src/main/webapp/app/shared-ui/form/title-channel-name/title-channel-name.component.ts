@@ -4,16 +4,22 @@ import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
-import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
-/** @deprecated */
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
-    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, FaIconComponent, ArtemisTranslatePipe, TumAetUiInputDirective, TumAetUiTooltipDirective],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly titleErrorId = `title-error-${generateUuid()}`;
+
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);
     channelNamePrefix = input<string | undefined>('');
@@ -49,6 +55,15 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;
+
+    /**
+     * Whether the title is one of the {@link alreadyUsedTitles}, as the title field's validator decides it, but as a signal so
+     * that a host's computed() follows it. The title the form was opened with does not count, as the field does not count it.
+     */
+    readonly isTitleDisallowed = computed(() => {
+        const title = this.title();
+        return title !== undefined && title !== this.titleOnPageLoad() && this.alreadyUsedTitles().has(title);
+    });
 
     isChannelFieldDisplayed = computed(() => {
         return !this.hideChannelName() && (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.channelName);

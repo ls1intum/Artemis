@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,15 +14,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for the apple-app-site-association json
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("mobile-apps/app-site-association")
+@FeatureUsage(UserFeature.MOBILE_APPS)
 @RestController
 @RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AppleAppSiteAssociationResource {
@@ -36,6 +41,7 @@ public class AppleAppSiteAssociationResource {
      *
      * @return apple-app-site-association as json
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping("apple-app-site-association")
     @ManualConfig
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
@@ -44,13 +50,13 @@ public class AppleAppSiteAssociationResource {
             return ResponseEntity.notFound().build();
         }
 
-        String[] paths = { "/courses/*" };
+        List<String> paths = List.of("/courses/*");
         AppleAppSiteAssociation.Applinks.Detail detail = new AppleAppSiteAssociation.Applinks.Detail(appId, paths);
-        AppleAppSiteAssociation.Applinks.Detail[] details = { detail };
-        String[] apps = {};
+        List<AppleAppSiteAssociation.Applinks.Detail> details = List.of(detail);
+        List<String> apps = List.of();
         AppleAppSiteAssociation.Applinks applinks = new AppleAppSiteAssociation.Applinks(apps, details);
 
-        String[] webcredentialApps = { appId };
+        List<String> webcredentialApps = List.of(appId);
         AppleAppSiteAssociation.Webcredentials webcredentials = new AppleAppSiteAssociation.Webcredentials(webcredentialApps);
 
         AppleAppSiteAssociation appleAppSiteAssociation = new AppleAppSiteAssociation(applinks, webcredentials);
@@ -60,12 +66,12 @@ public class AppleAppSiteAssociationResource {
 
     public record AppleAppSiteAssociation(Applinks applinks, Webcredentials webcredentials) {
 
-        public record Webcredentials(String[] apps) {
+        public record Webcredentials(List<String> apps) {
         }
 
-        public record Applinks(String[] apps, Detail[] details) {
+        public record Applinks(List<String> apps, List<Detail> details) {
 
-            public record Detail(String appID, String[] paths) {
+            public record Detail(String appID, List<String> paths) {
             }
         }
     }

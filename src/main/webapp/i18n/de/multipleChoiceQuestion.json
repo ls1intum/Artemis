@@ -58,7 +58,11 @@
                 "textPlaceholder": "Text ...",
                 "questionTitle": "Frage",
                 "answersTitle": "Antwortmöglichkeiten",
-                "newAnswerTitle": "Neue Antwortmöglichkeit hinzufügen"
+                "newAnswerTitle": "Neue Antwortmöglichkeit hinzufügen",
+                "correctnessOfAnswer": "Richtigkeit von Antwortmöglichkeit {{ number }}",
+                "deleteAnswer": "Antwortmöglichkeit {{ number }} löschen",
+                "invalidateAnswer": "Antwortmöglichkeit {{ number }} als ungültig markieren",
+                "resetAnswer": "Antwortmöglichkeit {{ number }} zurücksetzen"
             }
         }
     }

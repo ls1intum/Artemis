@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Profile(PROFILE_CORE)
 @Component
 @Lazy
@@ -71,7 +72,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
      */
     private String loadPipelineScript(final ProgrammingExercise exercise, final Optional<ProjectType> projectType) {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final boolean isSequentialTestRuns = exercise.getBuildConfig().hasSequentialTestRuns();
+        final boolean isSequentialTestRuns = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).hasSequentialTestRuns();
 
         final Path pipelinePath = buildResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
         final Resource resource = resourceLoaderService.getResource(pipelinePath);

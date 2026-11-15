@@ -22,7 +22,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -34,8 +34,8 @@ import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-edi
 import {
     RAIL_DISCLOSURE_MAX_HEIGHT,
     applyBottomCenterPlacement,
-    calculateBottomCenterPlacement,
     clearBottomCenterPlacement,
+    measureBottomCenterPlacement,
     measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
@@ -64,6 +64,12 @@ type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEdit
     ],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
+    private readonly sanitizer = inject(DomSanitizer);
+    private readonly elementRef = inject(ElementRef);
+    private readonly translateService = inject(TranslateService);
+    private readonly fullscreenPresentation = inject(FullscreenPresentationService);
+    private readonly contentObserver = inject(ContentObserver);
+
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
@@ -72,12 +78,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly faProblemStatement = faAlignLeft;
     protected readonly farQuestionCircle = faQuestionCircle;
     protected readonly fullscreenSupported = document.fullscreenEnabled;
-
-    private readonly sanitizer = inject(DomSanitizer);
-    private readonly elementRef = inject(ElementRef);
-    private readonly translateService = inject(TranslateService);
-    private readonly fullscreenPresentation = inject(FullscreenPresentationService);
-    private readonly contentObserver = inject(ContentObserver);
 
     protected readonly editorFrame = viewChild<ElementRef<HTMLElement>>('editorFrame');
     private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
@@ -90,6 +90,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly hasEditorTopLeft = computed(() => !!this.projectedTopLeft());
     private readonly hasEditorTopLeftRegion = computed(() => (!!this.savedStatus() && !this.readOnly()) || this.hasEditorTopLeft());
     protected readonly hasEditorBottomCenter = computed(() => this.withExplanation() || (this.showProjectedBottomCenter() && !!this.projectedBottomCenter()));
+    protected readonly saveState = computed(() => {
+        if (this.savedStatus()?.isSaving) {
+            return 'saving';
+        }
+        return this.savedStatus()?.isChanged ? 'unsaved' : 'saved';
+    });
 
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);
@@ -225,7 +231,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         });
     }
 
-    async ngAfterViewInit(): Promise<void> {
+    ngAfterViewInit(): void {
+        void this.initializeModelingEditorComponentView();
+    }
+
+    private async initializeModelingEditorComponentView(): Promise<void> {
         this.viewInitialized = true;
         if (this.readOnly()) {
             const model = this.umlModel();
@@ -350,7 +360,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         try {
             const diagram = await ApollonEditor.exportModelAsSvg(ModelingEditorComponent.modelWithoutAssessments(model));
             if (!this.isDestroyed && revision === this.readOnlyExportRevision) {
-                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg));
+                // Reviewed false positive (Sonar S6268): Apollon renders the diagram with React, which escapes every label, and serializes the resulting DOM.
+                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg)); // NOSONAR // nosemgrep
             }
         } catch (error) {
             if (!this.isDestroyed && revision === this.readOnlyExportRevision) {
@@ -485,22 +496,16 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         this.observeChromeResizeTargets(apollonRoot, bottomCenterRegion, bottomCenter, palette, zoom, minimap, placementControl);
 
-        const bottomCenterStyle = getComputedStyle(bottomCenter);
-        const editorStyle = getComputedStyle(editorFrame);
-        const paletteRect = palette?.getBoundingClientRect();
-        const paletteRegion = palette?.closest<HTMLElement>('[data-apollon-region]')?.dataset.apollonRegion;
-        const placement = calculateBottomCenterPlacement({
-            root: apollonRoot.getBoundingClientRect(),
-            zoom: zoom.getBoundingClientRect(),
-            minimap: minimap.getBoundingClientRect(),
-            surface: placementControl.getBoundingClientRect(),
-            palette: paletteRect,
-            paletteRegion,
+        const placement = measureBottomCenterPlacement({
+            root: apollonRoot,
+            zoom,
+            minimap,
+            surface: placementControl,
+            positionedElement: bottomCenter,
+            chromeContainer: editorFrame,
+            shiftProperty: '--modeling-editor-bottom-center-shift-x',
+            palette,
             obstruction: this.problemStatementDisclosure()?.getVisiblePanelRect(),
-            chromeGap: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-gap')) || 0,
-            chromeEdge: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-edge')) || 0,
-            rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
-            previousShift: Number.parseFloat(bottomCenterStyle.getPropertyValue('--modeling-editor-bottom-center-shift-x')) || 0,
         });
         applyBottomCenterPlacement(bottomCenter, '--modeling-editor-bottom-center-shift-x', placement);
         this.bottomCenterElevated.set(placement.elevated);

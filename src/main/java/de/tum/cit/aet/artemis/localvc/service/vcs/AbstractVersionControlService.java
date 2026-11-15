@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service.vcs;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.jgit.api.errors.TransportException;
@@ -11,7 +12,7 @@ import org.eclipse.jgit.internal.JGitText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
@@ -26,7 +27,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private static final Logger log = LoggerFactory.getLogger(AbstractVersionControlService.class);
 
-    protected final GitService gitService;
+    protected final BareGitRepositoryService bareGitRepositoryService;
 
     protected final UriService uriService;
 
@@ -38,10 +39,11 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
-    public AbstractVersionControlService(GitService gitService, UriService uriService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public AbstractVersionControlService(BareGitRepositoryService bareGitRepositoryService, UriService uriService,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
         this.uriService = uriService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -51,18 +53,18 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public LocalVCRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
-            String targetRepositoryName, Integer attempt) throws VersionControlException {
-        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false);
+            String targetRepositoryName, Integer attempt, Map<String, byte[]> additionalFiles) throws VersionControlException {
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false, additionalFiles);
     }
 
     @Override
     public LocalVCRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
             String targetRepositoryName, Integer attempt) throws VersionControlException {
-        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, true);
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, true, Map.of());
     }
 
     private LocalVCRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer attempt, boolean withHistory) throws VersionControlException {
+            Integer attempt, boolean withHistory, Map<String, byte[]> additionalFiles) throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase(Locale.ROOT);
         targetRepositoryName = targetRepositoryName.toLowerCase(Locale.ROOT);
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase(Locale.ROOT);
@@ -75,7 +77,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         if (repositoryExists(targetRepoUri)) {
             boolean targetRepositoryHealthy;
             try {
-                targetRepositoryHealthy = gitService.isBareRepositoryHealthy(targetRepoUri);
+                targetRepositoryHealthy = bareGitRepositoryService.isBareRepositoryHealthy(targetRepoUri);
             }
             catch (GitException ex) {
                 // The health of the pre-existing repository could not be determined (e.g. a transient I/O error):
@@ -106,8 +108,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         }
         // A failed copy needs no cleanup here: the repository is built next to the target path and only moved there once it is complete, so a copy that failed leaves the
         // target path as it found it. Deleting it would be actively harmful, since it may hold the repository that a concurrent copy of the same participation published.
-        try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
-                : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
+        try (Repository targetRepo = withHistory ? bareGitRepositoryService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
+                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch, additionalFiles)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | RuntimeException ex) {

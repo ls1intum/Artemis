@@ -2,6 +2,7 @@
 id: cleanup-service
 title: Cleanup Service
 sidebar_label: Cleanup Service
+last_reviewed: 2026-11-03
 ---
 
 import Image, {ImageSize} from "../../src/components/Image/Image";
@@ -35,9 +36,6 @@ For the age-based operations, always use the count/preview shown on the page to 
 
 ### Orphaned Data
 
-- Long Feedback Text with feedback that has no results
-- Text Block with feedback that has no results
-- Feedback records without results
 - Student and team scores where either a student or a team is specified
 - Long Feedback Text where both participation and submission are missing
 - Text Block where the referenced feedback has no associated participation or submission
@@ -64,6 +62,12 @@ These implement the storage-limitation and erasure principles of the GDPR (Art. 
 
 All of these operations are **admin-only**, expose a **count/preview** before execution, and are **off by default** for automation. Their cutoffs and schedules are configured centrally (see [Configuration reference](#configuration-reference)).
 
+### Reading the page
+
+Because these operations have no "from"/"to" pickers, the page states their scope in a grey line under each operation name, resolved against the cutoffs this instance is configured with. For example, "Courses that ended before Mar 4, 2021 (5 years retention)" for the plagiarism-case cleanup, or "Courses whose instructors were warned before Feb 2, 2026 (30 days grace period)" for the reset. The dates are the ones the operation would apply if it ran now, so they move with the configuration and with the current date; there is no need to reconstruct them from the YAML.
+
+The confirmation dialog then lists the affected entity types with their counts (courses, users, feedback, and so on) before anything is executed, and its button is named after what the operation does: **Warn** for the two warning phases (archive and email for courses, email for users), **Reset** for the old-course reset, and **Delete** everywhere else.
+
 ### Age-based operations
 
 | Operation | What it deletes | What it keeps | Default cutoff |
@@ -77,6 +81,8 @@ All of these operations are **admin-only**, expose a **count/preview** before ex
 :::info
 Courses are **never deleted** by these operations. The old-course operation only **resets** the student data and keeps all course material so the course can be reused. Exam submission versions are not affected by the submission-version cleanup because exam exercises are not attached to a course.
 :::
+
+None of these operations removes science data collection events, and resetting an old course keeps them. The not-enrolled-user deletion removes an account's consent decisions and renames its events, as described in [Deleting User Accounts](/admin/user-deletion). Events are deleted together with the course, or per course by the students themselves; see [Science Data Collection](/admin/science-data-collection#deleting-science-data).
 
 ### Grade-relevance and retention periods
 

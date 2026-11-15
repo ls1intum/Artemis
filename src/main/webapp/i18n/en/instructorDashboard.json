@@ -5,7 +5,7 @@
             "name": "Name",
             "username": "Username",
             "title": "Course Scores",
-            "exerciseDashboard": "Exercise Scores",
+            "exerciseDashboard": "Exercise Participations",
             "participated": "Participated in Exercises (%)",
             "successful": "Successful Exercises (%)",
             "quizPoints": "Quiz Points (%)",

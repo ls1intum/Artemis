@@ -6,7 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { faCog, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -14,13 +14,14 @@ import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-chec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
+    styleUrl: './tutorial-groups-checklist.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiButtonDirective, LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
+    imports: [TumAetUiButtonDirective, LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
@@ -35,6 +36,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
 
     protected readonly faCog = faCog;
     protected readonly faPlus = faPlus;
+    protected readonly faUsers = faUsers;
 
     ngUnsubscribe = new Subject<void>();
 
@@ -49,19 +51,19 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                 take(1),
                 switchMap((params) => {
                     const courseId = Number(params.get('courseId'));
-                    return combineLatest([this.courseManagementService.find(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
+                    return combineLatest([this.courseManagementService.findForInstructor(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
                 }),
                 finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: ([courseResult, configurationResult]) => {
+                next: ([courseResult, configuration]) => {
                     if (courseResult.body) {
                         this.course.set(courseResult.body);
                         this.isTimeZoneConfigured.set(!!this.course().timeZone);
                     }
-                    if (configurationResult.body) {
-                        this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configurationResult.body);
+                    if (configuration) {
+                        this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                         this.isTutorialGroupConfigurationCreated.set(!!this.course().tutorialGroupsConfiguration);
                     }
                 },

@@ -1,10 +1,13 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Component, OnDestroy, inject, input, output } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 
 @Component({
@@ -12,7 +15,8 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
     template: `
         @if (exercise().isAtLeastInstructor) {
             <button
-                pButton
+                tumAetUiButton
+                [attr.aria-label]="'entity.action.delete' | artemisTranslate"
                 jhiDeleteButton
                 size="small"
                 severity="danger"
@@ -23,15 +27,16 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
                 (delete)="removeTeam()"
                 [dialogError]="dialogError$"
             >
-                <i class="pi pi-trash"></i>
+                <fa-icon [icon]="faTrash" />
             </button>
         }
     `,
-    imports: [ButtonDirective, DeleteButtonDirective],
+    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, DeleteButtonDirective],
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private teamService = inject(TeamService);
+    readonly faTrash = faTrash;
 
     readonly team = input.required<Team>();
     readonly exercise = input.required<Exercise>();

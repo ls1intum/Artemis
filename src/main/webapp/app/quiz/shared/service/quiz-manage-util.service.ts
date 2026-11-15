@@ -3,9 +3,10 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
+    MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH,
     MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_LENGTH_THRESHOLD,
@@ -69,6 +70,7 @@ export function isQuizQuestionValid(question: QuizQuestion, dragAndDropQuestionU
                 question.title &&
                 question.title !== '' &&
                 question.title.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
+                dndQuestion.dragItems?.every((dragItem) => dragItem.pictureFilePath || (dragItem.text?.length ?? 0) <= MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH) &&
                 dndQuestion.correctMappings &&
                 dndQuestion.correctMappings.length > 0 &&
                 dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -192,6 +194,12 @@ export function computeQuizQuestionInvalidReason(
 
     if (question.type === QuizQuestionType.DRAG_AND_DROP) {
         const dndQuestion = question as DragAndDropQuestion;
+        if (dndQuestion.dragItems?.some((dragItem) => !dragItem.pictureFilePath && (dragItem.text?.length ?? 0) > MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH)) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.invalidReasons.dragItemTextLength',
+                translateValues: { index: index + 1, threshold: MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH },
+            });
+        }
         if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',

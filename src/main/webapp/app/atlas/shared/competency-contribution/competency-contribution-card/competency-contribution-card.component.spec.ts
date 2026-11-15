@@ -4,14 +4,11 @@ import { CompetencyContributionCardComponent } from './competency-contribution-c
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { provideRouter } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { By } from '@angular/platform-browser';
-import { ProgressBar } from 'primeng/progressbar';
 
 describe('CompetencyContributionCardComponent', () => {
     let component: CompetencyContributionCardComponent;
@@ -25,7 +22,6 @@ describe('CompetencyContributionCardComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 FaIconComponent,
                 MockComponent(FaLayersComponent),
-                MockModule(NgbTooltipModule),
                 MockRouterLinkDirective,
             ],
             providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
@@ -50,9 +46,9 @@ describe('CompetencyContributionCardComponent', () => {
         fixture.componentRef.setInput('mastery', 50);
         fixture.detectChanges();
 
-        const progressBar = fixture.debugElement.query(By.directive(ProgressBar));
+        const progressBar = fixture.nativeElement.querySelector('[role="progressbar"]');
         expect(progressBar).not.toBeNull();
-        expect(progressBar.componentInstance.value).toBe(50);
+        expect(progressBar.getAttribute('aria-valuenow')).toBe('50');
     });
 
     it('should fall back to 0 for the progress bar when mastery is undefined', () => {
@@ -61,8 +57,15 @@ describe('CompetencyContributionCardComponent', () => {
         fixture.componentRef.setInput('mastery', 0);
         fixture.detectChanges();
 
-        const progressBar = fixture.debugElement.query(By.directive(ProgressBar));
+        const progressBar = fixture.nativeElement.querySelector('[role="progressbar"]');
         expect(progressBar).not.toBeNull();
-        expect(progressBar.componentInstance.value).toBe(0);
+        expect(progressBar.getAttribute('aria-valuenow')).toBe('0');
+    });
+
+    it('hides the progress indicator when mastery is unavailable', () => {
+        fixture.componentRef.setInput('mastery', undefined);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[role="progressbar"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/courses/1/competencies/2');
     });
 });

@@ -132,7 +132,7 @@ public class SubmissionService {
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
         // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
         }
@@ -425,7 +425,7 @@ public class SubmissionService {
      * @param newResult the result to copy the typed feedback to
      * @param oldResult the result to copy the typed feedback from
      */
-    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+    public void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
@@ -591,8 +591,10 @@ public class SubmissionService {
                 feedback.setDetailText(feedbackText);
                 feedback.setPositive(false);
                 feedback.setType(FeedbackType.AUTOMATIC);
-                feedback = feedbackRepository.save(feedback);
+                // The feedback names its result before it is written: result_id is not nullable, so saving it detached and
+                // attaching it afterwards fails the insert instead of updating the row.
                 feedback.setResult(result);
+                feedback = feedbackRepository.save(feedback);
                 result.setFeedbacks(List.of(feedback));
                 resultRepository.save(result);
             }
@@ -626,8 +628,9 @@ public class SubmissionService {
      */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
-        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        Result latestResult = submission.getLatestResult();
+        if (latestResult != null && AssessmentType.AUTOMATIC == latestResult.getAssessmentType()) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(latestResult.getId());
         }
 
         // we only support one correction round for test runs
@@ -793,6 +796,25 @@ public class SubmissionService {
     }
 
     /**
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param submissionId    the id of the submission that is opened
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative, or neither below the exercise's number of correction rounds nor the round of an
+     *                                      existing result of the submission
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, long submissionId, int correctionRound) {
+        boolean isRoundOfTheExercise = correctionRound >= 0 && correctionRound < exercise.getNumberOfCorrectionRounds();
+        if (isRoundOfTheExercise || (correctionRound >= 0 && resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(submissionId, correctionRound))) {
+            return;
+        }
+        checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
+    }
+
+    /**
      * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
      * student and, for programming exercises, that the tests have run once more on the final submissions.
      * <p>
@@ -874,17 +896,17 @@ public class SubmissionService {
     /**
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
-     * @param exerciseId          the exerciseId of the exercise of which the complaints are fetched
-     * @param isAtLeastInstructor if the user is an instructor
+     * @param exerciseId      the exerciseId of the exercise of which the complaints are fetched
+     * @param instructorQueue whether the endpoint selects the instructor queue
      * @return a list of DTOs containing a complaint and its submission
      */
-    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean instructorQueue) {
         // get all complaints which belong to the exercise
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
 
-        if (!isAtLeastInstructor) {
-            complaints = complaints.stream().filter(complaint -> !userRepository.getUser().equals(complaint.getResult().getAssessor())).toList();
-        }
+        User caller = userRepository.getUser();
+        complaints = complaints.stream().filter(complaint -> complaint.getStudent() == null || !complaint.getStudent().equals(complaint.getResult().getAssessor()))
+                .filter(complaint -> instructorQueue || !caller.equals(complaint.getResult().getAssessor())).toList();
 
         return getSubmissionsWithComplaintsFromComplaints(complaints);
     }

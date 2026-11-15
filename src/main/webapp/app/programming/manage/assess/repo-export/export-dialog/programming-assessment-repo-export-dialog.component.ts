@@ -10,14 +10,15 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 interface ProgrammingAssessmentRepoExportDialogData {
     programmingExercises: ProgrammingExercise[];
     // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
-    // Priority: participationId >> participantIdentifier.
+    // Export-all takes priority; otherwise participation IDs take priority over participant identifiers.
     participationIdList?: number[];
     participantIdentifierList?: string; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode?: boolean;
@@ -27,7 +28,17 @@ interface ProgrammingAssessmentRepoExportDialogData {
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        TumAetUiDatePickerComponent,
+        FeatureToggleDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+    ],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);
@@ -39,7 +50,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     programmingExercises: ProgrammingExercise[] = this.data?.programmingExercises ?? [];
     // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
-    // Priority: participationId >> participantIdentifier.
+    // Export-all takes priority; otherwise participation IDs take priority over participant identifiers.
     participationIdList: number[] = this.data?.participationIdList ?? [];
     participantIdentifierList: string = this.data?.participantIdentifierList ?? ''; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode = this.data?.singleParticipantMode ?? false;
@@ -54,6 +65,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     set repositoryExportOptions(value: RepositoryExportOptions) {
         this._repositoryExportOptions.set(value);
     }
+    /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
+    readonly isFilterDateTextValid = signal(true);
     readonly isLoading = signal(false);
     readonly isRepoExportForMultipleExercises = signal<boolean>(undefined!);
     readonly isAtLeastInstructor = signal(false);
@@ -79,13 +92,21 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         };
     }
 
+    /**
+     * The export must not run with a date the picker shows as invalid; while the date is not used (filter off), it cannot matter.
+     * A method rather than a computed, because [(ngModel)] switches the filter on by mutating the options in place.
+     */
+    hasInvalidFilterDate(): boolean {
+        return !!this.repositoryExportOptions?.filterLateSubmissions && !this.isFilterDateTextValid();
+    }
+
     clear() {
         this.dialogRef.close();
     }
 
     exportRepos() {
         // Blank entries would otherwise become empty path segments in the request URL. The dialog can also be opened
-        // with nothing preselected (the exercise scores page does that), and exporting then asked the server for an
+        // with nothing preselected (the participation page does that), and exporting then asked the server for an
         // empty participant list, which answered 404 instead of telling the user that nothing was selected.
         const participantIdentifiers = this.repositoryExportOptions.exportAllParticipants
             ? ['ALL']
@@ -103,19 +124,14 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 return;
             }
             this.exportInProgress.set(true);
-            // The participation ids take priority over the participant identifiers (student login or team names).
-            if (this.participationIdList?.length) {
-                this.repoExportService
-                    .exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
-                    .subscribe({
-                        next: this.handleExportRepoResponseSuccess,
-                        error: () => this.handleExportRepoResponseError(exercise.id!),
-                    })
-                    .add(() => this.dialogRef.close(true));
-                return;
-            }
-            this.repoExportService
-                .exportReposByParticipantIdentifiers(exercise.id, participantIdentifiers, this.repositoryExportOptions)
+            const exportRequest = this.repositoryExportOptions.exportAllParticipants
+                ? this.repoExportService.exportReposByParticipantIdentifiers(exercise.id, ['ALL'], this.repositoryExportOptions)
+                : this.participationIdList?.length
+                  ? this.repositoryExportOptions.anonymizeRepository
+                      ? this.repoExportService.exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
+                      : this.repoExportService.exportIdentifiedReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
+                  : this.repoExportService.exportReposByParticipantIdentifiers(exercise.id, participantIdentifiers, this.repositoryExportOptions);
+            exportRequest
                 .subscribe({
                     next: this.handleExportRepoResponseSuccess,
                     error: () => this.handleExportRepoResponseError(exercise.id!),

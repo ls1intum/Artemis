@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -13,6 +13,7 @@ import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/s
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertBuildConfigDatesFromServer } from 'app/programming/shared/utils/build-time-window.utils';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -49,7 +50,7 @@ export type ProgrammingExerciseResetOptions = {
     recreateBuildPlans: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -68,7 +69,7 @@ export class ProgrammingExerciseService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
-        const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams().set('emptyRepositories', String(emptyRepositories)), programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
@@ -94,6 +95,10 @@ export class ProgrammingExerciseService {
      */
     reset(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
         return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
+    }
+
+    resetParticipations(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/reset-participations`, options, { responseType: 'text' });
     }
 
     /**
@@ -167,11 +172,27 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Adds Hyperion-inferred competency IDs to the exercise save itself so the server persists links and provenance together.
+     */
+    private addHyperionChecklistProvenanceParams(params: HttpParams, exercise: ProgrammingExercise): HttpParams {
+        const competencyIds = new Set(
+            (exercise.competencyLinks ?? [])
+                .filter((link) => link.generatedByAi)
+                .map((link) => link.competency?.id)
+                .filter((id): id is number => id !== undefined),
+        );
+        for (const competencyId of competencyIds) {
+            params = params.append('hyperionCompetencyId', competencyId);
+        }
+        return params;
     }
 
     /**
@@ -219,8 +240,17 @@ export class ProgrammingExerciseService {
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
     find(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, false, withPlagiarismDetectionConfig);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, true, withPlagiarismDetectionConfig);
+    }
+
+    private findDetails(programmingExerciseId: number, exam: boolean, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, {
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}${exam ? '/for-exam' : ''}`, {
                 observe: 'response',
                 params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
             })
@@ -370,10 +400,10 @@ export class ProgrammingExerciseService {
     /**
      * Deletes the programming exercise with the corresponding programming exercise Id
      * @param programmingExerciseId of the programming exercise to delete
-     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
-     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans?: boolean, deleteBaseReposBuildPlans?: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
@@ -419,6 +449,7 @@ export class ProgrammingExerciseService {
             return res;
         }
         res.body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(res.body.buildAndTestStudentSubmissionsAfterDueDate);
+        convertBuildConfigDatesFromServer(res.body.buildConfig);
         return res;
     }
 
@@ -454,6 +485,14 @@ export class ProgrammingExerciseService {
         });
     }
 
+    exportStudentRepositoryForStaff(exerciseId: number, participationId: number, identified = false): Observable<HttpResponse<Blob>> {
+        const audience = identified ? 'for-instructor' : 'for-staff';
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${audience}?participationId=${participationId}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
     /**
      * Exports all instructor repositories (solution, template, test), the problem statement and the exercise details.
      * @param exerciseId
@@ -480,6 +519,14 @@ export class ProgrammingExerciseService {
         });
     }
 
+    exportSolutionSnapshotForStaff(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository/for-staff`, {
+            params: { includeTests },
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
     /**
      * Re-evaluates and updates an existing programming exercise.
      *
@@ -487,7 +534,7 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, dto, {
@@ -552,8 +599,9 @@ export class ProgrammingExerciseService {
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
         const url = `api/programming/courses/${courseId}/programming-exercises/import-from-file`;
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams(), exercise);
         return this.http
-            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
+            .post<ProgrammingExercise>(url, formData, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 

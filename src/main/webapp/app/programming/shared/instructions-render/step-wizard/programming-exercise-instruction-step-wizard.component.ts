@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -11,10 +11,14 @@ import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { safeUnescape } from 'app/foundation/util/security.util';
 
 interface StepWizardStep {
     done: TestCaseState;
+    /** The task name as plain text, for the tooltip. */
     title: string;
+    /** The task name as HTML, because it is taken from the rendered markdown. */
+    taskName: string;
     testIds: number[];
 }
 
@@ -25,7 +29,7 @@ interface StepWizardStep {
     imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private translateService = inject(TranslateService);
     private instructionService = inject(ProgrammingExerciseInstructionService);
 
@@ -45,7 +49,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         }
         return tasks.map(({ taskName, testIds }) => ({
             done: this.instructionService.testStatusForTask(testIds, latestResult).testCaseState,
-            title: taskName,
+            title: safeUnescape(taskName) ?? taskName,
+            taskName,
             testIds,
         }));
     });
@@ -54,6 +59,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
     faCheck = faCheck;
     faCircle = faCircle;
 
+    /**
+     * @param tests the ids of the tests of the task
+     * @param taskName the name of the task as HTML, as it is taken from the rendered markdown
+     */
     showDetailsForTests(tests: number[], taskName: string) {
         const latestResult = this.latestResult();
         if (!latestResult || !tests.length) {
@@ -63,12 +72,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
             detailed: { notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, latestResult);
         this.dialogService.open(FeedbackComponent, {
-            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName }),
-            width: '50rem',
-            breakpoints: {
-                '850px': '95vw',
-            },
-            modal: true,
+            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: safeUnescape(taskName) ?? taskName }),
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,

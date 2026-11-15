@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -59,10 +62,12 @@ public class LectureUnitService {
 
     private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
             Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<LectureContentProcessingApi> contentProcessingApi) {
+            Optional<LectureContentProcessingApi> contentProcessingApi, ApplicationEventPublisher applicationEventPublisher) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -72,6 +77,16 @@ public class LectureUnitService {
         this.competencyRepositoryApi = competencyRepositoryApi;
         this.competencyRelationApi = competencyRelationApi;
         this.contentProcessingApi = contentProcessingApi;
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    /**
+     * Publishes an event after learning-relevant lecture unit content has changed.
+     *
+     * @param lectureUnit the created or updated lecture unit
+     */
+    public void publishContentChangedEvent(LectureUnit lectureUnit) {
+        applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(lectureUnit));
     }
 
     /**
@@ -254,11 +269,15 @@ public class LectureUnitService {
      * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
      * It makes sure to be Hibernate compliant by modifying the existing collection rather than replacing it.
      *
-     * @param dto    the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
-     * @param entity the existing DB entity to update
+     * Competencies can only be linked if they belong to the course of the lecture unit.
+     *
+     * @param dto      the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
+     * @param entity   the existing DB entity to update
+     * @param courseId the id of the course of the lecture unit
+     * @throws BadRequestAlertException if a linked competency belongs to another course
      */
     // TODO: duplicated code, try to unify with ExerciseService.updateCompetencyLinks
-    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, LectureUnit entity) {
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, LectureUnit entity, long courseId) {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
@@ -292,6 +311,9 @@ public class LectureUnitService {
                 else {
                     // no existing link → create a new one
                     var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    if (competency.getCourse() == null || competency.getCourse().getId() != courseId) {
+                        throw new BadRequestAlertException("The competency does not belong to the course of the lecture unit", "lectureUnit", "competencyCourseMismatch");
+                    }
                     var newLink = new CompetencyLectureUnitLink(competency, entity, weight);
 
                     updatedLinks.add(newLink);

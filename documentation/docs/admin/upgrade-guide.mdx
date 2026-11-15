@@ -2,6 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -26,6 +27,47 @@ Which of these actually execute depends on the database Artemis finds:
 - **An existing database** already has the changelogs under `history/` recorded from when it ran them, so Liquibase skips them. The baseline marks itself as applied without executing, because the schema it would create is already there. Only the changelogs under `changelog/` run.
 
 Both routes end with the same schema, so it makes no difference to the running instance whether it was installed fresh or upgraded over several years. A check on every Artemis pull request applies both routes to an empty database and compares the results on MySQL and PostgreSQL.
+
+## Planned Removals in Artemis 11
+
+<Callout variant={CalloutVariant.warning}>
+    Artemis 11, planned for March 2027, removes **Jenkins** as a continuous integration system and **MySQL** as a database.
+    Both are deprecated from now on. They keep working in the 10.x releases, but you should plan to leave them.
+</Callout>
+
+- **Jenkins.** The replacement is LocalCI, which runs build jobs in Docker containers on build agents that you scale by adding nodes. LocalVC remains
+  the version control system. Follow the [Jenkins to LocalCI migration guide](/admin/jenkins-to-localci-migration). An installation is affected if the `jenkins` profile is active. See [Integrated Code Lifecycle setup](/admin/production-setup/integrated-code-lifecycle-setup)
+  for the target setup. The Jenkins-only settings (`jenkins.*`, the `artemis.continuous-integration` keys that are marked as Jenkins specific, and the shared
+  build agent git credentials) are removed with it.
+- **MySQL.** The replacement is PostgreSQL. An installation is affected if its JDBC URL starts with `jdbc:mysql`. Production installations that still use MySQL
+  already have to override `spring.jpa.database: MYSQL`, because PostgreSQL is the default.
+  The MySQL branches of the Liquibase baseline and the MySQL test and CI jobs are removed in Artemis 11, which does not support MySQL.
+  Migrate the data to PostgreSQL while you still run a 10.x release, with the guide
+  [Migrating MySQL Data to PostgreSQL](/admin/database-tips#migrating-mysql-data-to-postgresql).
+
+The [roadmap](/about/roadmap#planned-removals-in-artemis-11) lists the whole scope.
+
+## Memiris Storage Cleanup After 10.4
+
+Artemis 10.4 removed the Memiris integration. The later contract migration
+`20261022231936-01-remove-memiris-storage` drops `user_ai_preference.memiris_enabled`,
+`iris_message.accessed_memories` and `iris_message.created_memories`. It also removes AI preference rows without a
+selection decision, and `20261022231936-02-require-ai-selection-decision` makes `user_ai_preference.selection_decision`
+mandatory, so such rows cannot appear again. Recorded decisions, including `NO_AI`, their timestamps, user accounts and
+chat messages remain.
+
+Deploy this cleanup only in a release after 10.4. Reverting the WAR to 10.4, which no longer maps these columns, remains
+compatible with the cleaned schema. Older releases that still read or write them require the database backup taken
+immediately before the migration. The migration permanently deletes the legacy memory data and deliberately refuses
+a Liquibase rollback rather than recreating empty columns and presenting them as recovered data.
+
+The distributed-data schema version is unchanged. The retired `Feature.Memiris` enum constant remains in its original
+position because removing it would change the persisted Redis keys of every feature after it, even if Memiris was
+never enabled. Its eventual removal belongs with an explicit distributed-data migration; see
+[Changing a stored type](/developer/guidelines/distributed-data#changing-a-stored-type).
+
+This migration affects only the Artemis database. Deployments that used Memiris must separately remove its unused
+Weaviate collections (`Memory`, `Learning` and `MemoryConnection`) after deploying Pyris without Memiris.
 
 ## Why Intermediate Versions Are Required
 
@@ -155,6 +197,79 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Client Address of Requests
+
+Artemis takes the address of a client from the address that Tomcat resolved for the request, and no longer reads `X-Forwarded-For` or other address headers itself. This applies to all rate limits except the one for Git over HTTP, which counts the address as described in the section linked below, to the check of internal endpoints (`artemis.security.internal.allowed-cidrs`) and to the address that is stored in an exam session.
+Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
+share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
+
+### 10.8: Build Results in the Distributed Data
+
+With Redis or Valkey, this release changes the stored layout of build results (schema version `2`). **Finished build results that were still waiting in the result queues when you stop the old nodes are discarded**, and their submissions need a new build. Queued builds are kept. A build that was still running when you stopped its node is marked as missing and rebuilt automatically after about five to ten minutes.
+Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
+[Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data#schema-1-to-2).
+
+### 10.7: Rate Limit of Git Operations
+
+The authentication of git operations over HTTP and SSH has its own rate limit setting, `artemis.rate-limiting.git-authentication-requests-per-minute` (`ARTEMIS_RATELIMITING_GITAUTHENTICATIONREQUESTSPERMINUTE`), which is **30 per minute and client address** unless you set it.
+Before, git shared `authentication-requests-per-minute` with the logins. After the upgrade, that value only applies to logins, and the two limits no longer add up to one: **with the defaults, one client address may now make up to 30 login attempts and up to 30 git authentications
+per minute, where it could make 30 in total.** With a login limit of your own, for example 300, an address that could make 300 requests of both kinds in total may now make 300 logins and 30 git authentications.
+That is more room for guessing a password, because git over HTTP can verify a password like a login does. **Review the git limit on every installation**, whether you raised, lowered or never set the login limit:
+
+- If you **raised** `authentication-requests-per-minute` so that a lecture hall behind one address could push at a deadline, set the git setting to the same value before you upgrade, or git drops to 30.
+- If you **lowered** it, for example to 5, to make guessing harder, set the git setting to the same value too, or git is at 30 while the logins stay at 5.
+- If you never set it, decide whether 30 git authentications per client address and minute is what you want next to 30 logins, and lower the git setting if not.
+
+See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
+### 10.5: Email Changes Need Confirmation
+
+No data has to be migrated. The upgrade adds nullable columns to `user_recovery_key`, so the previous version keeps working after a rollback. Two behaviors change for users:
+
+- A user with an internal account changes the email address only after the owners of the current and of the new address have both followed a link in a mail. Without a configured mail server (`jhipster.mail.from` left at its default), nothing could be confirmed, so the field in the settings is disabled and only an administrator can change the address. Configure the mail server before you upgrade if users should keep changing their address themselves. The links point to `/account/confirm-email-change` on `server.url`, so that path has to reach the client.
+- A session that started before the credentials last changed, for example before a password reset, can no longer add a passkey, an SSH key or an access token. The client signs the user out and asks them to sign in again.
+
+See [Changing the email address](/admin/user-registration#changing-the-email-address) and [Sessions and new credentials](/admin/user-registration#sessions-and-new-credentials).
+
+### 10.4: Course-Level Science Data Collection
+
+Science data collection is enabled per course and needs each student's consent in that course. See
+[Science Data Collection](/admin/science-data-collection). The migration changes the `science_event` table on the
+first start:
+
+- It adds a `course_id` column and fills it for existing events from the lecture, lecture unit, exercise, competency,
+  learning path or course each event refers to. Events whose resource no longer exists keep an empty `course_id`.
+- It adds a foreign key from `course_id` to `course`, so deleting a course deletes its science events, and two indexes,
+  on `course_id, timestamp, id` and on `identity, course_id`.
+- It drops the `science_setting` table, which held the global science preference of each user. These preferences are
+  not carried over: no course collects data until an administrator enables it, and the students of an enabled course
+  are asked again.
+
+The backfill, the foreign key and each index process the whole `science_event` table. On an instance that has
+collected events for a long time, that table can be large, so expect the first start to take correspondingly longer,
+and take the database backup described in the upgrade procedure right before you upgrade. Rolling the migration back
+recreates `science_setting` empty; the dropped preferences can only be restored from that backup.
+
+### 10.1: Installation Metadata in Production
+
+Every production core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:
+
+- `info.operatorName` (`INFO_OPERATORNAME`): the organization operating Artemis.
+- `info.operatorAdminName` (`INFO_OPERATORADMINNAME`): the administrator's name.
+- `info.universityName` (`INFO_UNIVERSITYNAME`): the university, school, or institution using Artemis. This setting is new.
+
+Empty values and template values such as `Admin`, `Some Artemis Operator`, `Your University`, or `Anonymous University` are rejected, and the error names each setting to correct. Development servers, test servers (`info.testServer: true`), and build agents start without them. Add all three to the configuration of every production core node before you upgrade:
+
+- **Ansible:** `artemis_operator_name`, `artemis_operator_admin_name`, and `artemis_university_name`. The collection has no defaults for them and stops the play on a core node where one is missing. Run the configuration update before the version update, because a version update does not rewrite the configuration.
+- **Helm:** `artemis.config.operator.name`, `artemis.config.operator.adminName`, and `artemis.config.operator.universityName`. The chart does not render while one of them is empty.
+- **Docker Compose and manual installations:** the environment variables or `application-prod.yml`.
+
+The About page shows the values that are set. See [Telemetry](/admin/telemetry#required-configuration) for the settings and for what the installation reports.
+
+### 10.0: Connection Collation on MySQL
+
+Searches that match names, logins or titles compare both sides in lower case, so they behave the same on MySQL and PostgreSQL. On MySQL, this requires the connection to use `utf8mb4_unicode_ci`, like the tables. A JDBC URL without `connectionCollation=utf8mb4_unicode_ci` connects with `utf8mb4_0900_ai_ci`, and these searches then fail with `Illegal mix of collations`. Add the parameter to the datasource URL of every node before you upgrade. See [MySQL Character Set and Collation](#mysql-character-set-and-collation). PostgreSQL installations need no action.
+
 ### 9.9: Accounts Provisioned Through SAML2
 
 The sign-in page asks for the identifier first and then decides, from the account's internal flag, whether to offer a password field or to send the user to the configured identity provider. Only an account marked as internal authenticates against a password stored in Artemis; every other account is sent to the identity provider.
@@ -194,12 +309,12 @@ From version 10.0 on, the same events live in `security_audit_event`, with their
 If the audit log does not reach back far enough, build the list from the identity provider instead, and still match on `login`: export the accounts the identity provider manages, apply your configured `saml2.username-pattern` to each one to get the login Artemis would have stored, lowercase the result, and match `jhi_user.login` against that list.
 
 <Callout variant={CalloutVariant.warning}>
-  Do not fall back to matching on `email`. Artemis identifies a SAML2 user by the login that `saml2.username-pattern` produces and never by email, and `jhi_user.email` is not unique: an address stored on an older release can be shared between accounts or recycled from a former owner, so an email match can select more than one row, or the wrong one. Clearing the internal flag on the wrong row changes that account's authentication route and locks its owner out of the password form, the password reset function, and password-based Git access. Where the identity provider gives you nothing but an email address, leave that account out of the update and confirm its identity in **Administration → User management** first. See [User Email Uniqueness](./user-email-uniqueness) for finding and resolving the duplicates an instance already has, and point `saml2.username-pattern` at a stable, globally unique identity provider attribute so that the login remains a reliable key.
+  Do not fall back to matching on `email`. Artemis identifies a SAML2 user by the login that `saml2.username-pattern` produces and never by email, and `jhi_user.email` is not unique: an address stored on an older release can be shared between accounts or recycled from a former owner, so an email match can select more than one row, or the wrong one. Clearing the internal flag on the wrong row changes that account's authentication route and locks its owner out of the password form, the password reset function, and password-based Git access. Where the identity provider gives you nothing but an email address, leave that account out of the update and confirm its identity in **Administration → Account → Users** first. See [User Email Uniqueness](./user-email-uniqueness) for finding and resolving the duplicates an instance already has, and point `saml2.username-pattern` at a stable, globally unique identity provider attribute so that the login remains a reliable key.
 </Callout>
 
 #### Clearing the Flag
 
-**For a few accounts**, open **Administration → User management**, edit the user, and clear the **Internal** checkbox.
+**For a few accounts**, open **Administration → Account → Users**, edit the user, and clear the **Internal** checkbox.
 
 **For many accounts**, update `jhi_user.is_internal` directly. Confirm that the `SELECT` above returns what you expect and that you have a backup, then run the update in a transaction:
 
@@ -229,6 +344,46 @@ Every Artemis pull request applies the baseline and the changelogs it summarises
 <Callout variant={CalloutVariant.info}>
   Ensure your database is backed up before performing any major version upgrade. Reverting to the previous release does not revert the schema, so a backup taken immediately before the migration is the only reliable way back.
 </Callout>
+
+### MySQL Character Set and Collation
+
+<Callout variant={CalloutVariant.warning}>
+  On MySQL, Artemis requires the character set `utf8mb4` with the collation `utf8mb4_unicode_ci`, and it requires them everywhere: for the server, for the `Artemis` database and its tables, and for every connection Artemis opens. Setting this up is the responsibility of the administrator. Artemis does not adapt its queries to a different collation.
+</Callout>
+
+The server gets the collation from the MySQL configuration, for example `--character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci`, and a database created afterwards inherits it. The connection does not: MySQL Connector/J connects with `utf8mb4_0900_ai_ci`, the MySQL default for `utf8mb4`, even when the server is configured with `utf8mb4_unicode_ci`. Set the connection collation in the JDBC URL with `connectionCollation=utf8mb4_unicode_ci`:
+
+```yaml
+spring:
+    datasource:
+        url: jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+```
+
+With the environment variable `SPRING_DATASOURCE_URL`, append the same parameter. Without it, the searches that match names, logins or titles fail with an error like the following, for example when searching for conversation members or course members:
+
+```text
+Illegal mix of collations (utf8mb4_unicode_ci,IMPLICIT), (utf8mb4_0900_ai_ci,IMPLICIT), (utf8mb4_0900_ai_ci,COERCIBLE) for operation 'like'
+```
+
+To check an installation, make sure the datasource URL of every node contains `connectionCollation=utf8mb4_unicode_ci`. Then check the defaults of the server and of the `Artemis` database, and the collation of its tables and text columns:
+
+```sql
+SHOW VARIABLES WHERE Variable_name IN ('character_set_server', 'collation_server');
+SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = 'Artemis';
+SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'Artemis' AND TABLE_COLLATION <> 'utf8mb4_unicode_ci';
+SELECT TABLE_NAME, COLUMN_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'Artemis' AND COLLATION_NAME IS NOT NULL AND COLLATION_NAME <> 'utf8mb4_unicode_ci';
+```
+
+- The first two queries should return `utf8mb4` and `utf8mb4_unicode_ci`. The server defaults matter even when the database is correct: with `createDatabaseIfNotExist=true`, a recreated `Artemis` database takes them over.
+- The other two should return no rows. A column can declare its own collation, so it can deviate even when its table does not. The Artemis schema declares no column collation, so a deviating column was changed outside of Artemis.
+
+The server configuration only applies when a database is created, so changing it later leaves the default of an existing `Artemis` database as it was. If that default differs, change it with the following statement. It applies to the tables that later migrations create and does not convert existing tables:
+
+```sql
+ALTER DATABASE Artemis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+PostgreSQL installations are not affected.
 
 ## Technical Details
 

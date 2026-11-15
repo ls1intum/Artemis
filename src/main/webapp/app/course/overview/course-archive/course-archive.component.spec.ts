@@ -11,8 +11,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CourseArchiveComponent } from 'app/course/overview/course-archive/course-archive.component';
@@ -48,8 +46,6 @@ describe('CourseArchiveComponent', () => {
                 SearchFilterComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseCardHeaderComponent),
             ],
@@ -110,8 +106,13 @@ describe('CourseArchiveComponent', () => {
             expect(component.archiveGroups().at(-1)).toBe('testCourses');
 
             fixture.changeDetectorRef.detectChanges();
-            const testCourseGroup = fixture.debugElement.nativeElement.querySelector('#semester-group-5');
+            const testCourseGroup: HTMLButtonElement = fixture.debugElement.nativeElement.querySelector('#semester-group-5');
+            expect(testCourseGroup.tagName).toBe('BUTTON');
+            expect(testCourseGroup.type).toBe('button');
+            expect(testCourseGroup.getAttribute('aria-expanded')).toBe('true');
             testCourseGroup.click();
+            fixture.detectChanges();
+            expect(testCourseGroup.getAttribute('aria-expanded')).toBe('false');
 
             expect(component.semesterCollapsed().testCourses).toBe(true);
         });

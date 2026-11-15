@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 
@@ -25,7 +26,8 @@ class RecipientDTONameTest {
         user.setLastName(lastName);
 
         assertThat(MailRecipientDTO.from(user).getName()).isEqualTo(expected);
-        assertThat(MailRecipientDTO.withRecoveryKey(user, "activation", null).getName()).isEqualTo(expected);
+        assertThat(MailRecipientDTO.withResetKeyFrom(user, new PasswordResetKeyDTO("a", "s")).getName()).isEqualTo(expected);
+        assertThat(MailRecipientDTO.withActivationKeyFrom(user, "activation").getName()).isEqualTo(expected);
         assertThat(CourseNotificationRecipientDTO.from(user).getName()).isEqualTo(expected);
     }
 }

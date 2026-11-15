@@ -1,6 +1,6 @@
 import { Component, HostListener, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,7 +9,7 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface ChartClickEvent {
     name: string;
@@ -21,7 +21,7 @@ interface ChartClickEvent {
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
     styleUrls: ['./participant-score-distribution.component.scss'],
-    imports: [TumUiBarChartComponent, TranslateDirective, HelpIconComponent],
+    imports: [TumAetUiBarChartComponent, TranslateDirective, HelpIconComponent],
 })
 export class ParticipantScoresDistributionComponent implements OnInit {
     private gradingService = inject(GradingService);
@@ -83,7 +83,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     private readonly resolvedColors = computed(() => this.chartColors());
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         xAxis: { label: this.xAxisLabel() },
         yAxis: { label: this.showYAxisLabel() ? this.yAxisLabel() : undefined, max: this.yScaleMax() },
         tooltip: {
@@ -390,7 +390,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     /**
      * Re-emits chart bar clicks in the shape previously provided by ngx-charts.
      */
-    onChartSelect(event: TumUiChartSelectEvent): void {
+    onChartSelect(event: TumAetUiChartSelectEvent): void {
         if (event.label !== undefined && event.value !== undefined) {
             this.onSelect.emit({ name: event.label, value: event.value, label: event.label });
         }

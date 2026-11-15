@@ -8,11 +8,9 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.RefSpec;
@@ -29,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
 /**
  * Unit tests for the repository state inspection in {@link GitService}.
  * <p>
- * {@link GitService#isBareRepositoryHealthy} decides whether a repository on disk can be served or has to be repaired, so it has to tell three states apart: a usable
+ * {@link BareGitRepositoryService#isBareRepositoryHealthy} decides whether a repository on disk can be served or has to be repaired, so it has to tell three states apart: a usable
  * repository, an "unborn" one that was created but never received a branch, and a directory that is not a git repository at all. {@link GitService#setRemoteUrl} rewrites the
  * remote of a checked out repository, which has to happen only when the remote actually changed.
  */
@@ -44,10 +42,14 @@ class GitServiceRepositoryStateTest {
 
     private GitService gitService;
 
+    private BareGitRepositoryService bareGitRepositoryService;
+
     @BeforeEach
     void setUp() {
         gitService = new GitService();
         ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
     }
 
     private LocalVCRepositoryUri uriFor(String repositorySlug) {
@@ -63,7 +65,7 @@ class GitServiceRepositoryStateTest {
         // A bare repository only gets a branch once something is pushed to it.
         checkoutOf("abc-exercise").close();
 
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-exercise"))).as("a repository with a branch is healthy").isTrue();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-exercise"))).as("a repository with a branch is healthy").isTrue();
     }
 
     @Test
@@ -73,7 +75,7 @@ class GitServiceRepositoryStateTest {
         Files.createDirectories(repositoryPath);
         Git.init().setDirectory(repositoryPath.toFile()).setBare(true).setInitialBranch("main").call().close();
 
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-unborn"))).as("a repository without any branch is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-unborn"))).as("a repository without any branch is not healthy").isFalse();
     }
 
     @Test
@@ -83,12 +85,12 @@ class GitServiceRepositoryStateTest {
         Files.createDirectories(repositoryPath.resolve("refs").resolve("heads"));
         Files.createDirectories(repositoryPath.resolve("objects"));
 
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-corrupt"))).as("a directory that is not a git repository is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-corrupt"))).as("a directory that is not a git repository is not healthy").isFalse();
     }
 
     @Test
     void isBareRepositoryHealthy_withAMissingDirectory_isNotHealthy() {
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-missing"))).as("a repository that does not exist is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-missing"))).as("a repository that does not exist is not healthy").isFalse();
     }
 
     @Test
@@ -98,7 +100,7 @@ class GitServiceRepositoryStateTest {
         FileUtils.write(repositoryPath.toFile(), "not a directory", StandardCharsets.UTF_8);
 
         // A plain file cannot be opened as a repository, which JGit reports as "not found" rather than as an I/O error, so the health check reports it as unhealthy.
-        assertThat(gitService.isBareRepositoryHealthy(uriFor("abc-file"))).as("a file where the repository should be is not healthy").isFalse();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(uriFor("abc-file"))).as("a file where the repository should be is not healthy").isFalse();
     }
 
     @Test
@@ -169,6 +171,21 @@ class GitServiceRepositoryStateTest {
         Path workingCopy = baseDir.resolve("checkout-" + repositorySlug);
         Git.cloneRepository().setURI(bare.toUri().toString()).setDirectory(workingCopy.toFile()).call().close();
         return new Repository(workingCopy.resolve(".git").toString(), uriFor(repositorySlug));
+    }
+
+    @Test
+    void getOrCheckoutRepository_withAnIncompleteWorkingCopy_clonesTheRepositoryAgain() throws Exception {
+        checkoutOf("abc-incomplete").close();
+        // The skeleton a partially failed deletion leaves behind: the git directory still has objects, but no HEAD and no config.
+        Path workingCopy = baseDir.resolve("incomplete-working-copy");
+        Files.createDirectories(workingCopy.resolve(".git").resolve("refs").resolve("heads"));
+        Files.createDirectories(workingCopy.resolve(".git").resolve("objects").resolve("pack"));
+        FileUtils.write(workingCopy.resolve(".git").resolve("objects").resolve("pack").resolve(".nfs0000000000000001").toFile(), "leftover", StandardCharsets.UTF_8);
+
+        try (Repository repository = gitService.getOrCheckoutRepositoryWithLocalPath(uriFor("abc-incomplete"), workingCopy, true, false)) {
+            assertThat(repository.resolve(Constants.HEAD)).as("the working copy is cloned again and has a HEAD").isNotNull();
+            assertThat(workingCopy.resolve("README.md")).as("the files of the repository are checked out").exists();
+        }
     }
 
     @Test
@@ -243,36 +260,20 @@ class GitServiceRepositoryStateTest {
     }
 
     @Test
-    void getOrCheckoutRepository_whileTheSamePathIsBeingCloned_givesUpInsteadOfCloningTwice() {
-        // A second clone into a directory that a clone is already writing to would corrupt it, so the service waits and then refuses.
-        LocalVCRepositoryUri repositoryUri = uriFor("abc-busy");
-        Path localPath = gitService.getLocalPathOfRepo(baseDir, repositoryUri);
-        Map<Path, Path> cloneInProgress = (Map<Path, Path>) ReflectionTestUtils.getField(gitService, "cloneInProgressOperations");
-        cloneInProgress.put(localPath, localPath);
-        try {
-            assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithTargetPath(repositoryUri, baseDir, true, true))
-                    .withMessageContaining("Cannot clone the same repository multiple times");
+    void ordinaryCloneFollowsRemoteHeadWhileAuthoringRequiresItsSelectedBranch() throws Exception {
+        String slug = "abc-branch-selection";
+        try (Repository repository = checkoutOf(slug); Git git = new Git(repository)) {
+            git.branchCreate().setName("release").call();
+            git.push().setRefSpecs(new RefSpec("refs/heads/release:refs/heads/release")).call();
         }
-        finally {
-            cloneInProgress.remove(localPath);
+        var uri = uriFor(slug);
+        try (Repository ordinary = gitService.getOrCheckoutRepository(uri, uri, baseDir.resolve("ordinary"), false, "not-in-source", false)) {
+            assertThat(ordinary.getBranch()).isEqualTo(DEFAULT_BRANCH);
         }
-    }
-
-    @Test
-    void getOrCheckoutRepository_whenWaitingForABusyPathIsInterrupted_reportsTheCancellation() {
-        LocalVCRepositoryUri repositoryUri = uriFor("abc-interrupted");
-        Path localPath = gitService.getLocalPathOfRepo(baseDir, repositoryUri);
-        Map<Path, Path> cloneInProgress = (Map<Path, Path>) ReflectionTestUtils.getField(gitService, "cloneInProgressOperations");
-        cloneInProgress.put(localPath, localPath);
-        try {
-            Thread.currentThread().interrupt();
-            assertThatExceptionOfType(CanceledException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithTargetPath(repositoryUri, baseDir, true, true))
-                    .withMessageContaining("interrupted");
+        try (Repository selected = gitService.getOrCheckoutRepositoryOnBranch(uri, baseDir.resolve("selected"), "release")) {
+            assertThat(selected.getBranch()).isEqualTo("release");
         }
-        finally {
-            Thread.interrupted();
-            cloneInProgress.remove(localPath);
-        }
+        assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryOnBranch(uri, baseDir.resolve("missing-branch"), "not-in-source"));
     }
 
     /**

@@ -28,10 +28,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
@@ -150,30 +147,6 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testEnforceAtLeastInstructorAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastInstructor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
-                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
-        rule.check(productionClasses);
-    }
-
-    @Test
-    void testEnforceAtLeastEditorAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastEditor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAnyPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
-                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
-        rule.check(productionClasses);
-    }
-
-    @Test
-    void testEnforceAtLeastTutorAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastTutor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
-                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
-        rule.check(productionClasses);
-    }
-
-    @Test
     void testEnforceAtLeastStudentAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastStudent.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
                 .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
@@ -218,8 +191,8 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
      * with X THEN it must live in package P") and do not catch an endpoint that carries NO authorization annotation at
      * all — this rule closes that gap.
      * <p>
-     * The check is class- and meta-annotation aware: it accepts method-level enforcement (all {@code @EnforceAtLeast*}
-     * gates and the composed {@code @EnforceAtLeast*In{Course,Exercise,Lecture,LectureUnit}} variants meta-carry
+     * The check is class- and meta-annotation aware: it accepts method-level enforcement ({@code @EnforceAtLeastStudent}
+     * and the composed {@code @EnforceAtLeast*In{Course,Exercise,Lecture,LectureUnit}} variants meta-carry
      * {@code @PreAuthorize}), class-level enforcement (the admin module's class-level {@code @EnforceAdmin} —
      * complementing {@code AbstractModuleResourceArchitectureTest#testNoOverrideOfEnforceAdmin}), and the {@code @Internal}
      * / {@code @ManualConfig} markers. The few endpoints that authorize without an annotation are listed in
@@ -246,14 +219,14 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
                     return;
                 }
                 events.add(violated(method, method.getFullName()
-                        + " is a REST endpoint without an authorization annotation. Add @EnforceAtLeastStudent/Tutor/Editor/Instructor (optionally the In{Course,Exercise,Lecture,LectureUnit} variant), @EnforceAdmin, @EnforceNothing (genuinely public), or @ManualConfig (authorization handled in the method body)."));
+                        + " is a REST endpoint without an authorization annotation. Add @EnforceAtLeastStudent, an @EnforceAtLeast{Student,Tutor,Editor,Instructor}In{Course,Exercise,Lecture,LectureUnit} annotation, @EnforceAdmin, @EnforceNothing (genuinely public), or @ManualConfig (authorization handled in the method body)."));
             }
         };
     }
 
     private static boolean isAuthorized(JavaMethod method) {
         JavaClass owner = method.getOwner();
-        // The @EnforceAtLeast* gates, @EnforceAdmin/@EnforceSuperAdmin, @EnforceNothing, @Internal and the composed
+        // @EnforceAtLeastStudent, @EnforceAdmin/@EnforceSuperAdmin, @EnforceNothing, @Internal and the composed
         // @EnforceAtLeast*In{Course,Exercise,Lecture,LectureUnit} annotations all meta-carry @PreAuthorize; class-level
         // enforcement (e.g. the admin module's class-level @EnforceAdmin) is covered by checking the declaring class.
         return method.isMetaAnnotatedWith(PreAuthorize.class) || owner.isMetaAnnotatedWith(PreAuthorize.class) || method.isAnnotatedWith(ManualConfig.class)

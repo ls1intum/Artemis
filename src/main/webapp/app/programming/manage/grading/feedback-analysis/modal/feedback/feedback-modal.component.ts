@@ -11,11 +11,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [TranslateDirective, CommonModule],
 })
 export class FeedbackModalComponent implements OnInit {
+    activeModal = inject(NgbActiveModal);
+    longFeedbackTextService = inject(LongFeedbackTextService);
+
     feedbackDetail = input.required<FeedbackDetail>();
     longFeedbackText = signal<string>('');
 
-    activeModal = inject(NgbActiveModal);
-    longFeedbackTextService = inject(LongFeedbackTextService);
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
 
     ngOnInit(): void {

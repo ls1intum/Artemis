@@ -36,6 +36,7 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/team-practice-hint/team-practice-hint.component';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
@@ -62,6 +63,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         ArtemisTranslatePipe,
         DiscussionSectionComponent,
         PanelModule,
+        TeamPracticeHintComponent,
     ],
 })
 export class ExerciseSplitPanelComponent {
@@ -114,6 +116,8 @@ export class ExerciseSplitPanelComponent {
     readonly irisEnabled = input<boolean>(false);
     readonly courseId = input.required<number>();
     readonly gradedStudentParticipation = input<StudentParticipation>();
+    /** The practice participation of the student, which tells the details whether practice can still be started. */
+    readonly practiceParticipation = input<StudentParticipation>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly latestRatedResult = input<Result>();
     readonly resultWithComplaint = input<Result>();
@@ -260,6 +264,9 @@ export class ExerciseSplitPanelComponent {
                 const type = exercise.type;
                 if (type === ExerciseType.QUIZ) {
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                    // The bare exercise URL is only an entry point. Keeping it in history makes Back reopen it and
+                    // immediately redirect to the quiz again. A switch from an active mode remains a user navigation.
+                    const replaceUrl = currentSegment === undefined;
                     if (mode === 'practice') {
                         // Already on a practice route — either viewing a result or a fresh attempt is in progress.
                         // Do not re-navigate, so an in-progress attempt is never disrupted.
@@ -270,12 +277,12 @@ export class ExerciseSplitPanelComponent {
                         // otherwise start the first attempt. Gate on testRun so we never navigate with a graded participation id.
                         const practiceParticipationId = participation?.testRun ? participation.id : undefined;
                         if (practiceParticipationId) {
-                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent });
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent, replaceUrl });
                         } else {
-                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent });
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent, replaceUrl });
                         }
                     } else if (currentSegment !== 'live') {
-                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent });
+                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent, replaceUrl });
                     }
                     return;
                 }
@@ -332,7 +339,8 @@ export class ExerciseSplitPanelComponent {
         }
         const component = outlet.component;
         if (isExerciseSubmission(component)) {
-            component.submitExercise();
+            // The participation component owns saving state and reports submission errors.
+            void component.submitExercise();
         }
     }
 

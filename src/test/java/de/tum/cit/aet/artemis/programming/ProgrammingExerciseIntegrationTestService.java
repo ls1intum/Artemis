@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -100,6 +101,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -107,6 +109,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
@@ -117,6 +120,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDT
 import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -169,6 +173,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -247,6 +257,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     public ProgrammingExercise programmingExercise;
 
+    /** The configuration {@link #programmingExercise} is stored with; the exercise does not carry it. */
+    private ProgrammingExerciseBuildConfig buildConfig;
+
     private ProgrammingExercise programmingExerciseInExam;
 
     private ProgrammingExerciseStudentParticipation participation1;
@@ -276,10 +289,11 @@ public class ProgrammingExerciseIntegrationTestService {
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(userPrefix);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+        // The configuration is a row of its own and is not loaded with the exercise.
+        buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
         programmingExerciseInExam = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(userPrefix);
-        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
-                .orElseThrow();
+        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseInExam.getId()).orElseThrow();
 
         participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
@@ -376,7 +390,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         return unzipExportedFile();
@@ -428,7 +442,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 + String.join(",", List.of(participation.get().getId().toString()));
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         // Read exported project files and assert participant identifier appended
@@ -468,7 +482,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // addParticipantName is on, so the export tries to rename the project and runs into the unparseable files
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         // The export still succeeds, and the files it could not rename are exported unchanged instead of being corrupted or dropped.
@@ -494,7 +508,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // all options false by default, only test if export works at all
         var exportOptions = new RepositoryExportOptionsDTO();
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         List<Path> entries = unzipExportedFile();
@@ -605,7 +619,8 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
@@ -620,7 +635,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
@@ -635,7 +652,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
@@ -650,7 +668,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     // VCS project deletion uses local VCS in the test environment, so no external call fails.
@@ -667,7 +687,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     // VCS repository deletion uses local VCS in the test environment, so no external call fails.
@@ -684,13 +705,14 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
-    void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
+    void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
-        request.delete(path, HttpStatus.NOT_FOUND);
+        request.delete(path, HttpStatus.FORBIDDEN);
     }
 
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
@@ -803,10 +825,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
     }
 
-    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
-        request.get(path, HttpStatus.NOT_FOUND, ProgrammingExerciseResponseDTO.class);
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
     }
 
     void testGetProgrammingExercisesForCourse() throws Exception {
@@ -832,12 +854,11 @@ public class ProgrammingExerciseIntegrationTestService {
         // Wire base repositories in LocalVC and ensure tests repo has the expected directory
         var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
 
         // Use the tests repository handle from base repos
         var testsRepo = baseRepos.testsRepository();
         String testsPath = java.nio.file.Path.of("test", programmingExercise.getPackageFolderName()).toString();
-        if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
+        if (buildConfig.hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
         }
         // Create tests path in tests repo so generator can write test.json (same approach as ProgrammingExerciseLocalVCExportsIntegrationTest)
@@ -857,23 +878,27 @@ public class ProgrammingExerciseIntegrationTestService {
     void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false, false);
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
                 INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
     void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        var storedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
         programmingExercise.setId(null);
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, storedBuildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         // both values are not set --> bad request
         programmingExercise.setCourse(null);
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST);
         // both values are set --> bad request
         programmingExerciseInExam.setCourse(course);
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExerciseInExam), HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExerciseInExam, programmingExerciseUtilService.buildConfigOf(programmingExerciseInExam)), HttpStatus.BAD_REQUEST);
     }
 
     void updateProgrammingExercise_correctlySavesTestIds() throws Exception {
@@ -887,7 +912,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         var response = request.putWithResponseBody("/api/programming/programming-exercises",
-                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
         assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
@@ -902,7 +928,8 @@ public class ProgrammingExerciseIntegrationTestService {
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST);
     }
 
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
@@ -910,17 +937,20 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST);
     }
 
     void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.FORBIDDEN);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
     void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
                 INVALID_TEMPLATE_REPOSITORY_URL);
     }
 
@@ -930,7 +960,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false, false);
 
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
                 INVALID_SOLUTION_BUILD_PLAN_ID);
     }
 
@@ -939,14 +970,16 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
                 INVALID_SOLUTION_REPOSITORY_URL);
     }
 
     void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
-        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
                 INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
@@ -966,7 +999,8 @@ public class ProgrammingExerciseIntegrationTestService {
         newProgrammingExercise.setCourse(newCourse);
 
         // Programming exercise update with the new course should fail.
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(newProgrammingExercise), HttpStatus.CONFLICT);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(newProgrammingExercise, programmingExerciseUtilService.buildConfigOf(newProgrammingExercise)), HttpStatus.CONFLICT);
     }
 
     /**
@@ -978,7 +1012,8 @@ public class ProgrammingExerciseIntegrationTestService {
         ProgrammingExercise updatedExercise = programmingExercise;
         updatedExercise.setStaticCodeAnalysisEnabled(true);
 
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(updatedExercise), HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(updatedExercise, programmingExerciseUtilService.buildConfigOf(updatedExercise)),
+                HttpStatus.BAD_REQUEST);
     }
 
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
@@ -996,7 +1031,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
         assertThat(programmingExercise.getDueDate()).isNotNull();
         programmingExercise.setReleaseDate(programmingExercise.getDueDate().minusDays(1));
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.OK);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.OK);
 
         {
             final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
@@ -1022,7 +1058,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
         programmingExercise.setDueDate(null);
         programmingExercise.setAssessmentDueDate(null);
-        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.OK);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.OK);
 
         {
             final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
@@ -1058,10 +1095,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
-    void updateProblemStatement_invalidId_notFound() throws Exception {
+    void updateProblemStatement_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
-        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
+        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
     void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
@@ -1069,43 +1106,43 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_idIsNotNull_badRequest() throws Exception {
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        request.post("/api/programming/programming-exercises/setup", programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExerciseInExam, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExercise.setId(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.FORBIDDEN);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.FORBIDDEN);
     }
 
     void createProgrammingExercise_titleNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("abc?=§ ``+##");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
         programmingExercise.setShortName("hi");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
         // Reject short names exceeding PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH (36); 37 chars must fail.
         programmingExercise.setShortName("a".repeat(37));
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
@@ -1113,10 +1150,10 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         course.setShortName(null);
         courseRepository.save(course);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
         course.setShortName("Hi");
         courseRepository.save(course);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest() throws Exception {
@@ -1125,61 +1162,62 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setMaxStaticCodeAnalysisPenalty(null);
-        programmingExercise.getBuildConfig().setCheckoutSolutionRepository(false);
+        buildConfig.setCheckoutSolutionRepository(false);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("emptyRepositories", "true");
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", programmingExercise, ProgrammingExercise.class, params, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), ProgrammingExercise.class,
+                params, HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseInExam.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setId(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExerciseInExam, HttpStatus.BAD_REQUEST);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExerciseInExam, buildConfig), HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("asdb ³¼²½¼³`` ");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         programmingExercise.setProgrammingLanguage(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("..asd. ß?");
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("abc.final.xyz");
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("eist.2020something");
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName(null);
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_packageNameIsTooLong_badRequest() throws Exception {
@@ -1187,7 +1225,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("testShortName");
         programmingExercise.setPackageName("a".repeat(MAX_PACKAGE_NAME_LENGTH + 1));
         request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
-                .content(request.getObjectMapper().writeValueAsString(programmingExercise))).andExpect(status().isBadRequest())
+                .content(request.getObjectMapper().writeValueAsString(CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig)))).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorKey").value("packagenameTooLong"));
     }
 
@@ -1195,14 +1233,14 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(null);
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setAllowOfflineIde(false);
         programmingExercise.setAllowOnlineEditor(false);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
@@ -1210,7 +1248,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest() throws Exception {
@@ -1218,8 +1256,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        buildConfig.setSequentialTestRuns(true);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest() throws Exception {
@@ -1229,7 +1267,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.programmingLanguage(ProgrammingLanguage.C);
         programmingExercise.setProjectType(ProjectType.FACT);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest() throws Exception {
@@ -1238,7 +1276,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setMaxStaticCodeAnalysisPenalty(20);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest() throws Exception {
@@ -1247,21 +1285,21 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.setMaxStaticCodeAnalysisPenalty(-20);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
@@ -1272,7 +1310,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // short name and the exercise short name, so the mock has to be set up for the derived key
         programmingExercise.forceNewProjectKey();
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, true);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_projectTypeMissing_badRequest() throws Exception {
@@ -1281,7 +1319,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
@@ -1290,7 +1328,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
@@ -1300,7 +1338,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.SWIFT);
         programmingExercise.setProjectType(ProjectType.XCODE);
         programmingExercise.setAllowOnlineEditor(true);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
@@ -1308,14 +1346,24 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.getBuildConfig().setCheckoutSolutionRepository(true);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        buildConfig.setCheckoutSolutionRepository(true);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(0.0);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_notIncludedZeroMaxScore_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        programmingExercise.setMaxPoints(0.0);
+        // The error key tells the rejected points apart from the title of the fixture, which already exists in the course and is checked later.
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig)))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("maxScoreInvalid"));
     }
 
     void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
@@ -1323,7 +1371,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
@@ -1331,7 +1379,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
@@ -1453,7 +1501,7 @@ public class ProgrammingExerciseIntegrationTestService {
         String problemStatement = "[task][Taskname](test1)";
         programmingExercise.setProblemStatement(problemStatementWithId);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
 
         String sourceId = programmingExercise.getId().toString();
 
@@ -1492,8 +1540,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 
-    void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
-        request.put("/api/programming/programming-exercises/" + (programmingExercise.getId() + 8337) + "/generate-tests", programmingExercise, HttpStatus.NOT_FOUND);
+    void generateStructureOracleForExercise_exerciseDoesNotExist_forbidden() throws Exception {
+        request.put("/api/programming/programming-exercises/" + (programmingExercise.getId() + 8337) + "/generate-tests", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
@@ -1510,8 +1558,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
-        request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.NOT_FOUND, String.class);
+    void getTestCaseState_exerciseDoesNotExist_forbidden() throws Exception {
+        request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
 
     void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
@@ -1556,7 +1604,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_asInstrutor() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -1579,7 +1627,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
 
@@ -1594,10 +1642,10 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(testCasesResponse).isNotNull();
     }
 
-    void updateTestCases_nonExistingExercise_notFound() throws Exception {
+    void updateTestCases_nonExistingExercise_forbidden() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
-        request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
+        request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
@@ -1666,7 +1714,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void resetTestCaseWeights_asInstructor() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
@@ -1675,10 +1723,11 @@ public class ProgrammingExerciseIntegrationTestService {
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        // Resetting plus versioning takes 27 queries; mapping the reset test cases must not pull their exercise or tasks back in
+        // Resetting plus versioning takes 31 queries and the global search lookup of the exercise's channel one more; mapping the reset test cases must not
+        // pull their exercise or tasks back in
         final var testCasesResponse = QueryCountAssert
                 .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
-                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(30);
+                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(32);
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var expectedTestCases = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
 
@@ -1933,7 +1982,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        PlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.NOT_FOUND, PlagiarismResult.class);
+        PlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.FORBIDDEN, PlagiarismResult.class);
         assertThat(result).isNull();
     }
 
@@ -2004,7 +2053,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
-        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, List.class);
+        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.FORBIDDEN, List.class);
     }
 
     void testGetAuxiliaryRepositoriesOk() throws Exception {
@@ -2044,7 +2093,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testResetExerciseNotFound() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
+        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
@@ -2057,7 +2106,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+        request.put(defaultResetEndpoint(programmingExercise.getId()) + "-participations", resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
@@ -2148,7 +2197,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
         programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(body));
-        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
         request.putWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), updateDTO, ProgrammingExercise.class, expectedStatus);
     }
 
@@ -2225,20 +2274,34 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
-        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise),
-                HttpStatus.FORBIDDEN);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
-        request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.NOT_FOUND);
+    void testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden() throws Exception {
+        request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
         ProgrammingExercise programmingExerciseToBeConflicted = createCourseWithProgrammingExerciseForReEvaluation();
 
-        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted),
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted, programmingExerciseUtilService.buildConfigOf(programmingExerciseToBeConflicted)),
                 HttpStatus.CONFLICT);
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_changedShortName_badRequest() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        String originalShortName = programmingExercise.getShortName();
+        // the DTO is built from the changed values of the entity, which is not saved
+        programmingExercise.setShortName(originalShortName + "x");
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", updateDTO, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseTestRepository.findById(programmingExercise.getId()).orElseThrow().getShortName()).isEqualTo(originalShortName);
     }
 
     /**

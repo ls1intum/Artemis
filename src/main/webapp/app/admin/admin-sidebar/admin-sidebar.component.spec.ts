@@ -30,6 +30,38 @@ describe('AdminSidebarComponent', () => {
         fixture.detectChanges();
     });
 
+    it('offers a single AI Generation destination', () => {
+        fixture.componentRef.setInput('hyperionGenerationEnabled', true);
+        fixture.detectChanges();
+        const workerEntries = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .filter((item) => item.routerLink === '/admin/ai-generation');
+        expect(workerEntries()).toHaveLength(1);
+        expect(workerEntries()[0].testId).toBe('admin-ai-generation');
+    });
+
+    it('offers worker monitoring without Hyperion generation', () => {
+        fixture.componentRef.setInput('aiWorkerEnabled', true);
+        fixture.detectChanges();
+        expect(
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .some((item) => item.routerLink === '/admin/ai-generation'),
+        ).toBe(true);
+    });
+
+    it('hides AI Generation when both modules are disabled', () => {
+        expect(
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .some((item) => item.routerLink === '/admin/ai-generation'),
+        ).toBe(false);
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -39,10 +71,12 @@ describe('AdminSidebarComponent', () => {
         expect(component.localCIActive()).toBe(false);
         expect(component.ltiEnabled()).toBe(false);
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
+        expect(component.scienceEnabled()).toBe(false);
         expect(component.atlasEnabled()).toBe(false);
         expect(component.examEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
+        expect(component.weaviateEnabled()).toBe(false);
     });
 
     it('should generate sidebar groups', () => {
@@ -72,6 +106,21 @@ describe('AdminSidebarComponent', () => {
         expect(buildSystemGroup).toBeFalsy();
     });
 
+    it('should include the ingestion dashboard item only when weaviateEnabled is true', () => {
+        const findIngestionItem = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .find((item) => item.testId === 'admin-course-ingestion-dashboard');
+
+        expect(findIngestionItem()).toBeFalsy();
+
+        fixture.componentRef.setInput('weaviateEnabled', true);
+        fixture.detectChanges();
+
+        expect(findIngestionItem()).toBeTruthy();
+    });
+
     it('should emit toggleCollapseState when called', () => {
         const toggleSpy = vi.spyOn(component.toggleCollapseState, 'emit');
         component.toggleCollapseState.emit();
@@ -92,6 +141,28 @@ describe('AdminSidebarComponent', () => {
         expect(passkeyManagementItem).toBeTruthy();
         expect(passkeyManagementItem!.translation).toBe('global.menu.admin.sidebar.passkeyManagement');
         expect(passkeyManagementItem!.testId).toBe('admin-passkey-management');
+    });
+
+    it('should include science link when atlas and science are enabled', () => {
+        fixture.componentRef.setInput('atlasEnabled', true);
+        fixture.componentRef.setInput('scienceEnabled', true);
+        fixture.detectChanges();
+
+        const contentGroup = component.sidebarGroups().find((g) => g.translation === 'global.menu.admin.groups.contentAndLearning');
+        const scienceItem = contentGroup!.items.find((i) => i.routerLink === '/admin/science');
+
+        expect(scienceItem).toBeTruthy();
+        expect(scienceItem!.translation).toBe('global.menu.admin.sidebar.science');
+    });
+
+    it('should not include science link when science is disabled', () => {
+        fixture.componentRef.setInput('atlasEnabled', true);
+        fixture.componentRef.setInput('scienceEnabled', false);
+        fixture.detectChanges();
+
+        const contentGroup = component.sidebarGroups().find((g) => g.translation === 'global.menu.admin.groups.contentAndLearning');
+
+        expect(contentGroup!.items.find((i) => i.routerLink === '/admin/science')).toBeFalsy();
     });
 
     it('should not include passkey management link when passkey is not enabled', () => {

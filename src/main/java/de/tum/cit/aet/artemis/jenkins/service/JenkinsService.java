@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Profile(PROFILE_JENKINS)
 @Lazy
 @Service
@@ -80,9 +81,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        // Make sure the build config is loaded
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 
@@ -125,7 +123,11 @@ public class JenkinsService implements ContinuousIntegrationService {
             return null;
         }
 
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        var exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return null;
+        }
+        final var projectKey = exercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
         return jenkinsBuildPlanService.getBuildStatusOfPlan(projectKey, planKey);
     }

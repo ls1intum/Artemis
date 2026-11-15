@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, throwError } from 'rxjs';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject, of, throwError } from 'rxjs';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { By } from '@angular/platform-browser';
@@ -17,21 +16,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
     let component: ExamLiveAnnouncementCreateModalComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateModalComponent>;
-    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
-    let dialogRef: DynamicDialogRef;
     let mockExamManagementService: ExamManagementService;
 
     beforeEach(async () => {
-        dialogRefCloseSpy = vi.fn();
-        dialogRef = {
-            close: dialogRefCloseSpy,
-            onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-
         await TestBed.configureTestingModule({
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: { examId: 1, courseId: 2 } } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -41,19 +30,75 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateModalComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('examId', 1);
+        fixture.componentRef.setInput('courseId', 2);
         global.ResizeObserver = MockResizeObserver as any;
         mockExamManagementService = TestBed.inject(ExamManagementService);
+        vi.spyOn(mockExamManagementService, 'getAnnouncements').mockReturnValue(of([]));
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize component with default properties from dialog config', () => {
+    it('should initialize component with the given ids', () => {
         fixture.detectChanges();
         expect(component.status()).toBe('not_submitted');
-        expect(component.examId).toBe(1);
-        expect(component.courseId).toBe(2);
+        expect(component.examId()).toBe(1);
+        expect(component.courseId()).toBe(2);
+        expect(component.visible()).toBe(true);
+    });
+
+    it('should replace history after sending and show the sent event only once', () => {
+        const past = { id: 5, text: 'Earlier announcement' } as ExamWideAnnouncementEvent;
+        const sent = { id: 6, text: 'New announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements)
+            .mockReturnValueOnce(of([past]))
+            .mockReturnValueOnce(of([sent, past]));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of(sent));
+        fixture.detectChanges();
+        expect(component.pastAnnouncements()).toEqual([past]);
+        component.submitAnnouncement();
+        fixture.detectChanges();
+        expect(component.pastAnnouncements()).toEqual([sent, past]);
+        expect(fixture.debugElement.queryAll(By.css('jhi-exam-live-event'))).toHaveLength(2);
+    });
+
+    it.each(['success', 'error'])('should ignore an outdated history %s after the refreshed history arrives', (outcome) => {
+        const initial = new Subject<ExamWideAnnouncementEvent[]>();
+        const refresh = new Subject<ExamWideAnnouncementEvent[]>();
+        const sent = { id: 6, text: 'Sent announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements).mockReturnValueOnce(initial).mockReturnValueOnce(refresh);
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of(sent));
+        fixture.detectChanges();
+        component.submitAnnouncement();
+        refresh.next([sent]);
+        if (outcome === 'success') {
+            initial.next([]);
+        } else {
+            initial.error(new Error('Old failure'));
+        }
+        expect(component.pastAnnouncements()).toEqual([sent]);
+        expect(component.historyLoadingFailed()).toBe(false);
+    });
+
+    it('should show an empty history message', () => {
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.examManagement.announcementCreate.historyEmpty"]'))).toBeTruthy();
+    });
+
+    it('should show a history error and retain the sent event when refreshing fails', () => {
+        const sent = { id: 6, text: 'Sent announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements)
+            .mockReturnValueOnce(of([]))
+            .mockReturnValueOnce(throwError(() => new Error('Refresh failed')));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of(sent));
+        fixture.detectChanges();
+        component.submitAnnouncement();
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.examManagement.announcementCreate.historyFailed"]'))).toBeTruthy();
+        const event = fixture.debugElement.query(By.css('jhi-exam-live-event'));
+        expect(event.componentInstance.event()).toEqual(sent);
     });
 
     it('should update text content and announcement when textContentChanged() is called', () => {
@@ -64,7 +109,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     it('should close the dialog when clear() is called', () => {
         component.clear();
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
+        expect(component.visible()).toBe(false);
     });
 
     it('should handle successful announcement submission', () => {

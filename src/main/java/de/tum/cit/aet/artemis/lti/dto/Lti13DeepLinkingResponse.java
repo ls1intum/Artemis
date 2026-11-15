@@ -10,11 +10,6 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-
 /**
  * Represents the LTI 1.3 Deep Linking Response.
  * It encapsulates the necessary information to construct a valid deep linking response according to the LTI 1.3 specification.
@@ -34,7 +29,6 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  * @param messageType          The type of LTI message, for deep linking this is "LtiDeepLinkingResponse".
  * @param ltiVersion           The LTI version, for deep linking responses this is typically "1.3.0".
  * @param contentItems         The actual content items being linked.
- * @param deepLinkingSettings  A JSON object containing deep linking settings.
  * @param clientRegistrationId The client registration ID.
  * @param returnUrl            The URL to return to after deep linking is completed.
  */
@@ -42,10 +36,8 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) String aud, @JsonProperty(IdTokenClaimNames.ISS) String iss,
         @JsonProperty(IdTokenClaimNames.EXP) String exp, @JsonProperty(IdTokenClaimNames.IAT) String iat, @JsonProperty(IdTokenClaimNames.NONCE) String nonce,
         @JsonProperty(Claims.MSG) String message, @JsonProperty(Claims.LTI_DEPLOYMENT_ID) String deploymentId, @JsonProperty(Claims.MESSAGE_TYPE) String messageType,
-        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) List<Map<String, Object>> contentItems, JsonNode deepLinkingSettings,
-        String clientRegistrationId, String returnUrl) {
-
-    private static final JsonMapper objectMapper = JsonObjectMapper.get();
+        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) List<Map<String, Object>> contentItems, String clientRegistrationId,
+        String returnUrl) {
 
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
@@ -59,15 +51,16 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
      */
     public static Lti13DeepLinkingResponse from(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
-        JsonNode deepLinkingSettingsJson = objectMapper.convertValue(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS), JsonNode.class);
-        // asString(null): a malformed claim from a third-party LMS must not raise out of here — Jackson 3 throws on a
-        // non-string node where Jackson 2's asText() returned "".
-        String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asString(null);
+        // The claim comes from a third-party LMS: a return URL of an unexpected shape is rejected later like a missing one.
+        if (!(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS) instanceof Map<?, ?> deepLinkingSettings)) {
+            throw new IllegalArgumentException("Missing or invalid deep linking settings in ID token.");
+        }
+        String returnUrl = deepLinkingSettings.get(Claims.DEEPLINK_RETURN_URL_CLAIM) instanceof String url ? url : null;
 
         return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().getFirst(), String.valueOf(ltiIdToken.getExpiresAt()),
                 String.valueOf(ltiIdToken.getIssuedAt()), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",
                 ltiIdToken.getClaimAsString(Claims.LTI_DEPLOYMENT_ID), "LtiDeepLinkingResponse", "1.3.0", null,  // ContentItems needs to be set separately
-                deepLinkingSettingsJson, clientRegistrationId, returnUrl);
+                clientRegistrationId, returnUrl);
     }
 
     private static void validateClaims(OidcIdToken ltiIdToken) {
@@ -123,6 +116,6 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
      */
     public Lti13DeepLinkingResponse setContentItems(List<Map<String, Object>> contentItems) {
         return new Lti13DeepLinkingResponse(this.aud, this.iss, this.exp, this.iat, this.nonce, this.message, this.deploymentId, this.messageType, this.ltiVersion, contentItems,
-                this.deepLinkingSettings, this.clientRegistrationId, this.returnUrl);
+                this.clientRegistrationId, this.returnUrl);
     }
 }

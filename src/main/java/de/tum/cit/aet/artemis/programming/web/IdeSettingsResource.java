@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
 import de.tum.cit.aet.artemis.programming.domain.ide.UserIdeMapping;
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepo
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/ide-settings")
+@FeatureUsage(UserFeature.PROGRAMMING_LOCAL_IDE)
 @RestController
 @RequestMapping("api/programming/")
 public class IdeSettingsResource {

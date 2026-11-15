@@ -1,9 +1,9 @@
 import { CanDeactivate } from '@angular/router';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate> {
     private translateService = inject(TranslateService);
 

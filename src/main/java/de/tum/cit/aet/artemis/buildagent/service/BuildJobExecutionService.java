@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
@@ -69,6 +70,14 @@ public class BuildJobExecutionService {
     private final BuildLogsMap buildLogsMap;
 
     private static final int MAX_CLONE_RETRIES = 3;
+
+    /** The largest result file that is read into memory. */
+    static final long MAX_RESULT_FILE_BYTES = 16L * 1024 * 1024;
+
+    /** The most that all result files of a build job add up to. */
+    static final long MAX_TOTAL_RESULT_BYTES = 64L * 1024 * 1024;
+
+    private static final Pattern SAFE_BUILD_JOB_ID = Pattern.compile("[A-Za-z0-9_-]{1,100}");
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -151,6 +160,10 @@ public class BuildJobExecutionService {
      * @return the parsed LocalCI result
      */
     public BuildResult runBuildJob(BuildJobQueueItem buildJob) {
+        // The id is used as a folder name, so it is validated before the build starts.
+        validateBuildJobId(buildJob.id());
+        // The repository names and checkout directories end up in folder names, so they are validated as well.
+        BuildJobQueueItemValidator.validate(buildJob);
         // Bind this job's clone token to the executing thread for the whole job. Every git operation below reaches
         // the credential through BuildJobGitService, including the ones inherited from AbstractGitService that carry
         // no build job context. The finally is essential: executor threads are reused, and a token left behind would
@@ -161,6 +174,18 @@ public class BuildJobExecutionService {
         }
         finally {
             buildJobGitService.clearCloneTokenForCurrentThread();
+        }
+    }
+
+    /**
+     * Accepts only plain ids when the id is used as a folder name.
+     *
+     * @param buildJobId the id of the queued build job
+     * @throws LocalCIException if the id is empty, too long or contains anything but letters, digits, '-' and '_'
+     */
+    static void validateBuildJobId(String buildJobId) {
+        if (buildJobId == null || !SAFE_BUILD_JOB_ID.matcher(buildJobId).matches()) {
+            throw new LocalCIException("The build job id is not valid");
         }
     }
 
@@ -296,6 +321,7 @@ public class BuildJobExecutionService {
         List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
+        long totalResultBytes = 0;
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextEntry()) != null) {
             // Go through all tar entries that are test result files.
@@ -303,10 +329,24 @@ public class BuildJobExecutionService {
                 continue;
             }
 
-            // Read the contents of the tar entry as a string.
-            String fileContent = readTarEntryContent(testResultsTarInputStream);
             // Get the file name of the tar entry.
             String fileName = getFileName(tarEntry);
+
+            // The files are produced by the code of the student: only files within the limits are read into memory, the others are skipped
+            if (tarEntry.getSize() > MAX_RESULT_FILE_BYTES || totalResultBytes + tarEntry.getSize() > MAX_TOTAL_RESULT_BYTES) {
+                String msg = "The file " + fileName + " is too large and is ignored.";
+                buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+                log.warn("Ignoring the result file {} of build job {} because it exceeds the size limits ({} bytes)", fileName, buildJobId, tarEntry.getSize());
+                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                    // A missing report must not count as a report without findings, so the job fails instead of continuing without it
+                    throw new LocalCIException("The static code analysis report " + fileName + " is too large to be processed");
+                }
+                continue;
+            }
+            totalResultBytes += tarEntry.getSize();
+
+            // Read the contents of the tar entry as a string.
+            String fileContent = readTarEntryContent(testResultsTarInputStream);
 
             try {
                 // Check if the file is a static code analysis report file
@@ -468,7 +508,7 @@ public class BuildJobExecutionService {
             try {
                 // Clone into a build-job-specific directory: {checkedOutReposPath}/{buildJobId}/{repoFolder}
                 // Using buildJobId (not commitHash) ensures complete isolation between concurrent build jobs
-                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(checkedOutReposPath, buildJobId, repositoryUri.folderNameForRepositoryUri()));
+                repository = buildJobGitService.cloneRepository(repositoryUri, repositoryUri.resolveFolderBelow(Path.of(checkedOutReposPath, buildJobId)));
                 break;
             }
             catch (GitAPIException | IOException | URISyntaxException e) {
@@ -521,7 +561,7 @@ public class BuildJobExecutionService {
         String msg;
         try {
             // Construct path using buildJobId to ensure we only affect this build job's files
-            Path repositoryPathForDeletion = Path.of(checkedOutReposPath, buildJobId, repositoryUri.folderNameForRepositoryUri());
+            Path repositoryPathForDeletion = repositoryUri.resolveFolderBelow(Path.of(checkedOutReposPath, buildJobId));
             Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository for build job " + buildJobId + " not found";
@@ -536,7 +576,7 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
-        catch (IOException e) {
+        catch (IOException | IllegalArgumentException e) {
             msg = "Error while deleting repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);

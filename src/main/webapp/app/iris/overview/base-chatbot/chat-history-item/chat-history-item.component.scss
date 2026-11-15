@@ -1,99 +1,35 @@
 .chat-history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    gap: 4px;
+    border-radius: 6px;
 
-    // Compact spacing to fit within the 17rem sidebar width (see .chat-history-open in parent SCSS)
-    margin: 0 8px;
-    font-size: 14px;
+    &:hover,
+    &:focus-within {
+        background-color: var(--iris-accent-background);
+    }
 
-    .chat-history-text {
-        display: flex;
-        align-items: center;
-        padding: 6px;
-        flex: 1;
-        min-width: 0;
+    &--selected {
+        background-color: var(--iris-tertiary-background);
+    }
 
-        .chat-history-label {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-            min-width: 0;
+    &__menu-trigger {
+        opacity: 0;
+
+        // The menu opens in an overlay outside the row, so keep its trigger visible while it is open.
+        &[aria-expanded='true'] {
+            opacity: 1;
         }
     }
 
     &:hover,
-    &:focus-within {
-        .chat-history-text {
-            background-color: var(--iris-accent-background);
-            border-radius: 6px;
-        }
-
-        .menu-trigger {
-            display: block;
-        }
-    }
-
-    .related-entity-icon {
-        color: var(--bs-body-color);
-        text-decoration: none;
-        flex-shrink: 0;
-        font-size: 14px;
-
-        &:hover,
-        &:focus {
-            color: var(--primary);
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--primary);
-            border-radius: 2px;
-        }
-    }
-
-    .menu-trigger {
-        flex-shrink: 0;
-        display: none;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        color: var(--bs-body-color);
-        font-size: 12px;
-        line-height: 1;
-
-        &:hover {
-            background-color: var(--iris-accent-border-color);
-        }
-    }
-
-    &.chat-history-item-selected {
-        .chat-history-text {
-            background-color: var(--iris-tertiary-background);
-            border-radius: 6px;
-
-            .menu-trigger {
-                display: block;
-            }
+    &:focus-within,
+    &--selected {
+        .chat-history-item__menu-trigger {
+            opacity: 1;
         }
     }
 }
 
-// Scoped to .chat-history-item-menu to avoid leaking to other PrimeNG menus.
-// ::ng-deep is needed because the popup is portaled to <body> via appendTo="body".
-:host ::ng-deep .chat-history-item-menu .danger {
-    color: var(--bs-danger);
-    cursor: pointer;
-    padding: 0.5rem 0.75rem;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-
-    &:hover {
-        background-color: var(--iris-accent-background);
+@media (hover: none) {
+    .chat-history-item__menu-trigger {
+        opacity: 1;
     }
 }

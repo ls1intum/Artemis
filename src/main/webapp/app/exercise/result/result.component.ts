@@ -1,16 +1,16 @@
+import { TumAetUiDialogService, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -43,12 +43,12 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
     imports: [
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         ResultProgressBarComponent,
         FaIconComponent,
         TranslateDirective,
         NgClass,
-        TooltipModule,
-        TagModule,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -58,7 +58,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 })
 export class ResultComponent {
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private resultService = inject(ResultService);
@@ -72,6 +72,11 @@ export class ResultComponent {
     readonly participation = input<Participation>();
     readonly result = input<Result>();
     readonly exercise = input<Exercise>();
+    /**
+     * The course of the exercise, for an exercise that carries no course, such as the exercises of the course overview. The accuracy of the score comes from it. A course that the
+     * exercise carries takes precedence.
+     */
+    readonly course = input<CourseScoreAccuracy>();
     readonly isBuilding = input(false);
     readonly isQueued = input(false);
     readonly short = input(true);
@@ -80,6 +85,26 @@ export class ResultComponent {
     readonly showIcon = input(true);
     readonly isInSidebarCard = input(false);
     readonly showCompletion = input(true);
+    /**
+     * Whether the badge is shown to the owner of the participation it belongs to.
+     *
+     * Only then may it open the text/modeling submission view. That deep link
+     * (`courses/:courseId/exercises/{text,modeling}-exercises/:exerciseId/participate/:participationId/…`) is the
+     * student exercise page: it loads the exercise details endpoint, which an exam exercise answers with 403, and in
+     * a course its split panel swaps a participation that is not the viewer's for the viewer's own. Passing `false`
+     * leaves the badge unclickable for those two exercise types — the assessment editor next to it shows the
+     * student's result instead. Every other type opens the feedback dialog, which renders whichever participation it
+     * is handed, so it stays clickable either way.
+     *
+     * **Any view that renders a participation other than the viewer's own must pass `false`**: today the exercise
+     * assessment dashboard, the instructor scores table, the participation submissions view and the
+     * example-submission import modal. {@link UpdatingResultComponent} forwards it for callers that go through the
+     * wrapper. The default cannot be flipped to make that automatic, because a badge on a result the viewer does
+     * own — the exercise page, the course overview cards, the exam summary — has to keep the link, and nothing in
+     * {@link Participation} reliably says whose it is (a tutor sees exam participations anonymised, so an absent
+     * student is not evidence either way).
+     */
+    readonly isOwnParticipation = input(true);
     readonly missingResultInfo = input(MissingResultInformation.NONE);
     readonly estimatedCompletionDate = input<dayjs.Dayjs>();
     readonly buildStartDate = input<dayjs.Dayjs>();
@@ -134,11 +159,17 @@ export class ResultComponent {
         this.currentLang(); // Recompute the translated text when the language changes.
         const status = this.templateStatus();
         return status === ResultTemplateStatus.LATE || this.displayableResult()
-            ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short())
+            ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short(), this.course())
             : '';
     });
 
     readonly resultTooltip = computed<string | undefined>(() => (this.displayableResult() ? this.buildResultTooltip() : undefined));
+
+    /** Whether the details of this result open as the student submission view rather than as the feedback dialog. */
+    private readonly opensSubmissionView = computed(() => {
+        const type = this.resolvedExercise()?.type;
+        return type === ExerciseType.TEXT || type === ExerciseType.MODELING;
+    });
 
     /**
      * Whether clicking the badge can open the result details.
@@ -147,8 +178,15 @@ export class ResultComponent {
      * the feedback dialog ({@link FeedbackComponent}) requires a participation. A result without one — an example
      * submission, for instance — has no detail view to open, so the badge must not advertise itself as clickable.
      * Quizzes show their scoring next to the questions instead of in a dialog, and sidebar cards navigate as a whole.
+     * Someone else's text or modeling participation has no view either, see {@link isOwnParticipation}.
      */
-    readonly canShowDetails = computed(() => !this.isInSidebarCard() && this.resolvedExercise()?.type !== ExerciseType.QUIZ && this.resolvedParticipation() !== undefined);
+    readonly canShowDetails = computed(
+        () =>
+            !this.isInSidebarCard() &&
+            this.resolvedExercise()?.type !== ExerciseType.QUIZ &&
+            this.resolvedParticipation() !== undefined &&
+            (this.isOwnParticipation() || !this.opensSubmissionView()),
+    );
 
     readonly badge = computed<Badge | undefined>(() => {
         const participation = this.resolvedParticipation();
@@ -241,7 +279,7 @@ export class ResultComponent {
 
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
         const exercise = this.resolvedExercise();
-        if (exercise?.type === ExerciseType.TEXT || exercise?.type === ExerciseType.MODELING) {
+        if (this.opensSubmissionView() && exercise) {
             const courseId = getCourseFromExercise(exercise)?.id;
             const submissionId = result.submission?.id;
 
@@ -271,19 +309,13 @@ export class ResultComponent {
 
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedback'),
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
-            },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
             // Don't auto-focus the first focusable element on show: in a long feedback list it is often
             // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
-            focusOnShow: false,
+            autoFocus: 'dialog',
             inputValues: {
                 exercise,
                 result,

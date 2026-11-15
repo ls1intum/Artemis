@@ -1,17 +1,19 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, effect, input, signal } from '@angular/core';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-score-display',
     templateUrl: './score-display.component.html',
     styleUrls: ['./score-display.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [TumAetUiTooltipDirective, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ScoreDisplayComponent {
     maxBonusPoints = input(0);

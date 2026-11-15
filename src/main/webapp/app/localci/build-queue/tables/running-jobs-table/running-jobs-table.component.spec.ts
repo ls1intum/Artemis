@@ -192,18 +192,6 @@ describe('RunningJobsTableComponent', () => {
         expect(jobClickSpy).not.toHaveBeenCalled();
     });
 
-    it('should emit cancelAll event when cancel all is triggered', () => {
-        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
-        fixture.detectChanges();
-
-        const cancelAllSpy = vi.fn();
-        component.cancelAll.subscribe(cancelAllSpy);
-
-        component.onCancelAll();
-
-        expect(cancelAllSpy).toHaveBeenCalled();
-    });
-
     it('should trigger jobClick when Enter key is pressed on row and target equals currentTarget', () => {
         fixture.componentRef.setInput('buildJobs', mockRunningJobs);
         fixture.detectChanges();
@@ -248,5 +236,17 @@ describe('RunningJobsTableComponent', () => {
         fixture.detectChanges();
 
         expect(component.buildJobs()[0].buildAgent).toBeUndefined();
+    });
+
+    it('should show the empty state without jobs and none with jobs', () => {
+        fixture.componentRef.setInput('buildJobs', []);
+        fixture.detectChanges();
+        const empty = fixture.nativeElement.querySelector('[data-testid="table-empty"]');
+        expect(empty).not.toBeNull();
+        expect(empty.textContent).toContain('artemisApp.buildQueue.noRunningBuilds');
+
+        fixture.componentRef.setInput('buildJobs', [{ id: '1', name: 'Job' }]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
     });
 });

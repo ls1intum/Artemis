@@ -1,7 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Service, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 
@@ -34,6 +35,8 @@ export interface ExerciseMetadataSyncContext<T extends Exercise> {
     // Safe by construction: setBaselineExercise only ever receives values read from this same context's
     // getters (see applySnapshotToBaseline). Without this, strictFunctionTypes rejects the assignment.
     getCurrentExercise(): T;
+    /** Receives the mutated exercise so reactive editors can publish a new reference while retaining nested identities. */
+    setCurrentExercise?(exercise: T): void;
     getBaselineExercise(): T;
     setBaselineExercise(exercise: T): void;
 }
@@ -163,7 +166,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Synchronizes exercise metadata changes from other editors into the current
  * exercise editor session.
  *
- * This service is intentionally `providedIn: 'root'` (singleton) because it
+ * This service is intentionally a root `@Service()` (singleton) because it
  * shares the WebSocket subscription managed by {@link ExerciseEditorSyncService},
  * which is also root-scoped. Only one exercise can be edited at a time, so the
  * singleton holds mutable state for the active exercise. Calling {@link initialize}
@@ -172,11 +175,12 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Consumers MUST call {@link destroy} in their `ngOnDestroy` to clean up
  * the WebSocket subscription and reset internal state before navigating away.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
 
     private context?: ExerciseMetadataSyncContext<Exercise>;
@@ -417,6 +421,7 @@ export class ExerciseMetadataSyncService {
     ): void {
         const currentExercise = context.getCurrentExercise();
         const conflictFields = new Set(conflicts.map((conflict) => conflict.field));
+        let applied = false;
 
         for (const handler of handlers) {
             if (conflictFields.has(handler.key)) {
@@ -424,6 +429,10 @@ export class ExerciseMetadataSyncService {
             }
             const incomingValue = handler.getIncomingValue(snapshot);
             handler.applyValue(currentExercise, incomingValue);
+            applied = true;
+        }
+        if (applied) {
+            context.setCurrentExercise?.(currentExercise);
         }
     }
 
@@ -477,30 +486,23 @@ export class ExerciseMetadataSyncService {
             exerciseType: this.context?.exerciseType,
         };
 
-        const dialogRef = this.dialogService.open(ExerciseMetadataConflictModalComponent, {
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
+        const dialogRef = this.dialogService.open<ExerciseMetadataConflictModalComponent, ExerciseMetadataConflictModalResult, ExerciseMetadataConflictModalData>(
+            ExerciseMetadataConflictModalComponent,
+            {
+                size: 'large',
+                header: this.translateService.instant('artemisApp.exercise.metadataSync.conflictTitle'),
+                closable: false,
+                closeOnEscape: false,
+                dismissableMask: false,
+                data,
             },
-            // Allow reopening the same component type for consecutive queued alerts.
-            // PrimeNG's DialogService deduplicates by component type and removes the
-            // entry from its internal map only after the close animation completes,
-            // which races with the queue immediately opening the next modal.
-            duplicate: true,
-            modal: true,
-            closable: false,
-            closeOnEscape: false,
-            dismissableMask: false,
-            data,
-        });
+        );
 
         if (!dialogRef) {
             return undefined;
         }
         try {
-            return (await firstValueFrom(dialogRef.onClose)) as ExerciseMetadataConflictModalResult | undefined;
+            return await firstValueFrom(dialogRef.onClose);
         } catch {
             // firstValueFrom rejects if the Observable completes without emitting (e.g. dialog destroyed externally)
             return undefined;
@@ -523,6 +525,7 @@ export class ExerciseMetadataSyncService {
     ): void {
         const currentExercise = context.getCurrentExercise();
         const handlerMap = new Map(handlers.map((handler) => [handler.key, handler]));
+        let applied = false;
 
         for (const decision of resolution.decisions) {
             const handler = handlerMap.get(decision.field);
@@ -534,6 +537,10 @@ export class ExerciseMetadataSyncService {
             }
             const incomingValue = handler.getIncomingValue(snapshot);
             handler.applyValue(currentExercise, incomingValue);
+            applied = true;
+        }
+        if (applied) {
+            context.setCurrentExercise?.(currentExercise);
         }
     }
 

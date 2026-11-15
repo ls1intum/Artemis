@@ -52,13 +52,13 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateUser_asInstructor_forbidden() throws Exception {
         request.put("/api/account/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/account/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
@@ -146,9 +146,15 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void searchUsers_asInstructor_isSuccessful() throws Exception {
-        userTestService.searchUsers_asInstructor_isSuccessful();
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void searchUsers_asAdmin_isSuccessful() throws Exception {
+        userTestService.searchUsers_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void searchUsers_asInstructor_forbidden() throws Exception {
+        userTestService.searchUsers_asInstructor_forbidden();
     }
 
     @Test
@@ -158,7 +164,7 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void searchUsers_asTutor_forbidden() throws Exception {
         userTestService.searchUsers_asTutor_forbidden();
     }
@@ -171,18 +177,24 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect() throws Exception {
+        userTestService.getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void getAuthorities_asAdmin_isSuccessful() throws Exception {
         userTestService.getAuthorities_asAdmin_isSuccessful();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getUsersOrAuthorities_asInstructor_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asInstructor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getUsersOrAuthorities_asTutor_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asTutor_forbidden();
     }
@@ -232,6 +244,12 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserEmptyRoles() throws Exception {
         userTestService.updateUserWithEmptyRoles();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateUserOnlyRetiredRoles() throws Exception {
+        userTestService.updateUserWithOnlyRetiredRoles();
     }
 
     @Test

@@ -48,10 +48,11 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranch().
-        programmingExercise.getBuildConfig().setBranch(null);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBranch(null);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -84,7 +85,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -112,7 +113,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Prepare the template repository (with the conventional slug) to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -140,7 +141,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // The stored URI points to a repository that really exists, but in a different project. The copy always reads from the project key of this exercise, so
         // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
@@ -168,7 +169,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetVcsAccessLog() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
         var user = userTestRepository.getUser();
@@ -185,7 +186,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
      * round trip through the DTO that used to dereference the user unconditionally.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetVcsAccessLogOfBuildAgentWithoutUser() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
@@ -211,7 +212,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
      * first used, so one that no test calls would reach production intact.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNewestAccessLogLookupsSkipBuildAgentEntries() {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var user = userTestRepository.getUser();
@@ -226,7 +227,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetVcsAccessLogOfTemplateParticipation() throws Exception {
         var user = userTestRepository.getUser();
         vcsAccessLogRepository.save(new VcsAccessLog(user, programmingExercise.getTemplateParticipation(), "instructor", "instructorMail@mail.de", RepositoryActionType.READ,

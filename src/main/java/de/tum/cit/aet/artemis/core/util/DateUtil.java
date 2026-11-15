@@ -12,6 +12,7 @@ import java.time.temporal.IsoFields;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.List;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
@@ -28,6 +29,27 @@ public class DateUtil {
      * Note: We can NOT use LocalTime.MAX as the precision is not supported by the database, and thus it will be rounded
      */
     public static final LocalTime END_OF_DAY = LocalTime.of(23, 59, 59);
+
+    /**
+     * The time zone names a course may use, sorted: every region id {@link ZoneId#of(String)} accepts, including the older
+     * aliases such as {@code Europe/Kiev} next to {@code Europe/Kyiv}. The {@code SystemV/} names are left out, because the
+     * time zone database dropped them and a browser need not support them, while the client shows course times in the
+     * course's time zone.
+     */
+    public static final List<String> SUPPORTED_TIME_ZONES = ZoneId.getAvailableZoneIds().stream().filter(zoneId -> !zoneId.startsWith("SystemV/")).sorted().toList();
+
+    private static final Set<String> SUPPORTED_TIME_ZONE_SET = Set.copyOf(SUPPORTED_TIME_ZONES);
+
+    /**
+     * Whether the given name is one of the {@link #SUPPORTED_TIME_ZONES}. The comparison is case-sensitive, as {@link ZoneId#of(String)}
+     * is, so {@code europe/berlin} is not supported although browsers would accept it.
+     *
+     * @param timeZone the time zone name to check
+     * @return {@code true} if a course may use the time zone, {@code false} for {@code null}
+     */
+    public static boolean isSupportedTimeZone(@Nullable String timeZone) {
+        return timeZone != null && SUPPORTED_TIME_ZONE_SET.contains(timeZone);
+    }
 
     /**
      * Validates that every configured date in {@code shouldPrecede} is strictly before {@code dateToValidate} and that {@code dateToValidate} is strictly before every

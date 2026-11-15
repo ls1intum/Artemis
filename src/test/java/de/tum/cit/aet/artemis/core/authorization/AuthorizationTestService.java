@@ -25,10 +25,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 
@@ -40,8 +37,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 @Profile(SPRING_PROFILE_TEST)
 public class AuthorizationTestService {
 
-    private static final Set<Class<? extends Annotation>> AUTHORIZATION_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,
-            EnforceAtLeastTutor.class, EnforceAtLeastStudent.class, EnforceNothing.class, PreAuthorize.class);
+    private static final Set<Class<? extends Annotation>> AUTHORIZATION_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastStudent.class, EnforceNothing.class,
+            PreAuthorize.class);
 
     private static final String REST_BASE_PATH = "/api";
 
@@ -171,7 +168,7 @@ public class AuthorizationTestService {
                     }
                 }
             }
-            case "EnforceAtLeastInstructor", "EnforceAtLeastEditor", "EnforceAtLeastTutor", "EnforceAtLeastStudent" -> {
+            case "EnforceAtLeastStudent" -> {
                 for (String pattern : patterns) {
                     if (!pattern.startsWith(REST_BASE_PATH)) {
                         addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @" + annotationType + " to start with "

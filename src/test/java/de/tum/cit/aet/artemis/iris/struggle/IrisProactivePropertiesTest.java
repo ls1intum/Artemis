@@ -98,4 +98,56 @@ class IrisProactivePropertiesTest {
 
         assertThatIllegalArgumentException().isThrownBy(properties::validate).withMessageContaining("persist-max-attempts");
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "retention", "replyWindow", "negativeReply", "missingCooldown", "negativeCooldown", "zeroCooldown",
+            "negativeConfidence" })
+    void invalidOperatorSettingsAreRejectedWithTheAffectedProperty(String invalid) {
+        var properties = withJobTimeout(300);
+        String expected;
+        switch (invalid) {
+            case "retention" -> {
+                properties.setAbandonedEpisodeRetention(null);
+                expected = "must be set";
+            }
+            case "replyWindow" -> {
+                properties.setEngagedReplyWindow(null);
+                expected = "must be set";
+            }
+            case "negativeReply" -> {
+                properties.setEngagedReplyWindow(Duration.ofSeconds(-1));
+                expected = "engaged-reply-window must be positive";
+            }
+            case "missingCooldown" -> {
+                properties.setTriggerCooldown(null);
+                expected = "trigger-cooldown must be positive";
+            }
+            case "negativeCooldown" -> {
+                properties.setTriggerCooldown(Duration.ofSeconds(-1));
+                expected = "trigger-cooldown must be positive";
+            }
+            case "zeroCooldown" -> {
+                properties.setTriggerCooldown(Duration.ZERO);
+                expected = "trigger-cooldown must be positive";
+            }
+            default -> {
+                properties.getStruggle().setConfidenceThreshold(-0.01);
+                expected = "confidence-threshold must be within [0, 1]";
+            }
+        }
+        assertThatIllegalArgumentException().isThrownBy(properties::validate).withMessageContaining(expected);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(doubles = { 0.0, 1.0 })
+    void confidenceEndpointsAndMinimumSafeRetentionAreAccepted(double confidence) {
+        var properties = withJobTimeout(300);
+        properties.setAbandonedEpisodeRetention(Duration.ofSeconds(3000));
+        properties.setEngagedReplyWindow(Duration.ofNanos(1));
+        properties.setTriggerCooldown(Duration.ofNanos(1));
+        properties.getStruggle().setConfidenceThreshold(confidence);
+        assertThatCode(properties::validate).doesNotThrowAnyException();
+        assertThat(properties.getStruggle().getConfidenceThreshold()).isEqualTo(confidence);
+    }
+
 }

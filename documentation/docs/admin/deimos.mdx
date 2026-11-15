@@ -2,6 +2,7 @@
 id: deimos
 title: Deimos Malicious Participation Analysis
 sidebar_label: Deimos Setup
+last_reviewed: 2026-11-03
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -83,7 +84,6 @@ artemis:
       completions-path: /api/chat/completions
       temperature: 0
       timeout-seconds: 90
-      max-retries: 3
 ```
 
 | Property | Required | Description |
@@ -95,16 +95,15 @@ artemis:
 | `artemis.deimos.llm.completions-path` | no | Must end with `/chat/completions`. Defaults to `/api/chat/completions`. |
 | `artemis.deimos.llm.temperature` | no | Sampling temperature. Defaults to `0`. |
 | `artemis.deimos.llm.timeout-seconds` | no | Per-request timeout. Defaults to `90`. |
-| `artemis.deimos.llm.max-retries` | no | Transport retries performed by the OpenAI SDK. Defaults to `3`. |
 | `artemis.deimos.executor.*` | no | Sizing of the dedicated batch executor. |
 
-If the module is enabled with a missing or invalid `base-url`, `model`, `completions-path`, `timeout-seconds`, or
-`max-retries`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
+If the module is enabled with a missing or invalid `base-url`, `model`, `completions-path` or
+`timeout-seconds`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
 endpoint would mean student code being sent somewhere you did not intend.
 
 ### Runtime feature toggle
 
-Enable the `Deimos` toggle under **Admin → Feature Toggles**. It is off by default even when the startup property is
+Enable the `Deimos` toggle under **Administration → Configuration → Features**. It is off by default even when the startup property is
 set. While it is off, the trigger buttons are hidden and the REST endpoints return `403`.
 
 ## Limits

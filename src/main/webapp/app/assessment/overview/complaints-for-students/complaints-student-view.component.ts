@@ -1,4 +1,5 @@
-import { Component, Injector, OnInit, Renderer2, afterNextRender, inject, input, signal } from '@angular/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { Component, ElementRef, Injector, OnInit, afterNextRender, inject, input, signal, viewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -27,7 +28,9 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
+    // A custom element is inline by default; its block child then splits it, so margins on the host are ignored and an empty line box appears above the area.
+    host: { class: 'block', 'data-testid': 'complaint-student-view' },
 })
 export class ComplaintsStudentViewComponent implements OnInit {
     private injector = inject(Injector);
@@ -35,7 +38,10 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
-    private renderer = inject(Renderer2);
+
+    // Every complaint view renders its own anchor, and the exam summary shows one view per exercise, so the anchor of this view
+    // must not be looked up by id: a document-wide lookup finds the anchor of the first view and scrolls the page to that exercise.
+    private readonly complaintScrollpoint = viewChild<ElementRef<HTMLElement>>('complaintScrollpoint');
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input.required<StudentParticipation>();
@@ -43,6 +49,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly exam = input<Exam>();
     readonly isCurrentUserSubmissionAuthor = input<boolean>();
     readonly testRun = input(false);
+    // Staff looking at the submission of a student read its complaint through the assessment endpoint, the default one serves only the owner
+    readonly forStaff = input(false);
 
     submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
     readonly complaint = signal<Complaint | undefined>(undefined);
@@ -97,8 +105,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     loadPotentialComplaint(): void {
-        this.complaintService
-            .findBySubmissionId(this.submission.id!)
+        const submissionId = this.submission.id!;
+        (this.forStaff() ? this.complaintService.findBySubmissionIdForAssessment(submissionId) : this.complaintService.findBySubmissionId(submissionId))
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));
@@ -170,6 +178,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     private scrollToComplaint(): void {
-        this.renderer.selectRootElement('#complaintScrollpoint', true).scrollIntoView({ behavior: 'smooth', block: 'end' });
+        // `nearest` moves the page only when the form would otherwise open below the visible area.
+        this.complaintScrollpoint()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }

@@ -1,13 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
 import { Observable } from 'rxjs';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { Imprint } from 'app/admin/legal/imprint.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LegalDocumentService {
     private http = inject(HttpClient);
 

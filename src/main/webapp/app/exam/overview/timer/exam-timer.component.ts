@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -17,8 +17,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class ExamTimerComponent implements OnInit, OnDestroy {
     private serverDateService = inject(ArtemisServerDateService);
-
-    @HostBinding('class.row') readonly row = true;
 
     readonly endDate = input<dayjs.Dayjs>(undefined!);
 

@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -53,7 +54,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/variant-groups")
+@FeatureUsage(UserFeature.EXERCISE_VARIANT_GROUPS)
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseVariantGroupResource {
@@ -169,7 +170,7 @@ public class ExerciseVariantGroupResource {
         // Load the group without its members so the ON DELETE SET NULL FK (see the Liquibase changelog) ungroups them;
         // loading them would fail Hibernate's flush because managed exercises still reference the removed group. Members survive.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
-        exerciseVariantGroupRepository.delete(group);
+        exerciseVariantGroupService.deleteGroup(groupId, courseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
     }
 

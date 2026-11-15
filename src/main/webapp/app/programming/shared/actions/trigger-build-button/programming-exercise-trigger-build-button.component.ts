@@ -1,8 +1,8 @@
-import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, Signal, effect, inject, input, signal, untracked } from '@angular/core';
 import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
-import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -22,11 +22,11 @@ import { SubmissionType } from 'app/exercise/shared/entities/submission/submissi
     template: '',
 })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnDestroy {
-    FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
-
     private submissionService = inject(ProgrammingSubmissionService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
+
+    FeatureToggle = FeatureToggle;
+    ButtonType = ButtonType;
 
     readonly exercise = input.required<ProgrammingExercise>();
     // Optional: the button is rendered for repositories that may have no participation (e.g. an auxiliary
@@ -43,6 +43,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     readonly isBuilding = signal(false);
     // If true, the trigger button is also displayed for successful submissions.
     readonly showForSuccessfulSubmissions = signal(false);
+    /** True if the server would refuse a manual build, because it is outside of the build time window of the exercise. Only the student button can be blocked. */
+    readonly isBlockedByBuildWindow: Signal<boolean> = signal(false);
 
     private submissionSubscription?: Subscription;
     private resultSubscription?: Subscription;
@@ -130,6 +132,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                             this.isBuilding.set(false);
                             this.participationHasLatestSubmissionWithoutResult.set(false);
                             break;
+                        case ProgrammingSubmissionState.IS_QUEUED:
                         case ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION:
                             this.isBuilding.set(true);
                             break;
@@ -175,7 +178,17 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.isRetrievingBuildStatus.set(false);
             return EMPTY;
         }
-        return this.submissionService.triggerBuild(participationId, submissionType).pipe(finalize(() => this.isRetrievingBuildStatus.set(false)));
+        const exerciseId = this.exercise().id;
+        if (submissionType === SubmissionType.INSTRUCTOR && exerciseId === undefined) {
+            this.isRetrievingBuildStatus.set(false);
+            return EMPTY;
+        }
+        const type = this.participation()?.type;
+        const build =
+            submissionType === SubmissionType.INSTRUCTOR
+                ? this.submissionService.triggerInstructorBuild(exerciseId!, participationId, type === ParticipationType.TEMPLATE || type === ParticipationType.SOLUTION)
+                : this.submissionService.triggerBuild(participationId, submissionType);
+        return build.pipe(finalize(() => this.isRetrievingBuildStatus.set(false)));
     }
 
     triggerFailed(lastGraded = false) {

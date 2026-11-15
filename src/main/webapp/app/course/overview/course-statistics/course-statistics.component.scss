@@ -1,10 +1,42 @@
-.statistic-summary {
-    // Match the size of the other info/help icons on this page (the `?` icons live in h5
-    // elements, i.e. 1.125rem), and optically centre it: align-items-center lines the icon up
-    // with the heading's metric box, which sits slightly above the visual centre of the
-    // lowercase text, so nudge it down a touch.
-    h2 + jhi-documentation-button {
-        font-size: 1.125rem;
-        transform: translateY(0.1em);
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.statistics-page {
+    max-width: 1440px;
+    margin-inline: auto;
+    padding: clamp(1rem, 2.5vw, 2rem);
+    color: var(--tumaet-ui-text-color);
+}
+
+.statistics-score-ring {
+    position: relative;
+    width: 13rem;
+    height: 13rem;
+    flex: none;
+}
+
+.statistics-score-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.statistics-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    min-width: 0;
+
+    @media (min-width: 64rem) {
+        &[data-materials='true'] {
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        }
     }
 }

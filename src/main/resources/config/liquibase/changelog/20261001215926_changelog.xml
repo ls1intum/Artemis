@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    A student who saves a quiz and submits it right after can reach the server with two requests at the same time. Both of
+    them used to replace the answers of the submission, and both inserted theirs, so that a submission held several answers
+    to one question and the one that was scored depended on the order the database returned them in.
+
+    The server now updates the stored answers instead of replacing them, and the live mode writes the answers of one
+    submission one request after the other. This changelog makes the database refuse what the server no longer does: it
+    removes the answers that were stored twice, and then allows one answer per question and submission.
+
+    Nothing references submitted_answer, the selection of an answer is a column of the same row, so removing a row removes
+    the whole answer.
+
+    The previous version of the server writes duplicates under the race described above, and the constraint rejects the
+    second of two such writes with an error where the previous version stored both. Rolling back to the previous version
+    therefore leaves the race failing for the student whose request comes second, and nothing else. Rolling back the
+    changelog drops the constraint; the removed duplicates cannot be restored.
+    -->
+
+    <changeSet id="20261001215926-01-remove-duplicate-submitted-answers" author="krusche">
+        <comment>Keep one answer to a question in each submission, the one that was scored, and remove the others.</comment>
+        <!-- Scoring writes score_in_points to the first answer it finds for a question, and the points of the submission and of
+             its result are summed from that answer. The answer that carries a score is the one the student was graded on, so
+             it is the one that is kept, and no score has to be calculated again: the grade stays what it was awarded.
+             Where no answer carries a score (the quiz was not evaluated yet), the one with the highest id is kept, which is
+             the one the last of the competing requests inserted. Of several scored answers the one with the highest id is kept.
+             The inner select is wrapped in a derived table because MySQL refuses to delete from a table that the same
+             statement reads from. -->
+        <sql>
+            DELETE FROM submitted_answer
+            WHERE id IN (
+                SELECT removable.id
+                FROM (
+                    SELECT answer.id AS id
+                    FROM submitted_answer answer
+                        JOIN (
+                            SELECT submission_id, quiz_question_id,
+                                COALESCE(MAX(CASE WHEN score_in_points IS NOT NULL THEN id END), MAX(id)) AS kept_id
+                            FROM submitted_answer
+                            GROUP BY submission_id, quiz_question_id
+                            HAVING COUNT(*) > 1
+                        ) duplicated
+                            ON duplicated.submission_id = answer.submission_id
+                            AND duplicated.quiz_question_id = answer.quiz_question_id
+                    WHERE answer.id &lt;&gt; duplicated.kept_id
+                ) removable
+            )
+        </sql>
+        <!-- the removed answers cannot be restored -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261001215926-02-submitted-answer-one-per-question" author="krusche">
+        <!-- The constraint is required: stop the start-up rather than run without it if the previous changeset left a duplicate. -->
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM (
+                    SELECT 1 FROM submitted_answer GROUP BY submission_id, quiz_question_id HAVING COUNT(*) &gt; 1
+                ) duplicated
+            </sqlCheck>
+        </preConditions>
+        <comment>Allow one answer per question in a submission.</comment>
+        <addUniqueConstraint tableName="submitted_answer" columnNames="submission_id, quiz_question_id" constraintName="UK_SUBMITTED_ANSWER_SUBMISSION_QUESTION"/>
+    </changeSet>
+</databaseChangeLog>

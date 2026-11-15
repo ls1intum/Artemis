@@ -1,9 +1,9 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResizableConstraints, ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 
@@ -14,10 +14,13 @@ const MIN_VIDEO_WIDTH = 300;
 /** Minimum width reserved for the transcript column in pixels. */
 const MIN_TRANSCRIPT_WIDTH = 250;
 
+/** How long the transcript holds still after the last pointer movement, focus or key press on the video (see `transcriptScrollDeferredUntil`). */
+const TRANSCRIPT_SCROLL_DEFER_MS = 10_000;
+
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe, ResizableDirective],
+    imports: [TumAetUiButtonDirective, CommonModule, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
@@ -32,7 +35,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
 
     /** Reference to the resizer handle */
-    resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
+    resizerHandle = viewChild('resizerHandle', { read: ElementRef<HTMLButtonElement> });
 
     /** The URL of the video to play (required input) */
     videoUrl = input<string | undefined>();
@@ -45,6 +48,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Active slide/page number inferred from the transcript */
     currentSlideNumberChange = output<number | undefined>();
+
+    /** Emitted when the video cannot be played at all, so callers stop waiting for a position it will never reach. */
+    playerFailed = output<void>();
 
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
@@ -59,11 +65,20 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Store reference to timeupdate handler for cleanup */
     private timeupdateHandler: (() => void) | undefined = undefined;
 
-    /** FontAwesome icon for the resizer grip */
-    faGripLinesVertical = faGripLinesVertical;
-
     /** True while the divider is being dragged; disables the video's pointer events so the drag stays smooth. */
     protected readonly isResizing = signal<boolean>(false);
+
+    /**
+     * Until when the transcript must not auto-scroll. Chrome closes a native control menu (playback speed, download) as soon
+     * as anything scrolls. The native controls keep clicks to themselves (the video element never sees a pointerdown or click
+     * from them), but it does see the pointer moving over it, focus and key presses, so the transcript holds still for a short
+     * while after the last of those. A pointer that rests on the video therefore stops holding it back after that time.
+     * Playing, pausing, seeking or picking a speed ends the hold early.
+     */
+    private transcriptScrollDeferredUntil = 0;
+
+    /** True while the transcript still has to catch up with the active segment after a deferred scroll. */
+    private transcriptScrollPending = false;
 
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
@@ -92,6 +107,28 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
+
+    /**
+     * Whether the video knows how long it is, which is what makes a requested position judgeable. Before its metadata
+     * arrives the element accepts any target and reports it back unchanged, so a caller that has to state whether it
+     * really got there (the Iris point-out ack) must wait for this signal rather than trust {@link seekTo} alone.
+     *
+     * A length of its own is what counts, not merely having metadata: unbounded media (a live stream) reports an
+     * infinite duration, against which {@link seekTo} has nothing to reject a target with and would accept any of
+     * them. Such a video therefore never becomes seekable in this sense, however much of it has loaded.
+     */
+    private readonly seekableState = signal<boolean>(false);
+    readonly isSeekable = this.seekableState.asReadonly();
+
+    /** The reason above, as an answer rather than a not-yet: {@link isSeekable} will not follow while this holds. */
+    private readonly unboundedState = signal<boolean>(false);
+    readonly isUnbounded = this.unboundedState.asReadonly();
+
+    /** Store reference to the metadata handler that flips {@link isSeekable}, for cleanup */
+    private durationHandler: (() => void) | undefined = undefined;
+
+    /** Store reference to the media error handler, for cleanup */
+    private errorHandler: (() => void) | undefined = undefined;
 
     constructor() {
         effect(() => {
@@ -153,6 +190,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                             // Fatal error, cannot recover
                             this.hls?.destroy();
                             this.hls = undefined;
+                            this.playerFailed.emit();
                             break;
                     }
                 }
@@ -167,6 +205,25 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.updateCurrentSegment(videoElement.currentTime);
         };
         videoElement.addEventListener('timeupdate', this.timeupdateHandler);
+
+        // A seek can only be judged against a known length, so track when the element has one. Metadata may already be
+        // there for a cached resource, in which case no event follows and the initial read is the only chance to see it.
+        // A positive finite duration is the actual condition — an unbounded stream has its metadata and still no length to judge
+        // against — and it covers the not-yet-loaded case on its own, since the duration is NaN until metadata arrives.
+        this.durationHandler = () => {
+            const duration = videoElement.duration;
+            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(duration) && duration > 0);
+            this.unboundedState.set(duration === Infinity);
+        };
+        videoElement.addEventListener('loadedmetadata', this.durationHandler);
+        videoElement.addEventListener('durationchange', this.durationHandler);
+        this.durationHandler();
+
+        // A media error is the element's way of saying the video is not coming, which ends the wait for a length.
+        this.errorHandler = () => {
+            this.playerFailed.emit();
+        };
+        videoElement.addEventListener('error', this.errorHandler);
 
         // Initialize transcript height syncing for the resizable panel
         this.initializeResizer();
@@ -215,18 +272,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * wrapper is resized (matching the previous interact.js behaviour).
      */
     protected onVideoColumnResize(event: ResizableSizeEvent): void {
-        const videoColumnEl = this.videoColumn()?.nativeElement;
-        const wrapperEl = this.videoWrapper()?.nativeElement;
-        if (!videoColumnEl || !wrapperEl) {
-            return;
-        }
-        const wrapperWidth = wrapperEl.getBoundingClientRect().width;
-        if (wrapperWidth <= 0) {
-            return;
-        }
-        const percent = Math.min(100, Math.max(0, (event.width / wrapperWidth) * 100));
-        videoColumnEl.style.flex = `0 0 ${percent}%`;
-        videoColumnEl.style.width = '';
+        resizeVideoColumn(this.videoColumn()?.nativeElement, this.videoWrapper()?.nativeElement, event.width);
     }
 
     /**
@@ -246,37 +292,43 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
      */
     private syncTranscriptHeight(): void {
-        const videoColumnEl = this.videoColumn()?.nativeElement;
-        const wrapperEl = this.videoWrapper()?.nativeElement;
-
-        if (!videoColumnEl || !wrapperEl) {
-            return;
-        }
-
-        const transcriptColumnEl = wrapperEl.querySelector<HTMLElement>('.transcript-column');
-        if (!transcriptColumnEl) {
-            return;
-        }
-
-        const videoHeight = videoColumnEl.offsetHeight;
-        const targetHeight = Math.max(videoHeight, this.MIN_TRANSCRIPT_HEIGHT);
-        transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
+        syncVideoTranscriptHeight(this.videoColumn()?.nativeElement, this.videoWrapper()?.nativeElement, this.MIN_TRANSCRIPT_HEIGHT);
     }
 
-    /** Seek the video to the given time and optionally resume playback. */
-    seekTo(seconds: number, resumePlayback = true): void {
-        const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : undefined;
-
+    /** {@link seekTo}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canSeekTo(seconds: number): boolean {
+        const videoElement = this.videoRef()?.nativeElement;
         if (!videoElement) {
-            return;
+            return false;
         }
+        const duration = videoElement.duration;
+        return seconds >= 0 && (!Number.isFinite(duration) || seconds <= duration);
+    }
+
+    /**
+     * Seeks the video to the given time and optionally resumes playback.
+     * @param seconds the position to seek to
+     * @param resumePlayback whether to start playing from there
+     * @return whether the video moved to the requested position. A target outside the video is refused rather than
+     *         seeked to: the browser would clamp it to the end, which is not the position that was asked for. While
+     *         the length is still unknown the target cannot be judged, and the seek is issued anyway — the browser
+     *         applies it once the resource loads, and refusing it would strand the transcript and synchronization
+     *         callers, which have no way to wait. A caller that must *state* the outcome (the Iris point-out ack)
+     *         waits for {@link isSeekable} first, so it never has to trust the answer given in that window.
+     */
+    seekTo(seconds: number, resumePlayback = true): boolean {
+        if (!this.canSeekTo(seconds)) {
+            return false;
+        }
+        // Guaranteed by canSeekTo, which returns false without an element.
+        const videoElement = this.videoRef()!.nativeElement;
 
         videoElement.currentTime = seconds;
         if (resumePlayback) {
             void videoElement.play();
         }
         this.updateCurrentSegment(seconds);
+        return true;
     }
 
     getCurrentSlideNumber(): number | undefined {
@@ -363,12 +415,32 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.currentSegmentIndex.set(index);
             this.updateActiveSlideNumber(segments[index].slideNumber);
 
-            // Scroll to the active segment in the transcript viewer
-            const viewer = this.transcriptViewer();
-            if (viewer) {
-                viewer.scrollToSegment(index);
-            }
+            this.transcriptScrollPending = true;
         }
+        this.scrollTranscriptIfDue();
+    }
+
+    /** Scrolls the transcript to the active segment once the hold after a click on the video has ended. */
+    private scrollTranscriptIfDue(): void {
+        if (!this.transcriptScrollPending || Date.now() < this.transcriptScrollDeferredUntil) {
+            return;
+        }
+        this.transcriptScrollPending = false;
+        const index = this.currentSegmentIndex();
+        if (index >= 0) {
+            this.transcriptViewer()?.scrollToSegment(index);
+        }
+    }
+
+    /** The pointer moving over the video, focus or a key press may mean a native menu is open, so keep the transcript still for a moment. */
+    protected onVideoInteraction(): void {
+        this.transcriptScrollDeferredUntil = Date.now() + TRANSCRIPT_SCROLL_DEFER_MS;
+    }
+
+    /** Playing, pausing, seeking or changing the speed means no native menu is open any more. */
+    protected onVideoPlaybackChange(): void {
+        this.transcriptScrollDeferredUntil = 0;
+        this.scrollTranscriptIfDue();
     }
 
     private updateActiveSlideNumber(slideNumber: number | undefined): void {
@@ -388,6 +460,17 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
+        }
+
+        if (videoElement && this.durationHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.durationHandler);
+            videoElement.removeEventListener('durationchange', this.durationHandler);
+            this.durationHandler = undefined;
+        }
+
+        if (videoElement && this.errorHandler) {
+            videoElement.removeEventListener('error', this.errorHandler);
+            this.errorHandler = undefined;
         }
 
         // Remove loadedmetadata listener to prevent memory leaks

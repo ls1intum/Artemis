@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -28,9 +28,7 @@ type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
 type TextBlockRequest = Pick<TextBlock, 'id' | 'type' | 'startIndex' | 'endIndex' | 'text'>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlockRequest[]; assessmentNote?: string };
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class TextAssessmentService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
@@ -182,8 +180,8 @@ export class TextAssessmentService {
      * @param exerciseId id of the exercise for which the example result should be retrieved of type {number}
      * @param submissionId id of the submission for which the example result should be retrieved of type {number}
      */
-    public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.RESOURCE_URL}/exercises/${exerciseId}/submissions/${submissionId}/example-result`);
+    public getExampleResult(exerciseId: number, submissionId: number, purpose: 'training' | 'instructor' = 'training'): Observable<Result> {
+        return this.http.get<Result>(`${this.RESOURCE_URL}/exercises/${exerciseId}/submissions/${submissionId}/example-result${purpose === 'instructor' ? '/for-instructor' : ''}`);
     }
 
     /**

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.competency;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -15,6 +17,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
  * @param maxN                The maximum number of competencies to extract
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyExtractionPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies,
-        CompetencyTaxonomy[] taxonomyOptions, int maxN) {
+public record PyrisCompetencyExtractionPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String courseDescription,
+        List<PyrisCompetencyRecommendationDTO> currentCompetencies, List<CompetencyTaxonomy> taxonomyOptions, int maxN) {
 }

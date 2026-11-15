@@ -33,10 +33,10 @@
                         <span class="metadata-row__value metadata-row__value--mono metadata-row__value--actions">
                             <span class="metadata-commit__actions">
                                 <button
-                                    pButton
+                                    tumAetUiButton
                                     type="button"
-                                    text
-                                    rounded
+                                    variant="text"
+                                    severity="secondary"
                                     size="small"
                                     class="metadata-commit__button"
                                     [attr.aria-label]="'global.generic.copy' | artemisTranslate"
@@ -48,10 +48,10 @@
                                 </button>
                                 @if (field.repositoryViewLink; as viewLink) {
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
-                                        text
-                                        rounded
+                                        variant="text"
+                                        severity="success"
                                         size="small"
                                         class="metadata-commit__button"
                                         [attr.aria-label]="'entity.action.view' | artemisTranslate"
@@ -64,10 +64,10 @@
                                 }
                                 @if (field.repositoryEditorLink; as editorLink) {
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
-                                        text
-                                        rounded
+                                        variant="text"
+                                        severity="warn"
                                         size="small"
                                         class="metadata-commit__button"
                                         [attr.aria-label]="'entity.action.edit' | artemisTranslate"
@@ -87,10 +87,10 @@
                             </span>
                             <span class="metadata-commit__actions">
                                 <button
-                                    pButton
+                                    tumAetUiButton
                                     type="button"
-                                    text
-                                    rounded
+                                    variant="text"
+                                    severity="secondary"
                                     size="small"
                                     class="metadata-commit__button"
                                     [attr.aria-label]="'global.generic.copy' | artemisTranslate"
@@ -102,10 +102,10 @@
                                 </button>
                                 @if (field.commitLink; as commitLink) {
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
-                                        text
-                                        rounded
+                                        variant="text"
+                                        severity="success"
                                         size="small"
                                         class="metadata-commit__button"
                                         [attr.aria-label]="'entity.action.view' | artemisTranslate"

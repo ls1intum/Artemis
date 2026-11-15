@@ -27,6 +27,10 @@
             "submittedFile": "Die Datei {{ filename }} wurde als Lösung für die Übung eingereicht",
             "download": "Datei herunterladen",
             "selectFile": "Bitte wähle zuerst eine Datei aus und sende sie dann ab.",
+            "examSelectOrDrop": "Datei hier ablegen oder auswählen",
+            "examAutomaticUpload": "Die Datei wird nach der Auswahl automatisch hochgeladen.",
+            "examUploading": "Datei wird hochgeladen…",
+            "examRetry": "Erneut hochladen",
             "forExercise": "für Übung"
         }
     }

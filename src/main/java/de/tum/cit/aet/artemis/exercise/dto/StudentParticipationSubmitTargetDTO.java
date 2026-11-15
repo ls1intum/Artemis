@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 /**
  * The participation a submission is about to be saved against, as far as saving it needs to know.
@@ -27,6 +28,17 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentParticipationSubmitTargetDTO(long id, InitializationState initializationState, ZonedDateTime initializationDate, ZonedDateTime individualDueDate,
         boolean testRun, Double presentationScore) {
+
+    /**
+     * The target of a participation that is loaded already, for a caller that has decided which participation to save to and must not have it resolved again.
+     *
+     * @param participation the participation the submission is saved against
+     * @return the same columns the projection queries read
+     */
+    public static StudentParticipationSubmitTargetDTO of(StudentParticipation participation) {
+        return new StudentParticipationSubmitTargetDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(),
+                participation.getIndividualDueDate(), participation.isPracticeMode(), participation.getPresentationScore());
+    }
 
     /**
      * The same target as the save leaves it, which is always finished.

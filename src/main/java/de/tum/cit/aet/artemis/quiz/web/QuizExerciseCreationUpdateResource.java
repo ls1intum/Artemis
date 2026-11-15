@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,14 +28,14 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -56,7 +55,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseCreationUpdateResource {
@@ -73,8 +72,6 @@ public class QuizExerciseCreationUpdateResource {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final ExerciseVersionService exerciseVersionService;
@@ -85,14 +82,13 @@ public class QuizExerciseCreationUpdateResource {
     private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService,
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, ExerciseVersionService exerciseVersionService,
             ExerciseVariantGroupService exerciseVariantGroupService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
-        this.atlasMLApi = atlasMLApi;
         this.exerciseVersionService = exerciseVersionService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
@@ -113,10 +109,11 @@ public class QuizExerciseCreationUpdateResource {
      * @throws IOException if there is an error handling the files
      */
     @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<QuizExerciseDetailsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
-        log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
+        log.info("REST request to create QuizExercise in exam exercise group {}", exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         // Competency links are passed separately for proper two-phase persistence
         quizExercise.setCompetencyLinks(new HashSet<>());
@@ -158,7 +155,7 @@ public class QuizExerciseCreationUpdateResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<QuizExerciseDetailsDTO> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
-        log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
+        log.info("REST request to create QuizExercise in course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         quizExercise.setCourse(course);
@@ -167,9 +164,6 @@ public class QuizExerciseCreationUpdateResource {
         quizExercise.setCompetencyLinks(new HashSet<>());
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false, quizExerciseDTO.competencyLinks());
-
-        // Notify AtlasML about the new quiz exercise
-        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
 
         exerciseVersionService.createExerciseVersion(result);
 
@@ -217,32 +211,10 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText, originalCompetencyIds);
 
-        // Notify AtlasML about the quiz exercise update
-        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
         exerciseVersionService.createExerciseVersion(result);
 
         QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
 
         return ResponseEntity.ok(resultDTO);
-    }
-
-    /**
-     * Helper method to notify AtlasML about quiz exercise changes with consistent
-     * error handling.
-     *
-     * @param exercise             the exercise to save
-     * @param operationType        the operation type (UPDATE or DELETE)
-     * @param operationDescription the description of the operation for logging
-     *                                 purposes
-     */
-    private void notifyAtlasML(QuizExercise exercise, OperationTypeDTO operationType, String operationDescription) {
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, operationType);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-            }
-        });
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -25,16 +25,21 @@ export interface IComplaintService {
     isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
     isComplaintLocked: (complaint: Complaint) => boolean | undefined;
     create: (complaintRequest: ComplaintRequestDTO) => Observable<EntityResponseType>;
-    findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
+    findBySubmissionIdForAssessment: (submissionId: number) => Observable<EntityResponseType>;
+    findForTutorByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findForTutorByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
     findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ComplaintService implements IComplaintService {
     private http = inject(HttpClient);
     private complaintResponseService = inject(ComplaintResponseService);
@@ -97,6 +102,21 @@ export class ComplaintService implements IComplaintService {
         return this.http.get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' });
     }
 
+    /** Find complaint detail for assessment rather than the participation owner. */
+    findBySubmissionIdForAssessment(submissionId: number): Observable<EntityResponseType> {
+        return this.http.get<ComplaintDTO>(`${this.resourceUrl}/for-assessment?submissionId=${submissionId}`, { observe: 'response' });
+    }
+
+    /** Find the current tutor's complaints in a course without student identities. */
+    findForTutorByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return this.requestComplaintsFromUrl(`${this.resourceUrl}/for-tutor?courseId=${courseId}&complaintType=${complaintType}`);
+    }
+
+    /** Find the current tutor's complaints in precisely one exercise without student identities. */
+    findForTutorByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return this.requestComplaintsFromUrl(`${this.resourceUrl}/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}`);
+    }
+
     /**
      * Find complaints for the instructor for a specified test run exercise (complaintType == 'COMPLAINT').
      * @param exerciseId
@@ -122,7 +142,18 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType - the type of complaint
      */
     findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        const url = `${this.resourceUrl}/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        return this.requestComplaintsFromUrl(url);
+    }
+
+    /**
+     * Find all complaints of a single exercise and complaintType without student's information.
+     * Used by the tutor "All" scope on exercise-scoped pages, so it cannot leak complaints of other exercises.
+     * @param exerciseId - the exercise id for which the complaints should be retrieved
+     * @param complaintType - the type of complaint
+     */
+    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        const url = `${this.resourceUrl}/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -275,6 +306,8 @@ export class ComplaintService implements IComplaintService {
         complaint.complaintType = dto.complaintType;
         complaint.accepted = dto.complaintIsAccepted;
         complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
+        complaint.assessorKey = dto.assessorKey;
+        complaint.assessorLabel = dto.assessorLabel;
 
         if (dto.complaintResponse) {
             complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);

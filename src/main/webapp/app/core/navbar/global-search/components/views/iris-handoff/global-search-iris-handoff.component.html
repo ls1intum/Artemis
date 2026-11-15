@@ -1,0 +1,23 @@
+@if (target(); as target) {
+    <!-- A strip across the foot of the answer card. The prompt names where the chat opens; only the action on the right,
+         with its keyboard shortcut, is clickable. The action is named by its visible label and described by the prompt. -->
+    <div class="iris-handoff-row">
+        <fa-icon [icon]="faComment" class="iris-handoff-icon" aria-hidden="true" />
+        <span class="iris-handoff-prompt" [id]="promptId">
+            {{ 'global.search.irisHandoffFollowUp' | artemisTranslate }} <strong class="iris-handoff-target">{{ target.name }}</strong>
+        </span>
+        <!-- aria-disabled rather than disabled while the chat is created, so keyboard focus stays on the action. -->
+        <button
+            type="button"
+            class="iris-handoff-action"
+            [attr.aria-disabled]="isOpening()"
+            [attr.aria-describedby]="promptId"
+            [attr.aria-keyshortcuts]="keyShortcuts()"
+            (click)="continueIn(target)"
+            data-testid="iris-handoff-button"
+        >
+            <span class="iris-handoff-action-label">{{ 'global.search.irisHandoffOpenChat' | artemisTranslate }}</span>
+            <span class="iris-handoff-kbd" aria-hidden="true">{{ shortcutLabel() }}</span>
+        </button>
+    </div>
+}

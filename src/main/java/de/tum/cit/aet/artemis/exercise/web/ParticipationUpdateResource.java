@@ -26,10 +26,12 @@ import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -50,7 +52,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationUpdateResource {
@@ -100,7 +102,8 @@ public class ParticipationUpdateResource {
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentParticipationDTO> updateParticipation(@PathVariable long exerciseId, @Valid @RequestBody ParticipationUpdateDTO dto) {
         log.debug("REST request to update Participation : {}", dto);
         if (dto.exerciseId() != exerciseId) {
@@ -109,14 +112,16 @@ public class ParticipationUpdateResource {
 
         // Load the existing participation from database to avoid orphan removal issues with detached entities
         StudentParticipation existingParticipation = studentParticipationRepository.findByIdElseThrow(dto.id());
+        var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), user);
         if (existingParticipation.getExercise().getId() != exerciseId) {
             throw new ConflictException("The participation does not belong to the specified exercise", ENTITY_NAME, "noidmatch");
         }
 
-        var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
-
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation)
+                && exerciseDateService.isAssessmentAnonymizationActive(existingParticipation.getExercise());
+        String participantLabel = hideParticipant ? existingParticipation.getId().toString() : existingParticipation.getParticipant().getName();
         Double newPresentationScore = dto.presentationScore();
 
         if (newPresentationScore != null && existingParticipation.getExercise().getPresentationScoreEnabled() != null
@@ -148,7 +153,7 @@ public class ParticipationUpdateResource {
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",
-                            Map.of("name", existingParticipation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
+                            Map.of("name", participantLabel, "presentationsNumber", gradingScale.get().getPresentationsNumber()));
                 }
             }
         }
@@ -168,8 +173,9 @@ public class ParticipationUpdateResource {
         existingParticipation.setPresentationScore(newPresentationScore);
 
         StudentParticipation updatedParticipation = studentParticipationRepository.saveAndFlush(existingParticipation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, existingParticipation.getParticipant().getName()))
-                .body(StudentParticipationDTO.ofAfterUpdate(updatedParticipation));
+        var response = StudentParticipationDTO.ofAfterUpdate(updatedParticipation);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participantLabel))
+                .body(hideParticipant ? response.withoutParticipantInformation() : response);
     }
 
     /**
@@ -183,7 +189,7 @@ public class ParticipationUpdateResource {
      * @return all participations where the individual due date actually changed.
      */
     @PutMapping("exercises/{exerciseId}/participations/update-individual-due-date")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<StudentParticipationDTO>> updateParticipationDueDates(@PathVariable long exerciseId,
             @Valid @RequestBody List<@Valid ParticipationDueDateUpdateDTO> dueDateUpdateDTOs) {
         final boolean anyInvalidExerciseId = dueDateUpdateDTOs.stream().anyMatch(dto -> dto.exerciseId() != exerciseId);
@@ -192,7 +198,6 @@ public class ParticipationUpdateResource {
         }
 
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");

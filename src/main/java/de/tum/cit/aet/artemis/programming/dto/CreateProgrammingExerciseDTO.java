@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
@@ -95,10 +97,48 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
-        ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria,
+        ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, List<GradingCriterionDTO> gradingCriteria,
         Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup)
         implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
+
+    /**
+     * Builds the creation request body describing an exercise and the build configuration it should be created with.
+     * The exercise does not carry that configuration - it is a row of its own that names the exercise - so both are
+     * mapped here.
+     *
+     * @param exercise    the exercise to create
+     * @param buildConfig the build configuration it should be created with
+     * @return the request body
+     */
+    public static CreateProgrammingExerciseDTO of(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+        // Every collection below is lazy: a detached exercise carries an uninitialized handle the request must not read.
+        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria()) ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria()) : null;
+        Set<CompetencyLinkDTO> competencyLinks = Hibernate.isInitialized(exercise.getCompetencyLinks())
+                ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
+                : null;
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositories = Hibernate.isInitialized(exercise.getAuxiliaryRepositories())
+                ? exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList()
+                : null;
+        var submissionPolicyEntity = exercise.getSubmissionPolicy();
+        var submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity) : null;
+        var plagiarismDetectionConfigEntity = exercise.getPlagiarismDetectionConfig();
+        var plagiarismDetectionConfig = plagiarismDetectionConfigEntity != null && Hibernate.isInitialized(plagiarismDetectionConfigEntity)
+                ? PlagiarismDetectionConfigDTO.of(plagiarismDetectionConfigEntity)
+                : null;
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return new CreateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getPackageName(),
+                exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getCategories(), exercise.getDifficulty(), exercise.getMode(),
+                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
+                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
+                exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(),
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
+                exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
+                exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig),
+                gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
+                exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
+                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()));
+    }
 
     /**
      * Builds the transient {@link ProgrammingExercise} the creation pipeline works on, reproducing the binding the
@@ -116,7 +156,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
             exercise.setCategories(new HashSet<>(categories));
         }
         if (gradingCriteria != null) {
-            exercise.setGradingCriteria(gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
+            exercise.setGradingCriteria(GradingCriterionDTO.toEntities(gradingCriteria));
         }
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
