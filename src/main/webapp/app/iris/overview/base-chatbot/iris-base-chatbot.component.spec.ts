@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance, afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -317,6 +317,97 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component['liveDraftAnimationIntervalId']).toBeUndefined();
         fixture.destroy();
         expect(remove).toHaveBeenCalledWith('change', listener);
+    });
+
+    describe('chat history on a narrow viewport', () => {
+        const NARROW_VIEWPORT_QUERY = '(max-width: 767.98px)';
+
+        let matchMediaSpy: MockInstance<typeof window.matchMedia> | undefined;
+
+        afterEach(() => matchMediaSpy?.mockRestore());
+
+        /**
+         * Replaces `window.matchMedia` with fresh query objects of its own (an earlier test in this file leaves its spy on
+         * `window.matchMedia`, so its objects must not be reused): the narrow-viewport query answers `matches` and exposes
+         * its listener spies, every other query never matches.
+         */
+        function mockNarrowViewport(matches: boolean) {
+            const add = vi.fn<MediaQueryList['addEventListener']>();
+            const remove = vi.fn<MediaQueryList['removeEventListener']>();
+            const createQuery = (query: string): MediaQueryList => {
+                const isNarrowQuery = query === NARROW_VIEWPORT_QUERY;
+                return {
+                    matches: isNarrowQuery && matches,
+                    media: query,
+                    onchange: null,
+                    // The MediaQueryList interface still requires the deprecated pair, so a typed stand-in has to list them.
+                    // eslint-disable-next-line @typescript-eslint/no-deprecated
+                    addListener: vi.fn(),
+                    // eslint-disable-next-line @typescript-eslint/no-deprecated
+                    removeListener: vi.fn(),
+                    addEventListener: isNarrowQuery ? add : vi.fn(),
+                    removeEventListener: isNarrowQuery ? remove : vi.fn(),
+                    dispatchEvent: vi.fn().mockReturnValue(false),
+                };
+            };
+            matchMediaSpy = vi.spyOn(window, 'matchMedia').mockImplementation(createQuery);
+            return { add, remove };
+        }
+
+        it('keeps the history open on a wide viewport', () => {
+            mockNarrowViewport(false);
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.isChatHistoryOpen()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.chat-history-container')).toBeTruthy();
+            expect(fixture.nativeElement.querySelector('.chat-history-collapsed')).toBeNull();
+        });
+
+        it('starts with the history collapsed to its icon rail so the chat keeps the width', () => {
+            mockNarrowViewport(true);
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.isChatHistoryOpen()).toBe(false);
+            expect(fixture.nativeElement.querySelector('.chat-history-collapsed')).toBeTruthy();
+            expect(fixture.nativeElement.querySelector('.chat-history-container')).toBeNull();
+        });
+
+        it('lets the user open the history again on a narrow viewport', () => {
+            mockNarrowViewport(true);
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+
+            fixture.componentInstance.setChatHistoryVisibility(true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.chat-history-container')).toBeTruthy();
+        });
+
+        it('collapses the open history when the viewport shrinks below the breakpoint, keeps it when it grows, and releases its listener', () => {
+            const { add, remove } = mockNarrowViewport(false);
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+            const instance = fixture.componentInstance;
+            expect(add).toHaveBeenCalledWith('change', expect.any(Function));
+            const listener = add.mock.calls[0][1] as (event: MediaQueryListEvent) => void;
+            expect(instance.isChatHistoryOpen()).toBe(true);
+
+            listener({ matches: true } as MediaQueryListEvent);
+            expect(instance.isChatHistoryOpen()).toBe(false);
+
+            // Growing past the breakpoint again must not reopen what the user may have collapsed on purpose.
+            listener({ matches: false } as MediaQueryListEvent);
+            expect(instance.isChatHistoryOpen()).toBe(false);
+
+            fixture.destroy();
+            expect(remove).toHaveBeenCalledWith('change', listener);
+        });
     });
 
     it('should hide the context selector when context selection is not available', () => {

@@ -170,6 +170,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     protected readonly reducedMotion = signal(this.reducedMotionQuery?.matches ?? false);
 
+    /** Below this width the open history (260px next to the course navigation) leaves the chat itself only a sliver, so it starts as the icon rail. */
+    private readonly narrowViewportQuery = window.matchMedia?.('(max-width: 767.98px)');
+
     // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
     // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
     // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
@@ -269,7 +272,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // UI state signals
     readonly newMessageTextContent = signal('');
     readonly isLoading = signal(false);
-    readonly isChatHistoryOpen = signal(true);
+    readonly isChatHistoryOpen = signal(!(this.narrowViewportQuery?.matches ?? false));
     readonly searchValue = signal('');
     readonly filteredSessions = computed(() => {
         const search = this.searchValue();
@@ -533,6 +536,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         };
         this.reducedMotionQuery?.addEventListener('change', onMotionPreferenceChange);
         this.destroyRef.onDestroy(() => this.reducedMotionQuery?.removeEventListener('change', onMotionPreferenceChange));
+
+        // Shrinking the window (or rotating a phone) past the breakpoint collapses an open history. Growing past it again
+        // leaves the state alone: the user may have collapsed it on purpose.
+        const onViewportWidthChange = (event: MediaQueryListEvent) => {
+            if (event.matches) {
+                this.setChatHistoryVisibility(false);
+            }
+        };
+        this.narrowViewportQuery?.addEventListener('change', onViewportWidthChange);
+        this.destroyRef.onDestroy(() => this.narrowViewportQuery?.removeEventListener('change', onViewportWidthChange));
 
         // Initialize user acceptance state
         this.checkIfUserAcceptedLLMUsage();
