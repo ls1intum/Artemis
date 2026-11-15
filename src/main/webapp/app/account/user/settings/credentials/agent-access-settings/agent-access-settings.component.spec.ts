@@ -3,8 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
-import { DialogService } from 'primeng/dynamicdialog';
 import { AgentAccessSettingsComponent } from 'app/account/user/settings/credentials/agent-access-settings/agent-access-settings.component';
 import { PersonalAccessTokenApiService } from 'app/account/user/settings/credentials/agent-access-settings/personal-access-token-api.service';
 import { PersonalAccessTokenDTO } from 'app/account/user/settings/credentials/agent-access-settings/dto/personal-access-token.dto';
@@ -32,7 +30,6 @@ describe('AgentAccessSettingsComponent', () => {
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                DialogService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

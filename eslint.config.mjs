@@ -63,6 +63,43 @@ const tumAetUiConsumerImportPatterns = [
         message: 'Import TUM AET UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
     },
 ];
+// Modules that are fully migrated to TUM AET UI and Tailwind. Every regression lock below is generated from this list:
+// the Bootstrap class and spacing rules for external and inline templates, the Bootstrap classes built in code, and the
+// ban on importing PrimeNG or ng-bootstrap. config/stylelint/stylelint.config.json names the same modules for SCSS, and
+// the `migration-source-coverage` test keeps both lists and the `@source` entries of tailwind.css consistent.
+const migratedModules = [
+    'account',
+    'admin',
+    'aiworker',
+    'assessment',
+    'calendar',
+    'exam',
+    'exercise',
+    'fileupload',
+    'foundation',
+    'hyperion',
+    'lecture',
+    'localci',
+    'localvc',
+    'logos',
+    'lti',
+    'modeling',
+    'notification',
+    'plagiarism',
+    'presentation',
+    'shared',
+    'sharing',
+    'tutorialgroup',
+    'videosource',
+];
+const migratedFolders = (extension) => migratedModules.map((module) => `src/main/webapp/app/${module}/**/*.${extension}`);
+
+const legacyUiLibraryImportPattern = {
+    group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+    message:
+        'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+};
+
 export default tseslint.config(
     {
         ignores: [
@@ -486,6 +523,7 @@ export default tseslint.config(
                             message:
                                 'app/foundation/ must not depend on app/editor/. foundation/ is the base infrastructure layer. Extract the editor-side dependency to a neutral constant or move the consuming file into app/editor/.',
                         },
+                        legacyUiLibraryImportPattern,
                     ],
                 },
             ],
@@ -720,13 +758,11 @@ export default tseslint.config(
         // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
         // (### Styling).
         files: [
-            'src/main/webapp/app/admin/**/*.html',
             'src/main/webapp/app/course/request/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
-            'src/main/webapp/app/videosource/gocast/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
@@ -737,42 +773,25 @@ export default tseslint.config(
             'src/main/webapp/app/core/layouts/footer/**/*.html',
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
-            'src/main/webapp/app/notification/**/*.html',
-            'src/main/webapp/app/calendar/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
-            'src/main/webapp/app/account/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
             'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
             'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
-            'src/main/webapp/app/exercise/**/*.html',
-            'src/main/webapp/app/exam/**/*.html',
-            'src/main/webapp/app/lecture/**/*.html',
-            'src/main/webapp/app/localci/**/*.html',
-            'src/main/webapp/app/foundation/**/*.html',
-            'src/main/webapp/app/modeling/**/*.html',
-            'src/main/webapp/app/hyperion/**/*.html',
-            'src/main/webapp/app/lti/**/*.html',
-            'src/main/webapp/app/logos/**/*.html',
-            'src/main/webapp/app/localvc/**/*.html',
-            'src/main/webapp/app/fileupload/**/*.html',
-            'src/main/webapp/app/plagiarism/**/*.html',
             'src/main/webapp/app/programming/manage/detail/**/*.html',
             'src/main/webapp/app/programming/manage/vcs-repository-access-log-view/**/*.html',
             'src/main/webapp/app/quiz/manage/detail/**/*.html',
             'src/main/webapp/app/quiz/manage/manage-buttons/**/*.html',
             'src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.html',
             'src/main/webapp/app/text/manage/detail/**/*.html',
-            'src/main/webapp/app/assessment/**/*.html',
             'src/main/webapp/app/shared-ui/table-view/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/button/**/*.html',
-            'src/main/webapp/app/tutorialgroup/**/*.html',
             'src/main/webapp/app/shared-ui/components/resizable-panels/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/confirm-autofocus-button/**/*.html',
             'src/main/webapp/app/shared-ui/loading-indicator-overlay/**/*.html',
@@ -784,6 +803,7 @@ export default tseslint.config(
             'src/main/webapp/app/atlas/shared/competency-contribution/**/*.html',
             'src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.html',
             'src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.html',
+            ...migratedFolders('html'),
         ],
         languageOptions: {
             parser: angularTemplateParser,
@@ -805,24 +825,10 @@ export default tseslint.config(
         // See client-development.mdx (### Styling).
         files: [
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
-            'src/main/webapp/app/assessment/overview/**/*.html',
-            'src/main/webapp/app/assessment/manage/complaints-for-tutor/**/*.html',
-            'src/main/webapp/app/assessment/manage/complaint-response/**/*.html',
             'src/main/webapp/app/text/overview/text-editor/**/*.html',
             'src/main/webapp/app/course/manage/athena-settings-update/**/*.html',
             'src/main/webapp/app/course/manage/control-center/about-athena-modal/**/*.html',
-            'src/main/webapp/app/exercise/**/*.html',
-            'src/main/webapp/app/exam/**/*.html',
-            'src/main/webapp/app/lecture/**/*.html',
-            'src/main/webapp/app/localci/**/*.html',
-            'src/main/webapp/app/foundation/**/*.html',
-            'src/main/webapp/app/modeling/**/*.html',
-            'src/main/webapp/app/hyperion/**/*.html',
-            'src/main/webapp/app/lti/**/*.html',
-            'src/main/webapp/app/logos/**/*.html',
-            'src/main/webapp/app/localvc/**/*.html',
-            'src/main/webapp/app/fileupload/**/*.html',
-            'src/main/webapp/app/plagiarism/**/*.html',
+            ...migratedFolders('html'),
         ],
         languageOptions: {
             parser: angularTemplateParser,
@@ -834,24 +840,40 @@ export default tseslint.config(
             'localRules/no-ambiguous-spacing-utility': 'error',
         },
     },
+    {
+        // The same locks for `template:` strings: button-inline-templates.mjs hands every inline template to ESLint a second
+        // time as `.lock-template`. Only the migrated modules are listed, so no other module is affected.
+        files: migratedFolders('lock-template'),
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-bootstrap-classes': 'error',
+            'localRules/no-ambiguous-spacing-utility': 'error',
+            'localRules/no-primeng-component-classes': 'error',
+            'localRules/no-raw-tailwind-color-palette': 'error',
+        },
+    },
+    {
+        // Bootstrap class names that code builds, keeps in a map or looks up in the DOM: the template rules cannot see them.
+        files: migratedFolders('ts'),
+        ignores: ['**/*.spec.ts'],
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-bootstrap-classes-in-code': 'error',
+        },
+    },
     // These modules are migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in them, including specs.
     // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
     {
         files: [
-            'src/main/webapp/app/exercise/**/*.ts',
-            'src/main/webapp/app/exam/**/*.ts',
-            'src/main/webapp/app/lecture/**/*.ts',
-            'src/main/webapp/app/localci/**/*.ts',
-            'src/main/webapp/app/foundation/**/*.ts',
-            'src/main/webapp/app/modeling/**/*.ts',
-            'src/main/webapp/app/hyperion/**/*.ts',
-            'src/main/webapp/app/lti/**/*.ts',
-            'src/main/webapp/app/logos/**/*.ts',
-            'src/main/webapp/app/localvc/**/*.ts',
-            'src/main/webapp/app/fileupload/**/*.ts',
-            'src/main/webapp/app/plagiarism/**/*.ts',
-            'src/main/webapp/app/notification/**/*.ts',
-            'src/main/webapp/app/calendar/**/*.ts',
+            ...migratedFolders('ts').filter((folder) => !folder.includes('/foundation/')),
+            'src/main/webapp/app/foundation/**/*.spec.ts',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.ts',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.ts',
         ],
@@ -865,14 +887,7 @@ export default tseslint.config(
                         noNgZoneImport,
                         ...noDirectCloneDeepImports,
                     ],
-                    patterns: [
-                        ...tumAetUiConsumerImportPatterns,
-                        {
-                            group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
-                            message:
-                                'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
-                        },
-                    ],
+                    patterns: [...tumAetUiConsumerImportPatterns, legacyUiLibraryImportPattern],
                 },
             ],
         },

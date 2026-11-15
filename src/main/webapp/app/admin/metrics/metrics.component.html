@@ -30,14 +30,14 @@
     </div>
 
     @if (!metrics() && updatingMetrics()) {
-        <div class="py-3 text-muted-color" jhiTranslate="metrics.updating"></div>
+        <div class="py-4! text-muted-color" jhiTranslate="metrics.updating"></div>
     }
 
     @if (metrics()) {
         <div class="flex flex-col gap-8">
             <div>
                 <h3 id="jvm-metrics" jhiTranslate="metrics.jvm.title"></h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6!">
                     <jhi-jvm-memory [updating]="updatingMetrics()" [jvmMemoryMetrics]="metrics()!.jvm" />
                     <jhi-jvm-threads [threads]="threads()" />
                     <jhi-metrics-system [updating]="updatingMetrics()" [systemMetrics]="metrics()!.processMetrics" />
