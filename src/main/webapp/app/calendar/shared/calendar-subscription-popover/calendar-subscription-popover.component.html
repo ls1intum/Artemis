@@ -105,15 +105,16 @@
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
         <div class="flex">
             <div class="flex-1 rounded-s-sm border border-e-0 border-(--border-color) p-1.5">
-                <textarea
+                <!-- One line: a long link is cut off with an ellipsis instead of wrapping, the copy button copies the whole link -->
+                <input
+                    type="text"
+                    data-testid="subscription-link-input"
                     [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
-                    class="w-full resize-none overflow-hidden border-0 bg-transparent text-xs leading-4 break-all outline-none focus:ring-0 focus:outline-none"
-                    cdkTextareaAutosize
-                    cdkAutosizeMinRows="1"
-                    cdkAutosizeMaxRows="10"
+                    [attr.title]="subscriptionUrl()"
+                    class="w-full truncate border-0 bg-transparent text-xs leading-4 outline-none focus:ring-0 focus:outline-none"
                     [ngModel]="subscriptionUrl()"
                     readonly
-                ></textarea>
+                />
             </div>
             <button
                 type="button"

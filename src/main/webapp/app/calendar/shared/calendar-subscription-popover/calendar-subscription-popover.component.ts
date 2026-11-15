@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
-import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
 import { faCheck, faCopy, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -17,7 +16,6 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         TumAetUiCheckboxComponent,
         TumAetUiPopoverComponent,
         TumAetUiSelectButtonComponent,
-        TextFieldModule,
         FormsModule,
         FaIconComponent,
         TranslateDirective,
