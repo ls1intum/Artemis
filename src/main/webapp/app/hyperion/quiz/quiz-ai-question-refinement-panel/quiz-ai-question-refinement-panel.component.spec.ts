@@ -63,7 +63,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
     it('should not render panel when hyperion is disabled', () => {
         setupWithHyperionEnabled(false);
 
-        const panel = fixture.debugElement.query(By.css('.quiz-ai-refinement-panel'));
+        const panel = fixture.debugElement.query(By.css('[data-testid="quiz-ai-refinement-panel"]'));
         expect(panel).toBeNull();
     });
 
@@ -72,14 +72,14 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         fixture.componentRef.setInput('isOpen', false);
         fixture.detectChanges();
 
-        const panel = fixture.debugElement.query(By.css('.quiz-ai-refinement-panel'));
+        const panel = fixture.debugElement.query(By.css('[data-testid="quiz-ai-refinement-panel"]'));
         expect(panel).toBeNull();
     });
 
     it('should render panel when hyperion is enabled and isOpen is true', () => {
         setupWithHyperionEnabled(true);
 
-        const panel = fixture.debugElement.query(By.css('.quiz-ai-refinement-panel'));
+        const panel = fixture.debugElement.query(By.css('[data-testid="quiz-ai-refinement-panel"]'));
         expect(panel).not.toBeNull();
     });
 
@@ -178,9 +178,9 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         vi.advanceTimersByTime(200);
         fixture.detectChanges();
 
-        const explanationCard = fixture.debugElement.query(By.css('.refinement-explanation-card'));
+        const explanationCard = fixture.debugElement.query(By.css('[data-testid="refinement-explanation-card"]'));
         expect(explanationCard).not.toBeNull();
-        const explanationText = fixture.debugElement.query(By.css('.refinement-explanation-text'));
+        const explanationText = fixture.debugElement.query(By.css('[data-testid="refinement-explanation-text"]'));
         expect(explanationText.nativeElement.textContent).toContain(reasoning);
 
         vi.useRealTimers();
@@ -221,7 +221,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
             fixture.componentRef.setInput('externalReasoning', 'Bulk AI changed this');
             fixture.detectChanges();
 
-            const panel = fixture.debugElement.query(By.css('.quiz-ai-refinement-panel'));
+            const panel = fixture.debugElement.query(By.css('[data-testid="quiz-ai-refinement-panel"]'));
             expect(panel).not.toBeNull();
         });
 

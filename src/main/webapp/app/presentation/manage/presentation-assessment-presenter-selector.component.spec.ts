@@ -10,7 +10,6 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('PresentationAssessmentPresenterSelectorComponent', () => {
@@ -28,7 +27,6 @@ describe('PresentationAssessmentPresenterSelectorComponent', () => {
             providers: [
                 { provide: CourseManagementService, useValue: { searchStudents } },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AlertService, useValue: { error: vi.fn() } },
             ],
         }).compileComponents();
