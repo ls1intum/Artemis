@@ -20,6 +20,22 @@ describe('SecurityFrameworkService', () => {
 
     afterEach(() => http.verify());
 
+    it('reads the state and the versions and changes the activation', () => {
+        service.getConfig(42).subscribe();
+        service.getVersions().subscribe();
+        service.activate(42, '2.2.1').subscribe();
+        service.deactivate(42).subscribe();
+        service.addDiscoveredTestClasses(42).subscribe();
+        service.updateFrameworkVersion(42, '2.2.1').subscribe();
+
+        expect(http.expectOne({ method: 'GET', url: URL })).toBeDefined();
+        expect(http.expectOne({ method: 'GET', url: 'api/programming/security-framework/versions' })).toBeDefined();
+        expect(http.expectOne((request) => request.method === 'PUT' && request.url === `${URL}/activate`).request.params.get('frameworkVersion')).toBe('2.2.1');
+        expect(http.expectOne({ method: 'PUT', url: `${URL}/deactivate` })).toBeDefined();
+        expect(http.expectOne({ method: 'PUT', url: `${URL}/test-classes` })).toBeDefined();
+        expect(http.expectOne((request) => request.method === 'PUT' && request.url === `${URL}/framework-version`).request.params.get('frameworkVersion')).toBe('2.2.1');
+    });
+
     it('reads the policies, the test structure and the template files', () => {
         service.getPolicies(42).subscribe();
         service.getTestStructure(42).subscribe();

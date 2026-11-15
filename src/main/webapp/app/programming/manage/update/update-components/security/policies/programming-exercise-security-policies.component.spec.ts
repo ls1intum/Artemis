@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
-import { SecurityPolicyChange, SecurityPolicyDocument, SecurityPolicyEditor } from 'app/programming/shared/entities/security-policy.model';
+import { SecurityPolicyChange, SecurityPolicyDocument, SecurityPolicyEditor, SecurityPolicyReadOnlyReason } from 'app/programming/shared/entities/security-policy.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 import { EditorPolicy, withAssignment, withRows } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
@@ -48,6 +48,13 @@ type Handlers = {
     reload(announce?: boolean): void;
     openYaml(policy: EditorPolicy): void;
     importYaml(content: string): void;
+    renderYamlUnsaved(): void;
+    retryLoad(): void;
+    retryCommit(): void;
+    dismissBanner(): void;
+    requestStructure(): void;
+    requestTemplateFiles(): void;
+    otherTests(policyId: string): Map<string, string>;
 };
 
 describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
@@ -287,6 +294,145 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(imported.tests).toEqual(['de.example.SortingTest']);
         expect(imported.extraClasses).toEqual(['de.example.Util']);
         expect(comp.importNotice()?.severity).toBe('success');
+    });
+
+    it('describes the files and the assignments the review shows', () => {
+        create(configured(), false);
+        const committed = comp.policies()[0];
+        handlers.onPolicyChange(withAssignment({ ...committed, name: 'Stress' }, ['de.example.StressTest'], []));
+        handlers.addPolicy();
+        handlers.onPolicyChange(withAssignment(comp.policies()[1], ['de.example.SortingTest#merge'], []));
+
+        expect(comp.reviewDescriptions().get('Stress.yaml')).toBe('Stress · artemisApp.programmingExercise.security.advanced.review.renamedFrom');
+        expect([...comp.reviewDescriptions().values()].filter((description) => description.endsWith('review.newFile'))).toHaveLength(1);
+        expect(comp.reviewAssignments()).toEqual([
+            { sign: '+', entry: 'de.example.StressTest', file: 'Stress.yaml' },
+            { sign: '−', entry: 'de.example.SortingTest', file: 'Stress.yaml' },
+            { sign: '+', entry: 'de.example.SortingTest#merge', file: expect.stringMatching(/\.yaml$/) },
+        ]);
+        expect(comp.reviewSummary()).toContain('review.basedOn');
+        expect(comp.defaultCommitMessage()).toBe('artemisApp.programmingExercise.security.advanced.review.defaultMessage');
+        expect(handlers.otherTests(committed.id)).toEqual(new Map([['de.example.SortingTest#merge', expect.any(String)]]));
+    });
+
+    it('names the problems of a policy without a name, with an invalid hidden period and of two policies in one file', () => {
+        create(configured(), false);
+        const policy = comp.policies()[0];
+        handlers.onPolicyChange({
+            ...policy,
+            working: { ...policy.working!, testBehavior: { hiddenTests: { hiddenFrom: '2026-12-24 10:00 Europe/Berlin', hiddenUntil: '2026-12-24 09:00 Europe/Berlin' } } },
+        });
+        handlers.addPolicy();
+        handlers.onPolicyChange(withAssignment({ ...comp.policies()[1], name: 'Security Policy' }, ['de.example.StressTest'], []));
+        handlers.addPolicy();
+        handlers.onPolicyChange({ ...comp.policies()[2], name: ' ' });
+
+        expect(comp.problems()).toEqual([
+            'artemisApp.programmingExercise.security.advanced.problem.hiddenPeriod',
+            'artemisApp.programmingExercise.security.advanced.problem.nameRequired',
+            'artemisApp.programmingExercise.security.advanced.problem.sameFile',
+        ]);
+    });
+
+    it('previews the change for the review and reports a refused preview', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        const preview = { verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [] };
+        service.previewPolicies.mockReturnValue(of(preview));
+
+        handlers.openReview();
+        expect(comp.reviewPreview()).toEqual(preview);
+
+        service.previewPolicies.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'Invalid policy' } })));
+        handlers.openReview();
+        expect(comp.reviewOpen()).toBe(false);
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'failed', message: 'Invalid policy' }));
+    });
+
+    it('retries a failed commit with its message and names an unknown author of a conflict', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        handlers.commit('Update');
+        expect(comp.banner()).toEqual({ kind: 'failed', message: 'artemisApp.programmingExercise.security.advanced.banner.failedGeneric', commitMessage: 'Update' });
+
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        handlers.retryCommit();
+        expect(lastChange().commitMessage).toBe('Update');
+        expect(comp.banner()).toEqual({ kind: 'conflict' });
+        handlers.dismissBanner();
+        expect(comp.banner()).toBeUndefined();
+    });
+
+    it('turns dependency scanning off', () => {
+        service.getPolicies.mockReturnValue(of(editor('a'.repeat(40), { ...DOCUMENT, languageConfiguration: 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION' })));
+        create(configured(), false);
+        service.commitPolicies.mockReturnValue(of({ editor: editor('e'.repeat(40)), config: configured() }));
+
+        expect(comp.scanDependencies()).toBe(true);
+        handlers.onScanRequested(false);
+        handlers.onDialogConfirmed(undefined);
+
+        expect(lastChange().policies[0].document.languageConfiguration).toBe('JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ');
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed' }));
+    });
+
+    it('shows a load error and loads again on retry', () => {
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        create();
+
+        expect(comp.loadFailed()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="security-policies-load-error"]')).not.toBeNull();
+        handlers.retryLoad();
+        expect(comp.loadFailed()).toBe(false);
+        expect(comp.policies()).toHaveLength(1);
+    });
+
+    it('requests the test structure and the template files once, and again after a failure', () => {
+        create(configured(), false);
+        service.getTestStructure.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        handlers.requestStructure();
+        handlers.requestStructure();
+        handlers.requestStructure();
+        expect(service.getTestStructure).toHaveBeenCalledTimes(2);
+
+        service.getTemplateFiles.mockReturnValueOnce(of({ paths: ['a.txt'], truncated: true }));
+        handlers.requestTemplateFiles();
+        handlers.requestTemplateFiles();
+        expect(service.getTemplateFiles).toHaveBeenCalledOnce();
+        expect(comp.templateFiles()).toEqual(['a.txt']);
+        expect(comp.templateFilesTruncated()).toBe(true);
+    });
+
+    it('renders the YAML of the unsaved changes and reports an import the editor cannot read', () => {
+        create(configured(), false);
+        handlers.openYaml(comp.policies()[0]);
+        service.previewPolicies.mockReturnValue(of({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, files: [{ path: 'SecurityPolicy.yaml', after: 'rendered' }] }));
+
+        handlers.renderYamlUnsaved();
+        expect(comp.yamlUnsaved()).toBe('rendered');
+
+        service.importPolicy.mockReturnValue(of({ policyPath: 'SecurityPolicy.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3 }));
+        handlers.importYaml('broken: [');
+        expect(comp.importNotice()).toEqual({ severity: 'error', text: 'artemisApp.programmingExercise.security.advanced.policy.readOnlyReason.YAML_ERROR' });
+    });
+
+    it('shows the state of the card while turning the sandbox on, off and while committing', () => {
+        create({ status: SecurityActivationStatus.GENERATING }, false);
+        expect(comp.cardState()).toBe('turningOn');
+        fixture.componentRef.setInput('config', { status: SecurityActivationStatus.DELETING });
+        expect(comp.cardState()).toBe('turningOff');
+    });
+
+    it('warns what deleting a committed policy changes', () => {
+        create(configured(), false);
+        handlers.askDeletePolicy(comp.policies()[0]);
+
+        expect(comp.deleteWarning()).toEqual({
+            key: 'artemisApp.programmingExercise.security.advanced.deletePolicy.committed',
+            params: { file: 'SecurityPolicy.yaml', count: 1 },
+        });
     });
 
     it('discards every unsaved change', () => {

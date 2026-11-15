@@ -107,6 +107,34 @@ describe('SecurityResourceAccessComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="security-resource-empty"]')).not.toBeNull();
     });
 
+    it('renders the rows of every category and names their fields when deleting them', () => {
+        let document = withRows(BASE, 'network', [{ host: 'localhost', port: 8080, open: true, send: true, receive: false }]);
+        document = withRows(document, 'commands', [{ command: 'python3', arguments: [] }]);
+        document = withRows(document, 'threads', [{ threadClass: 'java.lang.Thread', maxThreads: 2 }]);
+        document = withRows(document, 'packages', [{ packageName: 'org.apache.commons' }]);
+        fixture.componentRef.setInput('document', document);
+        const details: Record<string, string[]> = {};
+
+        for (const kind of ['network', 'commands', 'threads', 'packages']) {
+            handlers.onTabChange(kind);
+            fixture.detectChanges();
+            expect(rows()).toHaveLength(1);
+            handlers.openDelete(comp.activeRows()[0]);
+            details[kind] = comp.deleteDetails().map((detail) => detail.value);
+        }
+
+        expect(details).toEqual({
+            network: [
+                'localhost',
+                '8080',
+                'artemisApp.programmingExercise.security.advanced.resources.granted.open, artemisApp.programmingExercise.security.advanced.resources.granted.send',
+            ],
+            commands: ['python3', 'artemisApp.programmingExercise.security.advanced.resources.noArguments'],
+            threads: ['2', 'java.lang.Thread'],
+            packages: ['org.apache.commons'],
+        });
+    });
+
     it('tags the paths and scripts that already have a row for Browse…', () => {
         expect([...comp.browseBadges().keys()]).toEqual(['a.txt', 'b.txt', 'c.txt']);
 

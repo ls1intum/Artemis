@@ -61,6 +61,29 @@ describe('SecurityYamlDialogComponent', () => {
         expect(comp.copied()).toBe(true);
     });
 
+    it('exports the shown version as a file named like the policy', () => {
+        const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+        URL.createObjectURL = vi.fn().mockReturnValue('blob:policy');
+        URL.revokeObjectURL = vi.fn();
+
+        handlers.export();
+
+        expect(click).toHaveBeenCalledOnce();
+        expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('SecurityPolicy.yaml');
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:policy');
+    });
+
+    it('neither copies nor exports while there is nothing to show', async () => {
+        fixture.componentRef.setInput('unsavedContent', undefined);
+        URL.createObjectURL = vi.fn();
+
+        await handlers.copy();
+        handlers.export();
+
+        expect(comp.copied()).toBe(false);
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
     it('imports a selected file and refuses a file that is too large', async () => {
         const imported: string[] = [];
         comp.imported.subscribe((content) => imported.push(content));
