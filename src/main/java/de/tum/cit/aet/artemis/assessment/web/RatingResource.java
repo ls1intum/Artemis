@@ -42,6 +42,9 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Rating.
@@ -135,6 +138,8 @@ public class RatingResource {
      * @param pageable - Pagination information (page, size, sort)
      * @return List of RatingListItemDTO with pagination info in headers
      */
+    @ApiResponse(responseCode = "200", headers = {
+            @Header(name = "X-Total-Count", description = "The total number of elements over all pages", schema = @Schema(type = "integer", format = "int64")) })
     @GetMapping("courses/{courseId}/rating")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, @ParameterObject Pageable pageable) {

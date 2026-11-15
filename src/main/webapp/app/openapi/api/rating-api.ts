@@ -12,7 +12,7 @@
  * RatingApi - API service
  * @generated from OpenAPI specification
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { RatingListItem } from '../model/rating-list-item';
@@ -42,14 +42,14 @@ export class RatingApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      */
-    getRatingForInstructorDashboard(courseId: number, page?: number, size?: number, sort?: Array<string>): Observable<Array<RatingListItem>> {
+    getRatingForInstructorDashboard(courseId: number, page?: number, size?: number, sort?: Array<string>): Observable<HttpResponse<Array<RatingListItem>>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'size', size);
         appendQueryParam(queryParams, 'sort', sort);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/courses/${courseId}/rating${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<RatingListItem>>(url);
+        return this.http.get<Array<RatingListItem>>(url, { observe: 'response' });
     }
 
     /**

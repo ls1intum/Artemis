@@ -12,7 +12,7 @@
  * ResultApi - API service
  * @generated from OpenAPI specification
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ExternalSubmissionResult } from '../model/external-submission-result';
@@ -151,14 +151,14 @@ export class ResultApi {
      * @param page
      * @param pageSize
      */
-    searchExternalSubmissionCandidates(exerciseId: number, searchTerm: string, page?: number, pageSize?: number): Observable<Array<ExternalSubmissionCandidate>> {
+    searchExternalSubmissionCandidates(exerciseId: number, searchTerm: string, page?: number, pageSize?: number): Observable<HttpResponse<Array<ExternalSubmissionCandidate>>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'searchTerm', searchTerm);
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'pageSize', pageSize);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/external-submission-candidates${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<ExternalSubmissionCandidate>>(url);
+        return this.http.get<Array<ExternalSubmissionCandidate>>(url, { observe: 'response' });
     }
 
 }
