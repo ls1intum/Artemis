@@ -943,12 +943,11 @@ public class RepositoryService {
      * @param repository for which to execute the commit.
      * @param user       the user who has committed the changes in the online editor
      * @return the id of the commit that was created
-     * @throws GitAPIException          if the staging/committing process fails.
-     * @throws IllegalArgumentException if the staged content violates the limits for the files of a repository
+     * @throws GitAPIException if the staging/committing process fails.
      */
     public String commitChanges(Repository repository, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        StagedContentValidator.validate(repository);
+        StagedContentValidator.validate(repository, bareGitRepositoryService.getMaxRepositorySizeBytes(repository));
         return gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
     }
 

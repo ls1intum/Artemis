@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheIterator;
@@ -23,8 +25,8 @@ import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
  * Checks the staged content of a working copy against the same limits that the pre-receive hook applies to a push, before a commit of the online editor is created. A commit of
  * the online editor is pushed directly into the repository of the server, so the checks of the hook are not run for it.
  * <p>
- * Only the files that are new or changed compared to the last commit are checked, so that content that is part of the repository already (for example from a template) does not
- * prevent a commit that leaves it as it is.
+ * The files that are new or changed compared to the last commit are checked one by one, and the whole tree against the limits for its size, so that content that is part of the
+ * repository already (for example from a template) does not prevent a commit that does not make the repository larger.
  */
 public final class StagedContentValidator {
 
@@ -43,15 +45,25 @@ public final class StagedContentValidator {
     }
 
     /**
-     * Validates the files that are staged and differ from the last commit: the depth of the directories, the length of the paths, the size of every file and of all of them
-     * together, the names of the entries, and that no entry is a symbolic link or a submodule. The number of files is checked if the commit adds files.
+     * Validates the staged content of a repository like the pre-receive hook validates a push.
+     * <ul>
+     * <li>The files that are new or changed compared to the last commit are checked for the depth of the directories, the length of the paths, the size of the file, the names of
+     * the entries, and that they are no symbolic links or submodules.</li>
+     * <li>The whole staged tree is checked for the number of entries (files and directories) and the size of all files together. A staged tree above a limit is refused only if it
+     * is larger than the tree of the last commit, so that a commit that does not make an oversized repository larger is accepted.</li>
+     * </ul>
      *
-     * @param repository the working copy whose index is examined
+     * @param repository             the working copy whose index is examined
+     * @param maxRepositorySizeBytes the size that the files of the repository may add up to, as for a push to that repository
      * @throws BadRequestAlertException if the staged content violates one of the limits, or cannot be read
      */
-    public static void validate(Repository repository) {
+    public static void validate(Repository repository, long maxRepositorySizeBytes) {
+        validate(repository, maxRepositorySizeBytes, LocalVCPrePushHook.MAX_TREE_ENTRIES);
+    }
+
+    static void validate(Repository repository, long maxRepositorySizeBytes, int maxEntries) {
         try {
-            validateChangedEntries(repository);
+            validateStagedTree(repository, Math.min(maxRepositorySizeBytes, LocalVCPrePushHook.MAX_TREE_BYTES), maxEntries);
         }
         catch (IOException e) {
             log.warn("The staged content of {} could not be examined: {}", repository.getDirectory(), e.getMessage());
@@ -59,7 +71,7 @@ public final class StagedContentValidator {
         }
     }
 
-    private static void validateChangedEntries(Repository repository) throws IOException {
+    private static void validateStagedTree(Repository repository, long maxBytes, int maxEntries) throws IOException {
         DirCache dirCache = repository.readDirCache();
         ObjectId headTree = repository.resolve(Constants.HEAD + "^{tree}");
         try (ObjectReader reader = repository.newObjectReader(); TreeWalk treeWalk = new TreeWalk(repository, reader)) {
@@ -67,44 +79,99 @@ public final class StagedContentValidator {
             treeWalk.addTree(head);
             treeWalk.addTree(new DirCacheIterator(dirCache));
             treeWalk.setRecursive(true);
-            long addedBytes = 0;
-            long addedEntries = 0;
+            long stagedBytes = 0;
+            long stagedFiles = 0;
+            Set<String> stagedDirectories = new HashSet<>();
             while (treeWalk.next()) {
                 FileMode newMode = treeWalk.getFileMode(1);
                 if (FileMode.MISSING.equals(newMode)) {
                     // removed
                     continue;
                 }
-                if (newMode.equals(treeWalk.getFileMode(0)) && treeWalk.idEqual(0, 1)) {
-                    // the same as in the last commit
-                    continue;
+                stagedFiles++;
+                addParentDirectories(stagedDirectories, treeWalk.getPathString());
+                boolean unchanged = newMode.equals(treeWalk.getFileMode(0)) && treeWalk.idEqual(0, 1);
+                if (!unchanged) {
+                    validateChangedEntry(treeWalk, newMode);
                 }
-                String path = treeWalk.getPathString();
-                if (FileMode.MISSING.equals(treeWalk.getFileMode(0))) {
-                    addedEntries++;
-                }
-                if (path.length() > MAX_PATH_LENGTH || treeWalk.getDepth() > LocalVCPrePushHook.MAX_TREE_DEPTH) {
-                    reject("The path of a file is too long or too deeply nested: " + abbreviate(path));
-                }
-                if (GitPathNames.containsGitMetadataName(path)) {
-                    reject("The path is not allowed: " + abbreviate(path));
-                }
-                if (FileMode.SYMLINK.equals(newMode) || FileMode.GITLINK.equals(newMode)) {
-                    reject("Symbolic links and submodules are not allowed: " + abbreviate(path));
-                }
-                long size = reader.getObjectSize(treeWalk.getObjectId(1), Constants.OBJ_BLOB);
-                if (size > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
-                    reject("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes: " + abbreviate(path));
-                }
-                addedBytes += size;
-                if (addedBytes > LocalVCPrePushHook.MAX_TREE_BYTES) {
-                    reject("The changed files exceed the total size limit");
+                if (!FileMode.GITLINK.equals(newMode)) {
+                    // only the size is read, not the content
+                    stagedBytes += reader.getObjectSize(treeWalk.getObjectId(1), Constants.OBJ_BLOB);
                 }
             }
-            if (addedEntries > 0 && dirCache.getEntryCount() > LocalVCPrePushHook.MAX_TREE_ENTRIES) {
-                reject("The repository contains too many files");
+            long stagedEntries = stagedFiles + stagedDirectories.size();
+            if (stagedEntries > maxEntries && stagedEntries > countEntries(reader, headTree)) {
+                reject("The repository contains too many files and directories");
+            }
+            if (stagedBytes > maxBytes && stagedBytes > sizeOfFiles(reader, headTree)) {
+                reject("The repository would be %.1f MB large, but the limit is %d MB. Remove large files and commit again.".formatted(stagedBytes / (1024.0 * 1024.0),
+                        maxBytes / (1024 * 1024)));
             }
         }
+    }
+
+    private static void validateChangedEntry(TreeWalk treeWalk, FileMode newMode) throws IOException {
+        String path = treeWalk.getPathString();
+        if (path.length() > MAX_PATH_LENGTH || treeWalk.getDepth() > LocalVCPrePushHook.MAX_TREE_DEPTH) {
+            reject("The path of a file is too long or too deeply nested: " + abbreviate(path));
+        }
+        if (GitPathNames.containsGitMetadataName(path)) {
+            reject("The path is not allowed: " + abbreviate(path));
+        }
+        if (FileMode.SYMLINK.equals(newMode) || FileMode.GITLINK.equals(newMode)) {
+            reject("Symbolic links and submodules are not allowed: " + abbreviate(path));
+        }
+        long size = treeWalk.getObjectReader().getObjectSize(treeWalk.getObjectId(1), Constants.OBJ_BLOB);
+        if (size > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
+            reject("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes: " + abbreviate(path));
+        }
+    }
+
+    /** Adds the directories above a file that are not known yet. A known directory has all its parents known as well. */
+    private static void addParentDirectories(Set<String> directories, String path) {
+        int slash = path.lastIndexOf('/');
+        while (slash > 0) {
+            if (!directories.add(path.substring(0, slash))) {
+                return;
+            }
+            slash = path.lastIndexOf('/', slash - 1);
+        }
+    }
+
+    /** The number of entries, files and directories, of a tree, counted like the hook counts them. */
+    private static long countEntries(ObjectReader reader, ObjectId tree) throws IOException {
+        if (tree == null) {
+            return 0;
+        }
+        long entries = 0;
+        try (TreeWalk treeWalk = new TreeWalk(reader)) {
+            treeWalk.addTree(tree);
+            while (treeWalk.next()) {
+                entries++;
+                if (treeWalk.isSubtree()) {
+                    treeWalk.enterSubtree();
+                }
+            }
+        }
+        return entries;
+    }
+
+    /** The size of all files of a tree. */
+    private static long sizeOfFiles(ObjectReader reader, ObjectId tree) throws IOException {
+        if (tree == null) {
+            return 0;
+        }
+        long size = 0;
+        try (TreeWalk treeWalk = new TreeWalk(reader)) {
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                if (!FileMode.GITLINK.equals(treeWalk.getFileMode(0))) {
+                    size += reader.getObjectSize(treeWalk.getObjectId(0), Constants.OBJ_BLOB);
+                }
+            }
+        }
+        return size;
     }
 
     private static void reject(String message) {

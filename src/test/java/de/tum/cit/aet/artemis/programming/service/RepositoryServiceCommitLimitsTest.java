@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -39,7 +40,9 @@ class RepositoryServiceCommitLimitsTest {
         Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call().close();
         FileUtils.writeByteArrayToFile(workingTree.resolve("big.bin").toFile(), new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
         GitService gitService = mock(GitService.class);
-        RepositoryService repositoryService = new RepositoryService(gitService, mock(BareGitRepositoryService.class), Optional.empty());
+        BareGitRepositoryService bareGitRepositoryService = mock(BareGitRepositoryService.class);
+        when(bareGitRepositoryService.getMaxRepositorySizeBytes(any())).thenReturn(20L * 1024 * 1024);
+        RepositoryService repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
 
         try (Repository repository = AbstractGitService.linkRepositoryForExistingGit(workingTree,
                 new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise"), "main", false, true); Git git = new Git(repository)) {

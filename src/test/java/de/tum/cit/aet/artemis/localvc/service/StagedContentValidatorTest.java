@@ -28,6 +28,11 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
  */
 class StagedContentValidatorTest {
 
+    private static final long MB = 1024L * 1024;
+
+    /** The limit for the size of the files of a repository that applies to students. */
+    private static final long QUOTA = 20 * MB;
+
     @TempDir
     Path repositoryPath;
 
@@ -66,38 +71,38 @@ class StagedContentValidatorTest {
     @Test
     void acceptsRegularFiles() throws Exception {
         stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
-        assertThatCode(() -> StagedContentValidator.validate(repository)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
     }
 
     @Test
     void rejectsSymbolicLink() throws Exception {
         stage("link", FileMode.SYMLINK, "../outside".getBytes(StandardCharsets.UTF_8));
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsSubmodule() throws Exception {
         stage("module", FileMode.GITLINK, new byte[0]);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsTooDeepPath() throws Exception {
         stage("d/".repeat(LocalVCPrePushHook.MAX_TREE_DEPTH + 1) + "file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsTooLongPath() throws Exception {
         stage("a".repeat(StagedContentValidator.MAX_PATH_LENGTH + 1), FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void rejectsTooLargeFile() throws Exception {
         byte[] content = new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1];
         stage("big.bin", FileMode.REGULAR_FILE, content);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -115,7 +120,7 @@ class StagedContentValidatorTest {
             }
             builder.commit();
         }
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     private void commit() throws Exception {
@@ -132,7 +137,7 @@ class StagedContentValidatorTest {
 
         stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
 
-        assertThatCode(() -> StagedContentValidator.validate(repository)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
     }
 
     @Test
@@ -142,7 +147,7 @@ class StagedContentValidatorTest {
 
         stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 2]);
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -152,7 +157,7 @@ class StagedContentValidatorTest {
 
         stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("big.bin");
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("big.bin");
     }
 
     @Test
@@ -160,6 +165,109 @@ class StagedContentValidatorTest {
         stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
         commit();
 
-        assertThatCode(() -> StagedContentValidator.validate(repository)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+    }
+
+    private void unstage(String path) throws IOException {
+        DirCache dirCache = repository.lockDirCache();
+        DirCacheBuilder builder = dirCache.builder();
+        for (int i = 0; i < dirCache.getEntryCount(); i++) {
+            if (!dirCache.getEntry(i).getPathString().equals(path)) {
+                builder.add(dirCache.getEntry(i));
+            }
+        }
+        builder.commit();
+    }
+
+    private void stageMegabytes(String path, int megabytes) throws IOException {
+        stage(path, FileMode.REGULAR_FILE, new byte[(int) (megabytes * MB)]);
+    }
+
+    @Test
+    void growthAcrossSuccessiveCommitsIsRefusedOnceTheQuotaIsExceeded() throws Exception {
+        stageMegabytes("a.bin", 8);
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        commit();
+        stageMegabytes("b.bin", 8);
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        commit();
+
+        stageMegabytes("c.bin", 8);
+
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("limit");
+    }
+
+    @Test
+    void eightMegabytesAddedToAnEighteenMegabyteRepositoryAreRefused() throws Exception {
+        stageMegabytes("a.bin", 6);
+        stageMegabytes("b.bin", 6);
+        stageMegabytes("c.bin", 6);
+        commit();
+
+        stageMegabytes("d.bin", 8);
+
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void anUnrelatedChangeThatDoesNotGrowAnOversizedRepositoryIsAccepted() throws Exception {
+        stageMegabytes("a.bin", 9);
+        stageMegabytes("b.bin", 9);
+        stageMegabytes("c.bin", 9);
+        stage("notes.txt", FileMode.REGULAR_FILE, "first".getBytes(StandardCharsets.UTF_8));
+        commit();
+
+        stage("notes.txt", FileMode.REGULAR_FILE, "other".getBytes(StandardCharsets.UTF_8));
+
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void aCommitThatGrowsAnOversizedRepositoryIsRefused() throws Exception {
+        stageMegabytes("a.bin", 9);
+        stageMegabytes("b.bin", 9);
+        stageMegabytes("c.bin", 9);
+        commit();
+
+        stage("notes.txt", FileMode.REGULAR_FILE, "more".getBytes(StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void aCommitThatShrinksAnOversizedRepositoryIsAccepted() throws Exception {
+        stageMegabytes("a.bin", 9);
+        stageMegabytes("b.bin", 9);
+        stageMegabytes("c.bin", 9);
+        commit();
+
+        unstage("c.bin");
+
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void directoriesCountAsEntriesLikeInThePushCheck() throws Exception {
+        // five files in five directories are ten entries
+        for (int i = 0; i < 5; i++) {
+            stage("dir" + i + "/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
+        }
+
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA, 10)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("files and directories");
+    }
+
+    @Test
+    void aCommitThatDoesNotAddEntriesToATreeAboveTheEntryLimitIsAccepted() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            stage("dir" + i + "/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
+        }
+        commit();
+
+        stage("dir0/file.txt", FileMode.REGULAR_FILE, new byte[] { 2 });
+        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA, 9)).doesNotThrowAnyException();
+
+        stage("dir5/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class);
     }
 }
