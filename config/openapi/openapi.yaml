@@ -2259,6 +2259,90 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/course/courses/{courseId}/stats-for-assessment-dashboard:
+    get:
+      tags: [course-stats]
+      operationId: getStatsForAssessmentDashboard
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The assessment statistics of the course. Unset counts, the
+            correction-round arrays and an empty leaderboard are omitted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StatsForDashboard'}
+        '403': {description: The user is not at least a tutor in the course}
+  /api/course/courses/{courseId}/statistics:
+    get:
+      tags: [course-stats]
+      operationId: getActiveStudentsForCourseDetailView
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: periodIndex
+        in: query
+        description: 'Which period to return: 0 ends in the current week, or in the
+          week of the course end once the course is over, -1 is the period before
+          it, and so on'
+        required: true
+        schema: {type: integer, format: int64}
+      - name: periodSize
+        in: query
+        description: Number of weeks per period; 17 when omitted
+        required: false
+        schema: {type: integer, format: int32}
+      responses:
+        '200':
+          description: The number of active students per week, oldest week first.
+            A period that reaches back before the course start is shortened
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: integer, format: int32}
+        '403': {description: The user is not at least a tutor in the course}
+  /api/course/courses/{courseId}/statistics-lifetime-overview:
+    get:
+      tags: [course-stats]
+      operationId: getActiveStudentsForCourseLiveTime
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The number of active students per week from the course start
+            to now or the course end, oldest week first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: integer, format: int32}
+        '403': {description: The user is not at least a tutor in the course}
+  /api/course/courses/{courseId}/management-detail:
+    get:
+      tags: [course-stats]
+      operationId: getCourseDTOForDetailView
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The assessment, complaint, feedback, score and cost figures
+            of the course management detail view
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseManagementDetailView'}
+        '403': {description: The user is not at least a tutor in the course}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -4366,6 +4450,12 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    DueDateStat:
+      type: object
+      properties:
+        inTime: {type: integer, format: int64}
+        late: {type: integer, format: int64}
+      required: [inTime, late]
     ResultAfterEvaluation:
       type: object
       properties:
@@ -5461,9 +5551,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5494,6 +5584,24 @@ components:
         correctMappings:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerMapping'}
+    CourseManagementDetailView:
+      type: object
+      description: The figures of the course management detail view. A null figure
+        is omitted; a present 0 is a real value.
+      properties:
+        currentPercentageAssessments: {type: number, format: double}
+        currentAbsoluteAssessments: {type: integer, format: int64}
+        currentMaxAssessments: {type: integer, format: int64}
+        currentPercentageComplaints: {type: number, format: double}
+        currentAbsoluteComplaints: {type: integer, format: int64}
+        currentMaxComplaints: {type: integer, format: int64}
+        currentPercentageMoreFeedbacks: {type: number, format: double}
+        currentAbsoluteMoreFeedbacks: {type: integer, format: int64}
+        currentMaxMoreFeedbacks: {type: integer, format: int64}
+        currentPercentageAverageScore: {type: number, format: double}
+        currentAbsoluteAverageScore: {type: number, format: double}
+        currentMaxAverageScore: {type: number, format: double}
+        currentTotalLlmCostInEur: {type: number, format: double}
     ExamSeat:
       type: object
       properties:
@@ -5676,6 +5784,26 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    TutorLeaderboard:
+      type: object
+      properties:
+        userId: {type: integer, format: int64}
+        name: {type: string}
+        numberOfAssessments: {type: integer, format: int64}
+        numberOfAcceptedComplaints: {type: integer, format: int64}
+        numberOfTutorComplaints: {type: integer, format: int64}
+        numberOfNotAnsweredMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfComplaintResponses: {type: integer, format: int64}
+        numberOfAnsweredMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfTutorMoreFeedbackRequests: {type: integer, format: int64}
+        points: {type: number, format: double}
+        averageScore: {type: number, format: double}
+        averageRating: {type: number, format: double}
+        numberOfTutorRatings: {type: integer, format: int64}
+      required: [averageRating, averageScore, numberOfAcceptedComplaints, numberOfAnsweredMoreFeedbackRequests,
+        numberOfAssessments, numberOfComplaintResponses, numberOfNotAnsweredMoreFeedbackRequests,
+        numberOfTutorComplaints, numberOfTutorMoreFeedbackRequests, numberOfTutorRatings,
+        points, userId]
     VariantPlacement:
       type: object
       properties:
@@ -5940,6 +6068,32 @@ components:
         explanation: {type: string, maxLength: 500, minLength: 0}
         isCorrect: {type: boolean}
       required: [isCorrect, text]
+    StatsForDashboard:
+      type: object
+      properties:
+        numberOfStudents: {type: integer, format: int64}
+        numberOfSubmissions: {$ref: '#/components/schemas/DueDateStat'}
+        totalNumberOfAssessments: {type: integer, format: int64}
+        totalNumberOfAssessmentLocks: {type: integer, format: int64}
+        complaintsEnabled: {type: boolean}
+        feedbackRequestEnabled: {type: boolean}
+        numberOfAssessmentsOfCorrectionRounds:
+          type: array
+          items: {$ref: '#/components/schemas/DueDateStat'}
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound:
+          type: array
+          items: {$ref: '#/components/schemas/DueDateStat'}
+        numberOfAutomaticAssistedAssessments: {$ref: '#/components/schemas/DueDateStat'}
+        numberOfComplaints: {type: integer, format: int64}
+        numberOfOpenComplaints: {type: integer, format: int64}
+        numberOfMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfOpenMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfAssessmentLocks: {type: integer, format: int64}
+        tutorLeaderboardEntries:
+          type: array
+          items: {$ref: '#/components/schemas/TutorLeaderboard'}
+        numberOfRatings: {type: integer, format: int64}
+      required: [numberOfRatings]
     ShortAnswerSubmittedAnswerFromLiveClient:
       required: [type]
       type: object

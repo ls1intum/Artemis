@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
-import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
+import { CourseManagementDetailView } from 'app/openapi/model/course-management-detail-view';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -98,7 +98,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private readonly exploreSection = viewChild<ElementRef>('exploreSection');
 
-    readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
+    readonly courseDTO = signal<CourseManagementDetailView | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
     readonly fromOnboarding = signal(false);
 
@@ -373,8 +373,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
      */
     private fetchCourseStatistics(courseId: number) {
         this.courseManagementService.getCourseStatisticsForDetailView(courseId).subscribe({
-            next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
-                this.courseDTO.set(courseResponse.body!);
+            next: (courseStatistics: CourseManagementDetailView) => {
+                this.courseDTO.set(courseStatistics);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

@@ -6,10 +6,10 @@ import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
-import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard as StatsForDashboardDTO } from 'app/openapi/model/stats-for-dashboard';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
+import { CourseManagementDetailView } from 'app/openapi/model/course-management-detail-view';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
@@ -82,6 +82,12 @@ describe('Course Management Service', () => {
     let parseExerciseCategoriesSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
+    // the generated course statistics client sends root-relative URLs with the query string in the URL itself
+    const courseStatsUrl = '/api/course/courses';
+    const pathAndQuery = (urlWithParams: string) => {
+        const url = new URL(urlWithParams, 'http://localhost');
+        return { path: url.pathname, query: [...url.searchParams.entries()] };
+    };
 
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
@@ -460,26 +466,67 @@ describe('Course Management Service', () => {
     });
 
     it('should get stats of course', () => {
-        const stats = new StatsForDashboard();
-        returnedFromService = { ...stats };
-        courseManagementService
-            .getStatsForTutors(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(stats));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/stats-for-assessment-dashboard` });
-        req.flush(returnedFromService);
+        // plain JSON as the course route sends it: no correction rounds, flags or number of students, and real zeroes
+        const stats: StatsForDashboardDTO = {
+            numberOfSubmissions: { inTime: 3, late: 0 },
+            totalNumberOfAssessments: 0,
+            numberOfComplaints: 0,
+            numberOfRatings: 0,
+            tutorLeaderboardEntries: [
+                {
+                    userId: 4,
+                    name: 'Tutor',
+                    numberOfAssessments: 0,
+                    numberOfAcceptedComplaints: 0,
+                    numberOfTutorComplaints: 0,
+                    numberOfNotAnsweredMoreFeedbackRequests: 0,
+                    numberOfComplaintResponses: 0,
+                    numberOfAnsweredMoreFeedbackRequests: 0,
+                    numberOfTutorMoreFeedbackRequests: 0,
+                    points: 0,
+                    averageScore: 0,
+                    averageRating: 0,
+                    numberOfTutorRatings: 0,
+                },
+            ],
+        };
+        const next = vi.fn();
+        courseManagementService.getStatsForTutors(course.id!).subscribe(next);
+        const req = httpMock.expectOne({ method: 'GET', url: `${courseStatsUrl}/${course.id}/stats-for-assessment-dashboard` });
+        expect(req.request.body).toBeNull();
+        req.flush(stats);
+        expect(next).toHaveBeenCalledExactlyOnceWith(stats);
     });
 
-    it('should getStatisticsData', () => {
-        const periodIndex = 0;
-        const periodSize = 5;
-        const statsData = [1, 2, 3, 4, 5];
-        courseManagementService
-            .getStatisticsData(course.id!, periodIndex, periodSize)
-            .pipe(take(1))
-            .subscribe((stats) => expect(stats).toHaveLength(periodSize));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics?periodIndex=${periodIndex}&periodSize=${periodSize}` });
+    it.each([
+        {
+            periodIndex: 0,
+            periodSize: 5,
+            query: [
+                ['periodIndex', '0'],
+                ['periodSize', '5'],
+            ],
+        },
+        { periodIndex: -2, periodSize: undefined, query: [['periodIndex', '-2']] },
+        { periodIndex: -1, periodSize: 0, query: [['periodIndex', '-1']] },
+    ])('should getStatisticsData for period $periodIndex with size $periodSize', ({ periodIndex, periodSize, query }) => {
+        const statsData = [0, 2, 0, 5];
+        const next = vi.fn();
+        courseManagementService.getStatisticsData(course.id!, periodIndex, periodSize).subscribe(next);
+        const req = httpMock.expectOne((request) => request.method === 'GET' && pathAndQuery(request.urlWithParams).path === `${courseStatsUrl}/${course.id}/statistics`);
+        expect(pathAndQuery(req.request.urlWithParams).query).toEqual(query);
+        expect(req.request.body).toBeNull();
         req.flush(statsData);
+        expect(next).toHaveBeenCalledExactlyOnceWith([0, 2, 0, 5]);
+    });
+
+    it('should accept an empty period of active students', () => {
+        const next = vi.fn();
+        courseManagementService.getStatisticsData(course.id!, 0).subscribe(next);
+        const req = httpMock.expectOne((request) => pathAndQuery(request.urlWithParams).path === `${courseStatsUrl}/${course.id}/statistics`);
+        expect(pathAndQuery(req.request.urlWithParams).query).toEqual([['periodIndex', '0']]);
+        req.flush([]);
+        expect(next).toHaveBeenCalledExactlyOnceWith([]);
     });
 
     it('should register for the course', () => {
@@ -596,13 +643,13 @@ describe('Course Management Service', () => {
     });
 
     it('should return lifetime overview data', () => {
-        const stats = [34, 23, 45, 67, 89, 201, 67, 890, 1359];
-        courseManagementService
-            .getStatisticsForLifetimeOverview(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(stats));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
+        const stats = [34, 0, 45, 67, 89, 201, 67, 890, 1359];
+        const next = vi.fn();
+        courseManagementService.getStatisticsForLifetimeOverview(course.id!).subscribe(next);
+        const req = httpMock.expectOne({ method: 'GET', url: `${courseStatsUrl}/${course.id}/statistics-lifetime-overview` });
+        expect(req.request.urlWithParams).toBe(`${courseStatsUrl}/${course.id}/statistics-lifetime-overview`);
         req.flush(stats);
+        expect(next).toHaveBeenCalledExactlyOnceWith([34, 0, 45, 67, 89, 201, 67, 890, 1359]);
     });
 
     it('should search other users within course', () => {
@@ -667,15 +714,41 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch a non-empty management detail response and filter an empty one', () => {
-        const detail = { numberOfStudents: 12 } as unknown as CourseManagementDetailViewDto;
+        const detail: CourseManagementDetailView = {
+            currentPercentageAssessments: 75,
+            currentAbsoluteAssessments: 3,
+            currentMaxAssessments: 4,
+            currentPercentageComplaints: 0,
+            currentAbsoluteComplaints: 0,
+            currentMaxComplaints: 0,
+            currentTotalLlmCostInEur: 1.25,
+        };
         const next = vi.fn();
         courseManagementService.getCourseStatisticsForDetailView(7).subscribe(next);
-        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/management-detail` }).flush(detail);
-        expect(next).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ body: detail }));
+        const req = httpMock.expectOne({ method: 'GET', url: `${courseStatsUrl}/7/management-detail` });
+        expect(req.request.body).toBeNull();
+        req.flush(detail);
+        expect(next).toHaveBeenCalledExactlyOnceWith(detail);
 
-        courseManagementService.getCourseStatisticsForDetailView(8).subscribe(next);
-        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/8/management-detail` }).flush(null);
-        expect(next).toHaveBeenCalledTimes(1);
+        const complete = vi.fn();
+        courseManagementService.getCourseStatisticsForDetailView(8).subscribe({ next, complete });
+        httpMock.expectOne({ method: 'GET', url: `${courseStatsUrl}/8/management-detail` }).flush(null);
+        expect(next).toHaveBeenCalledOnce();
+        expect(complete).toHaveBeenCalledOnce();
+
+        // an empty object is a valid body: every figure is missing, not 0
+        courseManagementService.getCourseStatisticsForDetailView(9).subscribe(next);
+        httpMock.expectOne({ method: 'GET', url: `${courseStatsUrl}/9/management-detail` }).flush({});
+        expect(next).toHaveBeenLastCalledWith({});
+    });
+
+    it('should propagate an error of the management detail request', () => {
+        const next = vi.fn();
+        const error = vi.fn();
+        courseManagementService.getCourseStatisticsForDetailView(7).subscribe({ next, error });
+        httpMock.expectOne({ method: 'GET', url: `${courseStatsUrl}/7/management-detail` }).flush(null, { status: 403, statusText: 'Forbidden' });
+        expect(next).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ status: 403 }));
     });
 
     it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {

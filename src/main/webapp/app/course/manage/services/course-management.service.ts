@@ -10,11 +10,9 @@ import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model'
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
-import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
@@ -60,6 +58,9 @@ import {
     courseFromWithExercisesDTO,
 } from 'app/course/shared/entities/course-content-response.dto';
 import { LockedCourseSubmissionDTO, lockedCourseSubmissionFromDTO } from 'app/course/shared/entities/locked-course-submission.dto';
+import { CourseStatsApi } from 'app/openapi/api/course-stats-api';
+import { CourseManagementDetailView } from 'app/openapi/model/course-management-detail-view';
+import { StatsForDashboard as StatsForDashboardDTO } from 'app/openapi/model/stats-for-dashboard';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -101,6 +102,7 @@ export class CourseManagementService implements OnDestroy {
     private scoresStorageService = inject(ScoresStorageService);
     private courseNotificationService = inject(CourseNotificationService);
     private localStorageService = inject(LocalStorageService);
+    private courseStatsApi = inject(CourseStatsApi);
 
     private resourceUrl = 'api/course/courses';
 
@@ -206,10 +208,9 @@ export class CourseManagementService implements OnDestroy {
      * gets course information required for the course management detail page
      * @param courseId the id of the course of which the detailed data should be fetched
      */
-    getCourseStatisticsForDetailView(courseId: number): Observable<HttpResponse<CourseManagementDetailViewDto>> {
-        return this.http
-            .get<CourseManagementDetailViewDto>(`${this.resourceUrl}/${courseId}/management-detail`, { observe: 'response' })
-            .pipe(filter((res: HttpResponse<CourseManagementDetailViewDto>) => !!res.body));
+    getCourseStatisticsForDetailView(courseId: number): Observable<CourseManagementDetailView> {
+        // A success without a body (null) is skipped, as before; an empty object is a valid body and is emitted
+        return this.courseStatsApi.getCourseDTOForDetailView(courseId).pipe(filter((detail) => !!detail));
     }
 
     /**
@@ -219,11 +220,8 @@ export class CourseManagementService implements OnDestroy {
      * @param periodSize the size of the statistics-period to be fetched
      */
     getStatisticsData(courseId: number, periodIndex: number, periodSize?: number): Observable<number[]> {
-        const params: Record<string, number> = { periodIndex };
-        if (periodSize) {
-            params.periodSize = periodSize;
-        }
-        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
+        // periodIndex is always sent, including 0 and negative values; a falsy periodSize is left out so the server uses its default
+        return this.courseStatsApi.getActiveStudentsForCourseDetailView(courseId, periodIndex, periodSize ? periodSize : undefined);
     }
 
     /**
@@ -231,7 +229,7 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId the id of the course of which the statistics should be fetched
      */
     getStatisticsForLifetimeOverview(courseId: number): Observable<number[]> {
-        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics-lifetime-overview`);
+        return this.courseStatsApi.getActiveStudentsForCourseLiveTime(courseId);
     }
 
     /**
@@ -471,8 +469,8 @@ export class CourseManagementService implements OnDestroy {
      * returns the stats of the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
-    getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-assessment-dashboard`, { observe: 'response' });
+    getStatsForTutors(courseId: number): Observable<StatsForDashboardDTO> {
+        return this.courseStatsApi.getStatsForAssessmentDashboard(courseId);
     }
 
     /**
