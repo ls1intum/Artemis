@@ -47,6 +47,12 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.isVisible.set(false);
     }
 
+    dismiss(): void {
+        this.choice.emit(LLM_MODAL_DISMISSED);
+        this.modalService.emitChoice(LLM_MODAL_DISMISSED);
+        this.close();
+    }
+
     selectCloud(): void {
         this.choice.emit(LLMSelectionDecision.CLOUD_AI);
         this.modalService.emitChoice(LLMSelectionDecision.CLOUD_AI);
@@ -67,9 +73,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
 
     onBackdropClick(event: MouseEvent): void {
         if (event.target === event.currentTarget) {
-            this.choice.emit(LLM_MODAL_DISMISSED);
-            this.modalService.emitChoice(LLM_MODAL_DISMISSED);
-            this.close();
+            this.dismiss();
         }
     }
 

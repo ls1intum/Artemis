@@ -22,6 +22,19 @@ public enum RateLimitType {
     AUTHENTICATION(30),
 
     /**
+     * Rate limit for the failed password logins of one account, counted per login name and independent of the client address.
+     * <p>
+     * The limits per client address do not slow down a caller that spreads its attempts over many addresses. Each wrong password spends a token of the bucket of the
+     * login name that was tried, and while the bucket is empty further logins for that name are answered with 429 before the password is checked. It is a throttle and not a
+     * lock: the bucket refills continuously, so the owner of the account waits a few seconds at most and a sustained series of guesses is held to this rate.
+     * Successful logins spend nothing.
+     * <p>
+     * Default: 10 failed logins per minute per login name, overridable with
+     * {@code artemis.rate-limiting.failed-login-requests-per-minute}.
+     */
+    FAILED_LOGIN(10),
+
+    /**
      * Rate limit for the authentication of git operations over HTTP and SSH: one per clone, fetch or push over HTTP, and one
      * per SSH authentication. Build agents are exempt as described for {@link #BUILD_AGENT_CLONE_TOKEN}.
      * <p>
@@ -152,7 +165,18 @@ public enum RateLimitType {
      * Default: 60 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.client-error-report-requests-per-minute}.
      */
-    CLIENT_ERROR_REPORT(60, true, false);
+    CLIENT_ERROR_REPORT(60, true, false),
+
+    /**
+     * Rate limit for failed checks of the shared secrets of the external services (Athena, Pyris and the sharing platform)
+     * on the endpoints these services call. Only a check that fails spends budget, so a service that presents the right
+     * secret is never limited; once the budget is used up, further checks from the same address are refused without
+     * comparing the secret.
+     * <p>
+     * Default: 30 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.service-credential-failure-requests-per-minute}.
+     */
+    SERVICE_CREDENTIAL_FAILURE(30);
 
     private final int defaultRpm;
 

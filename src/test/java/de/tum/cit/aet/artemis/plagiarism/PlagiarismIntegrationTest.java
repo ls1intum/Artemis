@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -57,6 +59,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepository;
+
+    @Autowired
+    private PostTestRepository postRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -180,9 +185,40 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(plagiarismCaseOptionalEmpty3).as("should NOT remove plagiarism case for student 3").isPresent();
     }
 
+    /**
+     * Creates a plagiarism case for the student of the first submission of the comparison, and optionally communicates it to the student with a post.
+     */
+    private void createCaseForFirstSubmission(boolean communicated) {
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(textExercise);
+        plagiarismCase.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        var submissionA = plagiarismComparison1.getSubmissionA();
+        submissionA.setPlagiarismCase(plagiarismCase);
+        plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
+        if (communicated) {
+            Post post = new Post();
+            post.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+            post.setTitle("Title");
+            post.setContent("Content");
+            post.setVisibleForStudents(true);
+            post.setPlagiarismCase(plagiarismCase);
+            postRepository.save(post);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPlagiarismComparisonsForSplitView_studentNotYetCommunicated_forbidden() throws Exception {
+        createCaseForFirstSubmission(false);
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.FORBIDDEN,
+                PlagiarismComparisonDTO.class);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
+        createCaseForFirstSubmission(true);
         var comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
                 PlagiarismComparisonDTO.class);
         assertThat(List.of(comparison.submissionA().studentLogin(), comparison.submissionB().studentLogin())).as("should anonymize plagiarism comparison")
@@ -192,6 +228,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_studentWithNullSubmissionLogin_forbidden() throws Exception {
+        createCaseForFirstSubmission(true);
         plagiarismComparison1.getSubmissionA().setStudentLogin(null);
         plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
 

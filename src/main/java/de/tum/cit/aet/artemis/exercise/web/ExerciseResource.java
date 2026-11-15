@@ -374,7 +374,7 @@ public class ExerciseResource {
     @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("exercises/{exerciseId}/title")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);

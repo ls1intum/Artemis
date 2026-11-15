@@ -97,7 +97,7 @@ public class GroupChatResource extends ConversationManagementResource {
 
         var loginsToSearchFor = new HashSet<>(otherChatParticipantsLogins);
         loginsToSearchFor.add(requestingUser.getLogin());
-        var chatMembers = conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList());
+        var chatMembers = conversationService.findCourseUsersInDatabase(course, loginsToSearchFor.stream().toList());
 
         if (chatMembers.size() < 2 || chatMembers.size() > MAX_GROUP_CHAT_PARTICIPANTS) {
             throw new BadRequestAlertException("The number of participants in a group chat must be between 2 and " + MAX_GROUP_CHAT_PARTICIPANTS, GROUP_CHAT_ENTITY_NAME,
@@ -162,7 +162,7 @@ public class GroupChatResource extends ConversationManagementResource {
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithAuthorities();
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
-        var usersToRegister = conversationService.findUsersInDatabase(userLogins);
+        var usersToRegister = conversationService.findCourseUsersInDatabase(course, userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
 
         var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
@@ -190,6 +190,10 @@ public class GroupChatResource extends ConversationManagementResource {
         if (userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
+        // a group chat has a limited number of participants, so a longer list can only contain logins that are no participants
+        if (userLogins.size() > MAX_GROUP_CHAT_PARTICIPANTS) {
+            throw new BadRequestAlertException("At most " + MAX_GROUP_CHAT_PARTICIPANTS + " user logins can be provided", GROUP_CHAT_ENTITY_NAME, "userLoginsTooMany");
+        }
 
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
@@ -197,13 +201,14 @@ public class GroupChatResource extends ConversationManagementResource {
 
         groupChatAuthorizationService.isAllowedToRemoveUsersFromGroupChat(groupChatFromDatabase, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
-        conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
+        // only the users that were participants and have been removed are notified, the other logins are ignored
+        var removedUsers = conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
 
         var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
 
-        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification, removedUsers.stream().toList());
 
         return ResponseEntity.ok().build();
     }

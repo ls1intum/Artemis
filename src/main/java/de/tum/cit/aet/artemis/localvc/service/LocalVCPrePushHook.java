@@ -2,12 +2,12 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
 
 /**
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
@@ -38,6 +39,26 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     }
 
     private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
+
+    private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
+
+    /** The most entries of the tree of the pushed commit that are examined. A tree can reference the same subtree many times, so its paths are far more than its objects. */
+    static final int MAX_TREE_ENTRIES = 100_000;
+
+    /** The deepest directory nesting of the pushed tree. */
+    static final int MAX_TREE_DEPTH = 100;
+
+    /** The most that all files of the pushed tree add up to. */
+    static final long MAX_TREE_BYTES = 500L * 1024 * 1024;
+
+    /** The time that the examination of the tree may take. */
+    static final long MAX_TREE_NANOS = TimeUnit.SECONDS.toNanos(60);
+
+    private static final String METADATA_NAME_MESSAGE = "The path '%s' is not allowed: a name that denotes the metadata directory of a repository cannot be part of the content.";
+
+    private static final String TREE_TIMEOUT_MESSAGE = "The examination of the repository took too long. Please try again.";
+
+    private static final String TREE_LIMIT_MESSAGE = "The repository exceeds the limits for the number of files, the depth of the directories or the total size.";
 
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
@@ -122,20 +143,44 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 }
             }
 
-            rejectFilesLargerThan10MbOrSymlinksOrSubModules(repository, command);
+            rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(repository, command, localVCServletService.getMaxRepositorySizeBytes(repository));
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
         }
     }
 
-    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModules(Repository repository, ReceiveCommand command) throws IOException {
+    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(Repository repository, ReceiveCommand command, long maxRepositorySizeBytes)
+            throws IOException {
         try (ObjectReader reader = repository.newObjectReader(); RevWalk revWalk = new RevWalk(reader); TreeWalk treeWalk = new TreeWalk(reader)) {
             RevCommit newCommit = revWalk.parseCommit(command.getNewId());
             treeWalk.addTree(newCommit.getTree());
-            treeWalk.setRecursive(true);
+            // The walk is not recursive, so that every directory is counted and checked before it is entered. A recursive walk enters subtrees inside next(), where a tree that
+            // references the same empty subtrees many times could keep it busy without a single entry being returned.
+            final long startNanos = System.nanoTime();
+            long entries = 0;
+            long totalBytes = 0;
             while (treeWalk.next()) {
+                boolean timedOut = System.nanoTime() - startNanos > MAX_TREE_NANOS;
+                if (++entries > MAX_TREE_ENTRIES || treeWalk.getDepth() > MAX_TREE_DEPTH || timedOut) {
+                    log.warn("Rejected a push to {}: {} entries examined, depth {}, {} bytes, {} ms", repository.getDirectory(), entries, treeWalk.getDepth(), totalBytes,
+                            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, timedOut ? TREE_TIMEOUT_MESSAGE : TREE_LIMIT_MESSAGE);
+                    break;
+                }
                 FileMode mode = treeWalk.getFileMode(0);
+                if (treeWalk.isSubtree()) {
+                    if (GitPathNames.isGitMetadataName(treeWalk.getNameString())) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, METADATA_NAME_MESSAGE.formatted(treeWalk.getPathString()));
+                        break;
+                    }
+                    treeWalk.enterSubtree();
+                    continue;
+                }
+                if (GitPathNames.containsGitMetadataName(treeWalk.getPathString())) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, METADATA_NAME_MESSAGE.formatted(treeWalk.getPathString()));
+                    break;
+                }
                 if (FileMode.SYMLINK.equals(mode)) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
                             Symbolic links are not allowed: '%s'.
@@ -149,7 +194,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
                             After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes."""
                             .formatted(treeWalk.getPathString()));
-                    break;
+                    return;
                 }
                 if (FileMode.GITLINK.equals(mode)) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
@@ -160,17 +205,83 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                             3. Edit the '.gitmodules' file and remove the corresponding section.
                             4. Optionally, clean up '.git/config' if it contains a [submodule "%1$s"] section.
                             5. Commit all changes.""".formatted(treeWalk.getPathString()));
-                    break;
+                    return;
                 }
 
                 ObjectId objectId = treeWalk.getObjectId(0);
-                ObjectLoader loader = reader.open(objectId);
-                if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
+                // Only the size is read, the content of the file is not loaded
+                long size = reader.getObjectSize(objectId, Constants.OBJ_BLOB);
+                if (size > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                            "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
-                    break;
+                            "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), size / (1024.0 * 1024.0)));
+                    return;
+                }
+                totalBytes += size;
+                if (totalBytes > MAX_TREE_BYTES) {
+                    log.warn("Rejected a push to {}: the files add up to more than {} bytes", repository.getDirectory(), MAX_TREE_BYTES);
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, TREE_LIMIT_MESSAGE);
+                    return;
+                }
+            }
+            if (command.getResult() == ReceiveCommand.Result.NOT_ATTEMPTED) {
+                rejectOversizedRepository(repository, reader, revWalk, command, totalBytes, maxRepositorySizeBytes);
+            }
+        }
+    }
+
+    /**
+     * Rejects a push that makes the files of the repository larger than the limit. A push that does not make the repository larger is accepted even if the repository is over
+     * the limit already (e.g. because it was created from a large template before the limit existed), so that students can still push, and can bring the repository below the
+     * limit.
+     */
+    private static void rejectOversizedRepository(Repository repository, ObjectReader reader, RevWalk revWalk, ReceiveCommand command, long totalSize, long maxRepositorySizeBytes)
+            throws IOException {
+        if (totalSize <= maxRepositorySizeBytes) {
+            return;
+        }
+        long previousSize = ObjectId.zeroId().equals(command.getOldId()) ? largestExistingBranchSize(repository, reader, revWalk)
+                : sizeOfFiles(reader, revWalk.parseCommit(command.getOldId()));
+        if (totalSize <= previousSize) {
+            return;
+        }
+        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
+                The repository would be %.1f MB large, but the limit is %d MB.
+                Large files that never change (data sets, models, libraries, ...) must not be stored in git. Download them during the build instead.
+                See %s
+                To fix this, remove the large files from the repository, commit the changes and push again.""".formatted(totalSize / (1024.0 * 1024.0),
+                maxRepositorySizeBytes / (1024 * 1024), REPOSITORY_SIZE_DOCUMENTATION_URL));
+    }
+
+    /**
+     * The baseline for a push that creates a branch: the largest branch that exists already, or 0 in a repository without branches. Creating a branch at an existing commit
+     * adds no files, so it must not be treated as growing the repository from nothing.
+     */
+    private static long largestExistingBranchSize(Repository repository, ObjectReader reader, RevWalk revWalk) throws IOException {
+        long largest = 0;
+        for (Ref ref : repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)) {
+            if (ref.getObjectId() != null) {
+                largest = Math.max(largest, sizeOfFiles(reader, revWalk.parseCommit(ref.getObjectId())));
+            }
+        }
+        return largest;
+    }
+
+    private static long sizeOfFiles(ObjectReader reader, RevCommit commit) throws IOException {
+        long size = 0;
+        try (TreeWalk treeWalk = new TreeWalk(reader)) {
+            treeWalk.addTree(commit.getTree());
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                if (FileMode.GITLINK.equals(treeWalk.getFileMode(0))) {
+                    // the object of a submodule lives in another repository
+                    continue;
+                }
+                if (!FileMode.TREE.equals(treeWalk.getFileMode(0))) {
+                    // only the size is read, not the content
+                    size += reader.getObjectSize(treeWalk.getObjectId(0), Constants.OBJ_BLOB);
                 }
             }
         }
+        return size;
     }
 }

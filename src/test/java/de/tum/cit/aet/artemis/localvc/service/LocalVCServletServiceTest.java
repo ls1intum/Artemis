@@ -35,7 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,6 +45,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -122,7 +122,9 @@ class LocalVCServletServiceTest {
     @Mock
     private PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
 
-    @InjectMocks
+    @Mock
+    private BuildAgentNetworkPolicy buildAgentNetworkPolicy;
+
     private LocalVCServletService localVCServletService;
 
     private User testUser;
@@ -160,8 +162,11 @@ class LocalVCServletServiceTest {
         // The repositories do not exist on disk, so reading the latest commit of one finds nothing
         ReflectionTestUtils.setField(repositoryResolver, "localVCBasePath", Path.of("/tmp/test-repos"));
         ReflectionTestUtils.setField(repositoryResolver, "localVCBaseUri", URI.create("http://localhost"));
-        // Setup the VcsAccessLogService as an Optional containing the mock
-        ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
+        // The constructor takes the size limits as primitives, which constructor injection of mocks cannot provide, so the service is built explicitly
+        localVCServletService = new LocalVCServletService(authenticationManager, userRepository, programmingExerciseRepository, programmingExerciseBuildConfigRepository,
+                repositoryAccessService, programmingExerciseParticipationService, auxiliaryRepositoryService, Optional.of(vcsAccessLogService),
+                participationVCSAccessTokenRepository, repositoryVCSAccessTokenRepository, authorizationCheckService, rateLimitService, userVcsAccessTokenService,
+                repositoryResolver, accessLogRecorder, buildAgentAuthenticationService, passwordAuthenticationNoticeService, buildAgentNetworkPolicy, 20, 50);
     }
 
     @Test

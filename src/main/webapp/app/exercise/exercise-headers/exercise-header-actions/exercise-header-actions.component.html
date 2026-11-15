@@ -10,7 +10,14 @@
     }
     @if (exercise().isAtLeastTutor) {
         <div class="inline">
-            <button severity="secondary" tumAetUiButton type="button" id="instructor-actions-dropdown" [tumAetUiMenuTrigger]="instructorActions">
+            <button
+                severity="secondary"
+                tumAetUiButton
+                type="button"
+                id="instructor-actions-dropdown"
+                [tumAetUiMenuTrigger]="instructorActions"
+                [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate"
+            >
                 <fa-icon [icon]="faWrench" />
                 <span class="hidden md:inline">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span

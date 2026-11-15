@@ -48,8 +48,12 @@
     </div>
     <tumaet-ui-message severity="warn" class="mb-4" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
     @if (testRuns()) {
-        <div class="overflow-x-auto">
-            <table tumAetUiTable striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+        <tumaet-ui-table-layout
+            [empty]="testRuns().length === 0 && !isLoading()"
+            emptyTitle="artemisApp.examManagement.testRun.empty.title"
+            emptyDescription="artemisApp.examManagement.testRun.empty.description"
+        >
+            <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                 <thead>
                     <tr>
                         <th class="hidden md:table-cell" tumAetUiSortableColumn="id"><span jhiTranslate="global.field.id"></span></th>
@@ -121,7 +125,15 @@
                     }
                 </tbody>
             </table>
-        </div>
+            <div tumAetUiTableEmptyActions>
+                @if (course()?.isAtLeastInstructor && examContainsExercises()) {
+                    <button type="button" tumAetUiButton size="small" data-testid="test-run-empty-create" (click)="openCreateTestRunModal()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
+                    </button>
+                }
+            </div>
+        </tumaet-ui-table-layout>
     }
     @if (createTestRunDialogVisible()) {
         <jhi-create-test-run-modal [exam]="exam()!" [(visible)]="createTestRunDialogVisible" (testRunCreate)="createTestRun($event)" />

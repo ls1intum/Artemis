@@ -1,13 +1,19 @@
-import { TumAetUiButtonDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -18,14 +24,14 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
     templateUrl: './rating-list.component.html',
     imports: [
         TranslatePipe,
-        SortDirective,
-        SortByDirective,
         FaIconComponent,
         StarRatingComponent,
         TumAetUiPaginatorComponent,
         TumAetUiTooltipDirective,
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class RatingListComponent implements OnInit {
@@ -40,11 +46,24 @@ export class RatingListComponent implements OnInit {
 
     private courseId!: number; // set in ngOnInit() from route params
 
-    ratingsSortingPredicate = 'id';
-    ratingsReverseOrder = false;
+    private readonly sortingPredicateState = signal('id');
+    private readonly reverseOrderState = signal(false);
+
+    get ratingsSortingPredicate(): string {
+        return this.sortingPredicateState();
+    }
+    set ratingsSortingPredicate(value: string) {
+        this.sortingPredicateState.set(value);
+    }
+
+    get ratingsReverseOrder(): boolean {
+        return this.reverseOrderState();
+    }
+    set ratingsReverseOrder(value: boolean) {
+        this.reverseOrderState.set(value);
+    }
 
     // Icons
-    faSort = faSort;
     faFolderOpen = faFolderOpen;
 
     ngOnInit(): void {
@@ -62,6 +81,12 @@ export class RatingListComponent implements OnInit {
             this.ratings.set(pageResult.content);
             this.totalElements.set(pageResult.totalElements);
         });
+    }
+
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        this.ratingsSortingPredicate = event.field;
+        this.ratingsReverseOrder = event.order === 1;
+        this.sortRows();
     }
 
     sortRows(): void {

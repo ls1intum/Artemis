@@ -213,6 +213,22 @@ describe('FaqComponent', () => {
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 
+    it('should apply the column header sort and re-sort the filtered faqs', () => {
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation((array) => array);
+
+        faqComponent.onSort({ field: 'questionTitle', order: 1 });
+
+        expect(faqComponent.predicate()).toBe('questionTitle');
+        expect(faqComponent.ascending()).toBe(true);
+        expect(sortSpy).toHaveBeenCalledWith(faqComponent.filteredFaqs(), 'questionTitle', true);
+
+        faqComponent.onSort({ field: 'faqState', order: -1 });
+
+        expect(faqComponent.predicate()).toBe('faqState');
+        expect(faqComponent.ascending()).toBe(false);
+        expect(sortSpy).toHaveBeenLastCalledWith(faqComponent.filteredFaqs(), 'faqState', false);
+    });
+
     it('should reject faq properly', () => {
         vi.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();

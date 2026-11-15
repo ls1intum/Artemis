@@ -1,16 +1,22 @@
-<div class="frame">
-    <div class="controls">
-        <tumaet-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
+<jhi-tutorial-registrations-students-table
+    hasToolbar
+    [students]="filteredRegisteredStudents()"
+    [emptyTitle]="searchString() ? 'global.search.noResultsFound' : undefined"
+    [removeActionColumnInfo]="loggedInUserIsAtLeastTutorOfGroup() ? studentsTableRemoveActionColumnInfo : undefined"
+>
+    <div studentsTableToolbar class="contents">
+        <tumaet-ui-icon-field class="max-w-lg min-w-24 flex-1" [icon]="faMagnifyingGlass">
             <input
                 tumAetUiInput
                 tumAetUiInputSize="small"
-                class="search-input"
+                class="w-full"
                 type="text"
                 [placeholder]="searchFieldPlaceholder()"
                 [attr.aria-label]="searchFieldPlaceholder()"
                 [(ngModel)]="searchString"
             />
         </tumaet-ui-icon-field>
+        <span class="flex-1"></span>
         @if (loggedInUserIsAtLeastInstructorInCourse()) {
             <button
                 type="button"
@@ -42,11 +48,7 @@
             ></button>
         }
     </div>
-    <jhi-tutorial-registrations-students-table
-        [students]="filteredRegisteredStudents()"
-        [removeActionColumnInfo]="loggedInUserIsAtLeastTutorOfGroup() ? studentsTableRemoveActionColumnInfo : undefined"
-    />
-</div>
+</jhi-tutorial-registrations-students-table>
 <tumaet-ui-confirm-dialog />
 <jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #importModal />
 <jhi-tutorial-registrations-register-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #registerModal />

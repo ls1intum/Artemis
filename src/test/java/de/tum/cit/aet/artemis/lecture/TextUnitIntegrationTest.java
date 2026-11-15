@@ -93,6 +93,16 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void createTextUnit_competencyOfAnotherCourse_shouldBeRejected() throws Exception {
+        var otherCourse = lectureUtilService.createCourseWithLecture(false).getCourse();
+        var foreignCompetency = competencyUtilService.createCompetency(otherCourse);
+        textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(foreignCompetency, textUnit, 1)));
+
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         var persistedTextUnit = request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class,

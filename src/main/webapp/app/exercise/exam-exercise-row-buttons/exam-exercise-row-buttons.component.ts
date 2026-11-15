@@ -17,7 +17,20 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
-import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCode,
+    faExclamationTriangle,
+    faEye,
+    faFileSignature,
+    faLightbulb,
+    faPencilAlt,
+    faRedo,
+    faRobot,
+    faSignal,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -71,6 +84,8 @@ export class ExamExerciseRowButtonsComponent {
      * table column can floor its width the same way.
      */
     readonly actionsMinWidth = output<number>();
+    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
+    readonly actionsNaturalWidth = output<number>();
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
@@ -179,7 +194,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'grading',
                 labelKey: 'artemisApp.programmingExercise.configureGrading.shortTitle',
                 icon: faFileSignature,
-                severity: 'warn',
+                severity: 'secondary',
                 kind: 'link',
                 link: [...groupSeg, 'programming-exercises', ex.id!, 'grading', 'test-cases'],
             });
@@ -189,7 +204,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'examples',
                 labelKey: 'entity.action.exampleSubmissions',
                 icon: faBook,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: [...typeSeg, 'example-submissions'],
             });
@@ -199,7 +214,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'statistics',
                 labelKey: 'artemisApp.quizExercise.statistics',
                 icon: faSignal,
-                severity: 'info',
+                severity: 'secondary',
                 kind: 'link',
                 link: [...groupSeg, 'quiz-exercises', ex.id!, 'quiz-point-statistic'],
             });
@@ -209,7 +224,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'teams',
                 labelKey: 'artemisApp.exercise.teams',
                 icon: faUsers,
-                severity: 'primary',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
             });
@@ -226,7 +241,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
                 icon: faRobot,
-                severity: 'warn',
+                severity: 'secondary',
                 kind: 'button',
                 onClick: () => this.aiVariantModalVisible.set(true),
             });
@@ -235,8 +250,8 @@ export class ExamExerciseRowButtonsComponent {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
-                icon: faPencilAlt,
-                severity: 'warn',
+                icon: faCode,
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
@@ -246,15 +261,15 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'preview',
                 labelKey: 'artemisApp.quizExercise.preview',
                 icon: faEye,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: [...groupSeg, 'quiz-exercises', ex.id!, 'preview'],
             });
             items.push({
                 id: 'solution',
                 labelKey: 'artemisApp.quizExercise.solution',
-                icon: faEye,
-                severity: 'success',
+                icon: faLightbulb,
+                severity: 'secondary',
                 kind: 'link',
                 link: [...groupSeg, 'quiz-exercises', ex.id!, 'solution'],
             });
@@ -262,8 +277,8 @@ export class ExamExerciseRowButtonsComponent {
                 items.push({
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
-                    icon: faWrench,
-                    severity: 'warn',
+                    icon: faRedo,
+                    severity: 'secondary',
                     kind: 'link',
                     link: [...groupSeg, 'quiz-exercises', ex.id!, 're-evaluate'],
                 });
@@ -272,7 +287,7 @@ export class ExamExerciseRowButtonsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: [...typeSeg, 'edit'],
@@ -281,7 +296,7 @@ export class ExamExerciseRowButtonsComponent {
                 });
             }
         } else if (course.isAtLeastEditor) {
-            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faWrench, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
+            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faPencilAlt, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
         }
         if (course.isAtLeastInstructor) {
             items.push({

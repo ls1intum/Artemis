@@ -6,13 +6,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { lastValueFrom, of } from 'rxjs';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { TranslateService } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { By } from '@angular/platform-browser';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {
@@ -74,13 +75,8 @@ describe('RatingListComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useClass: MockRouter },
-                MockProvider(RatingService),
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent)],
+            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(RatingService), provideTranslateService()],
         })
             .compileComponents()
             .then(() => {
@@ -121,6 +117,64 @@ describe('RatingListComponent', () => {
         const loadSpy = vi.spyOn(component, 'loadRatings');
         component.sortRows();
         expect(loadSpy).toHaveBeenCalled();
+    });
+
+    it('should store the sort event, reverse the direction flag and reload with the matching sort parameter', () => {
+        const serviceSpy = vi.spyOn(ratingService, 'getRatingsForDashboard');
+
+        component['onSortChange']({ field: 'exerciseTitle', order: 1 });
+
+        expect(component.ratingsSortingPredicate).toBe('exerciseTitle');
+        expect(component.ratingsReverseOrder).toBe(true);
+        expect(serviceSpy).toHaveBeenLastCalledWith(123, 0, 20, 'exerciseTitle,asc');
+
+        component['onSortChange']({ field: 'rating', order: -1 });
+
+        expect(component.ratingsSortingPredicate).toBe('rating');
+        expect(component.ratingsReverseOrder).toBe(false);
+        expect(serviceSpy).toHaveBeenLastCalledWith(123, 0, 20, 'rating,desc');
+    });
+
+    describe('template', () => {
+        const element = () => fixture.nativeElement as HTMLElement;
+
+        it('should render a row per rating and the footer paginator', () => {
+            fixture.detectChanges();
+
+            expect(element().querySelectorAll('tbody tr')).toHaveLength(3);
+            const paginator = fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent));
+            expect(paginator).not.toBeNull();
+            expect(paginator.componentInstance.totalRecords()).toBe(3);
+        });
+
+        it('should load the next page with a one-based page number when the paginator emits a zero-based page', () => {
+            fixture.detectChanges();
+            const serviceSpy = vi.spyOn(ratingService, 'getRatingsForDashboard');
+
+            fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).componentInstance.pageChange.emit(2);
+
+            expect(component.page()).toBe(3);
+            expect(serviceSpy).toHaveBeenLastCalledWith(123, 2, 20, 'id,desc');
+        });
+
+        it('should reload the sorted ratings when a sortable header is clicked', () => {
+            fixture.detectChanges();
+            const serviceSpy = vi.spyOn(ratingService, 'getRatingsForDashboard');
+
+            const header = element().querySelector('th[tumAetUiSortableColumn="exerciseTitle"]')!;
+            ((header.querySelector('button') ?? header) as HTMLElement).click();
+
+            expect(component.ratingsSortingPredicate).toBe('exerciseTitle');
+            expect(serviceSpy).toHaveBeenLastCalledWith(123, 0, 20, 'exerciseTitle,asc');
+        });
+
+        it('should show the empty state and no rows when there are no ratings', () => {
+            vi.spyOn(ratingService, 'getRatingsForDashboard').mockReturnValue(of({ content: [], totalElements: 0, totalPages: 0 }));
+            fixture.detectChanges();
+
+            expect(element().querySelector('[data-testid="table-empty"]')).not.toBeNull();
+            expect(element().querySelectorAll('tbody tr')).toHaveLength(0);
+        });
     });
 
     it('should navigate to assessment view for text exercise', () => {

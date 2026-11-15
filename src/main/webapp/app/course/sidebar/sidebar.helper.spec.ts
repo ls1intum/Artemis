@@ -43,6 +43,19 @@ const SIDEBAR_CARD_ELEMENT_4 = { exercise: EXERCISE_4 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_5 = { exercise: EXERCISE_5, type: ExerciseType.PROGRAMMING, difficulty: DifficultyLevel.EASY } as SidebarCardElement;
 
 describe('getExerciseCategoryFilterOptions', () => {
+    it('should list categories that differ only in case, whitespace or color once', () => {
+        const element = (name: string, color: string) => ({ exercise: { categories: [new ExerciseCategory(name, color)] } as Exercise }) as SidebarCardElement;
+        const sidebarData: SidebarData = {
+            groupByCategory: true,
+            groupedData: {},
+            ungroupedData: [element('Bonus', '#111111'), element('bonus', '#111111'), element('Bonus', '#222222'), element(' Bonus ', '#333333'), element('Other', '#111111')],
+        };
+
+        const result = getExerciseCategoryFilterOptions(sidebarData, undefined);
+
+        expect(result.options.map((option) => option.category.category)).toEqual(['Bonus', 'Other']);
+    });
+
     it('should return all exercise categories', () => {
         const sidebarData: SidebarData = {
             groupByCategory: true,

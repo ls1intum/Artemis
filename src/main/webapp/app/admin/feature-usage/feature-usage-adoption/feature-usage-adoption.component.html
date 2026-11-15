@@ -1,5 +1,5 @@
-<div class="overflow-x-auto">
-    <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="adoption-table">
+<tumaet-ui-table-layout [empty]="rows().length === 0" emptyTitle="artemisApp.featureUsage.noAdoptionData">
+    <table tumAetUiTable size="small" aria-describedby="feature-usage-page-heading" data-testid="adoption-table">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.area"></th>
@@ -28,11 +28,7 @@
                         <span class="ms-2 text-sm">{{ row.sharePercent | number: '1.0-1' }}%</span>
                     </td>
                 </tr>
-            } @empty {
-                <tr>
-                    <td colspan="5" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noAdoptionData"></td>
-                </tr>
             }
         </tbody>
     </table>
-</div>
+</tumaet-ui-table-layout>

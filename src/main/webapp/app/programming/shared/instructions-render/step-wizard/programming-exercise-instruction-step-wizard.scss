@@ -5,6 +5,13 @@
 $step-font-size: 0.6rem;
 $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 
+// Same column as the rendered problem statement (see programming-exercise-instruction.scss), so the task list lines up with the text below it.
+.stepwizard-container {
+    width: 100%;
+    max-width: 90ch;
+    margin-inline: auto;
+}
+
 .stepwizard {
     display: table;
     width: 100%;

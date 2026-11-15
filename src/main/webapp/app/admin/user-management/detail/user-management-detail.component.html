@@ -60,7 +60,7 @@
             <jhi-user-course-roles class="mt-4 block" [login]="u.login" />
         }
         <div class="mt-4">
-            <a [routerLink]="['edit']" tumAetUiButton size="small" severity="warn" data-testid="edit-user-button">
+            <a [attr.aria-label]="'entity.action.edit' | artemisTranslate" [routerLink]="['edit']" tumAetUiButton size="small" severity="warn" data-testid="edit-user-button">
                 <fa-icon [icon]="faPencil" />
                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
             </a>

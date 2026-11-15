@@ -15,6 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 /**
  * Unit tests for the validation of the {@link DragAndDropQuizAnswerConversionService}.
  */
+@ResourceLock("FilePathConverter")
 class DragAndDropQuizAnswerConversionServiceTest {
 
     @TempDir

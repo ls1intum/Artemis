@@ -189,6 +189,11 @@ public class BuildJobContainerService {
         int cpuCount = runConfig.cpuCount();
         int memory = runConfig.memory();
         int memorySwap = runConfig.memorySwap();
+        // The named networks are limited to the allowed list when the exercise is saved and when the job is created on the server. The agent additionally refuses the values
+        // that do not give the build a network of its own.
+        if (DockerRunConfig.sharesNetworkNamespace(network)) {
+            throw new LocalCIException("The container network '" + network + "' is not allowed");
+        }
 
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {

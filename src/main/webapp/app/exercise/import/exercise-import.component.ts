@@ -1,3 +1,4 @@
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,14 +14,20 @@ import { TextExercisePagingService } from 'app/text/manage/text-exercise/service
 import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiCheckboxComponent,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { faArrowLeft, faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -48,14 +55,15 @@ const DEFAULT_SORT_COLUMN = 'ID';
     imports: [
         TranslateDirective,
         FormsModule,
-        SortDirective,
-        SortByDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         FaIconComponent,
         TumAetUiCheckboxComponent,
         TumAetUiInputDirective,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
         ExerciseCourseTitlePipe,
+        SearchHighlightComponent,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
         TumAetUiButtonComponent,
@@ -273,24 +281,6 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             return;
         }
         this.selectImport(preview.exercise);
-    }
-
-    highlightParts(value: string | undefined): { text: string; highlighted: boolean }[] {
-        if (!value || !this.searchTerm) {
-            return [{ text: value ?? '', highlighted: false }];
-        }
-        const parts: { text: string; highlighted: boolean }[] = [];
-        const term = this.searchTerm.toLocaleLowerCase();
-        let start = 0;
-        let match = value.toLocaleLowerCase().indexOf(term);
-        while (match !== -1) {
-            parts.push({ text: value.slice(start, match), highlighted: false });
-            parts.push({ text: value.slice(match, match + term.length), highlighted: true });
-            start = match + term.length;
-            match = value.toLocaleLowerCase().indexOf(term, start);
-        }
-        parts.push({ text: value.slice(start), highlighted: false });
-        return parts;
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {

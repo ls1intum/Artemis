@@ -607,6 +607,10 @@
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
                     "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein:"
+                },
+                "empty": {
+                    "title": "Noch keine Testläufe vorhanden",
+                    "description": "Erstelle einen Testlauf, um die Klausur aus der Sicht der Studierenden auszuprobieren."
                 }
             },
             "examStudents": {

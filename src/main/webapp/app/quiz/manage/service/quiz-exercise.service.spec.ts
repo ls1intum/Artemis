@@ -136,7 +136,7 @@ describe('QuizExercise Service', () => {
 
     it.each([
         ['COURSE', '/api/quiz/quiz-exercises/123'],
-        ['EXAM', 'api/quiz/quiz-exercises/123/for-exam'],
+        ['EXAM', '/api/quiz/quiz-exercises/123/for-exam'],
     ])('should convert loaded %s details into the class graph the editor works on', async (scope, url) => {
         const result = firstValueFrom(scope === 'EXAM' ? service.findForExam(123) : service.find(123));
         httpMock.expectOne({ method: 'GET', url }).flush({

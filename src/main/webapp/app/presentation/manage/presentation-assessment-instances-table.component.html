@@ -1,10 +1,10 @@
-<table tumAetUiTable data-testid="presentation-instances-table">
+<table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="sortChange.emit($event)" data-testid="presentation-instances-table">
     <thead>
         <tr>
-            <th><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
+            <th tumAetUiSortableColumn="studentLogin"><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
-            <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
-            <th><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
+            <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+            <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
             <th></th>
         </tr>
@@ -48,10 +48,6 @@
                     </td>
                 </tr>
             }
-        } @empty {
-            <tr>
-                <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
-            </tr>
         }
     </tbody>
 </table>

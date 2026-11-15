@@ -298,6 +298,14 @@ Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or
 primitives, and keep Artemis-specific composition in the application. See
 `documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
 
+## Data tables
+
+A table that is the main content of a page or a large dialog sits in `tumaet-ui-table-layout`: a toolbar of at most
+40px that never wraps, a body that is the only part that scrolls under a sticky 30px column header, and a footer of at
+most 40px with `tumaet-ui-paginator`. Slot nodes (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) must not sit directly
+in an `@if` (NG8011): use `[hidden]`. Use `tumAetUiInputSize="small"`, not `size`, on toolbar inputs. See
+[Data tables](../../documentation/docs/developer/guidelines/client-development.mdx#data-tables).
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and

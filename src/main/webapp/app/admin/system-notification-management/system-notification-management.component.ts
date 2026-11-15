@@ -14,11 +14,11 @@ import { faEye, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-ic
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import {
     TumAetUiButtonDirective,
     TumAetUiPaginatorComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTagComponent,
@@ -47,11 +47,11 @@ enum NotificationState {
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
         DeleteButtonDirective,
-        ItemCountComponent,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,

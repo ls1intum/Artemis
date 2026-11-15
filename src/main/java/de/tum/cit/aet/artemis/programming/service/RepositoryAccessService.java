@@ -296,8 +296,9 @@ public class RepositoryAccessService {
                 checkAccessRepositoryElseThrow(programmingParticipation, user, programmingParticipation.getProgrammingExercise(), RepositoryActionType.READ);
                 return;
             }
-            if (plagiarismAccessApi.isEmpty()
-                    || plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+            boolean isAtLeastStudent = authorizationCheckService.isAtLeastStudentInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()), user);
+            if (isAtLeastStudent && plagiarismAccessApi.isPresent()
+                    && plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
                 return;
             }
         }

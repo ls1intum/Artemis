@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 1;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -94,47 +94,6 @@ public final class DistributedDataSchema {
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
             // Current builds use pyris-job-map-v2 instead, so jobs moved from here are never read again.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
-
-    /**
-     * The name of the map holding the runtime feature toggles, keyed by {@link de.tum.cit.aet.artemis.core.service.feature.Feature}.
-     */
-    public static final String FEATURES = "features";
-
-    /**
-     * The structures the v1-to-v2 migration moves byte-for-byte. Version 2 removed {@code Feature.AtlasML}, and Kryo
-     * encodes an enum by its position, so every feature key after it changed its bytes: {@link #FEATURES} is therefore
-     * not listed here but transformed key by key, and everything else is unchanged and keeps its bytes.
-     */
-    public static final List<CarriedOverStructure> V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
-            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
-            new CarriedOverStructure("deferredBuildResultQueue", StructureKind.QUEUE), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP),
-            // Keep the originating browser tab and immutable material versions with the chat and search runs they describe.
-            new CarriedOverStructure("pyris-chat-job-client-id-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-chat-material-version-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-global-search-material-version-map", StructureKind.EXPIRING_MAP),
-            // A retained struggle run must keep its single-flight reservation, scoped cancellation lookup and admission charge.
-            new CarriedOverStructure("struggle-inflight-map", StructureKind.EXPIRING_MAP), new CarriedOverStructure("struggle-cooldown-map", StructureKind.EXPIRING_MAP),
-            // The previous boot id cannot be reconstructed if Pyris restarted while Artemis was stopped.
-            new CarriedOverStructure("pyris-restart-watch", StructureKind.MAP),
-            // Pending content-change events and consumed daily orchestration quota exist only in this per-course map.
-            new CarriedOverStructure("atlas-content-change-accumulator", StructureKind.MAP),
-            // Keep generation and uncertain-save reservations until explicit recovery, together with cancellation and unaccounted-spend guards.
-            new CarriedOverStructure("hyperion-exercise-generation-jobs", StructureKind.MAP), new CarriedOverStructure("hyperion-live-save-coordination", StructureKind.MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-cancellations", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-generation-token-budget-reservations", StructureKind.EXPIRING_MAP),
-            // Retained replay and unsaved candidates have no database equivalent; carry their remaining lifetime without restarting the retention window.
-            new CarriedOverStructure("hyperion-exercise-generation-transcripts", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-file-changes", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-artifacts", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-usage", StructureKind.EXPIRING_MAP),
-            // Activity, latest-mutation ownership, its owner index and cursor must agree for history and undo to remain available.
-            new CarriedOverStructure("hyperion-authoring-activity", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-authoring-latest-mutation", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-authoring-owner-runs", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-authoring-activity-sequence", StructureKind.MAP),
-            // Terminal variant jobs retain their output and the only pointer to a provisioned exercise whose cleanup failed.
-            new CarriedOverStructure("hyperion-exercise-variant-jobs", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

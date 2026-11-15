@@ -19,6 +19,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+
 /**
  * Holds the environment variables and the network that the build container of every programming exercise gets unless
  * the exercise says otherwise, see {@link ContainerDefaultsConfiguration}.
@@ -79,6 +81,11 @@ public class ContainerDefaults {
         if (network != null && (allowedNetworks == null || !allowedNetworks.contains(network))) {
             throw new IllegalStateException(PROPERTY + ".network is '" + network + "', which exercises may not select. It must be 'none' or one of " + ALLOWED_NETWORKS_PROPERTY
                     + ", which is " + allowedNetworks + ", so that every build that gets it is accepted by the build agents.");
+        }
+        // the build agents refuse a container that shares the network of the host or of another container, even if the list above names it
+        if (DockerRunConfig.sharesNetworkNamespace(network)) {
+            throw new IllegalStateException(
+                    PROPERTY + ".network is '" + network + "', which shares the network of the host or of another container. The build agents refuse it for every build.");
         }
         return network;
     }

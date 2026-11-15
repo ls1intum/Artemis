@@ -2315,6 +2315,9 @@ public class CourseTestService {
         parameters.set("nameOfUser", "student2");
         List<CourseMemberDTO> student2 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(student2).as("Another student in course found").hasSize(1);
+        // the search result only carries the data needed to pick a user
+        assertThat(student2.getFirst().login()).isNotNull();
+        assertThat(student2.getFirst().email()).isNull();
 
         // find a tutor for course
         parameters.set("nameOfUser", "tutor1");
@@ -3029,12 +3032,22 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitle() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setTitle("Test Course");
-        course = courseRepo.saveWithDefaultConfigurations(course);
+        course = courseRepo.save(course);
 
         final var title = request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
+    }
+
+    // Test
+    public void testGetCourseTitleAndAllowedComplaintsForUserOutsideTheCourse(String outsiderLogin) throws Exception {
+        userUtilService.createAndSaveUser(outsiderLogin);
+        Course course = courseUtilService.createCourse();
+        course = courseRepo.saveWithDefaultConfigurations(course);
+
+        request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/course/courses/" + course.getId() + "/allowed-complaints", HttpStatus.FORBIDDEN, Long.class);
     }
 
     // Test

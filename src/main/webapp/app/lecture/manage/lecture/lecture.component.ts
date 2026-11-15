@@ -37,6 +37,7 @@ import {
     TumAetUiPopoverComponent,
     TumAetUiPopoverTriggerDirective,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
 
@@ -58,6 +59,7 @@ export enum LectureDateFilter {
         TumAetUiPopoverComponent,
         TumAetUiPopoverTriggerDirective,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         TumAetUiTableSortableColumnComponent,
         TranslateDirective,
         DocumentationButtonComponent,

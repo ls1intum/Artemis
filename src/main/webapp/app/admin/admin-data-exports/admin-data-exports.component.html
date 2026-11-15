@@ -14,12 +14,20 @@
         </tumaet-ui-button>
     </div>
 
-    @if (loading()) {
-        <div class="flex justify-center my-4" data-testid="loading-spinner">
-            <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
-        </div>
-    } @else {
-        <table tumAetUiTable data-testid="data-exports-table">
+    <tumaet-ui-table-layout [loading]="loading()" [empty]="dataExports().length === 0 && !loading()" emptyTitle="artemisApp.dataExport.admin.noExports">
+        <tumaet-ui-button
+            tumAetUiTableEmptyActions
+            data-button-intent="transfer"
+            data-button-intent-reason="Opens the data export request workflow"
+            size="small"
+            severity="secondary"
+            (clicked)="openCreateModal()"
+            data-testid="create-export-empty-btn"
+        >
+            <fa-icon [icon]="faPlus" class="me-1" />
+            <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
+        </tumaet-ui-button>
+        <table tumAetUiTable size="small" data-testid="data-exports-table">
             <thead>
                 <tr>
                     <th scope="col"><span jhiTranslate="global.field.id"></span></th>
@@ -49,6 +57,7 @@
                             <div class="flex items-center justify-end gap-2">
                                 @if (dataExport.downloadable) {
                                     <tumaet-ui-button
+                                        [ariaLabel]="'entity.action.download' | artemisTranslate"
                                         severity="secondary"
                                         size="small"
                                         (clicked)="downloadExport(dataExport)"
@@ -77,30 +86,21 @@
                             </div>
                         </td>
                     </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="7" class="text-center">
-                            <span jhiTranslate="artemisApp.dataExport.admin.noExports"></span>
-                        </td>
-                    </tr>
                 }
             </tbody>
         </table>
 
-        @if (totalRecords() > 0) {
-            <div class="flex justify-center mt-3">
-                <tumaet-ui-paginator
-                    [page]="first() / rows()"
-                    [pageSize]="rows()"
-                    [totalRecords]="totalRecords()"
-                    [pageSizeOptions]="[10, 20, 50]"
-                    [showCurrentPageReport]="false"
-                    (pageChange)="onPageChange($event)"
-                    (pageSizeChange)="onPageSizeChange($event)"
-                />
-            </div>
-        }
-    }
+        <tumaet-ui-paginator
+            tumAetUiTableFooter
+            [page]="first() / rows()"
+            [pageSize]="rows()"
+            [totalRecords]="totalRecords()"
+            [pageSizeOptions]="[10, 20, 50]"
+            [disabled]="loading()"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+        />
+    </tumaet-ui-table-layout>
 </div>
 
 <jhi-admin-data-export-create-modal #createModal />

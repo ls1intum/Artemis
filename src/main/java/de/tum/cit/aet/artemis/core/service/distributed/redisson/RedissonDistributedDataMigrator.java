@@ -1,20 +1,16 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.FEATURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.LEGACY_TO_V1_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.MIGRATION_LOCK_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyPatternFor;
 
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RBucket;
@@ -121,20 +117,20 @@ class RedissonDistributedDataMigrator {
         }
     }
 
-    /**
-     * Resolves the recorded source version and validates the entire adjacent migration path before moving data.
-     * Missing metadata replays the path from version zero so partially drained intermediate namespaces are recovered.
-     * Each step publishes its version only after its data movement and cleanup have completed.
-     */
     private void migrateUnderLock() {
         RBucket<String> versionBucket = redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE);
         Integer storedVersion = readStoredVersion(versionBucket);
 
         if (storedVersion == null) {
-            // The first drain can empty every plain key before its version is recorded. A restart must therefore
-            // replay the complete adjacent path even when only numbered namespaces remain. Replaying empty sources
-            // is safe, including when a later step already moved some or all entries into the target namespace.
-            log.info("Distributed store carries no schema version, replaying migrations from version {}", UNVERSIONED);
+            // A store that predates this change carries no version key, but it does carry the structures the release
+            // running before it wrote. Claiming it for the current version without moving them would leave a queued
+            // build, an in-flight result or a flipped feature toggle stranded under a key nothing reads again.
+            if (!holdsUnversionedData()) {
+                log.info("Distributed store carries no schema version and no data yet, claiming it for version {}", targetVersion);
+                recordVersion(versionBucket, targetVersion);
+                return;
+            }
+            log.info("Distributed store predates schema versions, treating its contents as version {}", UNVERSIONED);
             storedVersion = UNVERSIONED;
         }
         if (storedVersion == targetVersion) {
@@ -159,13 +155,6 @@ class RedissonDistributedDataMigrator {
         }
     }
 
-    /**
-     * Builds a complete migration plan without mutating the store, rejecting gaps before an earlier step can run.
-     *
-     * @param storedVersion the schema version to migrate from
-     * @return the ordered adjacent steps leading to the target version
-     * @throws IllegalStateException if a required step is missing or skips a version
-     */
     private List<MigrationStep> migrationPlanFrom(int storedVersion) {
         List<MigrationStep> declaredSteps = migrationSteps();
         List<MigrationStep> plan = new ArrayList<>();
@@ -182,6 +171,15 @@ class RedissonDistributedDataMigrator {
             sourceVersion = step.toVersion();
         }
         return plan;
+    }
+
+    /**
+     * @return whether any structure that has to survive a bump already exists under its plain, unprefixed name, which
+     *         is what tells an unversioned store apart from an empty one
+     */
+    private boolean holdsUnversionedData() {
+        String[] names = LEGACY_TO_V1_STRUCTURES.stream().map(CarriedOverStructure::name).toArray(String[]::new);
+        return redissonClient.getKeys().countExists(names) > 0;
     }
 
     /**
@@ -232,80 +230,15 @@ class RedissonDistributedDataMigrator {
      * decision and a custom old-format decoder when a required representation is no longer wire-compatible.
      */
     private List<MigrationStep> migrationSteps() {
-        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)),
-                new MigrationStep(1, 2, this::migrateV1ToV2));
+        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)));
     }
 
-    /**
-     * Moves the reviewed wire-compatible structures and then discards the source namespace's unlisted data.
-     * The transition must list every indispensable structure. Steps requiring a custom transformation must finish it before discarding their source instead.
-     *
-     * @param fromVersion the source namespace
-     * @param toVersion   the destination namespace
-     * @param structures  the state explicitly retained by this transition
-     */
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
-        carryOver(fromVersion, toVersion, structures);
-        discardRemainderOf(fromVersion);
-    }
-
-    /**
-     * Drains the declared structures without clearing other source keys, allowing a step to transform incompatible data afterward.
-     *
-     * @param fromVersion the source namespace
-     * @param toVersion   the destination namespace
-     * @param structures  structures whose key and value bytes are compatible with the destination
-     */
-    private void carryOver(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
         for (CarriedOverStructure structure : structures) {
             long moved = drain(fromVersion, toVersion, structure);
             log.info("Carried {} entries of '{}' over to schema version {}", moved, structure.name(), toVersion);
         }
-    }
-
-    /**
-     * Version 2 removed {@code Feature.AtlasML}. Everything but the feature map keeps its bytes; the feature map's keys are
-     * re-encoded, see {@link V1FeatureKeyCodec}.
-     */
-    private void migrateV1ToV2() {
-        carryOver(1, 2, V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES);
-        long moved = migrateV1FeatureKeys();
-        log.info("Carried {} entries of '{}' over to schema version 2", moved, FEATURES);
-        discardRemainderOf(1);
-    }
-
-    /**
-     * Moves every feature toggle with its key re-encoded and its value bytes unchanged, writing before removing like
-     * {@link #drainMap}. A toggle whose feature no longer exists, or whose key cannot be read, is dropped: startup seeds
-     * its default again, which costs at most one runtime change, while refusing to start would take the instance down.
-     *
-     * @return how many toggles were moved
-     */
-    private long migrateV1FeatureKeys() {
-        RMap<byte[], byte[]> source = redissonClient.getMap(keyFor(1, FEATURES), ByteArrayCodec.INSTANCE);
-        RMap<byte[], byte[]> target = redissonClient.getMap(keyFor(2, FEATURES), ByteArrayCodec.INSTANCE);
-        V1FeatureKeyCodec keyCodec = new V1FeatureKeyCodec();
-        long moved = 0;
-        for (byte[] key : source.keySet()) {
-            byte[] value = source.get(key);
-            if (value == null) {
-                continue;
-            }
-            Optional<byte[]> currentKey;
-            try {
-                currentKey = keyCodec.reencode(key);
-            }
-            catch (IllegalArgumentException e) {
-                log.warn("Dropping the feature toggle with unreadable key {}; its default is seeded again at startup", HexFormat.of().formatHex(key), e);
-                currentKey = Optional.empty();
-            }
-            if (currentKey.isPresent()) {
-                target.put(currentKey.get(), value);
-                moved++;
-            }
-            source.remove(key);
-        }
-        return moved;
+        discardRemainderOf(fromVersion);
     }
 
     /**
@@ -354,14 +287,6 @@ class RedissonDistributedDataMigrator {
         return moved;
     }
 
-    /**
-     * Transfers map entries byte-for-byte, writing before removing so interrupted transfers can be replayed by overwriting duplicates.
-     * Existing target entries with other keys remain intact.
-     *
-     * @param source the map to drain
-     * @param target the destination map
-     * @return the number of transferred entries
-     */
     private long drainMap(RMap<byte[], byte[]> source, RMap<byte[], byte[]> target) {
         long moved = 0;
         // Iterating the key set and moving per key rather than reading the whole map keeps memory flat for a large

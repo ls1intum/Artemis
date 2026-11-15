@@ -7,6 +7,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -104,7 +106,7 @@ public class AdminSystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("system-notifications")
-    public ResponseEntity<SystemNotificationDTO> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
+    public ResponseEntity<SystemNotificationDTO> createSystemNotification(@Valid @RequestBody SystemNotificationUpdateDTO dto,
             @RequestParam(defaultValue = "false") boolean sendMaintenanceEmail) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", dto);
         if (dto.id() != null) {
@@ -147,7 +149,7 @@ public class AdminSystemNotificationResource {
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
     @PutMapping("system-notifications")
-    public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
+    public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@Valid @RequestBody SystemNotificationUpdateDTO updateDTO) {
         log.debug("REST request to update SystemNotification : {}", updateDTO);
         if (updateDTO.id() == null) {
             throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idNull");

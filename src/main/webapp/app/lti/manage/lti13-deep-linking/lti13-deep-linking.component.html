@@ -16,30 +16,21 @@
                 </button>
 
                 <div ngbDropdownMenu>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="thead-dark">
-                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                    <th class="d-md-table-cell"></th>
-                                    <th jhiSortBy="id">
-                                        id
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="type" jhiTranslate="artemisApp.exercise.type">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="title" jhiTranslate="artemisApp.exercise.title">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="includedInOverallScore" jhiTranslate="artemisApp.exercise.includedInOverallScore">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
+                    <div class="overflow-x-auto">
+                        <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th [tumAetUiSortableColumn]="'id'">id</th>
+                                    <th [tumAetUiSortableColumn]="'type'"><span jhiTranslate="artemisApp.exercise.type"></span></th>
+                                    <th [tumAetUiSortableColumn]="'title'"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                                    <th [tumAetUiSortableColumn]="'includedInOverallScore'"><span jhiTranslate="artemisApp.exercise.includedInOverallScore"></span></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @for (exercise of exercises(); track exercise) {
                                     <tr id="exercise-{{ exercise.id }}">
-                                        <td class="d-md-table-cell">
+                                        <td>
                                             <input
                                                 [attr.aria-label]="'accessibility.selectExercise' | artemisTranslate: { title: exercise.title }"
                                                 class="form-check-input"
@@ -84,24 +75,19 @@
                 </button>
 
                 <div ngbDropdownMenu>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="thead-dark">
-                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                    <th class="d-md-table-cell"></th>
-                                    <th jhiSortBy="id">
-                                        id
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="title" jhiTranslate="artemisApp.lecture.title">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
+                    <div class="overflow-x-auto">
+                        <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th [tumAetUiSortableColumn]="'id'">id</th>
+                                    <th [tumAetUiSortableColumn]="'title'"><span jhiTranslate="artemisApp.lecture.title"></span></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @for (lecture of lectures(); track lecture) {
                                     <tr id="lecture-{{ lecture.id }}">
-                                        <td class="d-md-table-cell">
+                                        <td>
                                             <input
                                                 [attr.aria-label]="'accessibility.selectLecture' | artemisTranslate: { title: lecture.title }"
                                                 class="form-check-input"

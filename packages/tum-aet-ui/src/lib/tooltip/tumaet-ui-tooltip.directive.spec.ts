@@ -22,6 +22,8 @@ describe('TumAetUiTooltipDirective', () => {
         fixture = createTooltip([inputBinding('tumAetUiTooltip', text)]);
         fixture.detectChanges();
         button = fixture.nativeElement as HTMLButtonElement;
+        // The last input kind is tracked per document across tests; start each from keyboard input.
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
     });
 
     afterEach(() => {
@@ -182,6 +184,23 @@ describe('TumAetUiTooltipDirective', () => {
         button.dispatchEvent(new Event('focusout', { bubbles: true }));
         vi.advanceTimersByTime(1);
         expect(bubble()).toBeNull();
+    });
+
+    it('ignores focus handed back by code after a pointer interaction elsewhere', () => {
+        // e.g. a popover closed by a click returns focus to its trigger; the pointer has already moved on.
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('shows on focus handed back by code after a key press', () => {
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        // e.g. the popover was closed with Escape.
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
     });
 
     it('hides on mouseleave when the trigger was clicked, since the click focused it', () => {

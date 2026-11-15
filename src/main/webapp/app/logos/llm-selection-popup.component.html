@@ -4,7 +4,7 @@
         data-testid="llm-selection-modal"
         [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
         (click)="onBackdropClick($event)"
-        (keydown.escape)="close()"
+        (keydown.escape)="dismiss()"
         role="dialog"
         tabindex="-1"
         aria-modal="true"

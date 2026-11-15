@@ -119,4 +119,12 @@ export interface TextEditor {
      * @return A disposable that can be used to remove the listener from the editor.
      */
     addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable;
+
+    /**
+     * Adds an interceptor that is called with the pasted text before the editor inserts it.
+     * The interceptor is not called if the editor is read-only or has more than one selection.
+     * @param handler The handler to call with the pasted text. If it returns true, the editor does not insert the pasted text.
+     * @return A disposable that can be used to remove the interceptor from the editor.
+     */
+    addPasteInterceptor(handler: (pastedText: string) => boolean): Disposable;
 }

@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import java.util.List;
+
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatibleSerializationCodec;
 
 /**
@@ -51,12 +55,16 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatib
 @Conditional(RedisCondition.class)
 public class RedissonCodecConfiguration {
 
+    @Value("${artemis.distributed-data.additional-allowed-types:}")
+    private List<String> additionalAllowedTypes;
+
     /**
      * @return a customizer that makes the Redisson client write map values with JDK serialization while reading both
-     *         formats, and leave every other encoding on Kryo
+     *         formats, and leave every other encoding on Kryo. Only the types Artemis stores are created when reading.
      */
     @Bean
     public RedissonAutoConfigurationCustomizer artemisRedissonSerializationCodecCustomizer() {
-        return config -> config.setCodec(new BackwardCompatibleSerializationCodec());
+        var typeFilter = DistributedDataTypeFilter.withAdditional(additionalAllowedTypes);
+        return config -> config.setCodec(new BackwardCompatibleSerializationCodec(typeFilter));
     }
 }
