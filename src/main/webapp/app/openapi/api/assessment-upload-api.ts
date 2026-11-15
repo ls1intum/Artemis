@@ -12,7 +12,7 @@
  * AssessmentUploadApi - API service
  * @generated from OpenAPI specification
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AssessmentUploadResult } from '../model/assessment-upload-result';
@@ -27,9 +27,9 @@ export class AssessmentUploadApi {
      *
      * @param exerciseId
      */
-    downloadManualAssessmentTemplate(exerciseId: number): Observable<string> {
+    downloadManualAssessmentTemplate(exerciseId: number): Observable<HttpResponse<Blob>> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/manual-assessments/template`;
-        return this.http.get<string>(url);
+        return this.http.get(url, { responseType: 'blob', observe: 'response' });
     }
 
     /**

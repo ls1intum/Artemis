@@ -35,7 +35,7 @@ describe('AssessmentUploadDialogComponent', () => {
 
     const zipFile = new File(['dummy'], 'assessments.zip', { type: 'application/zip' });
     const uploadUrl = '/api/assessment/exercises/7/manual-assessments';
-    const templateUrl = 'api/assessment/exercises/7/manual-assessments/template';
+    const templateUrl = '/api/assessment/exercises/7/manual-assessments/template';
 
     const expectUpload = () => {
         const request = http.expectOne(uploadUrl);
@@ -204,9 +204,13 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(request.request.responseType).toBe('blob');
         expect(component['isDownloadingTemplate']()).toBe(true);
 
-        request.flush(new Blob(['template']));
+        const template = new Blob(['template']);
+        request.flush(template, { headers: { filename: 'assessment-template-7.zip' } });
 
         expect(downloadZipFileFromResponse).toHaveBeenCalledOnce();
+        const response = vi.mocked(downloadZipFileFromResponse).mock.calls[0][0];
+        expect(response.body).toEqual(template);
+        expect(response.headers.get('filename')).toBe('assessment-template-7.zip');
         expect(component['isDownloadingTemplate']()).toBe(false);
     });
 

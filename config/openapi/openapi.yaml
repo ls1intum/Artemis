@@ -3143,10 +3143,10 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200':
-          description: OK
+          description: The template zip; its file name is in the filename header.
           content:
-            application/json:
-              schema: {type: string, format: byte}
+            application/octet-stream:
+              schema: {type: string, format: binary}
   /api/assessment/exercises/{exerciseId}/feedback-details:
     get:
       tags: [result]

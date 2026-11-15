@@ -11,7 +11,6 @@ import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/asse
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
-import { AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
 import { AssessmentUploadApi } from 'app/openapi/api/assessment-upload-api';
 import { AssessmentUploadError } from 'app/openapi/model/assessment-upload-error';
 import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-result';
@@ -46,7 +45,6 @@ import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-resu
 })
 export class AssessmentUploadDialogComponent {
     private readonly assessmentUploadApi = inject(AssessmentUploadApi);
-    private readonly assessmentUploadService = inject(AssessmentUploadService);
     private readonly alertService = inject(AlertService);
 
     private readonly datePipe = inject(ArtemisDatePipe);
@@ -175,7 +173,7 @@ export class AssessmentUploadDialogComponent {
             return;
         }
         this.isDownloadingTemplate.set(true);
-        this.assessmentUploadService.downloadTemplate(this.exerciseId()).subscribe({
+        this.assessmentUploadApi.downloadManualAssessmentTemplate(this.exerciseId()).subscribe({
             next: (response) => {
                 downloadZipFileFromResponse(response);
                 this.isDownloadingTemplate.set(false);
