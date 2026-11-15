@@ -22,7 +22,7 @@ import { IrisChat } from '../../support/pageobjects/iris/IrisChat';
 async function openIrisChat(page: Page): Promise<void> {
     await expect(page.locator('jhi-course-chatbot')).toBeVisible({ timeout: 30_000 });
 
-    const cloudOption = page.locator('.option-card.cloud-card');
+    const cloudOption = page.getByTestId('llm-selection-cloud-option');
     const messageInput = page.locator('.chat-input textarea');
     await expect(cloudOption.or(messageInput).first()).toBeVisible({ timeout: 30_000 });
     if (await cloudOption.isVisible()) {

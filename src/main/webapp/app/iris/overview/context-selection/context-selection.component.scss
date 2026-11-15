@@ -1,3 +1,5 @@
+/* stylelint-disable selector-disallowed-list -- the context picker keeps primeng/select as a contained fallback (see the matching
+   no-restricted-imports exception in eslint.config.mjs); its `.p-select-*` rules go away together with the fallback. */
 jhi-context-selection {
     // Let the component shrink inside the textarea-controls flex row (min-width on a flex item defaults to
     // auto, which would keep the chip at its content width and push the send button out of a narrow Iris window).
