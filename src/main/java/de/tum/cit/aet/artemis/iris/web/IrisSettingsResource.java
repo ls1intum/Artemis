@@ -21,9 +21,12 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -46,13 +49,30 @@ public class IrisSettingsResource {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Gets the Iris settings of a course. Users below instructor only receive whether Iris is enabled, the configuration is reserved for instructors.
+     *
+     * @param courseId the course id
+     * @return the settings of the course
+     */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
-        courseRepository.findByIdElseThrow(courseId);
-        return ResponseEntity.ok(irisSettingsService.getCourseSettingsWithRateLimit(courseId));
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        IrisCourseSettingsWithRateLimitDTO settings = irisSettingsService.getCourseSettingsWithRateLimit(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            // Users below instructor only need to know whether Iris is enabled; the configuration is reserved for those who manage it.
+            return ResponseEntity.ok(enabledOnly(settings));
+        }
+        return ResponseEntity.ok(settings);
+    }
+
+    private static IrisCourseSettingsWithRateLimitDTO enabledOnly(IrisCourseSettingsWithRateLimitDTO settings) {
+        IrisCourseSettings enabledOnly = settings.settings() == null ? null
+                : new IrisCourseSettings(settings.settings().enabled(), null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, null, null);
+        return new IrisCourseSettingsWithRateLimitDTO(settings.courseId(), enabledOnly, null, null);
     }
 
     /**
