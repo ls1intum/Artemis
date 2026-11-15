@@ -9,11 +9,17 @@ import sys
 import tempfile
 import textwrap
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from io import BytesIO, StringIO
 from pathlib import Path
+from unittest.mock import call, patch
+from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.dont_write_bytecode = True
 
+import check_exercise_image_sync as sync_cli  # noqa: E402
+import verify_exercise_images_offline as offline_cli  # noqa: E402
 from exercise_images import assembly, offline, phases, sync_check  # noqa: E402
 from exercise_images.images import IMAGE_SOURCES, TEMPLATES_DIR, configured_images, read_mapping, split_image  # noqa: E402
 
@@ -296,9 +302,108 @@ class SyncCheckTest(unittest.TestCase):
 
     def test_a_pin_the_image_does_not_hold_is_reported(self):
         template = (TEMPLATES_DIR / "kotlin/test/maven/projectTemplate/pom.xml").read_text(encoding="utf-8")
-        stale = template.replace("33.8.0-jre", "33.6.0-jre")
+        current = next(iter(sync_check.maven_versions(template)["com.google.guava:guava"]))
+        stale = template.replace(current, "0.0.0-stale")
         problems = sync_check.check_language("kotlin", "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.1", fetch=self._fetch(stale))
-        self.assertTrue(any("com.google.guava:guava 33.8.0-jre differs from the image (33.6.0-jre)" in problem for problem in problems), problems)
+        expected = f"com.google.guava:guava {current} differs from the image (0.0.0-stale)"
+        self.assertTrue(any(expected in problem for problem in problems), problems)
+
+
+class FetchFailureTest(unittest.TestCase):
+    URL = "https://raw.githubusercontent.com/example/image/v9.9.9/pom.xml"
+
+    def test_permanent_http_errors_fail_without_retrying(self):
+        for status in (400, 403, 404, 410, 422):
+            with self.subTest(status=status):
+                error = HTTPError(self.URL, status, "permanent failure", None, None)
+                with patch.object(sync_check.urllib.request, "urlopen", side_effect=error) as fetch, patch.object(sync_check.time, "sleep") as sleep:
+                    with self.assertRaises(HTTPError) as raised:
+                        sync_check.fetch_raw_github(self.URL)
+                    self.assertIs(raised.exception, error)
+                    self.assertEqual(fetch.call_count, 1)
+                    sleep.assert_not_called()
+
+    def test_transient_http_errors_retry_and_can_recover(self):
+        for status in (429, 500, 502, 503):
+            with self.subTest(status=status):
+                error = HTTPError(self.URL, status, "temporary failure", None, None)
+                with patch.object(sync_check.urllib.request, "urlopen", side_effect=[error, BytesIO(b"versions")]) as fetch, patch.object(sync_check.time, "sleep") as sleep:
+                    self.assertEqual(sync_check.fetch_raw_github(self.URL), "versions")
+                    self.assertEqual(fetch.call_count, 2)
+                    sleep.assert_called_once_with(3)
+
+    def test_transient_failures_have_bounded_retries(self):
+        errors = [HTTPError(self.URL, 429, "rate limit", None, None), HTTPError(self.URL, 503, "unavailable", None, None), URLError("connection lost"), TimeoutError("timed out")]
+        for error in errors:
+            with self.subTest(error=error):
+                with patch.object(sync_check.urllib.request, "urlopen", side_effect=error) as fetch, patch.object(sync_check.time, "sleep") as sleep:
+                    with self.assertRaises(type(error)):
+                        sync_check.fetch_raw_github(self.URL)
+                    self.assertEqual(fetch.call_count, 4)
+                    self.assertEqual(sleep.call_args_list, [call(3), call(6), call(12)])
+
+    def test_missing_tag_is_reported_with_image_tag_and_url(self):
+        def missing(url):
+            raise HTTPError(url, 404, "Not Found", None, None)
+
+        image = "ghcr.io/ls1intum/artemis-kotlin-docker:v9.9.9"
+        problems = sync_check.check_language("kotlin", image, fetch=missing)
+        self.assertEqual(len(problems), 1)
+        self.assertIn(image, problems[0])
+        self.assertIn("https://raw.githubusercontent.com/ls1intum/artemis-kotlin-docker/v9.9.9/", problems[0])
+        self.assertIn("404", problems[0])
+        output = StringIO()
+        with patch.object(sync_cli, "check", return_value={"kotlin": (image, problems)}), redirect_stdout(output):
+            self.assertEqual(sync_cli.main(), 1)
+        self.assertIn("::error", output.getvalue())
+        self.assertIn(problems[0], output.getvalue())
+
+
+    def test_fetch_diagnostics_are_escaped_in_workflow_annotations(self):
+        problem = "failed url%20path\n::warning::injected\rcontext"
+        output = StringIO()
+        with patch.object(sync_cli, "check", return_value={"kotlin": ("image:tag", [problem])}), redirect_stdout(output):
+            self.assertEqual(sync_cli.main(), 1)
+        self.assertIn("failed url%2520path%0A::warning::injected%0Dcontext", output.getvalue())
+        self.assertNotIn("\n::warning::", output.getvalue())
+
+
+class OfflineCliTest(unittest.TestCase):
+    @staticmethod
+    def successful_verification(templates, variant, image, workspace, platform):
+        return offline.Result(variant, image, True, workspace / "test.log", [])
+
+    def test_invalid_image_overrides_are_rejected_before_verification(self):
+        for value in ("Java=image", "jva=image", "java", "java=", "java=   ", "=image"):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as temporary:
+                arguments = ["verify_exercise_images_offline.py", "--image", value, "--variant", assembly.VARIANTS[0].name, "--work-dir", temporary]
+                error = StringIO()
+                with patch.object(sys, "argv", arguments), patch.object(offline_cli, "verify", side_effect=self.successful_verification) as verify, redirect_stderr(error), redirect_stdout(StringIO()):
+                    with self.assertRaises(SystemExit) as raised:
+                        offline_cli.main()
+                    self.assertEqual(raised.exception.code, 2)
+                    self.assertIn("--image", error.getvalue())
+                    verify.assert_not_called()
+
+    def test_valid_image_override_reaches_the_verifier(self):
+        variant = assembly.VARIANTS[0]
+        with tempfile.TemporaryDirectory() as temporary:
+            arguments = ["verify_exercise_images_offline.py", "--image", f"{variant.language}=custom-image:test", "--variant", variant.name, "--work-dir", temporary]
+            with patch.object(sys, "argv", arguments), patch.object(offline_cli, "verify", side_effect=self.successful_verification) as verify, redirect_stdout(StringIO()):
+                self.assertEqual(offline_cli.main(), 0)
+                verify.assert_called_once()
+                self.assertEqual(verify.call_args.args[1], variant)
+                self.assertEqual(verify.call_args.args[2], "custom-image:test")
+
+    def test_conflicting_filters_cannot_report_success_without_verifying_anything(self):
+        variant = assembly.VARIANTS[0]
+        other_language = next(item.language for item in assembly.VARIANTS if item.language != variant.language)
+        arguments = ["verify_exercise_images_offline.py", "--language", other_language, "--variant", variant.name]
+        with patch.object(sys, "argv", arguments), patch.object(offline_cli, "verify") as verify, redirect_stderr(StringIO()), redirect_stdout(StringIO()):
+            with self.assertRaises(SystemExit) as raised:
+                offline_cli.main()
+            self.assertEqual(raised.exception.code, 2)
+            verify.assert_not_called()
 
 
 if __name__ == "__main__":

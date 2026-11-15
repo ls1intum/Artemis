@@ -146,12 +146,16 @@ def compare(template: Versions, image: Versions) -> list[str]:
 
 
 def fetch_raw_github(url: str, attempts: int = 4) -> str:
-    """Reads a file of a public repository. Shared CI runners are rate limited now and then, so retry with a growing pause."""
+    """Reads a public repository file, retrying network failures, rate limits and server errors with a growing pause."""
     for attempt in range(attempts):
         try:
             with urllib.request.urlopen(url, timeout=30) as response:
                 return response.read().decode("utf-8")
-        except (urllib.error.URLError, TimeoutError):
+        except (urllib.error.URLError, TimeoutError) as error:
+            if isinstance(error, urllib.error.HTTPError):
+                error.close()
+                if error.code != 429 and not 500 <= error.code < 600:
+                    raise
             if attempt == attempts - 1:
                 raise
             time.sleep(3 * 2**attempt)
@@ -165,12 +169,18 @@ def check_language(language: str, image: str, templates_dir: Path = TEMPLATES_DI
     base_url = f"https://raw.githubusercontent.com/{source.github_repository}/{tag}/{source.template_directory}"
     image_files: dict[str, Versions] = {}
     problems = []
-    for entry in SOURCES[language]:
-        if entry.image_file not in image_files:
-            properties = gradle_properties(fetch(f"{base_url}/{entry.image_properties}")) if entry.image_properties else None
-            image_files[entry.image_file] = versions_of(entry.image_file, fetch(f"{base_url}/{entry.image_file}"), properties)
-        template = versions_of(entry.template_file, (templates_dir / entry.template_file).read_text(encoding="utf-8"))
-        problems += [f"{entry.template_file}: {problem}" for problem in compare(template, image_files[entry.image_file])]
+    try:
+        for entry in SOURCES[language]:
+            if entry.image_file not in image_files:
+                properties = gradle_properties(fetch(f"{base_url}/{entry.image_properties}")) if entry.image_properties else None
+                image_files[entry.image_file] = versions_of(entry.image_file, fetch(f"{base_url}/{entry.image_file}"), properties)
+            template = versions_of(entry.template_file, (templates_dir / entry.template_file).read_text(encoding="utf-8"))
+            problems += [f"{entry.template_file}: {problem}" for problem in compare(template, image_files[entry.image_file])]
+    except (urllib.error.URLError, TimeoutError) as error:
+        url = error.geturl() if isinstance(error, urllib.error.HTTPError) else base_url
+        if isinstance(error, urllib.error.HTTPError):
+            error.close()
+        problems.append(f"Could not read image {image} at git tag {tag} from {url}: {error}")
     return problems
 
 

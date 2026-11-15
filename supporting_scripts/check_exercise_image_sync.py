@@ -19,12 +19,12 @@ def main() -> int:
             print(f"OK: the {language} templates match {image}")
             continue
         failed = True
-        print(f"::error title=The {language} image is out of sync::the {language} templates pin versions that {image} does not hold")
         for problem in problems:
-            print(f"  {problem}")
+            detail = problem.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print(f"::error title=The {language} image could not be verified::{detail}")
     if failed:
         print(
-            "\nEvery build of such an exercise downloads the difference. Update the template project in the image repository "
+            "\nFix any reported fetch errors. For version differences, update the template project in the image repository "
             "(the same versions as the templates), publish a new image tag and set it in application.yml, "
             "or revert the template change."
         )

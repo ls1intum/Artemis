@@ -34,12 +34,21 @@ def main() -> int:
         print("\n".join(variant.name for variant in VARIANTS))
         return 0
 
-    overrides = dict(item.split("=", 1) for item in args.image)
+    languages = {variant.language for variant in VARIANTS}
+    overrides: dict[str, str] = {}
+    for item in args.image:
+        language, separator, image = item.partition("=")
+        image = image.strip()
+        if not separator or not image or language not in languages:
+            parser.error(f"--image expects LANGUAGE=IMAGE with LANGUAGE one of {sorted(languages)}: {item}")
+        overrides[language] = image
     defaults = {language: images["default"] for language, images in configured_images().items() if "default" in images}
     selected = [variant for variant in VARIANTS if (not args.variant or variant.name in args.variant) and (not args.language or variant.language in args.language)]
     unknown = set(args.variant or []) - {variant.name for variant in VARIANTS}
     if unknown:
         parser.error(f"unknown variant: {', '.join(sorted(unknown))}")
+    if not selected:
+        parser.error("no variants match the selected language and variant filters")
 
     work_dir = args.work_dir or Path(tempfile.mkdtemp(prefix="exercise-images-"))
     work_dir.mkdir(parents=True, exist_ok=True)
