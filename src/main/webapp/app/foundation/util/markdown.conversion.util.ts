@@ -6,7 +6,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 import TurndownService from 'turndown';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance, type RendererRule, type Token } from 'markdown-it';
 import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
-import { isImageSourceAllowed } from 'app/foundation/util/image-host-policy.util';
+import { hasImageHostRestriction, isImageSourceAllowed, isImageSourceSetAllowed } from 'app/foundation/util/image-host-policy.util';
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
@@ -213,6 +213,26 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
             node.removeAttribute('src');
             node.removeAttribute('srcset');
         }
+    }
+    restrictImageAttributes(node);
+}
+
+/**
+ * While the server lists the allowed image hosts, every attribute that loads an image is checked, not only the `src` of an `img`: all candidates of a `srcset`
+ * (of an `img` or a `source` in a `picture`), the `poster` of a `video` and the legacy `background` attribute. An attribute with an address that is not allowed is removed.
+ */
+function restrictImageAttributes(node: Element): void {
+    if (!hasImageHostRestriction()) {
+        return;
+    }
+    if ((node.tagName === 'IMG' || node.tagName === 'SOURCE') && !isImageSourceSetAllowed(node.getAttribute('srcset'))) {
+        node.removeAttribute('srcset');
+    }
+    if (node.tagName === 'VIDEO' && !isImageSourceAllowed(node.getAttribute('poster'))) {
+        node.removeAttribute('poster');
+    }
+    if (node.hasAttribute?.('background') && !isImageSourceAllowed(node.getAttribute('background'))) {
+        node.removeAttribute('background');
     }
 }
 

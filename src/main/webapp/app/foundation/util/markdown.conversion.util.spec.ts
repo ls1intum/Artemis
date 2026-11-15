@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
+import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml, restrictRenderedAttributes } from './markdown.conversion.util';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 import { setAllowedImageHosts } from 'app/foundation/util/image-host-policy.util';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
@@ -32,6 +32,79 @@ describe('markdown.conversion.util', () => {
 
             const html = htmlForMarkdown(
                 '<img src="https://images.example.net.unlisted.example/a.png"> <img src="https:\\\\unlisted.example/b.png"> <img src="//unlisted.example/c.png">',
+            );
+
+            expect(html).not.toContain('unlisted.example');
+        });
+    });
+
+    describe('attributes that load an image while image hosts are restricted', () => {
+        const restricted = (markup: string, selector: string): Element => {
+            const container = document.createElement('div');
+            container.innerHTML = markup;
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element));
+            return container.querySelector(selector)!;
+        };
+
+        beforeEach(() => setAllowedImageHosts('images.example.net'));
+        afterEach(() => setAllowedImageHosts(undefined));
+
+        it('removes an img srcset that has a candidate of another host', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png 1x, https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('keeps an img srcset whose candidates are all allowed', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png 1x, /local.png 2x">', 'img');
+
+            expect(image.getAttribute('srcset')).toContain('images.example.net');
+        });
+
+        it('removes the srcset of an img with an allowed src', () => {
+            const image = restricted('<img src="/ok.png" srcset="https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.getAttribute('src')).toBe('/ok.png');
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('finds a candidate that follows a data address with a comma', () => {
+            const image = restricted('<img srcset="data:image/png;base64,AAAA 1x, https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('removes the srcset of a source in a picture', () => {
+            const source = restricted('<picture><source srcset="https://unlisted.example/b.png"><img src="/ok.png"></picture>', 'source');
+
+            expect(source.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('removes the poster of a video', () => {
+            const video = restricted('<video poster="https://unlisted.example/p.png"></video>', 'video');
+
+            expect(video.hasAttribute('poster')).toBe(false);
+        });
+
+        it('removes the background attribute of a table cell', () => {
+            const cell = restricted('<table><tr><td background="https://unlisted.example/bg.png">x</td></tr></table>', 'td');
+
+            expect(cell.hasAttribute('background')).toBe(false);
+        });
+
+        it('keeps the attributes when every host is allowed', () => {
+            setAllowedImageHosts(undefined);
+            const container = document.createElement('div');
+            container.innerHTML = '<video poster="https://unlisted.example/p.png"></video><img srcset="https://unlisted.example/b.png 2x">';
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element));
+
+            expect(container.querySelector('video')!.getAttribute('poster')).toContain('unlisted.example');
+            expect(container.querySelector('img')!.getAttribute('srcset')).toContain('unlisted.example');
+        });
+
+        it('leaves none of them in rendered markdown', () => {
+            const html = htmlForMarkdown(
+                '<img srcset="https://unlisted.example/a.png 2x"><picture><source srcset="https://unlisted.example/b.png"></picture><video poster="https://unlisted.example/c.png"></video><table><tr><td background="https://unlisted.example/d.png">x</td></tr></table>',
             );
 
             expect(html).not.toContain('unlisted.example');
