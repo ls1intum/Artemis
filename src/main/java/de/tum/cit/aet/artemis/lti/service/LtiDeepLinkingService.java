@@ -123,6 +123,7 @@ public class LtiDeepLinkingService {
      */
     private List<LtiContentItem> populateExerciseContentItems(long courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.EXERCISE);
+        validateExercisesBelongToCourse(courseId, exerciseIds);
         return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).toList();
     }
 
@@ -131,6 +132,7 @@ public class LtiDeepLinkingService {
      */
     private LtiContentItem populateGroupedExerciseContentItem(long courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.GROUPED_EXERCISE);
+        validateExercisesBelongToCourse(courseId, exerciseIds);
         return setGroupedExerciseContentItem(courseId, exerciseIds);
     }
 
@@ -139,6 +141,7 @@ public class LtiDeepLinkingService {
      */
     private List<LtiContentItem> populateLectureContentItems(long courseId, Set<Long> lectureIds) {
         validateUnitIds(lectureIds, DeepLinkingType.LECTURE);
+        validateLecturesBelongToCourse(courseId, lectureIds);
         return lectureIds.stream().map(lectureId -> setLectureContentItem(courseId, String.valueOf(lectureId))).toList();
     }
 
@@ -147,6 +150,7 @@ public class LtiDeepLinkingService {
      */
     private LtiContentItem populateGroupedLectureContentItems(long courseId, Set<Long> lectureIds) {
         validateUnitIds(lectureIds, DeepLinkingType.GROUPED_LECTURE);
+        validateLecturesBelongToCourse(courseId, lectureIds);
         return setGroupedLectureContentItem(courseId, lectureIds);
     }
 
@@ -270,6 +274,26 @@ public class LtiDeepLinkingService {
     private void validateUnitIds(Set<Long> unitIds, DeepLinkingType type) {
         if (unitIds == null || unitIds.isEmpty()) {
             throw new BadRequestAlertException("No " + type.name().toLowerCase(Locale.ROOT) + " IDs provided for deep linking", "LTI", "no" + type.name() + "Ids");
+        }
+    }
+
+    /**
+     * Validate that all exercises belong to the course the content is selected for.
+     */
+    private void validateExercisesBelongToCourse(long courseId, Set<Long> exerciseIds) {
+        if (!exerciseRepository.findExerciseIdsByCourseId(courseId).containsAll(exerciseIds)) {
+            throw new BadRequestAlertException("Exercise not found.", "LTI", "exerciseNotFound");
+        }
+    }
+
+    /**
+     * Validate that all lectures belong to the course the content is selected for.
+     */
+    private void validateLecturesBelongToCourse(long courseId, Set<Long> lectureIds) {
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        Set<Long> lectureIdsOfCourse = api.findAllByCourseId(courseId).stream().map(Lecture::getId).collect(Collectors.toSet());
+        if (!lectureIdsOfCourse.containsAll(lectureIds)) {
+            throw new BadRequestAlertException("Lecture not found.", "LTI", "lectureNotFound");
         }
     }
 

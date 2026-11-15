@@ -13,8 +13,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.api.ConversationFileAccessApi;
 import de.tum.cit.aet.artemis.core.domain.FileUpload;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 
@@ -29,9 +32,37 @@ public class FileUploadService {
 
     private final FileService fileService;
 
-    public FileUploadService(FileUploadRepository fileUploadRepository, FileService fileService) {
+    private final ConversationFileAccessApi conversationFileAccessApi;
+
+    public FileUploadService(FileUploadRepository fileUploadRepository, FileService fileService, ConversationFileAccessApi conversationFileAccessApi) {
         this.fileUploadRepository = fileUploadRepository;
         this.fileService = fileService;
+        this.conversationFileAccessApi = conversationFileAccessApi;
+    }
+
+    /**
+     * Checks that the conversation belongs to the course and that the user takes part in it or that it is a course-wide channel.
+     *
+     * @param courseId       the id of the course in the request path
+     * @param conversationId the id of the conversation in the request path
+     * @param userId         the id of the requesting user
+     * @throws AccessForbiddenException if the user is not allowed to use the files of the conversation
+     */
+    public void checkCanAccessConversationFilesElseThrow(long courseId, long conversationId, long userId) {
+        conversationFileAccessApi.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userId);
+    }
+
+    /**
+     * Checks that the user may read a file of a conversation, see {@link ConversationFileAccessApi#checkCanReadConversationFileElseThrow}.
+     *
+     * @param courseId       the id of the course in the request path
+     * @param conversationId the id of the conversation in the request path
+     * @param filename       the name of the file in the request path
+     * @param user           the requesting user
+     * @throws AccessForbiddenException if the user is not allowed to read the file
+     */
+    public void checkCanReadConversationFileElseThrow(long courseId, long conversationId, String filename, User user) {
+        conversationFileAccessApi.checkCanReadConversationFileElseThrow(courseId, conversationId, filename, user);
     }
 
     /**
