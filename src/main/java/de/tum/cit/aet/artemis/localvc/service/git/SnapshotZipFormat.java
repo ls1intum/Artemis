@@ -42,4 +42,21 @@ public final class SnapshotZipFormat implements ArchiveCommand.Format<ArchiveOut
     public Iterable<String> suffixes() {
         return delegate.suffixes();
     }
+
+    /**
+     * Two instances write the same format. JGit compares registered formats with {@code equals}, so that a second registration of the same format, for example by another
+     * application context in the same JVM, is recognized instead of reported as a conflict.
+     *
+     * @param other the object to compare with
+     * @return true if the other object is a snapshot zip format
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof SnapshotZipFormat;
+    }
+
+    @Override
+    public int hashCode() {
+        return SnapshotZipFormat.class.hashCode();
+    }
 }

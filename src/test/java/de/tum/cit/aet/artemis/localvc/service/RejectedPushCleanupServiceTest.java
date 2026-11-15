@@ -114,6 +114,32 @@ class RejectedPushCleanupServiceTest {
     }
 
     @Test
+    void aRejectionAfterTheFirstOneDoesNotPostponeTheCleanup() throws Exception {
+        try (Repository repository = createRepository()) {
+            Path marker = repository.getDirectory().toPath().resolve("artemis-rejected-push");
+            RejectedPushCleanupService.markForCleanup(repository);
+            FileTime old = FileTime.from(Instant.now().minus(3, ChronoUnit.DAYS));
+            Files.setLastModifiedTime(marker, old);
+
+            RejectedPushCleanupService.markForCleanup(repository);
+
+            assertThat(Files.getLastModifiedTime(marker)).isEqualTo(old);
+        }
+    }
+
+    @Test
+    void aRejectionAfterAFirstCleanupStartsAnotherRound() throws Exception {
+        try (Repository repository = createRepository()) {
+            Path marker = repository.getDirectory().toPath().resolve("artemis-rejected-push");
+            Files.writeString(marker, "1");
+
+            RejectedPushCleanupService.markForCleanup(repository);
+
+            assertThat(marker).content().isEqualTo("0");
+        }
+    }
+
+    @Test
     void repositoryWithoutMarkIsNotTouched() throws Exception {
         try (Repository repository = createRepository()) {
             ObjectId orphan;

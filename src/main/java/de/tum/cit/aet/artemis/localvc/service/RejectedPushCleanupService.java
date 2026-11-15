@@ -8,6 +8,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -49,19 +50,27 @@ public class RejectedPushCleanupService {
     /** The content of a mark after a first cleanup, which a second cleanup removes together with the objects that the first one made loose. */
     private static final String SECOND_PASS = "1";
 
+    /** Above this size of its packs, a repository is not collected, see {@link #cleanupIfDue}. */
+    private static final long MAX_PACK_BYTES = 1L << 30;
+
     private static final Duration GRACE_PERIOD = Duration.ofDays(1);
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
     /**
-     * Marks the repository as one that holds the objects of a rejected push. A repeated call renews the mark, so the cleanup waits for a day without a rejected push.
+     * Marks the repository as one that holds the objects of a rejected push. The mark keeps the time of the first rejection until a cleanup processed it.
      *
      * @param repository the repository that received the rejected push
      */
     static void markForCleanup(Repository repository) {
         Path marker = repository.getDirectory().toPath().resolve(MARKER_FILE_NAME);
         try {
+            // A mark that no cleanup has processed yet keeps the time of the first rejection. Renewing it with every rejected push would postpone the cleanup for as long as
+            // pushes keep being rejected, while the objects of the rejected pushes are protected by their own age anyway.
+            if (Files.isRegularFile(marker) && FIRST_PASS.equals(Files.readString(marker).trim())) {
+                return;
+            }
             Files.writeString(marker, FIRST_PASS);
         }
         catch (IOException e) {
@@ -107,6 +116,12 @@ public class RejectedPushCleanupService {
                 return false;
             }
             String pass = Files.readString(claim).trim();
+            if (sizeOfPacks(repositoryPath) > MAX_PACK_BYTES) {
+                // The collection writes the unreferenced objects of old packs as loose objects, which can need far more space than the packs
+                log.warn("Not removing the objects of rejected pushes from {}: its packs are larger than {} bytes", repositoryPath, MAX_PACK_BYTES);
+                Files.deleteIfExists(claim);
+                return false;
+            }
             try (Repository repository = new FileRepositoryBuilder().setGitDir(repositoryPath.toFile()).setBare().build(); Git git = new Git(repository)) {
                 git.gc().setExpire(threshold).call();
             }
@@ -141,6 +156,8 @@ public class RejectedPushCleanupService {
             Path claim = repositoryPath.resolve(CLAIM_PREFIX + UUID.randomUUID());
             try {
                 Files.move(marker, claim, StandardCopyOption.ATOMIC_MOVE);
+                // The age of a claim tells whether a run still works on it, so it starts now
+                Files.setLastModifiedTime(claim, FileTime.from(Instant.now()));
                 return claim;
             }
             catch (NoSuchFileException e) {
@@ -154,6 +171,7 @@ public class RejectedPushCleanupService {
                     Path claim = repositoryPath.resolve(CLAIM_PREFIX + UUID.randomUUID());
                     try {
                         Files.move(leftover, claim, StandardCopyOption.ATOMIC_MOVE);
+                        Files.setLastModifiedTime(claim, FileTime.from(Instant.now()));
                         return claim;
                     }
                     catch (NoSuchFileException e) {
@@ -184,5 +202,19 @@ public class RejectedPushCleanupService {
         catch (IOException e) {
             log.debug("Could not restore the mark of {}", claim, e);
         }
+    }
+
+    private static long sizeOfPacks(Path repositoryPath) throws IOException {
+        Path packDirectory = repositoryPath.resolve("objects").resolve("pack");
+        if (!Files.isDirectory(packDirectory)) {
+            return 0;
+        }
+        long total = 0;
+        try (DirectoryStream<Path> packs = Files.newDirectoryStream(packDirectory, "*.pack")) {
+            for (Path pack : packs) {
+                total += Files.size(pack);
+            }
+        }
+        return total;
     }
 }

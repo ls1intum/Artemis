@@ -69,4 +69,9 @@ class SnapshotZipFormatTest {
             assertThat(names).containsExactly("Main.java");
         }
     }
+
+    @Test
+    void instancesAreEqualSoThatAnotherRegistrationIsRecognized() {
+        assertThat(new SnapshotZipFormat()).isEqualTo(new SnapshotZipFormat()).hasSameHashCodeAs(new SnapshotZipFormat());
+    }
 }
