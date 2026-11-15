@@ -9,17 +9,13 @@ import { admin } from '../../support/users';
 const uid = generateUUID();
 
 async function selectTaxonomy(page: Page, taxonomy: string) {
-    // The taxonomy control is a PrimeNG p-select: open its overlay and click the option whose translated label
-    // matches the requested taxonomy.
-    await page
-        .locator('p-select')
-        .filter({ has: page.locator('#taxonomy') })
-        .click();
-    const overlay = page.getByTestId('taxonomy-select-overlay');
+    // The taxonomy control is a TUM AET UI select: its trigger carries the id, and the options are listed in an
+    // overlay. Click the option whose translated label matches the requested taxonomy.
+    await page.getByTestId('taxonomy-select').locator('#taxonomy').click();
+    const overlay = page.getByRole('listbox');
     await expect(overlay).toBeVisible();
     await overlay
-        .getByTestId('taxonomy-select-option')
-        .filter({ hasText: new RegExp(taxonomy.trim(), 'i') })
+        .getByRole('option', { name: new RegExp(taxonomy.trim(), 'i') })
         .first()
         .click();
     await expect(overlay).toBeHidden();
