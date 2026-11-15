@@ -225,20 +225,20 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const ex = this.exercise();
         if (!ex) return [];
         const isProgramming = ex.type === ExerciseType.PROGRAMMING;
-        const assessmentTypeFilterable = ex.type !== ExerciseType.QUIZ;
+        const assessmentTypeFilterable = ex.type !== ExerciseType.QUIZ && ex.type !== ExerciseType.FILE_UPLOAD;
         const manualAssessmentEnabled = ex.type !== ExerciseType.QUIZ && (!isProgramming || ex.assessmentType !== AssessmentType.AUTOMATIC);
         return [
             { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], segmented: true },
             {
                 labelKey: 'artemisApp.participation.filterGroup.submissions',
-                single: !isProgramming,
+                single: false,
                 items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
             },
             ...(assessmentTypeFilterable
                 ? [
                       {
                           labelKey: 'artemisApp.participation.filterGroup.assessmentType',
-                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, ...(isProgramming || ex.type === ExerciseType.FILE_UPLOAD ? [FilterProp.AUTOMATIC] : [])],
+                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, ...(isProgramming ? [FilterProp.AUTOMATIC] : [])],
                       },
                   ]
                 : []),

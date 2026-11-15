@@ -661,11 +661,11 @@ describe('ParticipationComponent', () => {
             expect(filters()).toContain(FilterProp.GRADED);
         });
 
-        it('uses segmented results and multiple assessment choices while retaining exclusive non-programming submissions', () => {
+        it('uses segmented results and multiple selections for submissions and assessment types', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
             component.newManualResultAllowed.set(true);
             expect(component.filterGroups().filter((group) => group.items.includes(FilterProp.NO_SUBMISSIONS) || group.items.includes(FilterProp.MANUAL))).toHaveLength(2);
-            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(true);
+            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(false);
             expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SUCCESSFUL))?.segmented).toBe(true);
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
             expect(filters()).toContain(FilterProp.SEMI_AUTOMATIC);
@@ -681,16 +681,16 @@ describe('ParticipationComponent', () => {
             [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
             [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.MODELING }, true, true],
             [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
-            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, true],
+            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, false],
             [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
             [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, false],
-            [FilterProp.AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, false],
             [FilterProp.GRADED, { type: ExerciseType.FILE_UPLOAD }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
             [FilterProp.AUTOMATIC, { type: ExerciseType.MODELING }, true, false],
-            [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, true],
+            [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, false],
             [FilterProp.GRADED, { type: ExerciseType.QUIZ }, false, true],
             [FilterProp.GRADED, { type: ExerciseType.TEXT }, false, true],
             [FilterProp.GRADED, { type: ExerciseType.MODELING }, false, true],
