@@ -231,8 +231,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
     /**
      * The Additional Guidelines textarea, which grows with its content (up to its `max-h-56`, then it scrolls). The height
-     * comes from `scrollHeight`, which is `0` while the textarea is not rendered, so it is measured when the textarea
-     * appears (the General tab becomes active, Iris is enabled), when the text changes from outside (reset to default,
+     * comes from `scrollHeight`, which is `0` while the textarea is not rendered. The view query keeps the reference
+     * while the General tab is inactive, so the height is measured only while that tab is active: when it becomes
+     * active again, when the textarea appears (Iris is enabled), when the text changes from outside (reset to default,
      * loading) and on every input event.
      */
     private readonly customInstructionsTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('customInstructionsTextarea');
@@ -241,9 +242,11 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         this.isAdmin.set(this.accountService.isAdmin());
 
         effect(() => {
-            // Reading the settings re-runs the effect when the text is replaced from outside.
+            // Reading the settings re-runs the effect when the text is replaced from outside, and reading the active tab when the
+            // textarea is shown again. A change on another tab, such as the pipeline variant on the Admin tab, must not measure it.
             const settings = this.settings();
-            if (settings && this.customInstructionsTextarea()) {
+            const generalTabActive = this.activeTab() === 'general';
+            if (settings && generalTabActive && this.customInstructionsTextarea()) {
                 this.fitCustomInstructionsToContent();
             }
         });
@@ -259,8 +262,11 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             if (!textarea) {
                 return;
             }
+            const previousHeight = textarea.style.height;
             textarea.style.height = 'auto';
-            textarea.style.height = `${textarea.scrollHeight}px`;
+            const contentHeight = textarea.scrollHeight;
+            // A height of 0 means that the textarea is not rendered (its panel is not attached), so the previous height stays.
+            textarea.style.height = contentHeight > 0 ? `${contentHeight}px` : previousHeight;
         });
     }
 
