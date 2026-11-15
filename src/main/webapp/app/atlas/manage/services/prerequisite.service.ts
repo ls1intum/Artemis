@@ -1,141 +1,83 @@
 import { HttpResponse } from '@angular/common/http';
-import { Service } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { Service, inject } from '@angular/core';
+import { Observable, defer } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
+import { toCompetencyWithTailRelation, toCourseCompetencyRequestDTO, toPrerequisite } from 'app/atlas/shared/dto/course-competency-response.dto';
+import { CompetencyWithTailRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import {
-    CompetencyWithTailRelationResponseDTO,
-    CourseCompetencyRequestDTO,
-    CourseCompetencyResponseDTO,
-    toCourseCompetencyRequestDTO,
-    toPrerequisite,
-} from 'app/atlas/shared/dto/course-competency-response.dto';
-
-type EntityResponseType = HttpResponse<Prerequisite>;
-type EntityArrayResponseType = HttpResponse<Prerequisite[]>;
-type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
-type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
+import { PrerequisiteApi } from 'app/openapi/api/prerequisite-api';
+import { CompetencyImportOptions } from 'app/openapi/model/competency-import-options';
+import { CompetencyWithTailRelation } from 'app/openapi/model/competency-with-tail-relation';
+import { CourseCompetencyResponse } from 'app/openapi/model/course-competency-response';
 
 @Service()
 export class PrerequisiteService extends CourseCompetencyService {
-    override getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseDTOType) => this.mapPrerequisiteArrayResponse(res)),
-            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+    private readonly prerequisiteApi = inject(PrerequisiteApi);
+
+    override getAllForCourse(courseId: number): Observable<HttpResponse<Prerequisite[]>> {
+        return this.prerequisiteApi.getPrerequisitesWithProgress(courseId).pipe(
+            // Preserve the response shape shared with CourseCompetencyService for body-only operations.
+            map((body) => new HttpResponse({ body: body?.map((dto) => this.hydrate(dto)) ?? [] })),
+            tap((response) => response.body?.forEach((value) => this.sendTitlesToEntityTitleService(value))),
         );
     }
 
-    override findById(prerequisiteId: number, courseId: number) {
-        return this.httpClient.get<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites/${prerequisiteId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseDTOType) => {
-                const mapped = this.mapPrerequisiteResponse(res);
-                this.sendTitlesToEntityTitleService(mapped?.body);
-                return mapped;
-            }),
+    override findById(prerequisiteId: number, courseId: number): Observable<HttpResponse<Prerequisite>> {
+        return this.prerequisiteApi.getPrerequisite(prerequisiteId, courseId).pipe(
+            map((body) => new HttpResponse({ body: body ? this.hydrate(body) : null })),
+            tap((response) => this.sendTitlesToEntityTitleService(response.body)),
         );
     }
 
-    create(prerequisite: Prerequisite, courseId: number): Observable<EntityResponseType> {
-        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(prerequisite);
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites`, request, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapPrerequisiteResponse(res)));
-    }
-
-    createBulk(prerequisites: Prerequisite[], courseId: number) {
-        const request = prerequisites.map((prerequisite) => toCourseCompetencyRequestDTO(prerequisite));
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/prerequisites/bulk`, request, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseDTOType) => this.mapPrerequisiteArrayResponse(res)));
-    }
-
-    import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
-        if (courseCompetency.id === undefined) {
-            return throwError(() => new Error('Cannot import prerequisite: courseCompetency.id is missing'));
-        }
-        const payload: CourseCompetencyImportOptionsDTO = {
-            competencyIds: [courseCompetency.id],
-            importRelations: false,
-            importExercises: false,
-            importLectures: false,
-        };
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites/import`, payload, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapPrerequisiteResponse(res)));
+    create(prerequisite: Prerequisite, courseId: number): Observable<HttpResponse<Prerequisite>> {
+        return defer(() => this.prerequisiteApi.createPrerequisite(courseId, toCourseCompetencyRequestDTO(prerequisite))).pipe(
+            map((response) => response.clone({ body: response.body ? this.hydrate(response.body) : null })),
+        );
     }
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
-        const courseCompetencyIds = courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined);
-        const payload: CourseCompetencyImportOptionsDTO = {
-            importExercises: false,
+        const payload: CompetencyImportOptions = {
+            competencyIds: courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined),
             importRelations,
+            importExercises: false,
             importLectures: false,
-            competencyIds: courseCompetencyIds,
         };
-        return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`, payload, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapPrerequisiteImportResponse(res)));
+        return this.prerequisiteApi.importPrerequisites(courseId, payload).pipe(map((response) => this.mapImportResponse(response)));
     }
 
     override importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
-        const payload: CourseCompetencyImportOptionsDTO = {
+        const payload: CompetencyImportOptions = {
             competencyIds: [],
-            importLectures: false,
+            sourceCourseId,
             importRelations,
             importExercises: false,
-            sourceCourseId,
+            importLectures: false,
         };
-        return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import-all`, payload, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapPrerequisiteImportResponse(res)));
+        return this.prerequisiteApi.importAllPrerequisitesFromCourse(courseId, payload).pipe(map((response) => this.mapImportResponse(response)));
     }
 
     importStandardizedCompetencies(competencyIdsToImport: number[], courseId: number) {
-        return this.httpClient.post<Array<CompetencyImportResponseDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import-standardized`, competencyIdsToImport, {
-            observe: 'response',
-        });
+        return this.prerequisiteApi.importStandardizedPrerequisites(courseId, competencyIdsToImport);
     }
 
-    update(prerequisite: Prerequisite, courseId: number): Observable<EntityResponseType> {
-        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(prerequisite);
-        return this.httpClient
-            .put<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites`, request, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapPrerequisiteResponse(res)));
+    update(prerequisite: Prerequisite, courseId: number): Observable<HttpResponse<Prerequisite>> {
+        return defer(() => this.prerequisiteApi.updatePrerequisite(courseId, toCourseCompetencyRequestDTO(prerequisite))).pipe(
+            map((body) => new HttpResponse({ body: body ? this.hydrate(body) : null })),
+        );
     }
 
     delete(prerequisiteId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${prerequisiteId}`, { observe: 'response' });
+        return this.prerequisiteApi.deletePrerequisite(prerequisiteId, courseId);
     }
 
-    private mapPrerequisiteResponse(res: EntityResponseDTOType): EntityResponseType {
-        const body = res.body ? toPrerequisite(res.body) : undefined;
-        this.postProcessCompetency(body);
-        return res.clone({ body });
+    private hydrate(dto: CourseCompetencyResponse): Prerequisite {
+        const prerequisite = toPrerequisite(dto);
+        this.postProcessCompetency(prerequisite);
+        return prerequisite;
     }
 
-    private mapPrerequisiteArrayResponse(res: EntityArrayResponseDTOType): EntityArrayResponseType {
-        const body = res.body ? res.body.map((dto) => toPrerequisite(dto)) : [];
-        body.forEach((prerequisite) => {
-            this.postProcessCompetency(prerequisite);
-        });
-        return res.clone({ body });
-    }
-
-    private mapPrerequisiteImportResponse(res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>): HttpResponse<Array<CompetencyWithTailRelationDTO>> {
-        const body =
-            res.body?.map((dto) => {
-                const mapped = new CompetencyWithTailRelationDTO();
-                mapped.competency = dto.competency ? toPrerequisite(dto.competency) : undefined;
-                this.postProcessCompetency(mapped.competency);
-                mapped.tailRelations = dto.tailRelations;
-                return mapped;
-            }) ?? [];
-        return res.clone({ body });
+    private mapImportResponse(response: HttpResponse<CompetencyWithTailRelation[]>): HttpResponse<CompetencyWithTailRelationDTO[]> {
+        return response.clone({ body: response.body?.map((dto) => toCompetencyWithTailRelation(dto, (competency) => this.hydrate(competency))) ?? [] });
     }
 }

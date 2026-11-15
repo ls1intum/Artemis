@@ -2,8 +2,11 @@ import {
     Competency,
     CompetencyExerciseLink,
     CompetencyLectureUnitLink,
+    CompetencyProgress,
     CompetencyRelationDTO,
+    CompetencyRelationType,
     CompetencyTaxonomy,
+    CompetencyWithTailRelationDTO,
     ConfidenceReason,
     CourseCompetency,
     CourseCompetencyType,
@@ -19,7 +22,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import type { UMLDiagramType } from '@tumaet/apollon';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -28,21 +31,27 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
-export interface CourseCompetencyRequestDTO {
-    id?: number;
-    title: string;
-    description?: string;
-    softDueDate?: string;
-    masteryThreshold?: number;
-    taxonomy?: CompetencyTaxonomy;
-    optional?: boolean;
-}
+import { parseJson } from 'app/foundation/util/json.util';
+import type { AttachmentForCompetencyAttachmentTypeEnum } from 'app/openapi/model/attachment-for-competency';
+import type { CompetencyProgressConfidenceReasonEnum, CompetencyProgress as CompetencyProgressResponse } from 'app/openapi/model/competency-progress';
+import type { CompetencyRelation, CompetencyRelationRelationTypeEnum } from 'app/openapi/model/competency-relation';
+import type { CompetencyWithTailRelation } from 'app/openapi/model/competency-with-tail-relation';
+import type { CourseCompetencyRequest } from 'app/openapi/model/course-competency-request';
+import type { CourseCompetencyResponse, CourseCompetencyResponseTaxonomyEnum, CourseCompetencyResponseTypeEnum } from 'app/openapi/model/course-competency-response';
+import type { CourseInfo } from 'app/openapi/model/course-info';
+import type {
+    ExerciseForCompetency,
+    ExerciseForCompetencyAssessmentTypeEnum,
+    ExerciseForCompetencyDifficultyEnum,
+    ExerciseForCompetencyIncludedInOverallScoreEnum,
+    ExerciseForCompetencyModeEnum,
+    ExerciseForCompetencyTypeEnum,
+} from 'app/openapi/model/exercise-for-competency';
+import type { LectureUnitForCompetency } from 'app/openapi/model/lecture-unit-for-competency';
 
-export interface CompetencyProgressDTO {
-    progress?: number;
-    confidence?: number;
-    confidenceReason?: ConfidenceReason;
-}
+export type CompetencyProgressDTO = CompetencyProgressResponse;
+export type CourseCompetencyResponseDTO = CourseCompetencyResponse;
+export type CompetencyWithTailRelationResponseDTO = CompetencyWithTailRelation;
 
 export interface CourseCompetencyProgressDTO {
     competencyId?: number;
@@ -51,110 +60,75 @@ export interface CourseCompetencyProgressDTO {
     averageStudentScore?: number;
 }
 
-export interface CourseInfoDTO {
-    id: number;
-    title?: string;
-    semester?: string;
-}
+const taxonomyByValue: Record<CourseCompetencyResponseTaxonomyEnum, CompetencyTaxonomy> = {
+    REMEMBER: CompetencyTaxonomy.REMEMBER,
+    UNDERSTAND: CompetencyTaxonomy.UNDERSTAND,
+    APPLY: CompetencyTaxonomy.APPLY,
+    ANALYZE: CompetencyTaxonomy.ANALYZE,
+    EVALUATE: CompetencyTaxonomy.EVALUATE,
+    CREATE: CompetencyTaxonomy.CREATE,
+};
 
-export interface LinkedCourseCompetencyDTO {
-    id: number;
-    courseId: number;
-    courseTitle?: string;
-    semester?: string;
-}
+const competencyTypeByValue: Record<CourseCompetencyResponseTypeEnum, CourseCompetencyType> = {
+    competency: CourseCompetencyType.COMPETENCY,
+    prerequisite: CourseCompetencyType.PREREQUISITE,
+};
 
-export interface ExerciseForCompetencyDTO {
-    id: number;
-    title?: string;
-    shortName?: string;
-    type?: ExerciseType;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    maxPoints?: number;
-    bonusPoints?: number;
-    assessmentType?: AssessmentType;
-    difficulty?: DifficultyLevel;
-    includedInOverallScore?: IncludedInOverallScore;
-    mode?: ExerciseMode;
-    categories?: (ExerciseCategory | string)[];
-    teamMode?: boolean;
-    studentAssignedTeamId?: number;
-    studentAssignedTeamIdComputed?: boolean;
-    allowOnlineEditor?: boolean;
-    allowOfflineIde?: boolean;
-    quizStarted?: boolean;
-    quizEnded?: boolean;
-}
+const confidenceReasonByValue: Record<CompetencyProgressConfidenceReasonEnum, ConfidenceReason> = {
+    NO_REASON: ConfidenceReason.NO_REASON,
+    RECENT_SCORES_LOWER: ConfidenceReason.RECENT_SCORES_LOWER,
+    RECENT_SCORES_HIGHER: ConfidenceReason.RECENT_SCORES_HIGHER,
+    MORE_EASY_POINTS: ConfidenceReason.MORE_EASY_POINTS,
+    MORE_HARD_POINTS: ConfidenceReason.MORE_HARD_POINTS,
+    QUICKLY_SOLVED_EXERCISES: ConfidenceReason.QUICKLY_SOLVED_EXERCISES,
+    MORE_LOW_WEIGHTED_EXERCISES: ConfidenceReason.MORE_LOW_WEIGHTED_EXERCISES,
+    MORE_HIGH_WEIGHTED_EXERCISES: ConfidenceReason.MORE_HIGH_WEIGHTED_EXERCISES,
+};
 
-export interface CompetencyExerciseLinkResponseDTO {
-    weight: number;
-    generatedByAi?: boolean;
-    exercise?: ExerciseForCompetencyDTO;
-}
+const exerciseTypeByValue: Record<ExerciseForCompetencyTypeEnum, ExerciseType> = {
+    programming: ExerciseType.PROGRAMMING,
+    modeling: ExerciseType.MODELING,
+    text: ExerciseType.TEXT,
+    'file-upload': ExerciseType.FILE_UPLOAD,
+    quiz: ExerciseType.QUIZ,
+};
 
-export interface LectureReferenceDTO {
-    id: number;
-}
+const assessmentTypeByValue: Record<ExerciseForCompetencyAssessmentTypeEnum, AssessmentType> = {
+    AUTOMATIC: AssessmentType.AUTOMATIC,
+    SEMI_AUTOMATIC: AssessmentType.SEMI_AUTOMATIC,
+    MANUAL: AssessmentType.MANUAL,
+    AUTOMATIC_ATHENA: AssessmentType.AUTOMATIC_ATHENA,
+};
 
-export interface AttachmentForCompetencyDTO {
-    id?: number;
-    name?: string;
-    link?: string;
-    releaseDate?: string;
-    uploadDate?: string;
-    version?: number;
-    attachmentType?: AttachmentType;
-    studentVersion?: string;
-}
+const difficultyByValue: Record<ExerciseForCompetencyDifficultyEnum, DifficultyLevel> = {
+    EASY: DifficultyLevel.EASY,
+    MEDIUM: DifficultyLevel.MEDIUM,
+    HARD: DifficultyLevel.HARD,
+};
 
-export interface LectureUnitForCompetencyDTO {
-    id?: number;
-    lecture?: LectureReferenceDTO;
-    name?: string;
-    releaseDate?: string;
-    completed?: boolean;
-    visibleToStudents?: boolean;
-    type?: LectureUnitType;
-    description?: string;
-    source?: string;
-    content?: string;
-    attachment?: AttachmentForCompetencyDTO;
-    videoSource?: string;
-}
+const includedInOverallScoreByValue: Record<ExerciseForCompetencyIncludedInOverallScoreEnum, IncludedInOverallScore> = {
+    INCLUDED_COMPLETELY: IncludedInOverallScore.INCLUDED_COMPLETELY,
+    INCLUDED_AS_BONUS: IncludedInOverallScore.INCLUDED_AS_BONUS,
+    NOT_INCLUDED: IncludedInOverallScore.NOT_INCLUDED,
+};
 
-export interface CompetencyLectureUnitLinkResponseDTO {
-    weight: number;
-    generatedByAi?: boolean;
-    lectureUnit?: LectureUnitForCompetencyDTO;
-}
+const exerciseModeByValue: Record<ExerciseForCompetencyModeEnum, ExerciseMode> = {
+    INDIVIDUAL: ExerciseMode.INDIVIDUAL,
+    TEAM: ExerciseMode.TEAM,
+};
 
-export interface CourseCompetencyResponseDTO {
-    id: number;
-    title: string;
-    description?: string;
-    taxonomy?: CompetencyTaxonomy;
-    softDueDate?: string;
-    masteryThreshold?: number;
-    optional?: boolean;
-    generatedByAi?: boolean;
-    type?: CourseCompetencyType;
-    linkedCourseCompetency?: LinkedCourseCompetencyDTO;
-    linkedStandardizedCompetencyId?: number;
-    userProgress?: CompetencyProgressDTO[];
-    course?: CourseInfoDTO;
-    exerciseLinks?: CompetencyExerciseLinkResponseDTO[];
-    lectureUnitLinks?: CompetencyLectureUnitLinkResponseDTO[];
-}
+const attachmentTypeByValue: Record<AttachmentForCompetencyAttachmentTypeEnum, AttachmentType> = {
+    FILE: AttachmentType.FILE,
+    URL: AttachmentType.URL,
+};
 
-export interface CompetencyWithTailRelationResponseDTO {
-    competency?: CourseCompetencyResponseDTO;
-    tailRelations?: CompetencyRelationDTO[];
-}
+const relationTypeByValue: Record<CompetencyRelationRelationTypeEnum, CompetencyRelationType> = {
+    ASSUMES: CompetencyRelationType.ASSUMES,
+    EXTENDS: CompetencyRelationType.EXTENDS,
+    MATCHES: CompetencyRelationType.MATCHES,
+};
 
-const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
+const toCourse = (dto?: CourseInfo): Course | undefined => {
     if (!dto) {
         return undefined;
     }
@@ -166,13 +140,13 @@ const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
     return course;
 };
 
-const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise | undefined => {
+const toExercise = (dto?: ExerciseForCompetency, course?: Course): Exercise | undefined => {
     if (!dto || !dto.type) {
         return undefined;
     }
 
     let exercise: Exercise;
-    switch (dto.type) {
+    switch (exerciseTypeByValue[dto.type]) {
         case ExerciseType.PROGRAMMING:
             exercise = new ProgrammingExercise(course, undefined);
             break;
@@ -197,19 +171,25 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
     exercise.id = dto.id;
     exercise.title = dto.title;
     exercise.shortName = dto.shortName;
-    exercise.type = dto.type;
     exercise.releaseDate = convertDateStringFromServer(dto.releaseDate);
     exercise.startDate = convertDateStringFromServer(dto.startDate);
     exercise.dueDate = convertDateStringFromServer(dto.dueDate);
     exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
     exercise.maxPoints = dto.maxPoints;
     exercise.bonusPoints = dto.bonusPoints;
-    exercise.assessmentType = dto.assessmentType;
-    exercise.difficulty = dto.difficulty;
-    exercise.includedInOverallScore = dto.includedInOverallScore;
-    exercise.mode = dto.mode;
-    exercise.categories = dto.categories as ExerciseCategory[] | undefined;
-    exercise.teamMode = dto.teamMode ?? dto.mode === ExerciseMode.TEAM;
+    exercise.assessmentType = dto.assessmentType ? assessmentTypeByValue[dto.assessmentType] : undefined;
+    exercise.difficulty = dto.difficulty ? difficultyByValue[dto.difficulty] : undefined;
+    exercise.includedInOverallScore = dto.includedInOverallScore ? includedInOverallScoreByValue[dto.includedInOverallScore] : undefined;
+    exercise.mode = dto.mode ? exerciseModeByValue[dto.mode] : undefined;
+    exercise.categories = dto.categories?.flatMap((value) => {
+        try {
+            const { category, color } = parseJson<SerializedExerciseCategory>(value);
+            return [new ExerciseCategory(category, color)];
+        } catch {
+            return [];
+        }
+    });
+    exercise.teamMode = dto.teamMode ?? exercise.mode === ExerciseMode.TEAM;
     exercise.studentAssignedTeamId = dto.studentAssignedTeamId;
     exercise.studentAssignedTeamIdComputed = dto.studentAssignedTeamIdComputed ?? false;
 
@@ -225,17 +205,17 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
     return exercise;
 };
 
-const toLectureUnit = (dto?: LectureUnitForCompetencyDTO): LectureUnit | undefined => {
+const toLectureUnit = (dto?: LectureUnitForCompetency): LectureUnit | undefined => {
     if (!dto?.type) {
         return undefined;
     }
 
     let lectureUnit: LectureUnit;
     switch (dto.type) {
-        case LectureUnitType.ATTACHMENT_VIDEO:
-            lectureUnit = new AttachmentVideoUnit();
-            (lectureUnit as AttachmentVideoUnit).description = dto.description;
-            (lectureUnit as AttachmentVideoUnit).videoSource = dto.videoSource;
+        case LectureUnitType.ATTACHMENT_VIDEO: {
+            const unit = new AttachmentVideoUnit();
+            unit.description = dto.description;
+            unit.videoSource = dto.videoSource;
             if (dto.attachment) {
                 const attachment = new Attachment();
                 attachment.id = dto.attachment.id;
@@ -244,20 +224,26 @@ const toLectureUnit = (dto?: LectureUnitForCompetencyDTO): LectureUnit | undefin
                 attachment.releaseDate = convertDateStringFromServer(dto.attachment.releaseDate);
                 attachment.uploadDate = convertDateStringFromServer(dto.attachment.uploadDate);
                 attachment.version = dto.attachment.version;
-                attachment.attachmentType = dto.attachment.attachmentType;
+                attachment.attachmentType = dto.attachment.attachmentType ? attachmentTypeByValue[dto.attachment.attachmentType] : undefined;
                 attachment.studentVersion = dto.attachment.studentVersion;
-                (lectureUnit as AttachmentVideoUnit).attachment = attachment;
+                unit.attachment = attachment;
             }
+            lectureUnit = unit;
             break;
-        case LectureUnitType.ONLINE:
-            lectureUnit = new OnlineUnit();
-            (lectureUnit as OnlineUnit).description = dto.description;
-            (lectureUnit as OnlineUnit).source = dto.source;
+        }
+        case LectureUnitType.ONLINE: {
+            const unit = new OnlineUnit();
+            unit.description = dto.description;
+            unit.source = dto.source;
+            lectureUnit = unit;
             break;
-        case LectureUnitType.TEXT:
-            lectureUnit = new TextUnit();
-            (lectureUnit as TextUnit).content = dto.content;
+        }
+        case LectureUnitType.TEXT: {
+            const unit = new TextUnit();
+            unit.content = dto.content;
+            lectureUnit = unit;
             break;
+        }
         case LectureUnitType.EXERCISE:
             lectureUnit = new ExerciseUnit();
             break;
@@ -271,32 +257,27 @@ const toLectureUnit = (dto?: LectureUnitForCompetencyDTO): LectureUnit | undefin
     lectureUnit.releaseDate = convertDateStringFromServer(dto.releaseDate);
     lectureUnit.completed = dto.completed;
     lectureUnit.visibleToStudents = dto.visibleToStudents;
-    lectureUnit.type = dto.type;
     lectureUnit.lecture = dto.lecture ? { id: dto.lecture.id } : undefined;
 
     return lectureUnit;
 };
 
-const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompetencyResponseDTO, competency: T): T => {
+const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompetencyResponse, competency: T): T => {
     competency.id = dto.id;
     competency.title = dto.title;
     competency.description = dto.description;
-    competency.taxonomy = dto.taxonomy;
+    competency.taxonomy = dto.taxonomy ? taxonomyByValue[dto.taxonomy] : undefined;
     competency.softDueDate = convertDateStringFromServer(dto.softDueDate);
     competency.masteryThreshold = dto.masteryThreshold;
     competency.optional = dto.optional;
     competency.generatedByAi = dto.generatedByAi ?? false;
     if (dto.type) {
-        competency.type = dto.type;
+        competency.type = competencyTypeByValue[dto.type];
     }
     if (dto.linkedStandardizedCompetencyId) {
         competency.linkedStandardizedCompetency = { id: dto.linkedStandardizedCompetencyId };
     }
-    competency.userProgress = dto.userProgress?.map((progress) => ({
-        progress: progress.progress,
-        confidence: progress.confidence,
-        confidenceReason: progress.confidenceReason,
-    }));
+    competency.userProgress = dto.userProgress?.map(toCompetencyProgress);
 
     if (dto.course) {
         competency.course = toCourse(dto.course);
@@ -340,11 +321,38 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
     return competency;
 };
 
-export const toCompetency = (dto: CourseCompetencyResponseDTO): Competency => mapCourseCompetencyBase(dto, new Competency());
+export const toCompetency = (dto: CourseCompetencyResponse): Competency => mapCourseCompetencyBase(dto, new Competency());
 
-export const toPrerequisite = (dto: CourseCompetencyResponseDTO): Prerequisite => mapCourseCompetencyBase(dto, new Prerequisite());
+export const toPrerequisite = (dto: CourseCompetencyResponse): Prerequisite => mapCourseCompetencyBase(dto, new Prerequisite());
 
-export const toCourseCompetencyRequestDTO = (competency: CourseCompetency): CourseCompetencyRequestDTO => {
+export const toCompetencyProgress = (dto: CompetencyProgressResponse): CompetencyProgress => ({
+    progress: dto.progress,
+    confidence: dto.confidence,
+    confidenceReason: dto.confidenceReason ? confidenceReasonByValue[dto.confidenceReason] : undefined,
+});
+
+export const toCompetencyRelationDTO = (dto: CompetencyRelation): CompetencyRelationDTO => ({
+    id: dto.id,
+    tailCompetencyId: dto.tailCompetencyId,
+    headCompetencyId: dto.headCompetencyId,
+    relationType: relationTypeByValue[dto.relationType],
+});
+
+export const toCompetencyWithTailRelation = (
+    dto: CompetencyWithTailRelation,
+    hydrateCompetency: (competency: CourseCompetencyResponse) => CourseCompetency,
+): CompetencyWithTailRelationDTO => {
+    const result = new CompetencyWithTailRelationDTO();
+    result.competency = hydrateCompetency(dto.competency);
+    result.tailRelations = dto.tailRelations?.map(toCompetencyRelationDTO);
+    return result;
+};
+
+/** Builds the editable request from the hydrated client model. */
+export const toCourseCompetencyRequestDTO = (competency: CourseCompetency): CourseCompetencyRequest => {
+    if (competency.masteryThreshold === undefined) {
+        throw new Error('Cannot save a course competency without a mastery threshold');
+    }
     return {
         id: competency.id,
         title: competency.title ?? '',

@@ -139,18 +139,6 @@ export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     }
 }
 
-export interface CompetencyImportResponseDTO extends BaseEntity {
-    title?: string;
-    description?: string;
-    softDueDate?: dayjs.Dayjs;
-    taxonomy?: CompetencyTaxonomy;
-    masteryThreshold?: number;
-    optional?: boolean;
-    generatedByAi?: boolean;
-    courseId?: number;
-    linkedStandardizedCompetencyId?: number;
-}
-
 export enum ConfidenceReason {
     NO_REASON = 'NO_REASON',
     RECENT_SCORES_LOWER = 'RECENT_SCORES_LOWER',

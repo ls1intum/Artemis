@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO containing a {@link CourseCompetencyResponseDTO} and list of {@link CompetencyRelationDTO CompetencyRelation(DTO)s} for which it is the tail competency.
  *
@@ -11,5 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param tailRelations relations where it is the tail competency
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO competency, List<CompetencyRelationDTO> tailRelations) {
+public record CompetencyWithTailRelationDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) CourseCompetencyResponseDTO competency,
+        List<CompetencyRelationDTO> tailRelations) {
 }

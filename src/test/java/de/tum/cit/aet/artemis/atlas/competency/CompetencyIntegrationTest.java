@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -195,15 +197,16 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldCreateValidCompetency() throws Exception {
-        super.shouldCreateValidCompetency(new Competency());
+        super.shouldCreateValidCompetency("/api/atlas/courses/" + course.getId() + "/competencies", "competency");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldPersistHyperionChecklistProvenanceForCompetency() throws Exception {
         Competency generatedCompetency = competencyForBulkCreation("Hyperion generated");
-        CourseCompetencyResponseDTO created = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
-                toRequestDto(generatedCompetency), CourseCompetencyResponseDTO.class, HttpStatus.CREATED);
+        String collectionPath = "/api/atlas/courses/" + course.getId() + "/competencies";
+        var response = request.postWithoutResponseBody(collectionPath + "/generated-from-hyperion-checklist", toRequestDto(generatedCompetency), HttpStatus.CREATED, null);
+        CourseCompetencyResponseDTO created = readCreatedCourseCompetency(collectionPath, response);
         assertThat(created.generatedByAi()).isTrue();
     }
 
@@ -260,7 +263,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     List<? extends CourseCompetency> createBulkCall(long courseId, List<? extends CourseCompetency> competencies, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/bulk", competencies, Competency.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/bulk", competencies, Competency.class, expectedStatus, null,
+                Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/competencies/"));
     }
 
     @Test
@@ -279,7 +283,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         Competency generatedCompetency = competencyForBulkCreation("Generated");
         List<CourseCompetencyResponseDTO> generatedFromDescription = request.postListWithResponseBody(
                 "/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", List.of(generatedCompetency), CourseCompetencyResponseDTO.class,
-                HttpStatus.CREATED);
+                HttpStatus.CREATED, null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + course.getId() + "/competencies/"));
 
         assertThat(manuallyCreated).singleElement().satisfies(competency -> assertThat(competency.generatedByAi()).isFalse());
         assertThat(generatedFromDescription).singleElement().satisfies(competency -> assertThat(competency.generatedByAi()).isTrue());
@@ -328,7 +332,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     List<CompetencyWithTailRelationDTO> importAllCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus,
+                null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/competencies/"));
     }
 
     @Test
@@ -368,7 +373,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     List<CompetencyImportResponseDTO> importStandardizedCall(long courseId, List<Long> idList, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/import-standardized", idList, CompetencyImportResponseDTO.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/import-standardized", idList, CompetencyImportResponseDTO.class, expectedStatus,
+                null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/competencies/"));
     }
 
     @Test
@@ -384,7 +390,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/import/bulk", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/competencies/import/bulk", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus,
+                null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/competencies/"));
     }
 
     @Test

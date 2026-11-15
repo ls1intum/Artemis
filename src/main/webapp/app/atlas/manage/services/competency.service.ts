@@ -1,161 +1,95 @@
-import { Service } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import {
-    Competency,
-    CompetencyImportResponseDTO,
-    CompetencyWithTailRelationDTO,
-    CourseCompetency,
-    CourseCompetencyImportOptionsDTO,
-} from 'app/atlas/shared/entities/competency.model';
-import {
-    CompetencyWithTailRelationResponseDTO,
-    CourseCompetencyRequestDTO,
-    CourseCompetencyResponseDTO,
-    toCompetency,
-    toCourseCompetencyRequestDTO,
-} from 'app/atlas/shared/dto/course-competency-response.dto';
+import { Service, inject } from '@angular/core';
+import { Observable, defer } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { toCompetency, toCompetencyWithTailRelation, toCourseCompetencyRequestDTO } from 'app/atlas/shared/dto/course-competency-response.dto';
+import { Competency, CompetencyWithTailRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-
-type EntityResponseType = HttpResponse<Competency>;
-type EntityArrayResponseType = HttpResponse<Competency[]>;
-type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
-type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
+import { CompetencyApi } from 'app/openapi/api/competency-api';
+import { CompetencyImportOptions } from 'app/openapi/model/competency-import-options';
+import { CompetencyWithTailRelation } from 'app/openapi/model/competency-with-tail-relation';
+import { CourseCompetencyResponse } from 'app/openapi/model/course-competency-response';
 
 @Service()
 export class CompetencyService extends CourseCompetencyService {
-    override getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)),
-            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+    private readonly competencyApi = inject(CompetencyApi);
+
+    override getAllForCourse(courseId: number): Observable<HttpResponse<Competency[]>> {
+        return this.competencyApi.getCompetenciesWithProgress(courseId).pipe(
+            // Preserve the response shape shared with CourseCompetencyService for body-only operations.
+            map((body) => new HttpResponse({ body: body?.map((dto) => this.hydrate(dto)) ?? [] })),
+            tap((response) => response.body?.forEach((value) => this.sendTitlesToEntityTitleService(value))),
         );
     }
 
-    override findById(competencyId: number, courseId: number) {
-        return this.httpClient.get<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseDTOType) => {
-                const mapped = this.mapCompetencyResponse(res);
-                this.sendTitlesToEntityTitleService(mapped?.body);
-                return mapped;
-            }),
+    override findById(competencyId: number, courseId: number): Observable<HttpResponse<Competency>> {
+        return this.competencyApi.getCompetency(competencyId, courseId).pipe(
+            map((body) => new HttpResponse({ body: body ? this.hydrate(body) : null })),
+            tap((response) => this.sendTitlesToEntityTitleService(response.body)),
         );
     }
 
-    create(competency: Competency, courseId: number): Observable<EntityResponseType> {
-        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies`, request, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    create(competency: Competency, courseId: number): Observable<HttpResponse<Competency>> {
+        return defer(() => this.competencyApi.createCompetency(courseId, toCourseCompetencyRequestDTO(competency))).pipe(
+            map((response) => response.clone({ body: response.body ? this.hydrate(response.body) : null })),
+        );
     }
 
     /** Creates a competency through the server-owned Hyperion checklist provenance route. */
-    createFromHyperionChecklist(competency: Competency, courseId: number): Observable<EntityResponseType> {
-        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/generated-from-hyperion-checklist`, request, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    createFromHyperionChecklist(competency: Competency, courseId: number): Observable<HttpResponse<Competency>> {
+        return defer(() => this.competencyApi.createCompetencyGeneratedFromHyperionChecklist(courseId, toCourseCompetencyRequestDTO(competency))).pipe(
+            map((response) => response.clone({ body: response.body ? this.hydrate(response.body) : null })),
+        );
     }
 
-    createBulk(competencies: Competency[], courseId: number) {
-        const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, request, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
-    }
-
-    createBulkFromCourseDescription(competencies: Competency[], courseId: number) {
-        const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk/generated-from-description`, request, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
-    }
-
-    import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
-        if (courseCompetency.id === undefined) {
-            return throwError(() => new Error('Cannot import competency: courseCompetency.id is missing'));
-        }
-        const payload: CourseCompetencyImportOptionsDTO = {
-            competencyIds: [courseCompetency.id],
-            importRelations: false,
-            importExercises: false,
-            importLectures: false,
-        };
-        return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/import`, payload, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    createBulkFromCourseDescription(competencies: Competency[], courseId: number): Observable<HttpResponse<Competency[]>> {
+        return defer(() => this.competencyApi.createCompetenciesGeneratedFromDescription(courseId, competencies.map(toCourseCompetencyRequestDTO))).pipe(
+            map((response) => response.clone({ body: response.body?.map((dto) => this.hydrate(dto)) ?? [] })),
+        );
     }
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
-        const courseCompetencyIds = courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined);
-        const payload: CourseCompetencyImportOptionsDTO = {
-            importRelations: importRelations,
+        const payload: CompetencyImportOptions = {
+            competencyIds: courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined),
+            importRelations,
             importExercises: false,
             importLectures: false,
-            competencyIds: courseCompetencyIds,
         };
-        return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import/bulk`, payload, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapCompetencyImportResponse(res)));
+        return this.competencyApi.importCompetencies(courseId, payload).pipe(map((response) => this.mapImportResponse(response)));
     }
 
     override importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
-        const payload: CourseCompetencyImportOptionsDTO = {
-            importExercises: false,
-            importRelations: importRelations,
-            sourceCourseId: sourceCourseId,
-            importLectures: false,
+        const payload: CompetencyImportOptions = {
             competencyIds: [],
+            sourceCourseId,
+            importRelations,
+            importExercises: false,
+            importLectures: false,
         };
-        return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all`, payload, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapCompetencyImportResponse(res)));
+        return this.competencyApi.importAllCompetenciesFromCourse(courseId, payload).pipe(map((response) => this.mapImportResponse(response)));
     }
 
     importStandardizedCompetencies(competencyIdsToImport: number[], courseId: number) {
-        return this.httpClient.post<Array<CompetencyImportResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-standardized`, competencyIdsToImport, {
-            observe: 'response',
-        });
+        return this.competencyApi.importStandardizedCompetencies(courseId, competencyIdsToImport);
     }
 
-    update(competency: Competency, courseId: number): Observable<EntityResponseType> {
-        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
-        return this.httpClient
-            .put<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies`, request, { observe: 'response' })
-            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    update(competency: Competency, courseId: number): Observable<HttpResponse<Competency>> {
+        return defer(() => this.competencyApi.updateCompetency(courseId, toCourseCompetencyRequestDTO(competency))).pipe(
+            map((body) => new HttpResponse({ body: body ? this.hydrate(body) : null })),
+        );
     }
 
     delete(competencyId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' });
+        return this.competencyApi.deleteCompetency(competencyId, courseId);
     }
 
-    private mapCompetencyResponse(res: EntityResponseDTOType): EntityResponseType {
-        const body = res.body ? toCompetency(res.body) : undefined;
-        this.postProcessCompetency(body);
-        return res.clone({ body });
+    private hydrate(dto: CourseCompetencyResponse): Competency {
+        const competency = toCompetency(dto);
+        this.postProcessCompetency(competency);
+        return competency;
     }
 
-    private mapCompetencyArrayResponse(res: EntityArrayResponseDTOType): EntityArrayResponseType {
-        const body = res.body ? res.body.map((dto) => toCompetency(dto)) : [];
-        body.forEach((competency) => {
-            this.postProcessCompetency(competency);
-        });
-        return res.clone({ body });
-    }
-
-    private mapCompetencyImportResponse(res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>): HttpResponse<Array<CompetencyWithTailRelationDTO>> {
-        const body =
-            res.body?.map((dto) => {
-                const mapped = new CompetencyWithTailRelationDTO();
-                mapped.competency = dto.competency ? toCompetency(dto.competency) : undefined;
-                this.postProcessCompetency(mapped.competency);
-                mapped.tailRelations = dto.tailRelations;
-                return mapped;
-            }) ?? [];
-        return res.clone({ body });
+    private mapImportResponse(response: HttpResponse<CompetencyWithTailRelation[]>): HttpResponse<CompetencyWithTailRelationDTO[]> {
+        return response.clone({ body: response.body?.map((dto) => toCompetencyWithTailRelation(dto, (competency) => this.hydrate(competency))) ?? [] });
     }
 }
