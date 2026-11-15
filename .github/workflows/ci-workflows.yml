@@ -204,6 +204,11 @@ jobs:
                   ".github/workflows/ci-skills.yml",
                   "supporting_scripts/check_skill_references.py",
               },
+              "has_exercise_images": {
+                  ".github/workflows/ci.yml",
+                  ".github/workflows/ci-exercise-images.yml",
+                  "supporting_scripts/check_exercise_image_sync.py",
+              },
               "has_helm": {
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-helm.yml",
