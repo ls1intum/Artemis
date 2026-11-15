@@ -1,7 +1,10 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, throwError } from 'rxjs';
 
+import { AdminFeatureUsageApi } from 'app/openapi/api/admin-feature-usage-api';
+import { FeatureUsageOverviewCallerRoleEnumValues } from 'app/openapi/model/feature-usage-overview';
+import { UserFeatureUsageFeatureEnum, UserFeatureUsageFeatureEnumValues } from 'app/openapi/model/user-feature-usage';
+import { mapFeatureUsageOverview, mapFeatureUsageTrendPoint } from './feature-usage.mapper';
 import { FeatureAdoption, FeatureUsageOverview, FeatureUsageTrendPoint } from './feature-usage.model';
 
 /**
@@ -9,8 +12,7 @@ import { FeatureAdoption, FeatureUsageOverview, FeatureUsageTrendPoint } from '.
  */
 @Service()
 export class FeatureUsageService {
-    private readonly http = inject(HttpClient);
-    private readonly resourceUrl = 'api/admin/feature-usage';
+    private readonly api = inject(AdminFeatureUsageApi);
 
     /**
      * Retrieves the usage report for the given window, including the features that saw no usage.
@@ -19,7 +21,11 @@ export class FeatureUsageService {
      * @param callerRole restrict the counters to callers whose highest global role is this one; omit for every caller
      */
     getOverview(days: number, callerRole?: string): Observable<FeatureUsageOverview> {
-        return this.http.get<FeatureUsageOverview>(this.resourceUrl, { params: callerRole ? { days, callerRole } : { days } });
+        const role = FeatureUsageOverviewCallerRoleEnumValues.find((value) => value === callerRole);
+        if (callerRole && !role) {
+            return throwError(() => new Error(`Unsupported feature usage caller role: ${callerRole}`));
+        }
+        return this.api.getFeatureUsage(days, role).pipe(map(mapFeatureUsageOverview));
     }
 
     /**
@@ -32,7 +38,11 @@ export class FeatureUsageService {
      * Passed through so that charting a role-filtered row keeps that filter instead of silently widening to all callers.
      */
     getFeatureTrend(feature: string, days: number, callerRole?: string): Observable<FeatureUsageTrendPoint[]> {
-        return this.http.get<FeatureUsageTrendPoint[]>(`${this.resourceUrl}/trend`, { params: callerRole ? { feature, days, callerRole } : { feature, days } });
+        const catalogueFeature = UserFeatureUsageFeatureEnumValues.find((value) => value === feature);
+        if (feature && !catalogueFeature) {
+            return throwError(() => new Error(`Unsupported catalogue feature: ${feature}`));
+        }
+        return this.getTrend(catalogueFeature, undefined, days, callerRole);
     }
 
     /**
@@ -43,20 +53,28 @@ export class FeatureUsageService {
      * @param callerRole restrict the totals to callers whose highest global role is this one; omit for every caller
      */
     getEndpointTrend(featureIds: number[], days: number, callerRole?: string): Observable<FeatureUsageTrendPoint[]> {
-        return this.http.get<FeatureUsageTrendPoint[]>(`${this.resourceUrl}/trend`, { params: callerRole ? { featureIds, days, callerRole } : { featureIds, days } });
+        return this.getTrend(undefined, featureIds, days, callerRole);
     }
 
     /**
      * Retrieves how many entities have each optional setting switched on.
      */
     getAdoption(): Observable<FeatureAdoption[]> {
-        return this.http.get<FeatureAdoption[]>(`${this.resourceUrl}/adoption`);
+        return this.api.getFeatureAdoption();
     }
 
     /**
      * Sends the weekly digest email now, so an admin can check delivery without waiting for the next Monday.
      */
     sendDigestEmail(): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/digest/send-email`, {});
+        return this.api.sendFeatureUsageDigestEmail().pipe(map(() => undefined));
+    }
+
+    private getTrend(feature: UserFeatureUsageFeatureEnum | undefined, featureIds: number[] | undefined, days: number, callerRole?: string): Observable<FeatureUsageTrendPoint[]> {
+        const role = FeatureUsageOverviewCallerRoleEnumValues.find((value) => value === callerRole);
+        if (callerRole && !role) {
+            return throwError(() => new Error(`Unsupported feature usage caller role: ${callerRole}`));
+        }
+        return this.api.getFeatureUsageTrend(feature, featureIds, days, role).pipe(map((points) => points.map(mapFeatureUsageTrendPoint)));
     }
 }

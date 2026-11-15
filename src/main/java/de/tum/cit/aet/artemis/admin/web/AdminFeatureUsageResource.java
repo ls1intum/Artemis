@@ -26,6 +26,14 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for the built-in feature usage analysis.
@@ -50,6 +58,10 @@ public class AdminFeatureUsageResource {
      */
     private static final List<Integer> ALLOWED_WINDOWS_IN_DAYS = List.of(7, 30, 90, 180);
 
+    private static final String WINDOW_DESCRIPTION = "Window length in days. Allowed values: 7, 30, 90, 180.";
+
+    private static final String ROLE_DESCRIPTION = "Restricts the totals to callers whose highest global role is the given case-sensitive role name.";
+
     /** Bounds the {@code IN} clause of the trend query. The largest feature covers a few dozen endpoints. */
     private static final int MAX_TREND_FEATURE_IDS = 200;
 
@@ -70,7 +82,10 @@ public class AdminFeatureUsageResource {
      * @return the ResponseEntity with status 200 (OK) and the report in the body
      */
     @GetMapping("feature-usage")
-    public ResponseEntity<FeatureUsageOverviewDTO> getFeatureUsage(@RequestParam(defaultValue = "30") int days, @RequestParam(required = false) @Nullable Role callerRole) {
+    @Operation(summary = "Get the feature usage overview")
+    public ResponseEntity<FeatureUsageOverviewDTO> getFeatureUsage(@Parameter(description = WINDOW_DESCRIPTION) @RequestParam(defaultValue = "30") int days,
+            @Parameter(description = ROLE_DESCRIPTION, schema = @Schema(implementation = String.class, allowableValues = { "SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "EDITOR",
+                    "TEACHING_ASSISTANT", "STUDENT", "ANONYMOUS" })) @RequestParam(required = false) @Nullable Role callerRole) {
         log.debug("REST request to get feature usage over the last {} days for role {}", days, callerRole);
         return ResponseEntity.ok(featureUsageQueryService.getOverview(validateWindow(days), callerRole));
     }
@@ -90,9 +105,13 @@ public class AdminFeatureUsageResource {
      * @return the ResponseEntity with status 200 (OK) and the daily totals per interaction in the body
      */
     @GetMapping("feature-usage/trend")
-    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam(required = false) @Nullable UserFeature feature,
-            @RequestParam(required = false) @Nullable List<Long> featureIds, @RequestParam(defaultValue = "30") int days,
-            @RequestParam(required = false) @Nullable Role callerRole) {
+    @Operation(summary = "Get daily feature usage by interaction", description = "Provide exactly one of feature or a nonempty list of featureIds. Days without calls are omitted.")
+    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(
+            @Parameter(description = "Case-sensitive catalogue feature name.") @RequestParam(required = false) @Nullable UserFeature feature,
+            @Parameter(description = "Inventory IDs as repeated query parameters, for example featureIds=1&featureIds=2. An empty list is treated as absent.", style = ParameterStyle.FORM, explode = Explode.TRUE, array = @ArraySchema(maxItems = MAX_TREND_FEATURE_IDS, schema = @Schema(type = "integer", format = "int64"))) @RequestParam(required = false) @Nullable List<Long> featureIds,
+            @Parameter(description = WINDOW_DESCRIPTION) @RequestParam(defaultValue = "30") int days,
+            @Parameter(description = ROLE_DESCRIPTION, schema = @Schema(implementation = String.class, allowableValues = { "SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "EDITOR",
+                    "TEACHING_ASSISTANT", "STUDENT", "ANONYMOUS" })) @RequestParam(required = false) @Nullable Role callerRole) {
         boolean hasFeatureIds = featureIds != null && !featureIds.isEmpty();
         if ((feature == null) == !hasFeatureIds) {
             throw new BadRequestAlertException("Chart either a feature or a list of endpoints", ENTITY_NAME, "invalidTrendSelector");
@@ -116,6 +135,7 @@ public class AdminFeatureUsageResource {
      * @return the ResponseEntity with status 200 (OK) and the adoption counts in the body
      */
     @GetMapping("feature-usage/adoption")
+    @Operation(summary = "Get adoption counts for optional feature settings")
     public ResponseEntity<List<FeatureAdoptionDTO>> getFeatureAdoption() {
         log.debug("REST request to get feature adoption");
         return ResponseEntity.ok(featureUsageQueryService.getAdoption());
@@ -130,6 +150,9 @@ public class AdminFeatureUsageResource {
      *         off, no recipient is configured, or sending failed
      */
     @PostMapping("feature-usage/digest/send-email")
+    @Operation(summary = "Send the feature usage digest email now")
+    @ApiResponse(responseCode = "200", description = "The digest was sent to every resolved recipient.", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Recording or digest delivery is disabled, no recipient was resolved, or building or delivering the digest failed.", content = @Content)
     public ResponseEntity<Void> sendFeatureUsageDigestEmail() {
         log.info("REST request to send the feature usage digest email");
         if (featureUsageDigestScheduleService.sendDigestEmail()) {

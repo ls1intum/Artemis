@@ -1,4 +1,5 @@
 api/admin-ai-worker-api.ts
+api/admin-feature-usage-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
@@ -118,6 +119,11 @@ model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
 model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
+model/feature-adoption.ts
+model/feature-usage-entry.ts
+model/feature-usage-overview.ts
+model/feature-usage-role-share.ts
+model/feature-usage-trend-point.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
 model/generated-quiz-answer-option.ts
@@ -275,6 +281,7 @@ model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
 model/update-quiz-exercise.ts
+model/user-feature-usage.ts
 model/variant-generation-request.ts
 model/variant-job-detail.ts
 model/variant-job-start.ts
