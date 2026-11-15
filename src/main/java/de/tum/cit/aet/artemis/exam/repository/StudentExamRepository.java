@@ -507,7 +507,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT se.submitted
             FROM StudentExam se
                 JOIN se.exercises e
-            WHERE se.testRun = FALSE
+            WHERE (se.testRun IS NULL OR se.testRun = FALSE)
                 AND se.exam.id = :examId
                 AND se.user.id = :userId
                 AND e.id = :exerciseId

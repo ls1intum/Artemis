@@ -49,6 +49,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -1580,6 +1581,18 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         exam.setExamSummaryPublicationDate(ZonedDateTime.now().minusMinutes(1));
         examTestRepository.save(exam);
         userUtilService.changeUser(TEST_PREFIX + "student1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizWithUnsetTestRunFlag() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        var studentExam = examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+        // the flag is nullable and a null counts as a regular attempt
+        ReflectionTestUtils.setField(studentExam, "testRun", null);
+        examUtilService.addExerciseToStudentExam(studentExam, dndQuestion.getExercise());
+
         assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
     }
 
