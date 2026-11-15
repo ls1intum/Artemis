@@ -226,6 +226,26 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
     restrictImageAttributes(node);
 }
 
+const SVG_URL_ATTRIBUTES = ['mask', 'filter', 'fill', 'stroke', 'clip-path', 'cursor', 'marker-start', 'marker-mid', 'marker-end'];
+
+/**
+ * Whether every `url(...)` in the value of an attribute is a reference to the same document or an address that may be shown.
+ * A value with another function that loads an image (`image-set`, `src` ...) or an escape is not allowed.
+ * @param value the value of an attribute
+ */
+function areFunctionAddressesAllowed(value: string | null): boolean {
+    if (!value) {
+        return true;
+    }
+    if (/\\|\/\*|(?:image-set|image|element|cross-fade|paint|src)\s*\(/i.test(value)) {
+        return false;
+    }
+    return [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi)].every((match) => {
+        const address = (match[1] ?? match[2] ?? match[3] ?? '').trim();
+        return address.startsWith('#') || isImageSourceAllowed(address);
+    });
+}
+
 /**
  * While the server lists the allowed image hosts, every attribute that loads an image is checked, not only the `src` of an `img`: all candidates of a `srcset`
  * (of an `img` or a `source` in a `picture`), the `poster` of a `video`, the legacy `background` attribute and the `href` of an image inside an SVG. An attribute with an address that is not allowed is removed.
@@ -242,6 +262,12 @@ function restrictImageAttributes(node: Element): void {
     }
     if (node.hasAttribute?.('background') && !isImageSourceAllowed(node.getAttribute('background'))) {
         node.removeAttribute('background');
+    }
+    // SVG presentation attributes can name an image in `url(...)` as well, a reference to an element of the same document (`#id`) stays
+    for (const attribute of SVG_URL_ATTRIBUTES) {
+        if (node.hasAttribute?.(attribute) && !areFunctionAddressesAllowed(node.getAttribute(attribute))) {
+            node.removeAttribute(attribute);
+        }
     }
     // An image inside an SVG names its address in `href`, an `feImage` filter primitive in the same way
     if (['image', 'feimage'].includes(node.tagName?.toLowerCase())) {

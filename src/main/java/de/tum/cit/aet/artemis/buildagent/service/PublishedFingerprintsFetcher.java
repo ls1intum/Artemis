@@ -8,6 +8,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -37,7 +40,7 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
 
     PublishedFingerprintsFetcher(URI localVCBaseUri) {
         // The path of the base URL stays, as an installation can serve Artemis below a path
-        this.uri = UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment(FINGERPRINTS_PATH.split("/")).replaceQuery(null).fragment(null).build().toUri();
+        this.uri = UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment(FINGERPRINTS_PATH.split("/")).replaceQuery(null).fragment(null).build(true).toUri();
     }
 
     /**
@@ -56,9 +59,28 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
             log.warn("Not reading the SSH fingerprints of the core node from {}: they are only read over https", uri);
             return Set.of();
         }
+        return fetch(REQUEST_TIMEOUT);
+    }
+
+    /**
+     * Requests the fingerprints, the whole exchange including the body must end within the deadline.
+     *
+     * @param deadline the time that the exchange may take
+     * @return the fingerprints, empty when they could not be read in time
+     */
+    Set<String> fetch(Duration deadline) {
         try {
-            HttpRequest request = HttpRequest.newBuilder(uri).timeout(REQUEST_TIMEOUT).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpRequest request = HttpRequest.newBuilder(uri).timeout(deadline).GET().build();
+            // The timeout of the request ends with the response headers, so the whole exchange gets its own deadline that also cancels the transfer of the body
+            CompletableFuture<HttpResponse<String>> exchange = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response;
+            try {
+                response = exchange.get(deadline.toMillis(), TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException e) {
+                exchange.cancel(true);
+                throw e;
+            }
             if (response.statusCode() != 200) {
                 log.warn("Asking {} for the SSH fingerprints of the core node returned {}", uri, response.statusCode());
                 return Set.of();

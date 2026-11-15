@@ -93,6 +93,25 @@ describe('markdown.conversion.util', () => {
             expect(image.hasAttribute('xlink:href')).toBe(false);
         });
 
+        it('removes a mask, fill or filter of an svg element that names an image that is not allowed', () => {
+            const rect = restricted(
+                '<svg><rect width="1" height="1" mask="url(https://unlisted.example/m.png)" fill="url(\'https://unlisted.example/f.png\')" filter="url(https://unlisted.example/x.svg#f)"></rect></svg>',
+                'rect',
+            );
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+            expect(rect.hasAttribute('fill')).toBe(false);
+            expect(rect.hasAttribute('filter')).toBe(false);
+        });
+
+        it('keeps a reference to an element of the same document and an allowed address', () => {
+            const rect = restricted('<svg><rect width="1" height="1" mask="url(#m)" fill="url(https://images.example.net/f.png)" stroke="red"></rect></svg>', 'rect');
+
+            expect(rect.getAttribute('mask')).toBe('url(#m)');
+            expect(rect.getAttribute('fill')).toBe('url(https://images.example.net/f.png)');
+            expect(rect.getAttribute('stroke')).toBe('red');
+        });
+
         it('does not treat U+FEFF as the end of an address', () => {
             const image = restricted('<img srcset="https://images.example.net\uFEFF.unlisted.example/a.png 1x">', 'img');
 
