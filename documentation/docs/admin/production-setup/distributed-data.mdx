@@ -89,7 +89,8 @@ A finished build whose result had not yet been written to the database at the mo
 and the student needs a new build (a new push, or a retrigger by the instructor). To avoid this, first stop new builds from starting
 (**Pause All Agents** in the build agent administration), then wait until the running builds (`processingJobs`) have finished and both result queues are empty,
 and only then stop the old nodes. A build that is still running can add a result to a queue after you checked it. Builds that are queued stay queued
-and run after the upgrade. The structures whose types did not change move over unchanged:
+and run after the upgrade. A build that was still running on a node you stopped is not continued: it is marked as missing and rebuilt automatically, which takes about
+five to ten minutes with the default `artemis.continuous-integration.retry-missing-jobs-interval-seconds`. The structures whose types did not change move over unchanged:
 
 | Structure | Why it is preserved |
 |---|---|
