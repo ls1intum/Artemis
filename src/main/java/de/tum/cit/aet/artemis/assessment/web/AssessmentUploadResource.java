@@ -130,7 +130,7 @@ public class AssessmentUploadResource {
      * @param exerciseId the id of the programming exercise the template is generated for
      * @return {@code 200 (OK)} with the generated template zip as an attachment
      */
-    @GetMapping(value = "exercises/{exerciseId}/manual-assessments/template", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping("exercises/{exerciseId}/manual-assessments/template")
     @ApiResponse(responseCode = "200", description = "The template zip; its file name is in the filename header.", content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary")))
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<byte[]> downloadManualAssessmentTemplate(@PathVariable final long exerciseId) {
