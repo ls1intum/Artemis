@@ -1,5 +1,6 @@
 import { User } from 'app/account/user/user.model';
-import type { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { Course, CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
@@ -8,6 +9,9 @@ import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/t
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import type { CourseForEnrollment } from 'app/openapi/model/course-for-enrollment';
+import type { CourseMember } from 'app/openapi/model/course-member';
+import type { User as UserDTO } from 'app/openapi/model/user';
 
 class CourseQuizSelectionExercise extends Exercise {
     constructor() {
@@ -24,28 +28,6 @@ export interface CoursePrerequisiteDTO {
     masteryThreshold: number;
     optional: boolean;
     type: CourseCompetencyType;
-}
-
-export interface CourseForEnrollmentDTO {
-    id: number;
-    title: string;
-    description?: string;
-    semester?: string;
-    enrollmentConfirmationMessage?: string;
-    prerequisites?: CoursePrerequisiteDTO[];
-}
-
-export interface CourseMemberDTO {
-    id: number;
-    login?: string;
-    name?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    visibleRegistrationNumber?: string;
-    imageUrl?: string;
-    activated: boolean;
-    internal: boolean;
 }
 
 export interface CourseConfigurationResponseDTO {
@@ -202,12 +184,19 @@ function tutorialGroupsConfigurationFromDTO(dto?: TutorialGroupsConfigurationRes
     });
 }
 
-export function courseFromEnrollmentDTO(dto: CourseForEnrollmentDTO): Course {
+export function courseFromEnrollmentDTO(dto: CourseForEnrollment): Course {
     const course: Course = hydrate(new Course(), dto);
     course.prerequisites = (dto.prerequisites ?? []).map((prerequisiteDTO) => {
-        const prerequisite: Prerequisite = hydrate(new Prerequisite(), prerequisiteDTO);
-        prerequisite.softDueDate = convertDateStringFromServer(prerequisiteDTO.softDueDate);
-        return prerequisite;
+        return hydrate(new Prerequisite(), {
+            id: prerequisiteDTO.id,
+            title: prerequisiteDTO.title,
+            description: prerequisiteDTO.description,
+            taxonomy: prerequisiteDTO.taxonomy === undefined ? undefined : CompetencyTaxonomy[prerequisiteDTO.taxonomy],
+            softDueDate: convertDateStringFromServer(prerequisiteDTO.softDueDate),
+            masteryThreshold: prerequisiteDTO.masteryThreshold,
+            optional: prerequisiteDTO.optional,
+            type: CourseCompetencyType.PREREQUISITE,
+        });
     });
     return course;
 }
@@ -231,8 +220,39 @@ export function courseFromOrganizationsDTO(dto: CourseWithOrganizationsDTO): Cou
     return course;
 }
 
-export function courseMemberFromDTO(dto: CourseMemberDTO): User {
+export function courseMemberFromDTO(dto: CourseMember): User {
     return hydrate(new User(), dto);
+}
+
+export function courseStudentFromDTO(dto: UserDTO): User {
+    return hydrate(new User(), {
+        id: dto.id,
+        login: dto.login,
+        name: dto.name,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        email: dto.email,
+        visibleRegistrationNumber: dto.visibleRegistrationNumber,
+        imageUrl: dto.imageUrl,
+        activated: dto.activated,
+        langKey: dto.langKey,
+        internal: dto.internal,
+        isTestUser: dto.isTestUser ?? dto.testUser,
+        authorities: dto.authorities,
+        courseRoles: dto.courseRoles,
+        organizations: dto.organizations,
+        createdBy: dto.createdBy,
+        createdDate: dto.createdDate === undefined ? undefined : new Date(dto.createdDate),
+        lastModifiedBy: dto.lastModifiedBy,
+        lastModifiedDate: dto.lastModifiedDate === undefined ? undefined : new Date(dto.lastModifiedDate),
+        vcsAccessToken: dto.vcsAccessToken,
+        vcsAccessTokenExpiryDate: dto.vcsAccessTokenExpiryDate,
+        askToSetupPasskey: dto.askToSetupPasskey,
+        loggedInWithPasskey: dto.loggedInWithPasskey,
+        passkeySuperAdminApproved: dto.passkeySuperAdminApproved,
+        selectedLLMUsage: dto.selectedLLMUsage === undefined ? undefined : LLMSelectionDecision[dto.selectedLLMUsage],
+        selectedLLMUsageTimestamp: convertDateStringFromServer(dto.selectedLLMUsageTimestamp),
+    } satisfies Partial<User>);
 }
 
 export function courseWithIdFromDTO(dto: CourseWithIdDTO): Course {

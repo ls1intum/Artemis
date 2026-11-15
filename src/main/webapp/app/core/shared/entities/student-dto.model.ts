@@ -1,10 +1,10 @@
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
+/** An import row. Only one identifier is needed, and the server omits empty fields from unmatched rows. */
 export class StudentDTO {
-    public login!: string;
-    public firstName!: string;
-    public lastName!: string;
-    public registrationNumber!: string;
-    public email!: string;
+    declare public login?: string;
+    declare public firstName?: string;
+    declare public lastName?: string;
+    declare public registrationNumber?: string;
+    declare public email?: string;
     /** Optional: whether the imported user is a test/QA account (excluded from usage statistics). Undefined means "not provided" and leaves the flag unchanged. */
-    public isTestUser?: boolean;
+    declare public isTestUser?: boolean;
 }

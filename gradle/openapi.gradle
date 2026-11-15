@@ -53,7 +53,7 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.course.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -77,7 +77,27 @@
                 "-Dspring.main.banner-mode=off"
             ]
 
-            // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
+            if (!openApiGroup) {
+                def courses = "/api/course/courses"
+                // Springdoc filters the parsed OpenAPI path with AntPathMatcher. Match the literal role
+                // placeholder so the generic routes do not also select fixed course management paths.
+                def courseRole = "${courses}/{courseId}/{roleTemplate:[{]courseRoleSlug[}]}"
+                def login = "{loginTemplate:[{]login[}]}"
+                def applicationPaths = [
+                    "/api/aiworker/**", "/api/calendar/**", "/api/global-search/**", "/api/search", "/api/search/**",
+                    "/api/hyperion/**", "/api/quiz/**", "/api/tutorialgroup/**",
+                    "${courses}/for-enrollment", "${courses}/{courseId}/for-enrollment", "${courses}/{courseId}/access-state",
+                    "${courses}/{courseId}/enroll", "${courses}/{courseId}/unenroll",
+                    "${courses}/{courseId}/students", "${courses}/{courseId}/tutors",
+                    "${courses}/{courseId}/editors", "${courses}/{courseId}/instructors",
+                    "${courses}/{courseId}/students/search", "${courses}/{courseId}/users/search",
+                    "${courses}/{courseId}/search-other-users", "${courses}/{courseId}/members/search",
+                    "${courses}/{courseId}/students/${login}", "${courses}/{courseId}/tutors/${login}",
+                    "${courses}/{courseId}/editors/${login}", "${courses}/{courseId}/instructors/${login}",
+                    "${courseRole}/paged", "${courseRole}/users/search", courseRole,
+                ]
+                jvmArgs.add("-Dspringdoc.paths-to-match=" + applicationPaths.join(","))
+            }
             args.set([
                 "--server.port=${openApiServerPort}".toString(),
                 "--artemis.version-control.ssh-port=${openApiSshPort}".toString(),

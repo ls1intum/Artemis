@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * A DTO representing a single row in a course's paginated member list (students/tutors/editors/instructors).
@@ -10,7 +11,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * @param visibleRegistrationNumber the member's registration number as stored, or empty if the member has none
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseRoleMemberDTO(Long id, String login, String name, String email, String visibleRegistrationNumber, String imageUrl) {
+public record CourseRoleMemberDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String login,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name, String email, String visibleRegistrationNumber, String imageUrl) {
 
     /**
      * Creates the member row for the given user.

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Whether the requesting user already has access to a course.
  * <p>
@@ -12,5 +14,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param hasAccess true if the user is at least a student in the course, or an administrator
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseAccessStateDTO(boolean hasAccess) {
+public record CourseAccessStateDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean hasAccess) {
 }
