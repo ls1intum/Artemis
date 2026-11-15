@@ -267,7 +267,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), null);
         // Tutors must not see the student behind a submission (double-blind); instructors and the owner may.
         User user = userRepository.getUser();
-        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user) || participation.isOwnedBy(user);
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user) || authCheckService.isOwnerOfParticipation(participation, user);
         return ResponseEntity.ok(TextSubmissionResponseDTO.of(submission, includeStudent));
     }
 

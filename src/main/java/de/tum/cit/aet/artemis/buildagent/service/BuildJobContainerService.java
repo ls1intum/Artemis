@@ -213,7 +213,7 @@ public class BuildJobContainerService {
 
         HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
         HostConfig customHostConfig = defaultHostConfig;
-        if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0 || runConfig.allowRawSockets()) {
+        if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
             long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
                     : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
@@ -226,8 +226,7 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap,
-                    runConfig.allowRawSockets() && !"none".equalsIgnoreCase(StringUtils.trimToEmpty(network)));
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
 
         log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
@@ -247,14 +246,14 @@ public class BuildJobContainerService {
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap, boolean allowRawSockets) {
+    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
         HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
         if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);
         }
-        return BuildAgentConfiguration.restrictPrivileges(host, allowRawSockets, buildAgentConfiguration.isPrivilegeEscalationAllowed());
+        return BuildAgentConfiguration.restrictPrivileges(host, buildAgentConfiguration.isPrivilegeEscalationAllowed());
     }
 
     private long convertMemoryFromMBToBytes(long memory) {
@@ -770,7 +769,7 @@ public class BuildJobContainerService {
                     }
                 }
                 finally {
-                    Files.deleteIfExists(tarArchive);
+                    FileUtils.deleteQuietly(tarArchive.toFile());
                 }
                 return null;
             }, "Copy to container " + containerId, buildJobId);
@@ -836,12 +835,14 @@ public class BuildJobContainerService {
         }
 
         boolean created = false;
-        try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(tarFile)))) {
-            // Enable POSIX long file mode to support files with names > 100 characters
-            tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+        try {
+            try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(tarFile)))) {
+                // Enable POSIX long file mode to support files with names > 100 characters
+                tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
-            addFileToTar(tarArchiveOutputStream, sourcePath, "");
-            tarArchiveOutputStream.finish();
+                addFileToTar(tarArchiveOutputStream, sourcePath, "");
+                tarArchiveOutputStream.finish();
+            }
             created = true;
         }
         catch (IOException e) {
@@ -853,7 +854,7 @@ public class BuildJobContainerService {
         }
         finally {
             if (!created) {
-                // Also covers unchecked failures while listing directories, so that failed attempts do not accumulate partial archives
+                // Also covers unchecked failures while listing directories and a failing close, so that failed attempts do not accumulate partial archives
                 FileUtils.deleteQuietly(tarFile.toFile());
             }
         }

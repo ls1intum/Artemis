@@ -337,7 +337,10 @@ public class ProgrammingExerciseValidationService {
             throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
         }
 
-        validateBranchRegex(buildConfig.getBranchRegex());
+        // The regex is only used, and only editable, when branching is allowed. An exercise that was saved earlier with an unusable value stays editable
+        if (buildConfig.isAllowBranching()) {
+            validateBranchRegex(buildConfig.getBranchRegex());
+        }
     }
 
     private static void validateBranchRegex(@Nullable String branchRegex) {

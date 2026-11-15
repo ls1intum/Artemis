@@ -337,6 +337,10 @@ public class BuildJobExecutionService {
                 String msg = "The file " + fileName + " is too large and is ignored.";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 log.warn("Ignoring the result file {} of build job {} because it exceeds the size limits ({} bytes)", fileName, buildJobId, tarEntry.getSize());
+                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                    // A missing report must not count as a report without findings, so the job fails instead of continuing without it
+                    throw new LocalCIException("The static code analysis report " + fileName + " is too large to be processed");
+                }
                 continue;
             }
             totalResultBytes += tarEntry.getSize();

@@ -84,6 +84,19 @@ class SharedQueueManagementServiceCancelTest {
         sharedQueueManagementService.cancelBuildJobOfCourse("job-1", COURSE_ID);
 
         verify(buildJobQueue).removeAll(List.of(queued));
+        verify(canceledBuildJobsTopic, never()).publish(any());
+    }
+
+    @Test
+    void cancelBuildJobOfCourse_stopsTheJobWhenAnAgentTookItFromTheQueueInTheMeantime() {
+        var queued = job("job-1", COURSE_ID);
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queued)));
+        when(processingJobs.get("job-1")).thenReturn(queued);
+        when(processingJobs.remove("job-1")).thenReturn(queued);
+
+        sharedQueueManagementService.cancelBuildJobOfCourse("job-1", COURSE_ID);
+
+        verify(canceledBuildJobsTopic).publish("job-1");
     }
 
     @Test

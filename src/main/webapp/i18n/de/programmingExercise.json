@@ -157,7 +157,9 @@
             "script": "Build Script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
-                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB.",
+                "branchRegexTooLong": "Der Branch-Regex ist zu lang. Die maximal zulässige Länge beträgt 128 Zeichen.",
+                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck."
             },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
@@ -862,10 +864,6 @@
                     "label": "Maximale Arbeitsspeichergröße bearbeiten (in MB)",
                     "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
                     "invalid": "Die Arbeitsspeichergröße muss eine ganze Zahl von mindestens 6 MB sein."
-                },
-                "allowRawSockets": {
-                    "label": "Rohe Netzwerk-Sockets erlauben",
-                    "help": "Standardmäßig laufen Builds ohne die Linux-Berechtigung, rohe Netzwerk-Sockets zu öffnen. Gewöhnliche TCP- und UDP-Verbindungen, DNS, das Herunterladen von Abhängigkeiten und das übliche ping funktionieren weiterhin. Aktiviere diese Option nur, wenn die Aufgabe ein Werkzeug nutzt, das rohe Sockets braucht, zum Beispiel einen Paketmitschnitt oder ein traceroute mit rohen Paketen. Sie hat keine Wirkung, wenn das Netzwerk auf \"None\" gesetzt ist."
                 },
                 "memorySwap": {
                     "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",

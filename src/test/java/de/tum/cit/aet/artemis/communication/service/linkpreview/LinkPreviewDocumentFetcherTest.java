@@ -193,4 +193,11 @@ class LinkPreviewDocumentFetcherTest {
             responseBody.write(body);
         }
     }
+
+    @Test
+    void anInternationalizedHostIsConvertedToItsAsciiForm() throws Exception {
+        assertThat(LinkPreviewDocumentFetcher.createUri("https://bücher.example/path?q=1").getHost()).isEqualTo("xn--bcher-kva.example");
+        assertThat(LinkPreviewDocumentFetcher.createUri("https://bücher.example:8443/").getPort()).isEqualTo(8443);
+        assertThat(LinkPreviewDocumentFetcher.createUri("https://example.org/").getHost()).isEqualTo("example.org");
+    }
 }

@@ -181,37 +181,24 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testAdministratorCanLiftTheRestrictionOnPrivilegeGain() {
+    void testAdministratorCanAllowPrivilegeGainAndKeepsTheOtherRestrictions() {
         when(buildAgentConfiguration.isPrivilegeEscalationAllowed()).thenReturn(true);
 
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1));
 
         HostConfig hostConfig = captureHostConfig();
-        assertThat(hostConfig.getSecurityOpts()).isNotEqualTo(List.of("no-new-privileges"));
-        assertThat(hostConfig.getCapDrop()).contains(Capability.NET_RAW, Capability.MKNOD);
+        assertThat(hostConfig.getSecurityOpts() == null || hostConfig.getSecurityOpts().isEmpty()).isTrue();
+        assertThat(hostConfig.getCapDrop()).containsExactlyInAnyOrder(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP);
     }
 
     @Test
-    void testBuildContainerDropsTheUnusualCapabilitiesAndCannotGainPrivileges() {
+    void testBuildContainerDropsTheUnusualCapabilitiesAndCannotGainPrivilegesWhenRestricted() {
+        when(buildAgentConfiguration.isPrivilegeEscalationAllowed()).thenReturn(false);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1));
 
         HostConfig hostConfig = captureHostConfig();
-        assertThat(hostConfig.getCapDrop()).containsExactlyInAnyOrder(Capability.NET_RAW, Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE);
+        assertThat(hostConfig.getCapDrop()).containsExactlyInAnyOrder(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE);
         assertThat(hostConfig.getSecurityOpts()).isEqualTo(List.of("no-new-privileges"));
-    }
-
-    @Test
-    void testRawSocketsStayOnlyWhenTheExerciseAsksForThemAndHasANetwork() {
-        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), null, 0, 0, 0, true));
-
-        assertThat(captureHostConfig().getCapDrop()).containsExactlyInAnyOrder(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE);
-    }
-
-    @Test
-    void testNoNetworkDropsRawSocketsEvenWhenTheExerciseAsksForThem() {
-        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 0, 0, 0, true));
-
-        assertThat(captureHostConfig().getCapDrop()).contains(Capability.NET_RAW);
     }
 
     @Test

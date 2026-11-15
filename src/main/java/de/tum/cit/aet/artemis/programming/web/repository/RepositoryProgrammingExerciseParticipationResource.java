@@ -231,7 +231,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for plagiarism view for domainId : {}", participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Map<String, FileType> fileList = repositoryParticipationService.getFilesForPlagiarismView(participationId);
+            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
     }
@@ -419,7 +420,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to file {} for plagiarism view for domainId : {}", filename, participationId);
 
         return executeAndCheckForExceptions(() -> {
-            return repositoryParticipationService.getFileForPlagiarismView(participationId, filename);
+            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            return repositoryService.getFileFromRepository(filename, repository);
         });
     }
 

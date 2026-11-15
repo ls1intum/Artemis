@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.communication.service.linkpreview;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.IDN;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.regex.Matcher;
@@ -84,11 +86,30 @@ public final class LinkPreviewDocumentFetcher {
         return statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308;
     }
 
-    private static URI createUri(String url) throws IOException {
+    /**
+     * Parses the URL. The host of an internationalized domain name is converted to its ASCII form first, as {@link URI} does not recognize a host with other characters and
+     * the URL would be refused although its host is an ordinary domain.
+     *
+     * @param url the URL to parse
+     * @return the parsed URL
+     * @throws IOException if the URL is not valid
+     */
+    static URI createUri(String url) throws IOException {
         try {
-            return URI.create(url);
+            URI uri = URI.create(url);
+            if (uri.getHost() == null && uri.getRawAuthority() != null && uri.getScheme() != null && uri.getRawUserInfo() == null) {
+                String authority = uri.getRawAuthority();
+                int portSeparator = authority.lastIndexOf(':');
+                String host = portSeparator >= 0 ? authority.substring(0, portSeparator) : authority;
+                String port = portSeparator >= 0 ? authority.substring(portSeparator) : "";
+                String asciiHost = IDN.toASCII(host);
+                if (!asciiHost.equals(host)) {
+                    return new URI(uri.getScheme(), null, asciiHost, port.isEmpty() ? -1 : Integer.parseInt(port.substring(1)), uri.getPath(), uri.getQuery(), uri.getFragment());
+                }
+            }
+            return uri;
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException | URISyntaxException e) {
             throw new IOException("Invalid link preview URL", e);
         }
     }

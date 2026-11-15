@@ -25,7 +25,6 @@ interface DockerFlags {
     cpuCount?: number;
     memory?: number;
     memorySwap?: number;
-    allowRawSockets?: boolean;
 }
 
 // marks that no exercise's flags have been loaded into the controls yet (ngOnInit has not run)
@@ -54,7 +53,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly cpuCount = signal<number | undefined>(undefined);
     readonly memory = signal<number | undefined>(undefined);
     readonly memorySwap = signal<number | undefined>(undefined);
-    readonly allowRawSockets = signal(false);
     dockerFlags: DockerFlags = {};
 
     readonly envVarKeyTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarKeyTemplate');
@@ -180,7 +178,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.cpuCount.set(this.defaultCpuCount);
         this.memory.set(this.defaultMemory);
         this.memorySwap.set(this.defaultMemorySwap);
-        this.allowRawSockets.set(false);
         this.isCpuCountValid.set(true);
         this.isMemoryValid.set(true);
         this.isMemorySwapValid.set(true);
@@ -208,7 +205,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         if (this.dockerFlags.memorySwap != null) {
             this.memorySwap.set(this.dockerFlags.memorySwap);
         }
-        this.allowRawSockets.set(this.dockerFlags.allowRawSockets === true);
         const envVars: [string, string][] = [];
         if (this.dockerFlags.env) {
             for (const key in this.dockerFlags.env) {
@@ -216,11 +212,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             }
         }
         this.envVars.set(envVars);
-    }
-
-    onAllowRawSocketsChange(event: Event) {
-        this.allowRawSockets.set((event.target as HTMLInputElement).checked);
-        this.parseDockerFlagsToString();
     }
 
     onNetworkChange(value: string | undefined) {
@@ -319,12 +310,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             }
         });
         const network = this.network() === '' ? undefined : this.network();
-        const flags: DockerFlags = { env: newEnv, network: network, cpuCount: this.cpuCount(), memory: this.memory(), memorySwap: this.memorySwap() };
-        if (this.allowRawSockets()) {
-            // written only when set, so that exercises that never use it keep their stored flags unchanged
-            flags.allowRawSockets = true;
-        }
-        return flags;
+        return { env: newEnv, network: network, cpuCount: this.cpuCount(), memory: this.memory(), memorySwap: this.memorySwap() };
     }
 
     setIsLanguageSupported() {

@@ -922,8 +922,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(retrievedContent).isEqualTo(file.getBytes());
 
         // The response depends on the access of the user and must not be stored by shared caches
-        var cacheControl = mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.CACHE_CONTROL);
-        assertThat(cacheControl).satisfiesAnyOf(value -> assertThat(value).isNull(), value -> assertThat(value).doesNotContain("public"));
+        var fileResponse = mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(fileResponse.getHeader(HttpHeaders.CACHE_CONTROL)).contains("private").doesNotContain("public");
+        assertThat(fileResponse.getHeaders(HttpHeaders.VARY)).anySatisfy(value -> assertThat(value).containsIgnoringCase("Cookie"));
     }
 
     @Test

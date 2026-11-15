@@ -103,6 +103,9 @@ public class FileResource {
 
     private static final int DAYS_TO_CACHE = 1;
 
+    /** Files of a conversation depend on who asks, so only the browser of the user may keep them. */
+    private static final CacheControl CONVERSATION_FILE_CACHE_CONTROL = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate();
+
     private enum AttachmentCachePolicy {
 
         NONE, PRIVATE_ONE_DAY;
@@ -223,26 +226,26 @@ public class FileResource {
      * @param courseId       The ID of the course the conversation belongs to.
      * @param conversationId The ID of the conversation the file is used in.
      * @param filename       The filename of the file to get.
-     * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
+     * @return The requested file, or 404 if the file doesn't exist. Only the browser of the user may cache the response.
      */
     @FeatureUsage(UserFeature.MESSAGING)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
-        fileUploadService.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userRepository.getUser().getId());
-        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
+        fileUploadService.checkCanReadConversationFileElseThrow(courseId, conversationId, filename, userRepository.getUser());
+        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
 
         var serverFilePath = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
         var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
         var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), false);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), CONVERSATION_FILE_CACHE_CONTROL, true);
         }
 
-        return buildFileResponse(serverFilePath, filename, false);
+        return buildFileResponse(serverFilePath, filename, Optional.empty(), CONVERSATION_FILE_CACHE_CONTROL, true);
     }
 
     /**
@@ -874,6 +877,20 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays) {
+        return buildFileResponse(path, filename, replaceFilename, cacheDays > 0 ? CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic() : null, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path                to the file
+     * @param filename            the name of the file
+     * @param replaceFilename     replaces the downloaded file's name, if provided
+     * @param cacheControl        the caching policy of the response, or null for none
+     * @param varyByAuthorization true if a cached response depends on who asks, which is the case when the access to the file is checked per user
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, CacheControl cacheControl, boolean varyByAuthorization) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -884,9 +901,11 @@ public class FileResource {
             HttpHeaders headers = fileDownloadService.createFileHeaders(filename, replaceFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(fileDownloadService.getMediaTypeFromFilename(filename)).header("filename", filename);
-            if (cacheDays > 0) {
-                var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
+            if (cacheControl != null) {
                 response = response.cacheControl(cacheControl);
+            }
+            if (varyByAuthorization) {
+                response = response.varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
             }
             return response.body(file);
         }

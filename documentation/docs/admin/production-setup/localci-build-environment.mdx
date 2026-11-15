@@ -70,26 +70,20 @@ On Kubernetes, the user is also the one of the image. The privileges of the user
 
 ### Which privileges a build has
 
-Every build container starts with a reduced set of Linux capabilities, and its processes cannot gain privileges through setuid programs
-(Docker `no-new-privileges`, Kubernetes `allowPrivilegeEscalation: false`). This applies to both runners, to every exercise, and to the user of the image, including `root`.
+Every build container starts without a few Linux capabilities that the default set of Docker and Kubernetes contains but that ordinary builds do not use: `MKNOD`, `SYS_CHROOT` and `SETFCAP`.
+This applies to both runners, to every exercise, and to the user of the image, including `root`. A build without a network (`none`) on Kubernetes also loses `NET_RAW`.
 
-- **Dropped capabilities:** `NET_RAW`, `MKNOD`, `SYS_CHROOT`, `SETFCAP` and `AUDIT_WRITE`. They are part of the default set of Docker and Kubernetes but ordinary builds do not use them.
-- **What keeps working:** outbound TCP and UDP connections, DNS, dependency downloads, web requests of the tests, file ownership and permission changes, starting processes as another user (`su`, `gosu` as root), and installing packages as `root`.
-- **What stops working** (checked with a Debian image on Docker):
-  - Programs that need raw sockets, such as packet capture tools, fail because they need `NET_RAW`. The usual `ping` keeps working on Docker, because it falls back to ICMP datagram sockets, which the default
-    `net.ipv4.ping_group_range` of a Docker container allows. On Kubernetes this depends on the cluster setting, and `ping` needs `NET_RAW` where the setting does not include the group of the build user.
-  - A program that gains privileges through a setuid binary, for example `sudo` started by a non-root user of the image, is refused.
-  - Creating device files with `mknod`, using `chroot`, and setting file capabilities with `setcap` fail.
-- **Keeping `NET_RAW`:** instructors can enable **Allow raw network sockets** in the container configuration of an exercise, see
-  [Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional). The setting is stored with the other
-  container flags of the exercise as `allowRawSockets`, so it needs no database change. It has no effect for an exercise with the network `none`, which never gets `NET_RAW`.
-- **Lifting the restriction on privilege gain:** if images of your exercises rely on setuid programs such as `sudo` for a non-root user, set `artemis.continuous-integration.allow-privilege-escalation: true`
-  on the build agents. Only this restriction is lifted; the dropped capabilities stay. The default is `false`. Prefer fixing the image, for example by running the build as `root`, over lifting it.
-- **Mixed versions:** a build agent that is not updated yet keeps the old behavior, and an exercise that sets `allowRawSockets` is read by an old agent as an exercise without it.
-  Update all build agents to the same release.
+- **What keeps working:** outbound TCP and UDP connections, raw sockets (for example `ping`), DNS, dependency downloads, web requests of the tests, file ownership and permission changes,
+  starting processes as another user (`su`, `gosu`, `sudo`), and installing packages as `root`.
+- **What stops working:** creating device files with `mknod`, using `chroot`, and setting file capabilities with `setcap` fail with "Operation not permitted".
+- **Restricting privilege gain:** by default, processes may still gain privileges through setuid programs such as `sudo`, because the build scripts of some languages (for example C and MATLAB)
+  use `sudo` as the non-root user of the image. Set `artemis.continuous-integration.allow-privilege-escalation: false` on the build agents to refuse this (Docker `no-new-privileges`, Kubernetes
+  `allowPrivilegeEscalation: false`). Then `AUDIT_WRITE` is dropped as well. Test every image and the build scripts of your exercises first: a script that calls `sudo` as a non-root user fails,
+  and so do the default phases of the C and MATLAB templates. Prefer images whose build user is `root` before you switch it.
+- **Mixed versions:** a build agent that is not updated yet keeps the old behavior. Update all build agents to the same release.
 
-Check an image with `docker run --rm --cap-drop NET_RAW --cap-drop MKNOD --cap-drop SYS_CHROOT --cap-drop SETFCAP --cap-drop AUDIT_WRITE --security-opt no-new-privileges <image> <command>`
-before you rely on it for an exercise that uses tools like these.
+Check an image with `docker run --rm --cap-drop MKNOD --cap-drop SYS_CHROOT --cap-drop SETFCAP <image> <command>`, and add `--cap-drop AUDIT_WRITE --security-opt no-new-privileges` to test the restricted
+setting, before you rely on it for an exercise that uses tools like these.
 
 ## Network access
 

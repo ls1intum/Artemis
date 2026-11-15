@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.api.ConversationFileAccessApi;
 import de.tum.cit.aet.artemis.core.domain.FileUpload;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
@@ -49,6 +50,19 @@ public class FileUploadService {
      */
     public void checkCanAccessConversationFilesElseThrow(long courseId, long conversationId, long userId) {
         conversationFileAccessApi.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userId);
+    }
+
+    /**
+     * Checks that the user may read a file of a conversation, see {@link ConversationFileAccessApi#checkCanReadConversationFileElseThrow}.
+     *
+     * @param courseId       the id of the course in the request path
+     * @param conversationId the id of the conversation in the request path
+     * @param filename       the name of the file in the request path
+     * @param user           the requesting user
+     * @throws AccessForbiddenException if the user is not allowed to read the file
+     */
+    public void checkCanReadConversationFileElseThrow(long courseId, long conversationId, String filename, User user) {
+        conversationFileAccessApi.checkCanReadConversationFileElseThrow(courseId, conversationId, filename, user);
     }
 
     /**

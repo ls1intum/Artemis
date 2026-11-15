@@ -210,6 +210,7 @@ class ProgrammingExerciseValidationServiceTest {
     @Test
     void validateBuildConfigSize_rejectsABranchRegexThatIsNotValid() {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
         buildConfig.setBranchRegex("feature/[");
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
@@ -217,8 +218,18 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateBuildConfigSize_ignoresABranchRegexWhileBranchingIsNotAllowed() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
     void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumn() {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
         buildConfig.setBranchRegex("a".repeat(129));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
