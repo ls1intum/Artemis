@@ -1201,7 +1201,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.dueDate = undefined;
         });
 
-        it('is displayed in the advanced mode, but in the simple mode only if the exercise has a window', () => {
+        it('is displayed in the advanced mode, but not in the simple mode', () => {
             comp.isSimpleMode.set(true);
             fixture.detectChanges();
             expect(windowComponent()).toBeNull();
@@ -1211,17 +1211,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(windowComponent()).not.toBeNull();
         });
 
-        it('is displayed in the simple mode if the exercise has a window, so that a window invalidated by a date change can be fixed', () => {
+        it('is not displayed in the simple mode for a valid window', () => {
             comp.isSimpleMode.set(true);
             comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd.add(1, 'hour');
+            fixture.detectChanges();
+
+            expect(windowComponent()).toBeNull();
+        });
+
+        it('is displayed in the simple mode for a window that a date change invalidated, so that it can be fixed', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd.subtract(1, 'hour');
             fixture.detectChanges();
 
             expect(windowComponent()).not.toBeNull();
         });
 
-        it('stays displayed in the simple mode after the last date of the window was cleared, so that it can be replaced', () => {
+        it('stays displayed in the simple mode after the last date of an invalidated window was cleared, so that it can be replaced', () => {
             comp.isSimpleMode.set(true);
             comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart } };
+            comp.programmingExercise.dueDate = windowStart.subtract(1, 'hour');
             fixture.detectChanges();
             expect(windowComponent()).not.toBeNull();
 
@@ -1281,6 +1292,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('adds a reason when a picker holds text that is not a date', () => {
             comp.isSimpleMode.set(false);
+            fixture.detectChanges();
+            // the fields are closed until the instructor asks for a window
+            (windowComponent().nativeElement.querySelector('[data-testid="build-time-window-add"]') as HTMLButtonElement).click();
             fixture.detectChanges();
             const startField = windowComponent().nativeElement.querySelector('#build-time-window-start') as HTMLInputElement;
 

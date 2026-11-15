@@ -1337,15 +1337,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Whether the build time window is edited in the form. It is a setting of the advanced mode, but a window that exists is also shown in the simple mode,
-     * as a date change there can invalidate it, which blocks saving. Once shown for an existing window, it stays visible for the rest of the editing session,
-     * so that clearing the last date to replace it does not remove the fields.
+     * Whether the build time window is edited in the form. It is a setting of the advanced mode, because it is needed rarely, and the simple mode does not show it. The only
+     * exception is a window that a date change in the simple mode invalidates: that blocks saving, so the fields have to be reachable to fix it. Once shown for that reason,
+     * they stay visible for the rest of the editing session, so that clearing the last date to replace it does not remove them.
      */
     isBuildTimeWindowDisplayed(): boolean {
         if (this.isExamMode()) {
             return false;
         }
-        if (this.programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow) {
+        if (this.programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow && this.getBuildTimeWindowError() !== undefined) {
             this.buildTimeWindowKeptVisible = true;
         }
         return this.isEditFieldDisplayedRecord().buildTimeWindow || this.buildTimeWindowKeptVisible;

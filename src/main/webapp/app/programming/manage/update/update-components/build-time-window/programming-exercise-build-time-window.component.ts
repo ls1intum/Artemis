@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { TumAetUiDatePickerComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,7 +17,7 @@ import { BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS, BuildTimeWindowError, normali
 @Component({
     selector: 'jhi-programming-exercise-build-time-window',
     templateUrl: './programming-exercise-build-time-window.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, TumAetUiDatePickerComponent, TumAetUiMessageComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseBuildTimeWindowComponent {
@@ -36,12 +36,32 @@ export class ProgrammingExerciseBuildTimeWindowComponent {
     protected readonly start = linkedSignal(() => this.shownWindow()?.start);
     protected readonly end = linkedSignal(() => this.shownWindow()?.end);
 
+    private readonly opened = signal(false);
+
+    /**
+     * Whether the fields are shown. Most exercises build every push, so they stay closed until the instructor asks for a window. They are open for an existing window
+     * and for a problem with it, and they stay open while the dates are edited, so that clearing the last date to replace it does not close them.
+     */
+    protected readonly isOpen = computed(() => this.opened() || this.shownWindow() !== undefined || this.error() !== undefined);
+
     /** The pickers keep their last valid value while the typed text is not a date yet, so that text is tracked separately. */
     protected readonly isStartTextValid = signal(true);
     protected readonly isEndTextValid = signal(true);
 
     /** Whether both pickers hold a date or nothing, as opposed to text that is not a date yet. */
     readonly isInputValid = computed(() => this.isStartTextValid() && this.isEndTextValid());
+
+    protected open(): void {
+        this.opened.set(true);
+    }
+
+    /** Removes the window, so that every push is built again, and closes the fields. */
+    protected remove(): void {
+        this.writeWindow(undefined, undefined);
+        this.isStartTextValid.set(true);
+        this.isEndTextValid.set(true);
+        this.opened.set(false);
+    }
 
     protected onStartChange(start: dayjs.Dayjs | undefined): void {
         this.writeWindow(start, this.currentWindow()?.end);

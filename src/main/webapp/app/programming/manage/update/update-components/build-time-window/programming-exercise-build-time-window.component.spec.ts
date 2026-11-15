@@ -34,7 +34,55 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
         fixture.detectChanges();
     });
 
+    /** The fields are closed until the instructor asks for a window. */
+    const openFields = () => {
+        (fixture.nativeElement.querySelector('[data-testid="build-time-window-add"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+    };
+
+    it('shows only an explanation and a button without a window, and no pickers', () => {
+        expect(pickers()).toHaveLength(0);
+        expect(fixture.nativeElement.querySelector('[data-testid="build-time-window-add"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="build-time-window-remove"]')).toBeNull();
+    });
+
+    it('shows the pickers for an existing window without a click', () => {
+        const withWindow = new ProgrammingExercise(undefined, undefined);
+        withWindow.buildConfig!.advancedSettings = { buildTimeWindow: { start, end } };
+        fixture.componentRef.setInput('programmingExercise', withWindow);
+        fixture.componentRef.setInput('buildTimeWindow', withWindow.buildConfig!.advancedSettings.buildTimeWindow);
+        fixture.detectChanges();
+
+        expect(pickers()).toHaveLength(2);
+        expect(fixture.nativeElement.querySelector('[data-testid="build-time-window-add"]')).toBeNull();
+    });
+
+    it('shows the pickers for a problem with the window', () => {
+        fixture.componentRef.setInput('error', BuildTimeWindowError.OUTSIDE_EXERCISE_DATES);
+        fixture.detectChanges();
+
+        expect(pickers()).toHaveLength(2);
+    });
+
+    it('removes the window and closes the fields with the remove button', () => {
+        openFields();
+        const [startPicker, endPicker] = pickers();
+        startPicker.value.set(start);
+        endPicker.value.set(end);
+        fixture.componentRef.setInput('buildTimeWindow', exercise.buildConfig!.advancedSettings!.buildTimeWindow);
+        fixture.detectChanges();
+
+        (fixture.nativeElement.querySelector('[data-testid="build-time-window-remove"]') as HTMLButtonElement).click();
+        fixture.componentRef.setInput('buildTimeWindow', undefined);
+        fixture.detectChanges();
+
+        expect(exercise.buildConfig!.advancedSettings).toBeUndefined();
+        expect(pickers()).toHaveLength(0);
+        expect(component.isInputValid()).toBe(true);
+    });
+
     it('renders two labelled date pickers that are empty without a window', () => {
+        openFields();
         const [startPicker, endPicker] = pickers();
 
         expect(pickers()).toHaveLength(2);
@@ -72,6 +120,7 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
     });
 
     it('writes a changed start and end to the build config', () => {
+        openFields();
         const [startPicker, endPicker] = pickers();
 
         startPicker.value.set(start);
@@ -86,6 +135,7 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
     });
 
     it('keeps the bound that another editor changed in the meantime when the other bound is edited', () => {
+        openFields();
         const [startPicker] = pickers();
         const syncedEnd = dayjs('2026-10-01T18:00:00Z');
         // the metadata synchronization replaces the window on the same exercise object, which the pickers do not observe
@@ -98,6 +148,7 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
     });
 
     it('removes the advanced settings when both bounds are cleared, which means no window', () => {
+        openFields();
         const [startPicker, endPicker] = pickers();
         startPicker.value.set(start);
         endPicker.value.set(end);
@@ -114,6 +165,7 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
     });
 
     it('does nothing when the exercise has no build config', () => {
+        openFields();
         exercise.buildConfig = undefined;
 
         expect(() => {
@@ -138,6 +190,7 @@ describe('ProgrammingExerciseBuildTimeWindowComponent', () => {
     });
 
     it('reports typed text that is not a date yet as invalid input', () => {
+        openFields();
         const startField: HTMLInputElement = fixture.nativeElement.querySelector('#build-time-window-start');
 
         startField.value = '01.10.';
