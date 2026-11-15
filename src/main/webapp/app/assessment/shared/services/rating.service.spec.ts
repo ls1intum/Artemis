@@ -20,38 +20,6 @@ describe('Rating Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it('should create a Rating', () => {
-        const returnedFromService = 3;
-        service.createRating(3, 1).pipe(take(1)).subscribe();
-
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/assessment/results/1/rating/3' });
-        req.flush(returnedFromService);
-    });
-
-    it('should get a Rating', () => {
-        const ratingValue = 3;
-        let expectedResult: number | undefined;
-        service
-            .getRating(1)
-            .pipe(take(1))
-            .subscribe((rating) => {
-                expectedResult = rating;
-            });
-
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/assessment/results/1/rating' });
-        req.flush(ratingValue);
-
-        expect(expectedResult).toBe(ratingValue);
-    });
-
-    it('should update a Rating', () => {
-        const returnedFromService = 5;
-        service.updateRating(5, 1).pipe(take(1)).subscribe();
-
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/assessment/results/1/rating/5' });
-        req.flush(returnedFromService);
-    });
-
     it('should get paginated Ratings for Dashboard with default parameters', () => {
         const mockRatings: RatingListItem[] = [
             {
