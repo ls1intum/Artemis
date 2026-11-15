@@ -254,6 +254,35 @@ describe('CalendarService', () => {
         expect(service.subscriptionToken()).toBe('rotatedToken');
     });
 
+    it('should send only one request while a rotation is running', async () => {
+        await Promise.resolve();
+        const pending = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(pending);
+
+        service.rotateSubscriptionToken();
+        service.rotateSubscriptionToken();
+
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
+        expect(service.isRotatingSubscriptionToken()).toBe(true);
+
+        pending.next('rotatedToken');
+        pending.complete();
+
+        expect(service.isRotatingSubscriptionToken()).toBe(false);
+        expect(service.subscriptionToken()).toBe('rotatedToken');
+    });
+
+    it('should allow another rotation after a failed one', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        service.rotateSubscriptionToken();
+        service.rotateSubscriptionToken();
+
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(service.isRotatingSubscriptionToken()).toBe(false);
+    });
+
     it('should keep the subscription token and show an error when the rotation fails', async () => {
         await Promise.resolve();
         const addErrorAlert = vi.spyOn(TestBed.inject(AlertService), 'addErrorAlert');

@@ -40,6 +40,8 @@ export class CalendarSubscriptionPopoverComponent {
     courseId = input.required<number>();
     isMobile = input<boolean>(false);
     copiedUrl = signal(false);
+    confirmingRotation = signal(false);
+    isRotating = this.calendarService.isRotatingSubscriptionToken;
     includeLectureEvents = signal(true);
     includeExerciseEvents = signal(true);
     includeTutorialEvents = signal(true);
@@ -69,7 +71,17 @@ export class CalendarSubscriptionPopoverComponent {
         }
     }
 
+    /** The first click only asks for a confirmation, because every link in use stops working. */
+    askToConfirmRotation() {
+        this.confirmingRotation.set(true);
+    }
+
+    cancelRotation() {
+        this.confirmingRotation.set(false);
+    }
+
     rotateSubscriptionToken() {
+        this.confirmingRotation.set(false);
         this.calendarService.rotateSubscriptionToken();
     }
 

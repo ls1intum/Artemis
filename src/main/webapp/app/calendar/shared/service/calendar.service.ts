@@ -1,5 +1,5 @@
 import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
-import { EMPTY, Observable, Subscription, catchError, map, throwError } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, finalize, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
@@ -24,6 +24,8 @@ export class CalendarService implements OnDestroy {
     private currentEventMap = signal<Map<string, IdentifiableCalendarEvent[]>>(new Map());
 
     subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
+    private rotationInProgress = signal(false);
+    isRotatingSubscriptionToken = computed<boolean>(() => this.rotationInProgress());
     eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
     eventFilterOptions: CalendarEventFilterOption[] = this.buildEventFilterOptions();
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
@@ -133,18 +135,26 @@ export class CalendarService implements OnDestroy {
      * Replaces the subscription token with a new one. Subscription links that contain the previous token stop working.
      */
     rotateSubscriptionToken(): void {
+        if (this.rotationInProgress()) {
+            // a request is running already, a second one would replace the token that the first one returns
+            return;
+        }
+        this.rotationInProgress.set(true);
         const generation = this.stateGeneration;
-        this.apiService.rotateCalendarEventSubscriptionToken().subscribe({
-            next: (token: string) => {
-                if (this.stateGeneration !== generation) return;
-                this.currentSubscriptionToken.set(token);
-                this.alertService.success('artemisApp.calendar.subscriptionPopover.rotateSuccess');
-            },
-            error: () => {
-                if (this.stateGeneration !== generation) return;
-                this.alertService.addErrorAlert('artemisApp.calendar.subscriptionPopover.rotateError');
-            },
-        });
+        this.apiService
+            .rotateCalendarEventSubscriptionToken()
+            .pipe(finalize(() => this.rotationInProgress.set(false)))
+            .subscribe({
+                next: (token: string) => {
+                    if (this.stateGeneration !== generation) return;
+                    this.currentSubscriptionToken.set(token);
+                    this.alertService.success('artemisApp.calendar.subscriptionPopover.rotateSuccess');
+                },
+                error: () => {
+                    if (this.stateGeneration !== generation) return;
+                    this.alertService.addErrorAlert('artemisApp.calendar.subscriptionPopover.rotateError');
+                },
+            });
     }
 
     private loadSubscriptionToken() {

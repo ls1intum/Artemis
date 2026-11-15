@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
@@ -10,9 +11,12 @@ const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('
 describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
     let component: CalendarSubscriptionPopoverComponent;
-    const calendarService = { rotateSubscriptionToken: vi.fn() };
+    const isRotatingSubscriptionToken = signal(false);
+    const calendarService = { rotateSubscriptionToken: vi.fn(), isRotatingSubscriptionToken };
 
     afterEach(() => {
+        isRotatingSubscriptionToken.set(false);
+        calendarService.rotateSubscriptionToken.mockClear();
         vi.restoreAllMocks();
     });
 
@@ -77,6 +81,34 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         component.rotateSubscriptionToken();
 
         expect(calendarService.rotateSubscriptionToken).toHaveBeenCalledOnce();
+    });
+
+    it('asks for a confirmation before it rotates the token', () => {
+        component.askToConfirmRotation();
+
+        expect(component.confirmingRotation()).toBe(true);
+        expect(calendarService.rotateSubscriptionToken).not.toHaveBeenCalled();
+
+        component.rotateSubscriptionToken();
+
+        expect(calendarService.rotateSubscriptionToken).toHaveBeenCalledOnce();
+        expect(component.confirmingRotation()).toBe(false);
+    });
+
+    it('does not rotate the token when the confirmation is cancelled', () => {
+        component.askToConfirmRotation();
+        component.cancelRotation();
+
+        expect(component.confirmingRotation()).toBe(false);
+        expect(calendarService.rotateSubscriptionToken).not.toHaveBeenCalled();
+    });
+
+    it('exposes the running rotation of the service so that the buttons can be disabled', () => {
+        expect(component.isRotating()).toBe(false);
+
+        isRotatingSubscriptionToken.set(true);
+
+        expect(component.isRotating()).toBe(true);
     });
 
     it('marks the last remaining checkbox as disabled', () => {

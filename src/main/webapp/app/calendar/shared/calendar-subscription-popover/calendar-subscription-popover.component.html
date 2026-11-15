@@ -132,11 +132,32 @@
             </button>
         </div>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateExplanation"></span>
-        <div>
-            <button type="button" tumAetUiButton variant="outlined" data-testid="subscription-token-rotate-button" (click)="rotateSubscriptionToken()">
-                <fa-icon [icon]="faRotate" />
-                <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateButtonLabel"></span>
-            </button>
-        </div>
+        @if (confirmingRotation()) {
+            <div class="flex flex-col gap-2" data-testid="subscription-token-rotate-confirmation">
+                <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateConfirmation"></span>
+                <div class="flex gap-2">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        data-testid="subscription-token-rotate-confirm-button"
+                        [disabled]="isRotating()"
+                        (click)="rotateSubscriptionToken()"
+                    >
+                        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateConfirmButtonLabel"></span>
+                    </button>
+                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" data-testid="subscription-token-rotate-cancel-button" (click)="cancelRotation()">
+                        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateCancelButtonLabel"></span>
+                    </button>
+                </div>
+            </div>
+        } @else {
+            <div>
+                <button type="button" tumAetUiButton variant="outlined" data-testid="subscription-token-rotate-button" [disabled]="isRotating()" (click)="askToConfirmRotation()">
+                    <fa-icon [icon]="faRotate" />
+                    <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateButtonLabel"></span>
+                </button>
+            </div>
+        }
     </div>
 </tumaet-ui-popover>

@@ -43,6 +43,9 @@
                 "copyButtonLabel": "Abonnement-Link kopieren",
                 "rotateExplanation": "Abonnement-Links, die du bereits verwendest, funktionieren nicht mehr, sobald du einen neuen Link erzeugst. Abonniere danach erneut mit dem neuen Link.",
                 "rotateButtonLabel": "Neuen Link erzeugen",
+                "rotateConfirmation": "Wenn du einen neuen Link erzeugst, funktionieren alle Links, die du jetzt verwendest, nicht mehr. Möchtest du fortfahren?",
+                "rotateConfirmButtonLabel": "Jetzt neuen Link erzeugen",
+                "rotateCancelButtonLabel": "Abbrechen",
                 "rotateSuccess": "Der Abonnement-Link wurde erneuert. Bitte verwende den neuen Link in deinen Kalender Anwendungen.",
                 "rotateError": "Der Abonnement-Link konnte nicht erneuert werden. Bitte versuche es erneut.",
                 "languageOption": {

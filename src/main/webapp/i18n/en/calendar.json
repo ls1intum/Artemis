@@ -43,6 +43,9 @@
                 "copyButtonLabel": "Copy subscription link",
                 "rotateExplanation": "Subscription links that you already use stop working when you create a new link. After that, subscribe again with the new link.",
                 "rotateButtonLabel": "Create new link",
+                "rotateConfirmation": "Creating a new link makes every link that you use now stop working. Do you want to continue?",
+                "rotateConfirmButtonLabel": "Create new link now",
+                "rotateCancelButtonLabel": "Cancel",
                 "rotateSuccess": "The subscription link was renewed. Please use the new link in your calendar applications.",
                 "rotateError": "The subscription link could not be renewed. Please try again.",
                 "languageOption": {
