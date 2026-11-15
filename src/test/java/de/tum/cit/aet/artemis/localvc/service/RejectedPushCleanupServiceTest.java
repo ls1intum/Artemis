@@ -140,6 +140,21 @@ class RejectedPushCleanupServiceTest {
     }
 
     @Test
+    void aRunningCollectionKeepsTheSamePassDue() throws Exception {
+        try (Repository repository = createRepository()) {
+            Path directory = repository.getDirectory().toPath();
+            Path marker = directory.resolve("artemis-rejected-push");
+            RejectedPushCleanupService.markForCleanup(repository);
+            Files.setLastModifiedTime(marker, FileTime.from(Instant.now().minus(3, ChronoUnit.DAYS)));
+            Files.writeString(directory.resolve("gc.pid"), "1");
+
+            service().cleanup();
+
+            assertThat(marker).content().isEqualTo("0");
+        }
+    }
+
+    @Test
     void repositoryWithoutMarkIsNotTouched() throws Exception {
         try (Repository repository = createRepository()) {
             ObjectId orphan;

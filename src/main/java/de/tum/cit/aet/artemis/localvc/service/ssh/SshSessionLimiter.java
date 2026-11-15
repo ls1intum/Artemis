@@ -60,6 +60,10 @@ public class SshSessionLimiter implements SessionListener {
             catch (Exception e) {
                 log.debug("Could not disconnect the SSH session from {}", address, e);
             }
+            if (session.isClosing()) {
+                // The close callback may have run before the decision above was recorded and does not run again
+                decided.remove(session);
+            }
             return;
         }
         countedSessions.put(session, address);

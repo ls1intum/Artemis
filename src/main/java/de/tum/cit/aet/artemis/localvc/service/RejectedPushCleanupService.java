@@ -116,6 +116,12 @@ public class RejectedPushCleanupService {
                 return false;
             }
             String pass = Files.readString(claim).trim();
+            if (Files.exists(repositoryPath.resolve("gc.pid"))) {
+                // Another collection holds the lock of the repository, and a collection that finds it does nothing. The same pass stays due.
+                log.debug("A collection is running in {}, the cleanup of rejected pushes is retried", repositoryPath);
+                restore(marker, claim);
+                return false;
+            }
             if (sizeOfPacks(repositoryPath) > MAX_PACK_BYTES) {
                 // The collection writes the unreferenced objects of old packs as loose objects, which can need far more space than the packs
                 log.warn("Not removing the objects of rejected pushes from {}: its packs are larger than {} bytes", repositoryPath, MAX_PACK_BYTES);

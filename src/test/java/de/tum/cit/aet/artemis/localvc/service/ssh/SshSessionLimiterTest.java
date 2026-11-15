@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localvc.service.ssh;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -8,11 +9,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 import org.apache.sshd.common.SshConstants;
 import org.apache.sshd.common.session.SessionListener.Event;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class SshSessionLimiterTest {
 
@@ -87,5 +90,19 @@ class SshSessionLimiterTest {
         limiter.sessionEvent(next, Event.KeyEstablished);
 
         verify(next, never()).disconnect(anyInt(), anyString());
+    }
+
+    @Test
+    void aRefusedSessionThatIsAlreadyClosingLeavesNothingBehind() throws Exception {
+        SshSessionLimiter limiter = new SshSessionLimiter(1);
+        limiter.sessionEvent(sessionFrom("203.0.113.5"), Event.KeyEstablished);
+        ServerSession refused = sessionFrom("203.0.113.5");
+        // open when the admission starts, closing by the time the refusal is recorded
+        when(refused.isClosing()).thenReturn(false, true);
+
+        limiter.sessionEvent(refused, Event.KeyEstablished);
+
+        verify(refused).disconnect(SshConstants.SSH2_DISCONNECT_TOO_MANY_CONNECTIONS, "Too many open connections");
+        assertThat((Map<?, ?>) ReflectionTestUtils.getField(limiter, "decided")).as("only the admitted session is recorded").hasSize(1);
     }
 }
