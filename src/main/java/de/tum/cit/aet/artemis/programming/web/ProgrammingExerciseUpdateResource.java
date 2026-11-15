@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
@@ -101,13 +102,16 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ProgrammingExerciseUpdateMappingService programmingExerciseUpdateMappingService;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
             ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard,
-            ProgrammingExerciseUpdateMappingService programmingExerciseUpdateMappingService) {
+            ProgrammingExerciseUpdateMappingService programmingExerciseUpdateMappingService, SubmissionPolicyRepository submissionPolicyRepository) {
+        this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseUpdateMappingService = programmingExerciseUpdateMappingService;
         this.programmingExerciseDraftGuard = programmingExerciseDraftGuard;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
@@ -144,7 +148,10 @@ public class ProgrammingExerciseUpdateResource {
             Replaces the editable settings of an existing programming exercise, so send the whole exercise: omitted flags reset to false. \
             shortName, staticCodeAnalysisEnabled, the checkout paths and the course cannot be changed. A request with a personal access \
             token can change only an exercise that students cannot see yet (its releaseDate is in the future) and that has no student \
-            participations, and the change must keep releaseDate in the future. Anything else can be changed only in the Artemis web interface.""")
+            participations, and the change must keep releaseDate in the future. Anything else can be changed only in the Artemis web interface. \
+            The submissionPolicy of the request is ignored: the submission policy of an exercise is changed only through the submission-policy \
+            endpoints of the exercise (POST, PATCH, PUT to activate or deactivate, and DELETE on programming-exercises/{exerciseId}/submission-policy). \
+            The response contains the stored policy.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText,
             @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
@@ -254,6 +261,9 @@ public class ProgrammingExerciseUpdateResource {
             else {
                 exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
             }
+            // The policy is a lazy relation that the update does not load, so the response would show none. It is not part of this update, which leaves it as it is,
+            // and the response carries the stored one.
+            savedProgrammingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(savedProgrammingExercise.getId()));
             return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedProgrammingExercise, buildConfig));
         }
     }

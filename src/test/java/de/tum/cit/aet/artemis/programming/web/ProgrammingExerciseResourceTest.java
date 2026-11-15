@@ -1175,37 +1175,86 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     /**
-     * {@code SubmissionPolicyDTO.toEntity()} copies the id through, otherwise the transient policy the update path
-     * assigns to the managed exercise inserts a second {@code submission_policy} row.
+     * The exercise update does not touch the submission policy: the dedicated endpoints own it. A request that omits the policy therefore keeps the stored one, and the
+     * response shows it although the update does not load it.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testUpdateProgrammingExercise_resentSubmissionPolicy_keepsExactlyOneRowWithSameId() throws Exception {
+    void testUpdateProgrammingExercise_omittedSubmissionPolicy_keepsThePolicyAndReturnsIt() throws Exception {
         addInstructorToCourse();
+        long policyId = addLockRepositoryPolicy(5);
+
+        var updateDTO = withSubmissionPolicy(updateDtoOfLoadedExercise(), null);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.submissionPolicy()).isNotNull();
+        assertThat(response.submissionPolicy().id()).isEqualTo(policyId);
+        assertThat(response.submissionPolicy().submissionLimit()).isEqualTo(5);
+        assertThat(response.submissionPolicy().active()).isTrue();
+        assertStoredPolicy(policyId, 5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExercise_differentSubmissionPolicy_isIgnored() throws Exception {
+        addInstructorToCourse();
+        long policyId = addLockRepositoryPolicy(5);
+
+        var differentPolicy = new SubmissionPolicyDTO(policyId, SubmissionPolicyDTO.TYPE_LOCK_REPOSITORY, 99, null, false);
+        var updateDTO = withSubmissionPolicy(updateDtoOfLoadedExercise(), differentPolicy);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        // the stored policy is returned and kept, not the one that the request carried
+        assertThat(response.submissionPolicy()).isNotNull();
+        assertThat(response.submissionPolicy().submissionLimit()).isEqualTo(5);
+        assertThat(response.submissionPolicy().active()).isTrue();
+        assertStoredPolicy(policyId, 5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExercise_withoutStoredPolicy_ignoresASentPolicy() throws Exception {
+        addInstructorToCourse();
+
+        var sentPolicy = new SubmissionPolicyDTO(null, SubmissionPolicyDTO.TYPE_LOCK_REPOSITORY, 3, null, true);
+        var updateDTO = withSubmissionPolicy(updateDtoOfLoadedExercise(), sentPolicy);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.submissionPolicy()).isNull();
+        assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExercise.getId()))).isEmpty();
+    }
+
+    private long addLockRepositoryPolicy(int submissionLimit) {
         var policy = new LockRepositoryPolicy();
-        policy.setSubmissionLimit(5);
+        policy.setSubmissionLimit(submissionLimit);
         policy.setActive(true);
         programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
-        long policyId = policy.getId();
+        return policy.getId();
+    }
 
+    private UpdateProgrammingExerciseDTO updateDtoOfLoadedExercise() {
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
-        // the submission policy is a lazy relation of the loaded exercise; re-attach the loaded one the way the client
-        // re-sends the policy object it received
-        programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByIdElseThrow(policyId));
-        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
-        assertThat(updateDTO.submissionPolicy()).isNotNull();
-        assertThat(updateDTO.submissionPolicy().id()).isEqualTo(policyId);
-        assertThat(updateDTO.submissionPolicy().type()).isEqualTo(SubmissionPolicyDTO.TYPE_LOCK_REPOSITORY);
+        return UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+    }
 
-        // the client re-sends the loaded policy on every save - the id must survive so no second row is inserted
-        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
-        request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+    private static UpdateProgrammingExerciseDTO withSubmissionPolicy(UpdateProgrammingExerciseDTO dto, SubmissionPolicyDTO submissionPolicy) {
+        return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
+                dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
+                dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
+                dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), dto.gradingCriteria(), dto.competencyLinks(), dto.testRepositoryUri(),
+                dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
+                dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(), dto.buildAndTestStudentSubmissionsAfterDueDate(),
+                dto.testCasesChanged(), dto.projectKey(), submissionPolicy, dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(),
+                dto.plagiarismDetectionConfig());
+    }
 
+    private void assertStoredPolicy(long policyId, int submissionLimit) {
         // scope the row count to this exercise: the submission_policy table is shared with every other test in the run
         assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExercise.getId()))).extracting(entry -> entry.getId()).containsExactly(policyId);
         var exerciseFromDb = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
         assertThat(exerciseFromDb.getSubmissionPolicy().getId()).isEqualTo(policyId);
-        assertThat(exerciseFromDb.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
+        assertThat(exerciseFromDb.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(submissionLimit);
+        assertThat(exerciseFromDb.getSubmissionPolicy().isActive()).isTrue();
     }
 
     /**
@@ -1334,7 +1383,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(49);
+                // 49 plus the query that loads the stored submission policy for the response
+                .hasBeenCalledAtMostTimes(50);
     }
 
     /**
