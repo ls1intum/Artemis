@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -62,7 +63,7 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
 
     private final LongSupplier nanoClock;
 
-    private volatile Set<String> cachedFingerprints = Set.of();
+    private final AtomicReference<Set<String>> cachedFingerprints = new AtomicReference<>(Set.of());
 
     private volatile long cachedAtNanos;
 
@@ -123,7 +124,12 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
         return false;
     }
 
-    private boolean shouldWarnAboutMissingFingerprints() {
+    /**
+     * Whether the warning about a host key that was accepted without a comparison is due, which is once per period.
+     *
+     * @return true if the warning is to be logged now
+     */
+    boolean shouldWarnAboutMissingFingerprints() {
         long now = nanoClock.getAsLong();
         if (warnedAboutMissingFingerprints && now - lastWarningAtNanos < FAILURE_CACHE_DURATION.toNanos()) {
             return false;
@@ -135,22 +141,22 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
 
     private synchronized Set<String> publishedFingerprints(boolean forceRefresh) {
         long now = nanoClock.getAsLong();
-        if (!forceRefresh && !cachedFingerprints.isEmpty() && now - cachedAtNanos < CACHE_DURATION.toNanos()) {
-            return cachedFingerprints;
+        if (!forceRefresh && !cachedFingerprints.get().isEmpty() && now - cachedAtNanos < CACHE_DURATION.toNanos()) {
+            return cachedFingerprints.get();
         }
         if (lastFetchFailed && now - lastFailureAtNanos < FAILURE_CACHE_DURATION.toNanos()) {
             // The core node did not answer a moment ago, so it is not asked again for every connection
-            return cachedFingerprints;
+            return cachedFingerprints.get();
         }
         Set<String> fetched = fingerprintFetcher.get();
         if (fetched.isEmpty()) {
             // A fingerprint that was published before still counts when the core node cannot be asked right now
             lastFetchFailed = true;
             lastFailureAtNanos = now;
-            return cachedFingerprints;
+            return cachedFingerprints.get();
         }
         lastFetchFailed = false;
-        cachedFingerprints = fetched;
+        cachedFingerprints.set(fetched);
         cachedAtNanos = now;
         return fetched;
     }

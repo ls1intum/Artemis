@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -36,7 +37,7 @@ public class SshFingerprintsProviderService {
      * The fingerprints by algorithm, read from the key files once. The host keys of the SSH server do not change while it runs, so the cache is never invalidated:
      * after the keys were replaced on disk, the server has to be restarted, which also makes it present the new keys.
      */
-    private volatile Map<String, List<String>> cachedFingerprints;
+    private final AtomicReference<Map<String, List<String>>> cachedFingerprints = new AtomicReference<>();
 
     public SshFingerprintsProviderService(SshServer sshServer) {
         this.sshServer = sshServer;
@@ -62,17 +63,18 @@ public class SshFingerprintsProviderService {
      * @throws BadRequestException if there is an error loading keys from the SSH server.
      */
     public Map<String, List<String>> getAllSshFingerprints() {
-        Map<String, List<String>> cached = cachedFingerprints;
+        Map<String, List<String>> cached = cachedFingerprints.get();
         if (cached != null) {
             return cached;
         }
         synchronized (this) {
-            if (cachedFingerprints != null) {
-                return cachedFingerprints;
+            Map<String, List<String>> cachedInLock = cachedFingerprints.get();
+            if (cachedInLock != null) {
+                return cachedInLock;
             }
             Map<String, List<String>> loaded = loadFingerprints();
             if (!loaded.isEmpty()) {
-                cachedFingerprints = loaded;
+                cachedFingerprints.set(loaded);
             }
             return loaded;
         }

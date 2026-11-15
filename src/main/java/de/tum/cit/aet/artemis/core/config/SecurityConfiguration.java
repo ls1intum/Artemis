@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -145,7 +146,7 @@ public class SecurityConfiguration {
     private String frameAncestors = "";
 
     @Nullable
-    private volatile CachedContentSecurityPolicy cachedContentSecurityPolicy;
+    private final AtomicReference<CachedContentSecurityPolicy> cachedContentSecurityPolicy = new AtomicReference<>();
 
     /** One origin of {@code artemis.security.frame-ancestors}, optionally with a leading wildcard host label and a port. */
     private static final Pattern FRAME_ANCESTOR_ORIGIN = Pattern.compile("https?://(\\*\\.)?[A-Za-z0-9.-]+(:[0-9]{1,5})?");
@@ -354,12 +355,12 @@ public class SecurityConfiguration {
     String currentContentSecurityPolicy() {
         Set<String> platformOrigins = customLti13Configurer.map(CustomLti13Configurer::getPlatformOrigins).orElse(Set.of());
         boolean ltiEnabled = moduleFeatureService.isLtiEnabled();
-        CachedContentSecurityPolicy cached = cachedContentSecurityPolicy;
+        CachedContentSecurityPolicy cached = cachedContentSecurityPolicy.get();
         if (cached != null && cached.ltiEnabled() == ltiEnabled && cached.platformOrigins().equals(platformOrigins)) {
             return cached.policy();
         }
         String policy = contentSecurityPolicy(ltiEnabled, platformOrigins);
-        cachedContentSecurityPolicy = new CachedContentSecurityPolicy(ltiEnabled, platformOrigins, policy);
+        cachedContentSecurityPolicy.set(new CachedContentSecurityPolicy(ltiEnabled, platformOrigins, policy));
         return policy;
     }
 

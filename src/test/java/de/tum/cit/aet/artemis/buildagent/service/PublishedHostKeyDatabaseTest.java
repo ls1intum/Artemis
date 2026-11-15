@@ -13,12 +13,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.buildagent.service.PublishedHostKeyDatabase.Mode;
 import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
 
@@ -132,31 +127,17 @@ class PublishedHostKeyDatabaseTest {
     }
 
     @Test
-    void logsTheMissingFingerprintsOncePerPeriod() {
+    void warnsAboutMissingFingerprintsOncePerPeriod() {
         var clock = new AtomicLong();
         var database = new PublishedHostKeyDatabase(Set::of, Mode.IF_AVAILABLE, clock::get);
-        Logger logger = (Logger) LoggerFactory.getLogger(PublishedHostKeyDatabase.class);
-        // another test of the same JVM may have changed the level of this logger
-        Level previousLevel = logger.getLevel();
-        logger.setLevel(Level.WARN);
-        ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
-        try {
-            accept(database, publishedKey);
-            accept(database, publishedKey);
-            accept(database, publishedKey);
-            assertThat(appender.list).hasSize(1);
 
-            clock.addAndGet(PublishedHostKeyDatabase.FAILURE_CACHE_DURATION.toNanos() + 1);
-            accept(database, publishedKey);
+        assertThat(database.shouldWarnAboutMissingFingerprints()).isTrue();
+        assertThat(database.shouldWarnAboutMissingFingerprints()).isFalse();
+        assertThat(database.shouldWarnAboutMissingFingerprints()).isFalse();
 
-            assertThat(appender.list).hasSize(2);
-        }
-        finally {
-            logger.detachAppender(appender);
-            logger.setLevel(previousLevel);
-        }
+        clock.addAndGet(PublishedHostKeyDatabase.FAILURE_CACHE_DURATION.toNanos() + 1);
+
+        assertThat(database.shouldWarnAboutMissingFingerprints()).isTrue();
     }
 
     @Test

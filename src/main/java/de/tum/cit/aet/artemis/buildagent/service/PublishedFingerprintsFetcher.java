@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -71,17 +72,7 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
     Set<String> fetch(Duration deadline) {
         try {
             HttpRequest request = HttpRequest.newBuilder(uri).timeout(deadline).GET().build();
-            // The timeout of the request ends with the response headers, so the whole exchange gets its own deadline that also cancels the transfer of the body
-            CompletableFuture<HttpResponse<String>> exchange = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            HttpResponse<String> response;
-            try {
-                response = exchange.get(deadline.toMillis(), TimeUnit.MILLISECONDS);
-            }
-            catch (TimeoutException | InterruptedException e) {
-                // an interrupted wait must not leave the exchange reading a body that does not end
-                exchange.cancel(true);
-                throw e;
-            }
+            HttpResponse<String> response = awaitResponse(request, deadline);
             if (response.statusCode() != 200) {
                 log.warn("Asking {} for the SSH fingerprints of the core node returned {}", uri, response.statusCode());
                 return Set.of();
@@ -93,13 +84,28 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
             }
             return fingerprints.values().stream().flatMap(List::stream).collect(Collectors.toUnmodifiableSet());
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return Set.of();
         }
         catch (Exception e) {
             log.warn("Could not read the SSH fingerprints of the core node from {}: {}", uri, e.getMessage());
             return Set.of();
+        }
+    }
+
+    /**
+     * Sends the request and waits for the whole response. The timeout of the request ends with the response headers, so the exchange gets its own deadline that also
+     * cancels the transfer of the body, and an interrupted wait must not leave the exchange reading a body that does not end.
+     */
+    private HttpResponse<String> awaitResponse(HttpRequest request, Duration deadline) throws InterruptedException, ExecutionException, TimeoutException {
+        CompletableFuture<HttpResponse<String>> exchange = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+        try {
+            return exchange.get(deadline.toMillis(), TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException | InterruptedException e) {
+            exchange.cancel(true);
+            throw e;
         }
     }
 }

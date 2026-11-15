@@ -32,8 +32,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Service
 public class ProgrammingExerciseReEvaluationService {
 
-    private static final String ENTITY_NAME = "programmingExercise";
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;

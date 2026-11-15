@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.jspecify.annotations.Nullable;
@@ -87,7 +88,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
-    private volatile Set<String> cachedPlatformOrigins = Set.of();
+    private final AtomicReference<Set<String>> cachedPlatformOrigins = new AtomicReference<>(Set.of());
 
     private volatile long cachedPlatformOriginsAtNanos;
 
@@ -95,7 +96,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     private final ReentrantLock refreshLock = new ReentrantLock();
 
-    private volatile Set<String> platformsWarnedAbout = Set.of();
+    private final AtomicReference<Set<String>> platformsWarnedAbout = new AtomicReference<>(Set.of());
 
     public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         super.ltiPath(LTI13_BASE_PATH);
@@ -117,11 +118,11 @@ public class CustomLti13Configurer extends Lti13Configurer {
      */
     public Set<String> getPlatformOrigins() {
         if (isCacheFresh()) {
-            return cachedPlatformOrigins;
+            return cachedPlatformOrigins.get();
         }
         if (platformOriginsCached) {
             if (!refreshLock.tryLock()) {
-                return cachedPlatformOrigins;
+                return cachedPlatformOrigins.get();
             }
         }
         else {
@@ -129,10 +130,10 @@ public class CustomLti13Configurer extends Lti13Configurer {
         }
         try {
             if (isCacheFresh()) {
-                return cachedPlatformOrigins;
+                return cachedPlatformOrigins.get();
             }
             refreshPlatformOrigins();
-            return cachedPlatformOrigins;
+            return cachedPlatformOrigins.get();
         }
         finally {
             refreshLock.unlock();
@@ -161,7 +162,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
                 }
             }
             warnAboutNewPlatformsWithoutOrigin(platformsWithoutOrigin);
-            cachedPlatformOrigins = Collections.unmodifiableSortedSet(new TreeSet<>(origins));
+            cachedPlatformOrigins.set(Collections.unmodifiableSortedSet(new TreeSet<>(origins)));
         }
         catch (RuntimeException e) {
             // The previous origins stay in place rather than opening or closing the framing because of a failed read
@@ -176,13 +177,14 @@ public class CustomLti13Configurer extends Lti13Configurer {
      * repeat every minute.
      */
     private void warnAboutNewPlatformsWithoutOrigin(Set<String> platformsWithoutOrigin) {
+        Set<String> alreadyWarnedAbout = platformsWarnedAbout.get();
         for (String registrationId : platformsWithoutOrigin) {
-            if (!platformsWarnedAbout.contains(registrationId)) {
+            if (!alreadyWarnedAbout.contains(registrationId)) {
                 log.warn("No origin that may embed the client can be derived from the issuer or the authorization address of the LTI platform {}. "
                         + "List the origin of its learning management system in artemis.security.frame-ancestors.", registrationId);
             }
         }
-        platformsWarnedAbout = Set.copyOf(platformsWithoutOrigin);
+        platformsWarnedAbout.set(Set.copyOf(platformsWithoutOrigin));
     }
 
     @Nullable
@@ -198,7 +200,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
             }
             return scheme + "://" + uri.getHost().toLowerCase(Locale.ROOT) + (uri.getPort() == -1 ? "" : ":" + uri.getPort());
         }
-        catch (URISyntaxException e) {
+        catch (URISyntaxException _) {
             log.debug("The address {} of an LTI platform is not a valid URI", url);
             return null;
         }

@@ -101,7 +101,7 @@ public record ImageHostPolicy(List<String> allowedHosts, @Nullable String server
             String host = new URI(url.trim()).getHost();
             return host == null ? null : host.toLowerCase(Locale.ROOT);
         }
-        catch (URISyntaxException e) {
+        catch (URISyntaxException _) {
             return null;
         }
     }
