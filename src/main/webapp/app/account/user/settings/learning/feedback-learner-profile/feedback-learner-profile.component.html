@@ -10,12 +10,12 @@
 </div>
 
 @if (!isProfileSetup()) {
-    <tumaet-ui-button class="mt-3 inline-block" size="small" (clicked)="openOnboardingModal()">
+    <tumaet-ui-button class="mt-4! inline-block" size="small" (clicked)="openOnboardingModal()">
         <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.setPreferencesButton"></span>
     </tumaet-ui-button>
 } @else {
     <!-- Profile settings section -->
-    <tumaet-ui-button class="mt-3 inline-block" severity="secondary" variant="outlined" size="small" (clicked)="openOnboardingModal()">
+    <tumaet-ui-button class="mt-4! inline-block" severity="secondary" variant="outlined" size="small" (clicked)="openOnboardingModal()">
         <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.replayOnboardingButton"></span>
     </tumaet-ui-button>
     @if (!disabled()) {

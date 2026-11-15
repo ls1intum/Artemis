@@ -1,27 +1,28 @@
-<div class="inline-refinement-container d-flex align-items-center" [style.top.px]="top()" [style.left.px]="left()">
+<div class="fixed z-[1070] flex items-center" data-testid="inline-refinement" [style.top.px]="top()" [style.left.px]="left()">
     @if (!isExpanded()) {
         <!-- Collapsed: Trigger button with text label -->
         <button
-            pButton
+            tumAetUiButton
             type="button"
             severity="primary"
             size="small"
-            rounded
-            class="d-flex align-items-center gap-1 shadow-sm fw-medium"
+            class="gap-1! rounded-full! font-medium shadow-sm"
+            data-testid="inline-refinement-trigger"
             (click)="expand()"
             [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
         >
-            <fa-icon [icon]="facArtemisIntelligence" class="fs-x-small" />
-            <span class="text-nowrap">{{ 'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate }}</span>
+            <fa-icon [icon]="facArtemisIntelligence" class="text-xs" />
+            <span class="whitespace-nowrap">{{ 'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate }}</span>
         </button>
     } @else {
         <!-- Expanded: Input field with submit -->
-        <div class="d-flex align-items-center gap-1 bg-body border rounded-pill shadow py-1 px-2">
+        <div class="flex items-center gap-1 rounded-full border border-border bg-surface-raised px-2 py-1 shadow-lg">
             <input
                 [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 #instructionInput
                 type="text"
-                class="refinement-input fs-small py-1 px-2 w-100"
+                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-sm text-text outline-none placeholder:text-text-secondary disabled:opacity-60"
+                data-testid="inline-refinement-input"
                 [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 [ngModel]="instruction()"
                 (ngModelChange)="instruction.set($event)"
@@ -29,16 +30,16 @@
                 [disabled]="isLoading()"
                 [attr.maxlength]="MAX_INSTRUCTION_LENGTH"
             />
-            <span class="text-nowrap px-1 fs-x-small" [class.text-danger]="isNearLimit()" [class.text-muted]="!isNearLimit()">
+            <span class="px-1 text-xs whitespace-nowrap" [class.text-state-danger]="isNearLimit()" [class.text-text-secondary]="!isNearLimit()">
                 {{ instruction().length }}/{{ MAX_INSTRUCTION_LENGTH }}
             </span>
             <button
-                pButton
+                tumAetUiButton
                 type="button"
                 severity="primary"
                 size="small"
-                rounded
-                class="refinement-submit-btn flex-shrink-0 d-flex align-items-center justify-content-center"
+                class="size-7 min-w-7 shrink-0 rounded-full! p-0!"
+                data-testid="inline-refinement-submit"
                 (click)="submit()"
                 [disabled]="!instruction() || isLoading()"
                 [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
@@ -46,13 +47,13 @@
                 <fa-icon [icon]="faPaperPlane" />
             </button>
             <button
-                pButton
+                tumAetUiButton
                 type="button"
                 severity="secondary"
-                text
+                variant="text"
                 size="small"
-                rounded
-                class="refinement-close-btn flex-shrink-0 d-flex align-items-center justify-content-center p-0"
+                class="size-6 shrink-0 rounded-full! p-0!"
+                data-testid="inline-refinement-close"
                 [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.close' | artemisTranslate"
                 (click)="handleClose()"
             >

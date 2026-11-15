@@ -1,4 +1,4 @@
-<div class="mb-3 flex items-center justify-between">
+<div class="mb-4! flex items-center justify-between">
     <h2 class="mb-0 text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
     @if (currentUser()?.internal) {
         <tumaet-ui-button
@@ -12,7 +12,7 @@
         </tumaet-ui-button>
     }
 </div>
-<div class="mb-3 flex flex-col gap-2 empty:hidden">
+<div class="mb-4! flex flex-col gap-2 empty:hidden">
     @if (emailChangeRequested()) {
         <tumaet-ui-message severity="success" data-testid="settings-success-message">
             <span jhiTranslate="settings.messages.successEmailChangeRequested"></span>
@@ -81,7 +81,7 @@
     }
 </div>
 @if (currentUser(); as user) {
-    <div class="flex flex-col items-center gap-4 md:grid md:grid-cols-[auto_minmax(0,1fr)] md:items-stretch">
+    <div class="flex flex-col items-center gap-6! md:grid md:grid-cols-[auto_minmax(0,1fr)] md:items-stretch">
         <input
             [attr.aria-label]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
             type="file"
