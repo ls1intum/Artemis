@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost_;
@@ -76,7 +78,8 @@ public class MessageSpecs {
 
     /**
      * Specification which filters Messages and answer posts according to a search string in a match-all-manner
-     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
+     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content or in the name of the author
+     * of the message or of one of its answers (all strings lowercased). The name is matched as first name, last name or "first last".
      *
      * @param searchText Text to be searched within messages
      * @return specification used to chain DB operations
@@ -97,12 +100,40 @@ public class MessageSpecs {
                 Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
 
                 Predicate searchInMessageContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
-                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-                Predicate searchInAnswerContent = criteriaBuilder.like(criteriaBuilder.lower(answersJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
+                Join<Post, User> authorJoin = root.join(Post_.AUTHOR, JoinType.LEFT);
+                Predicate searchInAuthorName = authorNameMatches(criteriaBuilder, authorJoin, searchTextLiteral);
 
-                return criteriaBuilder.or(searchInMessageContent, searchInAnswerContent);
+                // EXISTS instead of a join: a join returns one row per answer, which would repeat a post and distort the paging and the total count.
+                Subquery<Long> answerSubquery = query.subquery(Long.class);
+                Root<AnswerPost> answerRoot = answerSubquery.from(AnswerPost.class);
+                Join<AnswerPost, User> answerAuthorJoin = answerRoot.join(AnswerPost_.AUTHOR, JoinType.LEFT);
+                answerSubquery.select(answerRoot.get(AnswerPost_.ID));
+                Predicate searchInAnswerContent = criteriaBuilder.like(criteriaBuilder.lower(answerRoot.get(AnswerPost_.CONTENT)), searchTextLiteral);
+                // The bot is left out of the name search: its reply stays hidden from students until it is verified, and its name must not give away which posts have one.
+                Predicate searchInAnswerAuthorName = criteriaBuilder.and(criteriaBuilder.notEqual(answerAuthorJoin.get(User_.LOGIN), User.IRIS_BOT_LOGIN),
+                        authorNameMatches(criteriaBuilder, answerAuthorJoin, searchTextLiteral));
+                answerSubquery.where(criteriaBuilder.equal(answerRoot.get(AnswerPost_.POST), root), criteriaBuilder.or(searchInAnswerContent, searchInAnswerAuthorName));
+
+                return criteriaBuilder.or(searchInMessageContent, searchInAuthorName, criteriaBuilder.exists(answerSubquery));
             }
         });
+    }
+
+    /**
+     * Builds the predicate that checks whether the lowercased name of the author, written as "first last", contains the lowercased search literal. This also covers a
+     * search for the first name or the last name alone. The login and the email address are deliberately not searched: the name is what is displayed next to a message
+     * (the login only for an account without a name), so a search cannot reveal more than that.
+     *
+     * @param criteriaBuilder   the builder of the query
+     * @param author            the join to the author
+     * @param searchTextLiteral the lowercased search text wrapped in wildcards
+     * @return the predicate matching the author's name
+     */
+    private static Predicate authorNameMatches(CriteriaBuilder criteriaBuilder, Join<?, User> author, Expression<String> searchTextLiteral) {
+        Expression<String> firstName = criteriaBuilder.coalesce(author.get(User_.FIRST_NAME), "");
+        Expression<String> lastName = criteriaBuilder.coalesce(author.get(User_.LAST_NAME), "");
+        Expression<String> fullName = criteriaBuilder.concat(criteriaBuilder.concat(firstName, " "), lastName);
+        return criteriaBuilder.like(criteriaBuilder.lower(fullName), searchTextLiteral);
     }
 
     /**

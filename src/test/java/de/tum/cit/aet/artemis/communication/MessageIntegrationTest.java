@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
@@ -97,6 +98,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private OneToOneChatTestRepository oneToOneChatRepository;
@@ -651,6 +655,103 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1") && (post.getContent().contains("Content") || answerHasContext(post.getAnswers(), "Content")))
                 .toList().size());
         assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "zorbal", "QUUXING", "zorbalina quux", "a Qu" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchTextMatchesTheNameOfTheAuthorOfAMessageOrAnAnswer(String searchText) throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        params.add("searchText", searchText);
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        // None of the contents contains the name, so every hit comes from the author of the message or of one of its answers.
+        var expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).toList();
+        assertThat(expectedIds).isNotEmpty();
+        assertThat(returnedPosts).extracting(post -> post.id()).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
+
+    /**
+     * A post that has several answers by the searched author must be listed once, and the total count must count posts, not answers.
+     * The author of the post itself is somebody else, so the match can only come from the answers.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessages_SearchTextMatchesTheNameOfTheAuthorOfAnswersWithoutRepeatingThePost() {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+        Post postOfSomeoneElse = existingCourseWideMessages.stream().filter(post -> !post.getAuthor().getId().equals(student1.getId())).findFirst().orElseThrow();
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", postOfSomeoneElse);
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", postOfSomeoneElse);
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", postOfSomeoneElse);
+
+        long[] conversationIds = existingCourseWideChannelIds.stream().mapToLong(Long::longValue).toArray();
+        var filter = new PostContextFilterDTO(courseId, null, conversationIds, null, "zorbal", true, false, false, PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+        // the posts that match: those of the author, those with an answer of the author, and the one that got three answers above
+        Set<Long> expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).collect(Collectors.toSet());
+        expectedIds.add(postOfSomeoneElse.getId());
+
+        // A page of one post: a join over the answers would fill it with the rows of one post and count three rows for the post with three answers.
+        Page<Post> firstPage = conversationMessageRepository.findMessages(filter, PageRequest.of(0, 1), student1.getId());
+        Page<Post> allPosts = conversationMessageRepository.findMessages(filter, PageRequest.of(0, 50), student1.getId());
+
+        assertThat(firstPage.getTotalElements()).as("the total counts posts and not answers").isEqualTo(expectedIds.size());
+        assertThat(allPosts.getContent()).extracting(Post::getId).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessages_SearchTextDoesNotRevealWhichPostsHaveAnUnverifiedReplyOfTheBot() {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Post post = existingCourseWideMessages.getFirst();
+        AnswerPost pendingReply = conversationUtilService.addThreadReplyWithReactionForUserToPost(User.IRIS_BOT_LOGIN, post);
+        pendingReply.setVerified(false);
+        answerPostRepository.save(pendingReply);
+
+        long[] conversationIds = existingCourseWideChannelIds.stream().mapToLong(Long::longValue).toArray();
+        var filter = new PostContextFilterDTO(courseId, null, conversationIds, null, irisBot.getFirstName(), true, false, false, PostSortCriterion.CREATION_DATE,
+                SortingOrder.DESCENDING);
+
+        Page<Post> page = conversationMessageRepository.findMessages(filter, PageRequest.of(0, 50), userTestRepository.getUser().getId());
+
+        // Students do not see the reply until it is verified, so its author must not make the post findable
+        assertThat(page.getContent()).extracting(Post::getId).doesNotContain(post.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchTextDoesNotMatchTheLoginOfTheAuthor() throws Exception {
+        // The generated names contain the login, so give the user a name that does not.
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        // The login is not displayed next to a message, so a search must not reveal it.
+        params.add("searchText", TEST_PREFIX + "student1");
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        assertThat(returnedPosts).isEmpty();
     }
 
     private boolean answerHasContext(Set<AnswerPost> answers, String searchText) {
