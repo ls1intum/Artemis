@@ -383,6 +383,18 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void aNestedTypeShadowsAMarkerOnlyWithinItsBody() throws IOException {
+        writeBuildFile();
+        // Helper.Public is in scope only inside SortingTest's body, so the @Public on SortingTest itself is still the Ares marker.
+        writeSource("test/de/example/SortingTest.java",
+                TEST_CLASS.formatted("de.example", "SortingTest").replace("import de.tum.cit.ase.ares.api.jupiter.Public;", "import de.tum.cit.ase.ares.api.jupiter.*;")
+                        .replace("    @Test\n", "    static class Helper {\n\n        @interface Public {\n        }\n    }\n\n    @Test\n"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+    }
+
+    @Test
     void aTestClassThatOnlyUsesJupiterAresTestIsUnsupported() throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");

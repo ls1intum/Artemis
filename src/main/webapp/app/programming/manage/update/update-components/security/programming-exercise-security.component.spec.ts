@@ -514,6 +514,23 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(service.deactivate).toHaveBeenCalledWith(42);
     });
 
+    it('closes an open deactivation confirmation and never deactivates the previous exercise when the card is reused for another one', () => {
+        initEdit(configuredConfig());
+        const request = captureConfirmation();
+        const close = vi.spyOn(confirmationService(), 'close');
+        comp.onToggleChanged(false);
+
+        service.getConfig.mockReturnValue(of(configuredConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+
+        expect(close).toHaveBeenCalledOnce();
+        expect(comp.isToggleOn()).toBe(true);
+        request().accept();
+        expect(service.deactivate).not.toHaveBeenCalled();
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+    });
+
     it('ignores a late result of an operation on the previous exercise', () => {
         initEdit(configuredConfig());
         const result = new Subject<SecurityFrameworkConfig>();

@@ -429,6 +429,11 @@ export class ProgrammingExerciseSecurityComponent {
     }
 
     private switchToExercise(exerciseId: number): void {
+        // A confirmation that is still open belongs to the previous exercise.
+        if (this.deactivationPending()) {
+            this.confirmationService.close(DEACTIVATE_CONFIRMATION_KEY);
+            this.deactivationPending.set(false);
+        }
         this.pendingOperation = undefined;
         this.config.set({ status: SecurityActivationStatus.CONFIGURED });
         this.lastSettledActive.set(true);
@@ -660,6 +665,10 @@ export class ProgrammingExerciseSecurityComponent {
             acceptSeverity: 'danger',
             accept: () => {
                 this.deactivationPending.set(false);
+                // The card may have been reused for another exercise while the confirmation was open; never deactivate the previous one.
+                if (exerciseId !== this.editExerciseId()) {
+                    return;
+                }
                 this.runOperation({ status: SecurityActivationStatus.DELETING }, () => this.securityService.deactivate(exerciseId));
             },
             reject: () => this.deactivationPending.set(false),

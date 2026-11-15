@@ -200,7 +200,7 @@ final class AresPolicyAnnotations {
         Matcher names = POLICY_ANNOTATION_NAME.matcher(masked);
         while (names.find()) {
             boolean qualified = names.group(1) != null;
-            if (qualified || (simpleNameIsAres && !isPartOfQualifiedName(masked, names.start()))) {
+            if (qualified || (simpleNameIsAres && !isPartOfQualifiedName(masked, names.start()) && !isShadowedAt(masked, "Policy", names.start()))) {
                 annotation(sources, names.start(), names.end()).ifPresent(annotations::add);
             }
         }
@@ -236,27 +236,79 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * A type that the file declares itself, e.g. {@code @interface Policy}, shadows a type of the same name that an on-demand import provides, so its
-     * simple name no longer refers to Ares. Within the declaring type it also shadows a single-type import.
+     * A type that the file declares itself, e.g. {@code @interface Policy}, shadows a type of the same name that an import provides (JLS 6.4.1): a
+     * top-level type in the whole file, a member or local type only within the body that declares it. Where it is shadowed, the simple name does not
+     * refer to Ares.
      *
      * @param masked     the source with comments and literals masked
      * @param simpleName the simple name of a type
-     * @return whether the file declares a type with this simple name
+     * @param offset     where the simple name is used
+     * @return whether a type that the file declares shadows the simple name at the offset
      */
-    static boolean declaresType(String masked, String simpleName) {
+    static boolean isShadowedAt(String masked, String simpleName, int offset) {
         Matcher declarations = TYPE_DECLARATION.matcher(masked);
         while (declarations.find()) {
-            if (declarations.group(2).equals(simpleName)) {
+            if (declarations.group(2).equals(simpleName) && isInScopeOf(masked, declarations.start(), offset)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean simpleNameRefersToAres(String masked) {
-        if (declaresType(masked, "Policy")) {
-            return false;
+    /**
+     * @return whether the offset lies in the scope of the declaration that starts at {@code declarationStart}: the whole file for a top-level declaration,
+     *         otherwise the body that contains it
+     */
+    private static boolean isInScopeOf(String masked, int declarationStart, int offset) {
+        int scopeStart = enclosingOpeningBrace(masked, declarationStart);
+        if (scopeStart < 0) {
+            return true;
         }
+        int scopeEnd = matchingBrace(masked, scopeStart);
+        return offset > scopeStart && (scopeEnd < 0 || offset < scopeEnd);
+    }
+
+    /**
+     * @return the offset of the innermost brace that is open at the offset; -1 at the top level of the file
+     */
+    private static int enclosingOpeningBrace(String masked, int offset) {
+        int depth = 0;
+        for (int index = offset - 1; index >= 0; index--) {
+            char character = masked.charAt(index);
+            if (character == '}') {
+                depth++;
+            }
+            else if (character == '{') {
+                if (depth == 0) {
+                    return index;
+                }
+                depth--;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @return the offset of the brace that closes the one at {@code open}, or -1 if there is none
+     */
+    private static int matchingBrace(String masked, int open) {
+        int depth = 0;
+        for (int index = open; index < masked.length(); index++) {
+            char character = masked.charAt(index);
+            if (character == '{') {
+                depth++;
+            }
+            else if (character == '}') {
+                depth--;
+                if (depth == 0) {
+                    return index;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private static boolean simpleNameRefersToAres(String masked) {
         boolean importsAresPolicy = false;
         boolean importsOtherPolicy = false;
         Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);

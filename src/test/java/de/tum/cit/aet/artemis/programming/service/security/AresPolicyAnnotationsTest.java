@@ -142,6 +142,33 @@ class AresPolicyAnnotationsTest {
     }
 
     @Test
+    void aNestedPolicyTypeShadowsTheAresAnnotationOnlyWithinItsBody() {
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                @Policy("SecurityPolicy.yaml")
+                class SortingTest {
+
+                    static class Helper {
+
+                        @interface Policy {
+                            String value();
+                        }
+
+                        @Policy("helper")
+                        static class Inner {
+                        }
+                    }
+                }
+                """;
+
+        // Only the annotation on SortingTest refers to Ares; the one inside Helper refers to Helper.Policy.
+        assertThat(AresPolicyAnnotations.find(original)).singleElement().satisfies(annotation -> assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml"));
+    }
+
+    @Test
     void ignoresAnnotationsInCommentsAndStrings() {
         String original = """
                 package de.example;

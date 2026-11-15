@@ -377,7 +377,7 @@ final class AresTestSources {
         Matcher uses = SECURITY_EXTENSION_USE.matcher(masked);
         while (uses.find()) {
             boolean partOfLongerName = uses.start() > 0 && (Character.isJavaIdentifierPart(masked.charAt(uses.start() - 1)) || masked.charAt(uses.start() - 1) == '.');
-            if (uses.group(1) != null || (simpleNameIsAres && !partOfLongerName)) {
+            if (uses.group(1) != null || (simpleNameIsAres && !partOfLongerName && !AresPolicyAnnotations.isShadowedAt(masked, SECURITY_EXTENSION, uses.start()))) {
                 return true;
             }
         }
@@ -432,7 +432,8 @@ final class AresTestSources {
         while (uses.find()) {
             boolean qualified = uses.group(1) != null;
             boolean partOfLongerName = uses.start() > 0 && (Character.isJavaIdentifierPart(masked.charAt(uses.start() - 1)) || masked.charAt(uses.start() - 1) == '.');
-            if (qualified || (simpleNameIsAres && !partOfLongerName)) {
+            // A type of the same name that the file declares itself shadows the Ares one where it is in scope.
+            if (qualified || (simpleNameIsAres && !partOfLongerName && !AresPolicyAnnotations.isShadowedAt(masked, simpleName, uses.start()))) {
                 offsets.add(uses.start());
             }
         }
@@ -440,10 +441,6 @@ final class AresTestSources {
     }
 
     private static boolean simpleNameRefersTo(String masked, String simpleName, String qualifiedName) {
-        // A type of the same name that the file declares itself shadows the Ares one.
-        if (AresPolicyAnnotations.declaresType(masked, simpleName)) {
-            return false;
-        }
         boolean importsIt = false;
         boolean importsOther = false;
         Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
