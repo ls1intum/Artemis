@@ -740,7 +740,7 @@ describe('IrisSettingsUpdateComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('p-tabpanel[value="admin"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('tumaet-ui-tab-panel[value="admin"]')).toBeNull();
         });
 
         it('should render the admin tab when isAdmin() is true', async () => {
@@ -751,7 +751,7 @@ describe('IrisSettingsUpdateComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('p-tabpanel[value="admin"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('tumaet-ui-tab-panel[value="admin"]')).not.toBeNull();
         });
     });
 
