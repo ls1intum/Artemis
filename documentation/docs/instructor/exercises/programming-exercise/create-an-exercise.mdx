@@ -14,6 +14,7 @@ import createFormGeneral from '../assets/programming/create-form-general.png';
 import createFormMode from '../assets/programming/create-form-mode.png';
 import createFormLanguage from '../assets/programming/create-form-language.png';
 import createFormVersionControl from '../assets/programming/create-form-version-control.png';
+import createFormBuildTimeWindow from '../assets/programming/create-form-build-time-window.png';
 import createFormProblem from '../assets/programming/create-form-problem.png';
 import createFormGrading from '../assets/programming/create-form-grading.png';
 import exerciseInList from '../assets/programming/course-dashboard-exercise-programming.png';
@@ -152,6 +153,8 @@ Configure the window in advanced mode, below **Version Control**. When editing a
 By default every push of a student is built. With a build time window you restrict the period in which pushes are built. This is useful if students should work with the repository first and only get test feedback later, for example from a start date a week after the release.
 
 To allow repository work before feedback begins, set the exercise's **Start Date** to the time repository access should begin, or omit it to use the **Release Date**. Set **Build window start** to the later feedback date. The exercise's ordinary repository-access rules still apply.
+
+<Image src={createFormBuildTimeWindow} alt="Build Time Window section of the programming exercise form with a start and an end date" size={ImageSize.large} caption="Build Time Window: pushes are built from 22 November 8:00 until 29 November 10:00" />
 
 - **Build window start**: The first moment at which pushes are built.
 - **Build window end**: The last moment at which pushes are built.

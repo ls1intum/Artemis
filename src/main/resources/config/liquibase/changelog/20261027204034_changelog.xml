@@ -9,6 +9,9 @@
         EXPAND step of expand and contract: the application no longer maps allow_branching and branch_regex, but the columns stay in the schema with the values they had
         when this changelog ran. Rolling the application back to the previous version therefore finds the schema it expects, but sees the branching settings as of the
         upgrade: settings edited afterwards are only in advanced_settings. The columns are dropped by a later changelog that must not be deployed before this one.
+
+        TODO: Drop the columns allow_branching and branch_regex of programming_exercise_build_config in a later release (contract step), once this changelog is deployed
+        everywhere and no rollback to a version that maps them is needed anymore. Until then they hold the values of the upgrade, and new rows get the column default.
     -->
     <changeSet id="20261027204034-01-add-advanced-settings" author="krusche">
         <addColumn tableName="programming_exercise_build_config">

@@ -87,6 +87,9 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     /**
      * Rarely used settings (branching, build time window) as one JSON document, NULL if none deviates from the default.
      * The legacy columns {@code allow_branching} and {@code branch_regex} are no longer mapped, see the changelog that introduced this column.
+     * <p>
+     * TODO: Drop the columns {@code allow_branching} and {@code branch_regex} from the database with a changelog (contract step) in a later release, once no application
+     * version that maps them can be rolled back to anymore, and then remove this note. They are not mapped in Java anymore, so there is nothing to remove in this class.
      */
     @Nullable
     @JdbcTypeCode(SqlTypes.JSON)
