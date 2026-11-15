@@ -13,6 +13,7 @@ import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
 import onlineEditor from './assets/programming/OnlineEditor.png';
 import buildNotificationsLight from './assets/programming/build-notifications-light.png';
 import buildNotificationsDark from './assets/programming/build-notifications-dark.png';
+import buildWindowNotice from './assets/programming/build-window-notice.png';
 import testClassSetupError from './assets/programming/test-class-setup-error.png';
 
 ## Overview
@@ -38,6 +39,14 @@ Participating in a programming exercise involves the following steps:
   The results from practice mode submissions after the due date are not graded and do not affect your score.
 
 </Callout>
+
+### Exercises with a Build Window
+
+Some exercises only build your pushes during a limited period, for example because the tests are switched on a week after the exercise is released. The exercise page and the online editor then show a notice with the period in which builds run.
+
+<Image src={buildWindowNotice} alt="Exercise header with a notice that builds start on 22 November" size={ImageSize.large} caption="The notice on the exercise page before the build window starts" />
+
+A push outside this period is saved in your repository, but Artemis does not build it and does not grade it. The output of `git push` tells you so, and the online editor shows that your changes were committed but not built. The **Trigger build** button is not available outside the period either. Pushes inside the period are built as usual. The build window does not apply in practice mode, so you can still build practice submissions after the due date.
 
 ## Online Code Editor
 
