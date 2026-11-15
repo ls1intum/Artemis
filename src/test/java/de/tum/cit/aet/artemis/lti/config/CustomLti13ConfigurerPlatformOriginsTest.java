@@ -129,6 +129,9 @@ class CustomLti13ConfigurerPlatformOriginsTest {
     void warnsOncePerPlatformWithoutADerivableOrigin() {
         when(repository.findAll()).thenReturn(List.of(platform("not a url", "ftp://files.example.org/x")));
         Logger logger = (Logger) LoggerFactory.getLogger(CustomLti13Configurer.class);
+        // another test of the same JVM may have changed the level of this logger
+        Level previousLevel = logger.getLevel();
+        logger.setLevel(Level.WARN);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
@@ -143,6 +146,7 @@ class CustomLti13ConfigurerPlatformOriginsTest {
         }
         finally {
             logger.detachAppender(appender);
+            logger.setLevel(previousLevel);
         }
     }
 }
