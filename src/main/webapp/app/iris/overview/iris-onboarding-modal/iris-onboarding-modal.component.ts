@@ -38,7 +38,7 @@ const TOOLTIP_VERTICAL_OFFSET_PX = 8;
 const TOOLTIP_VIEWPORT_PADDING_PX = 12;
 
 // Position-resolution retry budget. The target element may not be in the DOM yet
-// (e.g. PrimeNG overlay still mounting, animation in progress); poll until it appears
+// (e.g. an overlay still mounting, animation in progress); poll until it appears
 // or we've waited long enough to assume something is wrong and bail out silently.
 // 20 retries × 200 ms ≈ 4 s — generous enough for slow CI / animations, short enough
 // that a genuinely broken selector still gets reported within one tour session.

@@ -421,6 +421,14 @@ pre {
         border: none;
         border-radius: $iris-border-radius-lg $iris-border-radius-lg 0 0;
 
+        // The kit textarea sets its own font size (1rem), background, shadow and focus ring. The ghost-text and
+        // chip-preview overlays below use `font: inherit` and must line up with the typed text, and the wrapper owns
+        // the background, border and focus border, so the textarea must not draw a second set of them.
+        font: inherit;
+        background-color: transparent;
+        box-shadow: none;
+        outline: none;
+
         // The collapsed textarea must be tall enough to show the ghost suggestion, which renders in an
         // overlay pinned inside this box. The previous flat 40px left only 8px of content box after the
         // 16px vertical padding — less than a single line — so a wrapped suggestion spilled out of the
@@ -521,8 +529,7 @@ pre {
         max-height: calc(var(--iris-textarea-height, calc(var(--iris-input-lines) * var(--iris-input-line-height) + 32px)) - 32px);
         border: 1px solid transparent;
         pointer-events: none;
-        font-family: inherit;
-        font-size: inherit;
+        font: inherit;
         line-height: var(--iris-input-line-height);
         overflow-wrap: break-word;
         overflow: hidden;

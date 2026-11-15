@@ -9,7 +9,7 @@ import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.servi
 
 describe('IrisOnboardingService', () => {
     let service: IrisOnboardingService;
-    let dialogService: IrisOnboardingTourHost;
+    let tourHost: IrisOnboardingTourHost;
     let chatHttpService: IrisChatHttpService;
     let matchMediaMock: ReturnType<typeof vi.spyOn>;
 
@@ -55,7 +55,7 @@ describe('IrisOnboardingService', () => {
         });
 
         service = TestBed.inject(IrisOnboardingService);
-        dialogService = TestBed.inject(IrisOnboardingTourHost);
+        tourHost = TestBed.inject(IrisOnboardingTourHost);
         chatHttpService = TestBed.inject(IrisChatHttpService);
         localStorage.removeItem(STORAGE_KEY);
     });
@@ -96,29 +96,29 @@ describe('IrisOnboardingService', () => {
             setDesktopViewport(false);
             const result = await service.openOnboardingModal();
 
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
             expect(result).toBeUndefined();
         });
 
         it('should open the tour and resolve with its result', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
             const result = await resultPromise;
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(tourHost.open).toHaveBeenCalledOnce();
             expect(result).toEqual({ action: 'finish' });
         });
 
         it('should mark onboarding as completed synchronously on open', async () => {
             // Marking on open (rather than on close) ensures the flag survives the user
-            // navigating away mid-tour: PrimeNG's onClose only fires when .close() is invoked
+            // navigating away mid-tour: the tour ref's `onClose` only emits when close() is invoked
             // explicitly, not when the host component is torn down.
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
 
@@ -131,7 +131,7 @@ describe('IrisOnboardingService', () => {
 
         it('should keep onboarding marked completed even if onClose never fires', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             void service.openOnboardingModal();
             // Simulate a tour that never reports a result (the page reloads mid-tour):
@@ -141,7 +141,7 @@ describe('IrisOnboardingService', () => {
 
         it('should return undefined when modal is dismissed', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
             closeSubject.next(undefined);
@@ -154,12 +154,12 @@ describe('IrisOnboardingService', () => {
 
         it('should not open a second modal if one is already open', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const firstCall = service.openOnboardingModal();
             const secondCall = service.openOnboardingModal();
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(tourHost.open).toHaveBeenCalledOnce();
 
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
@@ -173,7 +173,7 @@ describe('IrisOnboardingService', () => {
         it('should clear dialogRef after modal closes', async () => {
             const closeSubject1 = new Subject<OnboardingResult | undefined>();
             const closeSubject2 = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValueOnce(createMockTourRef(closeSubject1)).mockReturnValueOnce(createMockTourRef(closeSubject2));
+            vi.spyOn(tourHost, 'open').mockReturnValueOnce(createMockTourRef(closeSubject1)).mockReturnValueOnce(createMockTourRef(closeSubject2));
 
             const firstPromise = service.openOnboardingModal();
             closeSubject1.next({ action: 'finish' });
@@ -185,7 +185,7 @@ describe('IrisOnboardingService', () => {
             closeSubject2.complete();
             await secondPromise;
 
-            expect(dialogService.open).toHaveBeenCalledTimes(2);
+            expect(tourHost.open).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -194,13 +194,13 @@ describe('IrisOnboardingService', () => {
             setDesktopViewport(false);
             const result = await service.showOnboardingIfNeeded(() => true);
 
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
             expect(result).toBeUndefined();
         });
 
         it('should delegate to openOnboardingModal', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            const openSpy = vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
             // Wait until the async session-count gate resolves and the dialog is opened.
@@ -209,7 +209,7 @@ describe('IrisOnboardingService', () => {
             closeSubject.complete();
             const result = await resultPromise;
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(tourHost.open).toHaveBeenCalledOnce();
             expect(result).toEqual({ action: 'finish' });
         });
 
@@ -219,14 +219,14 @@ describe('IrisOnboardingService', () => {
             const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
         });
 
         it('should return undefined and skip opening when not in empty state', async () => {
             const result = await service.showOnboardingIfNeeded(() => false);
 
             expect(result).toBeUndefined();
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
         });
 
         it('should skip opening when the user already has Iris messages', async () => {
@@ -235,12 +235,12 @@ describe('IrisOnboardingService', () => {
             const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
         });
 
         it('should open the modal when the user has zero Iris messages', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            const openSpy = vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 0 }));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
@@ -250,7 +250,7 @@ describe('IrisOnboardingService', () => {
             closeSubject.complete();
             const result = await resultPromise;
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(tourHost.open).toHaveBeenCalledOnce();
             expect(result).toEqual({ action: 'finish' });
         });
 
@@ -258,7 +258,7 @@ describe('IrisOnboardingService', () => {
             // Regression guard: opening the chat auto-creates an empty session server-side,
             // so new users land here with sessions=1, messages=0. The tour must still open.
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
+            const openSpy = vi.spyOn(tourHost, 'open').mockReturnValue(createMockTourRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 1, messages: 0 }));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
@@ -267,7 +267,7 @@ describe('IrisOnboardingService', () => {
             closeSubject.complete();
             const result = await resultPromise;
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(tourHost.open).toHaveBeenCalledOnce();
             expect(result).toEqual({ action: 'finish' });
         });
 
@@ -277,7 +277,7 @@ describe('IrisOnboardingService', () => {
             const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
         });
 
         it('should skip opening when the session-count request fails (fail-closed)', async () => {
@@ -286,7 +286,7 @@ describe('IrisOnboardingService', () => {
             const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(tourHost.open).not.toHaveBeenCalled();
         });
 
         it('should not call the session-count endpoint when an earlier gate already fails', async () => {
