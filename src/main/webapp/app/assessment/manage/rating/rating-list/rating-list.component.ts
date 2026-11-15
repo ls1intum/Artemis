@@ -8,16 +8,25 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { RatingService } from 'app/assessment/shared/services/rating.service';
-import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
+import { RatingApi } from 'app/openapi/api/rating-api';
+import { RatingListItem, RatingListItemAssessmentTypeEnum, RatingListItemExerciseTypeEnum } from 'app/openapi/model/rating-list-item';
+import { toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { TranslatePipe } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { map } from 'rxjs/operators';
+
+const exerciseTypeByResponse: Record<RatingListItemExerciseTypeEnum, ExerciseType> = {
+    text: ExerciseType.TEXT,
+    programming: ExerciseType.PROGRAMMING,
+    modeling: ExerciseType.MODELING,
+    'file-upload': ExerciseType.FILE_UPLOAD,
+    quiz: ExerciseType.QUIZ,
+};
 
 @Component({
     selector: 'jhi-rating-list',
@@ -35,7 +44,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
     ],
 })
 export class RatingListComponent implements OnInit {
-    private ratingService = inject(RatingService);
+    private ratingApi = inject(RatingApi);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
@@ -77,10 +86,13 @@ export class RatingListComponent implements OnInit {
         // page is 1-indexed in the component, but Spring is 0-indexed
         const sortDirection = this.ratingsReverseOrder ? 'asc' : 'desc';
         const sort = `${this.ratingsSortingPredicate},${sortDirection}`;
-        this.ratingService.getRatingsForDashboard(this.courseId, this.page() - 1, this.pageSize, sort).subscribe((pageResult) => {
-            this.ratings.set(pageResult.content);
-            this.totalElements.set(pageResult.totalElements);
-        });
+        this.ratingApi
+            .getRatingForInstructorDashboard(this.courseId, this.page() - 1, this.pageSize, [sort])
+            .pipe(map(toPageableResult))
+            .subscribe((pageResult) => {
+                this.ratings.set(pageResult.content);
+                this.totalElements.set(pageResult.totalElements);
+            });
     }
 
     protected onSortChange(event: TumAetUiTableSortEvent): void {
@@ -102,7 +114,7 @@ export class RatingListComponent implements OnInit {
         // Navigate to the appropriate assessment view based on exercise type
         const exerciseTypePath = this.getExerciseTypePath(rating.exerciseType);
 
-        if (rating.exerciseType === ExerciseType.PROGRAMMING) {
+        if (rating.exerciseType === RatingListItemExerciseTypeEnum.Programming) {
             // Programming exercises use a different route structure (no resultId)
             void this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessment']);
         } else {
@@ -123,15 +135,15 @@ export class RatingListComponent implements OnInit {
     /**
      * Get the route path segment for an exercise type.
      */
-    private getExerciseTypePath(exerciseType?: ExerciseType): string {
+    private getExerciseTypePath(exerciseType?: RatingListItem['exerciseType']): string {
         switch (exerciseType) {
-            case ExerciseType.TEXT:
+            case RatingListItemExerciseTypeEnum.Text:
                 return 'text-exercises';
-            case ExerciseType.PROGRAMMING:
+            case RatingListItemExerciseTypeEnum.Programming:
                 return 'programming-exercises';
-            case ExerciseType.MODELING:
+            case RatingListItemExerciseTypeEnum.Modeling:
                 return 'modeling-exercises';
-            case ExerciseType.FILE_UPLOAD:
+            case RatingListItemExerciseTypeEnum.FileUpload:
                 return 'file-upload-exercises';
             default:
                 return 'exercises';
@@ -141,26 +153,26 @@ export class RatingListComponent implements OnInit {
     /**
      * Get the icon for an exercise type.
      */
-    getExerciseIcon(exerciseType?: ExerciseType): IconProp {
-        return getIcon(exerciseType);
+    getExerciseIcon(exerciseType?: RatingListItem['exerciseType']): IconProp {
+        return getIcon(exerciseType && exerciseTypeByResponse[exerciseType]);
     }
 
     /**
      * Get the translation key for an exercise type tooltip.
      */
-    getExerciseTypeTooltip(exerciseType?: ExerciseType): string {
-        return getIconTooltip(exerciseType);
+    getExerciseTypeTooltip(exerciseType?: RatingListItem['exerciseType']): string {
+        return getIconTooltip(exerciseType && exerciseTypeByResponse[exerciseType]);
     }
 
     /**
      * Get the translation key for an assessment type.
      */
-    getAssessmentTypeTranslationKey(assessmentType?: AssessmentType): string {
+    getAssessmentTypeTranslationKey(assessmentType?: RatingListItem['assessmentType']): string {
         if (!assessmentType) {
             return 'artemisApp.AssessmentType.null';
         }
         return `artemisApp.AssessmentType.${assessmentType}`;
     }
 
-    protected readonly AssessmentType = AssessmentType;
+    protected readonly AssessmentType = RatingListItemAssessmentTypeEnum;
 }
