@@ -375,7 +375,7 @@ describe('UserManagementComponent', () => {
     it('should load the current deletion impact before allowing permanent deletion', () => {
         component.deleteUser('test');
 
-        const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        const request = httpMock.expectOne('/api/account/admin/users/deletion-impact');
         expect(request.request.method).toBe('POST');
         expect(request.request.body).toEqual({ logins: ['test'] });
         request.flush({
@@ -494,8 +494,8 @@ describe('UserManagementComponent', () => {
         component.deactivateInstead();
 
         // One request per previewed user, and the dialog only closes once all of them answered.
-        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' }).flush({});
-        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/2/deactivate' }).flush({});
+        httpMock.expectOne({ method: 'PATCH', url: '/api/account/admin/users/1/deactivate' }).flush({});
+        httpMock.expectOne({ method: 'PATCH', url: '/api/account/admin/users/2/deactivate' }).flush({});
 
         expect(component.deletionLoading()).toBeFalsy();
         expect(component.deletionDialogVisible()).toBeFalsy();
@@ -509,7 +509,7 @@ describe('UserManagementComponent', () => {
         component.deactivateInstead();
 
         expect(component.deletionLoading()).toBeFalsy();
-        httpMock.expectNone({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' });
+        httpMock.expectNone({ method: 'PATCH', url: '/api/account/admin/users/1/deactivate' });
     });
 
     it('should re-preview only users whose deletion plan changed', () => {
@@ -523,7 +523,7 @@ describe('UserManagementComponent', () => {
         component.selectedUsers.set([firstUser, secondUser, thirdUser]);
 
         component.deleteAllSelectedUsers();
-        const initialImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        const initialImpactRequest = httpMock.expectOne('/api/account/admin/users/deletion-impact');
         initialImpactRequest.flush({
             users: [
                 { userId: 41, login: 'first', impactFingerprint: 'first-fingerprint', totalAffectedObjects: 2, categories: [] },
@@ -536,7 +536,7 @@ describe('UserManagementComponent', () => {
         component.deletionConfirmation.set('3');
 
         component.confirmPermanentDeletion();
-        const deletionRequest = httpMock.expectOne('api/account/admin/users');
+        const deletionRequest = httpMock.expectOne('/api/account/admin/users');
         expect(deletionRequest.request.method).toBe('DELETE');
         expect(deletionRequest.request.body).toEqual({
             users: [
@@ -551,7 +551,7 @@ describe('UserManagementComponent', () => {
             { userId: 43, login: 'third', status: 'FAILED' },
         ]);
 
-        const refreshedImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        const refreshedImpactRequest = httpMock.expectOne('/api/account/admin/users/deletion-impact');
         expect(refreshedImpactRequest.request.method).toBe('POST');
         expect(refreshedImpactRequest.request.body).toEqual({ logins: ['second'] });
         refreshedImpactRequest.flush({
@@ -683,7 +683,7 @@ describe('UserManagementComponent', () => {
 
         component.deleteAllSelectedUsers();
 
-        const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        const request = httpMock.expectOne('/api/account/admin/users/deletion-impact');
         expect(request.request.method).toBe('POST');
         expect(request.request.body).toEqual({ logins: ['1', '2'] });
         request.flush({ users: [], totalAffectedObjects: 0, categories: [] });

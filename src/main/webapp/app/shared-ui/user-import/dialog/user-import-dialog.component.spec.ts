@@ -441,38 +441,25 @@ describe('UsersImportDialogComponent', () => {
         ]);
     });
 
-    it('should import admin users and map visibleRegistrationNumber in the response', () => {
+    it('should preserve registration-number-only rows and a false test-user flag in admin import', () => {
         fixture.componentRef.setInput('exam', undefined);
         fixture.componentRef.setInput('adminUserMode', true);
-        const usersToImport: ExamUserDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail' },
-            { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com' },
-        ];
-        const firstImportedUser = new User(undefined, 'alan', 'Alan', 'Turing', 'alan@example.com');
-        firstImportedUser.internal = true;
-        firstImportedUser.visibleRegistrationNumber = '3';
+        const userToImport = new ExamUserDTO();
+        userToImport.registrationNumber = '12345';
+        userToImport.isTestUser = false;
+        const unmatchedUser = new User();
+        unmatchedUser.visibleRegistrationNumber = '12345';
+        unmatchedUser.isTestUser = false;
 
-        const secondImportedUser = new User(undefined, 'grace', 'Grace', 'Hopper', 'grace@example.com');
-        secondImportedUser.internal = true;
-        secondImportedUser.visibleRegistrationNumber = '4';
+        vi.spyOn(adminUserService, 'importAll').mockReturnValue(of(new HttpResponse<User[]>({ body: [unmatchedUser] })));
 
-        const importedUsers: User[] = [firstImportedUser, secondImportedUser];
-
-        vi.spyOn(adminUserService, 'importAll').mockReturnValue(of(new HttpResponse<User[]>({ body: importedUsers })));
-
-        component.usersToImport.set(usersToImport);
+        component.usersToImport.set([userToImport]);
         component.importUsers();
 
-        expect(adminUserService.importAll).toHaveBeenCalledWith([
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
-            { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
-        ]);
+        expect(adminUserService.importAll).toHaveBeenCalledWith([{ registrationNumber: '12345', visibleRegistrationNumber: '12345', isTestUser: false }]);
         expect(component.isImporting()).toBe(false);
         expect(component.hasImported()).toBe(true);
-        expect(component.notFoundUsers).toMatchObject([
-            { registrationNumber: '3', firstName: 'Alan', lastName: 'Turing', login: 'alan', email: 'alan@example.com', visibleRegistrationNumber: '3' },
-            { registrationNumber: '4', firstName: 'Grace', lastName: 'Hopper', login: 'grace', email: 'grace@example.com', visibleRegistrationNumber: '4' },
-        ]);
+        expect(component.notFoundUsers).toMatchObject([{ registrationNumber: '12345', isTestUser: false }]);
     });
 
     it('should show a generic error when importUsers does not match any import mode', () => {

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.organization;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -185,7 +187,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
-        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
+        request.performMvcRequest(MockMvcRequestBuilders.post("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId())).andExpect(status().isOk())
+                .andExpect(content().string(""));
 
         List<OrganizationCourseDTO> courses = request.getList("/api/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
@@ -234,6 +237,22 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
                 pageableSearchUtilService.searchMapping(buildSearch("")));
         assertThat(members).hasSize(1);
         assertThat(members.get(0).id()).isEqualTo(student.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testBulkAddUsersToOrganization() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User first = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkfirst");
+        User second = userUtilService.createAndSaveUser(TEST_PREFIX + "bulksecond");
+        String usersUrl = "/api/admin/organizations/" + organization.getId() + "/users";
+
+        request.performMvcRequest(MockMvcRequestBuilders.post(usersUrl).contentType(MediaType.APPLICATION_JSON).content("""
+                {"logins":["%s","%s"]}
+                """.formatted(first.getLogin(), second.getLogin()))).andExpect(status().isOk()).andExpect(content().string(""));
+
+        List<OrganizationMemberDTO> members = request.getList(usersUrl, HttpStatus.OK, OrganizationMemberDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
+        assertThat(members).extracting(OrganizationMemberDTO::login).containsExactlyInAnyOrder(first.getLogin(), second.getLogin());
     }
 
     /**
@@ -859,7 +878,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organization.setName("Test Organization");
         organization = organizationRepo.save(organization);
 
-        final var title = request.get("/api/admin/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
-        assertThat(title).isEqualTo(organization.getName());
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations/" + organization.getId() + "/title")).andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN)).andExpect(content().string(organization.getName()));
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations/-1/title")).andExpect(status().isNotFound()).andExpect(content().string(""));
     }
 }

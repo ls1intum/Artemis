@@ -425,6 +425,258 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/admin/organizations/{organizationId}:
+    get:
+      tags: [admin-organization]
+      operationId: getOrganizationById
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Organization'}
+    put:
+      tags: [admin-organization]
+      description: Updates an organization. The body ID must match the path ID.
+      operationId: updateOrganization
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OrganizationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Organization'}
+    delete:
+      tags: [admin-organization]
+      operationId: deleteOrganization
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+  /api/account/admin/users:
+    get:
+      tags: [admin-user]
+      operationId: getAllUsers
+      parameters:
+      - name: authorities
+        in: query
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+      - name: origins
+        in: query
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+      - name: status
+        in: query
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+      - name: findWithoutCourseEnrollment
+        in: query
+        required: false
+        schema: {type: boolean}
+      - name: registrationNumbers
+        in: query
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string, default: ''}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/User'}
+    put:
+      tags: [admin-user]
+      description: Updates an existing user. The body must include the ID of that
+        user.
+      operationId: updateUser
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ManagedUserVM'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
+    post:
+      tags: [admin-user]
+      description: Creates a user. Omit the ID and omit the password to let Artemis
+        generate one for an internal account.
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ManagedUserVM'}
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+            Location:
+              description: URI of the created user
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
+    delete:
+      tags: [admin-user]
+      operationId: deleteUsers
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkUserDeletionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserDeletionResult'}
+  /api/account/admin/users/{userId}/sync-ldap:
+    put:
+      tags: [admin-user]
+      operationId: syncUserViaLdap
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1333,6 +1585,289 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/admin/organizations:
+    get:
+      tags: [admin-organization]
+      operationId: getOrganizations
+      parameters:
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string, default: ''}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: withCounts
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: sortedColumn
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Organization'}
+    post:
+      tags: [admin-organization]
+      description: Creates an organization. Omit the ID from the request body.
+      operationId: addOrganization
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OrganizationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Organization'}
+  /api/admin/organizations/{organizationId}/users:
+    get:
+      tags: [admin-organization]
+      operationId: getOrganizationUsers
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string, default: ''}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OrganizationMember'}
+    post:
+      tags: [admin-organization]
+      operationId: addUsersToOrganization
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginList'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+  /api/admin/organizations/{organizationId}/users/{userLogin}:
+    post:
+      tags: [admin-organization]
+      operationId: addUserToOrganization
+      parameters:
+      - name: userLogin
+        in: path
+        required: true
+        schema: {type: string}
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+    delete:
+      tags: [admin-organization]
+      operationId: removeUserFromOrganization
+      parameters:
+      - name: userLogin
+        in: path
+        required: true
+        schema: {type: string}
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+  /api/admin/organizations/{organizationId}/courses/{courseId}:
+    post:
+      tags: [admin-organization]
+      operationId: addCourseToOrganization
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+    delete:
+      tags: [admin-organization]
+      operationId: removeCourseFromOrganization
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+  /api/account/admin/users/import:
+    post:
+      tags: [admin-user]
+      operationId: importUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/Student'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Student'}
+  /api/account/admin/users/deletion-impact:
+    post:
+      tags: [admin-user]
+      operationId: getBulkUserDeletionImpact
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkUserDeletionImpactRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkUserDeletionImpact'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -1375,6 +1910,56 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/account/admin/users/{userId}/deactivate:
+    patch:
+      tags: [admin-user]
+      operationId: deactivateUser
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
+  /api/account/admin/users/{userId}/activate:
+    patch:
+      tags: [admin-user]
+      operationId: activateUser
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -2351,6 +2936,282 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/WorkerStatus'}
+  /api/admin/organizations/{organizationId}/users/search:
+    get:
+      tags: [admin-organization]
+      operationId: searchUsersForOrganizationRegistration
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: loginOrName
+        in: query
+        required: true
+        schema: {type: string}
+      - name: pageIndex
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 0}
+      - name: pageSize
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 10, minimum: 1}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserForRegistration'}
+  /api/admin/organizations/{organizationId}/title:
+    get:
+      tags: [admin-organization]
+      operationId: getOrganizationTitle
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
+        '404': {description: Organization not found}
+  /api/admin/organizations/{organizationId}/courses:
+    get:
+      tags: [admin-organization]
+      operationId: getOrganizationCourses
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string, default: ''}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32, default: 0, minimum: 1}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OrganizationCourse'}
+  /api/admin/organizations/users/{userId}:
+    get:
+      tags: [admin-organization]
+      operationId: getAllOrganizationsByUser
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Organization'}
+                uniqueItems: true
+  /api/account/admin/users/{login}:
+    get:
+      tags: [admin-user]
+      operationId: getUser
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/User'}
+        '404':
+          description: User not found
+          content:
+            application/problem+json:
+              schema: {type: object}
+    delete:
+      tags: [admin-user]
+      operationId: deleteUser
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PermanentUserDeletionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-artemisApp-params:
+              description: Alert parameter using the configured application header
+                prefix
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Alert message using the configured application header prefix
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserDeletionResult'}
+        '403':
+          description: Deletion forbidden
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserDeletionResult'}
+        '409':
+          description: Deletion plan changed
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserDeletionResult'}
+  /api/account/admin/users/{login}/deletion-impact:
+    get:
+      tags: [admin-user]
+      operationId: getUserDeletionImpact
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserDeletionImpact'}
+  /api/account/admin/users/{login}/course-roles:
+    get:
+      tags: [admin-user]
+      operationId: getCourseRoles
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserCourseRole'}
+        '404':
+          description: User not found
+          content:
+            application/problem+json:
+              schema: {type: object}
+  /api/account/admin/users/search:
+    get:
+      tags: [admin-user]
+      operationId: searchAllUsers
+      parameters:
+      - name: loginOrName
+        in: query
+        required: true
+        schema: {type: string, minLength: 3}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/User'}
+  /api/account/admin/users/not-enrolled:
+    get:
+      tags: [admin-user]
+      operationId: getNotEnrolledUsers
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Version:
+              description: Artemis API version when the API version filter is active
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: string}
+  /api/account/admin/users/authorities:
+    get:
+      tags: [admin-user]
+      operationId: getAuthorities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -2599,6 +3460,14 @@ components:
         applied: {type: boolean, description: Whether the action was successfully
             applied}
         summary: {type: string, description: Short summary of what was changed}
+    BulkUserDeletionImpactRequest:
+      type: object
+      properties:
+        logins:
+          type: array
+          items: {type: string, minLength: 1}
+          minItems: 1
+      required: [logins]
     DragAndDropQuestionStatistic:
       required: [type]
       type: object
@@ -3322,6 +4191,11 @@ components:
         id: {type: integer, format: int64, description: Id of the competency}
         title: {type: string, description: Title of the competency}
       required: [id]
+    PermanentUserDeletionRequest:
+      type: object
+      properties:
+        impactFingerprint: {type: string, minLength: 1}
+      required: [impactFingerprint]
     QuizSearchExam:
       type: object
       properties:
@@ -3602,6 +4476,49 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
           minItems: 1
       required: [criteria]
+    ManagedUserVM:
+      type: object
+      properties:
+        createdBy: {type: string}
+        createdDate: {type: string, format: date-time}
+        lastModifiedBy: {type: string}
+        lastModifiedDate: {type: string, format: date-time}
+        id: {type: integer, format: int64}
+        login: {type: string, maxLength: 50, minLength: 4, pattern: '^[_''.@A-Za-z0-9-]*$'}
+        name: {type: string, maxLength: 101, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        email: {type: string, format: email, maxLength: 100, minLength: 5}
+        visibleRegistrationNumber: {type: string}
+        imageUrl: {type: string, maxLength: 256, minLength: 0}
+        activated: {type: boolean}
+        langKey: {type: string, maxLength: 6, minLength: 2}
+        internal: {type: boolean}
+        authorities:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        courseRoles:
+          type: array
+          items: {$ref: '#/components/schemas/CourseAccessRights'}
+        organizations:
+          type: array
+          items: {$ref: '#/components/schemas/Organization'}
+          uniqueItems: true
+        vcsAccessToken: {type: string}
+        vcsAccessTokenExpiryDate: {type: string, format: date-time}
+        askToSetupPasskey: {type: boolean}
+        selectedLLMUsageTimestamp: {type: string, format: date-time}
+        selectedLLMUsage:
+          type: string
+          enum: [NO_AI, LOCAL_AI, CLOUD_AI]
+        password: {type: string, maxLength: 100, minLength: 8}
+        revokeCredentials: {type: boolean, default: false}
+        testUser: {type: boolean}
+        passkeySuperAdminApproved: {type: boolean}
+        loggedInWithPasskey: {type: boolean}
+        isTestUser: {type: boolean}
+      required: [login]
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -3811,10 +4728,32 @@ components:
           items: {$ref: '#/components/schemas/AuthoringRun'}
         nextBeforeId: {type: integer, format: int64}
       required: [runs]
+    CourseAccessRights:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [STUDENT, TEACHING_ASSISTANT, EDITOR, INSTRUCTOR]
+          uniqueItems: true
+      required: [courseId, roles]
     QuizSearchCourse:
       type: object
       properties:
         title: {type: string}
+    UserCourseRole:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        courseTitle: {type: string}
+        courseShortName: {type: string}
+        courseSemester: {type: string}
+        role:
+          type: string
+          enum: [STUDENT, TEACHING_ASSISTANT, EDITOR, INSTRUCTOR]
+      required: [courseId, role]
     QuizQuestionFilterVerdict:
       type: object
       description: The filter's judgement of one generated quiz question on one failure
@@ -4236,12 +5175,35 @@ components:
           items: {$ref: '#/components/schemas/SubmittedAnswerFromStudent'}
           uniqueItems: true
       required: [submittedAnswers]
+    BulkUserDeletionRequest:
+      type: object
+      properties:
+        users:
+          type: array
+          items: {$ref: '#/components/schemas/UserDeletionConfirmation'}
+          minItems: 1
+      required: [users]
     WorkloadCapability:
       type: object
       properties:
         workload: {type: string}
         version: {type: integer, format: int32}
         profile: {type: string}
+    UserDeletionImpact:
+      type: object
+      properties:
+        userId: {type: integer, format: int64}
+        login: {type: string}
+        automaticEligible: {type: boolean}
+        legacyDeleted: {type: boolean}
+        retentionOverrideRequired: {type: boolean}
+        totalAffectedObjects: {type: integer, format: int64}
+        impactFingerprint: {type: string}
+        categories:
+          type: array
+          items: {$ref: '#/components/schemas/UserDeletionImpactCategory'}
+      required: [automaticEligible, categories, impactFingerprint, legacyDeleted,
+        login, retentionOverrideRequired, totalAffectedObjects, userId]
     ResultAfterEvaluationWithSubmission:
       type: object
       properties:
@@ -4516,6 +5478,19 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    OrganizationMember:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        email: {type: string}
+    OrganizationCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
     QuizSubmissionAfterEvaluation:
       type: object
       properties:
@@ -4657,6 +5632,16 @@ components:
         id: {type: integer, format: int64}
         dragItemTempId: {type: integer, format: int64}
         dropLocationTempId: {type: integer, format: int64}
+    UserDeletionResult:
+      type: object
+      properties:
+        userId: {type: integer, format: int64}
+        login: {type: string}
+        status:
+          type: string
+          enum: [DELETED, PLAN_CHANGED, BLOCKED, FORBIDDEN, FAILED]
+        reason: {type: string}
+      required: [login, status]
     AnswerOptionCreate:
       type: object
       properties:
@@ -4750,6 +5735,18 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    Organization:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        url: {type: string}
+        description: {type: string}
+        emailPattern: {type: string}
+        logoUrl: {type: string}
+        numberOfUsers: {type: integer, format: int64}
+        numberOfCourses: {type: integer, format: int64}
     QuizExerciseWithQuestions:
       type: object
       properties:
@@ -4814,6 +5811,12 @@ components:
         invalid: {type: boolean}
         dragItem: {$ref: '#/components/schemas/DragItem'}
         dropLocation: {$ref: '#/components/schemas/DropLocation'}
+    UserDeletionConfirmation:
+      type: object
+      properties:
+        login: {type: string, minLength: 1}
+        impactFingerprint: {type: string, minLength: 1}
+      required: [impactFingerprint, login]
     ProblemStatementGenerationResponse:
       type: object
       description: Response containing generated problem statement
@@ -4852,6 +5855,17 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    UserForRegistration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        email: {type: string}
+        registrationNumber: {type: string}
+        profilePictureUrl: {type: string}
+        isRegistered: {type: boolean}
+      required: [id, isRegistered, login, name]
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -4936,6 +5950,17 @@ components:
         title: {type: string}
         course: {$ref: '#/components/schemas/QuizSearchCourse'}
         exerciseGroup: {$ref: '#/components/schemas/QuizSearchExerciseGroup'}
+    OrganizationRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string, maxLength: 100, minLength: 0}
+        shortName: {type: string, maxLength: 50, minLength: 0}
+        url: {type: string}
+        description: {type: string}
+        logoUrl: {type: string}
+        emailPattern: {type: string, minLength: 1}
+      required: [emailPattern, name, shortName]
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -5015,6 +6040,17 @@ components:
           type: array
           items: {$ref: '#/components/schemas/AnswerOptionWithoutSolution'}
         singleChoice: {type: boolean}
+    BulkUserDeletionImpact:
+      type: object
+      properties:
+        users:
+          type: array
+          items: {$ref: '#/components/schemas/UserDeletionImpact'}
+        totalAffectedObjects: {type: integer, format: int64}
+        categories:
+          type: array
+          items: {$ref: '#/components/schemas/UserDeletionImpactCategory'}
+      required: [categories, totalAffectedObjects, users]
     AnswerOptionReEvaluate:
       type: object
       properties:
@@ -5139,6 +6175,14 @@ components:
         maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
         maxJobDuration: {type: string, format: duration}
       required: [mode]
+    LoginList:
+      type: object
+      properties:
+        logins:
+          type: array
+          items: {type: string, minLength: 1}
+          minItems: 1
+      required: [logins]
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -5160,6 +6204,18 @@ components:
         invalid: {type: boolean}
         explanation: {type: string}
         isCorrect: {type: boolean}
+    UserDeletionImpactCategory:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [ACCOUNT, ASSESSMENT, COMMUNICATION, COURSE_MEMBERSHIP, COURSE_REQUEST,
+            EXAM, LEARNING_ANALYTICS, LTI, PARTICIPATION, PLAGIARISM, TEAM, TUTORIAL_GROUP]
+        action:
+          type: string
+          enum: [DELETE, REMOVE_MEMBERSHIP, DETACH_ACTOR]
+        count: {type: integer, format: int64}
+      required: [action, category, count]
     DomainObject:
       type: object
       properties:
@@ -5461,9 +6517,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5610,6 +6666,47 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    User:
+      type: object
+      properties:
+        createdBy: {type: string}
+        createdDate: {type: string, format: date-time}
+        lastModifiedBy: {type: string}
+        lastModifiedDate: {type: string, format: date-time}
+        id: {type: integer, format: int64}
+        login: {type: string, maxLength: 50, minLength: 4, pattern: '^[_''.@A-Za-z0-9-]*$'}
+        name: {type: string, maxLength: 101, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        email: {type: string, format: email, maxLength: 100, minLength: 5}
+        visibleRegistrationNumber: {type: string}
+        imageUrl: {type: string, maxLength: 256, minLength: 0}
+        activated: {type: boolean}
+        langKey: {type: string, maxLength: 6, minLength: 2}
+        internal: {type: boolean}
+        authorities:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        courseRoles:
+          type: array
+          items: {$ref: '#/components/schemas/CourseAccessRights'}
+        organizations:
+          type: array
+          items: {$ref: '#/components/schemas/Organization'}
+          uniqueItems: true
+        vcsAccessToken: {type: string}
+        vcsAccessTokenExpiryDate: {type: string, format: date-time}
+        askToSetupPasskey: {type: boolean}
+        selectedLLMUsageTimestamp: {type: string, format: date-time}
+        selectedLLMUsage:
+          type: string
+          enum: [NO_AI, LOCAL_AI, CLOUD_AI]
+        testUser: {type: boolean}
+        passkeySuperAdminApproved: {type: boolean}
+        loggedInWithPasskey: {type: boolean}
+        isTestUser: {type: boolean}
+      required: [login]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object

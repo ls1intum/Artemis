@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One role a user holds in one course, with the minimal course information needed to display and link it.
@@ -17,5 +18,6 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
  * @param role            the role the user holds in the course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "courseId", "role" })
 public record UserCourseRoleDTO(long courseId, @Nullable String courseTitle, @Nullable String courseShortName, @Nullable String courseSemester, CourseRole role) {
 }

@@ -518,7 +518,7 @@ describe('UserManagementUpdateComponent', () => {
             await component.save();
 
             const httpMock = TestBed.inject(HttpTestingController);
-            const request = httpMock.expectOne({ method: 'POST', url: 'api/account/admin/users' });
+            const request = httpMock.expectOne({ method: 'POST', url: '/api/account/admin/users' });
             expect(request.request.serializeBody()).not.toContain('"password"');
             request.flush({ id: 123, login: 'random-password-user', internal: true }, { status: 201, statusText: 'Created' });
             expect(component.isSaving()).toBe(false);

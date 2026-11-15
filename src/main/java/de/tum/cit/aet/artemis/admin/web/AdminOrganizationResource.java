@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -49,6 +50,12 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for administrating the Organization entities
@@ -93,6 +100,9 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization where the course should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, content = @Content)
     @PostMapping("organizations/{organizationId}/courses/{courseId}")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         log.debug("REST request to add course to organization : {}", organizationId);
@@ -110,6 +120,9 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization from with the course should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, content = @Content)
     @DeleteMapping("organizations/{organizationId}/courses/{courseId}")
     public ResponseEntity<Void> removeCourseFromOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
@@ -127,6 +140,8 @@ public class AdminOrganizationResource {
      * @param request        the request body containing the logins of the users to add
      * @return empty ResponseEntity with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, content = @Content)
     @PostMapping("organizations/{organizationId}/users")
     public ResponseEntity<Void> addUsersToOrganization(@PathVariable Long organizationId, @RequestBody @Valid LoginListDTO request) {
         organizationService.addUsersToOrganization(organizationId, request.logins());
@@ -141,6 +156,9 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization where the user should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, content = @Content)
     @PostMapping("organizations/{organizationId}/users/{userLogin}")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         User user = userRepository.getUserByLoginElseThrow(userLogin);
@@ -161,6 +179,9 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization from with the user should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, content = @Content)
     @DeleteMapping("organizations/{organizationId}/users/{userLogin}")
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         log.debug("REST request to remove course to organization : {}", organizationId);
@@ -177,6 +198,9 @@ public class AdminOrganizationResource {
      * @param organizationDTO the organization data to add
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
+    @Operation(description = "Creates an organization. Omit the ID from the request body.")
     @PostMapping("organizations")
     public ResponseEntity<OrganizationDTO> addOrganization(@Valid @RequestBody OrganizationRequestDTO organizationDTO) {
         log.debug("REST request to add new organization : {}", organizationDTO);
@@ -195,6 +219,9 @@ public class AdminOrganizationResource {
      * @param organizationDTO the updated organization data
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
+    @Operation(description = "Updates an organization. The body ID must match the path ID.")
     @PutMapping("organizations/{organizationId}")
     public ResponseEntity<OrganizationDTO> updateOrganization(@PathVariable Long organizationId, @Valid @RequestBody OrganizationRequestDTO organizationDTO) {
         log.debug("REST request to update organization : {}", organizationDTO);
@@ -214,6 +241,9 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization to remove
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, content = @Content)
     @DeleteMapping("organizations/{organizationId}")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
         log.debug("REST request to delete organization : {}", organizationId);
@@ -229,8 +259,12 @@ public class AdminOrganizationResource {
      *                       pass {@code true} to load counts via JOIN aggregation
      * @return ResponseEntity containing a page of organization DTOs with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching entries", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", description = "Pagination links", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("organizations")
-    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid @ParameterObject SearchTermPageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "false") boolean withCounts) {
         final Page<OrganizationDTO> page = organizationService.getAllOrganizations(search, withCounts);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -243,8 +277,11 @@ public class AdminOrganizationResource {
      * @param search         the search criteria containing the search term and pagination/sorting info
      * @return ResponseEntity containing a page of member DTOs with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching entries", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", description = "Pagination links", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("organizations/{organizationId}/users")
-    public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid @ParameterObject SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get users of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationMemberDTO> page = organizationService.getUsersByOrganizationId(organizationId, search);
@@ -259,8 +296,12 @@ public class AdminOrganizationResource {
      * @param search         the search criteria containing the search term and pagination/sorting info
      * @return ResponseEntity containing a page of course DTOs with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching entries", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", description = "Pagination links", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("organizations/{organizationId}/courses")
-    public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId,
+            @Valid @ParameterObject SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get courses of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
@@ -277,9 +318,13 @@ public class AdminOrganizationResource {
      * @param pageSize       number of results per page (default 10)
      * @return ResponseEntity containing a list of matching users with pagination headers
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching entries", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", description = "Pagination links", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("organizations/{organizationId}/users/search")
     public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForOrganizationRegistration(@PathVariable long organizationId, @RequestParam String loginOrName,
-            @RequestParam(defaultValue = "0") int pageIndex, @RequestParam(defaultValue = "10") int pageSize) {
+            @Parameter(schema = @Schema(implementation = Integer.class, minimum = "0", defaultValue = "0")) @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(schema = @Schema(implementation = Integer.class, minimum = "1", defaultValue = "10")) @RequestParam(defaultValue = "10") int pageSize) {
         if (pageIndex < 0 || pageSize < 1) {
             throw new BadRequestAlertException("Invalid pagination parameters", ENTITY_NAME, "invalidPagination");
         }
@@ -323,6 +368,8 @@ public class AdminOrganizationResource {
      * @return the title of the organization wrapped in an ResponseEntity or 404 Not Found if no organization with that id exists
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "404", description = "Organization not found", content = @Content)
     @GetMapping("organizations/{organizationId}/title")
     public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {
         final var title = organizationRepository.getOrganizationTitle(organizationId);

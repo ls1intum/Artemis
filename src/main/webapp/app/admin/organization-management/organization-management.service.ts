@@ -1,21 +1,25 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, tap, throwError } from 'rxjs';
 
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
-import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { PageableResult, SearchTermPageableSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
+import { UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+
+import { AdminOrganizationApi } from 'app/openapi/api/admin-organization-api';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { OrganizationRequest } from 'app/openapi/model/organization-request';
 
 @Service()
 export class OrganizationManagementService {
+    private readonly adminOrganizationApi = inject(AdminOrganizationApi);
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/account/organizations';
-    public adminResourceUrl = 'api/admin/organizations';
 
     /**
      * Send GET request to retrieve a paginated and filtered list of organizations
@@ -25,25 +29,10 @@ export class OrganizationManagementService {
      * @returns an observable emitting a pageable result containing the matching organizations and total element count
      */
     getOrganizations(params: SearchTermPageableSearch, withCounts = false): Observable<PageableResult<Organization>> {
-        return this.http
-            .get<Organization[]>(this.adminResourceUrl, {
-                params: {
-                    page: params.page,
-                    pageSize: params.pageSize,
-                    sortingOrder: params.sortingOrder,
-                    sortedColumn: params.sortedColumn,
-                    searchTerm: params.searchTerm,
-                    withCounts,
-                },
-                observe: 'response',
-            })
-            .pipe(
-                tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+        return this.adminOrganizationApi.getOrganizations(params.pageSize, params.searchTerm, params.page, params.sortingOrder, withCounts, params.sortedColumn).pipe(
+            tap((res) => res.body?.forEach((org) => this.sendTitlesToEntityTitleService(org))),
+            map(toPageableResult),
+        );
     }
 
     /**
@@ -51,7 +40,7 @@ export class OrganizationManagementService {
      * @param organizationId
      */
     getOrganizationById(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.adminResourceUrl}/${organizationId}`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
+        return this.adminOrganizationApi.getOrganizationById(organizationId).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -67,7 +56,7 @@ export class OrganizationManagementService {
      * @param userId the id of the user to retrieve the organizations from
      */
     getOrganizationsByUser(userId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.adminResourceUrl}/users/${userId}`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+        return this.adminOrganizationApi.getAllOrganizationsByUser(userId).pipe(tap((orgs) => orgs?.forEach((org) => this.sendTitlesToEntityTitleService(org))));
     }
 
     /**
@@ -75,7 +64,11 @@ export class OrganizationManagementService {
      * @param organization the organization to update
      */
     update(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.put<Organization>(`${this.adminResourceUrl}/${organization.id}`, organization, { observe: 'response' });
+        const request = this.organizationRequest(organization);
+        if (!request || organization.id === undefined) {
+            return throwError(() => new Error('Updating an organization requires its ID, name, short name and email pattern.'));
+        }
+        return this.adminOrganizationApi.updateOrganization(organization.id, request);
     }
 
     /**
@@ -83,7 +76,11 @@ export class OrganizationManagementService {
      * @param organization the organization to add
      */
     add(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.post<Organization>(`${this.adminResourceUrl}`, organization, { observe: 'response' });
+        const request = this.organizationRequest(organization);
+        if (!request) {
+            return throwError(() => new Error('Creating an organization requires a name, short name and email pattern.'));
+        }
+        return this.adminOrganizationApi.addOrganization(request);
     }
 
     /**
@@ -91,7 +88,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove
      */
     deleteOrganization(organizationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}`, { observe: 'response' });
+        return this.adminOrganizationApi.deleteOrganization(organizationId);
     }
 
     /**
@@ -100,7 +97,7 @@ export class OrganizationManagementService {
      * @param userLogin the user to remove
      */
     removeUserFromOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
+        return this.adminOrganizationApi.removeUserFromOrganization(userLogin, organizationId);
     }
 
     /**
@@ -109,7 +106,7 @@ export class OrganizationManagementService {
      * @param userLogin the user to add
      */
     addUserToOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
+        return this.adminOrganizationApi.addUserToOrganization(userLogin, organizationId);
     }
 
     /**
@@ -118,7 +115,7 @@ export class OrganizationManagementService {
      * @param courseId the id of the course to add
      */
     addCourseToOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/courses/${courseId}`, {}, { observe: 'response' });
+        return this.adminOrganizationApi.addCourseToOrganization(courseId, organizationId);
     }
 
     /**
@@ -127,7 +124,7 @@ export class OrganizationManagementService {
      * @param courseId the id of the course to remove
      */
     removeCourseFromOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}/courses/${courseId}`, { observe: 'response' });
+        return this.adminOrganizationApi.removeCourseFromOrganization(courseId, organizationId);
     }
 
     /**
@@ -137,18 +134,9 @@ export class OrganizationManagementService {
      * @returns an observable emitting a pageable result containing the matching users and total element count
      */
     getOrganizationUsers(organizationId: number, params: SearchTermPageableSearch): Observable<PageableResult<User>> {
-        return this.http
-            .get<User[]>(`${this.adminResourceUrl}/${organizationId}/users`, {
-                params: {
-                    page: params.page,
-                    pageSize: params.pageSize,
-                    sortingOrder: params.sortingOrder,
-                    sortedColumn: params.sortedColumn,
-                    searchTerm: params.searchTerm,
-                },
-                observe: 'response',
-            })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+        return this.adminOrganizationApi
+            .getOrganizationUsers(organizationId, params.pageSize, params.searchTerm, params.page, params.sortingOrder, params.sortedColumn)
+            .pipe(map((response) => toPageableResult(response.clone({ body: response.body?.map((member) => hydrate(new User(), member)) ?? null }))));
     }
 
     /**
@@ -158,18 +146,9 @@ export class OrganizationManagementService {
      * @returns an observable emitting a pageable result containing the matching courses and total element count
      */
     getOrganizationCourses(organizationId: number, params: SearchTermPageableSearch): Observable<PageableResult<Course>> {
-        return this.http
-            .get<Course[]>(`${this.adminResourceUrl}/${organizationId}/courses`, {
-                params: {
-                    page: params.page,
-                    pageSize: params.pageSize,
-                    sortingOrder: params.sortingOrder,
-                    sortedColumn: params.sortedColumn,
-                    searchTerm: params.searchTerm,
-                },
-                observe: 'response',
-            })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+        return this.adminOrganizationApi
+            .getOrganizationCourses(organizationId, params.pageSize, params.searchTerm, params.page, params.sortingOrder, params.sortedColumn)
+            .pipe(map(toPageableResult));
     }
 
     /**
@@ -179,7 +158,7 @@ export class OrganizationManagementService {
      * @param logins         the logins of the users to add
      */
     addUsersToOrganization(organizationId: number, logins: string[]): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users`, { logins }, { observe: 'response' });
+        return this.adminOrganizationApi.addUsersToOrganization(organizationId, { logins });
     }
 
     /**
@@ -193,17 +172,14 @@ export class OrganizationManagementService {
      * @returns an observable emitting a search result containing matching users and total count
      */
     searchUsersForOrganizationRegistration(organizationId: number, loginOrName: string, pageIndex: number, pageSize: number): Observable<UserSearchResult> {
-        return this.http
-            .get<UserForRegistration[]>(`${this.adminResourceUrl}/${organizationId}/users/search`, {
-                params: { loginOrName, pageIndex, pageSize },
-                observe: 'response',
-            })
-            .pipe(
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+        return this.adminOrganizationApi.searchUsersForOrganizationRegistration(organizationId, loginOrName, pageIndex, pageSize).pipe(map(toPageableResult));
+    }
+
+    private organizationRequest({ id, name, shortName, emailPattern, url, description, logoUrl }: Organization): OrganizationRequest | undefined {
+        if (name === undefined || shortName === undefined || emailPattern === undefined) {
+            return undefined;
+        }
+        return { id, name, shortName, emailPattern, url, description, logoUrl };
     }
 
     private sendTitlesToEntityTitleService(org: Organization | undefined | null) {

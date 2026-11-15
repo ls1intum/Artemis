@@ -100,7 +100,7 @@ describe('UserManagementDetailComponent', () => {
             const roles = detail.debugElement.query(By.directive(UserCourseRolesComponent));
             expect(roles).not.toBeNull();
             expect(roles.componentInstance.login()).toBe('user');
-            httpMock.expectOne({ method: 'GET', url: 'api/account/admin/users/user/course-roles' }).flush([]);
+            httpMock.expectOne({ method: 'GET', url: '/api/account/admin/users/user/course-roles' }).flush([]);
             httpMock.verify();
         });
     });
