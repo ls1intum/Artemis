@@ -32,7 +32,7 @@ const originalResizeObserver = globalThis.ResizeObserver;
 
 @Component({
     template: `
-        <jhi-markdown-editor-monaco>
+        <jhi-markdown-editor-monaco [showVisualButton]="true">
             <div id="previewMonaco"><span class="preview-probe"></span></div>
         </jhi-markdown-editor-monaco>
     `,
@@ -1046,10 +1046,11 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     describe('layout', () => {
         it('should re-layout the editor when an observed element is resized', () => {
-            let resizeCallback: ResizeObserverCallback | undefined;
+            // The tab list of the kit observes its own size, so every observer reports to the same list.
+            const resizeCallbacks: ResizeObserverCallback[] = [];
             globalThis.ResizeObserver = class {
                 constructor(callback: ResizeObserverCallback) {
-                    resizeCallback = callback;
+                    resizeCallbacks.push(callback);
                 }
                 observe() {}
                 unobserve() {}
@@ -1058,7 +1059,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             fixture.detectChanges();
             const adjustSpy = vi.spyOn(comp, 'adjustEditorDimensions');
 
-            resizeCallback!([], comp.resizeObserver!);
+            resizeCallbacks.forEach((callback) => callback([], comp.resizeObserver!));
 
             expect(adjustSpy).toHaveBeenCalledOnce();
         });
