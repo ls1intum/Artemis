@@ -1,20 +1,17 @@
 import { Component, OnDestroy, OnInit, Signal, effect, inject, model, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, map, tap } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
-    styleUrls: ['./exercise-update-plagiarism.component.scss'],
     standalone: true,
-    imports: [ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [ReactiveFormsModule, TranslateDirective, HelpIconComponent, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiTagComponent],
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     readonly fb = inject(FormBuilder);
@@ -27,7 +24,6 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     private formSubscription: Subscription;
 
     isCPCCollapsed = true;
-    readonly faQuestionCircle = faQuestionCircle;
     isFormValid = signal(false);
     /** Names of the controls that fail validation, as a signal so that a host's computed() follows them. */
     readonly invalidControlNames: Signal<string[]>;

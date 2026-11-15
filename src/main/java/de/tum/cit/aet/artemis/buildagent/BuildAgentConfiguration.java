@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -72,6 +73,9 @@ public class BuildAgentConfiguration {
 
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
+
+    @Value("${artemis.continuous-integration.allow-privilege-escalation:true}")
+    boolean allowPrivilegeEscalation = true;
 
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
     int pauseAfterConsecutiveFailedJobs;
@@ -152,8 +156,34 @@ public class BuildAgentConfiguration {
         log.info("Using build job container docker host config with CPU(s): {}, memory: {}, memory swap: {}, pids limit: {}.", cpuCount, formatMemory(memory),
                 formatMemory(memorySwap), pidsLimit);
 
-        return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
-                .withAutoRemove(true);
+        return restrictPrivileges(HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
+                .withPidsLimit(pidsLimit).withAutoRemove(true), allowPrivilegeEscalation);
+    }
+
+    /**
+     * Whether processes in build containers may gain privileges through setuid programs, see
+     * {@code artemis.continuous-integration.allow-privilege-escalation}.
+     *
+     * @return true if the restriction is lifted by the administrator
+     */
+    public boolean isPrivilegeEscalationAllowed() {
+        return allowPrivilegeEscalation;
+    }
+
+    /**
+     * Limits what processes of a build container may do. The capabilities that the container runtime grants by default but that no build needs are removed. Unless the
+     * administrator allows it with {@code artemis.continuous-integration.allow-privilege-escalation}, processes also cannot gain privileges through setuid programs such as
+     * {@code sudo}. Network access, file ownership and the ordinary use of package managers are not affected.
+     *
+     * @param hostConfig               the configuration of the container
+     * @param allowPrivilegeEscalation whether setuid programs may still raise privileges, for example {@code sudo} for a non-root user
+     * @return the same configuration
+     */
+    public static HostConfig restrictPrivileges(HostConfig hostConfig, boolean allowPrivilegeEscalation) {
+        if (allowPrivilegeEscalation) {
+            return hostConfig.withCapDrop(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP);
+        }
+        return hostConfig.withCapDrop(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE).withSecurityOpts(List.of("no-new-privileges"));
     }
 
     /**
