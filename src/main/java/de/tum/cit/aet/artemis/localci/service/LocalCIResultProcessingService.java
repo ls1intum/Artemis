@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -246,6 +247,30 @@ public class LocalCIResultProcessingService {
         }
     }
 
+    /**
+     * Checks that the ids that a queued build job declares belong together in the database: the exercise of the participation is the exercise of the job, the course of that
+     * exercise is the course of the job, and an existing record of the job id is a record of the same participation and exercise.
+     * <p>
+     * The processing list of the build agents is deliberately not consulted: an agent removes a job from it before it delivers the result.
+     */
+    private boolean isConsistentWithDatabase(BuildJobQueueItem buildJob, Participation participation) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+            return false;
+        }
+        ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+        if (exercise == null || !Objects.equals(exercise.getId(), buildJob.exerciseId())) {
+            return false;
+        }
+        Optional<Long> courseId = programmingExerciseRepository.findCourseIdById(buildJob.exerciseId());
+        if (courseId.isEmpty() || !Objects.equals(courseId.get(), buildJob.courseId())) {
+            return false;
+        }
+        return buildJobRepository.findByBuildJobId(buildJob.id())
+                .map(existing -> (existing.getParticipationId() == null || Objects.equals(existing.getParticipationId(), buildJob.participationId()))
+                        && (existing.getExerciseId() == null || Objects.equals(existing.getExerciseId(), buildJob.exerciseId())))
+                .orElse(true);
+    }
+
     private void processResultLocked(ResultQueueItem resultQueueItem) {
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
@@ -268,6 +293,12 @@ public class LocalCIResultProcessingService {
 
         SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
+        if (participationOptional.isPresent() && !isConsistentWithDatabase(buildJob, participationOptional.get())) {
+            // The ids of the item come from the queue, so a result is processed only for the participation, exercise and course that the database holds together
+            log.error("Dropping the result of build job {}: its participation {}, exercise {} and course {} do not belong together", buildJob.id(), buildJob.participationId(),
+                    buildJob.exerciseId(), buildJob.courseId());
+            return;
+        }
 
         try {
             if (participationOptional.isPresent()) {

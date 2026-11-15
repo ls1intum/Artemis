@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.localci.dto.BuildJobStatisticsDTO;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -89,6 +90,8 @@ class LocalCIResultProcessingServiceTest {
     private static final long PARTICIPATION_ID = 10L;
 
     private static final long EXERCISE_ID = 3L;
+
+    private static final long COURSE_ID = 1L;
 
     private static final java.util.UUID LISTENER_ID = java.util.UUID.randomUUID();
 
@@ -169,6 +172,11 @@ class LocalCIResultProcessingServiceTest {
         lenient().when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.of(resultProcessingPermit));
         lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(followUpProcessingPermit);
         lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
+        lenient().when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenReturn(Optional.of(COURSE_ID));
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(any())).thenAnswer(invocation -> {
+            ProgrammingExerciseParticipation loaded = invocation.getArgument(0);
+            return loaded.getProgrammingExercise();
+        });
         lenient().when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredResultQueue);
     }
 
@@ -322,6 +330,47 @@ class LocalCIResultProcessingServiceTest {
         ArgumentCaptor<BuildResult> graded = ArgumentCaptor.captor();
         verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), graded.capture(), anyBoolean());
         assertThat(graded.getValue().jobs().getFirst().successfulTests()).hasSize(BuildResultLimits.MAX_TESTS);
+    }
+
+    @Test
+    void aResultWhoseParticipationBelongsToAnotherExerciseIsDroppedBeforeItIsGraded() {
+        ProgrammingExercise otherExercise = new ProgrammingExercise();
+        otherExercise.setId(EXERCISE_ID + 1);
+        participation.setProgrammingExercise(otherExercise);
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aResultWhoseCourseIsNotTheCourseOfTheExerciseIsDropped() {
+        when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenReturn(Optional.of(COURSE_ID + 1));
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aResultWhoseJobIdBelongsToAnotherParticipationIsDropped() {
+        BuildJob recorded = new BuildJob();
+        recorded.setParticipationId(PARTICIPATION_ID + 1);
+        recorded.setExerciseId(EXERCISE_ID);
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
     }
 
     // --- lifecycle and health --------------------------------------------------------------------------------------
@@ -529,6 +578,7 @@ class LocalCIResultProcessingServiceTest {
         otherParticipation.setId(11L);
         otherParticipation.setProgrammingExercise(otherExercise);
         when(participationRepository.findWithProgrammingExerciseById(11L)).thenReturn(Optional.of(otherParticipation));
+        when(programmingExerciseRepository.findCourseIdById(4L)).thenReturn(Optional.of(COURSE_ID));
         withSavedBuildJob();
         when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
         ResultQueueItem busy = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
