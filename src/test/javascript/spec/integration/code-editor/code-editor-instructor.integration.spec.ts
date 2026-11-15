@@ -36,6 +36,7 @@ import {
     CodeEditorRepositoryService,
 } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -175,7 +176,7 @@ describe('CodeEditorInstructorIntegration', () => {
         const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
         const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-        const resultService = TestBed.inject(ResultService);
+        const resultApi = TestBed.inject(ResultApi);
         const buildLogService = TestBed.inject(CodeEditorBuildLogService);
         const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         const programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
@@ -192,7 +193,7 @@ describe('CodeEditorInstructorIntegration', () => {
         checkIfRepositoryIsCleanStub = vi.spyOn(codeEditorRepositoryService, 'getStatus');
         getRepositoryContentStub = vi.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails');
         getLatestResultWithFeedbacksStub = vi
             .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
             .mockReturnValue(throwError(() => new Error('no result')));
@@ -323,8 +324,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // Submission could be built
         expect(getBuildLogsStub).not.toHaveBeenCalled();
-        // Once called by each build-output & instructions
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(2);
+        // The build output attaches the loaded details to the result, so the instructions find them and do not load them again
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
 
         expect(comp.codeEditorContainer()!.grid()).toBeDefined(); // Have to use this as it's a component
         expect(comp.codeEditorContainer()!.fileBrowser()).toBeDefined(); // Have to use this as it's a component

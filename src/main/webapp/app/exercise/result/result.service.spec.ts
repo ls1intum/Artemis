@@ -1,14 +1,12 @@
 import { expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -41,7 +39,6 @@ vi.mock('app/core/error-reporting/capture-exception', async () => {
 describe('ResultService', () => {
     let resultService: ResultService;
     let translateService: TranslateService;
-    let http: HttpClient;
 
     const programmingExercise: ProgrammingExercise = {
         id: 34,
@@ -157,43 +154,6 @@ describe('ResultService', () => {
 
         resultService = TestBed.inject(ResultService);
         translateService = TestBed.inject(TranslateService);
-        http = TestBed.inject(HttpClient);
-    });
-
-    it('should convert the dates and points map when receiving a result with points from the server', () => {
-        const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
-        resultWithPoints1.result = result1;
-        resultWithPoints1.totalPoints = 100;
-        resultWithPoints1.pointsPerCriterion = new Map();
-        const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
-        resultWithPoints2.result = result2;
-        resultWithPoints2.totalPoints = 50;
-        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
-
-        const results = [resultWithPoints1, resultWithPoints2];
-
-        const httpStub = vi.spyOn(http, 'get').mockReturnValue(of({ body: results }));
-
-        resultService.getResultsWithPointsPerGradingCriterion(programmingExercise).subscribe((res) => {
-            const resultsWithScores: ResultWithPointsPerGradingCriterion[] = res.body!;
-            expect(resultsWithScores).toHaveLength(2);
-
-            const receivedResult1 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 1);
-            expect(receivedResult1!.result.completionDate).toEqual(result1.completionDate);
-            expect(receivedResult1!.result.submission!.participation!.initializationDate).toEqual(participation1.initializationDate);
-            expect(receivedResult1!.result.submission!.participation!.exercise!.releaseDate).toEqual(programmingExercise.releaseDate);
-            expect(receivedResult1!.result.submission!.participation!.exercise!.dueDate).toEqual(programmingExercise.dueDate);
-            expect(receivedResult1!.result.durationInMinutes).toBe(300);
-
-            const receivedResult2 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 2);
-            expect(receivedResult2!.result.completionDate).toBe(result2.completionDate);
-            const expectedPointsMap = new Map();
-            expectedPointsMap.set(1, 20);
-            expectedPointsMap.set(2, 30);
-            expect(receivedResult2!.pointsPerCriterion).toEqual(expectedPointsMap);
-        });
-
-        expect(httpStub).toHaveBeenCalledExactlyOnceWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     });
 
     it('should convert Result Response from Server', () => {

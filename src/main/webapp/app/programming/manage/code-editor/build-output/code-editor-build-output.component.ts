@@ -17,7 +17,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
@@ -30,7 +31,7 @@ import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/e
 })
 export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     private buildLogService = inject(CodeEditorBuildLogService);
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private submissionService = inject(CodeEditorSubmissionService);
 
@@ -220,10 +221,9 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
-            map((res) => res?.body ?? undefined),
-            map((feedbacks: Feedback[] | undefined) => {
-                result.feedbacks = feedbacks;
+        return this.resultApi.getResultDetails(participation.id!, result.id!).pipe(
+            map((feedbacks) => {
+                result.feedbacks = toFeedbacksOfResult(feedbacks, result);
                 return result;
             }),
             catchError(() => of(result)),
