@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Pageable;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -74,8 +74,8 @@ class PlagiarismAccessServiceTest {
 
     @Test
     void findComparedCommitHash_asksForTheNewestRowOnly() {
-        when(submissionRepository.findComparedCommitHashes(EXERCISE_ID, COMPARED_ID, Limit.of(1))).thenReturn(List.of("newest"));
-        when(submissionRepository.findComparedCommitHashes(OTHER_EXERCISE_ID, COMPARED_ID, Limit.of(1))).thenReturn(List.of());
+        when(submissionRepository.findComparedCommitHashes(EXERCISE_ID, COMPARED_ID, Pageable.ofSize(1))).thenReturn(List.of("newest"));
+        when(submissionRepository.findComparedCommitHashes(OTHER_EXERCISE_ID, COMPARED_ID, Pageable.ofSize(1))).thenReturn(List.of());
 
         assertThat(service.findComparedCommitHash(EXERCISE_ID, COMPARED_ID)).contains("newest");
         assertThat(service.findComparedCommitHash(OTHER_EXERCISE_ID, COMPARED_ID)).isEmpty();
@@ -84,7 +84,7 @@ class PlagiarismAccessServiceTest {
     @Test
     void findComparisonCreatedDate_asksForTheNewestRowOnly() {
         Instant created = Instant.parse("2026-01-01T10:00:00Z");
-        when(submissionRepository.findComparisonCreatedDates(EXERCISE_ID, COMPARED_ID, Limit.of(1))).thenReturn(List.of(created));
+        when(submissionRepository.findComparisonCreatedDates(EXERCISE_ID, COMPARED_ID, Pageable.ofSize(1))).thenReturn(List.of(created));
 
         assertThat(service.findComparisonCreatedDate(EXERCISE_ID, COMPARED_ID)).contains(created);
         assertThat(service.findComparisonCreatedDate(OTHER_EXERCISE_ID, COMPARED_ID)).isEmpty();

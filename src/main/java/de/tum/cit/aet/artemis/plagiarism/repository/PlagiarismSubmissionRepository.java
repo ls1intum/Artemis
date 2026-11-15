@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -55,7 +55,7 @@ public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<Pla
                 AND submission.commitHash IS NOT NULL
             ORDER BY submission.id DESC
             """)
-    List<String> findComparedCommitHashes(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId, Limit limit);
+    List<String> findComparedCommitHashes(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId, Pageable limit);
 
     /**
      * The creation dates of the plagiarism results that compared a participation of the exercise, newest first.
@@ -74,7 +74,7 @@ public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<Pla
                 AND submission.submissionId = :participationId
             ORDER BY result.createdDate DESC, submission.id DESC
             """)
-    List<Instant> findComparisonCreatedDates(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId, Limit limit);
+    List<Instant> findComparisonCreatedDates(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId, Pageable limit);
 
     /**
      * One side of a comparison with its elements loaded. The two sides are read one at a time because their element

@@ -11,7 +11,6 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -93,7 +92,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                 AND ps.submissionDate <= :date
             ORDER BY ps.submissionDate DESC, ps.id DESC
             """)
-    List<String> findCommitHashesSubmittedUntil(@Param("participationId") long participationId, @Param("date") ZonedDateTime date, Limit limit);
+    List<String> findCommitHashesSubmittedUntil(@Param("participationId") long participationId, @Param("date") ZonedDateTime date, Pageable limit);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);

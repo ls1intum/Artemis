@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -144,8 +144,10 @@ public class RepositoryParticipationService {
         if (stored.isPresent()) {
             return stored;
         }
-        return repositoryAccessService.findComparisonCreatedDate(programmingParticipation).flatMap(createdDate -> programmingSubmissionRepository
-                .findCommitHashesSubmittedUntil(programmingParticipation.getId(), ZonedDateTime.ofInstant(createdDate, ZoneId.systemDefault()), Limit.of(1)).stream().findFirst());
+        return repositoryAccessService.findComparisonCreatedDate(programmingParticipation)
+                .flatMap(createdDate -> programmingSubmissionRepository
+                        .findCommitHashesSubmittedUntil(programmingParticipation.getId(), ZonedDateTime.ofInstant(createdDate, ZoneId.systemDefault()), Pageable.ofSize(1)).stream()
+                        .findFirst());
     }
 
     /**
