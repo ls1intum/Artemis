@@ -5,6 +5,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
 import { catchError, map, startWith, switchMap, take } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -64,6 +65,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     private submissionService = inject(SubmissionService);
     private translateService = inject(TranslateService);
     private participationService = inject(ParticipationService);
+    private resultApi = inject(ResultApi);
     private exerciseService = inject(ExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
@@ -295,7 +297,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                     this.isTmpOrSolutionProgrParticipation.set(queryParams['isTmpOrSolutionProgrParticipation'] === 'true');
                 }
-                this.participationService.getBuildJobIdsForResultsOfParticipation(this._participationId).subscribe((buildJobIdMap) => {
+                this.resultApi.getBuildJobIdsForResultsOfParticipation(this._participationId).subscribe((buildJobIdMap) => {
                     this.resultIdToBuildJobIdMap.set(buildJobIdMap);
                     if (this.isTmpOrSolutionProgrParticipation()) {
                         // Find programming exercise of template and solution programming participation

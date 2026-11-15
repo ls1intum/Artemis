@@ -210,23 +210,6 @@ describe('Participation Service', () => {
         req.flush({ status: 200 });
     });
 
-    it('should get build job ids for participation results', () => {
-        let resultGetBuildJobId: any;
-        const resultIdToBuildJobIdMap: { [key: string]: boolean } = { '1': true, '2': false };
-        const returnedFromService = resultIdToBuildJobIdMap;
-        const expected = { ...returnedFromService };
-
-        service
-            .getBuildJobIdsForResultsOfParticipation(1)
-            .pipe(take(1))
-            .subscribe((resp) => (resultGetBuildJobId = resp));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-
-        expect(resultGetBuildJobId).toEqual(expected);
-    });
-
     describe('searchParticipations', () => {
         const baseSearch = {
             page: 0,

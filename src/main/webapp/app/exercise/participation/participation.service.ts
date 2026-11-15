@@ -144,10 +144,6 @@ export class ParticipationService {
         return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
-    getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
-        return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
-    }
-
     protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             ParticipationService.convertParticipationDatesFromServer(res.body);
