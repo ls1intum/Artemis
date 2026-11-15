@@ -1,21 +1,3 @@
-// Build agents table section
-.build-agents-section {
-    .table-responsive {
-        overflow-x: visible;
-    }
-
-    .table {
-        width: max-content;
-        table-layout: auto;
-
-        th {
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-    }
-}
-
 // Standard columns with consistent padding
 .build-agents-column {
     white-space: nowrap;
@@ -78,8 +60,7 @@
 
     // Ensure interactive elements (buttons, links) appear above the stretched link
     a:not(.stretched-row-link),
-    button,
-    .btn {
+    button {
         position: relative;
         z-index: 2;
     }
@@ -97,7 +78,7 @@
     }
 
     .job-link {
-        color: var(--p-primary-color);
+        color: var(--primary);
         cursor: pointer;
         font-size: 0.8rem;
 
@@ -105,11 +86,4 @@
             text-decoration: underline;
         }
     }
-}
-
-// Extra small cancel button
-.btn-xs {
-    padding: 0.15rem 0.3rem;
-    font-size: 0.7rem;
-    line-height: 1;
 }

@@ -80,6 +80,7 @@ const buildInformation = {
 
 export const expectedProfileInfo: ProfileInfo = {
     localLLMDeploymentEnabled: false,
+    mailConfigured: true,
     activeModuleFeatures: [MODULE_FEATURE_ATHENA, MODULE_FEATURE_APOLLON],
     activeProfiles: [PROFILE_PROD, PROFILE_JENKINS],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
