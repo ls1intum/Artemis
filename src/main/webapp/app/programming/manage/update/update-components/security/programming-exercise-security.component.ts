@@ -610,7 +610,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Retry after an ERROR: re-run whichever sync operation failed (activation, deactivation or a version change). */
     onRetry(): void {
-        if (this.pendingOperation && this.pendingOperation.visit === this.visit) {
+        if (this.pendingOperation?.visit === this.visit) {
             this.runOperation(this.pendingOperation.transientPatch, this.pendingOperation.run);
         }
     }
