@@ -70,8 +70,8 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     /**
-     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them.
-     * The hooks directory is set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
+     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them, and without symbolic links.
+     * The hooks directory and the symbolic link setting are set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
      * As they are part of the configuration, a configuration file that is saved contains them as well.
      *
      * @return the configuration of this repository
@@ -81,6 +81,10 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         FileBasedConfig config = super.getConfig();
         if (!NO_HOOKS_PATH.equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH))) {
             config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH, NO_HOOKS_PATH);
+        }
+        // Symbolic links are never created in a working copy: an entry that is a link is written as a plain file holding the target, and a link is not followed
+        if (!"false".equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS))) {
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
         }
         for (String filterDriver : config.getSubsections(ConfigConstants.CONFIG_FILTER_SECTION)) {
             config.unsetSection(ConfigConstants.CONFIG_FILTER_SECTION, filterDriver);
