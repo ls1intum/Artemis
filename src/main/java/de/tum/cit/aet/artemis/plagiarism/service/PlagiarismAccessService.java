@@ -4,6 +4,7 @@ import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 
 @Service
 @Conditional(PlagiarismEnabled.class)
@@ -25,11 +27,26 @@ public class PlagiarismAccessService {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
+    private final PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
     private final ExerciseDateService exerciseDateService;
 
-    public PlagiarismAccessService(PlagiarismComparisonRepository plagiarismComparisonRepository, ExerciseDateService exerciseDateService) {
+    public PlagiarismAccessService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismSubmissionRepository plagiarismSubmissionRepository,
+            ExerciseDateService exerciseDateService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismSubmissionRepository = plagiarismSubmissionRepository;
         this.exerciseDateService = exerciseDateService;
+    }
+
+    /**
+     * Finds the commit that was compared for a participation of a programming exercise.
+     *
+     * @param exerciseId      the id of the programming exercise
+     * @param participationId the id of the participation, which is the compared id of a programming comparison
+     * @return the hash of the most recently compared commit, empty if no hash was stored (e.g. for results created before hashes were stored)
+     */
+    public Optional<String> findComparedCommitHash(long exerciseId, long participationId) {
+        return plagiarismSubmissionRepository.findComparedCommitHashes(exerciseId, participationId).stream().findFirst();
     }
 
     /**

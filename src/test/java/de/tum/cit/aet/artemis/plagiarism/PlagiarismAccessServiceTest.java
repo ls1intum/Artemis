@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAccessService;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -33,12 +35,15 @@ class PlagiarismAccessServiceTest {
 
     private PlagiarismComparisonRepository comparisonRepository;
 
+    private PlagiarismSubmissionRepository submissionRepository;
+
     private PlagiarismAccessService service;
 
     @BeforeEach
     void setUp() {
         comparisonRepository = mock(PlagiarismComparisonRepository.class);
-        service = new PlagiarismAccessService(comparisonRepository, mock(ExerciseDateService.class));
+        submissionRepository = mock(PlagiarismSubmissionRepository.class);
+        service = new PlagiarismAccessService(comparisonRepository, submissionRepository, mock(ExerciseDateService.class));
     }
 
     private static PlagiarismComparison notifiedComparisonFor(String login) {
@@ -63,5 +68,14 @@ class PlagiarismAccessServiceTest {
 
         assertThat(service.wasUserNotifiedByInstructor(EXERCISE_ID, submission, "student1")).isTrue();
         assertThat(service.wasUserNotifiedByInstructor(OTHER_EXERCISE_ID, submission, "student1")).isFalse();
+    }
+
+    @Test
+    void findComparedCommitHash_returnsTheNewestStoredHash() {
+        when(submissionRepository.findComparedCommitHashes(EXERCISE_ID, COMPARED_ID)).thenReturn(List.of("newest", "older"));
+        when(submissionRepository.findComparedCommitHashes(OTHER_EXERCISE_ID, COMPARED_ID)).thenReturn(List.of());
+
+        assertThat(service.findComparedCommitHash(EXERCISE_ID, COMPARED_ID)).contains("newest");
+        assertThat(service.findComparedCommitHash(OTHER_EXERCISE_ID, COMPARED_ID)).isEmpty();
     }
 }

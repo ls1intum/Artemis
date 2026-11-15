@@ -6,12 +6,14 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -91,23 +93,32 @@ public class RepositoryParticipationService {
     }
 
     /**
-     * Get the repository for the plagiarism view of the given participation.
+     * What the plagiarism view shows for a participation: the participation and the compared commit, or no commit if the live repository is shown.
+     *
+     * @param participation the participation whose repository is shown
+     * @param commitHash    the hash of the compared commit, null for the live repository
+     */
+    public record PlagiarismViewTarget(ProgrammingExerciseParticipation participation, @Nullable String commitHash) {
+    }
+
+    /**
+     * Checks the access to the plagiarism view of the given participation and determines which state of the repository is shown.
      *
      * @param participationId the id of the participation to retrieve the repository for
-     * @return the repository for the plagiarism view of the given participation
-     * @throws GitAPIException          if the repository could not be accessed
+     * @return the participation and the compared commit, the commit is null if the live repository is shown
      * @throws AccessForbiddenException if the user does not have access to the repository
      */
-    public Repository getRepositoryForPlagiarismView(Long participationId) throws GitAPIException, AccessForbiddenException {
+    public PlagiarismViewTarget resolvePlagiarismViewTarget(Long participationId) throws AccessForbiddenException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException("Participation is not a programming exercise participation");
         }
 
-        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithAuthorities(), RepositoryActionType.READ);
+        User user = userRepository.getUserWithAuthorities();
+        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, user, RepositoryActionType.READ);
 
-        return getRepositoryFromGitService(true, programmingParticipation);
+        return new PlagiarismViewTarget(programmingParticipation, repositoryAccessService.findCommitHashForPlagiarismView(programmingParticipation, user));
     }
 
     /**

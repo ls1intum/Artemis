@@ -306,6 +306,26 @@ public class RepositoryAccessService {
         throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
     }
 
+    /**
+     * Determines which state of the repository the plagiarism view shows to the user. Teaching assistants and above read the live repository, which is signaled by {@code null}.
+     * Everybody else reads the commit that was compared by the plagiarism check, and gets no access if that commit was not stored.
+     * Call this after {@link #checkHasAccessToPlagiarismSubmission}.
+     *
+     * @param programmingParticipation the participation whose repository is shown
+     * @param user                     the user who wants to see the repository
+     * @return the hash of the compared commit, or null if the user reads the live repository
+     * @throws AccessForbiddenException if the user must read the compared commit and no commit was stored
+     */
+    @Nullable
+    public String findCommitHashForPlagiarismView(ProgrammingExerciseParticipation programmingParticipation, User user) throws AccessForbiddenException {
+        ProgrammingExercise exercise = programmingParticipation.getProgrammingExercise();
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user)) {
+            return null;
+        }
+        return plagiarismAccessApi.flatMap(api -> api.findComparedCommitHash(exercise.getId(), programmingParticipation.getId()))
+                .orElseThrow(() -> new AccessForbiddenException("The compared state of this repository is not available."));
+    }
+
     public void checkHasAccessToOfflineIDEElseThrow(ProgrammingExercise exercise, User user) throws AccessForbiddenException {
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(getCourseOrThrow(exercise), user)) {
             throw new AccessForbiddenException();

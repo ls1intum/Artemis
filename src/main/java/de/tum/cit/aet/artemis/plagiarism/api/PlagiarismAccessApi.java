@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -32,6 +34,17 @@ public class PlagiarismAccessApi extends AbstractPlagiarismApi {
      */
     public boolean hasAccessToSubmission(Long exerciseId, Long submissionId, String userLogin, Participation participation) {
         return plagiarismAccessService.hasAccessToSubmission(exerciseId, submissionId, userLogin, participation);
+    }
+
+    /**
+     * Finds the commit that was compared for a participation of a programming exercise.
+     *
+     * @param exerciseId      the id of the programming exercise
+     * @param participationId the id of the participation
+     * @return the hash of the most recently compared commit, empty if none was stored
+     */
+    public Optional<String> findComparedCommitHash(long exerciseId, long participationId) {
+        return plagiarismAccessService.findComparedCommitHash(exerciseId, participationId);
     }
 
     /**

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -32,6 +33,26 @@ public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<Pla
             WHERE submission.id = :submissionId
             """)
     void updatePlagiarismCase(@Param("submissionId") Long submissionId, @Param("plagiarismCase") PlagiarismCase plagiarismCase);
+
+    /**
+     * The commit hashes that were compared for a participation of the exercise, newest comparison first.
+     * Only programming comparisons carry a hash, and their compared ids are participation ids.
+     *
+     * @param exerciseId      the exercise the comparison belongs to
+     * @param participationId the id of the participation, which is the compared id of a programming comparison
+     * @return the stored commit hashes, newest first
+     */
+    @Query("""
+            SELECT submission.commitHash
+            FROM PlagiarismSubmission submission
+                JOIN submission.plagiarismComparison comparison
+                JOIN comparison.plagiarismResult result
+            WHERE result.exercise.id = :exerciseId
+                AND submission.submissionId = :participationId
+                AND submission.commitHash IS NOT NULL
+            ORDER BY submission.id DESC
+            """)
+    List<String> findComparedCommitHashes(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId);
 
     /**
      * One side of a comparison with its elements loaded. The two sides are read one at a time because their element

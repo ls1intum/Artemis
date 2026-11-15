@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -219,6 +220,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private PlagiarismUtilService plagiarismUtilService;
+
+    @Autowired
+    private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -1765,6 +1769,13 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertPlagiarismResult(programmingExercise, result, 100.0);
+
+        // the compared commit of each side is stored, the compared ids of a programming comparison are participation ids
+        var comparison = result.plagiarismResult().comparisons().getFirst();
+        for (var submission : List.of(comparison.submissionA(), comparison.submissionB())) {
+            assertThat(plagiarismSubmissionRepository.findComparedCommitHashes(programmingExercise.getId(), submission.submissionId())).hasSize(1)
+                    .allSatisfy(hash -> assertThat(hash).matches("[0-9a-f]{40}"));
+        }
     }
 
     void testCheckPlagiarismForTeamExercise() throws Exception {

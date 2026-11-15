@@ -881,7 +881,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
-    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
+    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) throws Exception {
+        addPlagiarismCaseToProgrammingExercise(studentLoginWithoutPost, studentLoginWithPost, pushCommitFromLocalClone(currentLocalFileContent));
+    }
+
+    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost, String comparedCommitHash) {
         var textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
         var plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
@@ -890,6 +894,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var plagiarismSubmissionA = new PlagiarismSubmission();
         plagiarismSubmissionA.setStudentLogin(studentLoginWithoutPost);
         plagiarismSubmissionA.setSubmissionId(participation.getId());
+        plagiarismSubmissionA.setCommitHash(comparedCommitHash);
 
         var plagiarismSubmissionB = new PlagiarismSubmission();
         plagiarismSubmissionB.setStudentLogin(studentLoginWithPost);
@@ -946,6 +951,43 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testPlagiarismViewShowsComparedCommitForStudent() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        String comparedContent = "content at the time of the comparison";
+        String comparedCommit = pushCommitFromLocalClone(comparedContent);
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2", comparedCommit);
+        pushCommitFromLocalClone("content pushed after the comparison");
+
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(comparedContent);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey(currentLocalFileName);
+
+        // staff keeps reading the live repository
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var liveFile = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class,
+                fileParams(currentLocalFileName));
+        assertThat(new String(liveFile, StandardCharsets.UTF_8)).isEqualTo("content pushed after the comparison");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testPlagiarismViewWithoutStoredCommitIsRefusedForStudent() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2", null);
+
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
+
+        // staff keeps the live fallback for results without a stored commit
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
     }
 
     @Test
