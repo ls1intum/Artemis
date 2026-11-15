@@ -1,55 +1,10 @@
-/* --- BACKDROP --- */
-.modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--ai-modal-bg);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 60px 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-    z-index: 9999;
-    animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
 /* --- MODAL --- */
-.modal-content {
-    background: var(--bs-body-bg);
-    border-radius: 24px;
-    max-width: 1100px;
-    width: 100%;
-    padding: 40px;
-    animation: slideUp 0.3s ease-out;
-    box-sizing: border-box;
+// The dialog supplies the backdrop, the panel and its padding; this only adds the room the roomy layout needs.
+.llm-modal {
+    padding: 24px 24px 8px;
 }
 
-@keyframes slideUp {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.modal-header {
+.llm-modal-header {
     margin-bottom: 32px;
     text-align: center;
     display: flex;
@@ -57,12 +12,12 @@
     align-items: center;
 }
 
-.modal-header h1 {
+.llm-modal-header h1 {
     font-size: 36px;
     font-weight: 700;
     margin: 0 0 12px;
     letter-spacing: -0.5px;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .subtitle {
@@ -156,12 +111,12 @@
 .icon-circle {
     width: 110px;
     height: 110px;
-    background: var(--bs-body-bg);
+    background: var(--body-bg);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--body-color) 8%, transparent);
     position: absolute;
     transition: transform 0.3s ease;
 }
@@ -206,26 +161,25 @@
     display: block;
 }
 
-/* --- CARD HEADER --- */
-.card-header {
+/* --- OPTION HEADER --- */
+.option-header {
     display: flex;
     gap: 12px;
     align-items: center;
     margin-bottom: 12px;
     flex-wrap: wrap;
     justify-content: center;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
-.card-header h2,
-.card-header h1 {
+.option-header h2,
+.option-header h1 {
     font-size: 22px;
     font-weight: 700;
     margin: 0;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
-.badge,
 .badge-experimental,
 .badge-recommended,
 .badge-current {
@@ -235,10 +189,6 @@
     font-weight: 600;
     color: var(--white);
     white-space: nowrap;
-}
-
-.badge {
-    background: var(--primary);
 }
 
 .badge-experimental {
@@ -274,7 +224,7 @@
     gap: 10px;
     padding: 6px 0;
     font-size: 13px;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .check-icon,
@@ -326,16 +276,11 @@
 }
 
 @media (max-width: 640px) {
-    .modal-backdrop {
-        padding: 30px 12px;
+    .llm-modal {
+        padding: 16px 8px 0;
     }
 
-    .modal-content {
-        padding: 24px 16px;
-        border-radius: 16px;
-    }
-
-    .modal-header h1 {
+    .llm-modal-header h1 {
         font-size: 26px;
     }
 
@@ -343,7 +288,7 @@
         font-size: 14px;
     }
 
-    .card-header h2 {
+    .option-header h2 {
         font-size: 20px;
     }
 
@@ -383,11 +328,7 @@
 }
 
 @media (max-width: 600px) {
-    .modal-content {
-        padding: 32px 24px;
-    }
-
-    .modal-header h1 {
+    .llm-modal-header h1 {
         font-size: 30px;
     }
 

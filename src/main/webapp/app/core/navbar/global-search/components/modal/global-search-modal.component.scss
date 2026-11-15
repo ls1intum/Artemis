@@ -1,32 +1,3 @@
-/* Search input section */
-.search-input-container {
-    gap: 0.75rem;
-    border-bottom: 1px solid var(--global-search-border-color);
-}
-
-.search-icon {
-    margin-left: 0.75rem;
-}
-
-.search-input {
-    flex: 1;
-    padding: 0.75rem 0.75rem 0.75rem 0;
-    font-size: 1rem;
-    outline: none;
-
-    &::placeholder {
-        color: var(--p-text-muted-color);
-        opacity: 0.6;
-    }
-}
-
-/* Results section */
-.results-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.5rem 0.75rem;
-}
-
 /* Footer with keyboard shortcuts */
 .search-footer {
     padding: 0.75rem 1rem;
@@ -37,8 +8,8 @@
 .keyboard-hints {
     font-size: 0.75rem;
 
-    // Medium grey (PrimeNG's muted washed out); matches the key glyphs below.
-    color: color-mix(in srgb, var(--p-text-color) 60%, transparent);
+    // Medium grey; matches the key glyphs below.
+    color: color-mix(in srgb, var(--tumaet-ui-text-color) 60%, transparent);
 }
 
 .key-hint-small {
@@ -49,5 +20,5 @@
     font-size: 0.75rem;
 
     // Key glyphs (arrows / ESC / Enter) at a medium grey: clear but not vibrant, identical across footer + nav hints.
-    color: color-mix(in srgb, var(--p-text-color) 60%, transparent);
+    color: color-mix(in srgb, var(--tumaet-ui-text-color) 60%, transparent);
 }

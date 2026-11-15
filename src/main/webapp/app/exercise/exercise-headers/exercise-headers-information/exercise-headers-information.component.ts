@@ -38,7 +38,7 @@ export interface QuizLiveHeaderInfo {
     showRemainingTime: boolean;
     /** Humanized remaining-time text, e.g. "12 min 30 s". */
     remainingTimeText?: string;
-    /** Bootstrap text color suffix for the remaining time (e.g. 'warning', 'danger'); undefined for the default color. */
+    /** State color name of the remaining time (e.g. 'warning', 'danger'); undefined for the default color. */
     remainingTimeColor?: string;
     /** Whether the "results available" date should be shown (after submit / once time is up). */
     showResultsAvailable: boolean;
@@ -157,6 +157,22 @@ export class ExerciseHeadersInformationComponent {
 
     /** How each box arranges itself: stacked in the panel, one line in the title bar so it sits at the bar's height. */
     protected readonly boxLayout = computed<InformationBoxLayout>(() => (this.placement() === 'titleBar' ? 'inline' : 'stacked'));
+
+    /** Text color class of a relative date: the state color for 'danger', 'warning', 'success' and 'info', the inherited color otherwise. */
+    protected timeAgoColorClass(color: string | undefined): string {
+        switch (color) {
+            case 'danger':
+                return 'text-state-danger';
+            case 'warning':
+                return 'text-state-warning';
+            case 'success':
+                return 'text-state-success';
+            case 'info':
+                return 'text-state-info';
+            default:
+                return '';
+        }
+    }
 
     /** Course resolved from the explicit input, falling back to the exercise's own course. */
     readonly resolvedCourse = computed<Course | undefined>(() => this.course() ?? getCourseFromExercise(this.exercise()));

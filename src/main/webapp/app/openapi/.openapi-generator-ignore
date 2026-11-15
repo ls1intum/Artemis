@@ -60,6 +60,7 @@ api/hyperion-code-generation-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
+api/athena-resources.ts
 api/bonus-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/grading-scale-resources.ts

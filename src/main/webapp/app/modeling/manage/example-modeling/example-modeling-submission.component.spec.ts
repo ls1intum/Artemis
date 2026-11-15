@@ -37,7 +37,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
 import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -169,7 +168,6 @@ describe('Example Modeling Submission Component', () => {
             providers: [
                 MockProvider(ChangeDetectorRef),
                 MockProvider(ArtemisTranslatePipe),
-                MockProvider(DialogService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

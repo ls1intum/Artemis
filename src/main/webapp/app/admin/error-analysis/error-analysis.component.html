@@ -45,10 +45,10 @@
     </ng-template>
 </div>
 
-<p class="text-muted-color text-sm mb-4" data-testid="error-analysis-note" jhiTranslate="artemisApp.errorAnalysis.note"></p>
+<p class="text-muted-color text-sm mb-6!" data-testid="error-analysis-note" jhiTranslate="artemisApp.errorAnalysis.note"></p>
 
 @if (loading() && !result()) {
-    <div class="flex justify-center my-5">
+    <div class="flex justify-center my-12!">
         <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
     </div>
 } @else if (result()) {

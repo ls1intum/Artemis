@@ -827,7 +827,7 @@ describe('FileUploadSubmissionComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const downloadSection = fixture.nativeElement.querySelector('.card-text');
+            const downloadSection = fixture.nativeElement.querySelector('[data-testid="submitted-file"]');
             expect(downloadSection).toBeTruthy();
         });
     });
@@ -882,9 +882,8 @@ describe('FileUploadSubmissionComponent', () => {
             expect(rating.classList).not.toContain('alert');
             expect(rating.classList).not.toContain('alert-info');
             const column = rating.parentElement!;
-            expect(column.classList).toContain('col-xl-8');
+            expect(column.classList).toContain('xl:w-2/3');
             expect(column.classList).not.toContain('alert');
-            expect(column.parentElement!.classList).toContain('row');
         });
 
         it('should render the section headings with the 16px semibold heading style', async () => {

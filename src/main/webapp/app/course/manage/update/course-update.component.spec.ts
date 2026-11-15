@@ -2113,7 +2113,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+        expect(formGroup.nativeElement.style.display).toBe('none');
     });
     it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
@@ -2132,7 +2132,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+        expect(formGroup.nativeElement.style.display).toBe('');
     });
 
     it('should hide the presentation assessments form field when the feature is not toggled', () => {
@@ -2143,7 +2143,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
 
         expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+        expect(formGroup.nativeElement.style.display).toBe('none');
     });
 
     it('should show the presentation assessments form field when the feature is toggled', () => {
@@ -2154,7 +2154,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
 
         expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+        expect(formGroup.nativeElement.style.display).toBe('');
     });
 });
 
