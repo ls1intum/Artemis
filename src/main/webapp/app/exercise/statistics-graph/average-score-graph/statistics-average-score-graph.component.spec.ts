@@ -213,6 +213,21 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         });
     });
 
+    describe('filter options', () => {
+        it('should render the options without list bullets and give every category option a label', () => {
+            (fixture.nativeElement.querySelector('#filter-dropdown-button') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            const options = document.querySelector('[data-testid="average-score-filter-options"]') as HTMLElement | null;
+
+            expect(options).not.toBeNull();
+            expect(options!.classList).toContain('list-none');
+            const labels = Array.from(options!.querySelectorAll('label')).map((label) => label.textContent!.trim());
+            expect(labels.length).toBeGreaterThan(0);
+            expect(labels.every((label) => label.length > 0)).toBe(true);
+            expect(labels).toEqual(expect.arrayContaining(categories));
+        });
+    });
+
     describe('heading', () => {
         it('should give the heading a column wide enough for the course average on large screens', () => {
             const heading = fixture.nativeElement.querySelector('[data-testid="average-score-heading"]') as HTMLElement;
