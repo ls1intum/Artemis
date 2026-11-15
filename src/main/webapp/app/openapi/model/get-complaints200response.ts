@@ -10,4 +10,4 @@
 
 import type { Complaint } from './complaint';
 
-export type GetComplaintBySubmissionId200Response = Array<Complaint> | Complaint;
+export type GetComplaints200Response = Array<Complaint> | Complaint;

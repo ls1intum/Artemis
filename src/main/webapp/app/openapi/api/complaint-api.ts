@@ -17,7 +17,9 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ComplaintRequest } from '../model/complaint-request';
 import { Complaint } from '../model/complaint';
-import { GetComplaintBySubmissionId200Response } from '../model/get-complaint-by-submission-id200response';
+import { GetComplaints200Response } from '../model/get-complaints200response';
+import { ComplaintsQuery } from '../model/complaints-query';
+import { ComplaintsForTutorQuery } from '../model/complaints-for-tutor-query';
 import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
@@ -39,31 +41,6 @@ export class ComplaintApi {
      *
      *
      * @param submissionId
-     * @param exerciseId
-     * @param complaintType
-     * @param courseId
-     * @param examId
-     * @param tutorId
-     * @param allComplaintsForTutor
-     */
-    getComplaintBySubmissionId(submissionId: number, exerciseId: number, complaintType: 'COMPLAINT' | 'MORE_FEEDBACK', courseId: number, examId: number, tutorId?: number, allComplaintsForTutor?: boolean): Observable<GetComplaintBySubmissionId200Response> {
-        const queryParams = new URLSearchParams();
-        appendQueryParam(queryParams, 'submissionId', submissionId);
-        appendQueryParam(queryParams, 'exerciseId', exerciseId);
-        appendQueryParam(queryParams, 'complaintType', complaintType);
-        appendQueryParam(queryParams, 'tutorId', tutorId);
-        appendQueryParam(queryParams, 'allComplaintsForTutor', allComplaintsForTutor);
-        appendQueryParam(queryParams, 'courseId', courseId);
-        appendQueryParam(queryParams, 'examId', examId);
-        const queryString = queryParams.toString();
-        const url = `${this.basePath}/api/assessment/complaints${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<GetComplaintBySubmissionId200Response>(url);
-    }
-
-    /**
-     *
-     *
-     * @param submissionId
      */
     getComplaintBySubmissionIdForAssessment(submissionId: number): Observable<Complaint> {
         const queryParams = new URLSearchParams();
@@ -76,17 +53,24 @@ export class ComplaintApi {
     /**
      *
      *
-     * @param exerciseId
-     * @param complaintType
-     * @param courseId
-     * @param allComplaintsForTutor
+     * @param queryParam
      */
-    getComplaintsForTutorByExerciseId(exerciseId: number, complaintType: 'COMPLAINT' | 'MORE_FEEDBACK', courseId: number, allComplaintsForTutor?: boolean): Observable<Array<Complaint>> {
+    getComplaints(queryParam: ComplaintsQuery): Observable<GetComplaints200Response> {
         const queryParams = new URLSearchParams();
-        appendQueryParam(queryParams, 'exerciseId', exerciseId);
-        appendQueryParam(queryParams, 'complaintType', complaintType);
-        appendQueryParam(queryParams, 'allComplaintsForTutor', allComplaintsForTutor);
-        appendQueryParam(queryParams, 'courseId', courseId);
+        appendQueryParam(queryParams, 'query', queryParam);
+        const queryString = queryParams.toString();
+        const url = `${this.basePath}/api/assessment/complaints${queryString ? `?${queryString}` : ''}`;
+        return this.http.get<GetComplaints200Response>(url);
+    }
+
+    /**
+     *
+     *
+     * @param queryParam
+     */
+    getComplaintsForTutor(queryParam: ComplaintsForTutorQuery): Observable<Array<Complaint>> {
+        const queryParams = new URLSearchParams();
+        appendQueryParam(queryParams, 'query', queryParam);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/complaints/for-tutor${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<Complaint>>(url);
