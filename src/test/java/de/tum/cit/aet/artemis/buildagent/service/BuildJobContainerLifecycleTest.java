@@ -76,6 +76,7 @@ class BuildJobContainerLifecycleTest {
         when(docker.createContainerCmd("image")).thenReturn(create);
         when(configuration.hostConfig())
                 .thenReturn(HostConfig.newHostConfig().withCpuPeriod(100000L).withCpuQuota(200000L).withMemory(1024L).withMemorySwap(2048L).withPidsLimit(100L));
+        when(configuration.applyStorageLimit(any(HostConfig.class))).thenCallRealMethod();
     }
 
     @Test
