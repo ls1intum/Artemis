@@ -336,9 +336,16 @@ export class ProgrammingExerciseSecurityComponent {
     /** The source exercise whose config was last requested, so a late response for an earlier source is discarded. */
     private requestedSourceId?: number;
     /** The last sync operation started, kept so {@link onRetry} can re-run exactly what failed, and the exercise it changes. */
-    private pendingOperation?: { exerciseId: number; transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
-    /** The exercise whose config the card shows in edit mode, so a late response for another exercise is discarded. */
+    private pendingOperation?: { visit: number; transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
+    /** The exercise whose config the card shows in edit mode. */
     private loadedExerciseId?: number;
+    /**
+     * Counts the exercises the card has shown, including a return to an earlier one (A, B, A), so a late response of an earlier visit is discarded even if
+     * it is for the same exercise.
+     */
+    private visit = 0;
+    /** Counts the loads of the config, so a late load never overwrites a newer one. */
+    private loadCount = 0;
 
     constructor() {
         this.securityService.getVersions().subscribe({
@@ -434,6 +441,7 @@ export class ProgrammingExerciseSecurityComponent {
             this.confirmationService.close(DEACTIVATE_CONFIRMATION_KEY);
             this.deactivationPending.set(false);
         }
+        this.visit++;
         this.pendingOperation = undefined;
         this.config.set({ status: SecurityActivationStatus.CONFIGURED });
         this.lastSettledActive.set(true);
@@ -443,11 +451,12 @@ export class ProgrammingExerciseSecurityComponent {
     /** Loads the persisted config (edit mode); a failure surfaces a distinct load-error state instead of a misleading INACTIVE. */
     private loadConfig(exerciseId: number): void {
         this.loadedExerciseId = exerciseId;
+        const load = ++this.loadCount;
         this.loadFailed.set(false);
         this.loading.set(true);
         this.securityService.getConfig(exerciseId).subscribe({
             next: (config) => {
-                if (exerciseId !== this.loadedExerciseId) {
+                if (load !== this.loadCount) {
                     return;
                 }
                 this.loading.set(false);
@@ -459,7 +468,7 @@ export class ProgrammingExerciseSecurityComponent {
                 this.lastSettledActive.set(isSecurityConfigured(config));
             },
             error: () => {
-                if (exerciseId !== this.loadedExerciseId) {
+                if (load !== this.loadCount) {
                     return;
                 }
                 this.loading.set(false);
@@ -599,7 +608,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Retry after an ERROR: re-run whichever sync operation failed (activation, deactivation or a version change). */
     onRetry(): void {
-        if (this.pendingOperation && this.pendingOperation.exerciseId === this.editExerciseId()) {
+        if (this.pendingOperation && this.pendingOperation.visit === this.visit) {
             this.runOperation(this.pendingOperation.transientPatch, this.pendingOperation.run);
         }
     }
@@ -655,6 +664,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Deactivating commits to the tests repository and runs the builds again, so the instructor confirms it; cancelling leaves everything as it was. */
     private confirmDeactivation(exerciseId: number): void {
+        const visit = this.visit;
         this.deactivationPending.set(true);
         this.confirmationService.confirm({
             key: DEACTIVATE_CONFIRMATION_KEY,
@@ -666,7 +676,7 @@ export class ProgrammingExerciseSecurityComponent {
             accept: () => {
                 this.deactivationPending.set(false);
                 // The card may have been reused for another exercise while the confirmation was open; never deactivate the previous one.
-                if (exerciseId !== this.editExerciseId()) {
+                if (visit !== this.visit) {
                     return;
                 }
                 this.runOperation({ status: SecurityActivationStatus.DELETING }, () => this.securityService.deactivate(exerciseId));
@@ -683,26 +693,26 @@ export class ProgrammingExerciseSecurityComponent {
      * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available and Repair doubles as the retry.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
-        const exerciseId = this.editExerciseId();
-        if (exerciseId === undefined) {
+        if (this.editExerciseId() === undefined) {
             return;
         }
+        const visit = this.visit;
         const statusOnFailure = this.isMisconfigured() ? SecurityActivationStatus.MISCONFIGURED : SecurityActivationStatus.ERROR;
         // A misconfigured exercise falls back to its settled state on failure, which includes the version the repository still pins.
         const versionBefore = this.config().frameworkVersion;
-        this.pendingOperation = { exerciseId, transientPatch, run };
+        this.pendingOperation = { visit, transientPatch, run };
         this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
             next: (next) => {
-                // The card was reused for another exercise while this ran; its state belongs to that exercise now.
-                if (exerciseId !== this.editExerciseId()) {
+                // The card was reused for another exercise while this ran; its state belongs to that visit now.
+                if (visit !== this.visit) {
                     return;
                 }
                 this.pendingOperation = undefined;
                 this.settle(next);
             },
             error: (error: unknown) => {
-                if (exerciseId !== this.editExerciseId()) {
+                if (visit !== this.visit) {
                     return;
                 }
                 const errorDetail = this.errorDetailOf(error);

@@ -459,23 +459,23 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, has no effect on the build, so
-     * it is neither read nor replaced.
+     * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
+     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced.
      *
      * @param content   the content of the build file
      * @param buildTool the build tool the file belongs to
-     * @return the pins outside comments, in the order of the file
+     * @return the pins outside comments and strings, in the order of the file
      */
     private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
-        boolean[] comment = buildTool == BuildTool.GRADLE ? gradleComments(content) : mavenComments(content);
-        return versionPattern(buildTool).matcher(content).results().filter(pin -> !comment[pin.start()]).toList();
+        boolean[] noCode = buildTool == BuildTool.GRADLE ? gradleCommentsAndStrings(content) : mavenComments(content);
+        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()]).toList();
     }
 
     /**
-     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment; quoted strings are skipped, so a
-     *         URL such as {@code 'https://example.org'} starts no comment
+     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment or to a quoted string; a URL
+     *         such as {@code 'https://example.org'} therefore starts no comment
      */
-    private static boolean[] gradleComments(String content) {
+    private static boolean[] gradleCommentsAndStrings(String content) {
         boolean[] comment = new boolean[content.length()];
         int index = 0;
         while (index < content.length()) {
@@ -493,6 +493,7 @@ public final class SecurityPolicyRepositoryFiles {
             else if (character == '\'' || character == '"') {
                 String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
                 end = endOfString(content, index + delimiter.length(), delimiter);
+                Arrays.fill(comment, index, end, true);
             }
             else {
                 end = index + 1;

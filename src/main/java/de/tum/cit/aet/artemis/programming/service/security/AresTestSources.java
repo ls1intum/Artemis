@@ -32,7 +32,7 @@ final class AresTestSources {
 
     private static final String ARES_1_PACKAGE = "de.tum.in.test.api";
 
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);
+    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;", Pattern.MULTILINE);
 
     /** A type declaration; the keyword must not follow a dot, so {@code Foo.class} is no declaration. */
     private static final Pattern TYPE_DECLARATION = AresPolicyAnnotations.TYPE_DECLARATION;

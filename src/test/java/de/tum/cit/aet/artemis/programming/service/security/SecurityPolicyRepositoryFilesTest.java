@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -562,6 +563,22 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("// aresVersion = '2.3.0'\n", null)).isEmpty();
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<!-- <ares.version>2.3.0</ares.version> -->\n<ares.version>2.2.1</ares.version>")).contains("2.2.1");
+    }
+
+    @Test
+    void ignoresAresVersionsInGradleStrings() {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("def example = \"aresVersion = '2.3.0'\"\next { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @Test
+    void aGeneratedPolicyListsTestClassesWithUnicodeNamesCompletely() throws IOException {
+        writeBuildFile();
+        // The file name stays ASCII, so the test does not depend on how the file system encodes names; Java only requires it for public classes.
+        writeTestClass("test/de/buecher/SortingTest.java", "de.bücher", "SortingÜTest");
+
+        String policy = SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, SecurityPolicyRepositoryFiles.BuildTool.GRADLE, Optional.of("de.bücher"), "");
+
+        assertThat(policy).contains("    - \"de.bücher.SortingÜTest\"\n");
     }
 
     @Test

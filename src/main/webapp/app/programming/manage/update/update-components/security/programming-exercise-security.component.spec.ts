@@ -531,6 +531,45 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
     });
 
+    it('ignores a late result of an earlier visit after returning to the same exercise', () => {
+        initEdit(configuredConfig());
+        const lateDeactivation = new Subject<SecurityFrameworkConfig>();
+        service.deactivate.mockReturnValueOnce(lateDeactivation);
+        deactivateConfirmed();
+
+        service.getConfig.mockReturnValue(of(configuredConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('programmingExercise', javaExercise(42));
+        fixture.detectChanges();
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+        lateDeactivation.next(inactiveConfig());
+
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+    });
+
+    it('never lets a late load overwrite a newer one', () => {
+        const firstLoad = new Subject<SecurityFrameworkConfig>();
+        service.getConfig.mockReturnValueOnce(firstLoad);
+        const exercise = javaExercise(42);
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('mode', 'edit');
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.detectChanges();
+
+        service.getConfig.mockReturnValue(of(inactiveConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('programmingExercise', javaExercise(42));
+        fixture.detectChanges();
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+
+        firstLoad.next(configuredConfig());
+
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+    });
+
     it('ignores a late result of an operation on the previous exercise', () => {
         initEdit(configuredConfig());
         const result = new Subject<SecurityFrameworkConfig>();

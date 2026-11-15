@@ -32,8 +32,11 @@ final class AresPolicyAnnotations {
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\s*;");
 
+    /** A Java identifier; it may contain any Unicode letter, e.g. {@code SortingÜTest}, so it uses the identifier classes of {@link Character}. */
+    private static final String JAVA_IDENTIFIER = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+";
+
     /** A declaration of a type, of any kind and at any depth; the second group is its simple name. */
-    static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\w.$])(?:class|interface|enum|record))\\s+([A-Za-z_$][\\w$]*)");
+    static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\p{javaJavaIdentifierPart}.])(?:class|interface|enum|record))\\s+(" + JAVA_IDENTIFIER + ")");
 
     private static final Pattern ARES_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.\\*\\s*;");
 
