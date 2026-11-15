@@ -1,0 +1,605 @@
+package de.tum.cit.aet.artemis.programming.service.security;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefLeaseSpec;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.io.FileSystemResource;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyChangeDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyCommitResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyDocumentDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyEditorDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyImportDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyPreviewDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityTemplateFilesDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityTestStructureDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+
+/**
+ * Tests {@link SecurityPolicyEditorService} against real git repositories, set up like in {@link SecurityFrameworkServiceTest}: a bare tests repository and
+ * a bare template repository stand in for LocalVC, and only the lookups of {@link GitService} and {@link BareGitRepositoryService} are replaced. The
+ * assertions read the pushed state, which is exactly what the next build runs with.
+ */
+class SecurityPolicyEditorServiceTest {
+
+    private static final Path MAIN_RESOURCES = Path.of("src", "main", "resources");
+
+    private static final String POLICY = """
+            # Ares 2 security policy for the tests of this repository.
+            thisPolicyFileCompliesToThePolicyVersion: 1
+            regardingTheSupervisedCode:
+              theFollowingProgrammingLanguageConfigurationIsUsed: JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ
+              theSupervisedCodeUsesTheFollowingPackage: "de.example"
+              theFollowingClassesAreTestClasses:
+                - "de.example.SortingTest"
+                - "de.example.StressTest"
+              theFollowingResourceAccessesArePermitted:
+                regardingFileSystemInteractions: [ ]
+                regardingNetworkConnections: [ ]
+                regardingCommandExecutions: [ ]
+                regardingThreadCreations:
+                  - createTheFollowingNumberOfThreads: 1
+                    ofThisClass: "java.util.concurrent.ThreadLocalRandom"
+                regardingPackageImports: [ ]
+                regardingTimeouts: [ ]
+            """;
+
+    private static final String SORTING_TEST = """
+            package de.example;
+
+            import org.junit.jupiter.api.Test;
+
+            @de.tum.cit.ase.ares.api.jupiter.Public
+            @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+            class SortingTest {
+
+                @Test
+                void testBubbleSort() {
+                }
+
+                @Test
+                void testMergeSort() {
+                }
+            }
+            """;
+
+    private static final String STRESS_TEST = """
+            package de.example;
+
+            import org.junit.jupiter.api.Test;
+
+            @de.tum.cit.ase.ares.api.jupiter.Public
+            @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+            class StressTest {
+
+                @Test
+                void testManyElements() {
+                }
+            }
+            """;
+
+    private static final String SORTING_TEST_PATH = "test/de/example/SortingTest.java";
+
+    private static final String STRESS_TEST_PATH = "test/de/example/StressTest.java";
+
+    @TempDir
+    private Path root;
+
+    private Path testsRemote;
+
+    private Path templateRemote;
+
+    private final AtomicInteger directoryCounter = new AtomicInteger();
+
+    /** Runs once after the next checkout, e.g. another instructor's change that is pushed while this change is being prepared. */
+    private Runnable afterNextCheckout;
+
+    private LocalVCPushProcessingService localVCPushProcessingService;
+
+    private BareGitRepositoryService bareGitRepositoryService;
+
+    private ResourceLoaderService resourceLoaderService;
+
+    private SecurityPolicyEditorService editorService;
+
+    private final LocalVCRepositoryUri testsUri = mock(LocalVCRepositoryUri.class);
+
+    private final LocalVCRepositoryUri templateUri = mock(LocalVCRepositoryUri.class);
+
+    private final User user = new User();
+
+    @BeforeEach
+    void setUp() throws Exception {
+        testsRemote = root.resolve("tests.git");
+        templateRemote = root.resolve("template.git");
+        createRemote(testsRemote, Map.of("build.gradle", "ext {\n    aresVersion = '2.2.1'\n}\n", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY, SORTING_TEST_PATH,
+                SORTING_TEST, STRESS_TEST_PATH, STRESS_TEST));
+        createRemote(templateRemote, Map.of("src/de/example/Client.java", "package de.example;\n\nclass Client {\n}\n", "data/input.txt", "3 1 2\n", "scripts/check.py",
+                "print('ok')\n", "build.gradle", "plugins {}\n"));
+
+        GitService gitService = mock(GitService.class);
+        when(gitService.getOrCheckoutRepositoryOnBranch(any(LocalVCRepositoryUri.class), any(Path.class), anyString())).thenAnswer(call -> {
+            Path localPath = call.getArgument(1, Path.class);
+            Git.cloneRepository().setURI(testsRemote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
+            Runnable hook = afterNextCheckout;
+            afterNextCheckout = null;
+            if (hook != null) {
+                hook.run();
+            }
+            return new Repository(new FileRepositoryBuilder().setGitDir(localPath.resolve(".git").toFile()).setWorkTree(localPath.toFile()).setup(), localPath,
+                    mock(LocalVCRepositoryUri.class));
+        });
+        doAnswer(call -> {
+            try (Git git = new Git(call.getArgument(0, Repository.class))) {
+                Status status = git.status().call();
+                git.add().setUpdate(true).addFilepattern(".").call();
+                git.add().addFilepattern(".").call();
+                return !status.isClean();
+            }
+        }).when(gitService).stageAllChanges(any(Repository.class));
+        when(gitService.getLocalHeadHash(any(Repository.class))).thenAnswer(call -> call.getArgument(0, Repository.class).resolve("HEAD").name());
+        when(gitService.commitStagedChanges(any(Repository.class), anyString(), any())).thenAnswer(call -> {
+            try (Git git = new Git(call.getArgument(0, Repository.class))) {
+                return GitService.commit(git).setMessage(call.getArgument(1, String.class)).setAuthor("Instructor", "instructor@example.org").call().getName();
+            }
+        });
+        doAnswer(call -> {
+            String remoteRef = "refs/heads/" + call.getArgument(2, String.class);
+            try (Git git = new Git(call.getArgument(0, Repository.class))) {
+                for (PushResult result : git.push().setRefSpecs(new RefSpec(call.getArgument(1, String.class) + ":" + remoteRef))
+                        .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, call.getArgument(3, String.class))).call()) {
+                    for (RemoteRefUpdate update : result.getRemoteUpdates()) {
+                        if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                            throw new TransportException("Push rejected: " + update.getStatus());
+                        }
+                    }
+                }
+            }
+            return null;
+        }).when(gitService).pushCommitWithLease(any(Repository.class), anyString(), anyString(), anyString());
+
+        bareGitRepositoryService = mock(BareGitRepositoryService.class);
+        when(bareGitRepositoryService.getBareRepository(eq(testsUri), anyString(), anyBoolean())).thenAnswer(_ -> bareRepository(testsRemote));
+        when(bareGitRepositoryService.getBareRepository(eq(templateUri), anyString(), anyBoolean())).thenAnswer(_ -> bareRepository(templateRemote));
+
+        TempFileUtilService tempFileUtilService = mock(TempFileUtilService.class);
+        when(tempFileUtilService.createTempDirectory(anyString())).thenAnswer(call -> newDirectory(call.getArgument(0, String.class)));
+        resourceLoaderService = mock(ResourceLoaderService.class);
+        when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> new FileSystemResource(MAIN_RESOURCES.resolve(call.getArgument(0, Path.class))));
+        localVCPushProcessingService = mock(LocalVCPushProcessingService.class);
+
+        ProgrammingExerciseBuildConfigRepository buildConfigRepository = mock(ProgrammingExerciseBuildConfigRepository.class);
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenReturn(new ProgrammingExerciseBuildConfig());
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(5L);
+        SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
+        when(solutionParticipationRepository.findByProgrammingExerciseId(anyLong())).thenReturn(Optional.of(solutionParticipation));
+        SecurityFrameworkService securityFrameworkService = new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository,
+                resourceLoaderService, Optional.of(localVCPushProcessingService), solutionParticipationRepository, mock(ProgrammingSubmissionTestRepository.class),
+                new LocalDataProviderService(), "main", new String[] { "2.2.1" });
+        editorService = new SecurityPolicyEditorService(securityFrameworkService, bareGitRepositoryService, resourceLoaderService);
+    }
+
+    private static Repository bareRepository(Path remote) throws IOException {
+        return new Repository(new FileRepositoryBuilder().setGitDir(remote.toFile()).setBare().setup(), remote, mock(LocalVCRepositoryUri.class));
+    }
+
+    /**
+     * Creates a new, uniquely named directory below the test's temporary folder (the architecture tests forbid {@code Files.createTempDirectory}).
+     */
+    private Path newDirectory(String prefix) throws IOException {
+        return Files.createDirectories(root.resolve(prefix + directoryCounter.incrementAndGet()));
+    }
+
+    private void createRemote(Path remote, Map<String, String> files) throws Exception {
+        Path seed = newDirectory("seed-");
+        for (Map.Entry<String, String> file : files.entrySet()) {
+            FileUtils.writeStringToFile(seed.resolve(file.getKey()).toFile(), file.getValue(), StandardCharsets.UTF_8);
+        }
+        try (Git git = Git.init().setDirectory(seed.toFile()).setInitialBranch("main").call()) {
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Set up the repository").setAuthor("Artemis", "artemis@example.org").call();
+        }
+        Git.cloneRepository().setURI(seed.toUri().toString()).setDirectory(remote.toFile()).setBare(true).call().close();
+    }
+
+    /** Pushes a change to the tests repository as someone else, e.g. through the online editor. */
+    private void pushToTests(String path, String content) {
+        try {
+            Path checkout = newDirectory("other-");
+            try (Git git = Git.cloneRepository().setURI(testsRemote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+                FileUtils.writeStringToFile(checkout.resolve(path).toFile(), content, StandardCharsets.UTF_8);
+                git.add().addFilepattern(".").call();
+                GitService.commit(git).setMessage("Change " + path).setAuthor("Other Instructor", "other@example.org").call();
+                git.push().call();
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private ProgrammingExercise exercise() {
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        when(exercise.getId()).thenReturn(1L);
+        when(exercise.getProgrammingLanguage()).thenReturn(ProgrammingLanguage.JAVA);
+        when(exercise.getPackageName()).thenReturn("de.example");
+        when(exercise.getVcsTestRepositoryUri()).thenReturn(testsUri);
+        when(exercise.getVcsTemplateRepositoryUri()).thenReturn(templateUri);
+        return exercise;
+    }
+
+    private Optional<String> readPushed(String path) throws IOException {
+        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build(); RevWalk revWalk = new RevWalk(repository)) {
+            ObjectId head = repository.resolve("refs/heads/main");
+            try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, revWalk.parseCommit(head).getTree())) {
+                return treeWalk == null ? Optional.empty() : Optional.of(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
+            }
+        }
+    }
+
+    private String pushedHead() throws IOException {
+        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build()) {
+            return repository.resolve("refs/heads/main").name();
+        }
+    }
+
+    private SecurityPolicyDocumentDTO loadedPolicy(SecurityPolicyEditorDTO editor) {
+        return editor.policies().getFirst().document();
+    }
+
+    private static SecurityPolicyDocumentDTO withFiles(SecurityPolicyDocumentDTO document, List<SecurityPolicyDocumentDTO.FilePermissionDTO> files) {
+        return new SecurityPolicyDocumentDTO(document.policyPath(), document.preset(), document.languageConfiguration(), document.supervisedPackage(), document.mainClass(),
+                document.testClasses(), files, document.network(), document.commands(), document.threads(), document.packages(), document.timeouts(), document.testBehavior());
+    }
+
+    private static SecurityPolicyDocumentDTO withTestClasses(SecurityPolicyDocumentDTO document, String policyPath, List<String> testClasses) {
+        return new SecurityPolicyDocumentDTO(policyPath, document.preset(), document.languageConfiguration(), document.supervisedPackage(), document.mainClass(), testClasses,
+                document.files(), document.network(), document.commands(), document.threads(), document.packages(), document.timeouts(), document.testBehavior());
+    }
+
+    private static SecurityPolicyDocumentDTO withBehavior(SecurityPolicyDocumentDTO document, SecurityPolicyDocumentDTO.TestBehaviorDTO behavior) {
+        return new SecurityPolicyDocumentDTO(document.policyPath(), document.preset(), document.languageConfiguration(), document.supervisedPackage(), document.mainClass(),
+                document.testClasses(), document.files(), document.network(), document.commands(), document.threads(), document.packages(), document.timeouts(), behavior);
+    }
+
+    private static final SecurityPolicyDocumentDTO.FilePermissionDTO LOGS = new SecurityPolicyDocumentDTO.FilePermissionDTO("logs/", false, true, true, false, false);
+
+    @Test
+    void loadsThePoliciesWithTheCommitTheyWereReadFrom() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+
+        assertThat(editor.baseCommitHash()).isEqualTo(pushedHead());
+        assertThat(editor.lastCommit()).isNotNull();
+        assertThat(editor.lastCommit().hash()).isEqualTo(pushedHead());
+        assertThat(editor.lastCommit().authorName()).isEqualTo("Artemis");
+        assertThat(editor.frameworkVersion()).isEqualTo("2.2.1");
+        assertThat(editor.presets()).isEmpty();
+        assertThat(editor.policies()).singleElement().satisfies(policy -> {
+            assertThat(policy.policyPath()).isEqualTo("SecurityPolicy.yaml");
+            assertThat(policy.content()).isEqualTo(POLICY);
+            assertThat(policy.readOnlyReason()).isNull();
+            assertThat(policy.referencedBy()).containsExactly("de.example.SortingTest", "de.example.StressTest");
+            assertThat(policy.document().testClasses()).containsExactly("de.example.SortingTest", "de.example.StressTest");
+            assertThat(policy.document().threads()).containsExactly(new SecurityPolicyDocumentDTO.ThreadPermissionDTO("java.util.concurrent.ThreadLocalRandom", 1));
+        });
+    }
+
+    @Test
+    void showsAPolicyReadOnlyIfTheEditorCannotKeepItsContent() throws Exception {
+        pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME,
+                POLICY.replace("  theFollowingResourceAccessesArePermitted:", "  aFieldAresDoesNotKnow: 1\n  theFollowingResourceAccessesArePermitted:"));
+
+        SecurityPolicyEditorDTO.PolicyDTO policy = editorService.getEditor(exercise()).policies().getFirst();
+
+        assertThat(policy.document()).isNull();
+        assertThat(policy.readOnlyReason()).isEqualTo(SecurityPolicyDocuments.ReadOnlyReason.UNSUPPORTED_CONTENT.name());
+        assertThat(policy.content()).contains("aFieldAresDoesNotKnow");
+    }
+
+    @Test
+    void previewsAChangeWithoutCommittingIt() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+
+        SecurityPolicyPreviewDTO preview = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)));
+
+        assertThat(preview.verdict()).isEqualTo("COMPATIBLE");
+        assertThat(preview.frameworkVersion()).isEqualTo("2.2.1");
+        assertThat(preview.problems()).isEmpty();
+        assertThat(preview.files()).singleElement().satisfies(file -> {
+            assertThat(file.before()).isEqualTo(POLICY);
+            assertThat(file.after()).startsWith("# Ares 2 security policy for the tests of this repository.\n").contains("onThisPathAndAllPathsBelow: \"logs/\"");
+        });
+        assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
+    }
+
+    @Test
+    void previewReportsWhatThePinnedVersionDoesNotAccept() {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO withTimeout = withBehavior(loadedPolicy(editor),
+                new SecurityPolicyDocumentDTO.TestBehaviorDTO(new SecurityPolicyDocumentDTO.StrictTimeoutDTO(2, "SECONDS", null, null), null, null, null));
+        SecurityPolicyDocumentDTO withTestCase = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml", List.of("de.example.SortingTest#testBubbleSort"));
+
+        SecurityPolicyPreviewDTO timeoutPreview = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(withTimeout)));
+        SecurityPolicyPreviewDTO testCasePreview = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(withTestCase)));
+
+        assertThat(timeoutPreview.verdict()).isEqualTo("INCOMPATIBLE");
+        assertThat(timeoutPreview.problems()).singleElement().asString().startsWith("SecurityPolicy.yaml: ").contains("regardingStrictTimeouts");
+        assertThat(testCasePreview.verdict()).isEqualTo("INCOMPATIBLE");
+        assertThat(testCasePreview.problems()).singleElement().asString().contains("single test cases (de.example.SortingTest#testBubbleSort)");
+    }
+
+    @Test
+    void commitsAChangedPolicyInOneCommitAndStartsTheBuilds() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        String expected = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed))).files().getFirst().after();
+
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), "Allow writing logs", List.of(changed)), user);
+
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(expected);
+        assertThat(result.config().status()).isEqualTo("CONFIGURED");
+        assertThat(result.editor().baseCommitHash()).isEqualTo(pushedHead()).isNotEqualTo(editor.baseCommitHash());
+        assertThat(result.editor().lastCommit().authorName()).isEqualTo("Instructor");
+        assertThat(loadedPolicy(result.editor()).files()).containsExactly(LOGS);
+        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build(); RevWalk revWalk = new RevWalk(repository)) {
+            assertThat(revWalk.parseCommit(repository.resolve("refs/heads/main")).getFullMessage()).startsWith("Allow writing logs\n\n")
+                    .contains("Security-Framework-Action: policy");
+        }
+        verify(localVCPushProcessingService).processNewPush(eq(pushedHead()), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void aNewPolicyIsUsedByTheTestClassesAssignedToIt() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO existing = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml", List.of("de.example.SortingTest"));
+        SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest"));
+
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(existing, stress)), user);
+
+        assertThat(readPushed("StressTests.yaml")).hasValueSatisfying(content -> assertThat(content).contains("- \"de.example.StressTest\"").doesNotContain("SortingTest"));
+        assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"StressTests.yaml\")"));
+        assertThat(readPushed(SORTING_TEST_PATH)).contains(SORTING_TEST);
+        assertThat(result.editor().policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::policyPath).containsExactly("SecurityPolicy.yaml", "StressTests.yaml");
+        assertThat(result.editor().policies().getLast().referencedBy()).containsExactly("de.example.StressTest");
+        assertThat(result.config().status()).isEqualTo("CONFIGURED");
+    }
+
+    @Test
+    void refusesANewPolicyNoTestClassUses() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO unused = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of());
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(unused)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyUnused"));
+        assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
+        assertThat(readPushed("StressTests.yaml")).isEmpty();
+    }
+
+    @Test
+    void refusesTheCommitIfThePolicyChangedSinceItWasLoaded() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY.replace("ThreadLocalRandom", "ForkJoinPool"));
+        String concurrentHead = pushedHead();
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(concurrentHead);
+        verify(localVCPushProcessingService, never()).processNewPush(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void refusesTheCommitIfSomeonePushesWhileItIsPrepared() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        afterNextCheckout = () -> pushToTests(STRESS_TEST_PATH,
+                STRESS_TEST.replace("Policy(value = \"SecurityPolicy.yaml\")", "Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
+
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)), user));
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(POLICY);
+    }
+
+    @Test
+    void anUnrelatedCommitSinceLoadingDoesNotConflict() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        pushToTests("README.md", "Edited in the online editor");
+
+        editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)), user);
+
+        assertThat(readPushed("README.md")).contains("Edited in the online editor");
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(content -> assertThat(content).contains("\"logs/\""));
+    }
+
+    @Test
+    void refusesAPolicyThePinnedVersionDoesNotAccept() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO withMirroring = withBehavior(loadedPolicy(editor),
+                new SecurityPolicyDocumentDTO.TestBehaviorDTO(null, new SecurityPolicyDocumentDTO.OutputMirroringDTO(true, 1000L), null, null));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(withMirroring)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyVersionIncompatible"));
+        assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
+    }
+
+    @Test
+    void refusesATestClassThatIsAssignedToTwoPolicies() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(loadedPolicy(editor), stress)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestClassAssignedTwice"));
+    }
+
+    @Test
+    void refusesToRewriteAPolicyTheEditorShowsReadOnly() throws Exception {
+        // Only the rules of Ares 2.2.1 are known, so a policy with a field the editor does not know stays configured for a newer version.
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.3.0'\n}\n");
+        pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME,
+                POLICY.replace("  theFollowingResourceAccessesArePermitted:", "  aFieldAresDoesNotKnow: 1\n  theFollowingResourceAccessesArePermitted:"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO document = withFiles(SecurityPolicyDocuments.parse("SecurityPolicy.yaml", POLICY, null).document(), List.of(LOGS));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(document)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyReadOnly"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../SecurityPolicy.yaml", "Policy.txt", "/etc/SecurityPolicy.yaml", "Stress\"Tests.yaml" })
+    void refusesAnInvalidPolicyPath(String policyPath) {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO document = withTestClasses(loadedPolicy(editor), policyPath, List.of("de.example.StressTest"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(document)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalidPath"));
+    }
+
+    @Test
+    void refusesAChangeWithoutTheCommitItIsBasedOn() {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(null, null, List.of(loadedPolicy(editor))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyNoBaseCommit"));
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of()), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyNoChange"));
+    }
+
+    @Test
+    void refusesInvalidValues() {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO document = withFiles(loadedPolicy(editor), List.of(new SecurityPolicyDocumentDTO.FilePermissionDTO("logs/", false, false, false, false, false)));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(document))))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalid"));
+    }
+
+    @Test
+    void readsAnImportedPolicyWithoutWritingIt() throws Exception {
+        String headBefore = pushedHead();
+
+        SecurityPolicyEditorDTO.PolicyDTO imported = editorService.importPolicy(exercise(),
+                new SecurityPolicyImportDTO("SecurityPolicy.yaml", POLICY.replace("regardingTimeouts: [ ]", "regardingTimeouts:\n      - timeout: 1000")));
+        SecurityPolicyEditorDTO.PolicyDTO broken = editorService.importPolicy(exercise(), new SecurityPolicyImportDTO("SecurityPolicy.yaml", "a: [\n"));
+
+        assertThat(imported.document()).isNotNull();
+        assertThat(imported.document().timeouts()).containsExactly(1000L);
+        assertThat(broken.document()).isNull();
+        assertThat(broken.readOnlyReason()).isEqualTo("YAML_ERROR");
+        assertThat(pushedHead()).isEqualTo(headBefore);
+    }
+
+    @Test
+    void listsTheTestClassesWithTheirTestCases() {
+        SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
+
+        assertThat(structure.testClasses()).containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort")),
+                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements")));
+    }
+
+    @Test
+    void listsTheFilesOfTheTemplateRepository() {
+        SecurityTemplateFilesDTO files = editorService.getTemplateFiles(exercise());
+
+        assertThat(files.paths()).containsExactly("build.gradle", "data/input.txt", "scripts/check.py", "src/de/example/Client.java");
+        assertThat(files.truncated()).isFalse();
+    }
+
+    @Test
+    void readsThePresetsOfTheCatalog() {
+        List<SecurityPolicyEditorDTO.PresetDTO> presets = SecurityPolicyEditorService.parsePresets("""
+                catalogVersion: 1
+                presets:
+                  - name: MOCKITO
+                    label: Mockito
+                    theFollowingResourceAccessesArePermitted:
+                      regardingFileSystemInteractions:
+                        - onThisPathAndAllPathsBelow: "tmp/mockito/"
+                          readAllFiles: true
+                          overwriteAllFiles: false
+                          createAllFiles: true
+                          executeAllFiles: false
+                          deleteAllFiles: false
+                      regardingNetworkConnections: [ ]
+                      regardingCommandExecutions: [ ]
+                      regardingThreadCreations: [ ]
+                      regardingPackageImports:
+                        - importTheFollowingPackage: "org.mockito"
+                      regardingTimeouts: [ ]
+                """);
+
+        assertThat(presets).singleElement().satisfies(preset -> {
+            assertThat(preset.name()).isEqualTo("MOCKITO");
+            assertThat(preset.label()).isEqualTo("Mockito");
+            assertThat(preset.files()).containsExactly(new SecurityPolicyDocumentDTO.FilePermissionDTO("tmp/mockito/", true, false, true, false, false));
+            assertThat(preset.packages()).containsExactly(new SecurityPolicyDocumentDTO.PackagePermissionDTO("org.mockito"));
+        });
+        assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyEditorService.parsePresets("presets:\n  - name: MOCKITO\n"));
+        assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyEditorService.parsePresets("catalogVersion: 1\n"));
+    }
+}

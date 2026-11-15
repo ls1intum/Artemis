@@ -104,9 +104,9 @@ public class SecurityFrameworkService {
 
     private static final String PROJECT_TEMPLATE_DIRECTORY = "projectTemplate";
 
-    private static final String GRADLE_BUILD_FILE = "build.gradle";
+    static final String GRADLE_BUILD_FILE = "build.gradle";
 
-    private static final String MAVEN_BUILD_FILE = "pom.xml";
+    static final String MAVEN_BUILD_FILE = "pom.xml";
 
     /** The oldest Ares version the Security Framework supports: the Java templates, the agent setup and the reserved packages script require it. */
     public static final String MINIMUM_FRAMEWORK_VERSION = "2.2.1";
@@ -189,6 +189,13 @@ public class SecurityFrameworkService {
         this.configuredFrameworkVersions = Arrays.stream(configuredFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).distinct()
                 .filter(SecurityFrameworkService::isSupportedConfiguredVersion).toList();
         this.compatibilityManifest = loadCompatibilityManifest(resourceLoaderService);
+    }
+
+    /**
+     * @return which policy fields each Ares release accepts
+     */
+    AresCompatibilityManifest compatibilityManifest() {
+        return compatibilityManifest;
     }
 
     /**
@@ -580,7 +587,7 @@ public class SecurityFrameworkService {
      * @return the file and what the release does not accept in it, e.g. {@code SecurityPolicy.yaml: a.b, a.c}; empty if the release accepts the file or it
      *         could not be checked
      */
-    private static Optional<String> describeIncompatibility(String policyPath, AresCompatibilityManifest.Check check) {
+    static Optional<String> describeIncompatibility(String policyPath, AresCompatibilityManifest.Check check) {
         if (check.verdict() != AresCompatibilityManifest.Verdict.INCOMPATIBLE) {
             return Optional.empty();
         }
@@ -692,8 +699,7 @@ public class SecurityFrameworkService {
      * @param action  what the change does, recorded in the commit so a later activation can find the last deactivation
      * @param process whether to run the push processing, which triggers the builds; false while an exercise is imported, because the import triggers them
      */
-    private SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, boolean process,
-            Consumer<Repository> change) {
+    SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, boolean process, Consumer<Repository> change) {
         LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
         String branch = repositoryBranch(exercise);
         Repository repository = null;
@@ -823,7 +829,7 @@ public class SecurityFrameworkService {
      *
      * @return the state, if it is supported
      */
-    private static SecurityFrameworkState requireSupported(SecurityFrameworkState state) {
+    static SecurityFrameworkState requireSupported(SecurityFrameworkState state) {
         if (state.status() == SecurityActivationStatus.UNSUPPORTED) {
             String reasons = state.unsupportedReasons().stream().map(reason -> reason.type() + " (" + reason.location() + ")").distinct().reduce((a, b) -> a + ", " + b).orElse("");
             throw new BadRequestAlertException("The Security Framework cannot manage the tests repository automatically: " + reasons, ENTITY_NAME,
@@ -893,7 +899,7 @@ public class SecurityFrameworkService {
         return compatibilities;
     }
 
-    private LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {
+    LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {
         LocalVCRepositoryUri testRepositoryUri = exercise.getVcsTestRepositoryUri();
         if (testRepositoryUri == null) {
             throw new BadRequestAlertException("The exercise has no tests repository.", ENTITY_NAME, "securityFrameworkNoTestRepository");
@@ -901,7 +907,7 @@ public class SecurityFrameworkService {
         return testRepositoryUri;
     }
 
-    private String repositoryBranch(ProgrammingExercise exercise) {
+    String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         return branch == null || branch.isBlank() ? defaultBranch : branch;
     }
@@ -911,13 +917,13 @@ public class SecurityFrameworkService {
      * to a commit of the repository. Like the scan of a checkout, it only considers regular files, never symbolic links, and selects the Java sources with
      * {@link SecurityPolicyRepositoryFiles#isJavaSourcePath}, so build output is skipped in the same way.
      */
-    private static SecurityFrameworkState evaluate(Repository repository, RevTree tree) throws IOException {
+    static SecurityFrameworkState evaluate(Repository repository, RevTree tree) throws IOException {
         SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null),
                 readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null));
         return SecurityPolicyRepositoryFiles.evaluate(javaSources(repository, tree), path -> readPolicyFile(repository, tree, path), buildFiles);
     }
 
-    private static Map<String, String> javaSources(Repository repository, RevTree tree) throws IOException {
+    static Map<String, String> javaSources(Repository repository, RevTree tree) throws IOException {
         Map<String, ObjectId> files = new TreeMap<>();
         try (TreeWalk treeWalk = new TreeWalk(repository)) {
             treeWalk.addTree(tree);
@@ -942,7 +948,7 @@ public class SecurityFrameworkService {
      * Reads a policy file of a commit: only a regular file is read, and only if it is not larger than {@link SecurityPolicyYaml#MAX_POLICY_SIZE}, which is
      * checked before its content is loaded.
      */
-    private static SecurityPolicyRepositoryFiles.PolicyFileContent readPolicyFile(Repository repository, RevTree tree, String path) {
+    static SecurityPolicyRepositoryFiles.PolicyFileContent readPolicyFile(Repository repository, RevTree tree, String path) {
         try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree)) {
             if (treeWalk == null) {
                 return new SecurityPolicyRepositoryFiles.PolicyFileContent(
@@ -981,7 +987,7 @@ public class SecurityFrameworkService {
         return false;
     }
 
-    private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
+    static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
         try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree)) {
             if (treeWalk == null) {
                 return Optional.empty();
@@ -1020,7 +1026,7 @@ public class SecurityFrameworkService {
      *
      * @param exercise the programming exercise to check
      */
-    private void validateJavaExercise(ProgrammingExercise exercise) {
+    void validateJavaExercise(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             throw new BadRequestAlertException("The Security Framework is only supported for Java programming exercises.", ENTITY_NAME, "onlyJavaSupported");
         }

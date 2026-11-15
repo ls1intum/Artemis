@@ -168,6 +168,40 @@ final class AresPolicyAnnotations {
         return result.toString();
     }
 
+    /**
+     * Points every Ares {@code @Policy} annotation of the source that can be evaluated to another policy file. Only the {@code value} argument changes; an
+     * unnamed value stays unnamed, and the {@code activated} argument and every other argument are kept. An annotation that already points to the file is not
+     * touched.
+     *
+     * @param source     the content of a Java file
+     * @param policyPath the validated path of the policy file relative to the repository root; it contains no quote and no backslash
+     * @return the rewritten source
+     */
+    static String setPolicyPath(String source, String policyPath) {
+        if (policyPath.indexOf('"') >= 0 || policyPath.indexOf('\\') >= 0) {
+            throw new IllegalArgumentException("A policy path must not contain quotes or backslashes: " + policyPath);
+        }
+        StringBuilder result = new StringBuilder(source);
+        List<Annotation> annotations = find(source);
+        String literal = "\"" + policyPath + "\"";
+        // Replace from the end, so the offsets of the annotations before stay valid.
+        for (int i = annotations.size() - 1; i >= 0; i--) {
+            Annotation annotation = annotations.get(i);
+            if (!annotation.isEvaluable() || annotation.policyPath().filter(policyPath::equals).isPresent()) {
+                continue;
+            }
+            Map<String, Argument> arguments = new LinkedHashMap<>();
+            Argument previous = annotation.arguments().get(VALUE_ARGUMENT);
+            boolean named = previous == null || previous.named() || annotation.arguments().size() > 1;
+            arguments.put(VALUE_ARGUMENT, new Argument(named, named ? VALUE_ARGUMENT + " = " + literal : literal, literal));
+            annotation.arguments().forEach((name, argument) -> arguments.putIfAbsent(name, argument));
+            StringJoiner rendered = new StringJoiner(", ", annotation.name() + "(", ")");
+            arguments.values().forEach(argument -> rendered.add(argument.text()));
+            result.replace(annotation.start(), annotation.end(), rendered.toString());
+        }
+        return result.toString();
+    }
+
     private static String render(Annotation annotation, boolean active) {
         Map<String, Argument> arguments = new LinkedHashMap<>(annotation.arguments());
         if (active) {

@@ -564,6 +564,44 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
+     * @param javaSources the Java sources of the repository by their path relative to its root, see {@link #isJavaSourcePath(String, Predicate)}
+     * @return the path of the source file of each test class, by the fully qualified name of the class, sorted by name
+     */
+    public static Map<String, String> testClassPaths(Map<String, String> javaSources) {
+        List<AresTestSources.Summary> summaries = javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+        Set<String> testClassNames = testClasses(summaries).stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
+        Map<String, String> paths = new TreeMap<>();
+        for (AresTestSources.Summary summary : summaries) {
+            summary.topLevelTypes().stream().filter(type -> testClassNames.contains(type.qualifiedName())).forEach(type -> paths.put(type.qualifiedName(), summary.path()));
+        }
+        return paths;
+    }
+
+    /**
+     * Points the {@code @Policy} annotation of test classes to a policy file, see {@link AresPolicyAnnotations#setPolicyPath(String, String)}. The Security
+     * Framework only changes repositories in which every file has at most one relevant top-level type, so rewriting the file rewrites the class.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policyBySource the validated policy path for each source file, by the path of the file relative to the root
+     * @return the number of files that changed
+     */
+    public static int pointTestClassesToPolicies(Path repositoryRoot, Map<String, String> policyBySource) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        int changedFiles = 0;
+        for (Map.Entry<String, String> entry : policyBySource.entrySet()) {
+            Path javaFile = root.resolve(entry.getKey()).normalize();
+            if (!javaFile.startsWith(root) || !Files.isRegularFile(javaFile, LinkOption.NOFOLLOW_LINKS)) {
+                continue;
+            }
+            String content = readFile(javaFile);
+            if (writeIfChanged(javaFile, content, AresPolicyAnnotations.setPolicyPath(content, entry.getValue()))) {
+                changedFiles++;
+            }
+        }
+        return changedFiles;
+    }
+
+    /**
      * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List)}.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository

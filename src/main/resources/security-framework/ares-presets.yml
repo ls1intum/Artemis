@@ -1,0 +1,28 @@
+# Presets of the Ares security policy that instructors can base a policy on (basedOnTheFollowingPreset).
+#
+# A preset is a policy file bundled with Ares. Ares merges it into every policy that names it, so the permissions it adds are shown in the policy
+# editor as locked rows tagged "Preset". Artemis cannot read the presets from the Ares release a test repository pins, so they are listed here.
+#
+# How to update it:
+#   1. When an Ares release bundles a preset that instructors may use, add an entry with the name Ares reads, the label shown to instructors and the
+#      resource accesses of the bundled file, in the format of a policy file.
+#   2. Add basedOnTheFollowingPreset to the fields of that release in ares-compatibility.yml, so the editor can tell which releases accept it.
+#
+# Example:
+#   presets:
+#     - name: MOCKITO
+#       label: Mockito
+#       theFollowingResourceAccessesArePermitted:
+#         regardingFileSystemInteractions: [ ]
+#         regardingNetworkConnections: [ ]
+#         regardingCommandExecutions: [ ]
+#         regardingThreadCreations: [ ]
+#         regardingPackageImports:
+#           - importTheFollowingPackage: "org.mockito"
+#         regardingTimeouts: [ ]
+#
+# No released Ares version bundles a preset for instructors yet; the only preset in development (SMOKE_TEST) exists for Ares' own tests.
+#
+# An instance can extend this file by placing a copy with the same path in its resources folder.
+catalogVersion: 1
+presets: [ ]

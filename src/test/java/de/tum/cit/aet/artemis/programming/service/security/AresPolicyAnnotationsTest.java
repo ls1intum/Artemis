@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -142,5 +143,39 @@ class AresPolicyAnnotationsTest {
         String original = "class A { String s = \"a(b\"; char c = ')'; /* ( */ // )\n}";
 
         assertThat(AresPolicyAnnotations.mask(original)).hasSameSizeAs(original).doesNotContain("a(b").contains("class A");
+    }
+
+    @Test
+    void pointsAnAnnotationToAnotherPolicyFileAndKeepsItsOtherArguments() {
+        String original = """
+                package de.example;
+
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml", /* kept */ activated = true)
+                class SortingTest {
+                }
+                """;
+
+        String rewritten = AresPolicyAnnotations.setPolicyPath(original, "StressTests.yaml");
+
+        assertThat(rewritten).contains("@de.tum.cit.ase.ares.api.Policy(value = \"StressTests.yaml\", /* kept */ activated = true)");
+        assertThat(AresPolicyAnnotations.find(rewritten)).singleElement().satisfies(annotation -> assertThat(annotation.policyPath()).contains("StressTests.yaml"));
+        assertThat(AresPolicyAnnotations.setPolicyPath(rewritten, "StressTests.yaml")).isEqualTo(rewritten);
+    }
+
+    @Test
+    void keepsAnUnnamedValueUnnamedAndAddsAMissingValue() {
+        String unnamed = source("import de.tum.cit.ase.ares.api.Policy;", "@Policy(\"SecurityPolicy.yaml\")");
+        String withoutValue = source("import de.tum.cit.ase.ares.api.Policy;", "@Policy(activated = false)");
+
+        assertThat(AresPolicyAnnotations.setPolicyPath(unnamed, "policies/Stress.yml")).contains("@Policy(\"policies/Stress.yml\")");
+        assertThat(AresPolicyAnnotations.setPolicyPath(withoutValue, "Stress.yaml")).contains("@Policy(value = \"Stress.yaml\", activated = false)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Stress\"Tests.yaml", "Stress\\Tests.yaml" })
+    void refusesAPathThatIsNoPlainStringLiteral(String policyPath) {
+        String original = source("import de.tum.cit.ase.ares.api.Policy;", "@Policy(\"SecurityPolicy.yaml\")");
+
+        assertThatIllegalArgumentException().isThrownBy(() -> AresPolicyAnnotations.setPolicyPath(original, policyPath));
     }
 }
