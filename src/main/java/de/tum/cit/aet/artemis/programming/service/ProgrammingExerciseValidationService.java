@@ -21,15 +21,16 @@ import java.util.regex.PatternSyntaxException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
+import de.tum.cit.aet.artemis.core.config.AllowedDockerRegistries;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -55,14 +56,6 @@ public class ProgrammingExerciseValidationService {
 
     /** The branch regex is stored in a column of this length. */
     private static final int MAX_BRANCH_REGEX_LENGTH = 128;
-
-    private static final String DEFAULT_DOCKER_REGISTRY = "docker.io";
-
-    /**
-     * Registries that a Docker image of an exercise may come from. Empty means that every registry is allowed.
-     */
-    @Value("${artemis.continuous-integration.allowed-docker-registries:}")
-    private List<String> allowedDockerRegistries = List.of();
 
     /** A run of whitespace, which a project key may not contain. */
     private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
@@ -131,11 +124,14 @@ public class ProgrammingExerciseValidationService {
 
     private final ProfileService profileService;
 
+    private final AllowedDockerRegistries allowedDockerRegistries;
+
     public ProgrammingExerciseValidationService(ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyService submissionPolicyService,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, Optional<VersionControlService> versionControlService1,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService, Environment environment) {
+        this.allowedDockerRegistries = AllowedDockerRegistries.from(environment);
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -433,24 +429,11 @@ public class ProgrammingExerciseValidationService {
         if (dockerImage == null || allowedDockerRegistries.isEmpty()) {
             return;
         }
-        String registry = registryOf(dockerImage.trim());
-        boolean allowed = allowedDockerRegistries.stream().map(entry -> entry.trim().toLowerCase(Locale.ROOT)).anyMatch(entry -> entry.equals(registry));
-        if (!allowed) {
-            throw new BadRequestAlertException("The Docker image comes from the registry " + registry + ", which is not allowed on this server", "programmingExercise",
+        if (!allowedDockerRegistries.allows(dockerImage)) {
+            throw new BadRequestAlertException(
+                    "The Docker image comes from the registry " + AllowedDockerRegistries.registryOf(dockerImage) + ", which is not allowed on this server", "programmingExercise",
                     "dockerImageRegistryNotAllowed");
         }
-    }
-
-    private static String registryOf(String dockerImage) {
-        int firstSlash = dockerImage.indexOf('/');
-        if (firstSlash > 0) {
-            String first = dockerImage.substring(0, firstSlash).toLowerCase(Locale.ROOT);
-            // Like Docker, treat the first component as a registry when it looks like a host name, with a dot or a port, or is localhost
-            if (first.contains(".") || first.contains(":") || "localhost".equals(first)) {
-                return "index.docker.io".equals(first) || "registry-1.docker.io".equals(first) ? DEFAULT_DOCKER_REGISTRY : first;
-            }
-        }
-        return DEFAULT_DOCKER_REGISTRY;
     }
 
     /**

@@ -33,6 +33,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
+import de.tum.cit.aet.artemis.core.config.AllowedDockerRegistries;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
@@ -79,6 +80,7 @@ public class ArtemisApp {
         }
         if (activeProfiles.contains(PROFILE_CORE)) {
             InternalAccessConfiguration.warnIfFullyOpen(env);
+            AllowedDockerRegistries.from(env).logActiveList();
         }
     }
 

@@ -18,7 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.mock.env.MockEnvironment;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -75,7 +75,24 @@ class ProgrammingExerciseValidationServiceTest {
     void setUp() {
         validationService = new ProgrammingExerciseValidationService(programmingExerciseBuildConfigRepository, auxiliaryRepositoryService, programmingExerciseRepository,
                 submissionPolicyService, Optional.of(programmingLanguageFeatureService), Optional.empty(), programmingExerciseBuildConfigService, Optional.empty(),
-                programmingExerciseTestCaseRepository, profileService);
+                programmingExerciseTestCaseRepository, profileService, new MockEnvironment());
+    }
+
+    /**
+     * Builds the service the way Spring does, with the allow-list read from real property sources.
+     */
+    private ProgrammingExerciseValidationService serviceWithAllowedRegistries(MockEnvironment environment) {
+        return new ProgrammingExerciseValidationService(programmingExerciseBuildConfigRepository, auxiliaryRepositoryService, programmingExerciseRepository,
+                submissionPolicyService, Optional.of(programmingLanguageFeatureService), Optional.empty(), programmingExerciseBuildConfigService, Optional.empty(),
+                programmingExerciseTestCaseRepository, profileService, environment);
+    }
+
+    private ProgrammingExerciseValidationService serviceWithAllowedRegistries(String... registries) {
+        MockEnvironment environment = new MockEnvironment();
+        for (int i = 0; i < registries.length; i++) {
+            environment.setProperty("artemis.continuous-integration.allowed-docker-registries[" + i + "]", registries[i]);
+        }
+        return serviceWithAllowedRegistries(environment);
     }
 
     private ProgrammingExercise exerciseWithPackageName(ProgrammingLanguage programmingLanguage, String packageName) {
@@ -370,25 +387,65 @@ class ProgrammingExerciseValidationServiceTest {
     @ParameterizedTest
     @ValueSource(strings = { "ghcr.io/ls1intum/image:1", "ghcr.io:443/ls1intum/image", "GHCR.IO/ls1intum/image" })
     void validateDockerImageRegistry_acceptsAnImageOfAnAllowedRegistry(String dockerImage) {
-        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("ghcr.io", "ghcr.io:443"));
+        validationService = serviceWithAllowedRegistries("ghcr.io", "ghcr.io:443");
 
         assertThatCode(() -> validationService.validateDockerImageRegistry(dockerImage)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "registry.example.org/team/image:1", "ubuntu:24.04", "library/ubuntu", "docker.io/library/ubuntu", "localhost:5000/image" })
+    @ValueSource(strings = { "registry.example.org/team/image:1", "ubuntu:24.04", "library/ubuntu", "docker.io/library/ubuntu", "localhost:5000/image", "Other/team/image" })
     void validateDockerImageRegistry_rejectsAnImageOfAnotherRegistry(String dockerImage) {
-        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("ghcr.io"));
+        validationService = serviceWithAllowedRegistries("ghcr.io");
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(dockerImage)).withMessageContaining("not allowed");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(dockerImage)).withMessageContaining("not allowed")
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("dockerImageRegistryNotAllowed"));
+    }
+
+    @Test
+    void validateDockerImageRegistry_readsAYamlList() {
+        // the property sources of a YAML list hold name[0], name[1], ...
+        validationService = serviceWithAllowedRegistries("ghcr.io", "registry.example.org");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image")).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry("quay.io/team/image"));
+    }
+
+    @Test
+    void validateDockerImageRegistry_readsACommaSeparatedString() {
+        validationService = serviceWithAllowedRegistries(
+                new MockEnvironment().withProperty("artemis.continuous-integration.allowed-docker-registries", "ghcr.io, registry.example.org"));
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image")).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry("quay.io/team/image"));
+    }
+
+    @Test
+    void validateDockerImageRegistry_treatsAFirstComponentWithUppercaseLettersAsAHost() {
+        // Docker only reads the first component as a repository path if it is lower case, so Myregistry is a host here
+        validationService = serviceWithAllowedRegistries("myregistry");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("Myregistry/team/img")).doesNotThrowAnyException();
+        validationService = serviceWithAllowedRegistries("docker.io");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry("Myregistry/team/img"));
+        assertThatCode(() -> validationService.validateDockerImageRegistry("myregistry/team/img")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_normalizesTheEntriesOfTheList() {
+        validationService = serviceWithAllowedRegistries("HTTPS://Registry.Example.org/", "http://other.example.org//", "registry-1.docker.io");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("other.example.org/team/image")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("ubuntu:24.04")).doesNotThrowAnyException();
     }
 
     @Test
     void validateDockerImageRegistry_treatsAnImageWithoutRegistryAsDockerHub() {
-        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("docker.io"));
+        validationService = serviceWithAllowedRegistries("docker.io");
 
         assertThatCode(() -> validationService.validateDockerImageRegistry("ubuntu:24.04")).doesNotThrowAnyException();
         assertThatCode(() -> validationService.validateDockerImageRegistry("index.docker.io/library/ubuntu")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry-1.docker.io/library/ubuntu")).doesNotThrowAnyException();
     }
 
     @Test
@@ -398,7 +455,7 @@ class ProgrammingExerciseValidationServiceTest {
 
     @Test
     void validateDockerImageRegistry_checksTheImageOfTheBuildPlanConfiguration() {
-        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("ghcr.io"));
+        validationService = serviceWithAllowedRegistries("ghcr.io");
         ProgrammingExerciseBuildConfig allowed = new ProgrammingExerciseBuildConfig();
         allowed.setBuildPlanConfiguration("{\"phases\":[],\"dockerImage\":\"ghcr.io/ls1intum/image:1\"}");
         ProgrammingExerciseBuildConfig refused = new ProgrammingExerciseBuildConfig();
