@@ -8,7 +8,9 @@ import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -91,6 +93,10 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     private volatile boolean platformOriginsCached;
 
+    private final ReentrantLock refreshLock = new ReentrantLock();
+
+    private volatile Set<String> platformsWarnedAbout = Set.of();
+
     public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
@@ -102,46 +108,99 @@ public class CustomLti13Configurer extends Lti13Configurer {
     /**
      * The origins ({@code scheme://host[:port]}) of the configured LTI platforms, which are the origins that embed the client when they launch it. They come from the
      * issuer and the authorization address of each platform. The result is cached for a minute, because it is needed for every response.
+     * <p>
+     * Only one request refreshes the cache at a time. The other requests that arrive meanwhile get the cached origins instead of querying the database as well. A failed
+     * refresh counts as a refresh: the previous origins stay in place and the next attempt waits for the cache duration, so that an outage of the database does not make
+     * every request query it. The very first read has no previous origins to serve, so concurrent requests wait for it.
      *
      * @return the origins, empty while no platform is configured
      */
     public Set<String> getPlatformOrigins() {
-        long now = System.nanoTime();
-        if (platformOriginsCached && now - cachedPlatformOriginsAtNanos < PLATFORM_ORIGINS_CACHE_DURATION.toNanos()) {
+        if (isCacheFresh()) {
             return cachedPlatformOrigins;
         }
-        Set<String> origins = new LinkedHashSet<>();
-        try {
-            for (LtiPlatformConfiguration platform : ltiPlatformConfigurationRepository.findAll()) {
-                addOrigin(origins, platform.getOriginalUrl());
-                addOrigin(origins, platform.getAuthorizationUri());
+        if (platformOriginsCached) {
+            if (!refreshLock.tryLock()) {
+                return cachedPlatformOrigins;
             }
+        }
+        else {
+            refreshLock.lock();
+        }
+        try {
+            if (isCacheFresh()) {
+                return cachedPlatformOrigins;
+            }
+            refreshPlatformOrigins();
+            return cachedPlatformOrigins;
+        }
+        finally {
+            refreshLock.unlock();
+        }
+    }
+
+    private boolean isCacheFresh() {
+        return platformOriginsCached && System.nanoTime() - cachedPlatformOriginsAtNanos < PLATFORM_ORIGINS_CACHE_DURATION.toNanos();
+    }
+
+    private void refreshPlatformOrigins() {
+        try {
+            Set<String> origins = new LinkedHashSet<>();
+            Set<String> platformsWithoutOrigin = new TreeSet<>();
+            for (LtiPlatformConfiguration platform : ltiPlatformConfigurationRepository.findAll()) {
+                String issuerOrigin = originOf(platform.getOriginalUrl());
+                String authorizationOrigin = originOf(platform.getAuthorizationUri());
+                if (issuerOrigin == null && authorizationOrigin == null) {
+                    platformsWithoutOrigin.add(String.valueOf(platform.getRegistrationId()));
+                }
+                if (issuerOrigin != null) {
+                    origins.add(issuerOrigin);
+                }
+                if (authorizationOrigin != null) {
+                    origins.add(authorizationOrigin);
+                }
+            }
+            warnAboutNewPlatformsWithoutOrigin(platformsWithoutOrigin);
+            cachedPlatformOrigins = Collections.unmodifiableSortedSet(new TreeSet<>(origins));
         }
         catch (RuntimeException e) {
             // The previous origins stay in place rather than opening or closing the framing because of a failed read
             log.warn("The LTI platforms could not be read to derive the origins that may embed the client: {}", e.getMessage());
-            return cachedPlatformOrigins;
         }
-        cachedPlatformOrigins = Collections.unmodifiableSortedSet(new TreeSet<>(origins));
-        cachedPlatformOriginsAtNanos = now;
+        cachedPlatformOriginsAtNanos = System.nanoTime();
         platformOriginsCached = true;
-        return cachedPlatformOrigins;
     }
 
-    private static void addOrigin(Set<String> origins, String url) {
+    /**
+     * Warns once for every platform whose embedding origin cannot be derived, and again only if the platform is fixed and breaks later. A warning per refresh would
+     * repeat every minute.
+     */
+    private void warnAboutNewPlatformsWithoutOrigin(Set<String> platformsWithoutOrigin) {
+        for (String registrationId : platformsWithoutOrigin) {
+            if (!platformsWarnedAbout.contains(registrationId)) {
+                log.warn("No origin that may embed the client can be derived from the issuer or the authorization address of the LTI platform {}. "
+                        + "List the origin of its learning management system in artemis.security.frame-ancestors.", registrationId);
+            }
+        }
+        platformsWarnedAbout = Set.copyOf(platformsWithoutOrigin);
+    }
+
+    @Nullable
+    private static String originOf(@Nullable String url) {
         if (url == null || url.isBlank()) {
-            return;
+            return null;
         }
         try {
             URI uri = new URI(url.trim());
             String scheme = uri.getScheme() == null ? null : uri.getScheme().toLowerCase(Locale.ROOT);
             if (uri.getHost() == null || !("https".equals(scheme) || "http".equals(scheme))) {
-                return;
+                return null;
             }
-            origins.add(scheme + "://" + uri.getHost().toLowerCase(Locale.ROOT) + (uri.getPort() == -1 ? "" : ":" + uri.getPort()));
+            return scheme + "://" + uri.getHost().toLowerCase(Locale.ROOT) + (uri.getPort() == -1 ? "" : ":" + uri.getPort());
         }
         catch (URISyntaxException e) {
             log.debug("The address {} of an LTI platform is not a valid URI", url);
+            return null;
         }
     }
 

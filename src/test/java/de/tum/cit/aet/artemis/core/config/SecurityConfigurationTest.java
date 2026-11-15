@@ -8,15 +8,20 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.filter.CorsFilter;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -108,20 +113,20 @@ class SecurityConfigurationTest {
 
     @Test
     void contentSecurityPolicy_withoutLti_forbidsFraming() {
-        assertThat(securityConfiguration.contentSecurityPolicy(false)).contains("base-uri 'self'").endsWith("frame-ancestors 'none'");
+        assertThat(securityConfiguration.contentSecurityPolicy(false, List.of())).contains("base-uri 'self'").endsWith("frame-ancestors 'none'");
     }
 
     @Test
     void contentSecurityPolicy_withLti_leavesFramingToTheLtiConfiguration() {
-        assertThat(securityConfiguration.contentSecurityPolicy(true)).contains("base-uri 'self'").doesNotContain("frame-ancestors");
+        assertThat(securityConfiguration.contentSecurityPolicy(true, List.of())).contains("base-uri 'self'").doesNotContain("frame-ancestors");
     }
 
     @Test
     void contentSecurityPolicy_withConfiguredOrigins_listsThem() {
         ReflectionTestUtils.setField(securityConfiguration, "frameAncestors", "https://lms.example.org, https://*.example.com:8443");
 
-        assertThat(securityConfiguration.contentSecurityPolicy(true)).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
-        assertThat(securityConfiguration.contentSecurityPolicy(false)).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
+        assertThat(securityConfiguration.contentSecurityPolicy(true, List.of())).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
+        assertThat(securityConfiguration.contentSecurityPolicy(false, List.of())).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
     }
 
     @Test
@@ -149,12 +154,52 @@ class SecurityConfigurationTest {
         assertThat(securityConfiguration.contentSecurityPolicy(true, List.of("https://moodle.example.org; script-src *", "not an origin"))).doesNotContain("frame-ancestors");
     }
 
+    @Test
+    void currentContentSecurityPolicy_isBuiltOnlyWhenItsInputChanges() {
+        CustomLti13Configurer configurer = mock(CustomLti13Configurer.class);
+        Set<String> origins = Set.of("https://moodle.example.org; script-src *");
+        when(configurer.getPlatformOrigins()).thenReturn(origins);
+        when(moduleFeatureService.isLtiEnabled()).thenReturn(true);
+        ReflectionTestUtils.setField(securityConfiguration, "customLti13Configurer", Optional.of(configurer));
+        Logger logger = (Logger) LoggerFactory.getLogger(SecurityConfiguration.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            String first = securityConfiguration.currentContentSecurityPolicy();
+            String second = securityConfiguration.currentContentSecurityPolicy();
+            String third = securityConfiguration.currentContentSecurityPolicy();
+
+            assertThat(second).isSameAs(first);
+            assertThat(third).isSameAs(first);
+            // the origin that cannot be used is reported once, not once per response
+            assertThat(appender.list).hasSize(1);
+
+            when(configurer.getPlatformOrigins()).thenReturn(Set.of("https://moodle.example.org"));
+
+            assertThat(securityConfiguration.currentContentSecurityPolicy()).endsWith("frame-ancestors 'self' https://moodle.example.org");
+            assertThat(appender.list).hasSize(1);
+        }
+        finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
+    void currentContentSecurityPolicy_followsTheStateOfTheLtiModule() {
+        when(moduleFeatureService.isLtiEnabled()).thenReturn(false);
+        assertThat(securityConfiguration.currentContentSecurityPolicy()).endsWith("frame-ancestors 'none'");
+
+        when(moduleFeatureService.isLtiEnabled()).thenReturn(true);
+        assertThat(securityConfiguration.currentContentSecurityPolicy()).doesNotContain("frame-ancestors");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "lms.example.org", "https://lms.example.org; script-src *", "'none'", "https://lms.example.org/path" })
     void contentSecurityPolicy_withInvalidOrigin_isRejected(String origin) {
         ReflectionTestUtils.setField(securityConfiguration, "frameAncestors", origin);
 
-        assertThatThrownBy(() -> securityConfiguration.contentSecurityPolicy(true)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> securityConfiguration.contentSecurityPolicy(true, List.of())).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
