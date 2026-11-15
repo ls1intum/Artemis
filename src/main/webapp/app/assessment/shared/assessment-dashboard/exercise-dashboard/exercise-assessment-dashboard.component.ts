@@ -862,7 +862,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.tutorParticipation.set({
                         id: dto.id,
                         status,
-                        trainedExampleSubmissions: dto.trainedExampleSubmissions.map(({ id, usedForTutorial, assessmentExplanation }) => ({
+                        trainedExampleSubmissions: dto.trainedExampleSubmissions?.map(({ id, usedForTutorial, assessmentExplanation }) => ({
                             id,
                             usedForTutorial,
                             assessmentExplanation,

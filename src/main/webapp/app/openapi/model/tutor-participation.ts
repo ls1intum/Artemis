@@ -15,7 +15,7 @@ export interface TutorParticipation {
     exerciseId?: number;
     tutorId?: number;
     status: TutorParticipationStatusEnum;
-    trainedExampleSubmissions: Array<ExampleSubmission>;
+    trainedExampleSubmissions?: Array<ExampleSubmission>;
 }
 
 export type TutorParticipationStatusEnum = 'NOT_PARTICIPATED' | 'REVIEWED_INSTRUCTIONS' | 'TRAINED' | 'COMPLETED';

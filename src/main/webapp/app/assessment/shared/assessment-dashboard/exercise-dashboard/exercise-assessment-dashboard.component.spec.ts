@@ -62,7 +62,6 @@ import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboa
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
-import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
 import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
@@ -97,8 +96,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseService: ExerciseService;
     let exerciseServiceGetForTutorsStub: MockInstance;
     let exerciseServiceGetStatsForTutorsStub: MockInstance;
-
-    let tutorParticipationApi: TutorParticipationApi;
 
     let accountService: AccountService;
 
@@ -249,7 +246,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: ProfileService, useClass: MockProfileService },
         MockProvider(ExerciseService),
         MockProvider(AlertService),
-        MockProvider(TutorParticipationApi),
         MockProvider(ArtemisMarkdownService),
         MockProvider(ComplaintService),
         MockProvider(ArtemisDatePipe),
@@ -281,7 +277,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         vi.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
         const router = fixture.debugElement.injector.get(Router);
         navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-        tutorParticipationApi = TestBed.inject(TutorParticipationApi);
         exerciseServiceGetForTutorsStub = vi.spyOn(exerciseService, 'getForTutors');
         exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
@@ -565,7 +560,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
-        const initStub = vi.spyOn(tutorParticipationApi, 'initTutorParticipation');
         const dto: TutorParticipation = {
             id: 1,
             exerciseId: comp.exerciseId(),
@@ -573,19 +567,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             status: 'REVIEWED_INSTRUCTIONS',
             trainedExampleSubmissions: [{ id: 5, usedForTutorial: false }],
         };
-
-        initStub.mockImplementation(() => {
-            expect(comp.isLoading()).toBe(true);
-            return of(dto);
-        });
+        const http = TestBed.inject(HttpTestingController);
 
         expect(comp.tutorParticipation()).toBeUndefined();
         expect(comp.isLoading()).toBe(false);
 
         comp.readInstruction();
 
-        expect(initStub).toHaveBeenCalledTimes(1);
-        expect(initStub).toHaveBeenCalledWith(comp.exerciseId());
+        expect(comp.isLoading()).toBe(true);
+        const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
+        expect(request.request.method).toBe('POST');
+        request.flush(dto);
 
         expect(comp.isLoading()).toBe(false);
 
@@ -595,6 +587,23 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             trainedExampleSubmissions: [{ id: 5, usedForTutorial: false, assessmentExplanation: undefined }],
         });
         expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+    });
+
+    it('starts a fresh tutor participation whose response has no trained example submissions', () => {
+        const alertService = TestBed.inject(AlertService);
+        const successSpy = vi.spyOn(alertService, 'success');
+        const http = TestBed.inject(HttpTestingController);
+
+        comp.readInstruction();
+
+        const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
+        expect(request.request.method).toBe('POST');
+        request.flush({ id: 3, exerciseId: comp.exerciseId(), tutorId: 2, status: 'REVIEWED_INSTRUCTIONS' });
+
+        expect(comp.tutorParticipation()).toEqual({ id: 3, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS, trainedExampleSubmissions: undefined });
+        expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+        expect(comp.isLoading()).toBe(false);
     });
 
     describe('test calls for all exercise types', () => {

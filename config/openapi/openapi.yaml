@@ -3107,7 +3107,7 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200':
-          description: OK
+          description: The long feedback text.
           content:
             text/plain:
               schema: {type: string}
@@ -7834,7 +7834,7 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ExampleSubmission'}
           uniqueItems: true
-      required: [status, trainedExampleSubmissions]
+      required: [status]
     AssessmentUploadResult:
       type: object
       properties:
