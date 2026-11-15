@@ -11,6 +11,8 @@ import type { BonusResponse } from 'app/openapi/model/bonus-response';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
@@ -670,5 +672,41 @@ describe('BonusComponent', () => {
 
         expect(bonusFinalGradeSpy).toHaveBeenCalledTimes(1);
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
+    });
+
+    describe('grading scale search request', () => {
+        beforeEach(() => {
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [BonusComponent],
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    { provide: ActivatedRoute, useValue: route },
+                    MockProvider(GradingService, { findGradeSteps: () => of(examGradeSteps), sortGradeSteps: () => {}, setGradePoints: () => {} }),
+                    MockProvider(BonusService, { generateBonusExamples: () => bonusExamples }),
+                    MockProvider(BonusApi, { getBonusForExam: () => throwError(() => ({ status: 404 })) }),
+                    MockProvider(AlertService),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
+            }).overrideComponent(BonusComponent, { set: { template: '' } });
+        });
+
+        it('sends every query parameter the server requires, sortedColumn included, and lists the returned scales', () => {
+            const http = TestBed.inject(HttpTestingController);
+            const searchFixture = TestBed.createComponent(BonusComponent);
+
+            searchFixture.componentInstance.ngOnInit();
+
+            const request = http.expectOne((req) => req.url.startsWith('/api/assessment/grading-scales'));
+            expect(request.request.method).toBe('GET');
+            const query = new URL(request.request.urlWithParams, 'http://localhost').searchParams;
+            expect(Object.fromEntries(query)).toEqual({ searchTerm: '', sortedColumn: 'ID', page: '1', pageSize: '100', sortingOrder: 'DESCENDING' });
+            request.flush(searchResult);
+            http.verify();
+
+            expect(searchFixture.componentInstance.sourceGradingScales()).toHaveLength(1);
+            expect(searchFixture.componentInstance.sourceGradingScales()[0].id).toBe(sourceGradingScale.id);
+        });
     });
 });
