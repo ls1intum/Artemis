@@ -47,6 +47,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
@@ -174,16 +175,18 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     @Test
     void testNetworkOutsideTheAllowedListOfTheAgentIsRejected() {
+        Object previous = ReflectionTestUtils.getField(buildJobContainerService, "allowedCustomNetworks");
         ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of("mirror-only"));
         try {
             var notListed = new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1);
-            assertThatThrownBy(() -> buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, notListed)).isInstanceOf(LocalCIException.class);
+            assertThatThrownBy(() -> buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, notListed))
+                    .isInstanceOf(ContainerNetworkNotAllowedException.class);
 
             buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "mirror-only", 1, 1, 1));
             buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 1, 1, 1));
         }
         finally {
-            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of());
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", previous);
         }
     }
 
@@ -295,10 +298,10 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     void testTarArchiveDoesNotFollowSymbolicLinks(@TempDir Path workDir) throws Exception {
         Path repository = Files.createDirectories(workDir.resolve("repository"));
         Path outsideDirectory = Files.createDirectories(workDir.resolve("outside"));
-        FileUtils.writeStringToFile(outsideDirectory.resolve("secret.txt").toFile(), "outside content", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(outsideDirectory.resolve("outside.txt").toFile(), "outside content", StandardCharsets.UTF_8);
         FileUtils.writeStringToFile(repository.resolve("file.txt").toFile(), "content", StandardCharsets.UTF_8);
         Files.createSymbolicLink(repository.resolve("inside-link"), Path.of("file.txt"));
-        Files.createSymbolicLink(repository.resolve("outside-file-link"), outsideDirectory.resolve("secret.txt"));
+        Files.createSymbolicLink(repository.resolve("outside-file-link"), outsideDirectory.resolve("outside.txt"));
         Files.createSymbolicLink(repository.resolve("outside-directory-link"), outsideDirectory);
 
         Path archive = ReflectionTestUtils.invokeMethod(buildJobContainerService, "createTarArchive", repository);

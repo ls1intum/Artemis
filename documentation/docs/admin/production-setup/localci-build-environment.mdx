@@ -114,7 +114,7 @@ therefore only affects what the **build script and the student code** can reach.
   `none` disables the network completely, and is the default entry of that list. Other entries must exist on every build agent host.
   See [Custom Docker Networks](/admin/production-setup/programming-exercise-adjustments#custom-docker-networks).
   A build agent checks the network of a build against its own copy of that list only if you set `container-flags-limit.allowed-custom-networks` on the agent. Then it refuses a build that requests another network,
-  except `none`, and the build fails with a message that names the network. If you do not set the list on the agent, the agent does not check the network, and the list on the core nodes decides alone.
+  except `none`, and the build fails with a message that names the network. Such a refusal does not count towards the consecutive failures that pause the agent. The agent logs the enforced list at startup. If you do not set the list on the agent, the agent does not check the network, and the list on the core nodes decides alone.
 - A common restriction for secret tests is a Docker network that only reaches your dependency mirror, combined with the mirror as the only source of dependencies.
 
 ## Container defaults

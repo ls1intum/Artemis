@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
 import de.tum.cit.aet.artemis.localci.exception.ImagePullException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -885,7 +886,7 @@ public class SharedQueueProcessingService {
                     else {
                         log.error("Error while processing build job: {}", buildJob, ex);
                     }
-                    if (!isCausedByImagePullFailedException(ex)) {
+                    if (!isCausedByImagePullFailedException(ex) && !isCausedByNetworkNotAllowed(ex)) {
                         consecutiveBuildJobFailures.incrementAndGet();
                     }
                 }
@@ -1378,6 +1379,21 @@ public class SharedQueueProcessingService {
                 buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < buildExecutorService.getMaximumPoolSize() && buildExecutorService.getActiveCount() < buildExecutorService.getMaximumPoolSize()
                 && buildExecutorService.getQueue().isEmpty();
+    }
+
+    /**
+     * Check if a throwable is caused by a build requesting a container network that the build agent does not allow. Such a build does not count as a failure of the agent.
+     *
+     * @param throwable throwable to check
+     * @return {@code true} if the build was refused because of its network
+     */
+    static boolean isCausedByNetworkNotAllowed(Throwable throwable) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            if (current instanceof ContainerNetworkNotAllowedException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

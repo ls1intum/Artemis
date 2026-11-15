@@ -32,12 +32,17 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -56,6 +61,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.RepositoryCheckoutPath;
@@ -99,7 +105,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
 @Service
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
-public class BuildJobContainerService {
+public class BuildJobContainerService implements EnvironmentAware {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
@@ -164,12 +170,24 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
+    private static final String ALLOWED_NETWORKS_PROPERTY = "artemis.continuous-integration.container-flags-limit.allowed-custom-networks";
+
     /**
      * The networks that a build on this agent may use, as configured on the agent. Empty if the agent does not configure the list, in which case the agent does not check the
      * network and relies on the check of the core node.
      */
-    @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:}")
     private List<String> allowedCustomNetworks = List.of();
+
+    @Override
+    public void setEnvironment(@NonNull Environment environment) {
+        allowedCustomNetworks = Binder.get(environment).bind(ALLOWED_NETWORKS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
+        if (allowedCustomNetworks.isEmpty()) {
+            log.info("The build agent does not configure the allowed container networks and does not check the network of a build");
+        }
+        else {
+            log.info("The build agent only runs builds on the container networks {} (and none)", allowedCustomNetworks);
+        }
+    }
 
     public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap, TempFileUtilService tempFileUtilService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
@@ -211,7 +229,7 @@ public class BuildJobContainerService {
             throw new LocalCIException("The container network '" + network + "' is not allowed");
         }
         if (!isNetworkAllowedOnThisAgent(network)) {
-            throw new LocalCIException("The container network '" + network + "' is not allowed on this build agent");
+            throw new ContainerNetworkNotAllowedException("The container network '" + network + "' is not allowed on this build agent");
         }
 
         List<String> envVars = new ArrayList<>();
