@@ -7,6 +7,10 @@ last_reviewed: 2026-11-12
 
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import emailChangePending from './assets/account/email-change-pending.png';
+import emailChangeConfirmed from './assets/account/email-change-confirmed.png';
 
 This page explains two things about your account that can surprise you: how you change your email address, and why
 Artemis sometimes asks you to sign in again before you can add an SSH key, a passkey or an access token.
@@ -26,9 +30,13 @@ the new one.
    you click, so a mail program that opens links on your behalf cannot confirm a change for you.
 5. Once both addresses are confirmed, your address changes. Your previous address receives a short notice.
 
+<Image src={emailChangeConfirmed} alt="Confirmation page after both addresses are confirmed" size={ImageSize.large} caption="The confirmation page after both addresses are confirmed" />
+
 Until then you keep using your current address. The Account Information page shows **Email change waiting for confirmation**, which
 of the two addresses is **confirmed** and which is **not confirmed yet**, and until when the links are valid. They are
 valid for 24 hours.
+
+<Image src={emailChangePending} alt="Account Information page with an email change that waits for confirmation from both addresses" size={ImageSize.large} caption="An email change that waits for confirmation from both addresses" />
 
 ### While a change is waiting
 
