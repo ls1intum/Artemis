@@ -89,7 +89,7 @@ setting, before you rely on it for an exercise that uses tools like these.
 ### Limiting the storage of a build
 
 By default, the writable layer of a build container has no size limit of its own, so a build can fill the disk of the build agent host up to the free space of the Docker data directory.
-Set `artemis.continuous-integration.container-storage-limit` on the build agents to limit it, for example `10g`. The value is a number with an optional unit `k`, `m` or `g`; a plain number is read as bytes.
+Set `artemis.continuous-integration.container-storage-limit` on the build agents to limit it, for example `10g`. The value is a number with an optional unit `k`, `m` or `g` and an optional `b` (for example `10g`, `512MB` or `2048`); a plain number is read as bytes. Surrounding whitespace is ignored. A value that is not a size stops the start of the build agent, and the agent logs the limit at startup.
 Artemis passes it to Docker as the `size` storage option of the container. Leave it blank (the default) to keep the behavior without a limit.
 
 Docker applies this option only on storage drivers and file systems that support quotas, for example `overlay2` on an `xfs` file system mounted with `pquota`. On other setups Docker

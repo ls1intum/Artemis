@@ -62,9 +62,10 @@ public class BuildAgentConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
-    /** Everything that is not a digit, removed to read the number out of a Docker flag value such as {@code 2g}. */
-    private static final Pattern STORAGE_LIMIT = Pattern.compile("(\\d{1,12})([kKmMgG]?)");
+    /** A size such as {@code 10g}, {@code 512MB} or {@code 2048}: a number, an optional unit k, m or g, and an optional b. */
+    private static final Pattern STORAGE_LIMIT = Pattern.compile("(\\d{1,12})([kKmMgG]?)[bB]?");
 
+    /** Everything that is not a digit, removed to read the number out of a Docker flag value such as {@code 2g}. */
     private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
@@ -89,6 +90,9 @@ public class BuildAgentConfiguration {
     @Value("${artemis.continuous-integration.container-storage-limit:}")
     String containerStorageLimit = "";
 
+    /** The limit in bytes, read once at startup from {@link #containerStorageLimit}, or null for no limit. */
+    Long storageLimitBytes;
+
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
     int pauseAfterConsecutiveFailedJobs;
 
@@ -103,6 +107,11 @@ public class BuildAgentConfiguration {
      */
     @PostConstruct
     public void onApplicationReady() {
+        // An invalid value stops the start of the agent, instead of failing every build later
+        storageLimitBytes = parseStorageLimit(containerStorageLimit);
+        if (storageLimitBytes != null) {
+            log.info("The writable layer of a build container is limited to {} bytes", storageLimitBytes);
+        }
         buildExecutor = createBuildExecutor();
         buildResultExecutor = createBuildResultExecutor();
         openDockerServicesIfSelected();
@@ -178,24 +187,41 @@ public class BuildAgentConfiguration {
      *
      * @param hostConfig the configuration of the container
      * @return the same configuration
-     * @throws LocalCIException if the configured limit is not a size such as {@code 10g}
      */
     public HostConfig applyStorageLimit(HostConfig hostConfig) {
-        if (containerStorageLimit == null || containerStorageLimit.isBlank()) {
+        if (storageLimitBytes == null) {
             return hostConfig;
         }
-        Matcher matcher = STORAGE_LIMIT.matcher(containerStorageLimit.trim());
-        if (!matcher.matches()) {
-            throw new LocalCIException("The container storage limit '" + containerStorageLimit + "' is not a size such as 10g");
+        return hostConfig.withStorageOpt(Map.of("size", Long.toString(storageLimitBytes)));
+    }
+
+    /**
+     * Reads a size such as {@code 10g}.
+     *
+     * @param limit the configured value, may be blank
+     * @return the size in bytes, or null if the value is blank
+     * @throws LocalCIException if the value is not a size
+     */
+    static Long parseStorageLimit(String limit) {
+        if (limit == null || limit.isBlank()) {
+            return null;
         }
-        String unit = matcher.group(2).toLowerCase(Locale.ROOT);
-        long factor = switch (unit) {
+        Matcher matcher = STORAGE_LIMIT.matcher(limit.trim());
+        if (!matcher.matches()) {
+            throw new LocalCIException("The container storage limit '" + limit + "' is not a size such as 10g");
+        }
+        long factor = switch (matcher.group(2).toLowerCase(Locale.ROOT)) {
             case "k" -> 1024L;
             case "m" -> 1024L * 1024L;
             case "g" -> 1024L * 1024L * 1024L;
             default -> 1L;
         };
-        return hostConfig.withStorageOpt(Map.of("size", Long.toString(Long.parseLong(matcher.group(1)) * factor)));
+        try {
+            return Math.multiplyExact(Long.parseLong(matcher.group(1)), factor);
+        }
+        catch (ArithmeticException e) {
+            throw new LocalCIException("The container storage limit '" + limit + "' is too large", e);
+        }
     }
 
     /**

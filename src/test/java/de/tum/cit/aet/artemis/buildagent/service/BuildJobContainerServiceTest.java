@@ -191,6 +191,20 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testStorageLimitIsAppliedToTheDefaultAndTheAdjustedHostConfig() {
+        ReflectionTestUtils.setField(buildAgentConfiguration, "storageLimitBytes", 1024L);
+        try {
+            Assertions.assertThat(buildAgentConfiguration.hostConfig().getStorageOpt()).containsEntry("size", "1024");
+
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1));
+            Assertions.assertThat(captureHostConfig().getStorageOpt()).containsEntry("size", "1024");
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentConfiguration, "storageLimitBytes", null);
+        }
+    }
+
+    @Test
     void testNonEmptyNetworkIsTaken() {
         var runConfig = new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);

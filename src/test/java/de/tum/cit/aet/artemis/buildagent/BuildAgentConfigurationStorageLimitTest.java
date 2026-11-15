@@ -16,29 +16,38 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
  */
 class BuildAgentConfigurationStorageLimitTest {
 
-    private BuildAgentConfiguration configuration(String limit) {
+    private BuildAgentConfiguration configuration(Long limitBytes) {
         BuildAgentConfiguration configuration = new BuildAgentConfiguration(mock(ProgrammingLanguageConfiguration.class));
-        configuration.containerStorageLimit = limit;
+        configuration.storageLimitBytes = limitBytes;
         return configuration;
     }
 
     @Test
     void withoutALimitTheHostConfigIsUnchanged() {
-        HostConfig hostConfig = HostConfig.newHostConfig();
-
-        assertThat(configuration("").applyStorageLimit(hostConfig).getStorageOpt()).isNull();
-        assertThat(configuration(null).applyStorageLimit(hostConfig).getStorageOpt()).isNull();
+        assertThat(configuration(null).applyStorageLimit(HostConfig.newHostConfig()).getStorageOpt()).isNull();
+        assertThat(BuildAgentConfiguration.parseStorageLimit("")).isNull();
+        assertThat(BuildAgentConfiguration.parseStorageLimit("  ")).isNull();
+        assertThat(BuildAgentConfiguration.parseStorageLimit(null)).isNull();
     }
 
     @Test
     void aLimitIsPassedToDockerInBytes() {
-        assertThat(configuration("10g").applyStorageLimit(HostConfig.newHostConfig()).getStorageOpt()).containsEntry("size", String.valueOf(10L * 1024 * 1024 * 1024));
-        assertThat(configuration("512M").applyStorageLimit(HostConfig.newHostConfig()).getStorageOpt()).containsEntry("size", String.valueOf(512L * 1024 * 1024));
-        assertThat(configuration("2048").applyStorageLimit(HostConfig.newHostConfig()).getStorageOpt()).containsEntry("size", "2048");
+        assertThat(configuration(1024L).applyStorageLimit(HostConfig.newHostConfig()).getStorageOpt()).containsEntry("size", "1024");
     }
 
     @Test
-    void aLimitThatIsNotASizeIsRefused() {
-        assertThatThrownBy(() -> configuration("lots").applyStorageLimit(HostConfig.newHostConfig())).isInstanceOf(LocalCIException.class);
+    void sizesWithUnitsAreParsedIntoBytes() {
+        assertThat(BuildAgentConfiguration.parseStorageLimit("10g")).isEqualTo(10L * 1024 * 1024 * 1024);
+        assertThat(BuildAgentConfiguration.parseStorageLimit(" 512MB ")).isEqualTo(512L * 1024 * 1024);
+        assertThat(BuildAgentConfiguration.parseStorageLimit("64k")).isEqualTo(64L * 1024);
+        assertThat(BuildAgentConfiguration.parseStorageLimit("2048")).isEqualTo(2048L);
+        assertThat(BuildAgentConfiguration.parseStorageLimit("2048b")).isEqualTo(2048L);
+    }
+
+    @Test
+    void aLimitThatIsNotASizeOrTooLargeIsRefused() {
+        assertThatThrownBy(() -> BuildAgentConfiguration.parseStorageLimit("lots")).isInstanceOf(LocalCIException.class);
+        assertThatThrownBy(() -> BuildAgentConfiguration.parseStorageLimit("-5g")).isInstanceOf(LocalCIException.class);
+        assertThatThrownBy(() -> BuildAgentConfiguration.parseStorageLimit("999999999999g")).isInstanceOf(LocalCIException.class);
     }
 }
