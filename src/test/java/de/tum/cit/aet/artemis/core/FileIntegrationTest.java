@@ -1487,4 +1487,44 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.get(backgroundUrl, HttpStatus.NOT_FOUND, byte[].class);
     }
+
+    private DragAndDropQuestion createExamDragAndDropQuestion(ZonedDateTime examStart, ZonedDateTime examEnd) {
+        var quiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, examStart, examEnd);
+        return quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst().orElseThrow();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizBeforeExamStart() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+        String backgroundUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png";
+        String dragItemUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/drag-items/1/item.png";
+
+        request.get(backgroundUrl, HttpStatus.FORBIDDEN, byte[].class);
+        request.get(dragItemUrl, HttpStatus.FORBIDDEN, byte[].class);
+
+        // teaching assistants pass the check; the question has no background, so the file is missing
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(backgroundUrl, HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizWithoutStudentExam() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        String backgroundUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png";
+
+        request.get(backgroundUrl, HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizDuringExam() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+
+        // the check passes; the question has no background, so the file is missing
+        request.get("/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png", HttpStatus.NOT_FOUND, byte[].class);
+    }
 }

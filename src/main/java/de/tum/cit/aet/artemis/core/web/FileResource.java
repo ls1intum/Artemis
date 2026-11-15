@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -140,6 +141,8 @@ public class FileResource {
 
     private final Optional<ExamUserApi> examUserApi;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final QuizQuestionRepository quizQuestionRepository;
@@ -151,7 +154,7 @@ public class FileResource {
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi, Optional<LectureAttachmentApi> lectureAttachmentApi,
             Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository,
-            CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi, Optional<ExamAccessApi> examAccessApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.fileDownloadService = fileDownloadService;
@@ -161,6 +164,7 @@ public class FileResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserApi = examUserApi;
+        this.examAccessApi = examAccessApi;
         this.quizQuestionRepository = quizQuestionRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitApi = lectureUnitApi;
@@ -264,7 +268,7 @@ public class FileResource {
     }
 
     /**
-     * The pictures of a drag and drop question of a course quiz are only available for students once the quiz is released. Teaching assistants and above can always see them.
+     * Pictures of a course quiz are only available for students once the quiz is released, those of an exam quiz once the exam content is available to them.
      *
      * @param question the drag and drop question the picture belongs to
      * @param course   the course of the quiz
@@ -272,7 +276,10 @@ public class FileResource {
      */
     private void checkQuizReleasedForStudentsElseThrow(DragAndDropQuestion question, Course course) {
         var exercise = question.getExercise();
-        if (!exercise.isExamExercise() && !exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        if (exercise.isExamExercise()) {
+            examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class)).checkExamContentAvailableForStudentElseThrow(exercise);
+        }
+        else if (!exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             throw new AccessForbiddenException("The quiz is not released yet");
         }
     }

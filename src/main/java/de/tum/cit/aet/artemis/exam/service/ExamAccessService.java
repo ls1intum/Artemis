@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -348,6 +350,31 @@ public class ExamAccessService {
         }
         else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
             throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+    }
+
+    /**
+     * Checks that the current user may read the content of an exam exercise that is shown during the exam, for example the pictures of a quiz question.
+     * Teaching assistants and above always may. Students need a student exam of this exam and the exam content must already be available to them,
+     * which is the case from {@code EXAM_START_WAIT_TIME_MINUTES} minutes before the exam start.
+     *
+     * @param exercise the exam exercise
+     */
+    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise) {
+        if (!exercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = exercise.getExerciseGroup().getExam();
+        User user = userRepository.getUserWithAuthorities();
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse(), user)) {
+            return;
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, exam.getCourse(), user);
+        if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(exam.getCourse().getId(), exam.getId(), user.getId())) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+        if (exam.getStartDate() == null || ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(exam.getStartDate())) {
+            throw new AccessForbiddenException("The exam content is not available yet");
         }
     }
 
