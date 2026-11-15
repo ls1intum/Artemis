@@ -180,6 +180,52 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         ]);
     });
 
+    describe('paging arrows', () => {
+        function arrows(): { left: HTMLElement; right: HTMLElement } {
+            const [left, right] = Array.from(fixture.nativeElement.querySelectorAll('fa-icon[role="button"]')) as HTMLElement[];
+            return { left, right };
+        }
+
+        it('should hide an unavailable arrow without removing it from the layout', () => {
+            // Eleven exercises, ten per page: only the forward arrow is available on the first page.
+            let { left, right } = arrows();
+            expect(left.classList).toContain('arrow-hidden');
+            expect(right.classList).not.toContain('arrow-hidden');
+
+            component.switchTimeSpan(true);
+            fixture.detectChanges();
+
+            ({ left, right } = arrows());
+            expect(left.classList).not.toContain('arrow-hidden');
+            expect(right.classList).toContain('arrow-hidden');
+        });
+
+        it('should never use the display:none utility, which would shift the chart sideways when paging', () => {
+            const { left, right } = arrows();
+            expect(left.classList).not.toContain('hidden');
+            expect(right.classList).not.toContain('hidden');
+
+            component.switchTimeSpan(true);
+            fixture.detectChanges();
+
+            expect(left.classList).not.toContain('hidden');
+            expect(right.classList).not.toContain('hidden');
+        });
+    });
+
+    describe('heading', () => {
+        it('should give the heading a column wide enough for the course average on large screens', () => {
+            const heading = fixture.nativeElement.querySelector('[data-testid="average-score-heading"]') as HTMLElement;
+            const chartRow = fixture.nativeElement.querySelector('.chart-row') as HTMLElement;
+
+            expect(heading.classList).toContain('xl:col-span-2');
+            expect(heading.classList).not.toContain('xl:col-span-1');
+            // Heading and chart row together fill the twelve columns of the grid.
+            expect(chartRow.classList).toContain('xl:col-span-10');
+            expect(fixture.nativeElement.querySelector('[data-testid="course-average"]').textContent).toContain(`${courseAverageScore}%`);
+        });
+    });
+
     describe('test filtering', () => {
         let expectedScores: CourseManagementStatisticsModel[];
 
