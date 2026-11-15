@@ -14,7 +14,6 @@ import { IrisMessageContextDTO, LectureContextsProvider } from 'app/iris/shared/
                 [isChatHistoryAvailable]="false"
                 [isContextSelectionAvailable]="isContextSelectionAvailable()"
                 [layout]="'widget'"
-                [aboutIrisDialogTransport]="'dynamic'"
                 [contextProvider]="contextProvider()"
             />
         }

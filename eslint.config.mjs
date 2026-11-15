@@ -78,6 +78,7 @@ const migratedModules = [
     'fileupload',
     'foundation',
     'hyperion',
+    'iris',
     'lecture',
     'localci',
     'localvc',
@@ -92,7 +93,9 @@ const migratedModules = [
     'tutorialgroup',
     'videosource',
 ];
-const migratedFolders = (extension) => migratedModules.map((module) => `src/main/webapp/app/${module}/**/*.${extension}`);
+// Components that are migrated although the rest of their module is not. They get the same locks as a module.
+const migratedComponentFolders = ['core/alert', 'shared-ui/user-registration-modal', 'core/navbar/global-search/components/modal'];
+const migratedFolders = (extension) => [...migratedModules, ...migratedComponentFolders].map((folder) => `src/main/webapp/app/${folder}/**/*.${extension}`);
 
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
@@ -759,19 +762,15 @@ export default tseslint.config(
         // (### Styling).
         files: [
             'src/main/webapp/app/course/request/**/*.html',
-            'src/main/webapp/app/iris/manage/settings/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
-            'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
-            'src/main/webapp/app/core/alert/**/*.html',
             'src/main/webapp/app/core/about-us/**/*.html',
             'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
-            'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
@@ -818,9 +817,8 @@ export default tseslint.config(
     {
         // Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different values for
         // 3 to 5, and Bootstrap wins while it is loaded, so a bare one renders differently once Bootstrap is removed.
-        // These templates (the exam, exercise, lecture, localci, foundation, modeling, hyperion, lti, logos, localvc,
-        // fileupload and plagiarism modules, and the student pages for complaints and the text editor) are laid out
-        // with Tailwind and must say which value they mean. Add a folder
+        // These templates (every migrated module and component folder, and the student pages for complaints and the text editor)
+        // are laid out with Tailwind and must say which value they mean. Add a folder
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
         files: [
@@ -888,6 +886,38 @@ export default tseslint.config(
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [...tumAetUiConsumerImportPatterns, legacyUiLibraryImportPattern],
+                },
+            ],
+        },
+    },
+    {
+        // The Iris context picker keeps only primeng/select as a contained fallback: tumaet-ui-select has no option
+        // groups, option templates or custom trigger yet. Keep every other migrated-client import ban in force.
+        // Remove this override together with the fallback. Rule options replace the entire rule, so repeat the shared bans.
+        files: ['src/main/webapp/app/iris/overview/context-selection/context-selection.component.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
+                        ...noDirectCloneDeepImports,
+                    ],
+                    patterns: [
+                        ...tumAetUiConsumerImportPatterns,
+                        {
+                            // A negated glob cannot re-include select when its primeng parent is ignored.
+                            // Match every PrimeNG entry point except exactly primeng/select instead.
+                            regex: '^primeng(?:$|/(?!select$))',
+                            message: 'Only primeng/select is permitted for the contained Iris context-picker fallback. Use TUM AET UI for other controls.',
+                        },
+                        {
+                            group: ['@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            message: 'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import ng-bootstrap or Bootstrap here.',
+                        },
+                    ],
                 },
             ],
         },

@@ -72,7 +72,6 @@
 @source './app/quiz/manage/manage-buttons';
 @source './app/quiz/manage/lifecyle-buttons';
 @source './app/text/manage/detail';
-@source './app/iris/manage/settings';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
 @source './app/editor/markdown-editor';
@@ -81,10 +80,8 @@
 @source './app/course/request';
 @source './app/course/overview/course-statistics';
 @source './app/shared-ui/user-import';
-@source './app/shared-ui/user-registration-modal';
 @source './app/shared-ui/confirm-entity-name';
 @source './app/shared-ui/delete-dialog';
-@source './app/core/alert';
 @source './app/core/about-us';
 @source './app/core/usage-statistics';
 @source './app/shared-ui/components/resizable-panels';
@@ -118,7 +115,6 @@
 @source './app/atlas/shared/orchestration-result-dialog';
 @source './app/core/feature-overview';
 @source './app/core/layouts/footer';
-@source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/overview/courses';
 @source './app/course/overview/course-registration';
@@ -136,6 +132,8 @@
 @source './app/course/manage/update';
 @source './app/text/overview/text-editor';
 @source './app/programming/shared/programming-exercise-update-timeline';
+@source './app/programming/shared/build-window-notice';
+@source './app/programming/manage/update/update-components/build-time-window';
 @source './app/course/manage/user-management-dropdown';
 
 /* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
@@ -279,7 +277,7 @@
 @source './app/shared-ui/form/form-footer/form-footer.component.html';
 @source './app/text/manage/example-text-submission/example-text-submission.component.html';
 
-/* The migrated modules: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
+/* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
 @source './app/account';
 @source './app/admin';
 @source './app/aiworker';
@@ -290,6 +288,7 @@
 @source './app/fileupload';
 @source './app/foundation';
 @source './app/hyperion';
+@source './app/iris';
 @source './app/lecture';
 @source './app/localci';
 @source './app/localvc';
@@ -303,3 +302,6 @@
 @source './app/sharing';
 @source './app/tutorialgroup';
 @source './app/videosource';
+@source './app/core/alert';
+@source './app/shared-ui/user-registration-modal';
+@source './app/core/navbar/global-search/components/modal';
