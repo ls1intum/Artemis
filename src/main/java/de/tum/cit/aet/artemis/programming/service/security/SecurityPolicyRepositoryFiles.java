@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -448,13 +450,101 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the build tool whose build file pins an Ares version
      */
     private static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
-        if (gradleBuild != null && GRADLE_ARES_VERSION.matcher(gradleBuild).find()) {
+        if (gradleBuild != null && !aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
             return Optional.of(BuildTool.GRADLE);
         }
-        if (mavenPom != null && MAVEN_ARES_VERSION.matcher(mavenPom).find()) {
+        if (mavenPom != null && !aresVersionPins(mavenPom, BuildTool.MAVEN).isEmpty()) {
             return Optional.of(BuildTool.MAVEN);
         }
         return Optional.empty();
+    }
+
+    /**
+     * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, has no effect on the build, so
+     * it is neither read nor replaced.
+     *
+     * @param content   the content of the build file
+     * @param buildTool the build tool the file belongs to
+     * @return the pins outside comments, in the order of the file
+     */
+    private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
+        boolean[] comment = buildTool == BuildTool.GRADLE ? gradleComments(content) : mavenComments(content);
+        return versionPattern(buildTool).matcher(content).results().filter(pin -> !comment[pin.start()]).toList();
+    }
+
+    /**
+     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment; quoted strings are skipped, so a
+     *         URL such as {@code 'https://example.org'} starts no comment
+     */
+    private static boolean[] gradleComments(String content) {
+        boolean[] comment = new boolean[content.length()];
+        int index = 0;
+        while (index < content.length()) {
+            char character = content.charAt(index);
+            int end;
+            if (content.startsWith("//", index)) {
+                end = endOfLine(content, index);
+                Arrays.fill(comment, index, end, true);
+            }
+            else if (content.startsWith("/*", index)) {
+                int close = content.indexOf("*/", index + 2);
+                end = close < 0 ? content.length() : close + 2;
+                Arrays.fill(comment, index, end, true);
+            }
+            else if (character == '\'' || character == '"') {
+                String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
+                end = endOfString(content, index + delimiter.length(), delimiter);
+            }
+            else {
+                end = index + 1;
+            }
+            index = end;
+        }
+        return comment;
+    }
+
+    /**
+     * @param from      the offset after the opening delimiter
+     * @param delimiter the quote that closes the string
+     * @return the offset after the closing delimiter; a string with a single quote also ends at the end of its line
+     */
+    private static int endOfString(String content, int from, String delimiter) {
+        int index = from;
+        while (index < content.length()) {
+            if (content.charAt(index) == '\\') {
+                index += 2;
+            }
+            else if (content.startsWith(delimiter, index)) {
+                return index + delimiter.length();
+            }
+            else if (delimiter.length() == 1 && content.charAt(index) == '\n') {
+                return index + 1;
+            }
+            else {
+                index++;
+            }
+        }
+        return content.length();
+    }
+
+    private static int endOfLine(String content, int from) {
+        int lineEnd = content.indexOf('\n', from);
+        return lineEnd < 0 ? content.length() : lineEnd;
+    }
+
+    /**
+     * @return for each character of a Maven POM whether it belongs to an XML comment
+     */
+    private static boolean[] mavenComments(String content) {
+        boolean[] comment = new boolean[content.length()];
+        int start = content.indexOf("<!--");
+        while (start >= 0) {
+            int close = content.indexOf("-->", start + 4);
+            int end = close < 0 ? content.length() : close + 3;
+            Arrays.fill(comment, start, end, true);
+            start = content.indexOf("<!--", end);
+        }
+        return comment;
     }
 
     /**
@@ -475,8 +565,8 @@ public final class SecurityPolicyRepositoryFiles {
      */
     public static Optional<String> parseAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom) {
         return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
-            Matcher matcher = versionPattern(buildTool).matcher(buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom);
-            return matcher.find() ? matcher.group(2).trim() : null;
+            String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
+            return aresVersionPins(content, buildTool).getFirst().group(2).trim();
         });
     }
 
@@ -494,8 +584,14 @@ public final class SecurityPolicyRepositoryFiles {
         }
         Path buildFile = buildFile(repositoryRoot, buildTool.get());
         String content = readFile(buildFile);
-        String updated = versionPattern(buildTool.get()).matcher(content).replaceAll(match -> Matcher.quoteReplacement(match.group(1) + aresVersion + match.group(3)));
-        return writeIfChanged(buildFile, content, updated);
+        StringBuilder updated = new StringBuilder();
+        int copiedUntil = 0;
+        for (MatchResult pin : aresVersionPins(content, buildTool.get())) {
+            updated.append(content, copiedUntil, pin.start()).append(pin.group(1)).append(aresVersion).append(pin.group(3));
+            copiedUntil = pin.end();
+        }
+        updated.append(content, copiedUntil, content.length());
+        return writeIfChanged(buildFile, content, updated.toString());
     }
 
     /**

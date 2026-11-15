@@ -372,6 +372,17 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        // The declared annotation shadows the Ares one that the wildcard import provides.
+        writeSource("test/de/example/OtherTest.java", TEST_CLASS.formatted("de.example", "OtherTest").replace("import de.tum.cit.ase.ares.api.jupiter.Public;",
+                "import de.tum.cit.ase.ares.api.jupiter.*;\n\n@interface Public {\n}"));
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES, "de.example.OtherTest");
+    }
+
+    @Test
     void aTestClassThatOnlyUsesJupiterAresTestIsUnsupported() throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
@@ -531,5 +542,22 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext {\n    aresVersion = '2.3.0'\n}\n", null)).contains("2.3.0");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<properties><ares.version>2.2.1</ares.version></properties>")).contains("2.2.1");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<project/>")).isEmpty();
+    }
+
+    @Test
+    void ignoresAresVersionsInComments() {
+        String gradleBuild = "// aresVersion = '2.3.0'\n/* aresVersion = \"9.9.9\" */\nrepositories { maven { url 'https://example.org/maven' } }\ndef aresVersion = '2.2.1'\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("// aresVersion = '2.3.0'\n", null)).isEmpty();
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<!-- <ares.version>2.3.0</ares.version> -->\n<ares.version>2.2.1</ares.version>")).contains("2.2.1");
+    }
+
+    @Test
+    void pinsTheVersionOnlyWhereTheBuildReadsIt() throws IOException {
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), "// aresVersion = '2.3.0'\ndef aresVersion = '2.2.1'\n", StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo("// aresVersion = '2.3.0'\ndef aresVersion = '2.4.0'\n");
     }
 }

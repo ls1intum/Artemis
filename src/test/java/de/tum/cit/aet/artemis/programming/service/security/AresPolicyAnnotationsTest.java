@@ -121,6 +121,27 @@ class AresPolicyAnnotationsTest {
     }
 
     @Test
+    void leavesAPolicyAnnotationAloneThatTheFileDeclaresItself() {
+        // The declared annotation shadows the Ares one that the wildcard import provides, so adding the flag would break the file.
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                @interface Policy {
+                    String value();
+                }
+
+                @Policy("SecurityPolicy.yaml")
+                class SortingTest {
+                }
+                """;
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(isDeactivated(original)).isFalse();
+    }
+
+    @Test
     void ignoresAnnotationsInCommentsAndStrings() {
         String original = """
                 package de.example;

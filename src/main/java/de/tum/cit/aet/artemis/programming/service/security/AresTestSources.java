@@ -35,7 +35,7 @@ final class AresTestSources {
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);
 
     /** A type declaration; the keyword must not follow a dot, so {@code Foo.class} is no declaration. */
-    private static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\w.$])(?:class|interface|enum|record))\\s+([A-Za-z_$][\\w$]*)");
+    private static final Pattern TYPE_DECLARATION = AresPolicyAnnotations.TYPE_DECLARATION;
 
     private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\w.$]+)");
 
@@ -432,6 +432,10 @@ final class AresTestSources {
     }
 
     private static boolean simpleNameRefersTo(String masked, String simpleName, String qualifiedName) {
+        // A type of the same name that the file declares itself shadows the Ares one.
+        if (AresPolicyAnnotations.declaresType(masked, simpleName)) {
+            return false;
+        }
         boolean importsIt = false;
         boolean importsOther = false;
         Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);

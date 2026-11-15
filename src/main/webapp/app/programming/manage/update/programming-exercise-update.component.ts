@@ -1129,16 +1129,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.navigateAfterSave(exercise);
             return;
         }
-        this.securityFrameworkService.getConfig(exercise.id).subscribe({
-            next: (config) => {
-                this.warnIfSecurityChoiceNotApplied(config, securityChoice);
-                this.navigateAfterSave(exercise);
-            },
-            error: () => {
-                this.alertService.warning('artemisApp.programmingExercise.security.notApplied.verificationFailed');
-                this.navigateAfterSave(exercise);
-            },
-        });
+        // Bound to the form: once the instructor leaves it, the late result must not navigate away from where they went.
+        this.securityFrameworkService
+            .getConfig(exercise.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (config) => {
+                    this.warnIfSecurityChoiceNotApplied(config, securityChoice);
+                    this.navigateAfterSave(exercise);
+                },
+                error: () => {
+                    this.alertService.warning('artemisApp.programmingExercise.security.notApplied.verificationFailed');
+                    this.navigateAfterSave(exercise);
+                },
+            });
     }
 
     private navigateAfterSave(exercise: ProgrammingExercise) {

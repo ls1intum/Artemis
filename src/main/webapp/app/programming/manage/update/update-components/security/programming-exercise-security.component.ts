@@ -335,8 +335,10 @@ export class ProgrammingExerciseSecurityComponent {
     private pendingReseed?: SecurityFrameworkChoice;
     /** The source exercise whose config was last requested, so a late response for an earlier source is discarded. */
     private requestedSourceId?: number;
-    /** The last sync operation started, kept so {@link onRetry} can re-run exactly what failed. */
-    private pendingOperation?: { transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
+    /** The last sync operation started, kept so {@link onRetry} can re-run exactly what failed, and the exercise it changes. */
+    private pendingOperation?: { exerciseId: number; transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
+    /** The exercise whose config the card shows in edit mode, so a late response for another exercise is discarded. */
+    private loadedExerciseId?: number;
 
     constructor() {
         this.securityService.getVersions().subscribe({
@@ -365,6 +367,16 @@ export class ProgrammingExerciseSecurityComponent {
                 return;
             }
             untracked(() => this.seed());
+        });
+
+        // Edit mode: the route can reuse this card for another exercise. Drop everything that belongs to the previous one, including a failed operation
+        // that Retry would re-run, and load the config of the new one.
+        effect(() => {
+            const exerciseId = this.editExerciseId();
+            if (!this.seeded() || exerciseId === undefined || exerciseId === this.loadedExerciseId) {
+                return;
+            }
+            untracked(() => this.switchToExercise(exerciseId));
         });
 
         // Import from an exercise: load the source's config, again whenever the source changes.
@@ -416,12 +428,23 @@ export class ProgrammingExerciseSecurityComponent {
         this.lastSettledActive.set(active);
     }
 
+    private switchToExercise(exerciseId: number): void {
+        this.pendingOperation = undefined;
+        this.config.set({ status: SecurityActivationStatus.CONFIGURED });
+        this.lastSettledActive.set(true);
+        this.loadConfig(exerciseId);
+    }
+
     /** Loads the persisted config (edit mode); a failure surfaces a distinct load-error state instead of a misleading INACTIVE. */
     private loadConfig(exerciseId: number): void {
+        this.loadedExerciseId = exerciseId;
         this.loadFailed.set(false);
         this.loading.set(true);
         this.securityService.getConfig(exerciseId).subscribe({
             next: (config) => {
+                if (exerciseId !== this.loadedExerciseId) {
+                    return;
+                }
                 this.loading.set(false);
                 // An operation started while the config was still loading owns the state now; a late load must not overwrite its result.
                 if (this.pendingOperation) {
@@ -431,6 +454,9 @@ export class ProgrammingExerciseSecurityComponent {
                 this.lastSettledActive.set(isSecurityConfigured(config));
             },
             error: () => {
+                if (exerciseId !== this.loadedExerciseId) {
+                    return;
+                }
                 this.loading.set(false);
                 this.loadFailed.set(true);
             },
@@ -568,7 +594,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Retry after an ERROR: re-run whichever sync operation failed (activation, deactivation or a version change). */
     onRetry(): void {
-        if (this.pendingOperation && this.editExerciseId() !== undefined) {
+        if (this.pendingOperation && this.pendingOperation.exerciseId === this.editExerciseId()) {
             this.runOperation(this.pendingOperation.transientPatch, this.pendingOperation.run);
         }
     }
@@ -648,20 +674,28 @@ export class ProgrammingExerciseSecurityComponent {
      * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available and Repair doubles as the retry.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
-        if (!this.isEditMode()) {
+        const exerciseId = this.editExerciseId();
+        if (exerciseId === undefined) {
             return;
         }
         const statusOnFailure = this.isMisconfigured() ? SecurityActivationStatus.MISCONFIGURED : SecurityActivationStatus.ERROR;
         // A misconfigured exercise falls back to its settled state on failure, which includes the version the repository still pins.
         const versionBefore = this.config().frameworkVersion;
-        this.pendingOperation = { transientPatch, run };
+        this.pendingOperation = { exerciseId, transientPatch, run };
         this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
             next: (next) => {
+                // The card was reused for another exercise while this ran; its state belongs to that exercise now.
+                if (exerciseId !== this.editExerciseId()) {
+                    return;
+                }
                 this.pendingOperation = undefined;
                 this.settle(next);
             },
             error: (error: unknown) => {
+                if (exerciseId !== this.editExerciseId()) {
+                    return;
+                }
                 const errorDetail = this.errorDetailOf(error);
                 if (statusOnFailure === SecurityActivationStatus.MISCONFIGURED) {
                     this.patchConfig({ status: statusOnFailure, errorDetail, frameworkVersion: versionBefore });

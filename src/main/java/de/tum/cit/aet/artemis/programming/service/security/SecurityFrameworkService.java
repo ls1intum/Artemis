@@ -850,17 +850,21 @@ public class SecurityFrameworkService {
      *
      * @param state         the state whose policy files are checked
      * @param contentByPath reads a policy file by its validated path; null if it cannot be read
-     * @return one entry per selectable version, newest first; empty if the state has no policy file to check
+     * @return one entry per selectable version, newest first; empty if none of the policy files of the state can be read
      */
     private List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> versionCompatibilities(SecurityFrameworkState state, UnaryOperator<@Nullable String> contentByPath) {
         Map<String, String> contents = new LinkedHashMap<>();
+        // A file that cannot be read cannot be checked, so a version that accepts all other files is not verified.
+        boolean someFileUnchecked = false;
         for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
-            SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).ifPresent(path -> {
-                String content = contentByPath.apply(path);
-                if (content != null) {
-                    contents.put(path, content);
-                }
-            });
+            String path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).orElse(null);
+            String content = path == null ? null : contentByPath.apply(path);
+            if (path != null && content != null) {
+                contents.put(path, content);
+            }
+            else {
+                someFileUnchecked = true;
+            }
         }
         if (contents.isEmpty()) {
             return List.of();
@@ -868,7 +872,7 @@ public class SecurityFrameworkService {
         List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> compatibilities = new ArrayList<>();
         for (String version : getFrameworkVersions().selectableVersions()) {
             List<String> incompatibilities = new ArrayList<>();
-            boolean unverified = false;
+            boolean unverified = someFileUnchecked;
             for (Map.Entry<String, String> file : contents.entrySet()) {
                 AresCompatibilityManifest.Check check = compatibilityManifest.check(version, file.getValue());
                 unverified |= check.verdict() == AresCompatibilityManifest.Verdict.UNVERIFIED;

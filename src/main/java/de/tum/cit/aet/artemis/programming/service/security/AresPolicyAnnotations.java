@@ -32,6 +32,9 @@ final class AresPolicyAnnotations {
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\s*;");
 
+    /** A declaration of a type, of any kind and at any depth; the second group is its simple name. */
+    static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\w.$])(?:class|interface|enum|record))\\s+([A-Za-z_$][\\w$]*)");
+
     private static final Pattern ARES_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.\\*\\s*;");
 
     /** A named annotation argument such as {@code activated = false}, matched on the masked source. */
@@ -232,7 +235,28 @@ final class AresPolicyAnnotations {
         return at > 0 && (Character.isJavaIdentifierPart(masked.charAt(at - 1)) || masked.charAt(at - 1) == '.');
     }
 
+    /**
+     * A type that the file declares itself, e.g. {@code @interface Policy}, shadows a type of the same name that an on-demand import provides, so its
+     * simple name no longer refers to Ares. Within the declaring type it also shadows a single-type import.
+     *
+     * @param masked     the source with comments and literals masked
+     * @param simpleName the simple name of a type
+     * @return whether the file declares a type with this simple name
+     */
+    static boolean declaresType(String masked, String simpleName) {
+        Matcher declarations = TYPE_DECLARATION.matcher(masked);
+        while (declarations.find()) {
+            if (declarations.group(2).equals(simpleName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean simpleNameRefersToAres(String masked) {
+        if (declaresType(masked, "Policy")) {
+            return false;
+        }
         boolean importsAresPolicy = false;
         boolean importsOtherPolicy = false;
         Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);

@@ -497,6 +497,38 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(service.activate).not.toHaveBeenCalled();
     });
 
+    it('drops the failed operation of the previous exercise and loads the new one when the card is reused for another exercise', () => {
+        initEdit(configuredConfig());
+        service.deactivate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        deactivateConfirmed();
+        expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+
+        service.getConfig.mockReturnValue(of(inactiveConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+
+        expect(service.getConfig).toHaveBeenLastCalledWith(43);
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        comp.onRetry();
+        expect(service.deactivate).toHaveBeenCalledOnce();
+        expect(service.deactivate).toHaveBeenCalledWith(42);
+    });
+
+    it('ignores a late result of an operation on the previous exercise', () => {
+        initEdit(configuredConfig());
+        const result = new Subject<SecurityFrameworkConfig>();
+        service.deactivate.mockReturnValueOnce(result);
+        deactivateConfirmed();
+
+        service.getConfig.mockReturnValue(of(configuredConfig('3.3.0')));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+        result.next(inactiveConfig());
+
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+        expect(comp.config().frameworkVersion).toBe('3.3.0');
+    });
+
     it('re-syncs when the framework version changes on an active exercise', () => {
         initEdit(configuredConfig('3.4.1'));
         const update$ = new Subject<SecurityFrameworkConfig>();
