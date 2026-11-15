@@ -219,7 +219,25 @@ Re-evaluating all results of a programming exercise (`PUT /api/programming/progr
 
 ### 10.8: External Logins and Internal Accounts
 
-A SAML2 or OpenID Connect login is refused when its login name belongs to an internal account, that is an account with a password of its own. Before, such a login signed in to the internal account and updated its data. Artemis logs a warning with the login name for every refused login. Accounts that an external login created are not affected. **Before you upgrade, check that no person signs in to the same account both with a password and through the identity provider**, for example after an administrator set a password on an externally created account. Such an account has to use one way only. See [OpenID Connect](/admin/oidc-login-registration#accounts-with-a-password-of-their-own) and [SAML2](/admin/saml2-login-registration#accounts-with-a-password-of-their-own).
+A SAML2 or OpenID Connect login is refused when its login name belongs to an internal account, that is an account with a password of its own. Before, such a login signed in to the internal account and updated its data. Artemis logs a warning with the login name for every refused login, and the user is told to sign in with the Artemis password.
+
+Accounts that an OpenID Connect login created are stored as external accounts and are not affected. Two groups of accounts are stored as internal accounts although a person may use them with an external login:
+
+- **SAML2 accounts that Artemis created before version 9.9 and that nobody converted.** They are still marked as internal. Clear the flag as described in [Accounts Provisioned Through SAML2](#99-accounts-provisioned-through-saml2) before you upgrade, otherwise their owners can no longer sign in through the identity provider.
+- **Accounts that an LTI launch created.** Artemis creates them as internal accounts, and their login is the `preferred_username` of the launch. If the identity provider of a SAML2 or OpenID Connect login produces the same login name, that login is refused.
+
+**Before you upgrade, check that no person signs in to the same account both with a password and through the identity provider.** Such an account has to use one way only. For SAML2, this query lists the internal accounts that signed in through the identity provider (the audit events are subject to your retention period, so a missing row is no proof):
+
+```sql
+SELECT u.login, u.email
+FROM jhi_user u
+WHERE u.is_internal = TRUE
+  AND u.login IN (SELECT e.principal
+                  FROM security_audit_event e
+                  WHERE e.event_type = 'SAML2_AUTHENTICATION_SUCCESS');
+```
+
+On a version before 10.0, read `jhi_persistent_audit_event` instead of `security_audit_event`. Artemis stores no audit event for a successful OpenID Connect login, so no comparable query exists for it. Compare the logins that your identity provider releases with the internal accounts instead. See [OpenID Connect](/admin/oidc-login-registration#accounts-with-a-password-of-their-own) and [SAML2](/admin/saml2-login-registration#accounts-with-a-password-of-their-own).
 
 ### 10.8: Client Address of Requests
 
