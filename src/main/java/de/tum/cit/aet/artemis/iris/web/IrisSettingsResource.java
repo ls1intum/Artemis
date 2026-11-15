@@ -50,7 +50,8 @@ public class IrisSettingsResource {
     }
 
     /**
-     * Gets the Iris settings of a course. Users below instructor only receive whether Iris is enabled, the configuration is reserved for instructors.
+     * Gets the Iris settings of a course. Users below instructor receive the enabled flag, the proactive switch and the rate limits, the rest of the configuration is reserved for
+     * instructors.
      *
      * @param courseId the course id
      * @return the settings of the course
@@ -63,16 +64,17 @@ public class IrisSettingsResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         IrisCourseSettingsWithRateLimitDTO settings = irisSettingsService.getCourseSettingsWithRateLimit(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            // Users below instructor only need to know whether Iris is enabled; the configuration is reserved for those who manage it.
-            return ResponseEntity.ok(enabledOnly(settings));
+            // Users below instructor only receive the values their clients act on; the configuration is reserved for those who manage it.
+            return ResponseEntity.ok(withoutConfiguration(settings));
         }
         return ResponseEntity.ok(settings);
     }
 
-    private static IrisCourseSettingsWithRateLimitDTO enabledOnly(IrisCourseSettingsWithRateLimitDTO settings) {
-        IrisCourseSettings enabledOnly = settings.settings() == null ? null
-                : new IrisCourseSettings(settings.settings().enabled(), null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, null, null);
-        return new IrisCourseSettingsWithRateLimitDTO(settings.courseId(), enabledOnly, null, null);
+    private static IrisCourseSettingsWithRateLimitDTO withoutConfiguration(IrisCourseSettingsWithRateLimitDTO settings) {
+        IrisCourseSettings current = settings.settings();
+        IrisCourseSettings reduced = current == null ? null
+                : new IrisCourseSettings(current.enabled(), null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, current.proactiveStruggleEnabled(), null);
+        return new IrisCourseSettingsWithRateLimitDTO(settings.courseId(), reduced, settings.effectiveRateLimit(), settings.applicationRateLimitDefaults());
     }
 
     /**

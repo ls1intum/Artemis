@@ -51,7 +51,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGetCourseSettings_belowInstructorOnlySeesEnabled() throws Exception {
+    void testGetCourseSettings_belowInstructorSeesReducedConfiguration() throws Exception {
         enableIrisFor(course1);
         var current = irisSettingsService.getSettingsForCourse(course1);
         var update = IrisCourseSettings.of(current.enabled(), "Custom instructions for this course", current.variant(), current.supportLevel(), current.rateLimit(),
@@ -71,8 +71,10 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(response.settings().enabled()).isTrue();
             assertThat(response.settings().customInstructions()).isNull();
             assertThat(response.settings().rateLimit()).isNull();
-            assertThat(response.effectiveRateLimit()).isNull();
-            assertThat(response.applicationRateLimitDefaults()).isNull();
+            assertThat(response.settings().variant()).isNotNull();
+            assertThat(response.settings().proactiveStruggleEnabled()).isEqualTo(instructorResponse.settings().proactiveStruggleEnabled());
+            assertThat(response.effectiveRateLimit()).isNotNull();
+            assertThat(response.applicationRateLimitDefaults()).isNotNull();
         }
     }
 
