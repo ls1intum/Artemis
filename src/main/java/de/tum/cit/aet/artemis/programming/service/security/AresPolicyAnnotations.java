@@ -30,7 +30,7 @@ final class AresPolicyAnnotations {
 
     private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile("@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
 
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\s*;");
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
     /** A Java identifier; it may contain any Unicode letter, e.g. {@code SortingÜTest}, so it uses the identifier classes of {@link Character}. */
     private static final String JAVA_IDENTIFIER = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+";

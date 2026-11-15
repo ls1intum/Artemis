@@ -434,6 +434,16 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.other.MoreSortingTest");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "import de.bücher.SortingÜTest;", "import de.bücher.*;" })
+    void aSubclassInAnotherPackageOfAnImportedTestClassWithAUnicodeNameIsATestClass(String importDeclaration) throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/buecher/SortingTest.java", "de.bücher", "SortingÜTest");
+        writeSource("test/de/other/MoreSortingTest.java", "package de.other;\n\n" + importDeclaration + "\n\nclass MoreSortingTest extends SortingÜTest {\n}\n");
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.other.MoreSortingTest");
+    }
+
     @Test
     void namesThatOnlyResembleAnUnsupportedRegistrationDoNotCount() throws IOException {
         writeBuildFile();
@@ -580,7 +590,7 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "def example = /aresVersion = '2.3.0'/\n", "def example = $/aresVersion = '2.3.0'/$\n" })
+    @ValueSource(strings = { "def example = /aresVersion = '2.3.0'/\n", "def example = $/aresVersion = '2.3.0'/$\n", "def example() {\n    return /aresVersion = '2.3.0'/\n}\n" })
     void ignoresAresVersionsInGradleSlashyStrings(String example) throws IOException {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(example + "ext { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
         FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), example + "ext { aresVersion = '2.2.1' }\n", StandardCharsets.UTF_8);
@@ -590,9 +600,16 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(example + "ext { aresVersion = '2.4.0' }\n");
     }
 
-    @Test
-    void readsAnAresVersionAfterADivision() {
-        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("def half = total / 2\next { aresVersion = '2.2.1' }\ndef third = total / 3\n", null)).contains("2.2.1");
+    @ParameterizedTest
+    @ValueSource(strings = { "def half = total / 2\n", "def half = n++ / 2\n", "def half = n-- / 2\n", "def half = this / 2\n" })
+    void readsAndWritesAnAresVersionAfterADivision(String division) throws IOException {
+        String gradleBuild = division + "ext { aresVersion = '2.2.1' }\ndef third = total / 3\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild.replace("2.2.1", "2.4.0"));
     }
 
     @Test

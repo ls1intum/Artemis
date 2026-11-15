@@ -43,7 +43,7 @@ final class AresTestSources {
     private static final Pattern JUNIT_TEST_MARKER = Pattern
             .compile("@(?:org\\.junit\\.jupiter\\.api\\.)?(?:Test|RepeatedTest|TestFactory|TestTemplate)\\b|@(?:org\\.junit\\.jupiter\\.params\\.)?ParameterizedTest\\b");
 
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\s*;");
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
     private static final List<String> ARES_CLASS_MARKERS = List.of("Public", "Hidden");
 
@@ -59,7 +59,7 @@ final class AresTestSources {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
-    private static final Pattern WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\.\\*\\s*;");
+    private static final Pattern WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\.\\*\\s*;");
 
     private static final Pattern ARES_JUPITER_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+" + Pattern.quote(ARES_JUPITER_PACKAGE) + "\\.\\*\\s*;");
 

@@ -87,6 +87,12 @@ public final class SecurityPolicyRepositoryFiles {
      */
     private static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
 
+    /**
+     * The Groovy keywords after which an expression, and therefore a slashy string, may follow; any other word is an operand, such as a variable,
+     * {@code this} or {@code null}.
+     */
+    private static final Set<String> GROOVY_KEYWORDS_BEFORE_EXPRESSIONS = Set.of("return", "throw", "assert", "case", "in", "yield", "else", "do");
+
     private static final Set<String> BUILD_FILES = Set.of(GRADLE_BUILD_FILE, "build.gradle.kts", MAVEN_BUILD_FILE);
 
     /** The build tool of the exercise-tests repository, which selects the Ares language configuration of a generated policy. */
@@ -478,8 +484,8 @@ public final class SecurityPolicyRepositoryFiles {
     private static boolean[] gradleCommentsAndStrings(String content) {
         boolean[] comment = new boolean[content.length()];
         int index = 0;
-        // The last character of code before the current one, without whitespace and comments; a string counts as an operand.
-        char previous = ';';
+        // The last token of code before the current one, without whitespace and comments: a word, ++, -- or a single character; a string counts as an operand.
+        String previous = ";";
         while (index < content.length()) {
             char character = content.charAt(index);
             int end;
@@ -496,17 +502,27 @@ public final class SecurityPolicyRepositoryFiles {
                 String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
                 end = endOfString(content, index + delimiter.length(), delimiter);
                 Arrays.fill(comment, index, end, true);
-                previous = '"';
+                previous = "\"";
             }
             else if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous) && endOfSlashyString(content, index) > 0) {
                 end = endOfSlashyString(content, index);
                 Arrays.fill(comment, index, end, true);
-                previous = '"';
+                previous = "\"";
+            }
+            else if (Character.isJavaIdentifierStart(character)) {
+                end = index + 1;
+                while (end < content.length() && Character.isJavaIdentifierPart(content.charAt(end))) {
+                    end++;
+                }
+                previous = content.substring(index, end);
             }
             else {
                 end = index + 1;
-                if (!Character.isWhitespace(character)) {
-                    previous = character;
+                if ((character == '+' || character == '-') && previous.equals(String.valueOf(character))) {
+                    previous = previous + character;
+                }
+                else if (!Character.isWhitespace(character)) {
+                    previous = String.valueOf(character);
                 }
             }
             index = end;
@@ -515,11 +531,15 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * A {@code /} after an operand divides, as in {@code a / b} or {@code (a) / b}; elsewhere, as after {@code =}, {@code (} or {@code ,}, it opens a slashy
-     * string.
+     * A {@code /} after an operand divides, as in {@code a / b}, {@code (a) / b} or {@code a++ / b}; elsewhere, as after {@code =}, {@code (}, {@code ,} or
+     * a keyword such as {@code return}, it opens a slashy string.
      */
-    private static boolean slashyStringMayStartAfter(char previous) {
-        return !Character.isJavaIdentifierPart(previous) && previous != ')' && previous != ']' && previous != '}' && previous != '"';
+    private static boolean slashyStringMayStartAfter(String previous) {
+        if (Character.isJavaIdentifierStart(previous.charAt(0))) {
+            return GROOVY_KEYWORDS_BEFORE_EXPRESSIONS.contains(previous);
+        }
+        char last = previous.charAt(previous.length() - 1);
+        return previous.length() == 1 && !Character.isJavaIdentifierPart(last) && last != ')' && last != ']' && last != '}' && last != '"';
     }
 
     /**
