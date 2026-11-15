@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * The effective retention cutoffs of the age-based cleanup operations, so the admin UI can state which data an
@@ -29,6 +30,9 @@ import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
  * @param usersWarnedBefore                       warned users warned before this are due for deletion
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "gradeRelevantRetentionYears", "gradeRelevantCoursesEndedBefore", "nonGradeRelevantRetentionYears", "nonGradeRelevantCoursesEndedBefore",
+        "resetWarningGracePeriodDays", "coursesWarnedBefore", "oldFeedbackCutoffWeeks", "oldFeedbackCoursesEndedBefore", "oldSubmissionVersionsCutoffWeeks",
+        "oldSubmissionVersionsCoursesEndedBefore", "notEnrolledUsersInactivityMonths", "usersInactiveBefore", "notEnrolledUsersWarningGracePeriodDays", "usersWarnedBefore" })
 public record CleanupConfigurationDTO(int gradeRelevantRetentionYears, ZonedDateTime gradeRelevantCoursesEndedBefore, int nonGradeRelevantRetentionYears,
         ZonedDateTime nonGradeRelevantCoursesEndedBefore, int resetWarningGracePeriodDays, ZonedDateTime coursesWarnedBefore, int oldFeedbackCutoffWeeks,
         ZonedDateTime oldFeedbackCoursesEndedBefore, int oldSubmissionVersionsCutoffWeeks, ZonedDateTime oldSubmissionVersionsCoursesEndedBefore,

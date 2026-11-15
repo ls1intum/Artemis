@@ -1,11 +1,22 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, defer, map } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { AdminCleanupApi } from 'app/openapi/api/admin-cleanup-api';
+import { CleanupConfiguration as CleanupConfigurationResponse } from 'app/openapi/model/cleanup-configuration';
+import { CleanupServiceExecutionRecord } from 'app/openapi/model/cleanup-service-execution-record';
+import { OrphanCleanupCount } from 'app/openapi/model/orphan-cleanup-count';
+import { PlagiarismComparisonCleanupCount } from 'app/openapi/model/plagiarism-comparison-cleanup-count';
+import { NonLatestNonRatedResultsCleanupCount } from 'app/openapi/model/non-latest-non-rated-results-cleanup-count';
+import { NonLatestRatedResultsCleanupCount } from 'app/openapi/model/non-latest-rated-results-cleanup-count';
+import { SubmissionVersionsCleanupCount } from 'app/openapi/model/submission-versions-cleanup-count';
+import { OldCoursesCleanupCount } from 'app/openapi/model/old-courses-cleanup-count';
+import { OldFeedbackCleanupCount } from 'app/openapi/model/old-feedback-cleanup-count';
+import { NotEnrolledUsersCleanupCount } from 'app/openapi/model/not-enrolled-users-cleanup-count';
+import { PlagiarismCasesCleanupCount } from 'app/openapi/model/plagiarism-cases-cleanup-count';
 
 export interface CleanupServiceExecutionRecordDTO {
-    executionDate: dayjs.Dayjs;
+    executionDate?: dayjs.Dayjs;
     jobType: string;
 }
 
@@ -19,58 +30,17 @@ export interface CleanupServiceExecutionRecordDTO {
  */
 export type CleanupCount = Record<string, number>;
 
-export type OrphanCleanupCountDTO = {
-    orphanStudentScore: number;
-    orphanTeamScore: number;
-    orphanFeedbackForOrphanResults: number;
-    orphanLongFeedbackTextForOrphanResults: number;
-    orphanTextBlockForOrphanResults: number;
-    orphanRating: number;
-    orphanResultsWithoutParticipation: number;
-    orphanFeedbackMessage: number;
-};
+type Indexable<T> = { [K in keyof T]: T[K] };
 
-export type PlagiarismComparisonCleanupCountDTO = {
-    plagiarismComparison: number;
-    plagiarismElements: number;
-    plagiarismSubmissions: number;
-    plagiarismMatches: number;
-};
-
-export type NonLatestNonRatedResultsCleanupCountDTO = {
-    longFeedbackText: number;
-    textBlock: number;
-    feedback: number;
-};
-
-export type NonLatestRatedResultsCleanupCountDTO = {
-    longFeedbackText: number;
-    textBlock: number;
-    feedback: number;
-};
-
-export type SubmissionVersionsCleanupCountDTO = {
-    submissionVersions: number;
-};
-
-export type OldCoursesCleanupCountDTO = {
-    courses: number;
-};
-
-export type OldFeedbackCleanupCountDTO = {
-    longFeedbackText: number;
-    textBlock: number;
-    feedback: number;
-};
-
-export type NotEnrolledUsersCleanupCountDTO = {
-    users: number;
-    blockedUsers: number;
-};
-
-export type PlagiarismCasesCleanupCountDTO = {
-    plagiarismCases: number;
-};
+export type OrphanCleanupCountDTO = Indexable<OrphanCleanupCount>;
+export type PlagiarismComparisonCleanupCountDTO = Indexable<PlagiarismComparisonCleanupCount>;
+export type NonLatestNonRatedResultsCleanupCountDTO = Indexable<NonLatestNonRatedResultsCleanupCount>;
+export type NonLatestRatedResultsCleanupCountDTO = Indexable<NonLatestRatedResultsCleanupCount>;
+export type SubmissionVersionsCleanupCountDTO = Indexable<SubmissionVersionsCleanupCount>;
+export type OldCoursesCleanupCountDTO = Indexable<OldCoursesCleanupCount>;
+export type OldFeedbackCleanupCountDTO = Indexable<OldFeedbackCleanupCount>;
+export type NotEnrolledUsersCleanupCountDTO = Indexable<NotEnrolledUsersCleanupCount>;
+export type PlagiarismCasesCleanupCountDTO = Indexable<PlagiarismCasesCleanupCount>;
 
 /**
  * The effective retention cutoffs of the age-based cleanup operations. Every cutoff comes as the configured period plus
@@ -94,40 +64,15 @@ export interface CleanupConfiguration {
     usersWarnedBefore: dayjs.Dayjs;
 }
 
-/** The configuration as it arrives on the wire, with the cutoffs still ISO strings. */
-interface CleanupConfigurationResponse extends Omit<CleanupConfiguration, CleanupConfigurationDateField> {
-    gradeRelevantCoursesEndedBefore: string;
-    nonGradeRelevantCoursesEndedBefore: string;
-    coursesWarnedBefore: string;
-    oldFeedbackCoursesEndedBefore: string;
-    oldSubmissionVersionsCoursesEndedBefore: string;
-    usersInactiveBefore: string;
-    usersWarnedBefore: string;
-}
-
-type CleanupConfigurationDateField =
-    | 'gradeRelevantCoursesEndedBefore'
-    | 'nonGradeRelevantCoursesEndedBefore'
-    | 'coursesWarnedBefore'
-    | 'oldFeedbackCoursesEndedBefore'
-    | 'oldSubmissionVersionsCoursesEndedBefore'
-    | 'usersInactiveBefore'
-    | 'usersWarnedBefore';
-
 @Service()
 export class DataCleanupService {
-    private http = inject(HttpClient);
-
-    private readonly adminResourceUrl = 'api/admin/cleanup';
+    private readonly api = inject(AdminCleanupApi);
 
     /**
      * Send DELETE request to delete orphaned data.
-     * @returns An observable of type HttpResponse<CleanupServiceExecutionRecordDTO>.
      */
-    deleteOrphans(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/orphans`, {
-            observe: 'response',
-        });
+    deleteOrphans(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.deleteOrphans().pipe(map(toExecutionRecord));
     }
 
     /**
@@ -135,13 +80,8 @@ export class DataCleanupService {
      * @param deleteFrom the start date from which plagiarism comparisons should be deleted
      * @param deleteTo the end date until which plagiarism comparisons should be deleted
      */
-    deletePlagiarismComparisons(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/plagiarism-comparisons`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    deletePlagiarismComparisons(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<CleanupServiceExecutionRecordDTO> {
+        return defer(() => this.api.deletePlagiarismComparisons(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo))).pipe(map(toExecutionRecord));
     }
 
     /**
@@ -149,13 +89,8 @@ export class DataCleanupService {
      * @param deleteFrom the start date from which non-rated results should be deleted
      * @param deleteTo the end date until which non-rated results should be deleted
      */
-    deleteNonRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/non-rated-results`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    deleteNonRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<CleanupServiceExecutionRecordDTO> {
+        return defer(() => this.api.deleteNonRatedResults(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo))).pipe(map(toExecutionRecord));
     }
 
     /**
@@ -163,76 +98,66 @@ export class DataCleanupService {
      * @param deleteFrom the start date from which old rated results should be deleted
      * @param deleteTo the end date until which old rated results should be deleted
      */
-    deleteOldRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-rated-results`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    deleteOldRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<CleanupServiceExecutionRecordDTO> {
+        return defer(() => this.api.deleteOldRatedResults(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo))).pipe(map(toExecutionRecord));
     }
 
     /**
      * Send DELETE request to delete old submission versions within a specific date range.
-     * @param deleteFrom the start date from which old rated results should be deleted
-     * @param deleteTo the end date until which old rated results should be deleted
+     * @param deleteFrom the start date from which old submission versions should be deleted
+     * @param deleteTo the end date until which old submission versions should be deleted
      */
-    deleteOldSubmissionVersions(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-submission-versions`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    deleteOldSubmissionVersions(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<CleanupServiceExecutionRecordDTO> {
+        return defer(() => this.api.deleteOldSubmissionVersions(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo))).pipe(map(toExecutionRecord));
     }
 
     /**
      * Send POST request to archive old courses due for a student-data reset and warn their instructors.
      */
-    warnOldCoursesReset(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-courses/warn`, undefined, { observe: 'response' });
+    warnOldCoursesReset(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.warnOldCoursesReset().pipe(map(toExecutionRecord));
     }
 
     /**
      * Send DELETE request to reset the student data of old courses that are past the reset grace period.
      */
-    resetOldCourses(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-courses/reset`, { observe: 'response' });
+    resetOldCourses(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.resetOldCourses().pipe(map(toExecutionRecord));
     }
 
     /**
      * Send DELETE request to delete the feedback of non-latest results of old courses.
      */
-    deleteOldFeedback(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-feedback`, { observe: 'response' });
+    deleteOldFeedback(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.deleteOldFeedback().pipe(map(toExecutionRecord));
     }
 
     /**
      * Send DELETE request to delete the submission versions of old courses.
      */
-    deleteOldCourseSubmissionVersions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-course-submission-versions`, { observe: 'response' });
+    deleteOldCourseSubmissionVersions(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.deleteOldCourseSubmissionVersions().pipe(map(toExecutionRecord));
     }
 
     /**
      * Send POST request to warn not-enrolled, inactive users that their account will be deleted after the grace period.
      */
-    warnNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users/warn`, undefined, { observe: 'response' });
+    warnNotEnrolledUsers(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.warnNotEnrolledUsers().pipe(map(toExecutionRecord));
     }
 
     /**
      * Send DELETE request to permanently delete warned users who are enrolled in no course, past the deletion grace period, and have no remaining domain references.
      */
-    deleteNotEnrolledUsers(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/not-enrolled-users`, { observe: 'response' });
+    deleteNotEnrolledUsers(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.deleteNotEnrolledUsers().pipe(map(toExecutionRecord));
     }
 
     /**
      * Send DELETE request to delete the plagiarism cases of courses that ended before the grade-relevant retention cutoff.
      */
-    deletePlagiarismCases(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/plagiarism-cases`, { observe: 'response' });
+    deletePlagiarismCases(): Observable<CleanupServiceExecutionRecordDTO> {
+        return this.api.deletePlagiarismCases().pipe(map(toExecutionRecord));
     }
 
     /**
@@ -240,8 +165,8 @@ export class DataCleanupService {
      * The cutoffs arrive as ISO strings and are converted to dayjs here, so callers can format them directly.
      */
     getCleanupConfiguration(): Observable<CleanupConfiguration> {
-        return this.http.get<CleanupConfigurationResponse>(`${this.adminResourceUrl}/configuration`).pipe(
-            map((configuration) => ({
+        return this.api.getCleanupConfiguration().pipe(
+            map((configuration: CleanupConfigurationResponse) => ({
                 gradeRelevantRetentionYears: configuration.gradeRelevantRetentionYears,
                 gradeRelevantCoursesEndedBefore: cutoff(configuration.gradeRelevantCoursesEndedBefore),
                 nonGradeRelevantRetentionYears: configuration.nonGradeRelevantRetentionYears,
@@ -262,132 +187,113 @@ export class DataCleanupService {
 
     /**
      * Send GET request to get the last executions.
-     * @returns An observable of type HttpResponse<CleanupServiceExecutionRecordDTO[]>.
      */
-    getLastExecutions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO[]>> {
-        return this.http.get<CleanupServiceExecutionRecordDTO[]>(`${this.adminResourceUrl}/last-executions`, {
-            observe: 'response',
-        });
+    getLastExecutions(): Observable<CleanupServiceExecutionRecordDTO[]> {
+        return this.api.getLastExecutions().pipe(map((records) => records.map(toExecutionRecord)));
     }
 
     /**
      * Send GET request to count orphaned data.
-     * @returns An observable of type HttpResponse<OrphanCleanupCountDTO>.
      */
-    countOrphans(): Observable<HttpResponse<OrphanCleanupCountDTO>> {
-        return this.http.get<OrphanCleanupCountDTO>(`${this.adminResourceUrl}/orphans/count`, {
-            observe: 'response',
-        });
+    countOrphans(): Observable<OrphanCleanupCountDTO> {
+        return this.api.countOrphans();
     }
 
     /**
      * Send GET request to count plagiarism comparisons within a specific date range.
      * @param deleteFrom the start date for counting
      * @param deleteTo the end date for counting
-     * @returns An observable of type HttpResponse<PlagiarismComparisonCleanupCountDTO>.
      */
-    countPlagiarismComparisons(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<PlagiarismComparisonCleanupCountDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.get<PlagiarismComparisonCleanupCountDTO>(`${this.adminResourceUrl}/plagiarism-comparisons/count`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    countPlagiarismComparisons(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<PlagiarismComparisonCleanupCountDTO> {
+        return defer(() => this.api.countPlagiarismComparisons(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo)));
     }
 
     /**
      * Send GET request to count non-rated results within a specific date range.
      * @param deleteFrom the start date for counting
      * @param deleteTo the end date for counting
-     * @returns An observable of type HttpResponse<NonLatestNonRatedResultsCleanupCountDTO>.
      */
-    countNonRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<NonLatestNonRatedResultsCleanupCountDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.get<NonLatestNonRatedResultsCleanupCountDTO>(`${this.adminResourceUrl}/non-rated-results/count`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    countNonRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<NonLatestNonRatedResultsCleanupCountDTO> {
+        return defer(() => this.api.countNonRatedResults(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo)));
     }
 
     /**
      * Send GET request to count old rated results within a specific date range.
      * @param deleteFrom the start date for counting
      * @param deleteTo the end date for counting
-     * @returns An observable of type HttpResponse<NonLatestRatedResultsCleanupCountDTO>.
      */
-    countOldRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<NonLatestRatedResultsCleanupCountDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.get<NonLatestRatedResultsCleanupCountDTO>(`${this.adminResourceUrl}/old-rated-results/count`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    countOldRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<NonLatestRatedResultsCleanupCountDTO> {
+        return defer(() => this.api.countOldRatedResults(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo)));
     }
 
     /**
      * Send GET request to count old submission versions within a specific date range.
      * @param deleteFrom the start date for counting
      * @param deleteTo the end date for counting
-     * @returns An observable of type HttpResponse<SubmissionVersionsCleanupCountDTO>.
      */
-    countOldSubmissionVersions(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<SubmissionVersionsCleanupCountDTO>> {
-        const deleteFromString = convertDateFromClient(deleteFrom)!;
-        const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.get<SubmissionVersionsCleanupCountDTO>(`${this.adminResourceUrl}/old-submission-versions/count`, {
-            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
-            observe: 'response',
-        });
+    countOldSubmissionVersions(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<SubmissionVersionsCleanupCountDTO> {
+        return defer(() => this.api.countOldSubmissionVersions(this.toIsoDate(deleteFrom), this.toIsoDate(deleteTo)));
     }
 
     /**
      * Send GET request to count old courses due for a student-data reset warning.
      */
-    countOldCoursesResetWarning(): Observable<HttpResponse<OldCoursesCleanupCountDTO>> {
-        return this.http.get<OldCoursesCleanupCountDTO>(`${this.adminResourceUrl}/old-courses/warn/count`, { observe: 'response' });
+    countOldCoursesResetWarning(): Observable<OldCoursesCleanupCountDTO> {
+        return this.api.countOldCoursesResetWarning();
     }
 
     /**
      * Send GET request to count old courses due for a student-data reset.
      */
-    countOldCoursesReset(): Observable<HttpResponse<OldCoursesCleanupCountDTO>> {
-        return this.http.get<OldCoursesCleanupCountDTO>(`${this.adminResourceUrl}/old-courses/reset/count`, { observe: 'response' });
+    countOldCoursesReset(): Observable<OldCoursesCleanupCountDTO> {
+        return this.api.countOldCoursesReset();
     }
 
     /**
      * Send GET request to count the feedback of non-latest results of old courses.
      */
-    countOldFeedback(): Observable<HttpResponse<OldFeedbackCleanupCountDTO>> {
-        return this.http.get<OldFeedbackCleanupCountDTO>(`${this.adminResourceUrl}/old-feedback/count`, { observe: 'response' });
+    countOldFeedback(): Observable<OldFeedbackCleanupCountDTO> {
+        return this.api.countOldFeedback();
     }
 
     /**
      * Send GET request to count the submission versions of old courses.
      */
-    countOldCourseSubmissionVersions(): Observable<HttpResponse<SubmissionVersionsCleanupCountDTO>> {
-        return this.http.get<SubmissionVersionsCleanupCountDTO>(`${this.adminResourceUrl}/old-course-submission-versions/count`, { observe: 'response' });
+    countOldCourseSubmissionVersions(): Observable<SubmissionVersionsCleanupCountDTO> {
+        return this.api.countOldCourseSubmissionVersions();
     }
 
     /**
      * Send GET request to count the not-enrolled, inactive users that would be warned about an upcoming deletion.
      */
-    countNotEnrolledUsersWarning(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
-        return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/warn/count`, { observe: 'response' });
+    countNotEnrolledUsersWarning(): Observable<NotEnrolledUsersCleanupCountDTO> {
+        return this.api.countNotEnrolledUsersWarning();
     }
 
     /**
      * Send GET request to count the warned users that would be permanently deleted or blocked by remaining references.
      */
-    countNotEnrolledUsers(): Observable<HttpResponse<NotEnrolledUsersCleanupCountDTO>> {
-        return this.http.get<NotEnrolledUsersCleanupCountDTO>(`${this.adminResourceUrl}/not-enrolled-users/count`, { observe: 'response' });
+    countNotEnrolledUsers(): Observable<NotEnrolledUsersCleanupCountDTO> {
+        return this.api.countNotEnrolledUsers();
     }
 
     /**
      * Send GET request to count the plagiarism cases of courses that ended before the grade-relevant retention cutoff.
      */
-    countPlagiarismCases(): Observable<HttpResponse<PlagiarismCasesCleanupCountDTO>> {
-        return this.http.get<PlagiarismCasesCleanupCountDTO>(`${this.adminResourceUrl}/plagiarism-cases/count`, { observe: 'response' });
+    countPlagiarismCases(): Observable<PlagiarismCasesCleanupCountDTO> {
+        return this.api.countPlagiarismCases();
     }
+
+    private toIsoDate(date: dayjs.Dayjs): string {
+        if (!date.isValid()) {
+            throw new Error('The cleanup date range contains an invalid date.');
+        }
+        return date.toISOString();
+    }
+}
+
+function toExecutionRecord(record: CleanupServiceExecutionRecord): CleanupServiceExecutionRecordDTO {
+    return { jobType: record.jobType, executionDate: convertDateStringFromServer(record.executionDate) };
 }
 
 /** An ISO-8601 instant as the server serializes a `ZonedDateTime`, captured down to its calendar date. */
@@ -401,10 +307,10 @@ const ISO_INSTANT = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+
  * dayjs normalizes an out-of-range day instead of refusing it. Both would read as a plausible but wrong cutoff, so the
  * shape and the calendar date are checked before the value is accepted.
  */
-function cutoff(value: string): dayjs.Dayjs {
+function cutoff(value: string | undefined): dayjs.Dayjs {
     const match = ISO_INSTANT.exec(value ?? '');
     const parsed = match && convertDateStringFromServer(value);
-    if (!parsed?.isValid() || !isRealCalendarDate(match![1], match![2], match![3])) {
+    if (!match || !isRealCalendarDate(match[1], match[2], match[3]) || !parsed?.isValid()) {
         throw new Error(`The cleanup configuration has no usable cutoff: received ${String(value)}`);
     }
     return parsed;

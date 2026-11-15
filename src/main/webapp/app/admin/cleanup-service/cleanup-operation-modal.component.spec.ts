@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef, signal } from '@angular/core';
 import { Subject, of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
@@ -87,30 +87,30 @@ describe('CleanupOperationModalComponent', () => {
                 {
                     provide: DataCleanupService,
                     useValue: {
-                        countOrphans: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockOrphanCounts }))),
-                        countPlagiarismComparisons: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockPlagiarismCounts }))),
-                        countNonRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockNonRatedCounts }))),
-                        countOldRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockOldRatedCounts }))),
-                        countOldSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockSubmissionVersionCounts }))),
-                        countOldCoursesResetWarning: vi.fn().mockReturnValue(of(new HttpResponse({ body: { courses: 3 } }))),
-                        countOldCoursesReset: vi.fn().mockReturnValue(of(new HttpResponse({ body: { courses: 2 } }))),
-                        countOldFeedback: vi.fn().mockReturnValue(of(new HttpResponse({ body: { longFeedbackText: 1, textBlock: 2, feedback: 3 } }))),
-                        countOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockSubmissionVersionCounts }))),
-                        countNotEnrolledUsersWarning: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 9, blockedUsers: 0 } }))),
-                        countNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 4 } }))),
-                        warnNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        countPlagiarismCases: vi.fn().mockReturnValue(of(new HttpResponse({ body: { plagiarismCases: 3 } }))),
-                        deleteOrphans: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deletePlagiarismComparisons: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deleteNonRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deleteOldRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deleteOldSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        warnOldCoursesReset: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        resetOldCourses: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deleteOldFeedback: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deleteOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deleteNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({}))),
-                        deletePlagiarismCases: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        countOrphans: vi.fn().mockReturnValue(of(mockOrphanCounts)),
+                        countPlagiarismComparisons: vi.fn().mockReturnValue(of(mockPlagiarismCounts)),
+                        countNonRatedResults: vi.fn().mockReturnValue(of(mockNonRatedCounts)),
+                        countOldRatedResults: vi.fn().mockReturnValue(of(mockOldRatedCounts)),
+                        countOldSubmissionVersions: vi.fn().mockReturnValue(of(mockSubmissionVersionCounts)),
+                        countOldCoursesResetWarning: vi.fn().mockReturnValue(of({ courses: 3 })),
+                        countOldCoursesReset: vi.fn().mockReturnValue(of({ courses: 2 })),
+                        countOldFeedback: vi.fn().mockReturnValue(of({ longFeedbackText: 1, textBlock: 2, feedback: 3 })),
+                        countOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(mockSubmissionVersionCounts)),
+                        countNotEnrolledUsersWarning: vi.fn().mockReturnValue(of({ users: 9, blockedUsers: 0 })),
+                        countNotEnrolledUsers: vi.fn().mockReturnValue(of({ users: 4, blockedUsers: 0 })),
+                        warnNotEnrolledUsers: vi.fn().mockReturnValue(of({ jobType: 'warnNotEnrolledUsers' })),
+                        countPlagiarismCases: vi.fn().mockReturnValue(of({ plagiarismCases: 3 })),
+                        deleteOrphans: vi.fn().mockReturnValue(of({ jobType: 'deleteOrphans' })),
+                        deletePlagiarismComparisons: vi.fn().mockReturnValue(of({ jobType: 'deletePlagiarismComparisons' })),
+                        deleteNonRatedResults: vi.fn().mockReturnValue(of({ jobType: 'deleteNonRatedResults' })),
+                        deleteOldRatedResults: vi.fn().mockReturnValue(of({ jobType: 'deleteRatedResults' })),
+                        deleteOldSubmissionVersions: vi.fn().mockReturnValue(of({ jobType: 'deleteSubmissionVersions' })),
+                        warnOldCoursesReset: vi.fn().mockReturnValue(of({ jobType: 'warnOldCoursesReset' })),
+                        resetOldCourses: vi.fn().mockReturnValue(of({ jobType: 'resetOldCourses' })),
+                        deleteOldFeedback: vi.fn().mockReturnValue(of({ jobType: 'deleteFeedback' })),
+                        deleteOldCourseSubmissionVersions: vi.fn().mockReturnValue(of({ jobType: 'deleteOldCourseSubmissionVersions' })),
+                        deleteNotEnrolledUsers: vi.fn().mockReturnValue(of({ jobType: 'deleteNotEnrolledUsers' })),
+                        deletePlagiarismCases: vi.fn().mockReturnValue(of({ jobType: 'deletePlagiarismCases' })),
                     },
                 },
             ],
@@ -206,7 +206,7 @@ describe('CleanupOperationModalComponent', () => {
             fixture.detectChanges();
 
             expect(dataCleanupService.countNotEnrolledUsers).toHaveBeenCalled();
-            expect(component.counts()).toEqual({ users: 4 });
+            expect(component.counts()).toEqual({ users: 4, blockedUsers: 0 });
         });
 
         it('should fetch plagiarism-case counts for the age-based deletePlagiarismCases operation without a date range', () => {
@@ -268,7 +268,7 @@ describe('CleanupOperationModalComponent', () => {
         it('should clear the previous error when reopened', () => {
             vi.spyOn(dataCleanupService, 'countOrphans')
                 .mockReturnValueOnce(throwError(() => new Error('Network error')))
-                .mockReturnValue(of(new HttpResponse({ body: mockOrphanCounts })));
+                .mockReturnValue(of(mockOrphanCounts));
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
             fixture.detectChanges();
@@ -284,7 +284,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should ignore a stale count response from a previously opened operation', () => {
             // The modal instance persists across opens. Open A with a count request that never resolves yet.
-            const orphanCounts = new Subject<HttpResponse<OrphanCleanupCountDTO>>();
+            const orphanCounts = new Subject<OrphanCleanupCountDTO>();
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(orphanCounts);
 
             componentRef.setInput('operation', deleteOrphansOperation);
@@ -300,14 +300,14 @@ describe('CleanupOperationModalComponent', () => {
             expect(component.counts()).toEqual(mockNonRatedCounts);
 
             // A's late response must not overwrite B's counts.
-            orphanCounts.next(new HttpResponse({ body: mockOrphanCounts }));
+            orphanCounts.next(mockOrphanCounts);
             expect(component.counts()).toEqual(mockNonRatedCounts);
         });
     });
 
     describe('executeCleanupOperation', () => {
         it('should ignore duplicate execution attempts while a cleanup request is in flight', () => {
-            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            const execution = new Subject<CleanupServiceExecutionRecordDTO>();
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
@@ -319,14 +319,14 @@ describe('CleanupOperationModalComponent', () => {
             expect(dataCleanupService.deleteOrphans).toHaveBeenCalledOnce();
             expect(component.operationExecuting()).toBe(true);
 
-            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.next({ executionDate: dayjs(), jobType: 'deleteOrphans' });
             execution.complete();
             expect(component.operationExecuting()).toBe(false);
             expect(component.operationExecuted()).toBe(true);
         });
 
         it('should ignore a stale cleanup completion after closing and reopening for another operation', () => {
-            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            const execution = new Subject<CleanupServiceExecutionRecordDTO>();
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
@@ -345,7 +345,7 @@ describe('CleanupOperationModalComponent', () => {
             component.executeCleanupOperation();
             expect(dataCleanupService.deleteNonRatedResults).not.toHaveBeenCalled();
 
-            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.next({ executionDate: dayjs(), jobType: 'deleteOrphans' });
             execution.complete();
 
             expect(component.operationExecuting()).toBe(false);
@@ -523,7 +523,7 @@ describe('CleanupOperationModalComponent', () => {
             const httpError = new HttpErrorResponse({ status: 500, error: { message: 'Delete failed' } });
             vi.spyOn(dataCleanupService, 'deleteOrphans')
                 .mockReturnValueOnce(throwError(() => httpError))
-                .mockReturnValueOnce(of(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } })));
+                .mockReturnValueOnce(of({ executionDate: dayjs(), jobType: 'deleteOrphans' }));
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
             fixture.detectChanges();
@@ -539,7 +539,7 @@ describe('CleanupOperationModalComponent', () => {
         });
 
         it('should ignore a cleanup completion delivered after the modal was closed', () => {
-            const execution = new Subject<HttpResponse<CleanupServiceExecutionRecordDTO>>();
+            const execution = new Subject<CleanupServiceExecutionRecordDTO>();
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(execution);
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
@@ -552,7 +552,7 @@ describe('CleanupOperationModalComponent', () => {
 
             // The completion arrives while the modal is closed (same operation), so only the !visible() half of the
             // stale-completion guard can trip: it must not flip operationExecuted, and the guard must be released.
-            execution.next(new HttpResponse({ body: { executionDate: dayjs(), jobType: 'deleteOrphans' } }));
+            execution.next({ executionDate: dayjs(), jobType: 'deleteOrphans' });
             execution.complete();
 
             expect(component.operationExecuted()).toBe(false);
@@ -590,7 +590,7 @@ describe('CleanupOperationModalComponent', () => {
                 orphanResultsWithoutParticipation: 0,
                 orphanFeedbackMessage: 0,
             };
-            vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: zeroCounts })));
+            vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(of(zeroCounts));
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
             fixture.detectChanges();
@@ -600,7 +600,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should show the affected entity counts before anything is executed', () => {
             // The confirmation dialog must state how many entities the operation would touch, per entity type.
-            vi.spyOn(dataCleanupService, 'countNotEnrolledUsers').mockReturnValue(of(new HttpResponse({ body: { users: 7, blockedUsers: 2 } })));
+            vi.spyOn(dataCleanupService, 'countNotEnrolledUsers').mockReturnValue(of({ users: 7, blockedUsers: 2 }));
             componentRef.setInput('operation', createAgeBasedOperation('deleteNotEnrolledUsers'));
             component.visible.set(true);
             fixture.detectChanges();
@@ -612,7 +612,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should keep a zero count visible rather than hiding the entity', () => {
             // A count of 0 must still be listed, otherwise the admin cannot tell "nothing affected" from "not reported".
-            vi.spyOn(dataCleanupService, 'countNotEnrolledUsers').mockReturnValue(of(new HttpResponse({ body: { users: 5, blockedUsers: 0 } })));
+            vi.spyOn(dataCleanupService, 'countNotEnrolledUsers').mockReturnValue(of({ users: 5, blockedUsers: 0 }));
             componentRef.setInput('operation', createAgeBasedOperation('deleteNotEnrolledUsers'));
             component.visible.set(true);
             fixture.detectChanges();

@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { EMPTY } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation, OperationName, createCleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CleanupConfiguration, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -201,14 +200,13 @@ export class CleanupServiceComponent implements OnInit {
 
     loadLastExecutions(): void {
         this.dataCleanupService.getLastExecutions().subscribe({
-            next: (response) => {
-                const executionRecords = response.body ?? [];
+            next: (executionRecords) => {
                 // Match by server job type, not array position (see serverJobTypeByName).
                 const executionDateByJobType = new Map(executionRecords.map((record) => [record.jobType, record.executionDate]));
                 this.cleanupOperations.update((operations) =>
                     operations.map((operation) => {
                         const executionDate = executionDateByJobType.get(this.serverJobTypeByName[operation.name]);
-                        return executionDate ? cloneWith(operation, { lastExecuted: convertDateFromServer(executionDate) }) : operation;
+                        return executionDate ? cloneWith(operation, { lastExecuted: executionDate }) : operation;
                     }),
                 );
             },

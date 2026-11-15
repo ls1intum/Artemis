@@ -4,6 +4,11 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRME
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -17,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.jayway.jsonpath.JsonPath;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
@@ -310,7 +317,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/admin/cleanup/plagiarism-comparisons/count", HttpStatus.OK, PlagiarismComparisonCleanupCountDTO.class, params);
+        var countResponse = request.performMvcRequest(get("/api/admin/cleanup/plagiarism-comparisons/count").params(params)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.plagiarismElements").value(0)).andReturn().getResponse();
+        request.restoreSecurityContext();
+        var counts = request.getObjectMapper().readValue(countResponse.getContentAsString(), PlagiarismComparisonCleanupCountDTO.class);
 
         assertThat(counts).isNotNull();
         assertThat(counts.plagiarismComparison()).isEqualTo(1);
@@ -318,10 +328,15 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(counts.plagiarismMatches()).isEqualTo(1);
         assertThat(counts.plagiarismSubmissions()).isEqualTo(2);
 
-        var responseBody = request.delete("/api/admin/cleanup/plagiarism-comparisons", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var actionResponse = request.performMvcRequest(delete("/api/admin/cleanup/plagiarism-comparisons").params(params)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobType").value("deletePlagiarismComparisons")).andExpect(jsonPath("$.executionDate").isString()).andReturn().getResponse();
+        request.restoreSecurityContext();
+        var responseBody = request.getObjectMapper().readValue(actionResponse.getContentAsString(), CleanupServiceExecutionRecordDTO.class);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
         assertThat(responseBody.executionDate()).isNotNull();
+        String rawExecutionDate = JsonPath.read(actionResponse.getContentAsString(), "$.executionDate");
+        assertThat(ZonedDateTime.parse(rawExecutionDate).toInstant()).isEqualTo(responseBody.executionDate().toInstant());
 
         assertThat(plagiarismComparisonRepository.existsById(plagiarismComparison2.getId())).isFalse();
         assertThat(plagiarismComparisonRepository.existsById(plagiarismComparison1.getId())).isTrue();
@@ -699,6 +714,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
+        cleanupJobExecutionRepository.deleteAll();
         var now = ZonedDateTime.now();
 
         var jobExecution = new CleanupJobExecution();
@@ -706,9 +722,16 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         jobExecution.setDeletionTimestamp(now);
         cleanupJobExecutionRepository.save(jobExecution);
 
-        var response = request.getList("/api/admin/cleanup/last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
-
         List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
+        int neverRunIndex = enumJobTypes.indexOf(CleanupJobType.NOT_ENROLLED_USERS_WARNING.label());
+        var rawResponse = request.performMvcRequest(get("/api/admin/cleanup/last-executions")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(12))
+                .andExpect(jsonPath("$[*].jobType", containsInAnyOrder(enumJobTypes.toArray(String[]::new))))
+                .andExpect(jsonPath("$[%d].jobType", neverRunIndex).value(CleanupJobType.NOT_ENROLLED_USERS_WARNING.label()))
+                .andExpect(jsonPath("$[%d].executionDate", neverRunIndex).doesNotHaveJsonPath()).andReturn().getResponse();
+        request.restoreSecurityContext();
+        var mapper = request.getObjectMapper();
+        List<CleanupServiceExecutionRecordDTO> response = mapper.readValue(rawResponse.getContentAsString(),
+                mapper.getTypeFactory().constructCollectionType(List.class, CleanupServiceExecutionRecordDTO.class));
 
         assertThat(response).isNotNull();
         assertThat(response).extracting(CleanupServiceExecutionRecordDTO::jobType).containsAll(enumJobTypes);
@@ -717,6 +740,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
         assertThat(orphansJob).isPresent();
         assertThat(now).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testMissingDeleteToIsRejected() throws Exception {
+        request.performMvcRequest(get("/api/admin/cleanup/plagiarism-comparisons/count").param("deleteFrom", DELETE_FROM.toString())).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -757,8 +786,16 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetCleanupConfiguration() throws Exception {
         var before = ZonedDateTime.now();
-        var configuration = request.get("/api/admin/cleanup/configuration", HttpStatus.OK, CleanupConfigurationDTO.class);
+        var rawResponse = request.performMvcRequest(get("/api/admin/cleanup/configuration")).andExpect(status().isOk());
         var after = ZonedDateTime.now();
+        for (String field : List.of("gradeRelevantRetentionYears", "gradeRelevantCoursesEndedBefore", "nonGradeRelevantRetentionYears", "nonGradeRelevantCoursesEndedBefore",
+                "resetWarningGracePeriodDays", "coursesWarnedBefore", "oldFeedbackCutoffWeeks", "oldFeedbackCoursesEndedBefore", "oldSubmissionVersionsCutoffWeeks",
+                "oldSubmissionVersionsCoursesEndedBefore", "notEnrolledUsersInactivityMonths", "usersInactiveBefore", "notEnrolledUsersWarningGracePeriodDays",
+                "usersWarnedBefore")) {
+            rawResponse.andExpect(jsonPath("$." + field).exists());
+        }
+        request.restoreSecurityContext();
+        var configuration = request.getObjectMapper().readValue(rawResponse.andReturn().getResponse().getContentAsString(), CleanupConfigurationDTO.class);
 
         assertThat(configuration).isNotNull();
         // The admin page states which data an age-based operation affects, so every configured period must be exposed.
