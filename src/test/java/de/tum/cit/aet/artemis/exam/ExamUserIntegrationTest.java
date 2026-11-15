@@ -615,10 +615,9 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testGetExamStudentsPaged_allowedForTutor() throws Exception {
+    void testGetExamStudentsPaged_forbiddenForTutor() throws Exception {
         var paginationExam = createPaginationTestExam();
-        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
-        assertThat(result).isNotNull();
+        request.getList(pagedUrl(paginationExam), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
     }
 
     @Test
