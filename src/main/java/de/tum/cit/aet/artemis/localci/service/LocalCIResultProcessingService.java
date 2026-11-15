@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultLimits;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -253,6 +254,14 @@ public class LocalCIResultProcessingService {
 
         if (buildResult == null) {
             return;
+        }
+        // The result was created on a build agent, so the number of its elements is bounded before it is processed
+        BuildResult limitedBuildResult = BuildResultLimits.limit(buildResult);
+        List<BuildLogDTO> limitedBuildLogs = BuildResultLimits.limitLogs(buildLogs);
+        if (limitedBuildResult != buildResult || limitedBuildLogs != buildLogs) {
+            log.warn("The result of build job {} exceeds the limits for the number of tests, reports or log entries and is shortened", buildJob.id());
+            buildResult = limitedBuildResult;
+            buildLogs = limitedBuildLogs;
         }
         BuildJob savedBuildJob;
         Result result = null;

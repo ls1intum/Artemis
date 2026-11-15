@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -44,7 +45,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultLimits;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
@@ -303,6 +307,21 @@ class LocalCIResultProcessingServiceTest {
 
         assertThat(withoutExercise.getProgrammingExercise()).isSameAs(exercise);
         verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
+    }
+
+    @Test
+    void aResultWithMoreTestsThanTheLimitIsShortenedBeforeItIsGraded() {
+        List<LocalCITestJobDTO> tests = Collections.nCopies(BuildResultLimits.MAX_TESTS + 1, new LocalCITestJobDTO("test", List.of()));
+        BuildResult oversized = new BuildResult("main", "a", "b", true, ZonedDateTime.now(), List.of(new LocalCIJobDTO(List.of(), tests)), List.of(), List.of(), false, 0);
+        withQueuedResult(new ResultQueueItem(oversized, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildResult> graded = ArgumentCaptor.captor();
+        verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), graded.capture(), anyBoolean());
+        assertThat(graded.getValue().jobs().getFirst().successfulTests()).hasSize(BuildResultLimits.MAX_TESTS);
     }
 
     // --- lifecycle and health --------------------------------------------------------------------------------------
