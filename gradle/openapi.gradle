@@ -53,7 +53,34 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.exercise.web"),
+                // Keep partially migrated packages scoped to their documented application endpoints.
+                *(openApiGroup ? [] : ["-Dspringdoc.paths-to-match=" + [
+                    "/api/aiworker/**",
+                    "/api/calendar/**",
+                    "/api/global-search/**",
+                    "/api/search",
+                    "/api/search/**",
+                    "/api/hyperion/**",
+                    "/api/quiz/**",
+                    "/api/tutorialgroup/**",
+                    "/api/exercise/exercises/{exerciseId}/teams",
+                    "/api/exercise/exercises/{exerciseId}/teams/{teamId}",
+                    "/api/exercise/exercises/{exerciseId}/teams/import-from-list",
+                    "/api/exercise/exercises/{exerciseId}/teams/import-from-exercise",
+                    "/api/exercise/courses/{courseId}/teams/exists",
+                    "/api/exercise/courses/{courseId}/exercises/{exerciseId}/team-search-users",
+                    "/api/exercise/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations",
+                    "/api/exercise/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations/for-staff",
+                    "/api/exercise/exercises/{exerciseId}/review-threads",
+                    "/api/exercise/exercises/{exerciseId}/review-threads/{threadId}/comments",
+                    "/api/exercise/exercises/{exerciseId}/review-threads/{threadId}/resolved",
+                    "/api/exercise/exercises/{exerciseId}/review-thread-groups",
+                    "/api/exercise/exercises/{exerciseId}/review-thread-groups/{groupId}",
+                    "/api/exercise/exercises/{exerciseId}/review-thread-groups/{groupId}/resolved",
+                    "/api/exercise/exercises/{exerciseId}/review-comments/{commentId}",
+                    "/api/exercise/exercises/{exerciseId}/review-comments/{commentId}/inline-fix/applied"
+                ].join(",")]),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",

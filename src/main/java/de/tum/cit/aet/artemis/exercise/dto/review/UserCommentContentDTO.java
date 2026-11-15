@@ -6,8 +6,10 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Schema(description = "Content for a user-provided review comment.")
+@Schema(description = "Content for a user-provided review comment.", requiredProperties = "contentType")
+@SchemaProperty(name = "contentType", schema = @Schema(type = "string", allowableValues = { "USER" }))
 public record UserCommentContentDTO(@Schema(description = "Comment text supplied by the reviewer.") @NotBlank @Size(max = 10000) String text) implements CommentContentDTO {
 }

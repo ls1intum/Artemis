@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
@@ -182,6 +183,34 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         ExerciseReviewThreadUpdateDTO websocketPayload = (ExerciseReviewThreadUpdateDTO) websocketPayloadCaptor.getValue();
         assertThat(websocketPayload.action()).isEqualTo(ReviewThreadSyncAction.COMMENT_UPDATED);
         assertThat(websocketPayload.comment().id()).isEqualTo(consistencyComment.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldMarkConsistencyInlineFixAsAppliedWithoutRequestBody() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentDTO comment = createThreadWithConsistencyComment(exercise, "Consistency issue", false).comments().getFirst();
+
+        request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewCommentInlineFixAppliedPath(exercise.getId(), comment.id())))).andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.contentType").value("CONSISTENCY_CHECK")).andExpect(jsonPath("$.content.suggestedFix.applied").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldSerializeDiscriminatorsAndOmitEmptyReviewFields() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO thread = createThreadWithComment(exercise, "User comment");
+        var emptyThread = new CommentThreadDTO(thread.id(), null, thread.exerciseId(), thread.targetType(), null, null, null, null, null, null, thread.initialLineNumber(), false,
+                false, List.of());
+        var consistency = new ConsistencyIssueCommentContentDTO(Severity.LOW, ConsistencyIssueCategory.ATTRIBUTE_TYPE_MISMATCH, "Issue",
+                new InlineCodeChangeDTO(1, 1, "", "", false));
+
+        assertThat(objectMapper.valueToTree(thread).at("/comments/0/content/contentType").asString()).isEqualTo("USER");
+        assertThat(objectMapper.valueToTree(emptyThread).has("comments")).isFalse();
+        var content = objectMapper.valueToTree(consistency);
+        assertThat(content.path("contentType").asString()).isEqualTo("CONSISTENCY_CHECK");
+        assertThat(content.path("suggestedFix").has("expectedCode")).isFalse();
+        assertThat(content.path("suggestedFix").has("replacementCode")).isFalse();
     }
 
     @Test

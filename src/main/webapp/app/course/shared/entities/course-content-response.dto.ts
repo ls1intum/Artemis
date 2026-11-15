@@ -461,7 +461,7 @@ export function courseFromDashboardDTO(dto: CourseDashboardDTO): Course {
  * The exercise model matching the payload's type discriminator, so `instanceof` checks and the typed readers of the
  * concrete models work on a converted list.
  */
-function newExerciseModel(type: ExerciseType, diagramType?: UMLDiagramType): Exercise {
+export function newExerciseModel(type: ExerciseType, diagramType?: UMLDiagramType): Exercise {
     switch (type) {
         case ExerciseType.PROGRAMMING:
             return new ProgrammingExercise(undefined, undefined);
