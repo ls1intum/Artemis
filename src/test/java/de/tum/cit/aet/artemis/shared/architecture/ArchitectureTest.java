@@ -769,7 +769,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // which Apache FileUtils cannot express either. Its test plants files directly to set up the malformed
                 // content it then asserts the reader survives.
                 .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogService").and()
-                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogServiceTest").should()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogServiceTest")
+                // RejectedPushCleanupService takes the mark of a repository by an atomic rename, so that only one cleanup can, and writes small marks into
+                // repository directories that exist. Apache FileUtils cannot promise the atomic rename or fail when a mark exists already. Its test plants marks directly.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.localvc.service.RejectedPushCleanupService").and()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.localvc.service.RejectedPushCleanupServiceTest").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);

@@ -15,7 +15,6 @@ import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class RejectedPushCleanupServiceTest {
 
@@ -34,9 +33,7 @@ class RejectedPushCleanupServiceTest {
     }
 
     private RejectedPushCleanupService service() {
-        RejectedPushCleanupService service = new RejectedPushCleanupService();
-        ReflectionTestUtils.setField(service, "localVCBasePath", base);
-        return service;
+        return new RejectedPushCleanupService(base);
     }
 
     @Test
@@ -149,6 +146,36 @@ class RejectedPushCleanupServiceTest {
             Files.writeString(directory.resolve("gc.pid"), "1");
 
             service().cleanup();
+
+            assertThat(marker).content().isEqualTo("0");
+        }
+    }
+
+    @Test
+    void anAgedCollectionLockLeftByADeadCollectionDoesNotBlockTheCleanup() throws Exception {
+        try (Repository repository = createRepository()) {
+            Path directory = repository.getDirectory().toPath();
+            Path marker = directory.resolve("artemis-rejected-push");
+            RejectedPushCleanupService.markForCleanup(repository);
+            FileTime old = FileTime.from(Instant.now().minus(3, ChronoUnit.DAYS));
+            Files.setLastModifiedTime(marker, old);
+            Path lock = directory.resolve("gc.pid");
+            Files.writeString(lock, "1");
+            Files.setLastModifiedTime(lock, old);
+
+            service().cleanup();
+
+            // the collection ran, so the marker advanced to the second pass
+            assertThat(marker).content().isEqualTo("1");
+        }
+    }
+
+    @Test
+    void aMissingMarkIsCreated() throws Exception {
+        try (Repository repository = createRepository()) {
+            Path marker = repository.getDirectory().toPath().resolve("artemis-rejected-push");
+
+            RejectedPushCleanupService.markForCleanup(repository);
 
             assertThat(marker).content().isEqualTo("0");
         }

@@ -55,8 +55,14 @@ public class RejectedPushCleanupService {
 
     private static final Duration GRACE_PERIOD = Duration.ofDays(1);
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
+    /** A collection lock that was not touched for this long belongs to a collection that died, JGit takes such a lock over itself. */
+    private static final Duration STALE_COLLECTION_LOCK = Duration.ofHours(12);
+
+    private final Path localVCBasePath;
+
+    public RejectedPushCleanupService(@Value("${artemis.version-control.local-vcs-repo-path}") Path localVCBasePath) {
+        this.localVCBasePath = localVCBasePath;
+    }
 
     /**
      * Marks the repository as one that holds the objects of a rejected push. The mark keeps the time of the first rejection until a cleanup processed it.
@@ -68,13 +74,23 @@ public class RejectedPushCleanupService {
         try {
             // A mark that no cleanup has processed yet keeps the time of the first rejection. Renewing it with every rejected push would postpone the cleanup for as long as
             // pushes keep being rejected, while the objects of the rejected pushes are protected by their own age anyway.
-            if (Files.isRegularFile(marker) && FIRST_PASS.equals(Files.readString(marker).trim())) {
+            if (isFirstPassMarker(marker)) {
                 return;
             }
             Files.writeString(marker, FIRST_PASS);
         }
         catch (IOException e) {
             log.warn("Could not mark the repository {} for the cleanup of rejected pushes", repository.getDirectory(), e);
+        }
+    }
+
+    private static boolean isFirstPassMarker(Path marker) throws IOException {
+        try {
+            return FIRST_PASS.equals(Files.readString(marker).trim());
+        }
+        catch (NoSuchFileException e) {
+            // A cleanup took the mark meanwhile, so the new rejection needs a mark of its own
+            return false;
         }
     }
 
@@ -116,7 +132,7 @@ public class RejectedPushCleanupService {
                 return false;
             }
             String pass = Files.readString(claim).trim();
-            if (Files.exists(repositoryPath.resolve("gc.pid"))) {
+            if (isCollectionRunning(repositoryPath)) {
                 // Another collection holds the lock of the repository, and a collection that finds it does nothing. The same pass stays due.
                 log.debug("A collection is running in {}, the cleanup of rejected pushes is retried", repositoryPath);
                 restore(marker, claim);
@@ -208,6 +224,12 @@ public class RejectedPushCleanupService {
         catch (IOException e) {
             log.debug("Could not restore the mark of {}", claim, e);
         }
+    }
+
+    private static boolean isCollectionRunning(Path repositoryPath) throws IOException {
+        Path lock = repositoryPath.resolve("gc.pid");
+        // An old lock is left to JGit, which takes it over
+        return Files.exists(lock) && Files.getLastModifiedTime(lock).toInstant().isAfter(Instant.now().minus(STALE_COLLECTION_LOCK));
     }
 
     private static long sizeOfPacks(Path repositoryPath) throws IOException {
