@@ -128,8 +128,8 @@ public class BonusResource {
     }
 
     private boolean mayReadSourceGradingScale(Bonus bonus, GradingScale sourceGradingScale) {
-        Course sourceCourse = sourceGradingScale.getCourse();
-        Course targetCourse = bonus.getBonusToGradingScale().getExam() == null ? null : bonus.getBonusToGradingScale().getExam().getCourse();
+        Course sourceCourse = sourceGradingScale.getCourseViaExamOrDirectly();
+        Course targetCourse = bonus.getBonusToGradingScale().getCourseViaExamOrDirectly();
         return targetCourse != null && authCheckService.isAtLeastTeachingAssistantInCourse(targetCourse, null)
                 || sourceCourse != null && authCheckService.isAtLeastStudentInCourse(sourceCourse, null);
     }

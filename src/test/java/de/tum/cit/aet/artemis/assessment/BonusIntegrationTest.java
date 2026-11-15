@@ -195,6 +195,19 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetBonusKeepsExamSourceOfSameCourseForStudent() throws Exception {
+        bonusRepository.delete(courseBonus);
+        bonusRepository.save(BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale.getId(), bonusToExamGradingScale.getId()));
+        examUtilService.addStudentExamWithUser(bonusToExamGradingScale.getExam(), TEST_PREFIX + "student1");
+
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+
+        assertThat(foundBonus.sourceGradingScale()).isNotNull();
+        assertThat(foundBonus.sourceGradingScale().exam()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetBonusKeepsSourceOfSameCourseForStudent() throws Exception {
         examUtilService.addStudentExamWithUser(bonusToExamGradingScale.getExam(), TEST_PREFIX + "student1");
 
