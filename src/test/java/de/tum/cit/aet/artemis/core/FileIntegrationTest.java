@@ -64,7 +64,10 @@ import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -127,6 +130,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseTestRepository;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamTestRepository;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -1507,7 +1516,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetDragAndDropPicturesOfExamQuizBeforeExamStart() throws Exception {
         var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
-        examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+        addStudentExamWithExercise(dndQuestion);
         String backgroundUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png";
         String dragItemUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/drag-items/1/item.png";
 
@@ -1532,8 +1541,55 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetDragAndDropPicturesOfExamQuizDuringExam() throws Exception {
         var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        addStudentExamWithExercise(dndQuestion);
+
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizNotInOwnStudentExam() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        // the student has an attempt of this exam, but it does not contain the exercise (another variant of the exercise group)
         examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
 
-        assertThat(request.get("/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/exam-background.jpg", HttpStatus.OK, byte[].class)).isNotEmpty();
+        request.get(examBackgroundUrl(dndQuestion), HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizAfterHandInUntilSummaryIsPublished() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        var exam = dndQuestion.getExercise().getExerciseGroup().getExam();
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examTestRepository.save(exam);
+        var studentExam = addStudentExamWithExercise(dndQuestion);
+        studentExamTestRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now().minusMinutes(90));
+
+        request.get(examBackgroundUrl(dndQuestion), HttpStatus.FORBIDDEN, byte[].class);
+
+        // staff is not affected
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+
+        // once the summary is published, the summary page can load the pictures again
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().minusMinutes(1));
+        examTestRepository.save(exam);
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    private StudentExam addStudentExamWithExercise(DragAndDropQuestion question) {
+        var studentExam = examUtilService.addStudentExamWithUser(question.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, question.getExercise());
+        return studentExam;
+    }
+
+    private static String examBackgroundUrl(DragAndDropQuestion question) {
+        return "/api/core/files/drag-and-drop/questions/" + question.getId() + "/backgrounds/exam-background.jpg";
     }
 }
