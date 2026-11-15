@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for transferring complaint data to the client.
@@ -47,8 +48,10 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
             SubmissionWithParticipationDTO submission, UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
 
         /**
-         * DTO containing the {@link Feedback} information needed in the result.
+         * DTO containing the {@link Feedback} information needed in the result. Named apart from {@link de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO} in the
+         * OpenAPI specification, which would otherwise describe this record with the other one's fields.
          */
+        @Schema(name = "ComplaintFeedbackDTO")
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public record FeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
                 Visibility visibility, String testCaseName, GradingInstructionDTO gradingInstruction) {
