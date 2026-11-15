@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -45,6 +46,17 @@ public class PlagiarismAccessApi extends AbstractPlagiarismApi {
      */
     public Optional<String> findComparedCommitHash(long exerciseId, long participationId) {
         return plagiarismAccessService.findComparedCommitHash(exerciseId, participationId);
+    }
+
+    /**
+     * Finds when the most recent plagiarism check that compared a participation of a programming exercise was created.
+     *
+     * @param exerciseId      the id of the programming exercise
+     * @param participationId the id of the participation
+     * @return the creation date of the most recent result, empty if the participation was not compared
+     */
+    public Optional<Instant> findComparisonCreatedDate(long exerciseId, long participationId) {
+        return plagiarismAccessService.findComparisonCreatedDate(exerciseId, participationId);
     }
 
     /**

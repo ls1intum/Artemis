@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.plagiarism.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -40,6 +42,7 @@ public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<Pla
      *
      * @param exerciseId      the exercise the comparison belongs to
      * @param participationId the id of the participation, which is the compared id of a programming comparison
+     * @param limit           the maximum number of rows, one row is enough for the newest hash
      * @return the stored commit hashes, newest first
      */
     @Query("""
@@ -52,7 +55,26 @@ public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<Pla
                 AND submission.commitHash IS NOT NULL
             ORDER BY submission.id DESC
             """)
-    List<String> findComparedCommitHashes(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId);
+    List<String> findComparedCommitHashes(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId, Limit limit);
+
+    /**
+     * The creation dates of the plagiarism results that compared a participation of the exercise, newest first.
+     *
+     * @param exerciseId      the exercise the comparison belongs to
+     * @param participationId the id of the participation, which is the compared id of a programming comparison
+     * @param limit           the maximum number of rows
+     * @return the creation dates of the results, newest first
+     */
+    @Query("""
+            SELECT result.createdDate
+            FROM PlagiarismSubmission submission
+                JOIN submission.plagiarismComparison comparison
+                JOIN comparison.plagiarismResult result
+            WHERE result.exercise.id = :exerciseId
+                AND submission.submissionId = :participationId
+            ORDER BY result.createdDate DESC, submission.id DESC
+            """)
+    List<Instant> findComparisonCreatedDates(@Param("exerciseId") long exerciseId, @Param("participationId") long participationId, Limit limit);
 
     /**
      * One side of a comparison with its elements loaded. The two sides are read one at a time because their element

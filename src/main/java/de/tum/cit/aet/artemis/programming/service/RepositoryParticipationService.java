@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jspecify.annotations.Nullable;
@@ -11,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -24,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -48,24 +53,29 @@ public class RepositoryParticipationService {
 
     private final RepositoryService repositoryService;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     /**
      * Constructor for the RepositoryParticipationService.
      *
-     * @param participationRepository       the participation repository
-     * @param gitService                    the git service
-     * @param userRepository                the user repository
-     * @param repositoryAccessService       the repository access service
-     * @param programmingExerciseRepository the programming exercise repository
-     * @param repositoryService             the repository service used to read file contents
+     * @param participationRepository         the participation repository
+     * @param gitService                      the git service
+     * @param userRepository                  the user repository
+     * @param repositoryAccessService         the repository access service
+     * @param programmingExerciseRepository   the programming exercise repository
+     * @param repositoryService               the repository service used to read file contents
+     * @param programmingSubmissionRepository the programming submission repository
      */
     public RepositoryParticipationService(ParticipationRepository participationRepository, GitService gitService, UserRepository userRepository,
-            RepositoryAccessService repositoryAccessService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryService repositoryService) {
+            RepositoryAccessService repositoryAccessService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryService repositoryService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.repositoryAccessService = repositoryAccessService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryService = repositoryService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -116,9 +126,26 @@ public class RepositoryParticipationService {
         }
 
         User user = userRepository.getUserWithAuthorities();
-        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, user, RepositoryActionType.READ);
+        boolean liveAccess = repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, user, RepositoryActionType.READ);
+        if (liveAccess) {
+            return new PlagiarismViewTarget(programmingParticipation, null);
+        }
+        String comparedCommitHash = findComparedCommitHash(programmingParticipation)
+                .orElseThrow(() -> new AccessForbiddenException("The compared state of this repository is not available."));
+        return new PlagiarismViewTarget(programmingParticipation, comparedCommitHash);
+    }
 
-        return new PlagiarismViewTarget(programmingParticipation, repositoryAccessService.findCommitHashForPlagiarismView(programmingParticipation, user));
+    /**
+     * Finds the commit that was compared for the participation. Results created before the commit was stored fall back to the latest commit that was submitted
+     * not later than the creation of the result, both dates are recorded by the server.
+     */
+    private Optional<String> findComparedCommitHash(ProgrammingExerciseParticipation programmingParticipation) {
+        Optional<String> stored = repositoryAccessService.findStoredComparedCommitHash(programmingParticipation);
+        if (stored.isPresent()) {
+            return stored;
+        }
+        return repositoryAccessService.findComparisonCreatedDate(programmingParticipation).flatMap(createdDate -> programmingSubmissionRepository
+                .findCommitHashesSubmittedUntil(programmingParticipation.getId(), ZonedDateTime.ofInstant(createdDate, ZoneId.systemDefault()), Limit.of(1)).stream().findFirst());
     }
 
     /**

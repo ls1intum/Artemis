@@ -147,11 +147,6 @@ public class PlagiarismSubmission extends DomainObject {
         return submission;
     }
 
-    @JsonIgnore
-    public String getCommitHash() {
-        return commitHash;
-    }
-
     public void setCommitHash(String commitHash) {
         this.commitHash = commitHash;
     }

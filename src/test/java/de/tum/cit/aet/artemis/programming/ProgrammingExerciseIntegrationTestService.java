@@ -50,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -1773,7 +1774,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // the compared commit of each side is stored, the compared ids of a programming comparison are participation ids
         var comparison = result.plagiarismResult().comparisons().getFirst();
         for (var submission : List.of(comparison.submissionA(), comparison.submissionB())) {
-            assertThat(plagiarismSubmissionRepository.findComparedCommitHashes(programmingExercise.getId(), submission.submissionId())).hasSize(1)
+            assertThat(plagiarismSubmissionRepository.findComparedCommitHashes(programmingExercise.getId(), submission.submissionId(), Limit.of(10))).hasSize(1)
                     .allSatisfy(hash -> assertThat(hash).matches("[0-9a-f]{40}"));
         }
     }

@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Limit;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -71,11 +73,20 @@ class PlagiarismAccessServiceTest {
     }
 
     @Test
-    void findComparedCommitHash_returnsTheNewestStoredHash() {
-        when(submissionRepository.findComparedCommitHashes(EXERCISE_ID, COMPARED_ID)).thenReturn(List.of("newest", "older"));
-        when(submissionRepository.findComparedCommitHashes(OTHER_EXERCISE_ID, COMPARED_ID)).thenReturn(List.of());
+    void findComparedCommitHash_asksForTheNewestRowOnly() {
+        when(submissionRepository.findComparedCommitHashes(EXERCISE_ID, COMPARED_ID, Limit.of(1))).thenReturn(List.of("newest"));
+        when(submissionRepository.findComparedCommitHashes(OTHER_EXERCISE_ID, COMPARED_ID, Limit.of(1))).thenReturn(List.of());
 
         assertThat(service.findComparedCommitHash(EXERCISE_ID, COMPARED_ID)).contains("newest");
         assertThat(service.findComparedCommitHash(OTHER_EXERCISE_ID, COMPARED_ID)).isEmpty();
+    }
+
+    @Test
+    void findComparisonCreatedDate_asksForTheNewestRowOnly() {
+        Instant created = Instant.parse("2026-01-01T10:00:00Z");
+        when(submissionRepository.findComparisonCreatedDates(EXERCISE_ID, COMPARED_ID, Limit.of(1))).thenReturn(List.of(created));
+
+        assertThat(service.findComparisonCreatedDate(EXERCISE_ID, COMPARED_ID)).contains(created);
+        assertThat(service.findComparisonCreatedDate(OTHER_EXERCISE_ID, COMPARED_ID)).isEmpty();
     }
 }

@@ -11,6 +11,7 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -75,6 +76,24 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             ORDER BY ps.submissionDate DESC
             """)
     List<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
+
+    /**
+     * The commit hashes of the submissions of a participation that were submitted not later than the given date, latest first.
+     *
+     * @param participationId the participation the submissions belong to
+     * @param date            the latest submission date to consider
+     * @param limit           the maximum number of rows
+     * @return the commit hashes, latest submission first
+     */
+    @Query("""
+            SELECT ps.commitHash
+            FROM ProgrammingSubmission ps
+            WHERE ps.participation.id = :participationId
+                AND ps.commitHash IS NOT NULL
+                AND ps.submissionDate <= :date
+            ORDER BY ps.submissionDate DESC, ps.id DESC
+            """)
+    List<String> findCommitHashesSubmittedUntil(@Param("participationId") long participationId, @Param("date") ZonedDateTime date, Limit limit);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);

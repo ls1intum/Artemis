@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -191,43 +192,40 @@ class RepositoryAccessServiceTest {
     }
 
     @Test
-    void findCommitHashForPlagiarismView_teachingAssistant_readsTheLiveRepository() {
+    void checkHasAccessToPlagiarismSubmission_teachingAssistant_readsTheLiveRepository() {
         var course = new Course();
         var participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(5L);
         participation.setExercise(exerciseWithCourse(course));
         var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
         when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastEditorInCourse(course, user)).thenReturn(true);
 
-        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).findCommitHashForPlagiarismView(participation, user)).isNull();
+        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ)).isTrue();
         verifyNoInteractions(plagiarismAccessApi);
     }
 
     @Test
-    void findCommitHashForPlagiarismView_student_readsTheComparedCommit() {
-        var course = new Course();
+    void findStoredComparedCommitHash_readsTheStoredHashOfTheParticipation() {
         var participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(5L);
-        participation.setExercise(exerciseWithCourse(course));
+        participation.setExercise(exerciseWithCourse(new Course()));
         var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
         when(plagiarismAccessApi.findComparedCommitHash(1L, 5L)).thenReturn(Optional.of("abc123"));
-        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
 
-        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).findCommitHashForPlagiarismView(participation, user)).isEqualTo("abc123");
+        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).findStoredComparedCommitHash(participation)).contains("abc123");
     }
 
     @Test
-    void findCommitHashForPlagiarismView_studentWithoutStoredCommit_isRefused() {
-        var course = new Course();
+    void findComparisonCreatedDate_readsTheCreationDateOfTheNewestResult() {
         var participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(5L);
-        participation.setExercise(exerciseWithCourse(course));
+        participation.setExercise(exerciseWithCourse(new Course()));
         var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
-        when(plagiarismAccessApi.findComparedCommitHash(1L, 5L)).thenReturn(Optional.empty());
-        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        Instant created = Instant.parse("2026-01-01T10:00:00Z");
+        when(plagiarismAccessApi.findComparisonCreatedDate(1L, 5L)).thenReturn(Optional.of(created));
 
-        assertThatExceptionOfType(AccessForbiddenException.class)
-                .isThrownBy(() -> serviceWithPlagiarismModule(plagiarismAccessApi).findCommitHashForPlagiarismView(participation, user));
+        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).findComparisonCreatedDate(participation)).contains(created);
     }
 
     @Test

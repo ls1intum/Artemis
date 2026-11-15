@@ -2,10 +2,10 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -280,50 +280,51 @@ public class RepositoryAccessService {
     }
 
     /**
-     * Checks access to the live repository used by the plagiarism view. Staff must also have live repository read access;
-     * anonymous assessment reads use the separately authorized submitted-commit endpoints.
+     * Checks access to the repository shown by the plagiarism view. Staff must also have live repository read access and are shown the live repository;
+     * users who were notified about a case are shown the compared state. Anonymous assessment reads use the separately authorized submitted-commit endpoints.
      *
      * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
      * @param user                     The user who wants to access the plagiarism submission.
      * @param repositoryActionType     The type of action that the user wants to perform on the plagiarism submission (i.e. READ, WRITE or RESET).
+     * @return true if the user is staff who reads the live repository, false if the user is shown the compared state
      * @throws AccessForbiddenException If the user is not allowed to access the plagiarism submission.
      */
-    public void checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user, RepositoryActionType repositoryActionType)
+    public boolean checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user, RepositoryActionType repositoryActionType)
             throws AccessForbiddenException {
         if (repositoryActionType == RepositoryActionType.READ) {
             boolean isAtLeastTeachingAssistant = authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()),
                     user);
             if (isAtLeastTeachingAssistant) {
                 checkAccessRepositoryElseThrow(programmingParticipation, user, programmingParticipation.getProgrammingExercise(), RepositoryActionType.READ);
-                return;
+                return true;
             }
             boolean isAtLeastStudent = authorizationCheckService.isAtLeastStudentInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()), user);
             if (isAtLeastStudent && plagiarismAccessApi.isPresent() && plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getProgrammingExercise().getId(),
                     programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
-                return;
+                return false;
             }
         }
         throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
     }
 
     /**
-     * Determines which state of the repository the plagiarism view shows to the user. Teaching assistants and above read the live repository, which is signaled by {@code null}.
-     * Everybody else reads the commit that was compared by the plagiarism check, and gets no access if that commit was not stored.
-     * Call this after {@link #checkHasAccessToPlagiarismSubmission}.
+     * Finds the commit that the plagiarism check stored for the participation.
      *
-     * @param programmingParticipation the participation whose repository is shown
-     * @param user                     the user who wants to see the repository
-     * @return the hash of the compared commit, or null if the user reads the live repository
-     * @throws AccessForbiddenException if the user must read the compared commit and no commit was stored
+     * @param programmingParticipation the participation whose compared commit is requested
+     * @return the hash of the compared commit, empty if none was stored (e.g. results created before hashes were stored)
      */
-    @Nullable
-    public String findCommitHashForPlagiarismView(ProgrammingExerciseParticipation programmingParticipation, User user) throws AccessForbiddenException {
-        ProgrammingExercise exercise = programmingParticipation.getProgrammingExercise();
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user)) {
-            return null;
-        }
-        return plagiarismAccessApi.flatMap(api -> api.findComparedCommitHash(exercise.getId(), programmingParticipation.getId()))
-                .orElseThrow(() -> new AccessForbiddenException("The compared state of this repository is not available."));
+    public Optional<String> findStoredComparedCommitHash(ProgrammingExerciseParticipation programmingParticipation) {
+        return plagiarismAccessApi.flatMap(api -> api.findComparedCommitHash(programmingParticipation.getProgrammingExercise().getId(), programmingParticipation.getId()));
+    }
+
+    /**
+     * Finds when the most recent plagiarism check that compared the participation was created.
+     *
+     * @param programmingParticipation the participation that was compared
+     * @return the creation date of the most recent result, empty if the participation was not compared
+     */
+    public Optional<Instant> findComparisonCreatedDate(ProgrammingExerciseParticipation programmingParticipation) {
+        return plagiarismAccessApi.flatMap(api -> api.findComparisonCreatedDate(programmingParticipation.getProgrammingExercise().getId(), programmingParticipation.getId()));
     }
 
     public void checkHasAccessToOfflineIDEElseThrow(ProgrammingExercise exercise, User user) throws AccessForbiddenException {

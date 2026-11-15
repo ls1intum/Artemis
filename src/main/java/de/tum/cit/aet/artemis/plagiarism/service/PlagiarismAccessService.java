@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -46,7 +48,18 @@ public class PlagiarismAccessService {
      * @return the hash of the most recently compared commit, empty if no hash was stored (e.g. for results created before hashes were stored)
      */
     public Optional<String> findComparedCommitHash(long exerciseId, long participationId) {
-        return plagiarismSubmissionRepository.findComparedCommitHashes(exerciseId, participationId).stream().findFirst();
+        return plagiarismSubmissionRepository.findComparedCommitHashes(exerciseId, participationId, Limit.of(1)).stream().findFirst();
+    }
+
+    /**
+     * Finds when the most recent plagiarism check that compared a participation of a programming exercise was created.
+     *
+     * @param exerciseId      the id of the programming exercise
+     * @param participationId the id of the participation, which is the compared id of a programming comparison
+     * @return the creation date of the most recent result, empty if the participation was not compared
+     */
+    public Optional<Instant> findComparisonCreatedDate(long exerciseId, long participationId) {
+        return plagiarismSubmissionRepository.findComparisonCreatedDates(exerciseId, participationId, Limit.of(1)).stream().findFirst();
     }
 
     /**

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckSe
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -245,7 +248,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void getFilesForPlagiarismView_withComparedCommit_readsTheCommitInsteadOfTheLiveRepository() throws Exception {
         when(repositoryParticipationService.resolvePlagiarismViewTarget(PARTICIPATION_ID))
                 .thenReturn(new RepositoryParticipationService.PlagiarismViewTarget(participation, "abc123"));
-        when(repositoryService.getFilesAtCommit(participation, "abc123")).thenReturn(java.util.Map.of("Main.java", de.tum.cit.aet.artemis.programming.domain.FileType.FILE));
+        when(repositoryService.getFilesAtCommit(participation, "abc123")).thenReturn(Map.of("Main.java", FileType.FILE));
 
         var response = resource.getFilesForPlagiarismView(PARTICIPATION_ID);
 
@@ -257,7 +260,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void getFileForPlagiarismView_withComparedCommit_readsTheFileOfTheCommit() throws Exception {
         when(repositoryParticipationService.resolvePlagiarismViewTarget(PARTICIPATION_ID))
                 .thenReturn(new RepositoryParticipationService.PlagiarismViewTarget(participation, "abc123"));
-        when(repositoryService.getFileAtCommit(participation, "abc123", "Main.java")).thenReturn(org.springframework.http.ResponseEntity.ok("compared".getBytes()));
+        when(repositoryService.getFileAtCommit(participation, "abc123", "Main.java")).thenReturn(ResponseEntity.ok("compared".getBytes()));
 
         assertThat(resource.getFileForPlagiarismView(PARTICIPATION_ID, "Main.java").getBody()).asString().isEqualTo("compared");
         verify(repositoryParticipationService, never()).getRepositoryFromGitService(anyBoolean(), any());
