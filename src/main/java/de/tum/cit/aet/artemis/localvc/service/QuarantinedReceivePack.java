@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.function.BiConsumer;
 
 import org.eclipse.jgit.errors.LargeObjectException;
+import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.submodule.SubmoduleValidator.SubmoduleValidationException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.ReceiveCommand;
@@ -38,8 +39,10 @@ public final class QuarantinedReceivePack extends ReceivePack {
      * @throws IOException if the place for the objects cannot be created
      */
     public static ReceivePack create(Repository repository, BiConsumer<ReceivePack, Collection<ReceiveCommand>> checkBeforeObjects) throws IOException {
-        PushQuarantine quarantine = PushQuarantine.open(repository);
-        return quarantine == null ? new ReceivePack(repository) : new QuarantinedReceivePack(quarantine, checkBeforeObjects);
+        if (!(repository instanceof FileRepository)) {
+            return new ReceivePack(repository);
+        }
+        return new QuarantinedReceivePack(PushQuarantine.open(repository), checkBeforeObjects);
     }
 
     @Override

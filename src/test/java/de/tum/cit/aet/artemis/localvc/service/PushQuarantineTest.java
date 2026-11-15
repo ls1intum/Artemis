@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -224,7 +225,7 @@ class PushQuarantineTest {
     @Test
     void aRepositoryThatKeepsItsObjectsElsewhereHasNoPlace() throws Exception {
         try (var inMemory = new InMemoryRepository(new DfsRepositoryDescription("memory"))) {
-            assertThat(PushQuarantine.open(inMemory)).isNull();
+            assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> PushQuarantine.open(inMemory));
         }
     }
 

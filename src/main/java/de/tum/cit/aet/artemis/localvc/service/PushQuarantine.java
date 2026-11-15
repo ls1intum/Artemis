@@ -55,12 +55,13 @@ public final class PushQuarantine implements AutoCloseable {
      * Opens a place for the objects of a push to the repository.
      *
      * @param repository the repository that receives the push
-     * @return the place, or null if the repository does not store its objects in a directory
-     * @throws IOException if the place cannot be created
+     * @return the place
+     * @throws IllegalArgumentException if the repository does not store its objects in a directory
+     * @throws IOException              if the place cannot be created
      */
     public static PushQuarantine open(Repository repository) throws IOException {
         if (!(repository instanceof FileRepository fileRepository)) {
-            return null;
+            throw new IllegalArgumentException("Only a repository that stores its objects in a directory can have a place for the objects of a push");
         }
         Path objects = fileRepository.getObjectDatabase().getDirectory().toPath();
         // The directory is created when the push is received, see prepare(): a request that is refused before that, as by an authentication that fails, costs no disk space
@@ -130,7 +131,7 @@ public final class PushQuarantine implements AutoCloseable {
         try {
             Files.createLink(targetPacks.resolve(name + PACK_SUFFIX), packs.resolve(name + PACK_SUFFIX));
         }
-        catch (FileAlreadyExistsException e) {
+        catch (FileAlreadyExistsException _) {
             publishedName = name + "-" + UUID.randomUUID().toString().substring(0, 8);
             Files.createLink(targetPacks.resolve(publishedName + PACK_SUFFIX), packs.resolve(name + PACK_SUFFIX));
         }

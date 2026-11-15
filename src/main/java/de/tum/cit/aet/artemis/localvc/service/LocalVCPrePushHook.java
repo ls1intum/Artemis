@@ -32,6 +32,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
+    private static final String BRANCH_CHECK_ERROR = "An error occurred while checking the branch.";
+
     public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
@@ -114,7 +116,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         }
         catch (LocalVCInternalException | IOException e) {
             log.warn("An error occurred while checking the default branch: {}", e.getMessage());
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
             return;
         }
 
@@ -147,7 +149,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             }
         }
         catch (IOException e) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
         }
     }
 
@@ -186,7 +188,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(repository, command, localVCServletService.getMaxRepositorySizeBytes(repository));
         }
         catch (IOException e) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
         }
     }
 
