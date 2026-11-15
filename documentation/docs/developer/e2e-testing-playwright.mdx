@@ -2,7 +2,7 @@
 id: e2e-testing-playwright
 title: E2E Testing with Playwright
 sidebar_label: E2E Testing with Playwright
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-14
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -75,7 +75,7 @@ Services stay running between test runs, so re-runs only take seconds.
 The script automatically kills any processes occupying ports 8080 (server), 9000 (client), and 7921 (local VC SSH),
 so you don't need to manually stop conflicting processes before running it.
 
-**Prerequisites:** Docker, Java 25+, Node.js 24+, pnpm (activate via `corepack enable`).
+**Prerequisites:** Docker, Java 25+, Node.js 26.13.1+, pnpm (install Corepack once with `npm install --global corepack`, then activate pnpm via `corepack enable`).
 
 **Architecture:**
 
