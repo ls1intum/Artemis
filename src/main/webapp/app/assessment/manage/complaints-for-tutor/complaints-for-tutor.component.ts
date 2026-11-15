@@ -5,7 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { finalize } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
@@ -13,7 +13,8 @@ import { Location } from '@angular/common';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { ComplaintResponseApi } from 'app/openapi/api/complaint-response-api';
+import type { ComplaintResponseUpdate } from 'app/openapi/model/complaint-response-update';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -40,6 +41,7 @@ export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; o
 export class ComplaintsForTutorComponent implements OnInit {
     private alertService = inject(AlertService);
     private complaintResponseService = inject(ComplaintResponseService);
+    private complaintResponseApi = inject(ComplaintResponseApi);
     private router = inject(Router);
     private location = inject(Location);
 
@@ -62,7 +64,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     set complaintResponse(value: ComplaintResponse) {
         this._complaintResponse.set(value);
     }
-    complaintResponseUpdate!: ComplaintResponseUpdateDTO; // instantiated before use in each lock-refresh / resolve flow (ngOnInit and respondToComplaint)
+    complaintResponseUpdate!: ComplaintResponseUpdate; // instantiated before use in each lock-refresh / resolve flow (ngOnInit and respondToComplaint)
     ComplaintType = ComplaintType;
     readonly isLoading = signal(false);
     readonly showLockDuration = signal(false);
@@ -95,8 +97,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             } else {
                 if (this.isAllowedToRespond) {
                     if (this.complaint().complaintResponse) {
-                        this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
-                        this.complaintResponseUpdate.action = ComplaintAction.REFRESH_LOCK;
+                        this.complaintResponseUpdate = { action: 'REFRESH_LOCK' };
                         this.refreshLock();
                     } else {
                         this.createLock();
@@ -110,16 +111,17 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     private createLock() {
         this.isLoading.set(true);
-        this.complaintResponseService
-            .createLock(this.complaint().id!)
+        this.complaintResponseApi
+            .lockComplaint(this.complaint().id!)
             .pipe(
+                map((dto) => this.complaintResponseService.convertComplaintResponseFromServer(dto)),
                 finalize(() => {
                     this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (response) => {
-                    this.complaintResponse = response.body!;
+                    this.complaintResponse = response;
                     this.complaintResponse.complaint = this.complaint();
                     this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
                     this.complaint.set(this.complaintResponse.complaint);
@@ -141,16 +143,17 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (!this.isLockedForLoggedInUser()) {
             // update the lock
             this.isLoading.set(true);
-            this.complaintResponseService
-                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id)
+            this.complaintResponseApi
+                .refreshLockOrResolveComplaint(this.complaint().id!, this.complaintResponseUpdate)
                 .pipe(
+                    map((dto) => this.complaintResponseService.convertComplaintResponseFromServer(dto)),
                     finalize(() => {
                         this.isLoading.set(false);
                     }),
                 )
                 .subscribe({
                     next: (response) => {
-                        this.complaintResponse = response.body!;
+                        this.complaintResponse = response;
                         this.complaintResponse.complaint = this.complaint();
                         this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
                         this.complaint.set(this.complaintResponse.complaint);
@@ -171,7 +174,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     removeLock() {
-        this.complaintResponseService.removeLock(this.complaint().id!).subscribe({
+        this.complaintResponseApi.removeLockFromComplaint(this.complaint().id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.locks.lockRemoved');
                 this.navigateBack();
@@ -219,19 +222,21 @@ export class ComplaintsForTutorComponent implements OnInit {
             });
         } else {
             // If the complaint was rejected, or it was a more feedback request, just the complaint response is updated.
-            this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
-            this.complaintResponseUpdate.action = ComplaintAction.RESOLVE_COMPLAINT;
-            this.complaintResponseUpdate.responseText = this.complaintResponse.responseText;
-            this.complaintResponseUpdate.complaintIsAccepted = this.complaintResponse.complaint.accepted;
+            this.complaintResponseUpdate = {
+                action: 'RESOLVE_COMPLAINT',
+                responseText: this.complaintResponse.responseText,
+                complaintIsAccepted: this.complaintResponse.complaint.accepted,
+            };
             this.resolveComplaint();
         }
     }
 
     private resolveComplaint() {
         this.isLoading.set(true);
-        this.complaintResponseService
-            .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaintResponse.complaint!.id)
+        this.complaintResponseApi
+            .refreshLockOrResolveComplaint(this.complaintResponse.complaint!.id!, this.complaintResponseUpdate)
             .pipe(
+                map((dto) => this.complaintResponseService.convertComplaintResponseFromServer(dto)),
                 finalize(() => {
                     this.isLoading.set(false);
                 }),
@@ -244,7 +249,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     } else {
                         this.alertService.success('artemisApp.complaintResponse.created');
                     }
-                    this.complaintResponse = response.body!;
+                    this.complaintResponse = response;
                     this.complaintResponse.complaint = this.complaint();
                     this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
                     this.complaintResponse.complaint.accepted = this.complaintResponseUpdate.complaintIsAccepted;

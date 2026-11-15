@@ -1,58 +1,37 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { User, UserIdAndLoginDTO } from 'app/account/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ComplaintAction, ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import type { ComplaintResponse as ComplaintResponseDTO } from 'app/openapi/model/complaint-response';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ComplaintResponseService', () => {
     let complaintResponseService: ComplaintResponseService;
-    let httpTestingController: HttpTestingController;
-    let defaultComplaintResponseDTO: ComplaintResponseDTO;
-    let expectedComplaintResponse: any;
-    let complaintResponseResolve: ComplaintResponseUpdateDTO;
-    let complaintResponseRefresh: ComplaintResponseUpdateDTO;
+    let defaultComplaintResponse: ComplaintResponseDTO;
     let accountService: AccountService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
-        })
-            .compileComponents()
-            .then(() => {
-                expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
-                complaintResponseService = TestBed.inject(ComplaintResponseService);
-                httpTestingController = TestBed.inject(HttpTestingController);
-                accountService = TestBed.inject(AccountService);
-
-                defaultComplaintResponseDTO = {
-                    id: 1,
-                    responseText: 'response_text',
-                    submittedTime: dayjs(),
-                    isCurrentlyLocked: true,
-                    lockEndDate: dayjs(),
-                    complaintId: 1,
-                    reviewer: { id: 2, login: 'reviewer1' } as UserIdAndLoginDTO,
-                } as ComplaintResponseDTO;
-
-                complaintResponseResolve = new ComplaintResponseUpdateDTO();
-                complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
-                complaintResponseResolve.responseText = 'response_text';
-                complaintResponseResolve.complaintIsAccepted = true;
-                complaintResponseRefresh = new ComplaintResponseUpdateDTO();
-                complaintResponseRefresh.action = ComplaintAction.REFRESH_LOCK;
-            });
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
+        });
+        complaintResponseService = TestBed.inject(ComplaintResponseService);
+        accountService = TestBed.inject(AccountService);
+        defaultComplaintResponse = {
+            id: 1,
+            responseText: 'response_text',
+            submittedTime: '2026-01-01T10:00:00Z',
+            isCurrentlyLocked: true,
+            lockEndDate: '2026-01-01T11:00:00Z',
+            complaintId: 1,
+            reviewer: { id: 2, login: 'reviewer1' },
+        };
     });
 
     afterEach(() => {
-        httpTestingController.verify();
         vi.resetAllMocks();
     });
 
@@ -83,59 +62,24 @@ describe('ComplaintResponseService', () => {
         expect(isLocked).toBe(expected);
     });
 
-    it('should call refreshLock', async () => {
-        const returnedFromService = { ...defaultComplaintResponseDTO, isCurrentlyLocked: true };
-        complaintResponseService
-            .refreshLockOrResolveComplaint(complaintResponseRefresh, 1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'PATCH' });
-        expect(req.request.body).toEqual(complaintResponseRefresh);
-        req.flush(returnedFromService);
+    it('should map the generated complaint response to the client entity', () => {
+        const mapped = complaintResponseService.convertComplaintResponseFromServer(defaultComplaintResponse);
 
-        expect(expectedComplaintResponse.body).toBeDefined();
-        expect(expectedComplaintResponse.body!.id).toBe(1);
-        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
-        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(true);
-        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
+        expect(mapped.id).toBe(1);
+        expect(mapped.responseText).toBe('response_text');
+        expect(mapped.isCurrentlyLocked).toBe(true);
+        expect(mapped.submittedTime!.isSame(dayjs('2026-01-01T10:00:00Z'))).toBe(true);
+        expect(mapped.lockEndDate!.isSame(dayjs('2026-01-01T11:00:00Z'))).toBe(true);
+        expect(mapped.reviewer).toBeInstanceOf(User);
+        expect(mapped.reviewer?.login).toBe('reviewer1');
     });
 
-    it('should call removeLock', async () => {
-        const returnedFromService = {};
-        complaintResponseService
-            .removeLock(1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'DELETE' });
-        req.flush(returnedFromService);
-    });
+    it('should keep absent dates and reviewer absent and an absent response text empty', () => {
+        const mapped = complaintResponseService.convertComplaintResponseFromServer({ id: 2, complaintId: 1 });
 
-    it('should call createLock', async () => {
-        const returnedFromService = { ...defaultComplaintResponseDTO };
-        complaintResponseService
-            .createLock(1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toBeDefined();
-        expect(expectedComplaintResponse.body!.id).toBe(1);
-        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
-        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(true);
-        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
-    });
-
-    it('should call resolveComplaint', async () => {
-        const returnedFromService = { ...defaultComplaintResponseDTO, isCurrentlyLocked: false, responseText: 'response_text' };
-        complaintResponseService
-            .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'PATCH' });
-        req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toBeDefined();
-        expect(expectedComplaintResponse.body!.id).toBe(1);
-        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
-        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(false);
+        expect(mapped.submittedTime).toBeUndefined();
+        expect(mapped.lockEndDate).toBeUndefined();
+        expect(mapped.reviewer).toBeUndefined();
+        expect(mapped.responseText).toBe('');
     });
 });

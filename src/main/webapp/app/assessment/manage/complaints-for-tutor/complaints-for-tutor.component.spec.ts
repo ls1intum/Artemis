@@ -13,8 +13,11 @@ import { FormsModule } from '@angular/forms';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import type { ComplaintResponse as ComplaintResponseDTO } from 'app/openapi/model/complaint-response';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -27,6 +30,7 @@ describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
+    let httpMock: HttpTestingController;
     let injectedAlertService: AlertService;
 
     let course: Course;
@@ -44,7 +48,9 @@ describe('ComplaintsForTutorComponent', () => {
             ],
             providers: [
                 provideRouter([]),
-                MockProvider(ComplaintResponseService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ComplaintService),
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -56,6 +62,7 @@ describe('ComplaintsForTutorComponent', () => {
                 complaintsForTutorComponent = fixture.componentInstance;
                 injectedComplaintResponseService = TestBed.inject(ComplaintResponseService);
                 injectedAlertService = TestBed.inject(AlertService);
+                httpMock = TestBed.inject(HttpTestingController);
 
                 course = new Course();
                 course.maxComplaintResponseTextLimit = 26;
@@ -67,7 +74,10 @@ describe('ComplaintsForTutorComponent', () => {
             });
     });
 
+    const lockedResponse = (overrides: Partial<ComplaintResponseDTO> = {}): ComplaintResponseDTO => ({ id: 1, complaintId: 1, isCurrentlyLocked: true, ...overrides });
+
     afterEach(() => {
+        httpMock.verify();
         vi.restoreAllMocks();
     });
 
@@ -140,38 +150,31 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
-        const createLockStub = vi.spyOn(injectedComplaintResponseService, 'createLock').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
         fixture.componentRef.setInput('complaint', unhandledComplaint);
         fixture.componentRef.setInput('isAssessor', false);
         fixture.detectChanges();
-        // We need the tick as `ngModel` writes data asynchronously into the DOM!
 
-        expect(createLockStub).toHaveBeenCalledTimes(1);
-        expect(complaintsForTutorComponent.complaint()).toEqual(freshlyCreatedComplaintResponse.complaint);
-        expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
+        const createRequest = httpMock.expectOne({ method: 'POST', url: '/api/assessment/complaints/1/response' });
+        expect(createRequest.request.body).toBeNull();
+        createRequest.flush(lockedResponse({ reviewer: { id: 2, login: 'tutor' } }));
+
+        expect(complaintsForTutorComponent.complaint()).toBe(unhandledComplaint);
+        expect(complaintsForTutorComponent.complaintResponse.id).toBe(1);
+        expect(complaintsForTutorComponent.complaintResponse.isCurrentlyLocked).toBe(true);
+        expect(complaintsForTutorComponent.complaintResponse.reviewer?.login).toBe('tutor');
+        expect(complaintsForTutorComponent.complaintResponse.complaint).toBe(unhandledComplaint);
+        expect(complaintsForTutorComponent.lockedByCurrentUser()).toBe(true);
+        fixture.detectChanges();
         const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
 
         expect(lockButton).not.toBeNull();
         expect(lockDuration).not.toBeNull();
 
-        // now we test if we can give up the lock
-        const removeLockStub = vi.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
+        const navigateBackSpy = vi.spyOn(complaintsForTutorComponent, 'navigateBack').mockImplementation(() => {});
         lockButton.click();
-        expect(removeLockStub).toHaveBeenCalledTimes(1);
+        httpMock.expectOne({ method: 'DELETE', url: '/api/assessment/complaints/1/response' }).flush(null);
+        expect(navigateBackSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle error when creating a new complaint response for an unhandled complaint', () => {
@@ -182,15 +185,14 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
 
-        const error = { status: 404 };
-        const createLockStub = vi.spyOn(injectedComplaintResponseService, 'createLock').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         const alertServiceErrorSpy = vi.spyOn(injectedAlertService, 'error');
 
         fixture.componentRef.setInput('complaint', unhandledComplaint);
         fixture.componentRef.setInput('isAssessor', false);
         fixture.detectChanges();
 
-        expect(createLockStub).toHaveBeenCalledTimes(1);
+        httpMock.expectOne({ method: 'POST', url: '/api/assessment/complaints/1/response' }).flush(null, { status: 404, statusText: 'Not Found' });
+
         expect(complaintsForTutorComponent.isLoading()).toBe(false);
         expect(alertServiceErrorSpy).toHaveBeenCalledTimes(1);
     });
@@ -206,38 +208,28 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
         vi.spyOn(injectedComplaintResponseService, 'isComplaintResponseLockedForLoggedInUser').mockReturnValue(false);
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
-        const createLockStub = vi.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
         fixture.componentRef.setInput('isAssessor', false);
         fixture.componentRef.setInput('complaint', unhandledComplaint);
         fixture.detectChanges();
-        // We need the tick as `ngModel` writes data asynchronously into the DOM!
 
-        expect(createLockStub).toHaveBeenCalledTimes(1);
-        expect(complaintsForTutorComponent.complaint()).toEqual(freshlyCreatedComplaintResponse.complaint);
-        expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
+        const refreshRequest = httpMock.expectOne({ method: 'PATCH', url: '/api/assessment/complaints/1/response' });
+        expect(refreshRequest.request.body).toEqual({ action: 'REFRESH_LOCK' });
+        refreshRequest.flush(lockedResponse());
+
+        expect(complaintsForTutorComponent.complaint()).toBe(unhandledComplaint);
+        expect(complaintsForTutorComponent.complaintResponse.id).toBe(1);
+        expect(complaintsForTutorComponent.complaintResponse.isCurrentlyLocked).toBe(true);
+        fixture.detectChanges();
         const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
 
         expect(lockButton).not.toBeNull();
         expect(lockDuration).not.toBeNull();
 
-        // now we test if we can give up the lock
-        const removeLockStub = vi.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
+        const navigateBackSpy = vi.spyOn(complaintsForTutorComponent, 'navigateBack').mockImplementation(() => {});
         lockButton.click();
-        expect(removeLockStub).toHaveBeenCalledTimes(1);
+        httpMock.expectOne({ method: 'DELETE', url: '/api/assessment/complaints/1/response' }).flush(null);
+        expect(navigateBackSpy).toHaveBeenCalledOnce();
     });
 
     it('should send event when accepting a complaint', () => {
@@ -283,26 +275,18 @@ describe('ComplaintsForTutorComponent', () => {
         complaintsForTutorComponent.complaintResponse = unhandledComplaint.complaintResponse;
         fixture.componentRef.setInput('complaint', unhandledComplaint);
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
-        const resolveStub = vi.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
         fixture.changeDetectorRef.detectChanges();
 
         const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         rejectComplaintButton.click();
 
-        expect(resolveStub).toHaveBeenCalledTimes(1);
+        const resolveRequest = httpMock.expectOne({ method: 'PATCH', url: '/api/assessment/complaints/1/response' });
+        expect(resolveRequest.request.body).toEqual({ action: 'RESOLVE_COMPLAINT', responseText: 'rejected', complaintIsAccepted: false });
+        resolveRequest.flush(lockedResponse({ isCurrentlyLocked: false, responseText: 'rejected', submittedTime: '2026-01-01T10:00:00Z' }));
+
+        expect(complaintsForTutorComponent.handled()).toBe(true);
+        expect(complaintsForTutorComponent.complaintResponse.submittedTime?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
+        expect(complaintsForTutorComponent.complaint().accepted).toBe(false);
     });
 
     it('should just display disabled accept and reject complaint button', () => {
@@ -314,24 +298,12 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
-        vi.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
         fixture.componentRef.setInput('isAssessor', false);
         fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         // Update fixture
+        fixture.detectChanges();
+        httpMock.expectOne({ method: 'PATCH', url: '/api/assessment/complaints/1/response' }).flush(lockedResponse());
         fixture.detectChanges();
 
         const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
@@ -370,24 +342,12 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
 
-        const freshlyCreatedComplaintResponse = new ComplaintResponse();
-        freshlyCreatedComplaintResponse.id = 1;
-        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
-        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
-
-        vi.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: freshlyCreatedComplaintResponse,
-                    status: 201,
-                }),
-            ),
-        );
-
         fixture.componentRef.setInput('isAssessor', false);
         fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         // Update fixture
+        fixture.detectChanges();
+        httpMock.expectOne({ method: 'PATCH', url: '/api/assessment/complaints/1/response' }).flush(lockedResponse());
         fixture.detectChanges();
 
         const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
