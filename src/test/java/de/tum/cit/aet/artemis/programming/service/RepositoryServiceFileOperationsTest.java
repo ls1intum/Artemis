@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -201,6 +202,37 @@ class RepositoryServiceFileOperationsTest {
 
         repositoryService.createFolder(repository, "src", content(""));
         assertThat(workingTree.resolve("src/.keep")).isRegularFile();
+    }
+
+    @Test
+    void createFolder_aboveTheSizeLimit_keepsFilesThatAnotherRequestAddedMeanwhile() throws Exception {
+        InputStream addsAFileThenFails = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() throws IOException {
+                Files.writeString(workingTree.resolve("src/Main.java"), "code");
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) throws IOException {
+                Files.writeString(workingTree.resolve("src/Main.java"), "code");
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "src", addsAFileThenFails));
+
+        assertThat(workingTree.resolve("src/Main.java")).exists();
+        assertThat(workingTree.resolve("src/.keep")).doesNotExist();
     }
 
     @Test

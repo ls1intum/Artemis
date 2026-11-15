@@ -709,8 +709,17 @@ public class RepositoryService {
             writeWithinSizeLimit(inputStream, keep);
         }
         catch (IOException | RuntimeException e) {
-            // Remove the folder created by this call, so that a retry with valid content does not fail on the existing folder
-            FileUtils.deleteQuietly(directory.toFile());
+            // Remove what this call created, so that a retry with valid content does not fail on the existing folder. Only the marker file and a folder that is empty
+            // afterwards are removed: a concurrent request may already have added files to the folder.
+            FileUtils.deleteQuietly(keep);
+            try (var remaining = Files.newDirectoryStream(directory)) {
+                if (!remaining.iterator().hasNext()) {
+                    Files.deleteIfExists(directory);
+                }
+            }
+            catch (IOException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
             throw e;
         }
     }
