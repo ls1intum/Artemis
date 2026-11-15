@@ -67,9 +67,10 @@ public class ExamAccessApi extends AbstractExamApi {
      * students only with a student exam of this exam once the exam content is available.
      *
      * @param exercise the exam exercise
+     * @param user     the current user, loaded with its course roles
      */
-    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise) {
-        examAccessService.checkExamContentAvailableForStudentElseThrow(exercise);
+    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise, User user) {
+        examAccessService.checkExamContentAvailableForStudentElseThrow(exercise, user);
     }
 
     /**

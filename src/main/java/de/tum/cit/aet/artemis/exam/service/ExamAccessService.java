@@ -359,18 +359,18 @@ public class ExamAccessService {
      * which is the case from {@code EXAM_START_WAIT_TIME_MINUTES} minutes before the exam start.
      *
      * @param exercise the exam exercise
+     * @param user     the current user, loaded with its course roles so that the role checks need no query
      */
-    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise) {
+    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise, User user) {
         if (!exercise.isExamExercise()) {
             throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
         }
         Exam exam = exercise.getExerciseGroup().getExam();
-        User user = userRepository.getUserWithAuthorities();
         if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse(), user)) {
             return;
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, exam.getCourse(), user);
-        if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(exam.getCourse().getId(), exam.getId(), user.getId())) {
+        if (!authorizationCheckService.isAtLeastStudentInCourse(exam.getCourse(), user)
+                || !studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(exam.getCourse().getId(), exam.getId(), user.getId())) {
             throw new AccessForbiddenException("You are not allowed to access this exam!");
         }
         if (exam.getStartDate() == null || ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(exam.getStartDate())) {

@@ -621,7 +621,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamStudentsPaged_doesNotContainEmailAddresses() throws Exception {
         var paginationExam = createPaginationTestExam();
         List<Map> rows = request.getList(pagedUrl(paginationExam), HttpStatus.OK, Map.class, pageParams(""));
