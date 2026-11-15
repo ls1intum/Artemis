@@ -13,8 +13,8 @@ INPUT_PATH="$1"
 NUM_RUNS="${2:-10}" # Default to 10 runs
 
 # Activate the pnpm version pinned in package.json via Corepack. The `pnpm exec
-# playwright` calls below depend on `pnpm` being on PATH; Corepack ships with
-# Node 24 and the call is idempotent, so it is safe to run unconditionally.
+# playwright` calls below depend on `pnpm` being on PATH; Corepack is installed once with
+# `npm install --global corepack` and the call is idempotent, so it is safe to run unconditionally.
 if command -v corepack >/dev/null 2>&1; then
     corepack enable >/dev/null 2>&1 || true
 fi
