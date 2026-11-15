@@ -532,7 +532,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         if (validWindow) {
             request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), ProgrammingExercise.class,
                     HttpStatus.OK);
-            var stored = programmingExerciseBuildConfigRepository.findByIdElseThrow(programmingExercise.getId()).getBuildTimeWindow();
+            var stored = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId()).getBuildTimeWindow();
             assertThat(stored).isNotNull();
             assertThat(stored.start().toInstant()).isEqualTo(window.start().toInstant());
             assertThat(stored.end().toInstant()).isEqualTo(window.end().toInstant());
@@ -1256,6 +1256,32 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         assertThat(response.submissionPolicy()).isNull();
         assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExercise.getId()))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReEvaluateProgrammingExercise_returnsStoredSubmissionPolicyWithoutCoordination(boolean hasStoredPolicy) throws Exception {
+        assertThat(exerciseGenerationEnabled).isFalse();
+        addInstructorToCourse();
+        Long policyId = hasStoredPolicy ? addLockRepositoryPolicy(5) : null;
+        var sentPolicy = new SubmissionPolicyDTO(policyId, SubmissionPolicyDTO.TYPE_LOCK_REPOSITORY, 99, null, false);
+        var updateDTO = withSubmissionPolicy(updateDtoOfLoadedExercise(), sentPolicy);
+
+        var response = request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false", updateDTO,
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        if (hasStoredPolicy) {
+            assertThat(response.submissionPolicy()).isNotNull();
+            assertThat(response.submissionPolicy().id()).isEqualTo(policyId);
+            assertThat(response.submissionPolicy().submissionLimit()).isEqualTo(5);
+            assertThat(response.submissionPolicy().active()).isTrue();
+            assertStoredPolicy(policyId, 5);
+        }
+        else {
+            assertThat(response.submissionPolicy()).isNull();
+            assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExercise.getId()))).isEmpty();
+        }
     }
 
     private long addLockRepositoryPolicy(int submissionLimit) {

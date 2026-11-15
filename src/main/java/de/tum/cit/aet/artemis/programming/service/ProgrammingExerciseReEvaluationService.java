@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
 /**
  * Re-evaluates a programming exercise after its update was applied, and saves the update with all follow-up effects of an ordinary update.
@@ -35,6 +36,8 @@ public class ProgrammingExerciseReEvaluationService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final SubmissionPolicyRepository submissionPolicyRepository;
 
     private final ProgrammingExerciseUpdateMappingService programmingExerciseUpdateMappingService;
 
@@ -53,12 +56,14 @@ public class ProgrammingExerciseReEvaluationService {
     private final ExerciseVersionService exerciseVersionService;
 
     public ProgrammingExerciseReEvaluationService(ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseUpdateMappingService programmingExerciseUpdateMappingService,
-            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            ExerciseService exerciseService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SlideApi> slideApi,
-            ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            ProgrammingExerciseUpdateMappingService programmingExerciseUpdateMappingService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
+            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ExerciseService exerciseService,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SlideApi> slideApi, ParticipationRepository participationRepository,
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseUpdateMappingService = programmingExerciseUpdateMappingService;
         this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
@@ -116,6 +121,9 @@ public class ProgrammingExerciseReEvaluationService {
             // (which would re-capture stale "originals" from the already-mutated L1 cache entity).
             ProgrammingExercise savedExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExercise, buildConfig, null, originalCompetencyIds,
                     originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalBuildAndTestOffset, originalProblemStatement);
+
+            // The update leaves the lazy policy unchanged; return the stored policy and make it available before versioning runs.
+            savedExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(savedExercise.getId()));
 
             // Apply all post-save side effects that the normal update path performs
             exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
