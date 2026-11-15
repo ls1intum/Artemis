@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ExampleSubmission, ExampleSubmissionDTO, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -143,38 +143,6 @@ describe('Example Submission Service', () => {
                 expect((ex.exercise as any).id).toBe(99);
                 expect((ex.submission as any).id).toBe(7);
                 expect(ex.tutorParticipations).toHaveLength(1);
-            });
-        });
-
-        describe('ExampleSubmissionDTO', () => {
-            it('constructor assigns all fields', () => {
-                const dto = new ExampleSubmissionDTO(1, true, 777, 'note');
-
-                expect(dto.id).toBe(1);
-                expect(dto.usedForTutorial).toBe(true);
-                expect(dto.submissionId).toBe(777);
-                expect(dto.assessmentExplanation).toBe('note');
-            });
-
-            it('constructor works without assessmentExplanation', () => {
-                const dto = new ExampleSubmissionDTO(2, false, 888);
-
-                expect(dto.id).toBe(2);
-                expect(dto.usedForTutorial).toBe(false);
-                expect(dto.submissionId).toBe(888);
-                expect(dto.assessmentExplanation).toBeUndefined();
-            });
-
-            it('serializes to JSON with the expected shape', () => {
-                const dto = new ExampleSubmissionDTO(3, true, 999, 'x');
-                const json = JSON.parse(JSON.stringify(dto));
-
-                expect(json).toEqual({
-                    id: 3,
-                    usedForTutorial: true,
-                    submissionId: 999,
-                    assessmentExplanation: 'x',
-                });
             });
         });
 
