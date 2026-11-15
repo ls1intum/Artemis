@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -30,11 +28,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.EmailAllowedDTO;
+import de.tum.cit.aet.artemis.account.dto.EmailAllowedRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.EmailChangeService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
@@ -81,9 +82,6 @@ public class PublicAccountResource {
      */
     private static final int MAX_LOGIN_IDENTIFIER_LENGTH = 255;
 
-    @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
-    private Optional<Pattern> allowedEmailPattern;
-
     @Value("${artemis.user-management.passkey.ask-users-to-setup:true}")
     private boolean askUsersToSetupPasskey;
 
@@ -110,9 +108,12 @@ public class PublicAccountResource {
 
     private final AccountSecurityEventService accountSecurityEventService;
 
+    private final EmailChangeService emailChangeService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
-            UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService, AccountSecurityEventService accountSecurityEventService) {
+            UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService, AccountSecurityEventService accountSecurityEventService,
+            EmailChangeService emailChangeService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -123,6 +124,25 @@ public class PublicAccountResource {
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.accountSecurityEventService = accountSecurityEventService;
+        this.emailChangeService = emailChangeService;
+    }
+
+    /**
+     * {@code POST /email-allowed} : tells a form whether an email address is allowed by the configured restriction, so that it can say so while the address is typed.
+     * <p>
+     * The answer is the one that registration and the change of the address give, because all of them ask {@link EmailChangeService#isAddressAllowed}. The forms ask after a
+     * short pause in typing and treat a failed request as allowed, since the decision is made again when the form is sent.
+     *
+     * @param request the address that was entered
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body whether the address is allowed
+     */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @PostMapping("email-allowed")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.EMAIL_ADDRESS_CHECK)
+    public ResponseEntity<EmailAllowedDTO> checkEmailAllowed(@Valid @RequestBody EmailAllowedRequestDTO request) {
+        return ResponseEntity.ok(new EmailAllowedDTO(emailChangeService.isAddressAllowed(request.email())));
     }
 
     /**
@@ -149,11 +169,8 @@ public class PublicAccountResource {
 
         SecurityUtils.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
-        if (allowedEmailPattern.isPresent()) {
-            Matcher emailMatcher = allowedEmailPattern.get().matcher(managedUserVM.getEmail());
-            if (!emailMatcher.matches()) {
-                throw new BadRequestAlertException("The provided email is invalid and does not follow the specified pattern", "Account", "emailInvalid");
-            }
+        if (!emailChangeService.isAddressAllowed(managedUserVM.getEmail())) {
+            throw new BadRequestAlertException("The provided email is invalid and does not follow the specified pattern", "Account", "emailInvalid");
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
