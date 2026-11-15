@@ -52,13 +52,15 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
+import { toGradingScaleResponse } from 'test/helpers/sample/grading-scale-response';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseManagementService: CourseManagementService;
     let gradingService: GradingService;
+    let gradingScaleApi: GradingScaleApi;
     let plagiarismCasesService: PlagiarismCasesService;
     let profileService: ProfileService;
 
@@ -228,9 +230,7 @@ describe('CourseScoresComponent', () => {
 
     const setupMocks = () => {
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(
-            of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleWithGradedPresentations) })),
-        );
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(gradingScaleWithGradedPresentations)));
         vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
         fixture.detectChanges();
     };
@@ -263,16 +263,8 @@ describe('CourseScoresComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
-                MockProvider(GradingService, {
-                    findGradingScaleForCourse: () => {
-                        return of(
-                            new HttpResponse({
-                                body: toGradingScaleDTO(new GradingScale()),
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
+                MockProvider(GradingService),
+                MockProvider(GradingScaleApi, { getGradingScaleForCourse: () => of(toGradingScaleResponse(new GradingScale())) }),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
@@ -302,6 +294,7 @@ describe('CourseScoresComponent', () => {
         component = fixture.componentInstance;
         courseManagementService = TestBed.inject(CourseManagementService);
         gradingService = TestBed.inject(GradingService);
+        gradingScaleApi = TestBed.inject(GradingScaleApi);
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         profileService = fixture.debugElement.injector.get(ProfileService);
@@ -488,9 +481,7 @@ describe('CourseScoresComponent', () => {
 
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
-        vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(
-            of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleWithGradedPresentations) })),
-        );
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(gradingScaleWithGradedPresentations)));
         vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
 
         fixture.detectChanges();
@@ -631,7 +622,7 @@ describe('CourseScoresComponent', () => {
 
     it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(gradingScale)));
         vi.spyOn(gradingService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
         const matchingGradeStep = gradingScale.gradeSteps[0];
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
@@ -747,7 +738,7 @@ describe('CourseScoresComponent', () => {
         vi.spyOn(gradingService, 'maxGrade').mockReturnValue('A');
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
-        component.setUpGradingScale(toGradingScaleDTO(gradingScale));
+        component.setUpGradingScale(toGradingScaleResponse(gradingScale));
         component.calculateGradingScaleInformation();
 
         expect(component.gradingScaleExists()).toBe(true);

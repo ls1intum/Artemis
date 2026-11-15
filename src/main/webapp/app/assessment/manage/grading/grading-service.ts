@@ -1,175 +1,36 @@
 import { Service, inject } from '@angular/core';
-import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { map } from 'rxjs/operators';
-import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Course } from 'app/course/shared/entities/course.model';
-import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-
-export type EntityResponseType = HttpResponse<GradingScaleDTO>;
-export type EntityArrayResponseType = HttpResponse<GradingScaleDTO[]>;
-
-/**
- * DTO for updating a grading scale.
- */
-export interface GradingScaleUpdateDTO {
-    gradeType: GradeType;
-    bonusStrategy?: BonusStrategy;
-    plagiarismGrade?: string;
-    noParticipationGrade?: string;
-    presentationsNumber?: number;
-    presentationsWeight?: number;
-    gradeSteps: GradeStepDTO[];
-    courseMaxPoints?: number;
-    coursePresentationScore?: number;
-    examMaxPoints?: number;
-}
+import { GradeStepApi } from 'app/openapi/api/grade-step-api';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
+import { toGradeStepsDTO } from 'app/assessment/shared/util/grading-scale-response.util';
 
 /**
- * DTO for a grade step within a grading scale.
+ * Grade step calculations on the client, and the grade steps of a course or an exam read through the generated grading scale APIs.
  */
-export interface GradeStepDTO {
-    id?: number;
-    lowerBoundPercentage: number;
-    lowerBoundInclusive: boolean;
-    upperBoundPercentage: number;
-    upperBoundInclusive: boolean;
-    gradeName: string;
-    isPassingGrade: boolean;
-}
-
 @Service()
 export class GradingService {
-    private http = inject(HttpClient);
-
-    public resourceUrl = 'api/assessment/courses';
-
-    /**
-     * Store a new grading scale for course on the server
-     *
-     * @param courseId the course for which the grading scale will be created
-     * @param gradingScale the grading scale to be created
-     */
-    createGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = this.toUpdateDTO(gradingScale);
-        return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
-    }
-
-    /**
-     * Update a grading scale for course on the server
-     *
-     * @param courseId the course for which the grading scale will be updated
-     * @param gradingScale the grading scale to be updated
-     */
-    updateGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = this.toUpdateDTO(gradingScale);
-        return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
-    }
-
-    /**
-     * Retrieves the grading scale for course
-     *
-     * @param courseId the course for which the grading scale will be retrieved
-     */
-    findGradingScaleForCourse(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
-    }
-
-    /**
-     * Store a new grading scale for exam on the server
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grading scale will be created
-     * @param gradingScale the grading scale to be created
-     */
-    createGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = this.toUpdateDTO(gradingScale);
-        return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
-    }
-
-    /**
-     * Update a grading scale for exam on the server
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grading scale will be updated
-     * @param gradingScale the grading scale to be updated
-     */
-    updateGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = this.toUpdateDTO(gradingScale);
-        return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
-    }
-
-    /**
-     * Retrieves the grading scale for exam
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grading scale will be retrieved
-     */
-    findGradingScaleForExam(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
-    }
-
-    /**
-     * Finds all grade steps for exam
-     *
-     * @param courseId the course for which the grade steps are retrieved
-     */
-    findGradeStepsForCourse(courseId: number): Observable<HttpResponse<GradeStepsDTO>> {
-        return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/grading-scale/grade-steps`, { observe: 'response' });
-    }
-
-    /**
-     * Finds all grade steps for exam
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grade steps are retrieved
-     */
-    findGradeStepsForExam(courseId: number, examId: number): Observable<HttpResponse<GradeStepsDTO>> {
-        return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/grade-steps`, { observe: 'response' });
-    }
+    private gradeStepApi = inject(GradeStepApi);
+    private gradingScaleApi = inject(GradingScaleApi);
 
     /**
      * Finds all grade steps for a course or an exam
      *
      * @param courseId the course for which the grade steps are queried
      * @param examId if present the grade steps for this exam are queried instead
+     * @param purpose 'management' reads the exam grade steps from the full instructor grading scale
      */
     findGradeSteps(courseId: number, examId?: number, purpose: 'student' | 'management' = 'student'): Observable<GradeStepsDTO | undefined> {
         if (examId !== undefined && purpose === 'management') {
-            return this.findGradingScaleForExam(courseId, examId).pipe(map((response) => response.body?.gradeSteps));
+            return this.gradingScaleApi.getGradingScaleForExam(courseId, examId).pipe(map((gradingScale) => gradingScale?.gradeSteps && toGradeStepsDTO(gradingScale.gradeSteps)));
         }
-        let gradeStepsObservable: Observable<HttpResponse<GradeStepsDTO>>;
-        if (examId != undefined) {
-            gradeStepsObservable = this.findGradeStepsForExam(courseId, examId);
-        } else {
-            gradeStepsObservable = this.findGradeStepsForCourse(courseId);
-        }
-        return gradeStepsObservable.pipe(map((gradeStepsDTO) => gradeStepsDTO?.body ?? undefined));
-    }
-
-    /**
-     * Finds grading scales eligible to be used as a bonus source. Grading Scales should have BONUS Grade Type and should belong to a
-     * course or exam where the current user is an instructor to be eligible. Supports search, sort, and pagination.
-     *
-     * @param pageable search, sort, and pagination parameters
-     */
-    findWithBonusGradeTypeForInstructor(pageable: SearchTermPageableSearch): Observable<HttpResponse<SearchResult<GradingScaleDTO>>> {
-        const params = new HttpParams()
-            .set('pageSize', String(pageable.pageSize))
-            .set('page', String(pageable.page))
-            .set('sortingOrder', pageable.sortingOrder)
-            .set('searchTerm', pageable.searchTerm)
-            .set('sortedColumn', pageable.sortedColumn);
-
-        return this.http.get<SearchResult<GradingScaleDTO>>('api/assessment/grading-scales', {
-            params,
-            observe: 'response',
-        });
+        const gradeSteps = examId != undefined ? this.gradeStepApi.getAllGradeStepsForExam(courseId, examId) : this.gradeStepApi.getAllGradeStepsForCourse(courseId);
+        return gradeSteps.pipe(map((response) => (response ? toGradeStepsDTO(response) : undefined)));
     }
 
     /**
@@ -321,31 +182,5 @@ export class GradingService {
             return undefined;
         }
         return numericValue;
-    }
-
-    /**
-     * Converts a GradingScale to an update DTO for sending to the server.
-     */
-    private toUpdateDTO(gradingScale: GradingScale): GradingScaleUpdateDTO {
-        return {
-            gradeType: gradingScale.gradeType,
-            bonusStrategy: gradingScale.bonusStrategy,
-            plagiarismGrade: gradingScale.plagiarismGrade,
-            noParticipationGrade: gradingScale.noParticipationGrade,
-            presentationsNumber: gradingScale.presentationsNumber,
-            presentationsWeight: gradingScale.presentationsWeight,
-            gradeSteps: gradingScale.gradeSteps.map((step) => ({
-                lowerBoundPercentage: step.lowerBoundPercentage,
-                lowerBoundInclusive: step.lowerBoundInclusive,
-                upperBoundPercentage: step.upperBoundPercentage,
-                upperBoundInclusive: step.upperBoundInclusive,
-                gradeName: step.gradeName,
-                isPassingGrade: step.isPassingGrade,
-            })),
-            courseMaxPoints: gradingScale.course?.maxPoints,
-            // The server treats omission as unchanged; explicitly disable Basic when switching to None or Graded.
-            coursePresentationScore: gradingScale.course ? (gradingScale.course.presentationScore ?? 0) : undefined,
-            examMaxPoints: gradingScale.exam?.examMaxPoints,
-        };
     }
 }

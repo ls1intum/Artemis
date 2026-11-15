@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of } from 'rxjs';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -42,7 +39,7 @@ const exerciseWithoutPresentationScore = {
 describe('PresentationScoreComponent', () => {
     let component: PresentationScoreComponent;
     let fixture: ComponentFixture<PresentationScoreComponent>;
-    let gradingService: GradingService;
+    let httpMock: HttpTestingController;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -57,17 +54,26 @@ describe('PresentationScoreComponent', () => {
 
         fixture = TestBed.createComponent(PresentationScoreComponent);
         component = fixture.componentInstance;
-        gradingService = TestBed.inject(GradingService);
-        vi.spyOn(gradingService, 'findGradeStepsForCourse').mockReturnValue(of(new HttpResponse({ body: { presentationsNumber: 0 } as GradeStepsDTO })));
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
+        httpMock.verify();
         vi.restoreAllMocks();
     });
 
     it('should show the presentation score checkbox', () => {
         fixture.componentRef.setInput('exercise', exerciseWithPresentationScore);
         fixture.detectChanges();
+        httpMock.expectOne('/api/assessment/courses/1/grading-scale/grade-steps').flush({ gradeSteps: [] });
+
+        expect(component.showPresentationScoreCheckbox()).toBe(true);
+    });
+
+    it('should show the presentation score checkbox when the grading scale has graded presentations', () => {
+        fixture.componentRef.setInput('exercise', exerciseWithoutPresentationScore);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/assessment/courses/2/grading-scale/grade-steps').flush({ presentationsNumber: 3, gradeSteps: [] });
 
         expect(component.showPresentationScoreCheckbox()).toBe(true);
     });
@@ -75,6 +81,7 @@ describe('PresentationScoreComponent', () => {
     it('should hide the presentation score checkbox', () => {
         fixture.componentRef.setInput('exercise', exerciseWithoutPresentationScore);
         fixture.detectChanges();
+        httpMock.expectOne('/api/assessment/courses/2/grading-scale/grade-steps').flush({ presentationsNumber: 0, gradeSteps: [] });
 
         expect(component.showPresentationScoreCheckbox()).toBe(false);
     });
@@ -89,6 +96,7 @@ describe('PresentationScoreComponent', () => {
         } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
+        httpMock.expectOne('/api/assessment/courses/1/grading-scale/grade-steps').flush({ gradeSteps: [] });
         await fixture.whenStable();
         fixture.detectChanges();
 

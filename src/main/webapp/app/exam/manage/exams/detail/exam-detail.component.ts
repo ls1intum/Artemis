@@ -14,8 +14,8 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import dayjs from 'dayjs/esm';
 import { faAward, faClipboard, faEye, faFlaskVial, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
+import { GradeStepsGradeTypeEnum } from 'app/openapi/model/grade-steps';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
@@ -56,7 +56,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private gradingService = inject(GradingService);
+    private gradingScaleApi = inject(GradingScaleApi);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private eventManager = inject(EventManager);
     private entityDeletionService = inject(EntityDeletionService);
@@ -113,9 +113,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                 this.resumeRunningDeletion(this.exam());
             }
 
-            this.gradingService.findGradingScaleForExam(this.exam().course!.id!, this.exam().id!).subscribe((gradingSystemResponse) => {
-                if (gradingSystemResponse.body) {
-                    this.canHaveBonus.set(gradingSystemResponse.body.gradeSteps.gradeType === GradeType.GRADE);
+            this.gradingScaleApi.getGradingScaleForExam(this.exam().course!.id!, this.exam().id!).subscribe((gradingScale) => {
+                if (gradingScale) {
+                    this.canHaveBonus.set(gradingScale.gradeSteps.gradeType === GradeStepsGradeTypeEnum.Grade);
                 }
             });
         });

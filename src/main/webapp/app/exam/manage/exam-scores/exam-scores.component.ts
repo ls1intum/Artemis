@@ -16,7 +16,7 @@ import {
     StudentResult,
     TableState,
 } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -25,6 +25,7 @@ import { ParticipantScoreApi } from 'app/openapi/api/participant-score-api';
 import { Score } from 'app/openapi/model/score';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
@@ -79,7 +80,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
-import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toGradingScale } from 'app/assessment/shared/util/grading-scale-response.util';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 
@@ -122,6 +123,7 @@ export class ExamScoresComponent implements OnInit {
     private localeConversionService = inject(LocaleConversionService);
     private participantScoreApi = inject(ParticipantScoreApi);
     private gradingService = inject(GradingService);
+    private gradingScaleApi = inject(GradingScaleApi);
     private courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
 
@@ -191,9 +193,7 @@ export class ExamScoresComponent implements OnInit {
             const findExamScoresObservable = this.participantScoreApi.getScoresOfExam(params['examId']).pipe(catchError(() => of(undefined)));
 
             // find grading scale if one exists and handle case when it doesn't
-            const gradingScaleObservable = this.gradingService
-                .findGradingScaleForExam(params['courseId'], params['examId'])
-                .pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
+            const gradingScaleObservable = this.gradingScaleApi.getGradingScaleForExam(params['courseId'], params['examId']).pipe(catchError(() => of(undefined)));
 
             this.courseManagementService.findForInstructor(params['courseId']).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
@@ -227,9 +227,9 @@ export class ExamScoresComponent implements OnInit {
                         }
                     }
                     // set the grading scale if it exists for the exam
-                    if (gradingScaleResponse.body) {
+                    if (gradingScaleResponse) {
                         this.gradingScaleExists.set(true);
-                        this.gradingScale.set(toEntity(gradingScaleResponse.body, this.course()));
+                        this.gradingScale.set(toGradingScale(gradingScaleResponse, this.course()));
                         this.isBonus.set(this.gradingScale()!.gradeType === GradeType.BONUS);
                         this.hasBonus.set(this.studentResults()?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy);
                         this.gradingScale()!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale()!.gradeSteps);
