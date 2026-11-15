@@ -117,23 +117,30 @@ public class DeimosSnapshotReader {
                         otherFiles.put(path, objectId);
                     }
                     else {
-                        // The path is the student's, so it stays out of a message that may reach a report.
-                        long size = blobLoader.getSize();
-                        if (size > maxFileBytes) {
-                            throw new IOException("A file of the commit is larger than " + maxFileBytes + " bytes");
-                        }
-                        if (size > maxTotalBytes - totalBytes) {
-                            throw new IOException("The text files of the commit add up to more than " + maxTotalBytes + " bytes");
-                        }
-                        totalBytes += size;
-                        try (InputStream inputStream = blobLoader.openStream()) {
-                            textFiles.put(path, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
-                        }
+                        textFiles.put(path, readText(blobLoader, maxFileBytes, maxTotalBytes - totalBytes, maxTotalBytes));
+                        totalBytes += blobLoader.getSize();
                     }
                 }
             }
         }
         return new TextSnapshot(textFiles, otherFiles);
+    }
+
+    /**
+     * Loads a text file, failing rather than holding a file or a commit beyond the limits in memory. The path is the
+     * student's, so it stays out of the message, which may reach a report.
+     */
+    private static String readText(ObjectLoader blobLoader, long maxFileBytes, long remainingBytes, long maxTotalBytes) throws IOException {
+        long size = blobLoader.getSize();
+        if (size > maxFileBytes) {
+            throw new IOException("A file of the commit is larger than " + maxFileBytes + " bytes");
+        }
+        if (size > remainingBytes) {
+            throw new IOException("The text files of the commit add up to more than " + maxTotalBytes + " bytes");
+        }
+        try (InputStream inputStream = blobLoader.openStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     /**
@@ -164,8 +171,9 @@ public class DeimosSnapshotReader {
             return false;
         }
 
+        // NOSONAR below: TreeFilter declares clone() abstract without being Cloneable, so neither removing it nor super.clone() is possible.
         @Override
-        public TreeFilter clone() {
+        public TreeFilter clone() { // NOSONAR
             return new EntryLimit(maxEntries);
         }
     }
