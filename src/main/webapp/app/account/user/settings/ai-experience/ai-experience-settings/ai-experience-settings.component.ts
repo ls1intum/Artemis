@@ -1,3 +1,5 @@
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGhost } from '@fortawesome/free-solid-svg-icons';
 import { AiModeSelectorComponent } from 'app/logos/ai-mode-selector.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -11,11 +13,11 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-ai-experience-settings',
-    imports: [TranslateDirective, DeleteButtonDirective, RouterLink, AiModeSelectorComponent, TumAetUiButtonDirective],
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, RouterLink, AiModeSelectorComponent, TumAetUiButtonDirective, TumAetUiCardComponent],
     templateUrl: './ai-experience-settings.component.html',
 })
 export class AiExperienceSettingsComponent implements OnInit {
@@ -26,6 +28,7 @@ export class AiExperienceSettingsComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
 
     protected readonly ActionType = ActionType;
+    protected readonly faGhost = faGhost;
 
     readonly currentSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
     readonly isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
