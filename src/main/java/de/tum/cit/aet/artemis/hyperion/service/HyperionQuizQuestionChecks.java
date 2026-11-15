@@ -32,14 +32,14 @@ final class HyperionQuizQuestionChecks {
 
     /**
      * Length limits under which a question can be stored in a quiz: the quiz editor accepts titles below 250 characters, and a quiz
-     * question stores up to 5,000 characters of text and 500 of explanation. They must not exceed the quiz question's columns; options
+     * question stores up to 5,000 characters of text and 2,000 of explanation. They must not exceed the quiz question's columns; options
      * keep the limit of {@code GeneratedQuizAnswerOptionDTO}.
      */
     private static final int MAX_QUESTION_TITLE_LENGTH = 249;
 
     private static final int MAX_QUESTION_TEXT_LENGTH = 5_000;
 
-    private static final int MAX_EXPLANATION_LENGTH = 500;
+    private static final int MAX_EXPLANATION_LENGTH = 2_000;
 
     private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
 
