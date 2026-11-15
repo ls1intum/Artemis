@@ -130,7 +130,7 @@ If an activation, deactivation or version change fails, the card shows **Error**
 When you edit an existing exercise, switching off **Activate Security Framework** opens a confirmation dialog first.
 After you confirm, Artemis creates one commit in the tests repository that:
 
-- deletes `SecurityPolicy.yaml`, and
+- deletes the policy files that the `@Policy` annotations point to, `SecurityPolicy.yaml` by default, and
 - sets `activated = false` on every `@Policy` annotation. Other arguments, such as a custom policy path, stay.
 
 The template and solution builds then run again. The Ares library stays in the build file, because tests also use
