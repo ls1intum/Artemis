@@ -8,6 +8,8 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
+import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -111,6 +113,91 @@ class PushQuarantineTest {
             }
 
             assertThat(repository.getObjectDatabase().has(id)).isTrue();
+        }
+    }
+
+    @Test
+    void movingTheObjectsTwiceIsHarmless() throws Exception {
+        try (Repository repository = createRepository()) {
+            try (PushQuarantine quarantine = PushQuarantine.open(repository)) {
+                ObjectId received = insert(quarantine.repository(), "received");
+
+                quarantine.migrate();
+                quarantine.migrate();
+
+                assertThat(repository.getObjectDatabase().has(received)).isTrue();
+            }
+        }
+    }
+
+    @Test
+    void closingTwiceIsHarmless() throws Exception {
+        try (Repository repository = createRepository()) {
+            PushQuarantine quarantine = PushQuarantine.open(repository);
+            quarantine.close();
+            quarantine.close();
+
+            assertThat(hasPlace(repository)).isFalse();
+        }
+    }
+
+    @Test
+    void theObjectsOfOnePushAreInvisibleToAnotherPushToTheSameRepository() throws Exception {
+        try (Repository repository = createRepository(); PushQuarantine first = PushQuarantine.open(repository); PushQuarantine second = PushQuarantine.open(repository)) {
+            ObjectId ofFirst = insert(first.repository(), "first push");
+            ObjectId ofSecond = insert(second.repository(), "second push");
+
+            assertThat(second.repository().getObjectDatabase().has(ofFirst)).isFalse();
+            assertThat(first.repository().getObjectDatabase().has(ofSecond)).isFalse();
+            assertThat(repository.getObjectDatabase().has(ofFirst)).isFalse();
+            assertThat(repository.getObjectDatabase().has(ofSecond)).isFalse();
+        }
+    }
+
+    @Test
+    void rejectingOnePushDoesNotTakeAwayTheObjectsOfAnotherThatWasAccepted() throws Exception {
+        try (Repository repository = createRepository()) {
+            ObjectId accepted;
+            try (PushQuarantine rejected = PushQuarantine.open(repository)) {
+                insert(rejected.repository(), "rejected push");
+                try (PushQuarantine kept = PushQuarantine.open(repository)) {
+                    accepted = insert(kept.repository(), "accepted push");
+                    kept.migrate();
+                }
+            }
+
+            assertThat(repository.getObjectDatabase().has(accepted)).isTrue();
+        }
+    }
+
+    @Test
+    void looseObjectsAreMovedNextToLooseObjectsThatAreThereAlready() throws Exception {
+        try (Repository repository = createRepository()) {
+            // two contents whose ids start with the same two characters would be needed for a shared directory, so the directory is created for the id of the first
+            ObjectId existing = insert(repository, "existing");
+            String fanOut = existing.name().substring(0, 2);
+            ObjectId received;
+            try (PushQuarantine quarantine = PushQuarantine.open(repository)) {
+                received = insert(quarantine.repository(), "received");
+                // place the received object in the directory that already exists in the repository
+                Path receivedFile = objectsDirectory(quarantine.repository()).resolve(received.name().substring(0, 2)).resolve(received.name().substring(2));
+                Path sharedDirectory = objectsDirectory(quarantine.repository()).resolve(fanOut);
+                Files.createDirectories(sharedDirectory);
+                if (!receivedFile.getParent().equals(sharedDirectory)) {
+                    FileUtils.moveFile(receivedFile.toFile(), sharedDirectory.resolve(received.name().substring(2)).toFile());
+                }
+
+                quarantine.migrate();
+            }
+
+            assertThat(repository.getObjectDatabase().has(existing)).isTrue();
+        }
+    }
+
+    @Test
+    void aRepositoryThatKeepsItsObjectsElsewhereHasNoPlace() throws Exception {
+        try (var inMemory = new InMemoryRepository(new DfsRepositoryDescription("memory"))) {
+            assertThat(PushQuarantine.open(inMemory)).isNull();
         }
     }
 }
