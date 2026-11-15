@@ -13,6 +13,7 @@ import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
 import onlineEditor from './assets/programming/OnlineEditor.png';
 import buildNotificationsLight from './assets/programming/build-notifications-light.png';
 import buildNotificationsDark from './assets/programming/build-notifications-dark.png';
+import testClassSetupError from './assets/programming/test-class-setup-error.png';
 
 ## Overview
 
@@ -152,6 +153,10 @@ After submitting your solution, you will see test results that indicate which pa
 - **Hidden tests**: Some tests may only be visible after the due date to prevent hardcoding solutions
 
 The test results also show your current score based on the weight of the passed tests.
+
+If the setup of a whole test class fails, for example because your code throws an exception while the tests are prepared, all tests of that class fail together. Their feedback then shows the error of the setup, so you can see what to fix.
+
+<Image src={testClassSetupError} alt="Feedback dialog of a task whose test class failed during its setup, showing the exception and its cause" size={ImageSize.large} caption="Feedback of a task whose test class failed during its setup" />
 
 ### Build Notifications
 
