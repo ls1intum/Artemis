@@ -28,8 +28,10 @@ IMAGE_SOURCES = {
 
 def split_image(image: str) -> tuple[str, str]:
     """Splits ``registry/name:tag`` into the name and the tag."""
+    if "@" in image:
+        raise ValueError(f"The image {image} is pinned by digest and has no Git tag to read")
     name, separator, tag = image.rpartition(":")
-    if not separator or "/" in tag:
+    if not separator or not name or not tag or "/" in tag:
         raise ValueError(f"The image {image} has no tag")
     return name, tag
 

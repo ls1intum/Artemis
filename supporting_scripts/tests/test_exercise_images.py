@@ -83,6 +83,11 @@ class ImagesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_image("localhost:5000/image")
 
+    def test_digest_and_empty_image_tags_are_rejected(self):
+        for image in ("repo@sha256:abcdef", "repo:tag@sha256:abcdef", "localhost:5000/image:", ":tag"):
+            with self.subTest(image=image), self.assertRaises(ValueError):
+                split_image(image)
+
     def test_default_images_of_java_and_kotlin_have_a_source_repository(self):
         images = configured_images()
         for language in sync_check.SOURCES:
@@ -358,6 +363,14 @@ class FetchFailureTest(unittest.TestCase):
         self.assertIn("::error", output.getvalue())
         self.assertIn(problems[0], output.getvalue())
 
+
+    def test_unverifiable_image_references_report_problems_without_fetching(self):
+        for image in ("ghcr.io/ls1intum/artemis-kotlin-docker@sha256:abcdef", "unknown/image:tag", "ghcr.io/ls1intum/artemis-kotlin-docker:"):
+            with self.subTest(image=image), patch.object(sync_check, "fetch_raw_github") as fetch:
+                problems = sync_check.check_language("kotlin", image, fetch=fetch)
+                self.assertEqual(len(problems), 1)
+                self.assertIn(image, problems[0])
+                fetch.assert_not_called()
 
     def test_fetch_diagnostics_are_escaped_in_workflow_annotations(self):
         problem = "failed url%20path\n::warning::injected\rcontext"

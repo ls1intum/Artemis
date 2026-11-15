@@ -164,8 +164,13 @@ def fetch_raw_github(url: str, attempts: int = 4) -> str:
 
 def check_language(language: str, image: str, templates_dir: Path = TEMPLATES_DIR, fetch: Fetch = fetch_raw_github) -> list[str]:
     """Problems of one language's templates against its image, empty when they agree."""
-    name, tag = split_image(image)
-    source = IMAGE_SOURCES[name]
+    try:
+        name, tag = split_image(image)
+    except ValueError as error:
+        return [str(error)]
+    source = IMAGE_SOURCES.get(name)
+    if source is None:
+        return [f"No source repository is configured for image {image}"]
     base_url = f"https://raw.githubusercontent.com/{source.github_repository}/{tag}/{source.template_directory}"
     image_files: dict[str, Versions] = {}
     problems = []
