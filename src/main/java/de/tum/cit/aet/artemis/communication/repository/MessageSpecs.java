@@ -37,8 +37,8 @@ public class MessageSpecs {
 
     /**
      * Specification which filters Messages and answer posts according to a search string and a list of authors
-     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
-     * and the author of the message or answer post is in the list of authors
+     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the content or author name (all strings lowercased)
+     * and the author of that same message or answer post is in the list of authors
      *
      * @param searchText Text to be searched within messages
      * @param authorIds  ids of the authors
@@ -63,13 +63,19 @@ public class MessageSpecs {
 
             List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
             Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
-            Predicate baseTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
-            Predicate baseAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
+            Join<Post, User> authorJoin = root.join(Post_.AUTHOR, JoinType.LEFT);
+            Predicate baseTextPredicate = criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral),
+                    authorNameMatches(criteriaBuilder, authorJoin, searchTextLiteral));
+            Predicate baseAuthorPredicate = authorJoin.get(User_.ID).in(authorIdList);
             Predicate baseCombined = criteriaBuilder.and(baseTextPredicate, baseAuthorPredicate);
 
             Join<Post, AnswerPost> answerJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-            Predicate answerTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(answerJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
-            Predicate answerAuthorPredicate = answerJoin.get(AnswerPost_.AUTHOR).get(User_.ID).in(authorIdList);
+            Join<AnswerPost, User> answerAuthorJoin = answerJoin.join(AnswerPost_.AUTHOR, JoinType.LEFT);
+            Predicate answerNamePredicate = criteriaBuilder.and(criteriaBuilder.notEqual(answerAuthorJoin.get(User_.LOGIN), User.IRIS_BOT_LOGIN),
+                    authorNameMatches(criteriaBuilder, answerAuthorJoin, searchTextLiteral));
+            Predicate answerTextPredicate = criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(answerJoin.get(AnswerPost_.CONTENT)), searchTextLiteral),
+                    answerNamePredicate);
+            Predicate answerAuthorPredicate = answerAuthorJoin.get(User_.ID).in(authorIdList);
             Predicate answerCombined = criteriaBuilder.and(answerTextPredicate, answerAuthorPredicate);
 
             return criteriaBuilder.or(baseCombined, answerCombined);
@@ -121,8 +127,8 @@ public class MessageSpecs {
 
     /**
      * Builds the predicate that checks whether the lowercased name of the author, written as "first last", contains the lowercased search literal. This also covers a
-     * search for the first name or the last name alone. The login and the email address are deliberately not searched: the name is what is displayed next to a message
-     * (the login only for an account without a name), so a search cannot reveal more than that.
+     * search for the first name or the last name alone. The login is only searched when both names are blank and it is displayed as the fallback name.
+     * The email address is never searched, so a search cannot reveal more than the name displayed next to a message.
      *
      * @param criteriaBuilder   the builder of the query
      * @param author            the join to the author
@@ -133,7 +139,9 @@ public class MessageSpecs {
         Expression<String> firstName = criteriaBuilder.coalesce(author.get(User_.FIRST_NAME), "");
         Expression<String> lastName = criteriaBuilder.coalesce(author.get(User_.LAST_NAME), "");
         Expression<String> fullName = criteriaBuilder.concat(criteriaBuilder.concat(firstName, " "), lastName);
-        return criteriaBuilder.like(criteriaBuilder.lower(fullName), searchTextLiteral);
+        Predicate hasNoName = criteriaBuilder.and(criteriaBuilder.equal(criteriaBuilder.trim(firstName), ""), criteriaBuilder.equal(criteriaBuilder.trim(lastName), ""));
+        Predicate displayedLoginMatches = criteriaBuilder.and(hasNoName, criteriaBuilder.like(criteriaBuilder.lower(author.get(User_.LOGIN)), searchTextLiteral));
+        return criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(fullName), searchTextLiteral), displayedLoginMatches);
     }
 
     /**

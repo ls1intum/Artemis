@@ -754,6 +754,65 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(returnedPosts).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchDisplayedLoginOfNamelessAuthor(boolean filterByAuthor) throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName(null);
+        student1.setLastName(" ");
+        userTestRepository.save(student1);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        params.add("searchText", student1.getLogin());
+        if (filterByAuthor) {
+            params.add("authorIds", student1.getId().toString());
+        }
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        var expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).toList();
+        assertThat(expectedIds).isNotEmpty();
+        assertThat(returnedPosts).extracting(PostResponseDTO::id).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchNameWithAuthorFilter(boolean matchingAuthor) throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+        var selectedAuthor = matchingAuthor ? student1 : userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        params.add("searchText", "ZORBALINA QUUX");
+        params.add("authorIds", selectedAuthor.getId().toString());
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        var expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).toList();
+        assertThat(expectedIds).isNotEmpty();
+        if (matchingAuthor) {
+            assertThat(returnedPosts).extracting(PostResponseDTO::id).containsExactlyInAnyOrderElementsOf(expectedIds);
+        }
+        else {
+            // A name on one author must not satisfy a filter selecting a different author of the same thread.
+            assertThat(returnedPosts).isEmpty();
+        }
+    }
+
     private boolean answerHasContext(Set<AnswerPost> answers, String searchText) {
         return answers.stream().anyMatch(answerPost -> answerPost.getContent().contains(searchText));
     }
