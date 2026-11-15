@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -62,17 +63,20 @@ public final class PushQuarantine implements AutoCloseable {
             return null;
         }
         Path objects = fileRepository.getObjectDatabase().getDirectory().toPath();
+        // The directory is created when the push is received, see prepare(): a request that is refused before that, as by an authentication that fails, costs no disk space
         Path directory = repository.getDirectory().toPath().resolve(DIRECTORY_PREFIX + UUID.randomUUID());
+        Repository quarantined = new FileRepositoryBuilder().setGitDir(repository.getDirectory()).setObjectDirectory(directory.toFile())
+                .addAlternateObjectDirectory(objects.toFile()).build();
+        return new PushQuarantine(directory, objects, quarantined);
+    }
+
+    /**
+     * Creates the directories that the objects of the push are written into. Called when the push is received.
+     *
+     * @throws IOException if the directories cannot be created
+     */
+    public void prepare() throws IOException {
         Files.createDirectories(directory.resolve(PACK_DIRECTORY));
-        try {
-            Repository quarantined = new FileRepositoryBuilder().setGitDir(repository.getDirectory()).setObjectDirectory(directory.toFile())
-                    .addAlternateObjectDirectory(objects.toFile()).setMustExist(true).build();
-            return new PushQuarantine(directory, objects, quarantined);
-        }
-        catch (IOException | RuntimeException e) {
-            FileUtils.deleteQuietly(directory.toFile());
-            throw e;
-        }
     }
 
     /**
@@ -85,25 +89,23 @@ public final class PushQuarantine implements AutoCloseable {
     }
 
     /**
-     * Moves the objects of the push into the repository. A pack becomes visible with its index, so the index is moved last.
+     * Moves the objects of the push into the repository. A pack becomes visible with its index, which is stored last, and a pack and its index are always stored as a pair:
+     * the name of a pack comes from the objects in it, so two pushes with the same objects can send packs of the same name that are encoded differently, and the index of one
+     * does not fit the other.
      *
      * @throws IOException if an object cannot be moved
      */
     public void migrate() throws IOException {
         Path packs = directory.resolve(PACK_DIRECTORY);
-        Path targetPacks = Files.createDirectories(objectsDirectory.resolve(PACK_DIRECTORY));
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(packs)) {
-            for (Path file : files) {
-                String name = file.getFileName().toString();
-                // The lock of the receive pack stays: it is removed from here when the receive pack is released, and a pack of the repository needs none
-                if (name.startsWith("pack-") && !name.endsWith(INDEX_SUFFIX) && !name.endsWith(KEEP_SUFFIX)) {
-                    move(file, targetPacks.resolve(name));
-                }
-            }
+        if (!Files.isDirectory(packs)) {
+            // nothing was received
+            return;
         }
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(packs, "pack-*" + INDEX_SUFFIX)) {
-            for (Path file : files) {
-                move(file, targetPacks.resolve(file.getFileName()));
+        Path targetPacks = Files.createDirectories(objectsDirectory.resolve(PACK_DIRECTORY));
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(packs, "pack-*" + PACK_SUFFIX)) {
+            for (Path pack : files) {
+                String name = pack.getFileName().toString();
+                publishPack(packs, name.substring(0, name.length() - PACK_SUFFIX.length()), targetPacks);
             }
         }
         try (DirectoryStream<Path> fanOut = Files.newDirectoryStream(directory, path -> FAN_OUT_NAME.matcher(path.getFileName().toString()).matches() && Files.isDirectory(path))) {
@@ -116,6 +118,32 @@ public final class PushQuarantine implements AutoCloseable {
                 }
             }
         }
+    }
+
+    /**
+     * Stores one pack with its index and the other files of the pack. The pack is claimed under its own name by creating the file, which fails if another push or an earlier
+     * one stored a pack of that name. Then this pack is stored under a name of its own, next to the other one, as the two may differ even though they hold the same objects.
+     * Both files of a pair are always stored under one name, and the index comes last.
+     */
+    private static void publishPack(Path packs, String name, Path targetPacks) throws IOException {
+        String publishedName = name;
+        try {
+            Files.createLink(targetPacks.resolve(name + PACK_SUFFIX), packs.resolve(name + PACK_SUFFIX));
+        }
+        catch (FileAlreadyExistsException e) {
+            publishedName = name + "-" + UUID.randomUUID().toString().substring(0, 8);
+            Files.createLink(targetPacks.resolve(publishedName + PACK_SUFFIX), packs.resolve(name + PACK_SUFFIX));
+        }
+        try (DirectoryStream<Path> sidecars = Files.newDirectoryStream(packs, name + ".*")) {
+            for (Path sidecar : sidecars) {
+                String suffix = sidecar.getFileName().toString().substring(name.length());
+                // The lock of the receive pack stays: it is removed from here when the receive pack is released, and a pack of the repository needs none
+                if (!suffix.equals(PACK_SUFFIX) && !suffix.equals(INDEX_SUFFIX) && !suffix.equals(KEEP_SUFFIX)) {
+                    Files.createLink(targetPacks.resolve(publishedName + suffix), sidecar);
+                }
+            }
+        }
+        Files.createLink(targetPacks.resolve(publishedName + INDEX_SUFFIX), packs.resolve(name + INDEX_SUFFIX));
     }
 
     private static void move(Path source, Path target) throws IOException {

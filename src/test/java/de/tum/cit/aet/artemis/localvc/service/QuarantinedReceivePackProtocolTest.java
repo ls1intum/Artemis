@@ -938,6 +938,16 @@ class QuarantinedReceivePackProtocolTest {
     }
 
     @Test
+    void aReceivePackThatIsNeverUsedLeavesNoPlaceOfAPush() throws Exception {
+        // as when a filter refuses the request after the receive pack was created
+        try (Repository server = openServer()) {
+            QuarantinedReceivePack.create(server, hook::examineBeforeObjects);
+        }
+
+        assertNoPlaceOfAPush();
+    }
+
+    @Test
     void theQuarantinedRepositoryIsAFileRepositoryThatSharesTheReferencesOfTheRealOne() throws Exception {
         ObjectId commit = commit(null, Entry.file("Main.java", "class Main {}"));
         assertAccepted(receive(pushOf(ObjectId.zeroId(), commit, DEFAULT_REF, Set.of())), commit, DEFAULT_REF);

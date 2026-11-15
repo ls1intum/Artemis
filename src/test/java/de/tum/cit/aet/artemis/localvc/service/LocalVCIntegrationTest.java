@@ -482,6 +482,19 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertNothingOfThePushIsStored(newCommit);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPushWithWrongPasswordStoresNothingAndCreatesNoPlaceForTheObjects() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "rejected-before-the-receipt.txt");
+        ObjectId commit = assignmentRepository.workingCopy().getRepository().resolve("HEAD");
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, "wrong-" + USER_PASSWORD, projectKey1, assignmentRepositorySlug);
+
+        assertThatExceptionOfType(GitAPIException.class).isThrownBy(() -> assignmentRepository.workingCopy().push().setRemote(repositoryUri).call());
+
+        assertNothingOfThePushIsStored(commit);
+    }
+
     /**
      * A push that is rejected leaves nothing in the repository: neither the objects it sent nor a place for them.
      */

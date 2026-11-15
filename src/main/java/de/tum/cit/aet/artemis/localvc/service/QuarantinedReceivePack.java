@@ -64,6 +64,7 @@ public final class QuarantinedReceivePack extends ReceivePack {
     @Override
     public void receive(InputStream input, OutputStream messages, OutputStream errors) throws IOException {
         try {
+            quarantine.prepare();
             super.receive(input, messages, errors);
         }
         finally {
@@ -74,6 +75,7 @@ public final class QuarantinedReceivePack extends ReceivePack {
     @Override
     public void receiveWithExceptionPropagation(InputStream input, OutputStream messages, OutputStream errors) throws IOException {
         try {
+            quarantine.prepare();
             super.receiveWithExceptionPropagation(input, messages, errors);
         }
         finally {
