@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -507,6 +508,39 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST,
                 "dockerFlagsTooLong");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExercise_mapsAndValidatesBuildTimeWindow(boolean validWindow) throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        ZonedDateTime now = ZonedDateTime.now().withNano(0);
+        programmingExercise.setReleaseDate(now.minusDays(1));
+        programmingExercise.setStartDate(null);
+        programmingExercise.setDueDate(now.plusDays(7));
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise.setExampleSolutionPublicationDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildPlanConfiguration(validBuildPlanConfiguration());
+        var window = new BuildTimeWindow(validWindow ? now.plusDays(1) : now.minusDays(2), now.plusDays(2));
+        buildConfig.setBuildTimeWindow(window);
+
+        if (validWindow) {
+            request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), ProgrammingExercise.class,
+                    HttpStatus.OK);
+            var stored = programmingExerciseBuildConfigRepository.findByIdElseThrow(programmingExercise.getId()).getBuildTimeWindow();
+            assertThat(stored).isNotNull();
+            assertThat(stored.start().toInstant()).isEqualTo(window.start().toInstant());
+            assertThat(stored.end().toInstant()).isEqualTo(window.end().toInstant());
+        }
+        else {
+            request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST,
+                    "buildTimeWindowOutsideExerciseDates");
+        }
     }
 
     @Test
