@@ -2,7 +2,9 @@ api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
+api/channel-api.ts
 api/global-search-api.ts
+api/group-chat-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
 api/hyperion-code-generation-api.ts
@@ -44,7 +46,7 @@ model/authoring-run-page.ts
 model/authoring-run.ts
 model/bloom-radar.ts
 model/calendar-event.ts
-model/channel-sub-type-reference-dates.ts
+model/channel-id-and-name.ts
 model/channel.ts
 model/checklist-action-request.ts
 model/checklist-action-response.ts
@@ -94,7 +96,6 @@ model/drop-location-from-editor.ts
 model/drop-location-re-evaluate.ts
 model/drop-location.ts
 model/entity-id-ref.ts
-model/exam-seat.ts
 model/exam-with-id-and-course.ts
 model/exercise-generation-activity.ts
 model/exercise-generation-capabilities.ts
@@ -118,6 +119,7 @@ model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
 model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
+model/feedback-channel-request.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
 model/generated-quiz-answer-option.ts
@@ -125,6 +127,8 @@ model/generated-quiz-question.ts
 model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
+model/group-chat-creation.ts
+model/group-chat.ts
 model/hyperion-course-settings.ts
 model/indexed-content-object.ts
 model/indexed-content-presence.ts

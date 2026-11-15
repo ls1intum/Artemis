@@ -4,6 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -21,7 +26,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -166,7 +173,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsCourseWide(false);
 
         // when
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        var response = request.performMvcRequest(post("/api/communication/courses/{courseId}/channels", exampleCourseId).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(channelDTO))).andExpect(status().isCreated()).andReturn().getResponse();
+        request.restoreSecurityContext();
+        var chat = request.getObjectMapper().readValue(response.getContentAsString(), ChannelDTO.class);
+        assertThat(response.getHeader(HttpHeaders.LOCATION)).isEqualTo("/api/channels/" + chat.getId());
         // then
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         assertChannelCreatorAccess(chat);
@@ -187,6 +198,29 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(chat.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createChannel_ignoresInternalSettersAndRequiresType() throws Exception {
+        String path = "/api/communication/courses/" + exampleCourseId + "/channels";
+        request.postStringWithoutLocation(path, """
+                {"name":"missing-type"}
+                """, HttpStatus.BAD_REQUEST, null);
+
+        String response = request.postWithResponseBodyString(path, """
+                {
+                    "type": "channel",
+                    "name": "ignored-setters",
+                    "subTypeWithReferenceFromChannel": "ignored",
+                    "subTypeReferenceDates": {"startDate": "2030-01-01T00:00:00Z"}
+                }
+                """, true, HttpStatus.CREATED, null, null, null);
+        var channel = request.getObjectMapper().readValue(response, ChannelDTO.class);
+        assertThat(channel.getSubType()).isEqualTo(ChannelSubType.GENERAL);
+        assertThat(channel.getSubTypeReferenceStartDate()).isNull();
+        assertThat(channel.getSubTypeReferenceEndDate()).isNull();
+        assertThat(response).doesNotContain("subTypeWithReferenceFromChannel", "subTypeReferenceDates");
     }
 
     private static void assertChannelCreatorAccess(ChannelDTO channel) {
@@ -729,6 +763,25 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void registerUsersToChannel_addsOnlyExplicitLoginsWithFalseOrOmittedFlags(boolean sendFalseFlags) throws Exception {
+        var channel = createChannel(true, "explicit-logins");
+        var params = new LinkedMultiValueMap<String, String>();
+        if (sendFalseFlags) {
+            for (String flag : List.of("addAllStudents", "addAllTutors", "addAllInstructors")) {
+                params.add(flag, "false");
+            }
+        }
+
+        request.performMvcRequest(post("/api/communication/courses/{courseId}/channels/{channelId}/register", exampleCourseId, channel.getId()).params(params)
+                .contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(List.of(testPrefix + "student1")))).andExpect(status().isOk())
+                .andExpect(content().string(""));
+        request.restoreSecurityContext();
+        assertParticipants(channel.getId(), 2, "instructor1", "student1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void registerUsersToChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
@@ -1048,6 +1101,20 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getExerciseAndLectureChannels_withoutChannelsReturnEmptyOkResponses() throws Exception {
+        var now = ZonedDateTime.now();
+        var exercise = textExerciseUtilService.createIndividualTextExercise(exampleCourse, now.minusDays(1), now.plusDays(1), now.plusDays(2));
+        var lecture = lectureUtilService.createLecture(exampleCourse);
+
+        request.performMvcRequest(get("/api/communication/courses/{courseId}/exercises/{exerciseId}/channel", exampleCourseId, exercise.getId())).andExpect(status().isOk())
+                .andExpect(header().string("X-Frame-Options", "DENY")).andExpect(content().string(""));
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/communication/courses/{courseId}/lectures/{lectureId}/channel", exampleCourseId, lecture.getId())).andExpect(status().isOk())
+                .andExpect(content().string(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLectureChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course);
@@ -1181,10 +1248,14 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         String BASE_ENDPOINT = "/api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        ChannelDTO response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
-                feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
+        var httpResponse = request.performMvcRequest(
+                post(BASE_ENDPOINT, courseId, exerciseId).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(feedbackChannelRequest)))
+                .andExpect(status().isCreated()).andReturn().getResponse();
+        request.restoreSecurityContext();
+        var response = request.getObjectMapper().readValue(httpResponse.getContentAsString(), ChannelDTO.class);
 
         assertThat(response).isNotNull();
+        assertThat(httpResponse.getHeader(HttpHeaders.LOCATION)).isEqualTo("/api/channels/" + response.getId());
         assertThat(response.getName()).isEqualTo("feedback-channel");
         assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
     }
@@ -1220,7 +1291,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         });
 
         User instructor1 = userTestRepository.getUser();
-        request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
+        request.performMvcRequest(post("/api/communication/courses/{courseId}/channels/mark-as-read", exampleCourseId)).andExpect(status().isOk()).andExpect(content().string(""));
+        request.restoreSecurityContext();
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
         updatedChannels.forEach(channel -> await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());

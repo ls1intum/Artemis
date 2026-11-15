@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
@@ -84,6 +85,7 @@ public class ConversationDTO {
      *
      * @return the conversation type, one of {@code channel}, {@code groupChat} or {@code oneToOneChat}
      */
+    @Schema(description = "Conversation subtype. Send channel in channel requests and groupChat in group chat updates.")
     public String getType() {
         return type;
     }
@@ -110,6 +112,7 @@ public class ConversationDTO {
         this.creationDate = creationDate;
     }
 
+    @Schema(description = "Time of the last message, if one exists")
     public ZonedDateTime getLastMessageDate() {
         return lastMessageDate;
     }
@@ -134,6 +137,7 @@ public class ConversationDTO {
         this.numberOfMembers = numberOfMembers;
     }
 
+    @Schema(description = "User who created the conversation, if it has a creator")
     public ConversationUserDTO getCreator() {
         return creator;
     }
@@ -174,6 +178,7 @@ public class ConversationDTO {
         this.isMuted = isMuted;
     }
 
+    @Schema(description = "Last read time, when set for the requesting participant")
     public ZonedDateTime getLastReadDate() {
         return lastReadDate;
     }
@@ -182,6 +187,7 @@ public class ConversationDTO {
         this.lastReadDate = lastReadDate;
     }
 
+    @Schema(description = "Unread message count for the requesting participant, when available")
     public Long getUnreadMessagesCount() {
         return unreadMessagesCount;
     }

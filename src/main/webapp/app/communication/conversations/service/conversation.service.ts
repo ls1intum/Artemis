@@ -12,6 +12,7 @@ import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversatio
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ChannelApi } from 'app/openapi/api/channel-api';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 
@@ -33,6 +34,7 @@ export enum ConversationMemberSearchFilter {
 @Service()
 export class ConversationService {
     private http = inject(HttpClient);
+    private readonly channelApi = inject(ChannelApi);
     private translationService = inject(TranslateService);
 
     public resourceUrl = '/api/communication/courses/';
@@ -191,7 +193,7 @@ export class ConversationService {
         return params.set('size', String(size));
     };
 
-    markAllChannelsAsRead(courseId: number) {
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/mark-as-read`, { observe: 'response' });
+    markAllChannelsAsRead(courseId: number): Observable<void> {
+        return this.channelApi.markAllChannelsOfCourseAsRead(courseId);
     }
 }
