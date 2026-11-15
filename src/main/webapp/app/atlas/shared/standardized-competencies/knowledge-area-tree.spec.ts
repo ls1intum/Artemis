@@ -9,7 +9,7 @@ import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atl
 
 /**
  * Host component that provides the consumer content templates (knowledgeArea + competency) the same way the real
- * consumers do, so the projected p-tree node templates can be asserted.
+ * consumers do, so the projected tree node templates can be asserted.
  */
 @Component({
     template: `
@@ -51,7 +51,7 @@ describe('KnowledgeAreaTreeComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should render the p-tree', () => {
+    it('should render the tree', () => {
         hostFixture.detectChanges();
         const tree = hostFixture.debugElement.query(By.css('[data-testid="knowledge-area-tree"]'));
         expect(tree).not.toBeNull();
@@ -96,6 +96,41 @@ describe('KnowledgeAreaTreeComponent', () => {
         host.tree().collapseAll();
         hostFixture.detectChanges();
         expect(title().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should support the arrow, home and end keys on the knowledge area titles', () => {
+        host.dataSource = { data: [ka({ id: 1, children: [ka({ id: 11, level: 1 })] }), ka({ id: 2 })] };
+        hostFixture.detectChanges();
+        const titles = () => Array.from(hostFixture.nativeElement.querySelectorAll<HTMLElement>('[data-tree-title]'));
+        const press = (element: HTMLElement, key: string) => {
+            const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+            element.dispatchEvent(event);
+            hostFixture.detectChanges();
+            return event;
+        };
+        expect(titles()).toHaveLength(2);
+
+        // ArrowRight expands, ArrowLeft collapses, and ArrowLeft on a collapsed title does nothing
+        expect(press(titles()[0], 'ArrowRight').defaultPrevented).toBe(true);
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('true');
+        expect(titles()).toHaveLength(3);
+        press(titles()[0], 'ArrowLeft');
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
+        press(titles()[0], 'ArrowLeft');
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
+
+        // Down, Up, End and Home move the focus between the visible titles
+        press(titles()[0], 'ArrowDown');
+        expect(document.activeElement).toBe(titles()[1]);
+        press(titles()[1], 'ArrowUp');
+        expect(document.activeElement).toBe(titles()[0]);
+        press(titles()[0], 'End');
+        expect(document.activeElement).toBe(titles()[1]);
+        press(titles()[1], 'Home');
+        expect(document.activeElement).toBe(titles()[0]);
+
+        // Other keys keep their default behaviour
+        expect(press(titles()[0], 'a').defaultPrevented).toBe(false);
     });
 
     it('should render an empty-state node for a knowledge area without children or competencies', () => {

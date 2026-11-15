@@ -14,7 +14,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('LearningPathNavOverviewComponent', () => {
     let component: LearningPathNavOverviewComponent;
@@ -36,7 +36,7 @@ describe('LearningPathNavOverviewComponent', () => {
                 },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ScienceService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
             ],
         })
             .overrideComponent(LearningPathNavOverviewComponent, {
@@ -116,7 +116,7 @@ describe('LearningPathNavOverviewComponent', () => {
 
     it('should log opening the competency graph, which the modal cannot do outside the course overview', () => {
         const logEventSpy = vi.spyOn(TestBed.inject(ScienceService), 'logEvent');
-        const openSpy = vi.spyOn(TestBed.inject(DialogService), 'open');
+        const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open');
 
         component.openCompetencyGraph();
 
