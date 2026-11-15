@@ -231,6 +231,9 @@
     --color-text-secondary: var(--tumaet-ui-muted-color);
 }
 
+@source './app/course/manage/update/course-home-welcome-context-form.component.html';
+@source './app/course/overview/course-home/**/*.html';
+
 /* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
 @source './app/communication/answer-post/answer-post.component.html';
 @source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
@@ -294,6 +297,3 @@
 @source './app/text';
 @source './app/tutorialgroup';
 @source './app/videosource';
-@source './app/course/manage/update/course-home-welcome-context-form.component.html';
-
-@source './app/course/overview/course-home/**/*.html';

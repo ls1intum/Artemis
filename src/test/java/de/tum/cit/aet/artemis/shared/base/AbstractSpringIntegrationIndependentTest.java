@@ -15,13 +15,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
-
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeAiClient;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
@@ -42,10 +40,6 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
         "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
 
-    // A spy so that a test can make the rename of science identities fail, which no real input can provoke.
-    @MockitoSpyBean
-    protected ScienceEventApi scienceEventApi;
-
     @MockitoBean
     protected CourseHomeAiClient courseHomeAiClient;
 
@@ -56,6 +50,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractS
     void resetCourseHomeAiMocks() {
         Mockito.reset(courseHomeAiClient, courseHomeAiProperties);
     }
+
+    // A spy so that a test can make the rename of science identities fail, which no real input can provoke.
+    @MockitoSpyBean
+    protected ScienceEventApi scienceEventApi;
 
     protected static final WeaviateContainer weaviateContainer;
 

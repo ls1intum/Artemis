@@ -94,7 +94,7 @@ const migratedModules = [
     'videosource',
 ];
 // Components that are migrated although the rest of their module is not. They get the same locks as a module.
-const migratedComponentFolders = ['core/alert', 'shared-ui/user-registration-modal', 'core/navbar/global-search/components/modal'];
+const migratedComponentFolders = ['core/alert', 'shared-ui/user-registration-modal', 'core/navbar/global-search/components/modal', 'course/overview/course-home'];
 const migratedFolders = (extension) => [...migratedModules, ...migratedComponentFolders].map((folder) => `src/main/webapp/app/${folder}/**/*.${extension}`);
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
@@ -774,7 +774,6 @@ export default tseslint.config(
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
-            'src/main/webapp/app/course/overview/course-home/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
             'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
             'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
@@ -816,7 +815,6 @@ export default tseslint.config(
         // See client-development.mdx (### Styling).
         files: [
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
-            'src/main/webapp/app/course/overview/course-home/**/*.html',
             'src/main/webapp/app/course/manage/athena-settings-update/**/*.html',
             'src/main/webapp/app/course/manage/control-center/about-athena-modal/**/*.html',
             ...migratedFolders('html'),
