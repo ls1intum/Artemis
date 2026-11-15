@@ -2,10 +2,10 @@ import { LegalDocumentFragmentDirective } from './legal-document-fragment.direct
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
+import { isLegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { switchMap } from 'rxjs';
+import { EMPTY, switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-imprint',
@@ -26,7 +26,7 @@ export class ImprintComponent extends LegalDocumentFragmentDirective implements 
         // Update the view if the language was changed
         this.languageHelper.language
             .pipe(
-                switchMap((lang) => this.legalDocumentService.getImprint(lang as LegalDocumentLanguage)),
+                switchMap((language) => (isLegalDocumentLanguage(language) ? this.legalDocumentService.getImprint(language) : EMPTY)),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((imprint) => this.imprint.set(imprint.text));

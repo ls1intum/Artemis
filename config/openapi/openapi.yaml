@@ -425,6 +425,56 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/admin/privacy-statement:
+    put:
+      tags: [admin-privacy-statement]
+      summary: Save the privacy statement
+      description: Requires an administrator. Creates the file if it does not exist.
+      operationId: updatePrivacyStatement
+      requestBody:
+        description: Provide type, language, and nonblank Markdown text.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - {$ref: '#/components/schemas/PrivacyStatement'}
+              required: [text]
+        required: true
+      responses:
+        '200':
+          description: The saved privacy statement
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacyStatement'}
+        '400': {description: Blank Markdown text}
+        '401': {description: Authentication required}
+        '403': {description: Administrator role required}
+        '500': {description: Could not write the privacy statement file}
+  /api/admin/imprint:
+    put:
+      tags: [admin-imprint]
+      summary: Save the imprint
+      description: Requires an administrator. Creates the file if it does not exist.
+      operationId: updateImprint
+      requestBody:
+        description: Provide type, language, and nonblank Markdown text.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - {$ref: '#/components/schemas/Imprint'}
+              required: [text]
+        required: true
+      responses:
+        '200':
+          description: The saved imprint
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Imprint'}
+        '400': {description: Blank Markdown text}
+        '401': {description: Authentication required}
+        '403': {description: Administrator role required}
+        '500': {description: Could not write the imprint file}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -2259,6 +2309,54 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/core/public/privacy-statement:
+    get:
+      tags: [public-privacy-statement]
+      summary: Get the privacy statement
+      description: Available without signing in. If the requested file is missing,
+        returns the document in the other language when available.
+      operationId: getPrivacyStatement
+      parameters:
+      - name: language
+        in: query
+        description: Requested language short name
+        required: true
+        schema:
+          type: string
+          enum: [en, de]
+      responses:
+        '200':
+          description: The privacy statement
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacyStatement'}
+        '400': {description: 'Missing or unsupported language, or neither language
+            has a file'}
+        '500': {description: Could not read the privacy statement file}
+  /api/core/public/imprint:
+    get:
+      tags: [public-imprint]
+      summary: Get the imprint
+      description: Available without signing in. If the requested file is missing,
+        returns the document in the other language when available.
+      operationId: getImprint
+      parameters:
+      - name: language
+        in: query
+        description: Requested language short name
+        required: true
+        schema:
+          type: string
+          enum: [en, de]
+      responses:
+        '200':
+          description: The imprint
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Imprint'}
+        '400': {description: 'Missing or unsupported language, or neither language
+            has a file'}
+        '500': {description: Could not read the imprint file}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -2351,6 +2449,56 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/WorkerStatus'}
+  /api/admin/privacy-statement-for-update:
+    get:
+      tags: [admin-privacy-statement]
+      summary: Get the privacy statement for editing
+      description: Requires an administrator. If the selected language has no file,
+        the response omits text.
+      operationId: getPrivacyStatementForUpdate
+      parameters:
+      - name: language
+        in: query
+        description: Requested language short name
+        required: true
+        schema:
+          type: string
+          enum: [en, de]
+      responses:
+        '200':
+          description: The privacy statement in the requested language
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacyStatement'}
+        '400': {description: Missing or unsupported language}
+        '401': {description: Authentication required}
+        '403': {description: Administrator role required}
+        '500': {description: Could not read the privacy statement file}
+  /api/admin/imprint-for-update:
+    get:
+      tags: [admin-imprint]
+      summary: Get the imprint for editing
+      description: Requires an administrator. If the selected language has no file,
+        the response omits text.
+      operationId: getImprintForUpdate
+      parameters:
+      - name: language
+        in: query
+        description: Requested language short name
+        required: true
+        schema:
+          type: string
+          enum: [en, de]
+      responses:
+        '200':
+          description: The imprint in the requested language
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Imprint'}
+        '400': {description: Missing or unsupported language}
+        '401': {description: Authentication required}
+        '403': {description: Administrator role required}
+        '500': {description: Could not read the imprint file}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -3640,6 +3788,17 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
+    PrivacyStatement:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [PRIVACY_STATEMENT, IMPRINT]
+        text: {type: string, description: 'Markdown content, omitted when empty'}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      required: [language, type]
     DragAndDropSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -5894,6 +6053,17 @@ components:
         started: {type: boolean, description: Whether a build was started}
         enqueued: {type: integer, format: int32, description: Intended questions newly
             added to the pool}
+    Imprint:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [PRIVACY_STATEMENT, IMPRINT]
+        text: {type: string, description: 'Markdown content, omitted when empty'}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      required: [language, type]
     TutorialGroupImportData:
       type: object
       properties:

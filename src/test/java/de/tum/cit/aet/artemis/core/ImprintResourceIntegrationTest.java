@@ -6,6 +6,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +26,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.admin.dto.ImprintDTO;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -40,8 +48,11 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    void testGetImprint_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/core/public/imprint?language=fr", HttpStatus.BAD_REQUEST, ImprintDTO.class);
+    void testGetImprint_invalidLanguageBadRequest() throws Exception {
+        request.performMvcRequest(get("/api/core/public/imprint")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/core/public/imprint").param("language", "fr")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/core/public/imprint").param("language", "EN")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/core/public/imprint").param("language", "")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -65,7 +76,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdatePrivacyStatement_cannotWriteFileInternalServerError() throws Exception {
+    void testUpdateImprint_cannotWriteFileInternalServerError() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFileUtils.when(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)))
@@ -76,7 +87,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdatePrivacyStatement_directoryDoesntExist_createsDirectoryAndSavesFile() throws Exception {
+    void testUpdateImprint_directoryDoesntExist_createsDirectoryAndSavesFile() throws Exception {
         ImprintDTO response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
@@ -93,28 +104,15 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     void testGetImprintReturnsOtherLanguageIfFirstLanguageNotFound(Language language) throws Exception {
-        ImprintDTO response;
+        Language fallback = language == Language.GERMAN ? Language.ENGLISH : Language.GERMAN;
+        String filename = "imprint_" + fallback.getShortName() + ".md";
+        String text = fallback == Language.ENGLISH ? "Imprint" : "Impressum";
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            if ("de".equals(language.getShortName())) {
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(true);
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
-            }
-            else {
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
-            }
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.endsWith(filename)))).thenReturn(true);
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.endsWith(filename)))).thenReturn(text);
 
-            response = request.get("/api/core/public/imprint?language=" + language.getShortName(), HttpStatus.OK, ImprintDTO.class);
-        }
-        if ("de".equals(language.getShortName())) {
-            assertThat(response.language()).isEqualTo(Language.ENGLISH);
-            assertThat(response.text()).isEqualTo("Imprint");
-        }
-        else {
-            assertThat(response.language()).isEqualTo(Language.GERMAN);
-            assertThat(response.text()).isEqualTo("Impressum");
+            request.performMvcRequest(get("/api/core/public/imprint").param("language", language.getShortName())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("IMPRINT")).andExpect(jsonPath("$.language").value(fallback.name())).andExpect(jsonPath("$.text").value(text));
         }
     }
 
@@ -136,68 +134,64 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetImprintForUpdate_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/admin/imprint-for-update?language=fr", HttpStatus.BAD_REQUEST, ImprintDTO.class);
+    void testGetImprintForUpdate_invalidLanguageBadRequest() throws Exception {
+        request.performMvcRequest(get("/api/admin/imprint-for-update")).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/admin/imprint-for-update").param("language", "fr")).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/admin/imprint-for-update").param("language", "EN")).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/admin/imprint-for-update").param("language", "")).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetImprintForUpdateFileDoesntExist() throws Exception {
-        ImprintDTO response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/admin/imprint-for-update?language=de", HttpStatus.OK, ImprintDTO.class);
+
+            request.performMvcRequest(get("/api/admin/imprint-for-update").param("language", "de")).andExpect(status().isOk()).andExpect(jsonPath("$.type").value("IMPRINT"))
+                    .andExpect(jsonPath("$.language").value("GERMAN")).andExpect(jsonPath("$.text").doesNotHaveJsonPath());
         }
-        assertThat(response.text()).isNull();
-        assertThat(response.language()).isEqualTo(Language.GERMAN);
     }
 
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     void testGetImprintReturnsCorrectFileContent(Language language) throws Exception {
-        ImprintDTO response;
+        String filename = "imprint_" + language.getShortName() + ".md";
+        String text = language == Language.ENGLISH ? "Imprint" : "Impressum";
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            if (language == Language.ENGLISH) {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
-            }
-            else {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
-            }
-            response = request.get("/api/core/public/imprint?language=" + language.getShortName(), HttpStatus.OK, ImprintDTO.class);
-        }
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.endsWith(filename)))).thenReturn(true);
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.endsWith(filename)))).thenReturn(text);
 
-        assertThat(response.language()).isEqualTo(language);
-        if (language == Language.ENGLISH) {
-            assertThat(response.text()).isEqualTo("Imprint");
-        }
-        else {
-            assertThat(response.text()).isEqualTo("Impressum");
+            request.performMvcRequest(get("/api/core/public/imprint").param("language", language.getShortName())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("IMPRINT")).andExpect(jsonPath("$.language").value(language.name())).andExpect(jsonPath("$.text").value(text));
         }
     }
 
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetImprintForUpdateReturnsCorrectFileContent(Language language) throws Exception {
-        ImprintDTO response;
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+    void testImprintEditRoundTrip(Language language) throws Exception {
+        String filename = "imprint_" + language.getShortName() + ".md";
+        String text = language == Language.ENGLISH ? "Imprint" : "Impressum";
+        String editedText = "## Aktualisierter Text für " + text;
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            if ("de".equals(language.getShortName())) {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
-            }
-            else {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
-            }
-            response = request.get("/api/admin/imprint-for-update?language=" + language.getShortName(), HttpStatus.OK, ImprintDTO.class);
-        }
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.endsWith(filename)))).thenReturn(text);
 
-        assertThat(response.language()).isEqualTo(language);
-        if ("de".equals(language.getShortName())) {
-            assertThat(response.text()).isEqualTo("Impressum");
-        }
-        else {
-            assertThat(response.text()).isEqualTo("Imprint");
+            var response = request.performMvcRequest(get("/api/admin/imprint-for-update").param("language", language.getShortName())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("IMPRINT")).andExpect(jsonPath("$.language").value(language.name())).andExpect(jsonPath("$.text").value(text)).andReturn()
+                    .getResponse();
+
+            request.restoreSecurityContext();
+            var mapper = request.getObjectMapper();
+            var payload = (ObjectNode) mapper.readTree(response.getContentAsByteArray());
+            payload.put("text", editedText);
+            request.performMvcRequest(put("/api/admin/imprint").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(payload))).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("IMPRINT")).andExpect(jsonPath("$.language").value(language.name())).andExpect(jsonPath("$.text").value(editedText));
+            mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toPath().endsWith(filename)), eq(editedText), eq(StandardCharsets.UTF_8)));
+            mockedFiles.verify(() -> Files.createDirectories(any()), never());
         }
     }
 
@@ -208,17 +202,11 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdateImprint_writesFile_ReturnsUpdatedFileContent() throws Exception {
-
-        ImprintDTO requestBody = new ImprintDTO("Impressum", Language.GERMAN);
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
-            mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            ImprintDTO response = request.putWithResponseBody("/api/admin/imprint", requestBody, ImprintDTO.class, HttpStatus.OK);
-            mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)));
-            assertThat(response.language()).isEqualTo(Language.GERMAN);
-            assertThat(response.text()).isEqualTo("Impressum");
-        }
+    void testAdminImprintRequiresAuthentication() throws Exception {
+        request.performMvcRequest(get("/api/admin/imprint-for-update").param("language", "de")).andExpect(status().isUnauthorized());
+        var body = new ImprintDTO("Markdown", Language.GERMAN);
+        request.performMvcRequest(put("/api/admin/imprint").contentType(MediaType.APPLICATION_JSON).content(JsonObjectMapper.get().writeValueAsBytes(body)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
