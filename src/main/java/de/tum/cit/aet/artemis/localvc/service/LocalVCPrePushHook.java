@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -59,7 +58,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     private static final String TREE_LIMIT_MESSAGE = "The repository exceeds the limits for the number of files, the depth of the directories or the total size.";
 
     /**
-     * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
+     * Called by JGit after the objects of a push were received into the separate place of the push, and before the references are updated. An accepted push moves its objects
+     * into the repository here. The objects of a rejected push are removed with the place, so a rejected push leaves nothing behind.
      *
      * @param receivePack the process handling the current receive. Hooks may obtain details about the destination repository through this handle.
      * @param commands    ReceiveCommands that each correspond to a single ref update (e.g. update to a branch or a tag).
@@ -67,20 +67,29 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         examine(receivePack, commands);
-        if (commands.stream().anyMatch(command -> command.getResult() != ReceiveCommand.Result.NOT_ATTEMPTED)) {
-            // The objects of a rejected push stay in the repository, unreferenced, until the cleanup of rejected pushes removes them.
-            RejectedPushCleanupService.markForCleanup(receivePack.getRepository());
+        if (receivePack instanceof QuarantinedReceivePack quarantinedReceivePack
+                && commands.stream().allMatch(command -> command.getResult() == ReceiveCommand.Result.NOT_ATTEMPTED)) {
+            try {
+                quarantinedReceivePack.storeObjects();
+            }
+            catch (IOException e) {
+                log.warn("Could not store the objects of a push to {}", receivePack.getRepository().getDirectory(), e);
+                commands.forEach(command -> command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while storing the push."));
+            }
         }
     }
 
-    private void examine(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
-
+    /**
+     * The checks that need only the commands of a push and not its objects. They run before the objects are read, so that a push that is refused for the name of its branch
+     * does not send its objects into the repository at all. A command that is rejected here is not applied.
+     *
+     * @param receivePack the process handling the current receive
+     * @param commands    the commands of the push
+     */
+    public void examineBeforeObjects(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         if (commands.isEmpty()) {
-            // E.g. no refs were updated during the push operation.
-            // Note: There is no command that we can set a REJECTED Result on so this will continue into the LocalVCPostPushHook and we have to return there again.
             return;
         }
-
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
         // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
         // the remaining refs through without any of the checks below.
@@ -88,9 +97,10 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             commands.forEach(multiRefCommand -> multiRefCommand.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push multiple refs at once."));
             return;
         }
-
         ReceiveCommand command = commands.iterator().next();
-
+        if (command.getResult() != ReceiveCommand.Result.NOT_ATTEMPTED) {
+            return;
+        }
         Repository repository = receivePack.getRepository();
 
         String defaultBranchName;
@@ -127,14 +137,36 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             }
         }
 
-        try (Git git = new Git(repository)) {
-            // Prevent deletion of branches.
-            Ref ref = git.getRepository().exactRef(command.getRefName());
+        // Prevent deletion of branches.
+        try {
+            Ref ref = repository.exactRef(command.getRefName());
             if (ref != null && command.getNewId().equals(ObjectId.zeroId())) {
                 command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot delete a branch.");
-                return;
             }
+        }
+        catch (IOException e) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+        }
+    }
 
+    private void examine(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+
+        if (commands.isEmpty()) {
+            // E.g. no refs were updated during the push operation.
+            // Note: There is no command that we can set a REJECTED Result on so this will continue into the LocalVCPostPushHook and we have to return there again.
+            return;
+        }
+
+        // The checks of the commands run again here, as a push that sent no objects does not reach the check before them
+        examineBeforeObjects(receivePack, commands);
+        if (commands.stream().anyMatch(command -> command.getResult() != ReceiveCommand.Result.NOT_ATTEMPTED)) {
+            return;
+        }
+
+        ReceiveCommand command = commands.iterator().next();
+        Repository repository = receivePack.getRepository();
+
+        try {
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
                 try {
