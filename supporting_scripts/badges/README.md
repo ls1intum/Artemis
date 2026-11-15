@@ -1,7 +1,7 @@
 # Self-hosted README badges
 
 Artemis generates its coverage, latest release and MIT license badges as standalone SVGs using
-Node 24 built-ins. They use system monospace text with no downloaded fonts or hosted renderer.
+Node 26 built-ins. They use system monospace text with no downloaded fonts or hosted renderer.
 The README loads `coverage.svg`, `latest-version.svg` and `license.svg` directly from the orphan
 `badges` branch via `raw.githubusercontent.com`.
 

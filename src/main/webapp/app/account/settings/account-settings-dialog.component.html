@@ -4,6 +4,21 @@
             <span jhiTranslate="settings.saml2SyncedInfo"></span>
         </tumaet-ui-message>
     }
+    @if (!isSaml2Active() && !mailConfigured) {
+        <tumaet-ui-message severity="info" class="mb-3 min-w-0 text-sm!" data-testid="settings-mail-not-configured-hint">
+            <span jhiTranslate="settings.messages.emailChangeUnavailableHint"></span>
+        </tumaet-ui-message>
+    }
+    @if (errorEmailExists()) {
+        <tumaet-ui-message severity="error" class="mb-3 min-w-0 text-sm!" data-testid="settings-email-exists-message">
+            <span jhiTranslate="settings.messages.error.emailExists"></span>
+        </tumaet-ui-message>
+    }
+    @if (errorMessageKey(); as messageKey) {
+        <tumaet-ui-message severity="error" class="mb-3 min-w-0 text-sm!" data-testid="settings-error-message">
+            <span [jhiTranslate]="messageKey"></span>
+        </tumaet-ui-message>
+    }
     <form id="account-settings-form" class="flex flex-col gap-3" (submit)="onSubmit($event)" novalidate>
         <tumaet-ui-form-field
             controlId="firstName"
@@ -61,6 +76,7 @@
                 tumAetUiInput
                 class="w-full"
                 id="email"
+                data-testid="email-input"
                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                 [formField]="settingsForm.email"
             />

@@ -65,6 +65,15 @@
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />
             }
+            <!-- Shown in the advanced mode, collapsed until a window is wanted. The simple mode shows it only for a window that a date change there invalidated, which blocks saving -->
+            @if (isBuildTimeWindowDisplayed()) {
+                <jhi-programming-exercise-build-time-window
+                    [programmingExercise]="programmingExercise"
+                    [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"
+                    [error]="getBuildTimeWindowError()"
+                />
+                <hr class="mb-5" />
+            }
             <jhi-programming-exercise-problem
                 [editingLocked]="generationEditingLocked()"
                 [beforeStatementSave]="generationExerciseId() !== undefined ? beforeStatementSave : undefined"

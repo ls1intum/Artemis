@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -38,6 +41,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  */
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseValidationServiceTest {
+
+    private static final ZonedDateTime NOW = ZonedDateTime.now();
 
     @Mock
     private AuxiliaryRepositoryService auxiliaryRepositoryService;
@@ -235,6 +240,91 @@ class ProgrammingExerciseValidationServiceTest {
 
         assertThatCode(() -> validationService.validateCheckoutDirectoriesUnchanged(original, updated)).doesNotThrowAnyException();
         assertThat(updated.getAssignmentCheckoutPath()).isEqualTo("assignment");
+    }
+
+    private static ProgrammingExercise exerciseWithDates(ZonedDateTime release, ZonedDateTime start, ZonedDateTime due) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setReleaseDate(release);
+        exercise.setStartDate(start);
+        exercise.setDueDate(due);
+        return exercise;
+    }
+
+    private static ProgrammingExerciseBuildConfig buildConfigWithWindow(ZonedDateTime start, ZonedDateTime end) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(start, end));
+        return buildConfig;
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAnExerciseWithoutAWindow() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), null, NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAWindowInsideTheStartAndDueDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(8)))).doesNotThrowAnyException();
+        // the bounds themselves are inside
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(3), NOW.plusDays(10)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAnOpenEndedWindow() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        // builds begin a week after the release, which is the use case of keeping the CI off while students prepare
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), null))).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(null, NOW.plusDays(5)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_usesTheReleaseDateWhenThereIsNoStartDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(2), null, NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(2), NOW.plusDays(4)))).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(1), NOW.plusDays(4))))
+                .withMessageContaining("must lie between");
+    }
+
+    @Test
+    void validateBuildTimeWindow_rejectsAWindowThatEndsBeforeItStartsOrIsEmpty() {
+        ProgrammingExercise exercise = exerciseWithDates(null, null, null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(4)))).withMessageContaining("end after");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(5)))).withMessageContaining("end after");
+    }
+
+    @Test
+    void validateBuildTimeWindow_rejectsAWindowOutsideTheStartAndDueDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(2), NOW.plusDays(5))))
+                .withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(11))))
+                .withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(11), null))).withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(null, NOW.plusDays(2)))).withMessageContaining("must lie between");
+    }
+
+    @Test
+    void validateBuildTimeWindow_isNotAvailableForExamExercises() {
+        ProgrammingExercise exercise = exerciseWithDates(null, null, null);
+        exercise.setExerciseGroup(new ExerciseGroup());
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW, NOW.plusDays(1))))
+                .withMessageContaining("exam exercises");
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
     }
 
     private static DockerFlagsDTO flags(int cpuCount, int memory, int memorySwap) {
