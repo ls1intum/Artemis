@@ -318,9 +318,7 @@ public class GitService extends AbstractGitService {
                 if (selectCloneBranch) {
                     clone.setBranch(defaultBranch);
                 }
-                try (Git ignored = clone.call()) {
-                    // Git instance automatically closed by try-with-resources
-                }
+                cloneWithoutSymbolicLinks(clone);
             }
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
