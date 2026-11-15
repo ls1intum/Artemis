@@ -41,7 +41,7 @@ export class IrisChat {
     }
 
     /**
-     * The native button inside `jhi-button#irisSendButton`. The wrapper element is a custom element, which Playwright
+     * The native button inside `tumaet-ui-button#irisSendButton`. The wrapper element is a custom element, which Playwright
      * always considers enabled, so waiting on it (or clicking it) does not wait for the disabled state the inner button
      * carries.
      */

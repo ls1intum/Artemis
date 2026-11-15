@@ -1,24 +1,34 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChalkboardUser, faEllipsisVertical, faFont, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { Menu, MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-chat-history-item',
     templateUrl: './chat-history-item.component.html',
     styleUrl: './chat-history-item.component.scss',
     standalone: true,
-    imports: [DatePipe, NgClass, FaIconComponent, ArtemisTranslatePipe, MenuModule, RouterLink, TooltipModule],
+    imports: [
+        TumAetUiButtonDirective,
+        TranslateDirective,
+        DatePipe,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        RouterLink,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatHistoryItemComponent {
@@ -49,30 +59,8 @@ export class ChatHistoryItemComponent {
     sessionClicked = output<IrisSessionDTO>();
     deleteSession = output<IrisSessionDTO>();
 
-    readonly contextMenu = viewChild<Menu>('menu');
-
-    // Built fresh on each toggle so the label always reflects the current language,
-    // and the PrimeNG popup Menu (appendTo="body") receives up-to-date items.
-    readonly menuItems = signal<MenuItem[]>([]);
-
     onItemClick(): void {
         this.sessionClicked.emit(this.session());
-    }
-
-    onEntityIconClick(event: Event): void {
-        event.stopPropagation();
-    }
-
-    onMenuToggle(event: Event): void {
-        event.stopPropagation();
-        this.menuItems.set([
-            {
-                label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
-                styleClass: 'danger',
-                command: () => this.onDeleteClick(),
-            },
-        ]);
-        this.contextMenu()?.toggle(event);
     }
 
     onDeleteClick(): void {
