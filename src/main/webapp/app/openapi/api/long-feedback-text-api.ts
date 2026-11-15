@@ -28,7 +28,7 @@ export class LongFeedbackTextApi {
      */
     getLongFeedback(feedbackId: number): Observable<string> {
         const url = `${this.basePath}/api/assessment/feedbacks/${feedbackId}/long-feedback`;
-        return this.http.get<string>(url);
+        return this.http.get(url, { responseType: 'text' });
     }
 
 }

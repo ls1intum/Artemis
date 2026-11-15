@@ -71,7 +71,7 @@ public class LongFeedbackTextResource {
      * @param feedbackId The feedback for which the long feedback should be fetched.
      * @return The long feedback text belonging to the feedback with id {@code feedbackId}.
      */
-    @GetMapping("feedbacks/{feedbackId}/long-feedback")
+    @GetMapping(value = "feedbacks/{feedbackId}/long-feedback", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLongFeedback(@PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {}", feedbackId);

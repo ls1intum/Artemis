@@ -3109,7 +3109,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
   /api/assessment/exercises/{exerciseId}/results-with-points-per-criterion:
     get:
