@@ -123,8 +123,13 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         // If branching is allowed, reject pushes to anything other than branch names that match the branch regex
         // If branching is not allowed, reject pushes to anything other than the default branch
         String branchPath = command.getRefName();
-        if (!branchPath.equals("refs/heads/" + defaultBranchName)) {
-            String branchName = branchPath.substring("refs/heads/".length());
+        if (!branchPath.equals(Constants.R_HEADS + defaultBranchName)) {
+            // Only branches can be pushed: the checks below judge the name as the name of a branch
+            if (!branchPath.startsWith(Constants.R_HEADS) || branchPath.length() == Constants.R_HEADS.length()) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You can only push to a branch.");
+                return;
+            }
+            String branchName = branchPath.substring(Constants.R_HEADS.length());
             LocalVCServletService.BranchingStatus branchingStatus = localVCServletService.isBranchNameAllowedForRepository(repository, branchName);
             switch (branchingStatus) {
                 case BRANCHING_DISABLED -> {

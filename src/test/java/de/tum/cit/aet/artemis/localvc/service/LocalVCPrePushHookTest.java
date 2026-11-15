@@ -523,6 +523,19 @@ class LocalVCPrePushHookTest {
     }
 
     @Test
+    void examineBeforeObjects_rejectsARefThatIsNotABranch() {
+        ObjectId id = ObjectId.fromString("0123456789012345678901234567890123456789");
+        for (String refName : List.of("refs/tags/v1", "refs/notes/x", "refs/x", "HEAD", "refs/heads/")) {
+            ReceiveCommand command = receive(id, refName);
+
+            hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+            assertThat(command.getResult()).as(refName).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).as(refName).isEqualTo("You can only push to a branch.");
+        }
+    }
+
+    @Test
     void examineBeforeObjects_acceptsTheDefaultBranchWithoutLookingAtTheObjects() {
         ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
 
