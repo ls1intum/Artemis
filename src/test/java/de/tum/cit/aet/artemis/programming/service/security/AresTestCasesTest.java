@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -60,11 +59,19 @@ class AresTestCasesTest {
     }
 
     @Test
-    void listsEveryTestClassWithItsTestCases() {
-        SecurityTestStructureDTO structure = AresTestCases.structure(Map.of("test/de/example/SortingTest.java", TEST_CLASS),
-                Set.of("de.example.SortingTest", "de.example.InheritedTest"));
+    void listsEveryTestClassWithItsTestCasesAndTheOtherClassesAsHelpers() {
+        String helper = "package de.example;\n\nclass SortingTestUtils {\n}\n";
 
-        assertThat(structure.testClasses()).containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.InheritedTest", List.of()),
-                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort", "testWithParameter", "testHidden")));
+        SecurityTestStructureDTO structure = AresTestCases.structure(Map.of("test/de/example/SortingTest.java", TEST_CLASS, "test/de/example/SortingTestUtils.java", helper));
+
+        assertThat(structure.testClasses()).containsExactly(
+                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort", "testWithParameter", "testHidden"), true, false),
+                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTestUtils", List.of(), false, false));
+    }
+
+    @Test
+    void findsTheFirstTestAnnotationOfEachTestMethod() {
+        assertThat(AresTestCases.testAnnotationOffsets(TEST_CLASS)).containsEntry("testBubbleSort", TEST_CLASS.indexOf("@Test\n    void testBubbleSort"))
+                .containsEntry("testMergeSort", TEST_CLASS.indexOf("@org.junit.jupiter.api.Test"));
     }
 }

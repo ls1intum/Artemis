@@ -12,10 +12,12 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -23,6 +25,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -192,6 +195,13 @@ public final class SecurityPolicyRepositoryFiles {
             anyActive = true;
             annotation.policyPath().filter(path -> !path.isBlank())
                     .ifPresent(path -> classesByPolicyPath.computeIfAbsent(path, _ -> new ArrayList<>()).add(testClass.qualifiedName()));
+            // Ares applies the annotation of a test method instead of the one of the class, so the method's policy file is read as well.
+            testClass.methodPolicies().forEach((method, methodAnnotation) -> {
+                if (methodAnnotation.isEvaluable() && methodAnnotation.isActivated()) {
+                    methodAnnotation.policyPath().filter(path -> !path.isBlank()).ifPresent(path -> classesByPolicyPath.computeIfAbsent(path, _ -> new ArrayList<>())
+                            .add(testClass.qualifiedName() + SecurityTestAssignments.METHOD_SEPARATOR + method));
+                }
+            });
         }
         boolean verifiedAresVersion = parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(SecurityPolicySchema.VERIFIED_ARES_VERSION::equals).isPresent();
         List<SecurityFrameworkState.PolicyFile> policyFiles = new ArrayList<>();
@@ -305,7 +315,8 @@ public final class SecurityPolicyRepositoryFiles {
         if (policy.testClasses().isEmpty()) {
             return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.TEST_CLASS_LIST_NOT_FOUND, List.of());
         }
-        List<String> missing = referencedBy.stream().filter(testClass -> !policy.testClasses().get().contains(testClass)).toList();
+        List<String> missing = referencedBy.stream().map(SecurityTestAssignments::testClassOf).distinct().filter(testClass -> !policy.testClasses().get().contains(testClass))
+                .toList();
         return new SecurityFrameworkState.PolicyFile(path, referencedBy, null, missing);
     }
 
@@ -383,7 +394,7 @@ public final class SecurityPolicyRepositoryFiles {
         return javaSources;
     }
 
-    private static BuildFiles buildFiles(Path repositoryRoot) {
+    static BuildFiles buildFiles(Path repositoryRoot) {
         return new BuildFiles(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null), readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
     }
 
@@ -499,6 +510,43 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
+     * A build file whose pinned Ares version changes.
+     *
+     * @param path   the path of the build file relative to the repository root
+     * @param before its content before
+     * @param after  its content with the other version pinned
+     */
+    public record BuildFileChange(String path, String before, String after) {
+    }
+
+    /**
+     * Pins another Ares version in the content of the build file, like {@link #writeAresVersion(Path, String)} does in a checkout.
+     *
+     * @param gradleBuild the content of {@code build.gradle}; null if there is none
+     * @param mavenPom    the content of {@code pom.xml}; null if there is none
+     * @param aresVersion the version to pin
+     * @return the build file before and after; empty if no build file pins a version
+     */
+    public static Optional<BuildFileChange> pinAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom, String aresVersion) {
+        return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
+            String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
+            String updated = versionPattern(buildTool).matcher(content).replaceAll(match -> Matcher.quoteReplacement(match.group(1) + aresVersion + match.group(3)));
+            return new BuildFileChange(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, content, updated);
+        });
+    }
+
+    /**
+     * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
+     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it.
+     *
+     * @param buildFiles the build files at the root of a repository
+     * @return whether a build file attaches a Java agent
+     */
+    static boolean attachesJavaAgent(BuildFiles buildFiles) {
+        return Stream.of(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(Objects::nonNull).anyMatch(content -> content.contains("-javaagent"));
+    }
+
+    /**
      * Writes a policy file. The path must have passed {@link #validatePolicyPath(String)}; it is checked again against the checkout, so neither a symbolic
      * link nor a path outside the repository is ever written.
      *
@@ -514,6 +562,26 @@ public final class SecurityPolicyRepositoryFiles {
             throw new IllegalArgumentException("Refusing to write the policy file " + policyPath);
         }
         writeIfChanged(file, readFileIfPresent(file).orElse(null), policy);
+    }
+
+    /**
+     * Deletes a policy file, if present. A path that leaves the repository or passes a symbolic link is left alone.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policyPath     the validated path of the policy file relative to the root
+     */
+    public static void deletePolicyFile(Path repositoryRoot, String policyPath) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        Path file = root.resolve(policyPath).normalize();
+        if (!file.startsWith(root) || hasSymbolicLinkOnPath(root, file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+            return;
+        }
+        try {
+            Files.delete(file);
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**
@@ -578,23 +646,23 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Points the {@code @Policy} annotation of test classes to a policy file, see {@link AresPolicyAnnotations#setPolicyPath(String, String)}. The Security
-     * Framework only changes repositories in which every file has at most one relevant top-level type, so rewriting the file rewrites the class.
+     * Rewrites the {@code @Policy} annotations of test classes so that their test cases use the given policy files, see
+     * {@link AresPolicyAnnotations#assign(String, String, String, Map)}.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @param policyBySource the validated policy path for each source file, by the path of the file relative to the root
+     * @param testClasses    the test classes with the annotations they should have
      * @return the number of files that changed
      */
-    public static int pointTestClassesToPolicies(Path repositoryRoot, Map<String, String> policyBySource) {
+    static int assignTestCases(Path repositoryRoot, Collection<SecurityTestAssignments.TestClass> testClasses) {
         Path root = repositoryRoot.toAbsolutePath().normalize();
         int changedFiles = 0;
-        for (Map.Entry<String, String> entry : policyBySource.entrySet()) {
-            Path javaFile = root.resolve(entry.getKey()).normalize();
+        for (SecurityTestAssignments.TestClass testClass : testClasses) {
+            Path javaFile = root.resolve(testClass.sourcePath()).normalize();
             if (!javaFile.startsWith(root) || !Files.isRegularFile(javaFile, LinkOption.NOFOLLOW_LINKS)) {
                 continue;
             }
             String content = readFile(javaFile);
-            if (writeIfChanged(javaFile, content, AresPolicyAnnotations.setPolicyPath(content, entry.getValue()))) {
+            if (writeIfChanged(javaFile, content, AresPolicyAnnotations.assign(testClass.sourcePath(), content, testClass.classPolicyPath(), testClass.methodPolicyPaths()))) {
                 changedFiles++;
             }
         }

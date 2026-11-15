@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,12 +95,14 @@ final class AresTestSources {
      * @param superclass       the fully qualified names the class it extends may have: the one its single-type import or qualified name gives, or else the
      *                             one in its own package and one per wildcard import; empty if it extends nothing
      * @param policies         its own Ares {@code @Policy} annotations
+     * @param methodPolicies   the Ares {@code @Policy} annotations of its methods, by the name of the method; Ares applies such an annotation instead of the
+     *                             one of the class to that test case
      * @param registersSandbox whether it registers the Ares sandbox through {@code @Public} or {@code @Hidden} on the type or {@code @PublicTest} or
      *                             {@code @HiddenTest} on a method
      * @param containsTests    whether one of its methods is a JUnit or Ares test
      */
-    record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<AresPolicyAnnotations.Annotation> policies, boolean registersSandbox,
-            boolean containsTests) {
+    record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<AresPolicyAnnotations.Annotation> policies,
+            Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests) {
 
         /**
          * @return whether the type takes part in the sandbox decision: it is a test class or carries a {@code @Policy}
@@ -140,7 +144,9 @@ final class AresTestSources {
         List<SecurityFrameworkState.UnsupportedReasonType> problems = new ArrayList<>();
         List<AresPolicyAnnotations.Annotation> annotations = AresPolicyAnnotations.find(source);
 
-        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, declarations, depth, problems);
+        List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType = new ArrayList<>();
+        declarations.forEach(_ -> methodPoliciesByType.add(new LinkedHashMap<>()));
+        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, masked, declarations, depth, methodPoliciesByType, problems);
         boolean[] registers = new boolean[declarations.size()];
         boolean[] tests = new boolean[declarations.size()];
         markAresMarkers(masked, declarations, depth, registers, tests, problems);
@@ -150,7 +156,7 @@ final class AresTestSources {
         }
         markJUnitTests(masked, declarations, depth, tests, problems);
 
-        List<TypeDeclaration> types = typeDeclarations(masked, packageName, declarations, policiesByType, registers, tests);
+        List<TypeDeclaration> types = typeDeclarations(masked, packageName, declarations, policiesByType, methodPoliciesByType, registers, tests);
         if (types.stream().filter(TypeDeclaration::isRelevant).count() > 1) {
             addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
         }
@@ -158,12 +164,14 @@ final class AresTestSources {
     }
 
     /**
-     * Assigns every {@code @Policy} annotation to the top-level type it annotates and records the annotations that annotate no such type.
+     * Assigns every {@code @Policy} annotation to the top-level type it annotates, or to the method of such a type, and records the annotations that annotate
+     * neither. A method may carry one annotation; Ares applies it to the test case instead of the annotation of the class.
      *
+     * @param methodPoliciesByType receives the annotations of the methods of each declaration, by its index
      * @return the annotations of each declaration, by its index
      */
-    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, List<Declaration> declarations, int[] depth,
-            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
+    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, String masked, List<Declaration> declarations,
+            int[] depth, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType, List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         List<List<AresPolicyAnnotations.Annotation>> policiesByType = new ArrayList<>();
         declarations.forEach(_ -> policiesByType.add(new ArrayList<>()));
         for (AresPolicyAnnotations.Annotation annotation : annotations) {
@@ -172,7 +180,12 @@ final class AresTestSources {
             }
             int owner = depth[annotation.start()] == 0 ? followingDeclaration(declarations, annotation.start()) : -1;
             if (owner < 0) {
-                addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+                int enclosing = enclosingDeclaration(declarations, annotation.start(), depth);
+                String method = enclosing >= 0 && !declarations.get(enclosing).annotationType() ? AresTestCases.methodNameAfter(masked, annotation.end()) : null;
+                if (method == null || methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) != null) {
+                    // A field, a nested type or an overloaded method with two annotations: the editor cannot tell which test case the annotation belongs to.
+                    addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+                }
             }
             else if (declarations.get(owner).annotationType()) {
                 addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_ON_ANNOTATION_TYPE);
@@ -234,13 +247,15 @@ final class AresTestSources {
      * @return the top-level types of the file, in the order of their declarations
      */
     private static List<TypeDeclaration> typeDeclarations(String masked, @Nullable String packageName, List<Declaration> declarations,
-            List<List<AresPolicyAnnotations.Annotation>> policiesByType, boolean[] registers, boolean[] tests) {
+            List<List<AresPolicyAnnotations.Annotation>> policiesByType, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType, boolean[] registers,
+            boolean[] tests) {
         List<TypeDeclaration> types = new ArrayList<>();
         for (int index = 0; index < declarations.size(); index++) {
             Declaration declaration = declarations.get(index);
             String qualifiedName = qualify(packageName, declaration.simpleName());
             List<String> superclass = declaration.superclass() == null ? List.of() : resolveTypeName(masked, packageName, declaration.superclass());
-            types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)), registers[index], tests[index]));
+            types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)),
+                    Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index]));
         }
         return types;
     }

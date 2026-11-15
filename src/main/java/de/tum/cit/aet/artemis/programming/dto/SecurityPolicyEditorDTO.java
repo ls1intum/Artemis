@@ -10,15 +10,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * The security policies of a programming exercise as the policy editor of the Security Framework loads them from the tests repository (Objective 2).
  *
- * @param baseCommitHash   the commit of the tests repository the policies were read from; a change is only committed if the policies did not change since
- * @param lastCommit       the most recent commit of the tests repository; absent if it has none
- * @param frameworkVersion the Ares version the tests repository pins
- * @param policies         the policy files that active {@code @Policy} annotations point to, sorted by path
- * @param presets          the presets an instructor can base a policy on
+ * @param baseCommitHash            the commit of the tests repository the policies were read from; a change is only committed if the policies did not change since
+ * @param lastCommit                the most recent commit of the tests repository; absent if it has none
+ * @param frameworkVersion          the Ares version the tests repository pins
+ * @param policies                  the policy files that active {@code @Policy} annotations point to, sorted by path
+ * @param presets                   the presets an instructor can base a policy on
+ * @param scanDependenciesAvailable whether the build of the tests repository attaches the Ares agent, which dependency scanning needs: with it, Ares also checks the
+ *                                      libraries of the student code while the tests run
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SecurityPolicyEditorDTO(@Nullable String baseCommitHash, @Nullable CommitDTO lastCommit, @Nullable String frameworkVersion, List<PolicyDTO> policies,
-        List<PresetDTO> presets) {
+        List<PresetDTO> presets, boolean scanDependenciesAvailable) {
 
     /**
      * A commit of the tests repository.
@@ -40,11 +42,11 @@ public record SecurityPolicyEditorDTO(@Nullable String baseCommitHash, @Nullable
      * @param readOnlyReason why the editor cannot change the file without losing something, see
      *                           {@link de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyDocuments.ReadOnlyReason}
      * @param errorLine      the line of the YAML error, 1-based, for {@code YAML_ERROR}
-     * @param referencedBy   the test classes whose active {@code @Policy} annotation points to the file
+     * @param assignedTests  the tests that use the policy: a test class for all of its test cases, or {@code Class#method} for a single test case
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record PolicyDTO(String policyPath, @Nullable String content, @Nullable SecurityPolicyDocumentDTO document, @Nullable String readOnlyReason, @Nullable Integer errorLine,
-            List<String> referencedBy) {
+            List<String> assignedTests) {
     }
 
     /**

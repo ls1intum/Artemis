@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,19 +39,25 @@ final class AresTestCases {
 
     /**
      * @param javaSources the Java sources of the repository by their path relative to its root
-     * @param testClasses the fully qualified names of the test classes
-     * @return the test classes with their test cases, sorted by name
+     * @return the test classes with their test cases, and the other top-level classes of the sources as candidates for test code, sorted by name
      */
-    static SecurityTestStructureDTO structure(Map<String, String> javaSources, Set<String> testClasses) {
-        Map<String, List<String>> testCasesByClass = new TreeMap<>();
+    static SecurityTestStructureDTO structure(Map<String, String> javaSources) {
+        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(javaSources);
+        Set<String> testClassNames = SecurityPolicyRepositoryFiles.testClassPaths(javaSources).keySet();
+        Map<String, SecurityTestStructureDTO.TestClassDTO> classes = new TreeMap<>();
         for (Map.Entry<String, String> source : javaSources.entrySet()) {
-            AresTestSources.Summary summary = AresTestSources.analyze(source.getKey(), source.getValue());
-            AresTestSources.relevantType(summary).filter(type -> testClasses.contains(type.qualifiedName()))
-                    .ifPresent(type -> testCasesByClass.put(type.qualifiedName(), testCases(source.getValue())));
+            for (AresTestSources.TypeDeclaration type : AresTestSources.analyze(source.getKey(), source.getValue()).topLevelTypes()) {
+                String name = type.qualifiedName();
+                SecurityTestAssignments.TestClass testClass = testClasses.get(name);
+                if (testClass != null) {
+                    classes.put(name, new SecurityTestStructureDTO.TestClassDTO(name, testClass.testCases(), true, !testClass.active()));
+                }
+                else if (!testClassNames.contains(name)) {
+                    classes.putIfAbsent(name, new SecurityTestStructureDTO.TestClassDTO(name, List.of(), false, false));
+                }
+            }
         }
-        testClasses.forEach(testClass -> testCasesByClass.putIfAbsent(testClass, List.of()));
-        return new SecurityTestStructureDTO(
-                testCasesByClass.entrySet().stream().map(entry -> new SecurityTestStructureDTO.TestClassDTO(entry.getKey(), entry.getValue())).toList());
+        return new SecurityTestStructureDTO(List.copyOf(classes.values()));
     }
 
     /**
@@ -59,22 +65,30 @@ final class AresTestCases {
      * @return the names of its test methods in the order of the source, each once
      */
     static List<String> testCases(String source) {
+        return new ArrayList<>(testAnnotationOffsets(source).keySet());
+    }
+
+    /**
+     * @param source the content of a Java file
+     * @return for each test method, in the order of the source, the offset of its first test annotation; a new annotation of the method goes before it
+     */
+    static Map<String, Integer> testAnnotationOffsets(String source) {
         String masked = AresPolicyAnnotations.mask(source);
-        Set<String> names = new LinkedHashSet<>();
+        Map<String, Integer> offsets = new LinkedHashMap<>();
         Matcher annotation = TEST_ANNOTATION.matcher(masked);
         while (annotation.find()) {
             String name = methodNameAfter(masked, annotation.end());
             if (name != null) {
-                names.add(name);
+                offsets.putIfAbsent(name, annotation.start());
             }
         }
-        return new ArrayList<>(names);
+        return offsets;
     }
 
     /**
      * @return the name of the method that the annotation ending at the offset annotates; null if none follows before the next body or statement
      */
-    private static @Nullable String methodNameAfter(String masked, int offset) {
+    static @Nullable String methodNameAfter(String masked, int offset) {
         int position = skipArguments(masked, skipWhitespace(masked, offset));
         while (position < masked.length()) {
             char character = masked.charAt(position);

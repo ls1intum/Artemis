@@ -115,7 +115,8 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
         SecurityPolicyDocumentDTO changed = new SecurityPolicyDocumentDTO(document.policyPath(), document.preset(), document.languageConfiguration(), document.supervisedPackage(),
                 document.mainClass(), document.testClasses(), List.of(LOGS), document.network(), document.commands(), document.threads(), document.packages(), document.timeouts(),
                 document.testBehavior());
-        return new SecurityPolicyChangeDTO(editor.baseCommitHash(), "Allow writing logs", List.of(changed));
+        return new SecurityPolicyChangeDTO(editor.baseCommitHash(), "Allow writing logs", null,
+                List.of(new SecurityPolicyChangeDTO.PolicyChangeDTO(document.policyPath(), changed, editor.policies().getFirst().assignedTests())), List.of());
     }
 
     @Test
@@ -128,12 +129,13 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
         assertThat(editor.policies()).singleElement().satisfies(policy -> {
             assertThat(policy.policyPath()).isEqualTo("SecurityPolicy.yaml");
             assertThat(policy.document().testClasses()).containsExactly("de.example.SortingTest");
+            assertThat(policy.assignedTests()).containsExactly("de.example.SortingTest");
         });
         SecurityPolicyPreviewDTO preview = request.postWithResponseBody(basePath + "/policies/preview", addLogsPermission(editor), SecurityPolicyPreviewDTO.class, HttpStatus.OK);
         assertThat(preview.verdict()).isEqualTo("COMPATIBLE");
         assertThat(preview.files().getFirst().after()).contains("onThisPathAndAllPathsBelow: \"logs/\"");
         assertThat(request.get(basePath + "/test-structure", HttpStatus.OK, SecurityTestStructureDTO.class).testClasses())
-                .containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort")));
+                .containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort"), true, false));
         assertThat(request.get(basePath + "/template-files", HttpStatus.OK, SecurityTemplateFilesDTO.class).paths()).contains("data/input.txt", "src/de/example/Client.java");
 
         assertThat(request.postWithResponseBody(basePath + "/policies/import", new SecurityPolicyImportDTO("SecurityPolicy.yaml", POLICY), SecurityPolicyEditorDTO.PolicyDTO.class,
@@ -148,7 +150,7 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorsCannotReadOrChangeThePolicies() throws Exception {
         String headBefore = pushedHead();
-        SecurityPolicyChangeDTO change = new SecurityPolicyChangeDTO(headBefore, null, List.of());
+        SecurityPolicyChangeDTO change = new SecurityPolicyChangeDTO(headBefore, null, null, List.of(), List.of());
 
         getEditor(HttpStatus.FORBIDDEN);
         request.postWithResponseBody(basePath + "/policies/preview", change, SecurityPolicyPreviewDTO.class, HttpStatus.FORBIDDEN);
@@ -168,7 +170,8 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
         String headBefore = pushedHead();
 
         getEditor(HttpStatus.FORBIDDEN);
-        request.putWithResponseBody(basePath + "/policies", new SecurityPolicyChangeDTO(headBefore, null, List.of()), SecurityPolicyCommitResultDTO.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(basePath + "/policies", new SecurityPolicyChangeDTO(headBefore, null, null, List.of(), List.of()), SecurityPolicyCommitResultDTO.class,
+                HttpStatus.FORBIDDEN);
 
         assertThat(pushedHead()).isEqualTo(headBefore);
     }

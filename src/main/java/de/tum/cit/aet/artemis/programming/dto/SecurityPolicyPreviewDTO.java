@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * The policy files a change would write, and whether the Ares version the tests repository pins accepts them.
  *
- * @param files            one entry per changed policy
- * @param frameworkVersion the Ares version the tests repository pins
+ * @param files            one entry per changed file: the policies, and the build file if the change pins another Ares version
+ * @param frameworkVersion the Ares version the tests repository pins after the change
  * @param verdict          {@code COMPATIBLE}, {@code INCOMPATIBLE} or {@code UNVERIFIED}, see
  *                             {@link de.tum.cit.aet.artemis.programming.service.security.AresCompatibilityManifest.Verdict}
  * @param problems         why the pinned version does not accept the files, one entry per file; empty unless {@code INCOMPATIBLE}
@@ -19,13 +19,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record SecurityPolicyPreviewDTO(List<FileDTO> files, @Nullable String frameworkVersion, String verdict, List<String> problems) {
 
     /**
-     * A policy file before and after the change.
+     * A file before and after the change.
      *
-     * @param policyPath the path relative to the root of the tests repository
-     * @param before     the content as committed; absent for a new policy
-     * @param after      the content the change writes
+     * @param path         the path relative to the root of the tests repository
+     * @param previousPath the path the file had before; differs from {@code path} for a renamed policy and is absent for a new one
+     * @param before       the content as committed; absent for a new policy
+     * @param after        the content the change writes; absent for a deleted policy
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record FileDTO(String policyPath, @Nullable String before, String after) {
+    public record FileDTO(String path, @Nullable String previousPath, @Nullable String before, @Nullable String after) {
     }
 }

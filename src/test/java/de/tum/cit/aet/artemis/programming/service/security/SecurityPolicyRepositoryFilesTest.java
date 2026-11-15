@@ -321,15 +321,44 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "class SortingTest {|    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void sorts() {\n    }\n}",
+    @ValueSource(strings = { "class SortingTest {|    @de.tum.cit.ase.ares.api.Policy\n    private int size;\n}",
             "class SortingTest {|    @Test\n    void runs() {\n    }\n\n" + "    @de.tum.cit.ase.ares.api.Policy\n    static class Nested {\n    }\n}" })
-    void policiesOnMembersAreUnsupported(String classAndBody) throws IOException {
+    void policiesOnFieldsAndNestedTypesAreUnsupported(String classAndBody) throws IOException {
         writeBuildFile();
         String[] parts = classAndBody.split("\\|");
         writeSource("test/de/example/SortingTest.java", "package de.example;\n\nimport org.junit.jupiter.api.Test;\n\n@de.tum.cit.ase.ares.api.jupiter.Public\n"
                 + "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n" + parts[0] + "\n" + parts[1] + "\n");
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE, "test/de/example/SortingTest.java");
+    }
+
+    @Test
+    void aPolicyOnATestMethodIsReadForThatTestCase() throws IOException {
+        writeBuildFile();
+        writeSource(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY);
+        writeSource("Stress.yaml", POLICY);
+        writeSource("test/de/example/SortingTest.java", """
+                package de.example;
+
+                import org.junit.jupiter.api.Test;
+
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                class SortingTest {
+
+                    @de.tum.cit.ase.ares.api.Policy(value = "Stress.yaml")
+                    @Test
+                    void sortsManyElements() {
+                    }
+                }
+                """);
+
+        SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
+
+        assertThat(state.status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+        assertThat(state.policyFiles()).extracting(SecurityFrameworkState.PolicyFile::referencedBy).containsExactly(List.of("de.example.SortingTest"),
+                List.of("de.example.SortingTest#sortsManyElements"));
+        assertThat(state.policyFiles()).allSatisfy(policyFile -> assertThat(policyFile.missingTestClasses()).isEmpty());
     }
 
     @Test

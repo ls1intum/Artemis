@@ -156,6 +156,8 @@ class SecurityPolicyEditorServiceTest {
 
     private SecurityPolicyEditorService editorService;
 
+    private SecurityFrameworkService securityFrameworkService;
+
     private final LocalVCRepositoryUri testsUri = mock(LocalVCRepositoryUri.class);
 
     private final LocalVCRepositoryUri templateUri = mock(LocalVCRepositoryUri.class);
@@ -228,9 +230,9 @@ class SecurityPolicyEditorServiceTest {
         solutionParticipation.setId(5L);
         SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         when(solutionParticipationRepository.findByProgrammingExerciseId(anyLong())).thenReturn(Optional.of(solutionParticipation));
-        SecurityFrameworkService securityFrameworkService = new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository,
-                resourceLoaderService, Optional.of(localVCPushProcessingService), solutionParticipationRepository, mock(ProgrammingSubmissionTestRepository.class),
-                new LocalDataProviderService(), "main", new String[] { "2.2.1" });
+        securityFrameworkService = new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
+                Optional.of(localVCPushProcessingService), solutionParticipationRepository, mock(ProgrammingSubmissionTestRepository.class), new LocalDataProviderService(), "main",
+                new String[] { "2.2.1" });
         editorService = new SecurityPolicyEditorService(securityFrameworkService, bareGitRepositoryService, resourceLoaderService);
     }
 
@@ -317,6 +319,20 @@ class SecurityPolicyEditorServiceTest {
                 document.testClasses(), document.files(), document.network(), document.commands(), document.threads(), document.packages(), document.timeouts(), behavior);
     }
 
+    private static SecurityPolicyChangeDTO.PolicyChangeDTO edited(SecurityPolicyDocumentDTO document, List<String> assignedTests) {
+        return new SecurityPolicyChangeDTO.PolicyChangeDTO(document.policyPath(), document, assignedTests);
+    }
+
+    private static SecurityPolicyChangeDTO.PolicyChangeDTO added(SecurityPolicyDocumentDTO document, List<String> assignedTests) {
+        return new SecurityPolicyChangeDTO.PolicyChangeDTO(null, document, assignedTests);
+    }
+
+    private static SecurityPolicyChangeDTO change(SecurityPolicyEditorDTO editor, SecurityPolicyChangeDTO.PolicyChangeDTO... policies) {
+        return new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, null, List.of(policies), List.of());
+    }
+
+    private static final List<String> BOTH_CLASSES = List.of("de.example.SortingTest", "de.example.StressTest");
+
     private static final SecurityPolicyDocumentDTO.FilePermissionDTO LOGS = new SecurityPolicyDocumentDTO.FilePermissionDTO("logs/", false, true, true, false, false);
 
     @Test
@@ -333,7 +349,7 @@ class SecurityPolicyEditorServiceTest {
             assertThat(policy.policyPath()).isEqualTo("SecurityPolicy.yaml");
             assertThat(policy.content()).isEqualTo(POLICY);
             assertThat(policy.readOnlyReason()).isNull();
-            assertThat(policy.referencedBy()).containsExactly("de.example.SortingTest", "de.example.StressTest");
+            assertThat(policy.assignedTests()).containsExactly("de.example.SortingTest", "de.example.StressTest");
             assertThat(policy.document().testClasses()).containsExactly("de.example.SortingTest", "de.example.StressTest");
             assertThat(policy.document().threads()).containsExactly(new SecurityPolicyDocumentDTO.ThreadPermissionDTO("java.util.concurrent.ThreadLocalRandom", 1));
         });
@@ -356,12 +372,14 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
 
-        SecurityPolicyPreviewDTO preview = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)));
+        SecurityPolicyPreviewDTO preview = editorService.preview(exercise(), change(editor, edited(changed, BOTH_CLASSES)));
 
         assertThat(preview.verdict()).isEqualTo("COMPATIBLE");
         assertThat(preview.frameworkVersion()).isEqualTo("2.2.1");
         assertThat(preview.problems()).isEmpty();
         assertThat(preview.files()).singleElement().satisfies(file -> {
+            assertThat(file.path()).isEqualTo("SecurityPolicy.yaml");
+            assertThat(file.previousPath()).isEqualTo("SecurityPolicy.yaml");
             assertThat(file.before()).isEqualTo(POLICY);
             assertThat(file.after()).startsWith("# Ares 2 security policy for the tests of this repository.\n").contains("onThisPathAndAllPathsBelow: \"logs/\"");
         });
@@ -375,8 +393,8 @@ class SecurityPolicyEditorServiceTest {
                 new SecurityPolicyDocumentDTO.TestBehaviorDTO(new SecurityPolicyDocumentDTO.StrictTimeoutDTO(2, "SECONDS", null, null), null, null, null));
         SecurityPolicyDocumentDTO withTestCase = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml", List.of("de.example.SortingTest#testBubbleSort"));
 
-        SecurityPolicyPreviewDTO timeoutPreview = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(withTimeout)));
-        SecurityPolicyPreviewDTO testCasePreview = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(withTestCase)));
+        SecurityPolicyPreviewDTO timeoutPreview = editorService.preview(exercise(), change(editor, edited(withTimeout, BOTH_CLASSES)));
+        SecurityPolicyPreviewDTO testCasePreview = editorService.preview(exercise(), change(editor, edited(withTestCase, BOTH_CLASSES)));
 
         assertThat(timeoutPreview.verdict()).isEqualTo("INCOMPATIBLE");
         assertThat(timeoutPreview.problems()).singleElement().asString().startsWith("SecurityPolicy.yaml: ").contains("regardingStrictTimeouts");
@@ -388,15 +406,17 @@ class SecurityPolicyEditorServiceTest {
     void commitsAChangedPolicyInOneCommitAndStartsTheBuilds() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
-        String expected = editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed))).files().getFirst().after();
+        String expected = editorService.preview(exercise(), change(editor, edited(changed, BOTH_CLASSES))).files().getFirst().after();
 
-        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), "Allow writing logs", List.of(changed)), user);
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(),
+                new SecurityPolicyChangeDTO(editor.baseCommitHash(), "Allow writing logs", null, List.of(edited(changed, BOTH_CLASSES)), List.of()), user);
 
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(expected);
         assertThat(result.config().status()).isEqualTo("CONFIGURED");
         assertThat(result.editor().baseCommitHash()).isEqualTo(pushedHead()).isNotEqualTo(editor.baseCommitHash());
         assertThat(result.editor().lastCommit().authorName()).isEqualTo("Instructor");
         assertThat(loadedPolicy(result.editor()).files()).containsExactly(LOGS);
+        assertThat(readPushed(SORTING_TEST_PATH)).contains(SORTING_TEST);
         try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build(); RevWalk revWalk = new RevWalk(repository)) {
             assertThat(revWalk.parseCommit(repository.resolve("refs/heads/main")).getFullMessage()).startsWith("Allow writing logs\n\n")
                     .contains("Security-Framework-Action: policy");
@@ -410,14 +430,35 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyDocumentDTO existing = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml", List.of("de.example.SortingTest"));
         SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest"));
 
-        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(existing, stress)), user);
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(),
+                change(editor, edited(existing, List.of("de.example.SortingTest")), added(stress, List.of("de.example.StressTest"))), user);
 
         assertThat(readPushed("StressTests.yaml")).hasValueSatisfying(content -> assertThat(content).contains("- \"de.example.StressTest\"").doesNotContain("SortingTest"));
         assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"StressTests.yaml\")"));
         assertThat(readPushed(SORTING_TEST_PATH)).contains(SORTING_TEST);
         assertThat(result.editor().policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::policyPath).containsExactly("SecurityPolicy.yaml", "StressTests.yaml");
-        assertThat(result.editor().policies().getLast().referencedBy()).containsExactly("de.example.StressTest");
+        assertThat(result.editor().policies().getLast().assignedTests()).containsExactly("de.example.StressTest");
         assertThat(result.config().status()).isEqualTo("CONFIGURED");
+    }
+
+    @Test
+    void deactivatingDeletesEveryPolicyFileAndActivatingRestoresThem() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO existing = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml", List.of("de.example.SortingTest"));
+        SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest"));
+        editorService.commit(exercise(), change(editor, edited(existing, List.of("de.example.SortingTest")), added(stress, List.of("de.example.StressTest"))), user);
+        String stressPolicy = readPushed("StressTests.yaml").orElseThrow();
+
+        securityFrameworkService.deactivate(exercise(), user);
+
+        assertThat(readPushed("SecurityPolicy.yaml")).isEmpty();
+        assertThat(readPushed("StressTests.yaml")).isEmpty();
+
+        securityFrameworkService.activate(exercise(), "2.2.1", user);
+
+        assertThat(readPushed("StressTests.yaml")).contains(stressPolicy);
+        assertThat(editorService.getEditor(exercise()).policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::policyPath).containsExactly("SecurityPolicy.yaml",
+                "StressTests.yaml");
     }
 
     @Test
@@ -425,8 +466,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO unused = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of());
 
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(unused)), user))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, added(unused, List.of())), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyUnused"));
         assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
         assertThat(readPushed("StressTests.yaml")).isEmpty();
@@ -439,8 +479,7 @@ class SecurityPolicyEditorServiceTest {
         pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY.replace("ThreadLocalRandom", "ForkJoinPool"));
         String concurrentHead = pushedHead();
 
-        assertThatExceptionOfType(ConflictException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)), user))
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
         assertThat(pushedHead()).isEqualTo(concurrentHead);
         verify(localVCPushProcessingService, never()).processNewPush(any(), any(), any(), any(), any(), any());
@@ -453,8 +492,7 @@ class SecurityPolicyEditorServiceTest {
         afterNextCheckout = () -> pushToTests(STRESS_TEST_PATH,
                 STRESS_TEST.replace("Policy(value = \"SecurityPolicy.yaml\")", "Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
 
-        assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)), user));
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user));
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(POLICY);
     }
 
@@ -464,7 +502,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
         pushToTests("README.md", "Edited in the online editor");
 
-        editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(changed)), user);
+        editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user);
 
         assertThat(readPushed("README.md")).contains("Edited in the online editor");
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(content -> assertThat(content).contains("\"logs/\""));
@@ -476,20 +514,25 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyDocumentDTO withMirroring = withBehavior(loadedPolicy(editor),
                 new SecurityPolicyDocumentDTO.TestBehaviorDTO(null, new SecurityPolicyDocumentDTO.OutputMirroringDTO(true, 1000L), null, null));
 
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(withMirroring)), user))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(withMirroring, BOTH_CLASSES)), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyVersionIncompatible"));
         assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
     }
 
     @Test
-    void refusesATestClassThatIsAssignedToTwoPolicies() throws Exception {
+    void refusesATestThatIsAssignedToTwoPolicies() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest"));
+        SecurityPolicyDocumentDTO sorting = withTestClasses(loadedPolicy(editor), "SortingTests.yaml", List.of("de.example.SortingTest"));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(loadedPolicy(editor), stress)), user))
-                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestClassAssignedTwice"));
+                .isThrownBy(() -> editorService.commit(exercise(), change(editor, added(stress, List.of("de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestAssignedTwice"));
+        // A whole class and one of its test cases cannot use two policies.
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(),
+                        change(editor, edited(loadedPolicy(editor), BOTH_CLASSES), added(sorting, List.of("de.example.SortingTest#testBubbleSort"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestAssignedTwice"));
     }
 
     @Test
@@ -501,8 +544,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO document = withFiles(SecurityPolicyDocuments.parse("SecurityPolicy.yaml", POLICY, null).document(), List.of(LOGS));
 
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(document)), user))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(document, BOTH_CLASSES)), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyReadOnly"));
     }
 
@@ -513,7 +555,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyDocumentDTO document = withTestClasses(loadedPolicy(editor), policyPath, List.of("de.example.StressTest"));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(document)), user))
+                .isThrownBy(() -> editorService.commit(exercise(), change(editor, added(document, List.of("de.example.StressTest"))), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalidPath"));
     }
 
@@ -522,10 +564,10 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(null, null, List.of(loadedPolicy(editor))), user))
+                .isThrownBy(
+                        () -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(null, null, null, List.of(edited(loadedPolicy(editor), BOTH_CLASSES)), List.of()), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyNoBaseCommit"));
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of()), user))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyNoChange"));
     }
 
@@ -534,8 +576,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO document = withFiles(loadedPolicy(editor), List.of(new SecurityPolicyDocumentDTO.FilePermissionDTO("logs/", false, false, false, false, false)));
 
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, List.of(document))))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.preview(exercise(), change(editor, edited(document, BOTH_CLASSES))))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalid"));
     }
 
@@ -555,11 +596,108 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void assignsSingleTestCasesWithAnnotationsOnTheirMethods() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.SortingTest"));
+
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(),
+                change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testBubbleSort", "de.example.StressTest")),
+                        added(stress, List.of("de.example.SortingTest#testMergeSort"))),
+                user);
+
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy\nclass SortingTest {")
+                .contains("    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n    @Test\n    void testBubbleSort()")
+                .contains("    @de.tum.cit.ase.ares.api.Policy(value = \"StressTests.yaml\")\n    @Test\n    void testMergeSort()"));
+        assertThat(readPushed(STRESS_TEST_PATH)).contains(STRESS_TEST);
+        assertThat(result.config().status()).isEqualTo("CONFIGURED");
+        assertThat(result.editor().policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::assignedTests)
+                .containsExactly(List.of("de.example.SortingTest#testBubbleSort", "de.example.StressTest"), List.of("de.example.SortingTest#testMergeSort"));
+
+        // Assigning both test cases to one policy again makes the class annotation point to it, so test cases added later use it too.
+        SecurityPolicyEditorDTO reloaded = result.editor();
+        SecurityPolicyDocumentDTO keptStress = reloaded.policies().getLast().document();
+        editorService.commit(exercise(), new SecurityPolicyChangeDTO(reloaded.baseCommitHash(), null, null,
+                List.of(edited(reloaded.policies().getFirst().document(), BOTH_CLASSES)), List.of(keptStress.policyPath())), user);
+
+        assertThat(readPushed(SORTING_TEST_PATH)).contains(SORTING_TEST);
+        assertThat(readPushed("StressTests.yaml")).isEmpty();
+    }
+
+    @Test
+    void renamesAPolicyAndPointsItsTestsToTheNewFile() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
+
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(),
+                change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", renamed, BOTH_CLASSES)), user);
+
+        assertThat(readPushed("SecurityPolicy.yaml")).isEmpty();
+        assertThat(readPushed("SortingPolicy.yaml")).hasValueSatisfying(content -> assertThat(content).startsWith("# Ares 2 security policy"));
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("Policy(value = \"SortingPolicy.yaml\")"));
+        assertThat(result.editor().policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::policyPath).containsExactly("SortingPolicy.yaml");
+    }
+
+    @Test
+    void deletingAPolicyLetsItsTestsUseTheDefaultPolicy() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(),
+                new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, null, List.of(), List.of("SecurityPolicy.yaml")), user);
+
+        assertThat(readPushed("SecurityPolicy.yaml")).isEmpty();
+        assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy\nclass StressTest"));
+        assertThat(result.config().status()).isEqualTo("CONFIGURED");
+        assertThat(result.editor().policies()).isEmpty();
+    }
+
+    @Test
+    void pinsAnotherVersionWithTheCommit() throws Exception {
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO change = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, "2.2.1", List.of(), List.of());
+
+        SecurityPolicyPreviewDTO preview = editorService.preview(exercise(), change);
+        editorService.commit(exercise(), change, user);
+
+        assertThat(preview.frameworkVersion()).isEqualTo("2.2.1");
+        assertThat(preview.files()).singleElement().satisfies(file -> {
+            assertThat(file.path()).isEqualTo("build.gradle");
+            assertThat(file.after()).contains("aresVersion = '2.2.1'");
+        });
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.2.1'"));
+    }
+
+    @Test
+    void refusesDependencyScanningWithoutTheAresAgent() {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO document = loadedPolicy(editor);
+        SecurityPolicyDocumentDTO scanning = new SecurityPolicyDocumentDTO(document.policyPath(), document.preset(), "JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION",
+                document.supervisedPackage(), document.mainClass(), document.testClasses(), document.files(), document.network(), document.commands(), document.threads(),
+                document.packages(), document.timeouts(), document.testBehavior());
+
+        assertThat(editor.scanDependenciesAvailable()).isFalse();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(scanning, BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyAgentMissing"));
+    }
+
+    @Test
+    void refusesATestWhoseClassThePolicyDoesNotDeclare() {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of());
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(),
+                        change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest")), added(stress, List.of("de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestClassNotDeclared"));
+    }
+
+    @Test
     void listsTheTestClassesWithTheirTestCases() {
         SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
 
-        assertThat(structure.testClasses()).containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort")),
-                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements")));
+        assertThat(structure.testClasses()).containsExactly(
+                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort"), true, false),
+                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements"), true, false));
     }
 
     @Test

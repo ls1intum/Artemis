@@ -14,12 +14,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
@@ -150,33 +152,68 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Renders the changed policies without committing them, and checks them against the Ares version the tests repository pins.
+     * Renders the changed files without committing them, and checks the policies against the Ares version the tests repository pins after the change.
      *
      * @param exercise the programming exercise
-     * @param change   the changed policies
-     * @return the files before and after the change and whether the pinned version accepts them
+     * @param change   the changes
+     * @return the files before and after the change and whether the pinned version accepts the policies
      */
     public SecurityPolicyPreviewDTO preview(ProgrammingExercise exercise, SecurityPolicyChangeDTO change) {
         securityFrameworkService.validateJavaExercise(exercise);
-        requireValidDocuments(change);
+        requireValidChange(change);
         return readTestRepository(exercise, (repository, commit) -> {
             RevTree tree = commit.getTree();
             @Nullable
-            String frameworkVersion = frameworkVersion(repository, tree);
+            String gradleBuild = SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null);
+            @Nullable
+            String mavenPom = SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null);
+            @Nullable
+            String pinned = SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, mavenPom).orElse(null);
+            @Nullable
+            String frameworkVersion = change.frameworkVersion() != null ? change.frameworkVersion() : pinned;
             Set<String> existingPaths = SecurityFrameworkService.evaluate(repository, tree).policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath)
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toCollection(TreeSet::new));
             List<SecurityPolicyPreviewDTO.FileDTO> files = new ArrayList<>();
-            for (SecurityPolicyDocumentDTO document : change.policies()) {
-                String path = requireValidPolicyPath(document.policyPath());
+            Set<String> changedPaths = new HashSet<>();
+            for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+                String path = requireValidPolicyPath(policy.document().policyPath());
+                @Nullable
+                String previousPath = policy.previousPolicyPath() == null ? null : requireValidPolicyPath(policy.previousPolicyPath());
+                @Nullable
+                String before = previousPath != null && existingPaths.contains(previousPath) ? SecurityFrameworkService.readPolicyFile(repository, tree, previousPath).content()
+                        : null;
+                files.add(new SecurityPolicyPreviewDTO.FileDTO(path, previousPath, before, SecurityPolicyDocuments.render(policy.document(), before)));
+                changedPaths.add(previousPath == null ? path : previousPath);
+            }
+            for (String removedPath : change.removedPolicyPaths()) {
+                String path = requireValidPolicyPath(removedPath);
+                @Nullable
                 String before = existingPaths.contains(path) ? SecurityFrameworkService.readPolicyFile(repository, tree, path).content() : null;
-                files.add(new SecurityPolicyPreviewDTO.FileDTO(path, before, SecurityPolicyDocuments.render(document, before)));
+                files.add(new SecurityPolicyPreviewDTO.FileDTO(path, path, before, null));
+                changedPaths.add(path);
             }
             List<String> problems = new ArrayList<>();
             AresCompatibilityManifest.Verdict verdict = AresCompatibilityManifest.Verdict.COMPATIBLE;
             for (SecurityPolicyPreviewDTO.FileDTO file : files) {
-                VersionCheck check = checkAgainstVersion(file.policyPath(), file.after(), frameworkVersion);
-                problems.addAll(check.problems());
-                verdict = worse(verdict, check.verdict());
+                if (file.after() != null) {
+                    VersionCheck check = checkAgainstVersion(file.path(), file.after(), frameworkVersion);
+                    problems.addAll(check.problems());
+                    verdict = worse(verdict, check.verdict());
+                }
+            }
+            if (frameworkVersion != null && !frameworkVersion.equals(pinned)) {
+                // Another version also has to accept the policies the change keeps as they are.
+                for (String path : existingPaths) {
+                    @Nullable
+                    String content = changedPaths.contains(path) ? null : SecurityFrameworkService.readPolicyFile(repository, tree, path).content();
+                    if (content != null) {
+                        VersionCheck check = checkAgainstVersion(path, content, frameworkVersion);
+                        problems.addAll(check.problems());
+                        verdict = worse(verdict, check.verdict());
+                    }
+                }
+                SecurityPolicyRepositoryFiles.pinAresVersion(gradleBuild, mavenPom, frameworkVersion)
+                        .ifPresent(build -> files.add(new SecurityPolicyPreviewDTO.FileDTO(build.path(), build.path(), build.before(), build.after())));
             }
             return new SecurityPolicyPreviewDTO(files, frameworkVersion, verdict.name(), problems);
         });
@@ -200,27 +237,27 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Writes the changed policies to the tests repository in one commit and pushes it. The test classes a new or changed policy lists by their fully qualified
-     * name are pointed to that policy, so Ares applies it to them.
+     * Applies the changes to the tests repository in one commit and pushes it: writes, renames and deletes policy files, rewrites the {@code @Policy}
+     * annotations so the assigned tests use their policy, and pins another Ares version if requested.
      *
      * @param exercise the programming exercise
-     * @param change   the changed policies, with the commit the editor loaded them from
+     * @param change   the changes, with the commit the editor loaded the policies from
      * @param user     the acting user, who authors the commit
      * @return the policies and the Security Framework state after the commit
      */
     public SecurityPolicyCommitResultDTO commit(ProgrammingExercise exercise, SecurityPolicyChangeDTO change, User user) {
         securityFrameworkService.validateJavaExercise(exercise);
-        requireValidDocuments(change);
-        if (change.policies().isEmpty()) {
-            throw new BadRequestAlertException("The change contains no policy.", ENTITY_NAME, "securityPolicyNoChange");
+        requireValidChange(change);
+        if (change.policies().isEmpty() && change.removedPolicyPaths().isEmpty() && change.frameworkVersion() == null) {
+            throw new BadRequestAlertException("The change contains nothing to commit.", ENTITY_NAME, "securityPolicyNoChange");
         }
         if (change.baseCommitHash() == null || !ObjectId.isId(change.baseCommitHash())) {
             throw new BadRequestAlertException("The change does not name the commit the policies were loaded from.", ENTITY_NAME, "securityPolicyNoBaseCommit");
         }
         SecurityFrameworkConfigDTO config = securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION, true,
                 repository -> applyChange(repository, change));
-        log.info("User {} changed the security policies {} of programming exercise {}", user.getLogin(),
-                change.policies().stream().map(SecurityPolicyDocumentDTO::policyPath).toList(), exercise.getId());
+        log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
+                change.policies().stream().map(policy -> policy.document().policyPath()).toList(), change.removedPolicyPaths(), exercise.getId());
         return new SecurityPolicyCommitResultDTO(getEditor(exercise), config);
     }
 
@@ -233,8 +270,7 @@ public class SecurityPolicyEditorService {
     public SecurityTestStructureDTO getTestStructure(ProgrammingExercise exercise) {
         securityFrameworkService.validateJavaExercise(exercise);
         return readTestRepository(exercise, (repository, commit) -> {
-            Map<String, String> javaSources = SecurityFrameworkService.javaSources(repository, commit.getTree());
-            return AresTestCases.structure(javaSources, SecurityPolicyRepositoryFiles.testClassPaths(javaSources).keySet());
+            return AresTestCases.structure(SecurityFrameworkService.javaSources(repository, commit.getTree()));
         });
     }
 
@@ -307,6 +343,8 @@ public class SecurityPolicyEditorService {
     private SecurityPolicyEditorDTO editorAt(Repository repository, RevCommit commit) throws IOException {
         RevTree tree = commit.getTree();
         SecurityFrameworkState state = SecurityFrameworkService.evaluate(repository, tree);
+        Map<String, List<String>> assignedTests = SecurityTestAssignments
+                .entriesByPolicy(SecurityTestAssignments.read(SecurityFrameworkService.javaSources(repository, tree)).values());
         List<SecurityPolicyEditorDTO.PolicyDTO> policies = new ArrayList<>();
         for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
             Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
@@ -314,22 +352,21 @@ public class SecurityPolicyEditorService {
                     : SecurityPolicyRepositoryFiles.PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
             SecurityPolicyDocuments.Parsed parsed = SecurityPolicyDocuments.parse(policyFile.policyPath(), content.content(), content.problem());
             policies.add(new SecurityPolicyEditorDTO.PolicyDTO(policyFile.policyPath(), content.content(), parsed.document(),
-                    parsed.reason() == null ? null : parsed.reason().name(), parsed.errorLine(), policyFile.referencedBy()));
+                    parsed.reason() == null ? null : parsed.reason().name(), parsed.errorLine(), assignedTests.getOrDefault(policyFile.policyPath(), List.of())));
         }
         PersonIdent author = commit.getAuthorIdent();
         SecurityPolicyEditorDTO.CommitDTO lastCommit = new SecurityPolicyEditorDTO.CommitDTO(commit.name(), author.getName(),
                 ZonedDateTime.ofInstant(author.getWhenAsInstant(), author.getZoneId()));
-        return new SecurityPolicyEditorDTO(commit.name(), lastCommit, frameworkVersion(repository, tree), policies, presets);
-    }
-
-    private static @Nullable String frameworkVersion(Repository repository, RevTree tree) throws IOException {
-        return SecurityPolicyRepositoryFiles.parseAresVersion(SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null),
-                SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null)).orElse(null);
+        SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(
+                SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null),
+                SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null));
+        return new SecurityPolicyEditorDTO(commit.name(), lastCommit, SecurityPolicyRepositoryFiles.parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).orElse(null),
+                policies, presets, SecurityPolicyRepositoryFiles.attachesJavaAgent(buildFiles));
     }
 
     /**
-     * Applies a change to the checkout: checks that the policies did not change since the editor loaded them, writes the policy files and points the listed
-     * test classes to them.
+     * Applies a change to the checkout: checks that the policies did not change since the editor loaded them, pins the requested version, writes, renames and
+     * deletes the policy files and rewrites the {@code @Policy} annotations of the test classes whose assignment changes.
      */
     private void applyChange(Repository repository, SecurityPolicyChangeDTO change) {
         Path root = repository.getLocalPath();
@@ -348,61 +385,179 @@ public class SecurityPolicyEditorService {
                 .collect(Collectors.toMap(SecurityFrameworkState.PolicyFile::policyPath, Function.identity()));
         @Nullable
         String frameworkVersion = SecurityPolicyRepositoryFiles.readAresVersion(root).orElse(null);
-        Map<String, String> testClassPaths = SecurityPolicyRepositoryFiles.testClassPaths(SecurityPolicyRepositoryFiles.javaSources(root));
-        Map<String, String> policyByTestClass = new HashMap<>();
-        Set<String> newPolicies = new HashSet<>();
+        if (change.frameworkVersion() != null && !change.frameworkVersion().equals(frameworkVersion)) {
+            securityFrameworkService.validateFrameworkVersion(change.frameworkVersion());
+            SecurityPolicyRepositoryFiles.writeAresVersion(root, change.frameworkVersion());
+            frameworkVersion = change.frameworkVersion();
+        }
+        boolean javaAgent = SecurityPolicyRepositoryFiles.attachesJavaAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
+
+        // The paths the change frees: deleted policies and the old paths of renamed ones.
+        Set<String> removed = new LinkedHashSet<>();
+        for (String removedPath : change.removedPolicyPaths()) {
+            removed.add(requireExistingPolicy(existing, requireValidPolicyPath(removedPath)));
+        }
+        Set<String> vacated = new HashSet<>(removed);
+        Set<String> touched = new HashSet<>(removed);
+        for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+            if (policy.previousPolicyPath() != null) {
+                String previousPath = requireExistingPolicy(existing, requireValidPolicyPath(policy.previousPolicyPath()));
+                if (!touched.add(previousPath)) {
+                    throw refused("The policy " + previousPath + " is listed twice.", "securityPolicyDuplicate", Map.of("path", previousPath));
+                }
+                if (!previousPath.equals(policy.document().policyPath())) {
+                    vacated.add(previousPath);
+                }
+            }
+        }
+
         Map<String, String> rendered = new LinkedHashMap<>();
-        for (SecurityPolicyDocumentDTO document : change.policies()) {
+        for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+            SecurityPolicyDocumentDTO document = policy.document();
             String path = requireValidPolicyPath(document.policyPath());
             @Nullable
             String previous = null;
-            if (existing.containsKey(path)) {
-                previous = SecurityPolicyRepositoryFiles.readPolicyFile(root, path).content();
-                if (SecurityPolicyDocuments.parse(path, previous, existing.get(path).problem()).document() == null) {
-                    throw new BadRequestAlertException("The policy " + path + " can only be changed in the repository, because the editor cannot keep all of its content.",
-                            ENTITY_NAME, "securityPolicyReadOnly");
+            if (policy.previousPolicyPath() != null) {
+                String previousPath = requireValidPolicyPath(policy.previousPolicyPath());
+                previous = SecurityPolicyRepositoryFiles.readPolicyFile(root, previousPath).content();
+                if (SecurityPolicyDocuments.parse(previousPath, previous, existing.get(previousPath).problem()).document() == null) {
+                    throw refused("The policy " + previousPath + " can only be changed in the repository, because the editor cannot keep all of its content.",
+                            "securityPolicyReadOnly", Map.of("path", previousPath));
                 }
             }
-            else {
-                if (Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
-                    throw new BadRequestAlertException("The file " + path + " already exists in the tests repository.", ENTITY_NAME, "securityPolicyFileExists");
-                }
-                newPolicies.add(path);
+            boolean samePath = path.equals(policy.previousPolicyPath());
+            if (!samePath && !vacated.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
+                throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
             }
-            for (String testClass : document.testClasses()) {
-                if (testClassPaths.containsKey(testClass)) {
-                    String other = policyByTestClass.put(testClass, path);
-                    if (other != null && !other.equals(path)) {
-                        throw new BadRequestAlertException("The test class " + testClass + " is assigned to the policies " + other + " and " + path + ".", ENTITY_NAME,
-                                "securityPolicyTestClassAssignedTwice");
-                    }
-                }
+            if (usesInstrumentation(document.languageConfiguration()) && !javaAgent && (previous == null || !previous.contains("_INSTRUMENTATION"))) {
+                throw refused("The build of the tests repository does not attach the Ares agent, which scanning dependencies needs.", "securityPolicyAgentMissing",
+                        Map.of("path", path));
             }
             String content = SecurityPolicyDocuments.render(document, previous);
             VersionCheck check = checkAgainstVersion(path, content, frameworkVersion);
             if (check.verdict() == AresCompatibilityManifest.Verdict.INCOMPATIBLE) {
-                throw new BadRequestAlertException("The pinned Ares version " + frameworkVersion + " does not accept the policy: " + String.join("; ", check.problems()),
-                        ENTITY_NAME, "securityPolicyVersionIncompatible");
+                throw versionIncompatible(frameworkVersion, check.problems());
             }
             rendered.put(path, content);
         }
+        if (change.frameworkVersion() != null) {
+            // Another version also has to accept the policies the change keeps as they are.
+            for (String path : existing.keySet()) {
+                if (!touched.contains(path)) {
+                    @Nullable
+                    String content = SecurityPolicyRepositoryFiles.readPolicyFile(root, path).content();
+                    VersionCheck check = content == null ? new VersionCheck(AresCompatibilityManifest.Verdict.UNVERIFIED, List.of())
+                            : checkAgainstVersion(path, content, frameworkVersion);
+                    if (check.verdict() == AresCompatibilityManifest.Verdict.INCOMPATIBLE) {
+                        throw versionIncompatible(frameworkVersion, check.problems());
+                    }
+                }
+            }
+        }
+
+        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(SecurityPolicyRepositoryFiles.javaSources(root));
+        Map<String, String> requested = requestedEntries(change, testClasses, touched);
+
+        vacated.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path));
         rendered.forEach((path, content) -> SecurityPolicyRepositoryFiles.writePolicy(root, path, content));
-        Map<String, String> policyBySource = new TreeMap<>();
-        policyByTestClass.forEach((testClass, path) -> policyBySource.put(testClassPaths.get(testClass), path));
-        SecurityPolicyRepositoryFiles.pointTestClassesToPolicies(root, policyBySource);
+        List<SecurityTestAssignments.TestClass> reassigned = new ArrayList<>();
+        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
+            Map<String, String> entries = new LinkedHashMap<>();
+            requested.forEach((entry, path) -> {
+                if (SecurityTestAssignments.testClassOf(entry).equals(testClass.qualifiedName())) {
+                    entries.put(entry, path);
+                }
+            });
+            SecurityTestAssignments.TestClass assigned = testClass.with(entries);
+            if (testClass.active() && !assigned.entries().equals(testClass.entries())) {
+                reassigned.add(assigned);
+            }
+        }
+        SecurityPolicyRepositoryFiles.assignTestCases(root, reassigned);
 
         SecurityFrameworkState after = SecurityPolicyRepositoryFiles.evaluate(root);
         Set<String> referencedPolicies = after.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath).collect(Collectors.toSet());
-        for (String newPolicy : newPolicies) {
-            if (!referencedPolicies.contains(newPolicy)) {
-                throw new BadRequestAlertException("The new policy " + newPolicy + " is not used by any test class. Assign at least one test class to it.", ENTITY_NAME,
-                        "securityPolicyUnused");
+        for (String path : rendered.keySet()) {
+            if (!referencedPolicies.contains(path)) {
+                throw refused("No test uses the policy " + path + ". Assign at least one test case to it.", "securityPolicyUnused", Map.of("path", path));
             }
         }
         if (after.status() != SecurityActivationStatus.CONFIGURED) {
-            throw new BadRequestAlertException("The change would leave the Security Framework " + after.status() + ", so it was not committed.", ENTITY_NAME,
-                    "securityPolicyBreaksConfiguration");
+            throw refused("The change would leave the Security Framework " + after.status() + ", so it was not committed.", "securityPolicyBreaksConfiguration",
+                    Map.of("status", after.status().name()));
         }
+    }
+
+    /**
+     * The policy of every assigned test after the change: the policies the change does not touch keep their tests, and each listed policy gets the tests it
+     * lists. A test can only use one policy, and a whole test class cannot be assigned together with one of its test cases.
+     *
+     * @param touched the paths in the repository of the policies the change rewrites, renames or deletes
+     * @return the policy path by entry, see {@link SecurityTestAssignments}
+     */
+    private static Map<String, String> requestedEntries(SecurityPolicyChangeDTO change, Map<String, SecurityTestAssignments.TestClass> testClasses, Set<String> touched) {
+        Map<String, String> requested = new LinkedHashMap<>();
+        testClasses.values().forEach(testClass -> testClass.entries().forEach((entry, path) -> {
+            if (!touched.contains(path)) {
+                requested.put(entry, path);
+            }
+        }));
+        for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+            String path = requireValidPolicyPath(policy.document().policyPath());
+            Set<String> declared = new HashSet<>(policy.document().testClasses());
+            for (String entry : policy.assignedTests()) {
+                SecurityTestAssignments.TestClass testClass = testClasses.get(SecurityTestAssignments.testClassOf(entry));
+                if (testClass == null || !SecurityTestAssignments.isValidEntry(testClass, entry)) {
+                    throw refused("The tests repository has no test " + entry + ".", "securityPolicyUnknownTest", Map.of("test", entry));
+                }
+                if (!testClass.active()) {
+                    throw refused("The test class " + testClass.qualifiedName() + " runs without the sandbox, so its tests cannot use a policy.", "securityPolicyTestSwitchedOff",
+                            Map.of("testClass", testClass.qualifiedName()));
+                }
+                if (!declared.contains(testClass.qualifiedName())) {
+                    throw refused("The policy " + path + " does not declare the test class " + testClass.qualifiedName() + " of its test " + entry + ".",
+                            "securityPolicyTestClassNotDeclared", Map.of("path", path, "testClass", testClass.qualifiedName()));
+                }
+                String other = requested.put(entry, path);
+                if (other != null && !other.equals(path)) {
+                    throw assignedTwice(entry, other, path);
+                }
+            }
+        }
+        Map<String, String> wholeClasses = new HashMap<>();
+        requested.forEach((entry, path) -> {
+            if (entry.indexOf(SecurityTestAssignments.METHOD_SEPARATOR) < 0) {
+                wholeClasses.put(entry, path);
+            }
+        });
+        requested.forEach((entry, path) -> {
+            String wholeClass = wholeClasses.get(SecurityTestAssignments.testClassOf(entry));
+            if (wholeClass != null && !entry.equals(SecurityTestAssignments.testClassOf(entry))) {
+                throw assignedTwice(entry, wholeClass, path);
+            }
+        });
+        return requested;
+    }
+
+    private static String requireExistingPolicy(Map<String, SecurityFrameworkState.PolicyFile> existing, String path) {
+        if (!existing.containsKey(path)) {
+            throw refused("No test uses the policy " + path + " in the tests repository.", "securityPolicyNotFound", Map.of("path", path));
+        }
+        return path;
+    }
+
+    private static boolean usesInstrumentation(@Nullable String languageConfiguration) {
+        return languageConfiguration != null && languageConfiguration.endsWith("_INSTRUMENTATION");
+    }
+
+    private static BadRequestAlertException assignedTwice(String test, String first, String second) {
+        return refused("The test " + test + " is assigned to the policies " + first + " and " + second + ".", "securityPolicyTestAssignedTwice",
+                Map.of("test", test, "first", first, "second", second));
+    }
+
+    private static BadRequestAlertException versionIncompatible(@Nullable String frameworkVersion, List<String> problems) {
+        return refused("The pinned Ares version " + frameworkVersion + " does not accept the policy: " + String.join("; ", problems), "securityPolicyVersionIncompatible",
+                Map.of("version", Objects.requireNonNullElse(frameworkVersion, ""), "details", String.join("; ", problems)));
     }
 
     /**
@@ -502,16 +657,26 @@ public class SecurityPolicyEditorService {
         };
     }
 
-    private static void requireValidDocuments(SecurityPolicyChangeDTO change) {
+    private static void requireValidChange(SecurityPolicyChangeDTO change) {
         Set<String> paths = new HashSet<>();
-        for (SecurityPolicyDocumentDTO document : change.policies()) {
-            String path = requireValidPolicyPath(document.policyPath());
-            if (!paths.add(path)) {
-                throw new BadRequestAlertException("The policy " + path + " is listed twice.", ENTITY_NAME, "securityPolicyDuplicate");
+        for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+            if (policy.document() == null) {
+                throw new BadRequestAlertException("A changed policy has no content.", ENTITY_NAME, "securityPolicyNoChange");
             }
-            List<String> problems = SecurityPolicyDocuments.validate(document);
+            String path = requireValidPolicyPath(policy.document().policyPath());
+            if (!paths.add(path)) {
+                throw refused("The policy " + path + " is listed twice.", "securityPolicyDuplicate", Map.of("path", path));
+            }
+            List<String> problems = SecurityPolicyDocuments.validate(policy.document());
             if (!problems.isEmpty()) {
-                throw new BadRequestAlertException("The policy " + path + " is not valid: " + String.join(" ", problems), ENTITY_NAME, "securityPolicyInvalid");
+                throw refused("The policy " + path + " is not valid: " + String.join(" ", problems), "securityPolicyInvalid",
+                        Map.of("path", path, "details", String.join(" ", problems)));
+            }
+        }
+        for (String removedPath : change.removedPolicyPaths()) {
+            String path = requireValidPolicyPath(removedPath);
+            if (paths.contains(path)) {
+                throw refused("The policy " + path + " is listed twice.", "securityPolicyDuplicate", Map.of("path", path));
             }
         }
     }
@@ -524,7 +689,14 @@ public class SecurityPolicyEditorService {
         Optional<String> path = Optional.ofNullable(policyPath).flatMap(SecurityPolicyRepositoryFiles::validatePolicyPath)
                 .filter(validPath -> POLICY_FILE_EXTENSIONS.stream().anyMatch(validPath::endsWith))
                 .filter(validPath -> validPath.indexOf('"') < 0 && validPath.indexOf('\\') < 0 && validPath.chars().noneMatch(Character::isISOControl));
-        return path.orElseThrow(() -> new BadRequestAlertException("The policy path " + policyPath + " is not valid.", ENTITY_NAME, "securityPolicyInvalidPath"));
+        return path.orElseThrow(() -> refused("The policy path " + policyPath + " is not valid.", "securityPolicyInvalidPath", Map.of("path", String.valueOf(policyPath))));
+    }
+
+    /**
+     * @return the error that refuses a request; the client shows its translation with the parameters, so the message names the translation
+     */
+    private static BadRequestAlertException refused(String defaultMessage, String errorKey, Map<String, Object> params) {
+        return new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, defaultMessage, ENTITY_NAME, errorKey, Map.of("message", "error." + errorKey, "params", params));
     }
 
     private static String commitMessage(@Nullable String commitMessage) {

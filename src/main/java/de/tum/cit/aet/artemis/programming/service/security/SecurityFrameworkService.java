@@ -652,7 +652,10 @@ public class SecurityFrameworkService {
             // Nothing to do; a commit here would also become a misleading restore point for the next activation.
             return;
         }
+        // Every policy file an active annotation points to is deleted, not only SecurityPolicy.yaml, because the policy editor can add more of them.
         SecurityPolicyRepositoryFiles.deletePolicy(root);
+        state.policyFiles().forEach(policyFile -> SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath())
+                .ifPresent(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path)));
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
     }
 
@@ -1032,7 +1035,7 @@ public class SecurityFrameworkService {
         }
     }
 
-    private void validateFrameworkVersion(String frameworkVersion) {
+    void validateFrameworkVersion(String frameworkVersion) {
         if (!getFrameworkVersions().selectableVersions().contains(frameworkVersion)) {
             throw new BadRequestAlertException("Unsupported Security Framework version: " + frameworkVersion, ENTITY_NAME, "unsupportedFrameworkVersion");
         }

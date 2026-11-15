@@ -12,6 +12,8 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Finds and rewrites the Ares {@code @Policy} annotations of a Java source file.
  * <p>
@@ -40,6 +42,8 @@ final class AresPolicyAnnotations {
     private static final String ACTIVATED_ARGUMENT = "activated";
 
     private static final String VALUE_ARGUMENT = "value";
+
+    private static final String WITHIN_PATH_ARGUMENT = "withinPath";
 
     private static final String FALSE_LITERAL = "false";
 
@@ -169,37 +173,144 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * Points every Ares {@code @Policy} annotation of the source that can be evaluated to another policy file. Only the {@code value} argument changes; an
-     * unnamed value stays unnamed, and the {@code activated} argument and every other argument are kept. An annotation that already points to the file is not
-     * touched.
+     * Renders an annotation that points to another policy file, or to none. Only the {@code value} argument changes; an unnamed value stays unnamed if it
+     * remains the only argument, and the {@code activated} argument and every other argument are kept. Without a policy file the annotation makes Ares apply
+     * its strict default policy.
      *
-     * @param source     the content of a Java file
-     * @param policyPath the validated path of the policy file relative to the repository root; it contains no quote and no backslash
+     * @param annotation an evaluable annotation, see {@link Annotation#isEvaluable()}
+     * @param policyPath the validated path of the policy file relative to the repository root, without quotes and backslashes; null for none
+     * @return the annotation as it should be written
+     */
+    static String withPolicyPath(Annotation annotation, @Nullable String policyPath) {
+        Map<String, Argument> arguments = new LinkedHashMap<>();
+        if (policyPath != null) {
+            String literal = quote(policyPath);
+            Argument previous = annotation.arguments().get(VALUE_ARGUMENT);
+            // A value that was written without its name stays so while it is the only argument; a new one is written with its name, like the templates do.
+            boolean named = previous == null || previous.named() || annotation.arguments().keySet().stream().anyMatch(name -> !VALUE_ARGUMENT.equals(name));
+            arguments.put(VALUE_ARGUMENT, new Argument(named, named ? VALUE_ARGUMENT + " = " + literal : literal, literal));
+        }
+        annotation.arguments().forEach((name, argument) -> {
+            if (!VALUE_ARGUMENT.equals(name)) {
+                arguments.put(name, argument);
+            }
+        });
+        if (arguments.isEmpty()) {
+            return annotation.name();
+        }
+        StringJoiner rendered = new StringJoiner(", ", annotation.name() + "(", ")");
+        arguments.values().forEach(argument -> rendered.add(arguments.size() == 1 ? argument.text() : argument.render()));
+        return rendered.toString();
+    }
+
+    /**
+     * Renders the annotation for a test method, written like the annotation of its class: with the same name and the same {@code withinPath} argument, so
+     * Ares resolves the policy file the same way.
+     *
+     * @param classAnnotation the evaluable annotation of the test class
+     * @param policyPath      the validated path of the policy file relative to the repository root, without quotes and backslashes
+     * @return the annotation as it should be written
+     */
+    static String methodAnnotation(Annotation classAnnotation, String policyPath) {
+        StringJoiner rendered = new StringJoiner(", ", classAnnotation.name() + "(", ")");
+        rendered.add(VALUE_ARGUMENT + " = " + quote(policyPath));
+        Argument withinPath = classAnnotation.arguments().get(WITHIN_PATH_ARGUMENT);
+        if (withinPath != null) {
+            rendered.add(withinPath.render());
+        }
+        return rendered.toString();
+    }
+
+    /**
+     * Rewrites the {@code @Policy} annotations of a test class so that its test cases use the given policy files: the annotation of the class points to
+     * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, and the annotations of the other
+     * methods are removed. Annotations that already point to the right file are not touched, and new method annotations go on their own line above the
+     * method's first test annotation, indented like it.
+     *
+     * @param path              the path of the file relative to the repository root
+     * @param source            the content of a Java file with exactly one test class, whose annotation is evaluable
+     * @param classPolicyPath   the validated policy path for the class annotation; null for the strict default policy
+     * @param methodPolicyPaths the validated policy path for each test method that uses another policy than the class
      * @return the rewritten source
      */
-    static String setPolicyPath(String source, String policyPath) {
+    static String assign(String path, String source, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths) {
+        AresTestSources.TypeDeclaration type = AresTestSources.relevantType(AresTestSources.analyze(path, source)).filter(declaration -> declaration.policies().size() == 1)
+                .orElseThrow(() -> new IllegalArgumentException("The file " + path + " has no test class with one @Policy annotation"));
+        Annotation classAnnotation = type.policies().getFirst();
+        // Each edit replaces the range [start, end) of the original source; they are applied from the end so the offsets of the others stay valid.
+        List<int[]> ranges = new ArrayList<>();
+        List<String> replacements = new ArrayList<>();
+        if (!classAnnotation.policyPath().equals(Optional.ofNullable(classPolicyPath))) {
+            ranges.add(new int[] { classAnnotation.start(), classAnnotation.end() });
+            replacements.add(withPolicyPath(classAnnotation, classPolicyPath));
+        }
+        type.methodPolicies().forEach((method, annotation) -> {
+            String target = methodPolicyPaths.get(method);
+            if (target == null) {
+                ranges.add(lineRange(source, annotation.start(), annotation.end()));
+                replacements.add("");
+            }
+            else if (!annotation.policyPath().equals(Optional.of(target))) {
+                ranges.add(new int[] { annotation.start(), annotation.end() });
+                replacements.add(withPolicyPath(annotation, target));
+            }
+        });
+        Map<String, Integer> testAnnotations = AresTestCases.testAnnotationOffsets(source);
+        String lineSeparator = source.contains("\r\n") ? "\r\n" : "\n";
+        methodPolicyPaths.forEach((method, target) -> {
+            if (type.methodPolicies().containsKey(method)) {
+                return;
+            }
+            Integer offset = testAnnotations.get(method);
+            if (offset == null) {
+                throw new IllegalArgumentException("The test class in " + path + " has no test case " + method);
+            }
+            int lineStart = source.lastIndexOf('\n', offset - 1) + 1;
+            String indentation = source.substring(lineStart, offset);
+            boolean ownLine = indentation.isBlank();
+            ranges.add(new int[] { ownLine ? lineStart : offset, ownLine ? lineStart : offset });
+            replacements.add(ownLine ? indentation + methodAnnotation(classAnnotation, target) + lineSeparator : methodAnnotation(classAnnotation, target) + " ");
+        });
+        List<Integer> order = new ArrayList<>();
+        for (int index = 0; index < ranges.size(); index++) {
+            order.add(index);
+        }
+        order.sort((first, second) -> Integer.compare(ranges.get(second)[0], ranges.get(first)[0]));
+        StringBuilder result = new StringBuilder(source);
+        for (int index : order) {
+            result.replace(ranges.get(index)[0], ranges.get(index)[1], replacements.get(index));
+        }
+        return result.toString();
+    }
+
+    /**
+     * @return the range to remove for an annotation: its whole line if nothing else is on it, otherwise the annotation and the whitespace after it
+     */
+    private static int[] lineRange(String source, int start, int end) {
+        int lineStart = source.lastIndexOf('\n', start - 1) + 1;
+        int after = end;
+        while (after < source.length() && (source.charAt(after) == ' ' || source.charAt(after) == '\t')) {
+            after++;
+        }
+        boolean aloneOnLine = source.substring(lineStart, start).isBlank() && (after == source.length() || source.charAt(after) == '\n' || source.charAt(after) == '\r');
+        if (!aloneOnLine) {
+            return new int[] { start, after };
+        }
+        int lineEnd = after;
+        if (lineEnd < source.length() && source.charAt(lineEnd) == '\r') {
+            lineEnd++;
+        }
+        if (lineEnd < source.length() && source.charAt(lineEnd) == '\n') {
+            lineEnd++;
+        }
+        return new int[] { lineStart, lineEnd };
+    }
+
+    private static String quote(String policyPath) {
         if (policyPath.indexOf('"') >= 0 || policyPath.indexOf('\\') >= 0) {
             throw new IllegalArgumentException("A policy path must not contain quotes or backslashes: " + policyPath);
         }
-        StringBuilder result = new StringBuilder(source);
-        List<Annotation> annotations = find(source);
-        String literal = "\"" + policyPath + "\"";
-        // Replace from the end, so the offsets of the annotations before stay valid.
-        for (int i = annotations.size() - 1; i >= 0; i--) {
-            Annotation annotation = annotations.get(i);
-            if (!annotation.isEvaluable() || annotation.policyPath().filter(policyPath::equals).isPresent()) {
-                continue;
-            }
-            Map<String, Argument> arguments = new LinkedHashMap<>();
-            Argument previous = annotation.arguments().get(VALUE_ARGUMENT);
-            boolean named = previous == null || previous.named() || annotation.arguments().size() > 1;
-            arguments.put(VALUE_ARGUMENT, new Argument(named, named ? VALUE_ARGUMENT + " = " + literal : literal, literal));
-            annotation.arguments().forEach((name, argument) -> arguments.putIfAbsent(name, argument));
-            StringJoiner rendered = new StringJoiner(", ", annotation.name() + "(", ")");
-            arguments.values().forEach(argument -> rendered.add(argument.text()));
-            result.replace(annotation.start(), annotation.end(), rendered.toString());
-        }
-        return result.toString();
+        return "\"" + policyPath + "\"";
     }
 
     private static String render(Annotation annotation, boolean active) {
