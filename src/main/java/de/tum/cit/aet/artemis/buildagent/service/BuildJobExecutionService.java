@@ -156,6 +156,8 @@ public class BuildJobExecutionService {
     public BuildResult runBuildJob(BuildJobQueueItem buildJob) {
         // The id is used as a folder name, so it is validated before the build starts.
         validateBuildJobId(buildJob.id());
+        // The repository names and checkout directories end up in folder names, so they are validated as well.
+        BuildJobQueueItemValidator.validate(buildJob);
         // Bind this job's clone token to the executing thread for the whole job. Every git operation below reaches
         // the credential through BuildJobGitService, including the ones inherited from AbstractGitService that carry
         // no build job context. The finally is essential: executor threads are reused, and a token left behind would

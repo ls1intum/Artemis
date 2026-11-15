@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-12
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -519,6 +519,18 @@ template areas as they are migrated.
 
 - Use JSDoc style comments for functions, interfaces, enums, and classes.
 - Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation without having to read the code.
+
+### Rendering markdown and user-provided text
+
+Render markdown through `ArtemisMarkdownService`, the `markdown` directive or `htmlForMarkdown`, never through a hand-built `innerHTML` binding.
+`htmlForMarkdown` validates its input:
+
+- Style sheets, form controls and document level elements (`style`, `form`, `input`, `button`, `select`, `textarea`, `link`, `meta`, `base`, `object`, `embed`) are removed.
+- The inline `style` attribute is removed everywhere except inside formulas, which KaTeX needs. A caller that must keep it lists `style` in `allowedHtmlAttributes`.
+- Images keep rendering, including remote ones, but are requested with `referrerpolicy="no-referrer"` so that the address of the page is not passed on to the image host.
+  Blocking remote images altogether would break posts that legitimately embed them; restrict them with an `img-src` rule if a deployment needs that.
+
+Render text that is not markdown, such as text produced by a language model, with interpolation (`{{ text }}`), not with `[innerHTML]`.
 
 ### Strings
 

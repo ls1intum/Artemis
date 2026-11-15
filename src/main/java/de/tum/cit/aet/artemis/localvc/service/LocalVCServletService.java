@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -118,6 +119,10 @@ public class LocalVCServletService {
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
+    private final long maxRepositorySizeMb;
+
+    private final long maxTestsAndSolutionRepositorySizeMb;
+
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, RepositoryAccessService repositoryAccessService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
@@ -125,7 +130,8 @@ public class LocalVCServletService {
             RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             UserVcsAccessTokenService userVcsAccessTokenService, LocalVCRepositoryResolverService repositoryResolver, LocalVCAccessLogRecorderService accessLogRecorder,
             LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
+            @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}") long maxTestsAndSolutionRepositorySizeMb) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -144,6 +150,8 @@ public class LocalVCServletService {
         this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.maxRepositorySizeMb = maxRepositorySizeMb;
+        this.maxTestsAndSolutionRepositorySizeMb = maxTestsAndSolutionRepositorySizeMb;
     }
 
     /**
@@ -478,6 +486,21 @@ public class LocalVCServletService {
         String projectKey = localVCRepositoryUri.getProjectKey();
 
         return getBuildConfigOrThrow(projectKey).isAllowBranching();
+    }
+
+    /**
+     * Returns the maximum size of the files of a repository, which a push must not exceed. Template repositories and student repositories (and everything that is not a tests or
+     * solution repository) have a smaller limit than tests and solution repositories.
+     *
+     * @param repository the repository that receives the push
+     * @return the limit in bytes, or {@link Long#MAX_VALUE} if the limit is disabled by configuration
+     */
+    public long getMaxRepositorySizeBytes(Repository repository) {
+        String repositoryTypeOrUserName = repositoryResolver.parseRepositoryUri(repository.getDirectory().toPath()).getRepositoryTypeOrUserName();
+        boolean isTestsOrSolutionRepository = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+        long limitInMegabytes = isTestsOrSolutionRepository ? maxTestsAndSolutionRepositorySizeMb : maxRepositorySizeMb;
+        return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
     }
 
     public static enum BranchingStatus {

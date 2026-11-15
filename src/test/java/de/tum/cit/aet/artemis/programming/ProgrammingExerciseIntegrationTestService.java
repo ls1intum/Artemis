@@ -2292,6 +2292,18 @@ public class ProgrammingExerciseIntegrationTestService {
                 HttpStatus.CONFLICT);
     }
 
+    void testReEvaluateAndUpdateProgrammingExercise_changedShortName_badRequest() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        String originalShortName = programmingExercise.getShortName();
+        // the DTO is built from the changed values of the entity, which is not saved
+        programmingExercise.setShortName(originalShortName + "x");
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", updateDTO, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseTestRepository.findById(programmingExercise.getId()).orElseThrow().getShortName()).isEqualTo(originalShortName);
+    }
+
     /**
      * Creates a course with one programming exercise and returns that exercise, loaded with the associations
      * {@link UpdateProgrammingExerciseDTO#of} needs.

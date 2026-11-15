@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIA
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -155,6 +157,7 @@ public class ProgrammingExerciseValidationService {
         validateBuildConfigSize(buildConfig);
         validateBuildPhaseNames(buildConfig);
         validateDockerFlags(buildConfig);
+        validateBuildTimeWindow(programmingExercise, buildConfig);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -249,9 +252,11 @@ public class ProgrammingExerciseValidationService {
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
      */
     public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        // The features are known whenever the exercise can be built, which is the only case in which static code analysis can be configured
+        programmingLanguageFeatureService.ifPresent(featureService -> {
+            ProgrammingLanguageFeature programmingLanguageFeature = featureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+            programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        });
     }
 
     /**
@@ -265,6 +270,32 @@ public class ProgrammingExerciseValidationService {
                 || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
                 || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
             throw new BadRequestAlertException("The custom checkout paths cannot be changed!", "programmingExercise", "checkoutDirectoriesChanged");
+        }
+    }
+
+    /**
+     * Validates the optional build time window of a programming exercise. The window must be well-formed, must lie within the period in which students can work on the
+     * exercise (from its start date or, without one, its release date until its due date, as far as these dates are set) and is not available for exam exercises.
+     *
+     * @param exercise    the exercise whose dates the window is checked against
+     * @param buildConfig the build configuration holding the window
+     * @throws BadRequestAlertException if the window is invalid
+     */
+    public void validateBuildTimeWindow(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+        BuildTimeWindow window = buildConfig.getBuildTimeWindow();
+        if (window == null) {
+            return;
+        }
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The build time window is not available for exam exercises", "Exercise", "buildTimeWindowNotSupportedForExams");
+        }
+        if (window.start() != null && window.end() != null && !window.start().isBefore(window.end())) {
+            throw new BadRequestAlertException("The build time window must end after it starts", "Exercise", "buildTimeWindowEndBeforeStart");
+        }
+        ZonedDateTime earliest = exercise.getStartDate() != null ? exercise.getStartDate() : exercise.getReleaseDate();
+        if (!window.isWithin(earliest, exercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "Exercise",
+                    "buildTimeWindowOutsideExerciseDates");
         }
     }
 
@@ -444,6 +475,24 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
+     * Checks that an exercise with automatic assessment has at least one active test case with a weight above zero.
+     *
+     * @param exercise the programming exercise to be checked
+     * @throws BadRequestAlertException if no test case has a positive weight
+     */
+    public void validateAutomaticAssessmentTestWeights(ProgrammingExercise exercise) {
+        // It has already been checked when setting the test case weights that their sum is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
+        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
+                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
+                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
+            }
+        }
+    }
+
+    /**
      * Checks whether the exercise to be updated has valid references to its template and solution repositories and build plans.
      *
      * @param exercise    the programming exercise to be checked
@@ -451,8 +500,6 @@ public class ProgrammingExerciseValidationService {
      * @throws BadRequestAlertException if one of the references is invalid
      */
     public void checkProgrammingExerciseForError(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
-        validateBuildPhaseNames(buildConfig);
-
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -468,16 +515,6 @@ public class ProgrammingExerciseValidationService {
         var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
         if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
             throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
-        }
-
-        // It has already been checked when setting the test case weights that their sum is at least >= 0.
-        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
-        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
-                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
-                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
-            }
         }
     }
 

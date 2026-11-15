@@ -110,6 +110,9 @@ public class StudentExamResource {
 
     private static final String ENTITY_NAME = "studentExam";
 
+    /** The longest message that a teaching assistant can show to a student with an attendance check. */
+    private static final int MAX_ATTENDANCE_CHECK_MESSAGE_LENGTH = 1000;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -216,6 +219,9 @@ public class StudentExamResource {
         log.debug("REST request for attendance-check for student : {}", studentLogin);
 
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+        if (message != null && message.length() > MAX_ATTENDANCE_CHECK_MESSAGE_LENGTH) {
+            throw new BadRequestAlertException("The message must not be longer than " + MAX_ATTENDANCE_CHECK_MESSAGE_LENGTH + " characters", "studentExam", "messageTooLong");
+        }
 
         return ResponseEntity.ok(studentExamLiveEventService.createAttendanceCheckEvent(examId, studentLogin, message));
     }

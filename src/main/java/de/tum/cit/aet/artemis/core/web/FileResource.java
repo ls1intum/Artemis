@@ -261,6 +261,20 @@ public class FileResource {
     }
 
     /**
+     * The pictures of a drag and drop question of a course quiz are only available for students once the quiz is released. Teaching assistants and above can always see them.
+     *
+     * @param question the drag and drop question the picture belongs to
+     * @param course   the course of the quiz
+     * @throws AccessForbiddenException if the quiz of a course is not released yet and the user is a student
+     */
+    private void checkQuizReleasedForStudentsElseThrow(DragAndDropQuestion question, Course course) {
+        var exercise = question.getExercise();
+        if (!exercise.isExamExercise() && !exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            throw new AccessForbiddenException("The quiz is not released yet");
+        }
+    }
+
+    /**
      * GET /files/drag-and-drop/questions/:questionId/backgrounds/:filename : Get the background file with the given name for the given drag and drop question
      *
      * @param questionId ID of the drag and drop question, the file belongs to
@@ -275,6 +289,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        checkQuizReleasedForStudentsElseThrow(question, course);
         String backgroundFilePath = question.getBackgroundFilePath();
         if (backgroundFilePath == null) {
             throw new EntityNotFoundException("Drag and drop question " + questionId + " has no background file");
@@ -304,6 +319,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        checkQuizReleasedForStudentsElseThrow(question, course);
         DragItem dragItem = question.findDragItemById(dragItemId);
         String pictureFilePath = dragItem == null ? null : dragItem.getPictureFilePath();
         if (pictureFilePath == null) {

@@ -1076,14 +1076,20 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
         courseTestService.testGetCourseTitle();
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetCourseTitleAndAllowedComplaintsAsUserOutsideTheCourse_forbidden() throws Exception {
+        courseTestService.testGetCourseTitleAndAllowedComplaintsForUserOutsideTheCourse(TEST_PREFIX + "outsider");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCourseTitleForNonExistingCourse() throws Exception {
         courseTestService.testGetCourseTitleForNonExistingCourse();
     }

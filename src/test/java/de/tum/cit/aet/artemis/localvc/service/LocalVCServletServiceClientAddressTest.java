@@ -53,7 +53,7 @@ class LocalVCServletServiceClientAddressTest {
                 mock(AuxiliaryRepositoryService.class), Optional.empty(), mock(ParticipationVCSAccessTokenRepository.class), mock(RepositoryVCSAccessTokenRepository.class),
                 mock(AuthorizationCheckService.class), rateLimitService, mock(UserVcsAccessTokenService.class), mock(LocalVCRepositoryResolverService.class),
                 mock(LocalVCAccessLogRecorderService.class), mock(LocalVCBuildAgentAuthenticationService.class), mock(PasswordAuthenticationNoticeService.class),
-                new BuildAgentNetworkPolicy(configuration, new MockEnvironment()));
+                new BuildAgentNetworkPolicy(configuration, new MockEnvironment()), 20L, 50L);
     }
 
     /**

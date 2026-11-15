@@ -681,6 +681,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
         headers.set("X-Artemis-Client-Fingerprint", "bar");
+        // An address header of the request is not used, the session stores the address that the servlet container resolved
         headers.set("X-Forwarded-For", "10.0.28.1");
         return headers;
     }
@@ -768,7 +769,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(examSession.getIpAddress()).isNull();
         assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
         assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
-        assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
+        assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("127.0.0.1");
     }
 
     /**
@@ -1333,6 +1334,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(result.text()).isEqualTo(testMessage);
         assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testExamAttendanceCheckRejectsTooLongMessage() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var tooLongMessage = "a".repeat(1001);
+        request.postWithPlainStringResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", tooLongMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

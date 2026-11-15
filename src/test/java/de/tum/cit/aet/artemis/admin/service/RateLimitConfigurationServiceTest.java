@@ -105,6 +105,15 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_FailedLogin_UsesTheCustomValueOrTheDefault() {
+        when(properties.getFailedLoginRequestsPerMinute()).thenReturn(4);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.FAILED_LOGIN)).isEqualTo(4);
+
+        when(properties.getFailedLoginRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.FAILED_LOGIN)).isEqualTo(RateLimitType.FAILED_LOGIN.getDefaultRpm());
+    }
+
+    @Test
     void testGetEffectiveRpm_GitAuthentication_UsesTheCustomValueOrTheDefault() {
         when(properties.getGitAuthenticationRequestsPerMinute()).thenReturn(300);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(300);
@@ -121,6 +130,15 @@ class RateLimitConfigurationServiceTest {
 
         assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(300);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(20);
+    }
+
+    @Test
+    void testGetEffectiveRpm_ServiceCredentialFailure_UsesTheCustomValueOrTheDefault() {
+        when(properties.getServiceCredentialFailureRequestsPerMinute()).thenReturn(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.SERVICE_CREDENTIAL_FAILURE)).isEqualTo(7);
+
+        when(properties.getServiceCredentialFailureRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.SERVICE_CREDENTIAL_FAILURE)).isEqualTo(RateLimitType.SERVICE_CREDENTIAL_FAILURE.getDefaultRpm());
     }
 
     @Test

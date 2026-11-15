@@ -51,4 +51,11 @@ public interface ApollonDiagramRepository extends ArtemisJpaRepository<ApollonDi
             WHERE ad.id = :diagramId
             """)
     String getDiagramTitle(@Param("diagramId") Long diagramId);
+
+    @Query("""
+            SELECT ad.courseId
+            FROM ApollonDiagram ad
+            WHERE ad.id = :diagramId
+            """)
+    Long findCourseIdById(@Param("diagramId") Long diagramId);
 }

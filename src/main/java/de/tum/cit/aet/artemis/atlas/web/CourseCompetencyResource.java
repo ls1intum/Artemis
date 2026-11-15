@@ -130,6 +130,11 @@ public class CourseCompetencyResource {
     @GetMapping("course-competencies/{competencyId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCompetencyTitle(@PathVariable long competencyId) {
+        Long courseId = courseCompetencyRepository.findCourseIdById(competencyId).orElse(null);
+        if (courseId == null) {
+            return ResponseEntity.notFound().build();
+        }
+        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         final var title = courseCompetencyRepository.getCompetencyTitle(competencyId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
@@ -238,6 +243,9 @@ public class CourseCompetencyResource {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = courseCompetencyRepository.findByIdWithExercisesElseThrow(competencyId);
+        if (!courseCompetencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the course", "courseCompetency", "competencyCourseMismatch");
+        }
 
         var progress = competencyProgressService.getCompetencyCourseProgress(competency, course);
 

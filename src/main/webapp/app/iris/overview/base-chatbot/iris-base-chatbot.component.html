@@ -450,8 +450,7 @@
                             </textarea>
                             @if (ghostText()) {
                                 <div class="ghost-text-overlay" aria-hidden="true">
-                                    <span class="ghost-text-mirror">{{ newMessageTextContent() }}</span
-                                    ><span class="ghost-text-suggestion">{{ ghostText() }}</span>
+                                    <span class="ghost-text-mirror">{{ newMessageTextContent() }}</span><span class="ghost-text-suggestion">{{ ghostText() }}</span>
                                 </div>
                             }
                             @if (chipPreviewText() && !isInputDisabled()) {

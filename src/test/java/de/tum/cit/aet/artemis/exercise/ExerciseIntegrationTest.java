@@ -1370,7 +1370,17 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetExerciseTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
+
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetExerciseTitleForNonExistingExercise() throws Exception {
         request.get("/api/exercise/exercises/12312321321/title", HttpStatus.NOT_FOUND, String.class);
     }
