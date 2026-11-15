@@ -98,7 +98,7 @@ jobs:
       - name: Setup Node.js for dependency selection
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26'
       - name: Determine relevant tests
         id: determine
         run: supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh base_branch
@@ -138,7 +138,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -357,7 +357,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -565,7 +565,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -756,7 +756,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
