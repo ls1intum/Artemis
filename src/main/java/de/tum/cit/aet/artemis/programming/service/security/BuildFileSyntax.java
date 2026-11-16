@@ -26,6 +26,9 @@ final class BuildFileSyntax {
     /** The variable, property or object an interpolation in a Gradle string starts with, e.g. {@code agentJar} in {@code ${agentJar.singleFile}}. */
     private static final Pattern INTERPOLATED_NAME = Pattern.compile("\\$\\{?\\s*+([A-Za-z_]\\w*+)");
 
+    /** How a statement gives a variable or property its value right after its name: an assignment or a call such as {@code .from(...)}. */
+    private static final Pattern TAKES_VALUE = Pattern.compile("\\s*+(?:\\+?=(?!=)|\\.\\s*+(?:from|setFrom|set|convention)\\s*+\\()");
+
     /** The last characters of a line after which a Gradle statement continues on the next line. */
     private static final String CONTINUING_ENDS = "=(,.+:";
 
@@ -80,7 +83,8 @@ final class BuildFileSyntax {
         }
         Matcher source = Pattern.compile("\\b" + Pattern.quote(interpolation.group(1)) + "\\b").matcher(code);
         while (source.find()) {
-            if (configuration.matcher(statementAfter(code, source.end())).find()) {
+            String statement = statementAfter(code, source.end());
+            if (TAKES_VALUE.matcher(statement).lookingAt() && configuration.matcher(statement).find()) {
                 return true;
             }
         }
@@ -88,11 +92,17 @@ final class BuildFileSyntax {
     }
 
     /**
-     * @return the rest of the statement after the offset: the rest of its line and every following line while the statement continues, because a line
-     *         ends with an operator such as {@code =} or the next one starts with a method call, as in {@code def agentJar =} followed by
+     * @return the rest of the statement after the offset, up to a semicolon: the rest of its line and every following line while the statement continues,
+     *         because a line ends with an operator such as {@code =} or the next one starts with a method call, as in {@code def agentJar =} followed by
      *         {@code configurations.aresAgent} on the next line
      */
     private static String statementAfter(String code, int offset) {
+        String statement = continuedLinesAfter(code, offset);
+        int semicolon = statement.indexOf(';');
+        return semicolon < 0 ? statement : statement.substring(0, semicolon);
+    }
+
+    private static String continuedLinesAfter(String code, int offset) {
         int end = code.indexOf('\n', offset);
         while (end >= 0) {
             String statement = code.substring(offset, end).stripTrailing();

@@ -49,11 +49,16 @@ class BuildFileSyntaxTest {
         String declaredButNotAttached = "dependencies {\n    testRuntimeOnly \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\ntest {\n    jvmArgs '-javaagent:jacocoagent.jar'\n}\n";
         String otherInterpolatedAgent = "dependencies {\n    testRuntimeOnly \"de.tum.cit.ase:ares:1.0:agent\"\n}\ndef runtimeFiles = configurations.testRuntimeOnly\n"
                 + "def jacocoJar = file('jacocoagent.jar')\ntest {\n    jvmArgs \"-javaagent:${jacocoJar}\"\n}\n";
+        String sameLine = otherInterpolatedAgent.replace("def runtimeFiles = configurations.testRuntimeOnly\ndef jacocoJar = file('jacocoagent.jar')",
+                "def jacocoJar = file('jacocoagent.jar'); def runtimeFiles = configurations.testRuntimeOnly");
+        String mentionedOnly = otherInterpolatedAgent.replace("def runtimeFiles = configurations.testRuntimeOnly", "println jacocoJar.name + configurations.testRuntimeOnly.name");
         String mavenJacocoOnly = "<project><artifactId>ares</artifactId><classifier>agent</classifier><argLine>-javaagent:${project.build.directory}/jacoco.jar</argLine></project>";
 
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(jacoco))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(declaredButNotAttached))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(otherInterpolatedAgent))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(sameLine))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(mentionedOnly))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenJacocoOnly))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(commented))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenComment))).isFalse();
