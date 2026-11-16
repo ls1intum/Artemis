@@ -186,7 +186,7 @@ export class CompetencyManagementTableComponent {
             data: dialogData,
         });
 
-        dialogRef.onClose.subscribe((result) => {
+        dialogRef.onClose.subscribe((result: ImportAllFromCourseResult | undefined) => {
             if (result) {
                 const courseTitle = result.courseForImportDTO.title ?? '';
 
