@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -221,6 +223,80 @@ describe('ForwardMessageDialogComponent', () => {
         searchInput.dispatchEvent(down);
         expect(down.defaultPrevented).toBe(false);
     });
+
+    it('keeps the active recipient at each end of the list while navigating with arrows', () => {
+        const navigate = (key: string) => {
+            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+        };
+        navigate('ArrowDown');
+        const options = fixture.nativeElement.querySelectorAll('[data-testid="forward-destination-option"]') as NodeListOf<HTMLElement>;
+        navigate('ArrowUp');
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(options[0].id);
+        for (let index = 0; index <= options.length; index++) {
+            navigate('ArrowDown');
+        }
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(options[options.length - 1].id);
+        navigate('ArrowUp');
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(options[options.length - 2].id);
+    });
+
+    it('collapses the recipient list when focus leaves the input and lets Escape reach the dialog', () => {
+        searchInput.click();
+        fixture.detectChanges();
+        expect(component.isInputFocused).toBe(true);
+        searchInput.dispatchEvent(new FocusEvent('blur'));
+        fixture.detectChanges();
+        expect(component.isInputFocused).toBe(false);
+        expect(searchInput.getAttribute('aria-expanded')).toBe('false');
+        const keydown = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', keydown);
+        const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        searchInput.dispatchEvent(escape);
+        expect(escape.defaultPrevented).toBe(false);
+        expect(keydown).toHaveBeenCalledOnce();
+    });
+
+    it('offers remote user matches without selected users and sends the newly selected recipient', () => {
+        component.courseId.set(123);
+        component.selectedUsers = [component.users()[0]];
+        const recipient = { id: 5, name: 'User Two', imageUrl: 'user2.png' } as UserPublicInfoDTO;
+        const search = vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers').mockReturnValue(of(new HttpResponse({ body: [component.users()[0], recipient] })));
+        searchInput.value = 'USER';
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(search).toHaveBeenCalledExactlyOnceWith(123, 'user', ['students', 'tutors', 'instructors']);
+        const options = fixture.nativeElement.querySelectorAll('[data-testid="forward-destination-option"]') as NodeListOf<HTMLElement>;
+        expect(options).toHaveLength(1);
+        expect(options[0].textContent).toContain('User Two');
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+
+        expect(component.selectedUsers).toEqual([component.users()[0], recipient]);
+        expect(searchInput.getAttribute('aria-expanded')).toBe('false');
+        const close = vi.spyOn(TestBed.inject(DynamicDialogRef), 'close');
+        (fixture.nativeElement.querySelector('[data-testid="forward-send-button"]') as HTMLButtonElement).click();
+        expect(close).toHaveBeenCalledWith({ channels: [], users: [component.users()[0], recipient], messageContent: undefined });
+    });
+
+    it.each([of(new HttpResponse<UserPublicInfoDTO[]>({})), throwError(() => new Error('Search unavailable'))])(
+        'keeps matching channels available when remote user search returns no data or fails',
+        (response) => {
+            component.courseId.set(123);
+            vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers').mockReturnValue(response);
+            searchInput.value = 'General';
+            searchInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+
+            expect(component.filteredUsers()).toEqual([]);
+            expect(component.filteredOptions().map((option) => option.name)).toEqual(['General']);
+            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+            expect(component.selectedChannels.map((channel) => channel.name)).toEqual(['General']);
+        },
+    );
 
     it('should initialize combined options with channels and users', () => {
         expect(component.combinedOptions()).toEqual([

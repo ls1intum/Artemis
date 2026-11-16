@@ -256,6 +256,50 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
     });
 
     describe('Canvas Rendering', () => {
+        it.each([
+            { width: 500, height: 400, renderedWidth: 1000, containerHeight: '60vh' },
+            { width: 400, height: 500, renderedWidth: 640, containerHeight: '800px' },
+        ])('renders a $width by $height page after opening and clears the loading indicator', ({ width, height, renderedWidth, containerHeight }) => {
+            const original = component.originalCanvas()!;
+            original.width = width;
+            original.height = height;
+            Object.defineProperty(mockContainer, 'clientWidth', { value: 1000, configurable: true });
+            Object.defineProperty(mockContainer, 'clientHeight', { value: 800, configurable: true });
+            const context = mockEnlargedCanvas.getContext('2d')!;
+            expect(component.isEnlargedCanvasLoading()).toBe(true);
+            expect(mockContainer.style.overflow).toBe('hidden');
+
+            vi.advanceTimersByTime(516);
+            fixture.detectChanges();
+
+            expect(mockEnlargedCanvas.width).toBe(renderedWidth);
+            expect(mockEnlargedCanvas.height).toBe(800);
+            expect(context.drawImage).toHaveBeenLastCalledWith(original, 0, 0, renderedWidth, 800);
+            expect(mockContainer.style.height).toBe(containerHeight);
+            expect(component.isEnlargedCanvasLoading()).toBe(false);
+            expect(fixture.nativeElement.querySelector('tumaet-ui-progress-spinner')).toBeNull();
+        });
+
+        it('redraws the current page when the browser window is resized', () => {
+            vi.clearAllTimers();
+            Object.defineProperty(mockContainer, 'clientWidth', { value: 750, configurable: true });
+            Object.defineProperty(mockContainer, 'clientHeight', { value: 600, configurable: true });
+            const pages = [createMockCanvas(), createMockCanvas(), createMockCanvas()];
+            for (const page of pages) {
+                const pageContainer = document.createElement('div');
+                pageContainer.className = 'pdf-canvas-container';
+                pageContainer.append(page);
+                mockContainer.append(pageContainer);
+            }
+            component.currentPage.set(3);
+            const context = mockEnlargedCanvas.getContext('2d')!;
+
+            window.dispatchEvent(new Event('resize'));
+            vi.advanceTimersByTime(16);
+
+            expect(context.drawImage).toHaveBeenLastCalledWith(pages[2], 0, 0, 750, 600);
+        });
+
         it('should calculate the correct scale factor for horizontal slides', () => {
             // Mock container dimensions
             Object.defineProperty(mockContainer, 'clientWidth', { value: 1000, configurable: true });
