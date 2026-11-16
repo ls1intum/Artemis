@@ -364,6 +364,7 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         Files.createSymbolicLink(repository.resolve("inside-link"), Path.of("file.txt"));
         Files.createDirectories(repository.resolve("sub"));
         Files.createSymbolicLink(repository.resolve("sub/absolute-inside-link"), repository.resolve("file.txt").toAbsolutePath());
+        Files.createSymbolicLink(repository.resolve("sub/self"), repository.resolve("sub").toAbsolutePath());
         Files.createSymbolicLink(repository.resolve("outside-file-link"), outsideDirectory.resolve("outside.txt"));
         Files.createSymbolicLink(repository.resolve("outside-directory-link"), outsideDirectory);
 
@@ -371,12 +372,16 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
         List<String> names = new ArrayList<>();
         String absoluteLinkTarget = null;
+        String selfLinkTarget = null;
         try (TarArchiveInputStream tar = new TarArchiveInputStream(Files.newInputStream(archive))) {
             TarArchiveEntry entry;
             while ((entry = tar.getNextEntry()) != null) {
                 names.add(entry.getName());
                 if (entry.getName().endsWith("absolute-inside-link")) {
                     absoluteLinkTarget = entry.getLinkName();
+                }
+                if (entry.getName().endsWith("sub/self")) {
+                    selfLinkTarget = entry.getLinkName();
                 }
                 Assertions.assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).doesNotContain("outside content");
             }
@@ -386,6 +391,7 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         }
         Assertions.assertThat(names).contains("repository/file.txt", "repository/inside-link");
         Assertions.assertThat(absoluteLinkTarget).as("an absolute target inside the repository is archived relative to the link").isEqualTo("../file.txt");
+        Assertions.assertThat(selfLinkTarget).as("a link to its own directory has a target that is not empty").isEqualTo(".");
         assertThat(names.stream().noneMatch(name -> name.contains("outside"))).as("links leaving the repository are not archived").isTrue();
     }
 }
