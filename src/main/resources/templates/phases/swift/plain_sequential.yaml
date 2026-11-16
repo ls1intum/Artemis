@@ -10,8 +10,9 @@
   script: |-
     cd ${studentParentWorkingDirectoryName}
     status=0
-    swift test --filter 'AttributeTest|ClassTest|MethodTest' || status=$?
-    mv tests.xml structural-tests.xml
+    # Swift Testing appends -swift-testing to the name of the xUnit file
+    swift test --filter 'AttributeTest|ClassTest|MethodTest' --xunit-output tests.xml || status=$?
+    mv tests-swift-testing.xml structural-tests.xml
     exit $status
   resultPaths:
     - '${studentParentWorkingDirectoryName}/structural-tests.xml'
@@ -19,8 +20,8 @@
   script: |-
     cd ${studentParentWorkingDirectoryName}
     status=0
-    swift test --filter 'SortingExampleBehaviorTest' || status=$?
-    mv tests.xml behavior-tests.xml
+    swift test --filter 'SortingExampleBehaviorTest' --xunit-output tests.xml || status=$?
+    mv tests-swift-testing.xml behavior-tests.xml
     exit $status
   resultPaths:
     - '${studentParentWorkingDirectoryName}/behavior-tests.xml'

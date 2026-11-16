@@ -10,9 +10,10 @@
 - name: test
   script: |-
     cd ${studentParentWorkingDirectoryName}
-    swift test
+    # Swift Testing appends -swift-testing to the name of the xUnit file, so the results are in tests-swift-testing.xml
+    swift test --xunit-output tests.xml
   resultPaths:
-    - '${studentParentWorkingDirectoryName}/tests.xml'
+    - '${studentParentWorkingDirectoryName}/tests-swift-testing.xml'
 - name: finalize
   script: |-
     # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
