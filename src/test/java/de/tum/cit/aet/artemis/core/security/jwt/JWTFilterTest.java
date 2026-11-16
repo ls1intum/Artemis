@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -430,5 +431,66 @@ class JWTFilterTest {
             logAppender.stop();
             logger.setLevel(previousLevel);
         }
+    }
+
+    @Test
+    void aToolTokenIsRejectedOnTheWebsocketHandshake() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/websocket/websocket");
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        jwtFilter.doFilter(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(filterChain.getRequest()).as("the request is not passed on").isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void aToolTokenIsRejectedOutsideTheRestEndpoints() throws Exception {
+        for (String path : List.of("/management/health", "/websocket/info", "/other")) {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
+            request.setCookies(new Cookie(Constants.JWT_COOKIE_NAME, createToolToken()));
+            MockHttpServletResponse response = new MockHttpServletResponse();
+
+            jwtFilter.doFilter(request, response, new MockFilterChain());
+
+            assertThat(response.getStatus()).as(path).isEqualTo(HttpStatus.FORBIDDEN.value());
+        }
+    }
+
+    @Test
+    void aToolTokenIsAuthenticatedOnTheRestEndpoints() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/core/test");
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        jwtFilter.doFilter(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(filterChain.getRequest()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    @Test
+    void aTokenWithoutToolIsStillAuthenticatedOnTheWebsocketHandshake() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/websocket/websocket");
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + tokenProvider.createToken(authentication, false));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        jwtFilter.doFilter(request, response, new MockFilterChain());
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    private String createToolToken() {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        return tokenProvider.createToken(authentication, TOKEN_VALIDITY_IN_MILLISECONDS, ToolTokenType.SCORPIO);
     }
 }

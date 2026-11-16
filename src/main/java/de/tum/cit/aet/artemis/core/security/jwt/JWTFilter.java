@@ -35,6 +35,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.Claims;
 
@@ -283,11 +284,19 @@ public class JWTFilter extends GenericFilterBean {
         }
 
         if (jwtToken != null) {
+            ToolTokenType tool = this.tokenProvider.getTools(jwtToken);
+            if (tool != null && !isReachableWithToolToken(httpServletRequest.getRequestURI())) {
+                // A token issued for a tool is only meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks. Everything else, such as the
+                // websocket connection, is not handled by that interceptor and is therefore not available to a tool token.
+                httpServletResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied due to 'tools' claim.");
+                return;
+            }
+
             // Resolve the Spring Security authentication from the JWT
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
 
             // Only consider rotating secure, cookie-based tokens without tool-specific data
-            boolean tokenIsConsideredSecure = "cookie".equals(source) && this.tokenProvider.getTools(jwtToken) == null;
+            boolean tokenIsConsideredSecure = "cookie".equals(source) && tool == null;
             if (tokenIsConsideredSecure && authentication != null) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }
@@ -409,6 +418,17 @@ public class JWTFilter extends GenericFilterBean {
      * @param uri A URI relative to the Artemis base URL, i.e. without the {@code https://artemis.domain.com} part at the start.
      * @return True, if the URI does not use JWT authentication.
      */
+    /**
+     * Whether a request to the given path may carry a tool token. Only the REST endpoints below {@code /api/} qualify, as {@code ToolsInterceptor} restricts these to the
+     * endpoints annotated with {@code @AllowedTools}.
+     *
+     * @param uri the path of the request
+     * @return true if the path belongs to the REST endpoints
+     */
+    private static boolean isReachableWithToolToken(final String uri) {
+        return uri.startsWith("/api/");
+    }
+
     private static boolean isIgnoredUri(final String uri) {
         // /git/**: used by Git clients with a token mechanism
         // /api/iris/internal/** used by Pyris status callbacks with a token mechanism restricted to internal access
