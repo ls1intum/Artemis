@@ -43,7 +43,7 @@ class WorkingCopyCommitTest {
                 // another request for the same working copy, for example a second commit of the editor
                 CompletableFuture<Void> competitor = CompletableFuture.runAsync(() -> {
                     try {
-                        WorkingCopyLocks.shared().withLock(repository.getLocalPath(), () -> {
+                        WorkingCopyLocks.shared().withLock(AbstractGitService.workingCopyPath(repository), () -> {
                             competitorRanDuringCommit.set(!commitDone.get());
                             return null;
                         });
@@ -71,5 +71,38 @@ class WorkingCopyCommitTest {
         // after the commit the competitor gets the lock
         competitorFuture.get().get(5, TimeUnit.SECONDS);
         assertThat(competitorRanDuringCommit).isFalse();
+    }
+
+    @Test
+    void aPullOfTheWorkingCopyWaitsUntilTheCommitIsDone() throws Exception {
+        Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call().close();
+        GitService committingGitService = mock(GitService.class);
+        GitService pullingGitService = new GitService();
+        AtomicBoolean commitDone = new AtomicBoolean();
+        AtomicBoolean pullFinishedDuringCommit = new AtomicBoolean();
+        AtomicReference<CompletableFuture<Void>> pull = new AtomicReference<>();
+        try (Repository repository = AbstractGitService.linkRepositoryForExistingGit(workingTree,
+                new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise"), "main", false, true)) {
+            when(committingGitService.commitAndPush(any(), anyString(), anyBoolean(), any())).thenAnswer(invocation -> {
+                // the pull of the editor on the same working copy, started between the check and the commit
+                pull.set(CompletableFuture.runAsync(() -> {
+                    pullingGitService.pullIgnoreConflicts(repository);
+                    pullFinishedDuringCommit.compareAndSet(false, !commitDone.get());
+                }));
+                try {
+                    pull.get().get(300, TimeUnit.MILLISECONDS);
+                }
+                catch (TimeoutException expected) {
+                    // the pull waits for the lock
+                }
+                commitDone.set(true);
+                return "commit-id";
+            });
+
+            WorkingCopyCommit.commitChanges(committingGitService, repository, Long.MAX_VALUE, "message", new User());
+            pull.get().get(10, TimeUnit.SECONDS);
+        }
+
+        assertThat(pullFinishedDuringCommit).as("the pull must not change the index while the commit stages, checks and commits").isFalse();
     }
 }

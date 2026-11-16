@@ -523,7 +523,8 @@ public class GitService extends AbstractGitService {
         boolean pushed = false;
         try (Git git = new Git(repo)) {
             setRemoteUrl(repo);
-            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commitHash).call();
+            // like every operation that changes the index, the reset is done under the lock of the working copy
+            reset(repo, commitHash);
             String remoteRef = "refs/heads/" + branch;
             log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
             Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
@@ -546,10 +547,13 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the reset failed.
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            setRemoteUrl(repo);
-            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
-        }
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                setRemoteUrl(repo);
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
+            }
+            return null;
+        });
     }
 
     /**
@@ -604,10 +608,16 @@ public class GitService extends AbstractGitService {
      * @param repo Local Repository Object.
      */
     public void pullIgnoreConflicts(Repository repo) {
-        try (Git git = new Git(repo)) {
-            log.debug("Pull ignore conflicts {}", repo.getLocalPath());
-            setRemoteUrl(repo);
-            pullCommand(git).call();
+        try {
+            // The pull changes the index, so it takes the lock that the commit of the online editor holds while it stages, checks and commits
+            workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+                try (Git git = new Git(repo)) {
+                    log.debug("Pull ignore conflicts {}", repo.getLocalPath());
+                    setRemoteUrl(repo);
+                    pullCommand(git).call();
+                }
+                return null;
+            });
         }
         catch (WrongRepositoryStateException ex) {
             // A merge that stopped on conflicts leaves the repository in MERGING or MERGING_RESOLVED until the repository is reset, e.g. via the code editor.
@@ -627,11 +637,14 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the pull failed.
      */
     private void pull(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            log.info("Pull {}", repo.getLocalPath());
-            setRemoteUrl(repo);
-            pullCommand(git).call();
-        }
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                log.info("Pull {}", repo.getLocalPath());
+                setRemoteUrl(repo);
+                pullCommand(git).call();
+            }
+            return null;
+        });
     }
 
     /**
@@ -670,15 +683,18 @@ public class GitService extends AbstractGitService {
     }
 
     private void resetToOriginHeadOrThrow(Repository repo) throws GitAPIException {
-        fetchAll(repo);
-        var originHead = getOriginHead(repo);
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            fetchAll(repo);
+            var originHead = getOriginHead(repo);
 
-        if (originHead == null) {
-            log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
-            return;
-        }
+            if (originHead == null) {
+                log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
+                return null;
+            }
 
-        reset(repo, "origin/" + originHead);
+            reset(repo, "origin/" + originHead);
+            return null;
+        });
     }
 
     /**

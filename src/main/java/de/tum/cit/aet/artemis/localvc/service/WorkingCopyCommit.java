@@ -27,7 +27,7 @@ public final class WorkingCopyCommit {
      * @throws GitAPIException if staging, committing or pushing fails
      */
     public static String commitChanges(GitService gitService, Repository repository, long maxRepositorySizeBytes, String message, User user) throws GitAPIException {
-        return WorkingCopyLocks.shared().withLock(repository.getLocalPath(), () -> {
+        return WorkingCopyLocks.shared().withLock(AbstractGitService.workingCopyPath(repository), () -> {
             gitService.stageAllChanges(repository);
             StagedContentValidator.validate(repository, maxRepositorySizeBytes);
             return gitService.commitAndPush(repository, message, true, user);
