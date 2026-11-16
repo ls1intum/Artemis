@@ -231,8 +231,9 @@ class HyperionConsistencyCheckServiceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "structural,false", "semantic,false", "verification,false", "structural,true", "semantic,true", "verification,true" })
-    void billedResponseFailureRetainsKnownCosts(String failedStage, boolean afterUsageRecorded) throws Exception {
+    @CsvSource({ "structural,false,0.002", "semantic,false,0.002", "verification,false,0.002", "structural,true,0.002", "semantic,true,0.002", "verification,true,0.002",
+            "structural,false,0", "semantic,false,0", "verification,false,0", "structural,true,0", "semantic,true,0", "verification,true,0" })
+    void billedResponseFailureRetainsKnownCosts(String failedStage, boolean afterUsageRecorded, double callCost) throws Exception {
         var exercise = getProgrammingExercise();
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
         when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
@@ -243,7 +244,7 @@ class HyperionConsistencyCheckServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt prompt = invocation.getArgument(0);
             boolean unparseable = prompt.getInstructions().stream().anyMatch(message -> Objects.toString(message.getText(), "").contains("stage::" + failedStage));
-            var nativeUsage = CompletionUsage.builder().promptTokens(100).completionTokens(50).totalTokens(150).putAdditionalProperty("cost", JsonValue.from(0.002))
+            var nativeUsage = CompletionUsage.builder().promptTokens(100).completionTokens(50).totalTokens(150).putAdditionalProperty("cost", JsonValue.from(callCost))
                     .putAdditionalProperty("cost_currency", JsonValue.from("USD")).build();
             var metadata = ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(100, 50, 150, nativeUsage)).build();
             return new ChatResponse(List
@@ -254,13 +255,45 @@ class HyperionConsistencyCheckServiceTest {
         var response = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         verify(chatModel, times(3)).call(any(Prompt.class));
-        assertThat(response.costs().totalUsd()).isEqualTo(afterUsageRecorded ? 0.006 : 0.004);
+        assertThat(response.costs().totalUsd()).isEqualTo(callCost * (afterUsageRecorded ? 3 : 2));
         assertThat(response.costs().totalUsdComplete()).isEqualTo(afterUsageRecorded);
         var persisted = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
         verify(llmTokenUsageTraceRepository).save(persisted.capture());
-        assertThat(persisted.getValue().getLLMRequests()).hasSize(afterUsageRecorded ? 3 : 2).allSatisfy(request -> {
-            assertThat(request.getTotalCostUsd()).isEqualTo(0.002);
+        var requests = persisted.getValue().getLLMRequests();
+        assertThat(requests).hasSize(3);
+        assertThat(requests.stream().filter(request -> request.getTotalCostUsd() != null)).hasSize(afterUsageRecorded ? 3 : 2).allSatisfy(request -> {
+            assertThat(request.getTotalCostUsd()).isEqualTo(callCost);
             assertThat(request.getCostSource()).isEqualTo("PROVIDER");
+        });
+        assertThat(requests.stream().filter(request -> request.getTotalCostUsd() == null)).hasSize(afterUsageRecorded ? 0 : 1).allSatisfy(request -> {
+            assertThat(request.getCostSource()).isNull();
+            assertThat(request.getModel()).isEmpty();
+            assertThat(request.getNumInputTokens()).isZero();
+            assertThat(request.getNumOutputTokens()).isZero();
+            assertThat(request.getServicePipelineId()).isEqualTo("HYPERION_CONSISTENCY");
+        });
+    }
+
+    @Test
+    void missingUsageForEveryConsistencyCallPersistsThreeUnpricedAttempts() throws Exception {
+        var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/main/java/Tree.java", "class Tree {}"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new IllegalStateException("No response usage available"));
+
+        var response = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        assertThat(response.costs().totalUsd()).isNull();
+        assertThat(response.costs().totalUsdComplete()).isFalse();
+        assertThat(response.tokens().total()).isZero();
+        var persisted = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(persisted.capture());
+        assertThat(persisted.getValue().getLLMRequests()).hasSize(3).allSatisfy(request -> {
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getCostSource()).isNull();
+            assertThat(request.getNumInputTokens()).isZero();
+            assertThat(request.getNumOutputTokens()).isZero();
         });
     }
 

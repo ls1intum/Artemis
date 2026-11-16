@@ -202,13 +202,15 @@ public class HyperionConsistencyCheckService {
             issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
         }
 
-        List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
-        if (!validRequests.isEmpty()) {
+        // Keep attempted calls without usage unpriced in persisted aggregates as well as in this response.
+        // Their zero counters mean no observed tokens; the legacy constructor leaves USD unknown rather than estimating a free call.
+        List<LLMRequest> requests = usageCollector.stream().map(request -> request != null ? request : new LLMRequest("", 0, 0f, 0, 0f, CONSISTENCY_PIPELINE_ID)).toList();
+        if (!requests.isEmpty()) {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
                     ? exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember().getId()
                     : null;
             Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
-            llmTokenUsageService.saveLLMTokenUsage(validRequests, LLMServiceType.HYPERION,
+            llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION,
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }
 
@@ -218,14 +220,14 @@ public class HyperionConsistencyCheckService {
         var timingDTO = new TimingDTO(startTime.toString(), endTime.toString(), durationSeconds);
 
         // Aggregate token usage and costs from LLMRequest data
-        long totalPromptTokens = validRequests.stream().mapToLong(LLMRequest::numInputTokens).sum();
-        long totalCompletionTokens = validRequests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
-        boolean costComplete = !validRequests.isEmpty() && validRequests.size() == usageCollector.size()
-                && validRequests.stream().allMatch(request -> request.totalCostUsd() != null);
-        double totalCostUsd = validRequests.stream().map(LLMRequest::totalCostUsd).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
+        long totalPromptTokens = requests.stream().mapToLong(LLMRequest::numInputTokens).sum();
+        long totalCompletionTokens = requests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
+        boolean costComplete = !requests.isEmpty() && requests.stream().allMatch(request -> request.totalCostUsd() != null);
+        boolean hasKnownCost = requests.stream().anyMatch(request -> request.totalCostUsd() != null);
+        double totalCostUsd = requests.stream().map(LLMRequest::totalCostUsd).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
 
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);
-        var costsDto = new CostsDTO(costComplete || totalCostUsd > 0 ? totalCostUsd : null, costComplete);
+        var costsDto = new CostsDTO(hasKnownCost ? totalCostUsd : null, costComplete);
 
         log.debug("Consistency check for exercise {} complete: {} issues", exerciseId, issueDTOs.size());
         issueDTOs.forEach(issue -> log.debug("Issue [{}] {}: {}", issue.severity(), issue.category(), issue.description()));
