@@ -23,7 +23,7 @@
             "error": {
                 "fail": "<strong>Es ist ein Fehler aufgetreten!</strong> Die Einstellungen konnten nicht gespeichert werden.",
                 "emailExists": "<strong>E-Mail ist bereits in Verwendung!</strong> Bitte wähle eine andere aus.",
-                "emailInvalid": "<strong>Diese E-Mail-Adresse ist nicht erlaubt.</strong> Bitte verwende eine Adresse, die zum erlaubten Muster passt.",
+                "emailInvalid": "<strong>Diese E-Mail-Adresse ist nicht erlaubt.</strong> Bitte verwende eine der erlaubten E-Mail-Adressen.",
                 "emailChangeUnavailable": "<strong>Die E-Mail-Adresse kann hier nicht geändert werden.</strong> Diese Artemis-Instanz kann keine E-Mails versenden. Bitte wende dich an eine Administratorin oder einen Administrator.",
                 "emailChangeRequestedTooRecently": "<strong>Bitte warte einen Moment.</strong> Du hast vor weniger als einer Minute eine Änderung der E-Mail-Adresse angefordert. Versuche es in einer Minute erneut.",
                 "emailChangeDailyLimitReached": "<strong>Zu viele Anfragen.</strong> Du hast heute zu viele Änderungen der E-Mail-Adresse angefordert. Versuche es morgen erneut.",
@@ -45,7 +45,8 @@
                     "maxlength": "Dein Nachname darf nicht länger als 50 Zeichen sein"
                 },
                 "email": {
-                    "pattern": "Domain muss eine der folgenden sein: {{ pattern }}."
+                    "hint": "Erlaubte E-Mail-Adressen: {{ pattern }}",
+                    "notAllowed": "Diese E-Mail-Adresse ist nicht erlaubt."
                 }
             }
         }

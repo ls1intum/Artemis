@@ -404,7 +404,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     private void checkPotentialPlagiarismCaseForStudent(TextSubmission textSubmission) {
         plagiarismAccessApi.ifPresent(api -> {
-            boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission, userRepository.getUser().getLogin());
+            boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission.getParticipation().getExercise().getId(), textSubmission, userRepository.getUser().getLogin());
             if (!wasNotified) {
                 throw new AccessForbiddenException("The user has not yet been notified about a plagiarism case.");
             }

@@ -36,6 +36,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -239,6 +240,25 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     private Optional<PendingEmailChange> storedPendingChange() {
         return userRecoveryKeyService.findPendingEmailChange(user.getId());
+    }
+
+    @Test
+    @WithMockUser(username = LOGIN)
+    void anEmailChangeWithoutADestinationIsRejectedAndDiscarded() throws Throwable {
+        requestChangeTo(NEW_EMAIL);
+        ConfirmationMail toNew = mailTo(NEW_EMAIL);
+        confirm(mailTo(originalEmail));
+        PendingEmailChange pending = storedPendingChange().orElseThrow();
+        // Exercise an incomplete persisted request: its destination column is nullable.
+        ReflectionTestUtils.setField(pending, "newEmail", null);
+        userRecoveryKeyService.storePendingEmailChange(user.getId(), pending);
+
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.empty(), () -> {
+            confirmFailing(toNew, toNew.keySecret(), "invalidEmailChangeKey");
+        });
+
+        assertThat(emailOfAccount()).isEqualTo(originalEmail);
+        assertThat(storedPendingChange()).isEmpty();
     }
 
     /**
