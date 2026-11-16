@@ -106,21 +106,15 @@ export class CourseNotificationComponent {
             } else if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;
             } else {
-                // Render markdown, then iteratively strip HTML tags to plain text (handles nested tags like
-                // <scr<script>ipt>). The conversion util already sanitizes the HTML via DOMPurify. If the lazy
-                // markdown chunk fails to load, fall back to the raw value rather than leak an unhandled rejection.
-                let sanitized: string;
+                // The markdown pipeline sanitizes HTML via DOMPurify. Extract decoded text so entities are not
+                // escaped twice when the translation directive renders it. If the lazy chunk fails, pass the raw
+                // value to the directive, which also escapes it as text.
                 try {
-                    sanitized = await renderPostingMarkdownToHtml(value.toString());
+                    const sanitized = await renderPostingMarkdownToHtml(value.toString());
+                    notificationParameters[key] = new DOMParser().parseFromString(sanitized, 'text/html').body.textContent ?? '';
                 } catch {
-                    sanitized = value.toString();
+                    notificationParameters[key] = value.toString();
                 }
-                let previous: string;
-                do {
-                    previous = sanitized;
-                    sanitized = sanitized.replace(/<[^>]*>/g, '');
-                } while (sanitized !== previous);
-                notificationParameters[key] = sanitized;
             }
         }
         // A newer notification may have arrived while awaiting the lazy markdown render; discard this stale run.

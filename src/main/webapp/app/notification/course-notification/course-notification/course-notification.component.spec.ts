@@ -390,6 +390,18 @@ describe('CourseNotificationComponent rendering translated content', () => {
         expect(content.textContent).toBe('Please check the build log.');
     });
 
+    it.each([
+        ['A & B', 'A & B'],
+        ['Use `<span>` for text', 'Use <span> for text'],
+        ['`<img src=x onerror="alert(1)">` & **safe**', '<img src=x onerror="alert(1)"> & safe'],
+        ['Literal &amp; entity', 'Literal & entity'],
+    ])('should display decoded Markdown preview text without interpreting it as markup (%s)', async (postMarkdownContent, expectedText) => {
+        const content = await renderContent('newPostNotification', { postMarkdownContent });
+
+        expect(content.textContent).toBe(expectedText);
+        expect(content.querySelector('span, img, strong')).toBeNull();
+    });
+
     it('should use the reply preview for a thread answer even when the parent message has no preview', async () => {
         const content = await renderContent('newAnswerNotification', { replyMarkdownContent: 'The build is fixed.' });
 
