@@ -162,9 +162,6 @@ public class BuildJobCloneTokenService {
     private Set<RepositoryIdentity> getPersistedRepositoryIdentities(BuildJobQueueItem buildJob) {
         String jobId = buildJob.id();
         try {
-            if (jobId == null) {
-                return loadPersistedRepositoryIdentities(buildJob);
-            }
             Set<RepositoryIdentity> persisted = persistedRepositoriesOfJobs.get(jobId, _ -> loadPersistedRepositoryIdentities(buildJob));
             if (persisted.isEmpty()) {
                 // Nothing is remembered for a job that the database does not know, so that a later request reads it again
