@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261115165205-01-plagiarism-submission-commit-hash" author="krusche">
+        <comment>Store the commit that was compared for a programming plagiarism submission, so that the comparison view shows exactly the compared state.
+            Nullable on purpose: results created before this column existed carry no hash.</comment>
+        <addColumn tableName="plagiarism_submission">
+            <column name="commit_hash" type="varchar(64)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

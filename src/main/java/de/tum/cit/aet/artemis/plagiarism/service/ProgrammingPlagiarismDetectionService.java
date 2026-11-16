@@ -10,9 +10,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -56,7 +60,9 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -137,10 +143,12 @@ public class ProgrammingPlagiarismDetectionService {
         }
 
         try {
-            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
+            Map<Long, String> comparedCommitHashes = new ConcurrentHashMap<>();
+            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize, comparedCommitHashes);
             log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", jPlagResult.getAllComparisons().size(), programmingExerciseId);
             PlagiarismResult textPlagiarismResult = new PlagiarismResult();
             textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise);
+            assignComparedCommitHashes(textPlagiarismResult, comparedCommitHashes);
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
@@ -164,7 +172,7 @@ public class ProgrammingPlagiarismDetectionService {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
-        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
+        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize, new ConcurrentHashMap<>());
 
         log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return generateJPlagReportZip(result, programmingExercise);
@@ -180,7 +188,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @throws BadRequestAlertException if there are not enough valid submissions to compare
      */
     @NonNull
-    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
+    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize,
+            Map<Long, String> comparedCommitHashes) {
         // TODO: Move minimumSize to configuration parameter in next refactoring
         long programmingExerciseId = programmingExercise.getId();
         final var targetPath = createTemporaryTargetDirectory("jplag-repos-", 60);
@@ -192,7 +201,7 @@ public class ProgrammingPlagiarismDetectionService {
                     "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath, minimumSize);
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath, minimumSize, comparedCommitHashes);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         // Check if we have enough repositories after filtering
@@ -383,8 +392,33 @@ public class ProgrammingPlagiarismDetectionService {
         }
     }
 
+    /**
+     * Stores the commit that was compared for each participation, so that a later view of the comparison shows exactly the compared state.
+     * The compared ids of a programming comparison are participation ids.
+     */
+    private static void assignComparedCommitHashes(PlagiarismResult result, Map<Long, String> comparedCommitHashes) {
+        for (PlagiarismComparison comparison : result.getComparisons()) {
+            for (PlagiarismSubmission submission : comparison.getSubmissions()) {
+                if (submission != null) {
+                    submission.setCommitHash(comparedCommitHashes.get(submission.getSubmissionId()));
+                }
+            }
+        }
+    }
+
+    private static String headCommitHash(Repository repository) {
+        try {
+            ObjectId head = repository.resolve(Constants.HEAD);
+            return head == null ? null : head.getName();
+        }
+        catch (IOException e) {
+            log.warn("Could not resolve the head commit of repository {}: {}", repository.getLocalPath(), e.getMessage());
+            return null;
+        }
+    }
+
     private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, Path targetPath,
-            int minimumTokenSize) {
+            int minimumTokenSize, Map<Long, String> comparedCommitHashes) {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
@@ -399,6 +433,10 @@ public class ProgrammingPlagiarismDetectionService {
             try {
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state
+                String comparedCommitHash = headCommitHash(repo);
+                if (comparedCommitHash != null) {
+                    comparedCommitHashes.put(participation.getId(), comparedCommitHash);
+                }
 
                 // Check if repository meets minimum size requirement
                 if (minimumTokenSize > 0) {

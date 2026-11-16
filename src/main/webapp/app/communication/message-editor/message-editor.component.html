@@ -285,14 +285,17 @@
         ></div>
     </div>
     <!--
-        The visible hint is short, so it takes at most two lines at any width, and the full text sits in the tooltip of the help button.
-        Screen readers get the full text as the description of the editor.
+        The hint is split into three parts that never repeat each other: what @ and # do (triggers), how Enter and Shift+Enter behave (short)
+        and what else is worth knowing (details). The visible hint is short, so it takes at most two lines at any width. The tooltip of the help
+        button adds what the visible line leaves out: only the details on a wide line, and the triggers as well on a narrow one.
+        Screen readers get all three parts as the description of the editor.
     -->
+    @let triggersHint = 'artemisApp.communication.formattedEditor.hintTriggers' | artemisTranslate;
+    @let shortHint = 'artemisApp.communication.formattedEditor.hintShort' | artemisTranslate;
+    @let detailsHint = 'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate;
     <div class="message-editor-divider message-editor-muted flex items-start gap-1 border-t py-1 ps-2 pe-1 text-xs">
-        <p class="m-0 min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">
-            {{ (wideHint() ? 'artemisApp.communication.formattedEditor.hint' : 'artemisApp.communication.formattedEditor.hintShort') | artemisTranslate }}
-        </p>
-        <span [id]="hintId" class="sr-only">{{ 'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate }}</span>
+        <p class="m-0 min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">{{ wideHint() ? triggersHint + ' ' + shortHint : shortHint }}</p>
+        <span [id]="hintId" class="sr-only">{{ triggersHint + ' ' + shortHint + ' ' + detailsHint }}</span>
         <button
             type="button"
             tumAetUiButton
@@ -302,7 +305,7 @@
             class="shrink-0"
             data-testid="message-editor-help"
             [attr.aria-label]="'artemisApp.communication.formattedEditor.help' | artemisTranslate"
-            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate"
+            [tumAetUiTooltip]="wideHint() ? detailsHint : triggersHint + ' ' + detailsHint"
         >
             <fa-icon [icon]="icons.faCircleQuestion" />
         </button>
