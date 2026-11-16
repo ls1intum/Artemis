@@ -230,6 +230,12 @@ including after test failure or an INT/TERM signal. Reporter markers must remain
 restoration returns infrastructure exit code 2, which cannot match a healthy runner verdict.
 Do not add `|| true` to the teardown: it would hide the next real teardown failure.
 
+A forcibly killed container can bypass that exit trap. The same self-hosted large runners
+also execute server and client jobs, so those jobs and full server reporting restore ownership
+of only `src/test/playwright/test-results` and `test-reports` before checkout, as E2E jobs do.
+Recovery is best-effort; checkout remains authoritative and still fails on any unrepaired
+permission problem. Keep checkout cleanup enabled and do not recursively change the whole workspace.
+
 ## E2E spec flaky only on develop's multi-node stack
 
 **Symptom.** A spec that touches a file written by one request and read by another (a download, an
