@@ -99,8 +99,10 @@ describe('TumAetUiPopoverComponent', () => {
             expect(closedSpy).toHaveBeenCalledOnce();
         });
 
-        it('has handed the focus back to its origin by the time it announces that it is gone', async () => {
+        it('has handed the focus back to the element focused before it opened by the time it announces that it is gone', async () => {
             const { finish } = stubAnimations();
+            // The focus trap restores the previously focused element; focus the origin explicitly to check that
+            // this has happened before closed emits.
             origin.focus();
             component.open(origin);
             fixture.detectChanges();
