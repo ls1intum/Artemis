@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
+import de.tum.cit.aet.artemis.core.util.RateLimitTestUtil;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -69,6 +71,9 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
+
+    @Autowired
+    private LimitRequestsPerMinuteAspect requestLimitAspect;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -143,6 +148,18 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(optionalSubmission.get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void triggerBuildStudentTooOftenIsRejected() throws Exception {
+        String url = "/api/programming/participations/" + Long.MAX_VALUE + "/trigger-build";
+
+        RateLimitTestUtil.withRateLimits(requestLimitAspect, properties -> properties.setProgrammingBuildTriggerRequestsPerMinute(2), () -> {
+            request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
+            request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
+            request.postWithoutLocation(url, null, HttpStatus.TOO_MANY_REQUESTS, new HttpHeaders());
+        });
     }
 
     @Test

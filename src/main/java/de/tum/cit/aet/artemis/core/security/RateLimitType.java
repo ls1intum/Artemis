@@ -214,10 +214,10 @@ public enum RateLimitType {
      * Rate limit for the manual build of a programming exercise participation, which each time starts a build job.
      * It is counted per signed-in user, so users on one network address do not share it.
      * <p>
-     * Default: 30 requests per minute per user, overridable with
+     * Default: 10 requests per minute per user, overridable with
      * {@code artemis.rate-limiting.programming-build-trigger-requests-per-minute}.
      */
-    PROGRAMMING_BUILD_TRIGGER(30);
+    PROGRAMMING_BUILD_TRIGGER(10);
 
     private final int defaultRpm;
 
