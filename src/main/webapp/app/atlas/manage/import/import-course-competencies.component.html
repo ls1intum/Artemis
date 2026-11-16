@@ -31,9 +31,9 @@
     } @else {
         <span [jhiTranslate]="'artemisApp.' + entityType + '.import.selectedTableEmpty'"></span>
     }
-    <div class="mt-4">
+    <div class="mt-6!">
         @if (allowRelationImport) {
-            <div class="mb-1 d-flex">
+            <div class="mb-1 flex">
                 <span [jhiTranslate]="'artemisApp.competency.import.importRelations'"></span>
                 <input
                     [attr.aria-label]="'artemisApp.competency.import.importRelations' | artemisTranslate"

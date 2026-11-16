@@ -51,7 +51,7 @@ public class AthenaInternalResource {
         this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.rateLimitService = rateLimitService;
         this.athenaSecretConfigured = StringUtils.hasText(athenaSecret);
-        this.athenaSecretHash = hashSha256(athenaSecret);
+        this.athenaSecretHash = athenaSecretConfigured ? hashSha256(athenaSecret) : new byte[0];
     }
 
     /**
