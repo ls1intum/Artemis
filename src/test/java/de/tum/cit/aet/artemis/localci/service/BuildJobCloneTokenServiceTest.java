@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -185,6 +186,10 @@ class BuildJobCloneTokenServiceTest {
     void shouldReturnNoRepositoriesForAJobWithoutRepositoryInfo() {
         assertThat(service.getRepositoryIdentities(null)).isEmpty();
         assertThat(service.coversRepository(null, new LocalVCRepositoryUri(uri("student1")))).isFalse();
+        BuildJobQueueItem jobWithoutRepositoryInfo = buildJob(null, "bjct-x");
+        assertThat(service.getRepositoryIdentities(jobWithoutRepositoryInfo)).isEmpty();
+        assertThat(service.coversRepository(jobWithoutRepositoryInfo, new LocalVCRepositoryUri(uri("student1")))).isFalse();
+        verifyNoInteractions(participationRepository, programmingExerciseRepository);
     }
 
     /**

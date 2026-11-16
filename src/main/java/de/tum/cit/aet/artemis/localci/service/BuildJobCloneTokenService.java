@@ -130,6 +130,9 @@ public class BuildJobCloneTokenService {
      * @return the repositories of that job, empty if it has none
      */
     public Set<RepositoryIdentity> getRepositoryIdentities(@Nullable BuildJobQueueItem buildJob) {
+        if (buildJob == null) {
+            return new HashSet<>();
+        }
         Set<RepositoryIdentity> declared = getDeclaredRepositoryIdentities(buildJob);
         if (declared.isEmpty()) {
             return declared;
@@ -138,8 +141,8 @@ public class BuildJobCloneTokenService {
         return declared;
     }
 
-    private Set<RepositoryIdentity> getDeclaredRepositoryIdentities(@Nullable BuildJobQueueItem buildJob) {
-        if (buildJob == null || buildJob.repositoryInfo() == null) {
+    private Set<RepositoryIdentity> getDeclaredRepositoryIdentities(BuildJobQueueItem buildJob) {
+        if (buildJob.repositoryInfo() == null) {
             return new HashSet<>();
         }
         RepositoryInfo repositoryInfo = buildJob.repositoryInfo();
