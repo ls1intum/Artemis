@@ -23,23 +23,9 @@
                     [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
-                >
-                    <!-- Each message is projected next to its own input, so that it stays below it when the inputs stack on a narrow screen. -->
-                    <div titleMessage>
-                        @if (!exam.title?.trim()) {
-                            <div
-                                class="mt-1 block text-sm text-state-danger"
-                                data-testid="title-validation-message"
-                                jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"
-                            ></div>
-                        }
-                    </div>
-                    <div channelNameMessage>
-                        @if (isChannelNameMissing) {
-                            <div class="mt-1 block text-sm text-state-danger" data-testid="channel-name-validation-message" jhiTranslate="error.examChannelNameMissing"></div>
-                        }
-                    </div>
-                </jhi-title-channel-name>
+                    [titleValidationMessage]="!exam.title?.trim() ? 'artemisApp.examManagement.titleMissingOrNotValid' : undefined"
+                    [channelNameValidationMessage]="isChannelNameMissing ? 'error.examChannelNameMissing' : undefined"
+                />
             </div>
             <div class="mb-6!">
                 <div>

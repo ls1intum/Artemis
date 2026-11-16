@@ -199,10 +199,14 @@ describe('ExamUpdateComponent', () => {
             // a negative top margin moves the message over the lower edge of the input field above it
             expect(messages.map((message) => Array.from(message.classList).filter((cssClass) => cssClass.startsWith('-mt-')))).toEqual([[], []]);
             expect(messages.map((message) => message.classList.contains('mt-1'))).toEqual([true, true]);
-            // When the inputs stack on a narrow screen, each message has to stay with its own input
-            const inputs: HTMLElement[] = ['field_title', 'field_channel_name'].map((id) => fixture.nativeElement.querySelector(`#${id}`));
-            expect(messages.map((message, index) => message.closest('div.min-w-0')?.contains(inputs[index]))).toEqual([true, true]);
-            expect(messages.map((message, index) => message.closest('div.min-w-0')?.contains(inputs[1 - index]))).toEqual([false, false]);
+            const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_title');
+            const channelInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_channel_name');
+            expect(titleInput.parentElement!.contains(messages[0])).toBe(true);
+            expect(titleInput.parentElement!.contains(messages[1])).toBe(false);
+            expect(channelInput.parentElement!.contains(messages[1])).toBe(true);
+            expect(channelInput.parentElement!.contains(messages[0])).toBe(false);
+            expect(titleInput.getAttribute('aria-describedby')).toBe(messages[0].id);
+            expect(channelInput.getAttribute('aria-describedby')).toBe(messages[1].id);
         });
 
         describe('explanations of invalid fields', () => {
