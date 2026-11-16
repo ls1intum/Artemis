@@ -60,6 +60,7 @@ import {
 } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -427,6 +428,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
+            // The submission was validated before the suggestions arrived. Validate again, otherwise the Submit button stays disabled until an assessor edits a feedback.
+            this.validateFeedback();
         } finally {
             if (this.submission() == submissionAtStart) {
                 this.loadingFeedbackSuggestions.set(false);
@@ -547,6 +550,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            return;
+        }
 
         this.modelingAssessmentService.saveAssessment(this.result()!.id!, this.feedback, this.submission()!.id!, this.result()!.assessmentNote?.note).subscribe({
             next: (result: Result) => {
@@ -560,7 +567,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
                 this.alertService.closeAll();
-                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error(isCreditsOutOfBounds(error) ? FEEDBACK_CREDITS_OUT_OF_BOUNDS : 'artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
     }
@@ -592,6 +599,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            return;
+        }
 
         this.modelingAssessmentService.saveAssessment(this.result()!.id!, this.feedback, this.submission()!.id!, this.result()!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
@@ -607,7 +618,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
                 let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
-                if (error.error && error.error.entityName && error.error.message) {
+                if (isCreditsOutOfBounds(error)) {
+                    errorMessage = FEEDBACK_CREDITS_OUT_OF_BOUNDS;
+                } else if (error.error?.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
                 this.alertService.closeAll();
@@ -620,6 +633,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.validateFeedback();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            assessmentAfterComplaint.onError();
+            return;
+        }
+        if (!Feedback.haveCreditsInBounds(this.feedback)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             assessmentAfterComplaint.onError();
             return;
         }
@@ -636,13 +654,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
                 assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else {
-                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                }
+                alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         });
     }

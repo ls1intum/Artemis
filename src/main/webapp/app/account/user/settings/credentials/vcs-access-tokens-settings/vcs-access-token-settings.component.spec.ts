@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
-import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -40,7 +38,6 @@ describe('VcsAccessTokensSettingsComponent', () => {
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
-                DialogService,
                 { provide: AlertService, useValue: alertServiceMock },
                 provideHttpClient(),
             ],

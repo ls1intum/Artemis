@@ -10,7 +10,8 @@ const referencePattern =
     /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])|(?<IMAGE>!\[.*?]\(.*?\))|(?<FAQ>\[faq].*?\[\/faq])/y;
 
 // Block parsing supplies source line ranges; inline parsing consumes escapes, entities and code before they can become references.
-const markdown = MarkdownIt({ html: true, linkify: true }).use(MarkdownItKatex, { enableMathInlineInHtml: true });
+// Reviewed false positive (Sonar S5247): the instance only parses to find reference positions and never renders HTML; html: true makes raw HTML count as literal source.
+const markdown = MarkdownIt({ html: true, linkify: true }).use(MarkdownItKatex, { enableMathInlineInHtml: true }); // NOSONAR
 // Include overlapping candidates: escaping an outer reference can leave an inner numeric reference editable.
 const candidatesPattern = new RegExp('(?=(' + referencePattern.source + '))', 'g');
 type SourceRange = { start: number; end: number };

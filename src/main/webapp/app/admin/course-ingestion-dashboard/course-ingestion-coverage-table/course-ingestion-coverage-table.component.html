@@ -1,12 +1,12 @@
 <tumaet-ui-panel [header]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate">
     @if (refreshError()) {
-        <tumaet-ui-message severity="error" class="mb-3 w-full" aria-live="assertive" data-testid="coverage-refresh-error">{{
+        <tumaet-ui-message severity="error" class="mb-4! w-full" aria-live="assertive" data-testid="coverage-refresh-error">{{
             'artemisApp.courseIngestionDashboard.matrix.refreshError' | artemisTranslate
         }}</tumaet-ui-message>
     }
 
     @if (error()) {
-        <tumaet-ui-message severity="error" class="mb-3 w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tumaet-ui-message>
+        <tumaet-ui-message severity="error" class="mb-4! w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tumaet-ui-message>
     }
 
     <tumaet-ui-table-layout

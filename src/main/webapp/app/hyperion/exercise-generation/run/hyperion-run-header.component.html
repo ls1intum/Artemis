@@ -37,7 +37,7 @@
             Not announced: the elapsed clock reprints once a second, and a live region here would read the whole rail
             aloud every second.
         -->
-        <dl class="mt-4 mb-0 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4" aria-live="off" data-testid="hyperion-run-facts">
+        <dl class="mt-6! mb-0 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4" aria-live="off" data-testid="hyperion-run-facts">
             @for (fact of facts(); track fact.key) {
                 <div class="flex min-w-0 flex-col" [attr.data-fact]="fact.key">
                     <dt class="text-sm text-muted-color" [jhiTranslate]="fact.labelKey"></dt>
@@ -59,10 +59,10 @@
     }
 
     @if (!ownedByCaller()) {
-        <p class="mt-3 mb-0 text-sm text-muted-color" data-testid="hyperion-run-other-instructor" jhiTranslate="artemisApp.hyperion.generation.run.otherInstructor"></p>
+        <p class="mt-4! mb-0 text-sm text-muted-color" data-testid="hyperion-run-other-instructor" jhiTranslate="artemisApp.hyperion.generation.run.otherInstructor"></p>
     }
 
-    <div class="mt-4 flex flex-wrap items-center gap-2">
+    <div class="mt-6! flex flex-wrap items-center gap-2">
         @if (cancelAvailable()) {
             <tumaet-ui-button
                 data-button-intent="destructive"

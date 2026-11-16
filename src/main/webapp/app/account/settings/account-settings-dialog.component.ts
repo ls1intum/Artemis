@@ -1,12 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
-import { FormField, disabled, email, form, maxLength, minLength, pattern, required } from '@angular/forms/signals';
+import { ChangeDetectionStrategy, Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { FormField, disabled, email, form, maxLength, minLength, required, validateHttp } from '@angular/forms/signals';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_TIMEOUT_MS, EMAIL_ALLOWED_URL, EmailAllowedResponse, emailAllowedRequestContext } from 'app/account/shared/email-allowed';
+import { EMAIL_NOT_ALLOWED_ERROR_KEY } from 'app/foundation/constants/error.constants';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+
+/** Error keys of the server that are shown as their own message. All other failures show a generic message. */
+const EMAIL_CHANGE_ERROR_KEYS = [EMAIL_NOT_ALLOWED_ERROR_KEY, 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'emailChangeDailyLimitReached', 'noPendingEmailChange'];
+const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 
 interface AccountSettingsFormModel {
     firstName: string;
@@ -35,8 +42,19 @@ export class AccountSettingsDialogComponent {
     private readonly profileInfo = this.profileService.getProfileInfo();
 
     readonly visible = model(false);
+    /** The request to change the email address that waits for confirmation, used to tell a new request from an unchanged one */
+    readonly pendingEmailChange = input<PendingEmailChangeDTO | undefined>(undefined);
+    /** Emits the request that a save created or replaced: the confirmation mails were sent and the email address stays the current one until both are confirmed */
+    readonly emailChangeRequested = output<PendingEmailChangeDTO>();
+    /** Indicates the email already exists error */
+    readonly errorEmailExists = signal(false);
+    /** Translation key of the error to show for any other failure, undefined when there is none */
+    readonly errorMessageKey = signal<string | undefined>(undefined);
+    /** Whether the server can send emails. Without it an email change cannot be confirmed, so the email cannot be changed. */
+    readonly mailConfigured = this.profileInfo.mailConfigured ?? true;
     readonly isSaml2Active = signal(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2));
-    readonly allowedEmailPatternReadable = this.profileInfo.allowedEmailPatternReadable ?? this.profileInfo.allowedEmailPattern;
+    /** The description of the allowed addresses that the administrators configured, shown below the email field so that people know what is accepted before they save */
+    readonly allowedEmailPatternHint = this.profileInfo.allowedEmailPatternReadable;
 
     readonly settingsModel = signal<AccountSettingsFormModel>({ firstName: '', lastName: '', email: '' });
     readonly settingsChanged = computed(() => this.haveSettingsChanged());
@@ -50,19 +68,35 @@ export class AccountSettingsDialogComponent {
         required(path.email);
         minLength(path.email, 5);
         maxLength(path.email, 100);
-        const allowedEmailPattern = this.profileInfo.allowedEmailPattern;
-        if (allowedEmailPattern) {
-            pattern(path.email, new RegExp(`^(?:${allowedEmailPattern})$`));
+        if (this.profileInfo.allowedEmailPattern) {
+            // With a restriction, the server alone judges the address. The check only runs once the other validators passed, and a failed request does not block the
+            // form, because the decision is made again when the settings are saved. The address the account already has is not asked about: the server only checks an
+            // address that changes, so a person whose address predates the restriction can still save the name.
+            validateHttp<string, EmailAllowedResponse>(path.email, {
+                request: ({ value }) => ({
+                    url: EMAIL_ALLOWED_URL,
+                    method: 'POST',
+                    body: { email: value() },
+                    context: emailAllowedRequestContext(),
+                    timeout: EMAIL_ALLOWED_TIMEOUT_MS,
+                }),
+                debounce: EMAIL_ALLOWED_DEBOUNCE_MS,
+                when: ({ value }) => value().toLowerCase() !== (this.accountService.userIdentity()?.email ?? '').toLowerCase(),
+                onSuccess: (response) => (response.allowed ? undefined : { kind: 'emailNotAllowed' }),
+                onError: () => undefined,
+            });
         } else {
             email(path.email);
         }
         const fieldsDisabled = () => !this.accountService.userIdentity()?.internal || this.isSaml2Active();
         disabled(path.firstName, { when: fieldsDisabled });
         disabled(path.lastName, { when: fieldsDisabled });
-        disabled(path.email, { when: fieldsDisabled });
+        disabled(path.email, { when: () => fieldsDisabled() || !this.mailConfigured });
     });
 
     initializeForm(): void {
+        this.errorEmailExists.set(false);
+        this.errorMessageKey.set(undefined);
         const user = this.accountService.userIdentity();
         if (!user) {
             return;
@@ -82,7 +116,7 @@ export class AccountSettingsDialogComponent {
 
     saveSettings(): void {
         const user = this.accountService.userIdentity();
-        if (!user || this.settingsForm().invalid() || !this.settingsChanged()) {
+        if (!user || this.settingsForm().invalid() || this.settingsForm().pending() || !this.settingsChanged()) {
             return;
         }
 
@@ -94,15 +128,42 @@ export class AccountSettingsDialogComponent {
             userToSave.email = settings.email;
         }
 
+        this.errorEmailExists.set(false);
+        this.errorMessageKey.set(undefined);
+        const previousRequestTime = this.pendingEmailChange()?.requestedAt;
         this.accountService.save(userToSave).subscribe({
-            next: () => {
-                userToSave.name = `${userToSave.firstName} ${userToSave.lastName}`;
-                this.accountService.authenticate(userToSave);
+            next: (response) => {
+                const pendingEmailChange = response?.pendingEmailChange ?? undefined;
+                // Database reads round the initial Instant to milliseconds; distinct requests are at least a minute apart.
+                if (
+                    pendingEmailChange !== undefined &&
+                    userToSave.email !== user.email &&
+                    (previousRequestTime === undefined || Math.abs(Date.parse(pendingEmailChange.requestedAt) - Date.parse(previousRequestTime)) > 2)
+                ) {
+                    this.emailChangeRequested.emit(pendingEmailChange);
+                }
+                // The email address of the account stays the current one until the change is confirmed from both addresses.
+                const updatedUser = cloneWith(userToSave, { email: user.email, name: `${userToSave.firstName} ${userToSave.lastName}` });
+                this.accountService.authenticate(updatedUser);
                 this.visible.set(false);
             },
-            // All possible failures are already handled through automatic alerts.
-            error: () => {},
+            error: (response) => this.handleError(response),
         });
+    }
+
+    /**
+     * Maps account-save errors to localized feedback in the dialog, which stays open so the input can be corrected.
+     * @param response the server error returned by the save request
+     */
+    private handleError(response: { status?: number; error?: { type?: string; errorKey?: string } }): void {
+        const errorKey = response.error?.errorKey;
+        if (response.status === 400 && (response.error?.type === 'https://www.jhipster.tech/problem/email-already-used' || errorKey === 'emailAlreadyUsed')) {
+            this.errorEmailExists.set(true);
+        } else if (response.status === 400 && errorKey && EMAIL_CHANGE_ERROR_KEYS.includes(errorKey)) {
+            this.errorMessageKey.set(`settings.messages.error.${errorKey}`);
+        } else {
+            this.errorMessageKey.set(GENERIC_ERROR_MESSAGE_KEY);
+        }
     }
 
     private haveSettingsChanged(): boolean {

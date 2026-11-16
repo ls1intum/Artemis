@@ -5,8 +5,7 @@ import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblo
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -49,7 +48,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            imports: [FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,

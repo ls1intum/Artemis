@@ -49,6 +49,7 @@ import { TumAetUiTagComponent } from '@tumaet/ui-angular';
     host: { class: 'block', '[class.file-upload-submission--fill]': 'showsAssessedSubmission()', '[class.p-2]': '!displayedInExamSummary() && !showsAssessedSubmission()' },
     imports: [
         ResizeableContainerComponent,
+        TumAetUiTagComponent,
         TranslateDirective,
         ExerciseActionButtonComponent,
         GeneralFeedbackComponent,
@@ -60,7 +61,6 @@ import { TumAetUiTagComponent } from '@tumaet/ui-angular';
         MarkdownDirective,
         NgTemplateOutlet,
         AssessmentSubmissionPanelComponent,
-        TumAetUiTagComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

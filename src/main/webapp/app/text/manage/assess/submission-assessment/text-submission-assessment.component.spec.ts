@@ -447,6 +447,59 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBe(serverReturnsError);
     });
 
+    it('should refuse to update points outside the bounds after a complaint and name the bounds', () => {
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 100.5;
+        unreferencedFeedback.detailText = 'too many points';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        const updateAssessmentAfterComplaintStub = vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+        let onErrorCalled = false;
+
+        component.updateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => (onErrorCalled = true) });
+
+        expect(updateAssessmentAfterComplaintStub).not.toHaveBeenCalled();
+        expect(onErrorCalled).toBe(true);
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
+    it('should name the bounds when the server refuses the points after a complaint', () => {
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+        );
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component.updateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => {} });
+
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
+    it.each(['save', 'submit'] as const)('should name the bounds once when the server refuses the points on %s', async (action) => {
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        vi.spyOn(component, 'assessmentsAreValid').mockReturnValue(true);
+        vi.spyOn(textAssessmentService, action).mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', skipAlert: true } })),
+        );
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component[action]();
+
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
     it('should submit the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
@@ -666,13 +719,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         const feedbacks: Feedback[] = [
             { id: 1, reference: 'missing-strategy-block', credits: 1, detailText: 'Correct strategy explanation', type: FeedbackType.MANUAL },
             { id: 2, reference: 'missing-bridge-block', credits: 1, detailText: 'Correct bridge explanation', type: FeedbackType.MANUAL },
-            { id: 3, reference: submission.blocks![0].id, credits: 1, type: FeedbackType.MANUAL },
+            { id: 3, reference: submission.blocks![0].id, credits: 1, detailText: 'Correct conclusion', type: FeedbackType.MANUAL },
             { id: 4, credits: 0, detailText: 'General feedback', type: FeedbackType.MANUAL_UNREFERENCED },
         ];
         getLatestSubmissionResult(submission)!.feedbacks = feedbacks;
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
 
-        expect(component.totalScore()).toBe(3);
+        expect(component.scoreSummary().total).toBe(3);
         expect(component.allAssessmentFeedbacks()).toHaveLength(4);
         expect(component.unreferencedFeedback()).toEqual([
             { ...feedbacks[0], reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED },
@@ -685,7 +738,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.validateFeedback();
         expect(component.assessmentsAreValid()).toBe(true);
-        expect(component.totalScore()).toBe(3);
+        expect(component.scoreSummary().total).toBe(3);
         component.save();
 
         expect(saveSpy.mock.calls[0][2]).toEqual(expect.arrayContaining(component.allAssessmentFeedbacks()));
@@ -765,7 +818,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         expect(component.unreferencedFeedback()).toEqual([]);
         expect(component.textBlockRefs.filter(({ feedback }) => !!feedback)).toHaveLength(suggestions.length);
-        expect(component.totalScore()).toBe(suggestions.length);
+        expect(component.scoreSummary().total).toBe(suggestions.length);
         expect(component.textBlockRefs.map(({ block }) => block!.text).join('')).toBe(submission.text);
     });
 

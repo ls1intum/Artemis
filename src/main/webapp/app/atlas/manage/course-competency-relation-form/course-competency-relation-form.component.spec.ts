@@ -146,7 +146,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     it('should place the tail select before the head select so the form reads "tail requires head"', () => {
         fixture.detectChanges();
 
-        const selectIds = Array.from(fixture.nativeElement.querySelectorAll('select')).map((select) => (select as HTMLSelectElement).id);
+        const selectIds = Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-select button[role="combobox"]')).map((select) => (select as HTMLButtonElement).id);
 
         expect(selectIds).toEqual(['tail', 'type', 'head']);
     });
@@ -308,6 +308,24 @@ describe('CourseCompetencyRelationFormComponent', () => {
         component.relationType.set(CompetencyRelationType.ASSUMES);
 
         expect(component['selectableHeadCourseCompetencyIds']()).toEqual([3]);
+    });
+
+    it('should offer only selectable heads, and keep an already chosen one so that it stays visible', () => {
+        component.tailCompetencyId.set(2);
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        expect(component['headOptions']().map(({ id }) => id)).toEqual([3]);
+
+        component.headCompetencyId.set(1);
+
+        expect(component['headOptions']().map(({ id }) => id)).toEqual([1, 3]);
+    });
+
+    it('should offer every relation type with its translated label', () => {
+        const options = component['relationTypeOptions']();
+
+        expect(options.map(({ value }) => value)).toEqual(Object.values(CompetencyRelationType));
+        expect(options[0].label).toBe(`artemisApp.courseCompetency.relations.relationTypes.${options[0].value}`);
     });
 
     it('should delete relation', async () => {

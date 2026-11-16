@@ -70,9 +70,9 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     /**
-     * The configuration of this repository, with git hooks disabled as Artemis does not use them.
-     * The hooks directory is set on every access, as the configuration may be reloaded from disk.
-     * As it is part of the configuration, a configuration file that is saved contains it as well.
+     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them.
+     * The hooks directory is set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
+     * As they are part of the configuration, a configuration file that is saved contains them as well.
      *
      * @return the configuration of this repository
      */
@@ -81,6 +81,9 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         FileBasedConfig config = super.getConfig();
         if (!NO_HOOKS_PATH.equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH))) {
             config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH, NO_HOOKS_PATH);
+        }
+        for (String filterDriver : config.getSubsections(ConfigConstants.CONFIG_FILTER_SECTION)) {
+            config.unsetSection(ConfigConstants.CONFIG_FILTER_SECTION, filterDriver);
         }
         return config;
     }
