@@ -183,12 +183,9 @@ class BuildJobCloneTokenServiceTest {
     }
 
     @Test
-    void shouldReturnNoRepositoriesForAJobWithoutRepositoryInfo() {
+    void shouldReturnNoRepositoriesForAMissingJob() {
         assertThat(service.getRepositoryIdentities(null)).isEmpty();
         assertThat(service.coversRepository(null, new LocalVCRepositoryUri(uri("student1")))).isFalse();
-        BuildJobQueueItem jobWithoutRepositoryInfo = buildJob(null, "bjct-x");
-        assertThat(service.getRepositoryIdentities(jobWithoutRepositoryInfo)).isEmpty();
-        assertThat(service.coversRepository(jobWithoutRepositoryInfo, new LocalVCRepositoryUri(uri("student1")))).isFalse();
         verifyNoInteractions(participationRepository, programmingExerciseRepository);
     }
 

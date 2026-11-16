@@ -142,9 +142,6 @@ public class BuildJobCloneTokenService {
     }
 
     private Set<RepositoryIdentity> getDeclaredRepositoryIdentities(BuildJobQueueItem buildJob) {
-        if (buildJob.repositoryInfo() == null) {
-            return new HashSet<>();
-        }
         RepositoryInfo repositoryInfo = buildJob.repositoryInfo();
         Set<RepositoryIdentity> repositories = new HashSet<>();
         addIfPresent(repositories, repositoryInfo.assignmentRepositoryUri());
