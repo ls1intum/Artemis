@@ -134,4 +134,20 @@ describe('TranslateDirective', () => {
         expect(element.textContent).toContain('name');
         expect(element.textContent).toContain('Format:');
     });
+
+    it('shows string values that are inserted into a translation as text', () => {
+        const fixture = TestBed.createDirective(TranslateDirective, {
+            tagName: 'div',
+            bindings: [inputBinding('jhiTranslate', () => 'test'), inputBinding('translateValues', () => ({ title: '<span class="x">Exam</span> & "more"', count: 3 }))],
+        });
+        fixture.detectChanges();
+
+        expect(spy).toHaveBeenCalledWith('test', { title: '&lt;span class=&quot;x&quot;&gt;Exam&lt;/span&gt; &amp; &quot;more&quot;', count: 3 });
+    });
+
+    it('does not change the markup of the translation itself', () => {
+        const element = render('Hello <strong class="text-danger">world</strong>');
+
+        expect(element.querySelector('strong.text-danger')?.textContent).toBe('world');
+    });
 });

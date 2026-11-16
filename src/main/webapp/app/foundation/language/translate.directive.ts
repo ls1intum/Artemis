@@ -16,6 +16,23 @@ const TRANSLATION_SANITIZE_CONFIG = {
 };
 
 /**
+ * Escapes the characters that start markup, so that a value that is inserted into a translation is shown as text.
+ */
+function escapeHtml(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/**
+ * Escapes the string values that are inserted into a translation, as they are rendered as markup. The markup of the translation itself is not touched.
+ */
+function escapeTranslateValues(values?: { [key: string]: unknown }): { [key: string]: unknown } | undefined {
+    if (!values) {
+        return values;
+    }
+    return Object.fromEntries(Object.entries(values).map(([name, value]) => [name, typeof value === 'string' ? escapeHtml(value) : value]));
+}
+
+/**
  * A wrapper directive on top of the translate pipe as the inbuilt translate directive from ngx-translate is too verbose and buggy
  */
 @Directive({
@@ -55,7 +72,7 @@ export class TranslateDirective implements OnInit {
             return;
         }
         this.translateService
-            .get(key, this.translateValues())
+            .get(key, escapeTranslateValues(this.translateValues()))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (value) => {
