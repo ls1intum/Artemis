@@ -21,7 +21,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
 
@@ -58,7 +58,6 @@ import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.co
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 /**
@@ -122,7 +121,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     // mutates this object in place. Module-scope consts would leak those mutations (feedbacks, rated, score,
     // circular-reference stripping, ...) across unrelated tests.
     let result: Result;
-    let complaint: Complaint;
+    let complaint: ComplaintDTO;
     let exercise: ProgrammingExercise;
     let participation: ProgrammingExerciseStudentParticipation;
     let submission: ProgrammingSubmission;
@@ -153,7 +152,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         };
         result.submission!.id = 1;
 
-        complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+        complaint = { id: 1, complaintText: 'Why only 80%?' };
         exercise = {
             id: 1,
             templateParticipation: {
@@ -243,7 +242,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         lockAndGetProgrammingSubmissionParticipationStub = vi
             .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
             .mockReturnValue(scheduled([submission], asapScheduler));
-        findBySubmissionIdForAssessmentStub = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
+        findBySubmissionIdForAssessmentStub = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(complaint));
         getIdentityStub = vi.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
         getProgrammingSubmissionForExerciseWithoutAssessmentStub = vi
             .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
@@ -562,7 +561,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should not show complaint when participation contains no complaint', async () => {
-        findBySubmissionIdForAssessmentStub.mockReturnValue(of({ body: undefined }));
+        findBySubmissionIdForAssessmentStub.mockReturnValue(of(undefined));
         comp.ngOnInit();
         await flushMicrotasks();
 

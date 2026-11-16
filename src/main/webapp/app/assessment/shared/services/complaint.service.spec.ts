@@ -9,15 +9,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
-import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClient } from '@angular/common/http';
-import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
-import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
@@ -26,27 +26,7 @@ describe('ComplaintService', () => {
 
     const dayjsTime1 = dayjs().utc().year(2022).month(3).date(14).hour(10).minute(35).second(12).millisecond(332);
     const stringTime1 = '2022-04-14T10:35:12.332Z';
-    const dayjsTime2 = dayjs().utc().year(2022).month(4).date(12).hour(18).minute(12).second(11).millisecond(140);
-    const stringTime2 = '2022-05-12T18:12:11.140Z';
     const dayjsTime3 = dayjs();
-
-    const clientComplaint1 = new ComplaintDTO();
-    clientComplaint1.id = 42;
-    clientComplaint1.complaintType = ComplaintType.MORE_FEEDBACK;
-    clientComplaint1.result = new ResultSimpleDTO();
-    clientComplaint1.submittedTime = dayjsTime1;
-    clientComplaint1.complaintText = 'Test text';
-
-    const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
-
-    const clientComplaint2 = new ComplaintDTO();
-    clientComplaint2.id = 42;
-    clientComplaint2.complaintType = ComplaintType.MORE_FEEDBACK;
-    clientComplaint2.result = new ResultSimpleDTO();
-    clientComplaint2.submittedTime = dayjsTime2;
-    clientComplaint2.complaintText = 'Test text';
-
-    const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
 
     let exercise: Exercise;
     let emptyResult: Result;
@@ -315,166 +295,6 @@ describe('ComplaintService', () => {
         });
     });
 
-    it('uses explicit assessment detail URL', () => {
-        complaintService.findBySubmissionIdForAssessment(42).subscribe();
-        const req = httpMock.expectOne('api/assessment/complaints/for-assessment?submissionId=42');
-        expect(req.request.method).toBe('GET');
-        req.flush(clientComplaint1);
-    });
-
-    it.each(['course', 'exercise'] as const)('uses current-tutor %s scope without an arbitrary tutor ID', (scope) => {
-        if (scope === 'course') {
-            complaintService.findForTutorByCourseId(42, ComplaintType.COMPLAINT).subscribe();
-        } else {
-            complaintService.findForTutorByExerciseId(42, ComplaintType.COMPLAINT).subscribe();
-        }
-        const req = httpMock.expectOne(`api/assessment/complaints/for-tutor?${scope}Id=42&complaintType=COMPLAINT`);
-        expect(req.request.method).toBe('GET');
-        req.flush([]);
-    });
-
-    it('findBySubmissionId', () => {
-        const submissionId = 1337;
-        complaintService.findBySubmissionId(submissionId).subscribe((received) => {
-            expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?submissionId=${submissionId}`);
-
-        res.flush(clone(serverComplaint1));
-    });
-
-    it('getComplaintsForTestRun', () => {
-        const exerciseId = 1337;
-        complaintService.getComplaintsForTestRun(exerciseId).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('findAllByTutorIdForCourseId', () => {
-        const tutorId = 1337;
-        const courseId = 69;
-        const complaintType = ComplaintType.COMPLAINT;
-
-        complaintService.findAllByTutorIdForCourseId(tutorId, courseId, complaintType).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('findAllByTutorIdForExerciseId', () => {
-        const tutorId = 1337;
-        const exerciseId = 69;
-        const complaintType = ComplaintType.COMPLAINT;
-
-        complaintService.findAllByTutorIdForExerciseId(tutorId, exerciseId, complaintType).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('findAllByCourseId', () => {
-        const courseId = 69;
-        const complaintType = ComplaintType.COMPLAINT;
-
-        complaintService.findAllByCourseId(courseId, complaintType).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('findAllByCourseIdAndExamId', () => {
-        const courseId = 69;
-        const examId = 42;
-
-        complaintService.findAllByCourseIdAndExamId(courseId, examId).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&examId=${examId}`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('findAllByExerciseId', () => {
-        const exerciseId = 69;
-        const complaintType = ComplaintType.COMPLAINT;
-
-        complaintService.findAllByExerciseId(exerciseId, complaintType).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    function clone(object: object): object {
-        return Object.assign({}, object);
-    }
-
-    it('findAllWithoutStudentInformationForCourseId', () => {
-        const courseId = 69;
-        const complaintType = ComplaintType.COMPLAINT;
-
-        complaintService.findAllWithoutStudentInformationForCourseId(courseId, complaintType).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
-            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('findAllWithoutStudentInformationForExerciseId', () => {
-        const exerciseId = 42;
-        const complaintType = ComplaintType.COMPLAINT;
-
-        complaintService.findAllWithoutStudentInformationForExerciseId(exerciseId, complaintType).subscribe((received) => {
-            expect(received.body).toHaveLength(2);
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
     it('should remove result references from feedbacks for update after complaint', () => {
         const result = new Result();
         result.id = 1;
@@ -519,12 +339,7 @@ describe('ComplaintService', () => {
 
     describe('convertComplaintFromServer', () => {
         it('should map base fields and attach the provided result', () => {
-            const dto = new ComplaintDTO();
-            dto.id = 7;
-            dto.complaintText = 'Why only 80%?';
-            dto.complaintType = ComplaintType.COMPLAINT;
-            dto.complaintIsAccepted = true;
-            dto.submittedTime = dayjsTime1;
+            const dto: ComplaintDTO = { id: 7, complaintText: 'Why only 80%?', complaintType: 'COMPLAINT', complaintIsAccepted: true, submittedTime: stringTime1 };
 
             const result = new Result();
             result.id = 99;
@@ -541,8 +356,7 @@ describe('ComplaintService', () => {
         });
 
         it('should tolerate an undefined result', () => {
-            const dto = new ComplaintDTO();
-            dto.id = 8;
+            const dto: ComplaintDTO = { id: 8 };
 
             const complaint = complaintService.convertComplaintFromServer(dto, undefined);
 
@@ -551,8 +365,7 @@ describe('ComplaintService', () => {
         });
 
         it('should map a student participant onto complaint.student', () => {
-            const dto = new ComplaintDTO();
-            dto.participant = { id: 3, name: 'Student One', login: 'student1', isStudent: true } as ParticipantDTO;
+            const dto: ComplaintDTO = { participant: { id: 3, name: 'Student One', login: 'student1', isStudent: true } };
 
             const complaint = complaintService.convertComplaintFromServer(dto, undefined);
 
@@ -564,8 +377,7 @@ describe('ComplaintService', () => {
         });
 
         it('should map a team participant onto complaint.team', () => {
-            const dto = new ComplaintDTO();
-            dto.participant = { id: 4, name: 'Team Awesome', login: 'team-awesome', isStudent: false } as ParticipantDTO;
+            const dto: ComplaintDTO = { participant: { id: 4, name: 'Team Awesome', login: 'team-awesome', isStudent: false } };
 
             const complaint = complaintService.convertComplaintFromServer(dto, undefined);
 
@@ -579,23 +391,24 @@ describe('ComplaintService', () => {
 
     describe('convertComplaintFromServerInList', () => {
         it('should reconstruct the reduced result, exercise title, assessor and feedbacks', () => {
-            const dto = new ComplaintDTO();
-            dto.id = 11;
-            dto.complaintType = ComplaintType.COMPLAINT;
-            dto.complaintIsAccepted = false;
-            dto.assessorKey = '9';
-            dto.assessorLabel = 'Tutor One';
-            dto.result = {
-                id: 55,
-                completionDate: dayjsTime1,
-                score: 80,
-                rated: true,
-                assessmentType: AssessmentType.MANUAL,
-                assessor: { id: 9, login: 'tutor1', name: 'Tutor One' },
-                exerciseTitle: 'My Exercise',
-                feedbacks: [{ id: 1, credits: 5, reference: 'reference-id', detailText: 'Good' } as FeedbackDTO],
-                submission: { id: 21, participation: { id: 31, exercise: { id: 41, type: ExerciseType.TEXT } } },
-            } as ResultSimpleDTO;
+            const dto: ComplaintDTO = {
+                id: 11,
+                complaintType: 'COMPLAINT',
+                complaintIsAccepted: false,
+                assessorKey: '9',
+                assessorLabel: 'Tutor One',
+                result: {
+                    id: 55,
+                    completionDate: stringTime1,
+                    score: 80,
+                    rated: true,
+                    assessmentType: 'MANUAL',
+                    assessor: { id: 9, login: 'tutor1', name: 'Tutor One' },
+                    exerciseTitle: 'My Exercise',
+                    feedbacks: [{ id: 1, credits: 5, reference: 'reference-id', detailText: 'Good' }],
+                    submission: { id: 21, participation: { id: 31, exercise: { id: 41, type: 'text' } } },
+                },
+            };
 
             const complaint = complaintService.convertComplaintFromServerInList(dto);
 
@@ -619,17 +432,13 @@ describe('ComplaintService', () => {
         });
 
         it('should keep assessorKey and assessorLabel when result.assessor is redacted', () => {
-            const dto = new ComplaintDTO();
-            dto.id = 13;
-            dto.complaintType = ComplaintType.COMPLAINT;
-            dto.assessorKey = '42';
-            dto.assessorLabel = 'Foreign Tutor';
-            dto.result = {
-                id: 56,
-                score: 70,
-                rated: true,
-                assessmentType: AssessmentType.MANUAL,
-            } as ResultSimpleDTO;
+            const dto: ComplaintDTO = {
+                id: 13,
+                complaintType: 'COMPLAINT',
+                assessorKey: '42',
+                assessorLabel: 'Foreign Tutor',
+                result: { id: 56, score: 70, rated: true, assessmentType: 'MANUAL' },
+            };
 
             const complaint = complaintService.convertComplaintFromServerInList(dto);
 

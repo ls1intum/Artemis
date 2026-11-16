@@ -1,6 +1,6 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -30,7 +30,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -62,7 +62,7 @@ describe('ComplaintsStudentViewComponent', () => {
         examStudentReviewStart: dayjs().subtract(complaintTimeLimitDays, 'day'),
         examStudentReviewEnd: dayjs().add(complaintTimeLimitDays, 'day'),
     } as Exam;
-    const complaint = new ComplaintDTO();
+    const complaint: ComplaintDTO = {};
     const numberOfComplaints = 42;
 
     let component: ComplaintsStudentViewComponent;
@@ -160,7 +160,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
 
-            const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
+            const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(complaint));
             const numberOfAllowedComplaintsMock = vi.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             const userMock = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
@@ -180,7 +180,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('exam', defaultExam);
             fixture.componentRef.setInput('forStaff', true);
             const ownerLookup = vi.spyOn(complaintService, 'findBySubmissionId');
-            const staffLookup = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as EntityResponseType));
+            const staffLookup = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(complaint));
             vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
             fixture.detectChanges();
@@ -309,7 +309,7 @@ describe('ComplaintsStudentViewComponent', () => {
         });
 
         it('should initialize with complaint', async () => {
-            await testInitWithResultStub(of({ body: complaint } as EntityResponseType));
+            await testInitWithResultStub(of(complaint));
             expect(component.complaint()).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
         });
 
@@ -497,7 +497,7 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.timeOfComplaintValid()).toBe(true);
         }
 
-        async function testInitWithResultStub(content: Observable<EntityResponseType>) {
+        async function testInitWithResultStub(content: Observable<ComplaintDTO | undefined>) {
             fixture.componentRef.setInput('exercise', courseExercise);
             fixture.componentRef.setInput('result', result);
             const complaintBySubmissionStub = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(content);
@@ -514,7 +514,7 @@ describe('ComplaintsStudentViewComponent', () => {
     });
 
     describe('layout', () => {
-        async function renderCourseView(complaintResponse: Observable<EntityResponseType>) {
+        async function renderCourseView(complaintResponse: Observable<ComplaintDTO | undefined>) {
             const exerciseWithComplaints: Exercise = { ...courseExercise, course: { ...course, maxComplaints: 3 } };
             fixture.componentRef.setInput('exercise', exerciseWithComplaints);
             fixture.componentRef.setInput('result', result);
@@ -569,7 +569,7 @@ describe('ComplaintsStudentViewComponent', () => {
         });
 
         it('should place the request and the response side by side only from 1200px and stack them below', async () => {
-            await renderCourseView(of({ body: complaint } as EntityResponseType));
+            await renderCourseView(of(complaint));
 
             const request = fixture.nativeElement.querySelector('jhi-complaint-request') as HTMLElement;
             const response = fixture.nativeElement.querySelector('jhi-complaint-response') as HTMLElement;

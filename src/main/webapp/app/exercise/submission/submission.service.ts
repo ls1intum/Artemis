@@ -8,7 +8,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';

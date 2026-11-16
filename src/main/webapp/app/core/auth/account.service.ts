@@ -11,7 +11,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
@@ -437,7 +436,7 @@ export class AccountService implements IAccountService {
      *
      * @param expiryDate The expiry date which should get set for the vcsAccessToken
      */
-    addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
+    addNewVcsAccessToken(expiryDate: string): Observable<HttpResponse<User>> {
         const params = new HttpParams().set('expiryDate', expiryDate);
         return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }

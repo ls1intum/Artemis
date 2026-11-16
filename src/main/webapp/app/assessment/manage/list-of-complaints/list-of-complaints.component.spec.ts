@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complaints/list-of-complaints.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { User } from 'app/account/user/user.model';
@@ -20,8 +20,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -36,17 +35,14 @@ describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
     let comp: ListOfComplaintsComponent;
 
-    let complaintService: IComplaintService;
+    let complaintService: ComplaintService;
     let activatedRoute: MockActivatedRoute;
     let translateService: TranslateService;
     let router: Router;
     let datePipe: ArtemisDatePipe;
 
-    let findAllByTutorIdForExerciseIdStub: MockInstance;
-    let findAllByTutorIdForCourseIdStub: MockInstance;
-    let findAllByExerciseIdStub: MockInstance;
-    let findAllByCourseIdAndExamIdStub: MockInstance;
-    let findAllByCourseIdStub: MockInstance;
+    let findAllStub: MockInstance<ComplaintService['findAll']>;
+    let findAllForTutorStub: MockInstance<ComplaintService['findAllForTutor']>;
 
     const complaint1 = {
         id: 1,
@@ -96,11 +92,8 @@ describe('ListOfComplaintsComponent', () => {
                 router = fixture.debugElement.injector.get(Router);
                 datePipe = fixture.debugElement.injector.get(ArtemisDatePipe);
 
-                findAllByTutorIdForExerciseIdStub = vi.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
-                findAllByTutorIdForCourseIdStub = vi.spyOn(complaintService, 'findAllByTutorIdForCourseId');
-                findAllByExerciseIdStub = vi.spyOn(complaintService, 'findAllByExerciseId');
-                findAllByCourseIdAndExamIdStub = vi.spyOn(complaintService, 'findAllByCourseIdAndExamId');
-                findAllByCourseIdStub = vi.spyOn(complaintService, 'findAllByCourseId');
+                findAllStub = vi.spyOn(complaintService, 'findAll');
+                findAllForTutorStub = vi.spyOn(complaintService, 'findAllForTutor');
             });
     });
 
@@ -111,90 +104,49 @@ describe('ListOfComplaintsComponent', () => {
     describe('loadComplaints', () => {
         it('chooses explicit tutor exercise scope and ignores another tutor in the route', () => {
             vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
-            const tutorRequest = vi.spyOn(complaintService, 'findForTutorByExerciseId');
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
-            expect(tutorRequest).toHaveBeenCalledExactlyOnceWith(56, ComplaintType.MORE_FEEDBACK);
-            expect(findAllByTutorIdForExerciseIdStub).not.toHaveBeenCalled();
+            expect(findAllForTutorStub).toHaveBeenCalledExactlyOnceWith({ exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
+            expect(findAllStub).not.toHaveBeenCalled();
         });
 
         it('chooses explicit tutor course scope without a tutor route parameter', () => {
             vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
-            const tutorRequest = vi.spyOn(complaintService, 'findForTutorByCourseId');
             activatedRoute.setParameters({ courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
-            expect(tutorRequest).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.MORE_FEEDBACK);
-            expect(findAllByCourseIdStub).not.toHaveBeenCalled();
+            expect(findAllForTutorStub).toHaveBeenCalledExactlyOnceWith({ courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
+            expect(findAllStub).not.toHaveBeenCalled();
         });
 
-        it('find for tutor by exercise', () => {
-            activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
+        it.each([
+            ['for tutor by exercise', { tutorId: 12, courseId: 34, exerciseId: 56 }, { exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK, tutorId: 12 }],
+            ['for tutor by exam', { tutorId: 12, courseId: 34, examId: 56 }, { courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK, tutorId: 12 }],
+            ['for tutor by course', { tutorId: 12, courseId: 34 }, { courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK, tutorId: 12 }],
+            ['general by exercise', { courseId: 12, exerciseId: 34 }, { exerciseId: 34, complaintType: ComplaintType.MORE_FEEDBACK }],
+            ['general by exam', { courseId: 12, examId: 34 }, { courseId: 12, examId: 34 }],
+            ['general by course', { courseId: 12 }, { courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK }],
+        ])('finds %s', (_scope, routeParameters, expectedQuery) => {
+            activatedRoute.setParameters({ ...routeParameters, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledTimes(1);
-            expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledWith(12, 56, ComplaintType.MORE_FEEDBACK);
-            verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
-        });
-
-        it('find for tutor by exam', () => {
-            activatedRoute.setParameters({ tutorId: 12, courseId: 34, examId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
-            comp.ngOnInit();
-
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
-            verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
-        });
-
-        it('find for tutor by course', () => {
-            activatedRoute.setParameters({ tutorId: 12, courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
-            comp.ngOnInit();
-
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
-            verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
-        });
-
-        it('find general by exercise', () => {
-            activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
-            comp.ngOnInit();
-
-            expect(findAllByExerciseIdStub).toHaveBeenCalledTimes(1);
-            expect(findAllByExerciseIdStub).toHaveBeenCalledWith(34, ComplaintType.MORE_FEEDBACK);
-            verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByTutorIdForCourseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
-        });
-
-        it('find general by exam', () => {
-            activatedRoute.setParameters({ courseId: 12, examId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
-            comp.ngOnInit();
-
-            expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledTimes(1);
-            expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledWith(12, 34);
-            verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdStub);
-        });
-
-        it('find general by course', () => {
-            activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
-            comp.ngOnInit();
-
-            expect(findAllByCourseIdStub).toHaveBeenCalledTimes(1);
-            expect(findAllByCourseIdStub).toHaveBeenCalledWith(12, ComplaintType.MORE_FEEDBACK);
-            verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub);
+            expect(findAllStub).toHaveBeenCalledExactlyOnceWith(expectedQuery);
+            expect(findAllForTutorStub).not.toHaveBeenCalled();
         });
 
         it('process complaints without student information', () => {
-            findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3] } as EntityResponseTypeArray));
+            findAllStub.mockReturnValue(of([complaint1, complaint2, complaint3]));
             comp.loadComplaints();
 
             expect(comp.complaintsToShow()).toEqual([complaint3]);
         });
 
         it('process complaints with student information', () => {
-            findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint4] } as EntityResponseTypeArray));
+            findAllStub.mockReturnValue(of([complaint1, complaint2, complaint3, complaint4]));
             comp.loadComplaints();
 
             expect(comp.complaintsToShow()).toEqual([complaint3, complaint4]);
 
-            findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
+            findAllStub.mockReturnValue(of([complaint1, complaint2, complaint3, complaint5]));
             comp.loadComplaints();
 
             expect(comp.complaintsToShow()).toEqual([complaint3]);
@@ -204,7 +156,7 @@ describe('ListOfComplaintsComponent', () => {
     it('triggerAddressedComplaints', () => {
         const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
         const freeComplaints = [complaint3, complaint4];
-        findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
+        findAllStub.mockReturnValue(of(complaints));
         comp.loadComplaints();
         expect(comp.showAddressedComplaints()).toBe(false);
         expect(comp.complaintsToShow()).toEqual(freeComplaints);
@@ -344,7 +296,7 @@ describe('ListOfComplaintsComponent', () => {
         const openComplaints = [complaint3, complaint4];
 
         const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
-        findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
+        findAllStub.mockReturnValue(of(complaints));
         comp.filterOption.set(Number(filterOption));
         comp.loadComplaints();
 
@@ -387,7 +339,7 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('clears loading when the mine request fails', () => {
-        findAllByCourseIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        findAllStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
 
         comp.ngOnInit();
@@ -396,27 +348,21 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('requests the exercise-scoped all list on exercise-scoped routes', () => {
-        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId').mockReturnValue(of(emptyComplaintResponse()));
-        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId');
         activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
 
         comp.setComplaintScope('all');
 
-        expect(findAllForExerciseStub).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.COMPLAINT);
-        verifyNotCalled(findAllForCourseStub);
+        expect(findAllForTutorStub).toHaveBeenCalledExactlyOnceWith({ exerciseId: 34, complaintType: ComplaintType.COMPLAINT, allComplaintsForTutor: true });
     });
 
     it('requests the course-scoped all list on course-scoped routes', () => {
-        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
-        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId');
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
 
         comp.setComplaintScope('all');
 
-        expect(findAllForCourseStub).toHaveBeenCalledExactlyOnceWith(12, ComplaintType.COMPLAINT);
-        verifyNotCalled(findAllForExerciseStub);
+        expect(findAllForTutorStub).toHaveBeenCalledExactlyOnceWith({ courseId: 12, complaintType: ComplaintType.COMPLAINT, allComplaintsForTutor: true });
     });
 
     it('sorts the assessor column by the same value the cell renders', () => {
@@ -465,14 +411,14 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('resets mine/all caches when the route identity changes', () => {
-        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        findAllStub.mockReturnValue(of([complaint3]));
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
-        vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
+        findAllForTutorStub.mockReturnValue(of([]));
         comp.setComplaintScope('all');
         expect(comp.allComplaintsForTutorLoaded()).toBe(true);
 
-        findAllByExerciseIdStub.mockReturnValue(of({ body: [complaint4] } as EntityResponseTypeArray));
+        findAllStub.mockReturnValue(of([complaint4]));
         activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
 
         expect(comp.allComplaintsForTutorLoaded()).toBe(false);
@@ -482,15 +428,13 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('switches between mine and all using the cached all list without a second request', () => {
-        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        findAllStub.mockReturnValue(of([complaint3]));
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
 
-        const findAllForCourseStub = vi
-            .spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId')
-            .mockReturnValue(of({ body: [complaint3, complaint4] } as EntityResponseTypeArray));
+        findAllForTutorStub.mockReturnValue(of([complaint3, complaint4]));
         comp.setComplaintScope('all');
-        expect(findAllForCourseStub).toHaveBeenCalledTimes(1);
+        expect(findAllForTutorStub).toHaveBeenCalledTimes(1);
         expect(comp.allComplaintsForTutorLoaded()).toBe(true);
         expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([3, 4]);
 
@@ -501,16 +445,16 @@ describe('ListOfComplaintsComponent', () => {
         // Same scope is a no-op; a second All uses the cache.
         comp.setComplaintScope('mine');
         comp.setComplaintScope('all');
-        expect(findAllForCourseStub).toHaveBeenCalledTimes(1);
+        expect(findAllForTutorStub).toHaveBeenCalledTimes(1);
         expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([3, 4]);
     });
 
     it('restores the mine list when the all request fails', () => {
-        findAllByCourseIdStub.mockReturnValue(of({ body: [complaint3] } as EntityResponseTypeArray));
+        findAllStub.mockReturnValue(of([complaint3]));
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
 
-        vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        findAllForTutorStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         comp.setComplaintScope('all');
 
         expect(comp.isLoadingAllComplaints()).toBe(false);
@@ -518,14 +462,4 @@ describe('ListOfComplaintsComponent', () => {
         expect(comp.assessorFilter()).toBeUndefined();
         expect(comp.complaintsToShow()).toEqual([complaint3]);
     });
-
-    function emptyComplaintResponse(): EntityResponseTypeArray {
-        return new HttpResponse<ComplaintDTO[]>({ body: [] });
-    }
-
-    function verifyNotCalled(...instances: MockInstance[]) {
-        for (const spyInstance of instances) {
-            expect(spyInstance).not.toHaveBeenCalled();
-        }
-    }
 });

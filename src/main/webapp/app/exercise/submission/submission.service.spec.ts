@@ -13,7 +13,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import dayjs from 'dayjs/esm';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 
 describe('Submission Service', () => {
     let service: SubmissionService;
@@ -172,7 +172,7 @@ describe('Submission Service', () => {
         const complaintSubmittedTimeStr = '2022-02-03T22:11:33.444Z';
 
         const complaint: ComplaintDTO = {
-            submittedTime: complaintSubmittedTimeStr as any, // String should be converted to proper type by the tested service.
+            submittedTime: complaintSubmittedTimeStr,
             complaintIsAccepted: false,
             result: { id: 2374, successful: true },
         };

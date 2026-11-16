@@ -4,14 +4,14 @@ import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibilit
 import type { Feedback as FeedbackResponse } from 'app/openapi/model/feedback';
 import type { TestCase } from 'app/openapi/model/test-case';
 
-const feedbackTypeByResponse: Record<NonNullable<FeedbackResponse['type']>, FeedbackType> = {
+export const feedbackTypeByResponse: Record<NonNullable<FeedbackResponse['type']>, FeedbackType> = {
     AUTOMATIC: FeedbackType.AUTOMATIC,
     AUTOMATIC_ADAPTED: FeedbackType.AUTOMATIC_ADAPTED,
     MANUAL: FeedbackType.MANUAL,
     MANUAL_UNREFERENCED: FeedbackType.MANUAL_UNREFERENCED,
 };
 
-const visibilityByResponse: Record<NonNullable<TestCase['visibility']>, Visibility> = {
+export const visibilityByResponse: Record<NonNullable<TestCase['visibility']>, Visibility> = {
     ALWAYS: Visibility.Always,
     AFTER_DUE_DATE: Visibility.AfterDueDate,
     NEVER: Visibility.Never,
