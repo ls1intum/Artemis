@@ -79,7 +79,7 @@
     <!-- State 2: Selection of exercises to be imported after an exam was selected -->
     @if (exam(); as selectedExam) {
         @if (subsequentExerciseGroupSelection()) {
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-6!">
                 <div>
                     @if (!isImportingExercises()) {
                         <p class="my-0!" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
@@ -90,7 +90,7 @@
                 </div>
                 <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
-            <div class="flex justify-end pt-4">
+            <div class="flex justify-end pt-6!">
                 <button severity="secondary" tumAetUiButton type="button" [disabled]="isImportingExercises()" (click)="performImportOfExerciseGroups()">
                     @if (isImportingExercises()) {
                         <fa-icon [icon]="faSpinner" animation="spin" />

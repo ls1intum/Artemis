@@ -9,6 +9,8 @@ import { faTable, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('ExerciseActionBarComponent', () => {
     let fixture: ComponentFixture<ExerciseActionBarComponent>;
@@ -31,21 +33,76 @@ describe('ExerciseActionBarComponent', () => {
     afterEach(() => vi.restoreAllMocks());
 
     describe('hiddenIds / hasOverflow', () => {
-        it('collapses no inline action before the row width is measured', () => {
+        it('shows up to three actions inline, without the ellipsis, before the row width is measured', () => {
             fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
+            fixture.detectChanges();
+
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);
         });
 
-        it('always puts actions outside inlineIds into the menu, in display order', () => {
+        it('keeps the other actions and, with them, delete in the menu, however wide the row', () => {
+            fixture.componentRef.setInput('items', buildActions(['statistics', 'preview', 'solution', 'participations', 'edit', 'delete']));
+            seedEqualWidths(30);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(2000);
+
+            expect(component.hasOverflow()).toBe(true);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['statistics', 'preview', 'solution', 'delete']);
+        });
+
+        it('shows a single menu entry as a button instead, e.g. delete in a programming row', () => {
+            fixture.componentRef.setInput('items', buildActions(['edit-in-editor', 'participations', 'edit', 'delete']));
+            seedEqualWidths(30);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(2000);
+
+            expect(component.hasOverflow()).toBe(false);
+        });
+
+        it('shows edit in editor, participations and edit, and delete in the menu, for a programming row with more actions', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'edit-in-editor', 'participations', 'edit', 'delete']));
+            seedEqualWidths(30);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(2000);
+
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['teams', 'delete']);
+        });
+
+        it('renders the trailing actions last, set apart from the others before them', () => {
             fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'edit', 'delete']));
             fixture.detectChanges();
 
-            expect(component.hasOverflow()).toBe(true);
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['teams', 'statistics']);
-            const inlineIds = [...fixture.nativeElement.querySelectorAll('.inline-item [data-testid]')].map((el: HTMLElement) => el.dataset.testid);
-            expect(inlineIds).toEqual(['exercise-action-participations', 'exercise-action-edit', 'exercise-action-delete']);
+            const items: HTMLElement[] = [...fixture.nativeElement.querySelectorAll('.inline-item')];
+            expect(items.map((item) => item.querySelector<HTMLElement>('[data-testid]')!.dataset.testid)).toEqual([
+                'exercise-action-teams',
+                'exercise-action-statistics',
+                'exercise-action-participations',
+                'exercise-action-edit',
+                'exercise-action-delete',
+            ]);
+            expect(items.map((item) => item.classList.contains('group-start'))).toEqual([false, false, true, false, false]);
+        });
+
+        it('labels every button but edit and delete, which show only their icon and name it in the tooltip', () => {
+            fixture.componentRef.setInput('items', buildActions(['edit-in-editor', 'participations', 'edit', 'delete']));
+            fixture.detectChanges();
+
+            const button = (id: string): HTMLElement => fixture.nativeElement.querySelector(`[data-testid="exercise-action-${id}"]`);
+            expect(button('edit-in-editor').textContent).toContain('label.edit-in-editor');
+            expect(button('participations').textContent).toContain('label.participations');
+            expect(button('participations').getAttribute('aria-label')).toBeNull();
+            expect(button('edit').textContent).not.toContain('label.edit');
+            expect(button('edit').getAttribute('aria-label')).toBe('label.edit');
+            expect(button('delete').getAttribute('aria-label')).toBe('label.delete');
+        });
+
+        it('does not set the trailing actions apart when no other action precedes them', () => {
+            fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelectorAll('.inline-item.group-start')).toHaveLength(0);
         });
 
         /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
@@ -57,27 +114,71 @@ describe('ExerciseActionBarComponent', () => {
             component['buttonWidths'].set(widths);
         };
 
-        it('collapses inline actions in inlineIds order when the row is too narrow', () => {
-            fixture.componentRef.setInput('items', buildActions(['a', 'b', 'c', 'extra']));
-            fixture.componentRef.setInput('inlineIds', ['c', 'a', 'b']);
+        it('folds delete first, then the other actions, and keeps the default-priority ids inline longest', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'preview', 'edit-in-editor', 'edit', 'delete']));
+            // Lifted, so only the width limits the buttons here.
+            fixture.componentRef.setInput('inlineIds', ['teams', 'participations', 'statistics', 'preview', 'edit-in-editor', 'edit', 'delete']);
+            fixture.componentRef.setInput('maxInline', 10);
+            // Each button 100px wide. With a 460px row (available 452 after the safety margin, budget 414 after the
+            // ellipsis + gap) exactly four 100px buttons plus their gaps fit.
+            seedEqualWidths(100);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(460);
+
+            expect(component.hasOverflow()).toBe(true);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['statistics', 'preview', 'delete']);
+        });
+
+        it('folds only delete when one button is too many, so the ellipsis takes its place at the end', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'edit', 'delete']));
+            fixture.componentRef.setInput('inlineIds', ['teams', 'participations', 'edit', 'delete']);
+            fixture.componentRef.setInput('maxInline', 10);
+            // Four buttons (412px incl. gaps) exceed a 400px row (available 392); after the ellipsis and its gap the budget
+            // is 354px, so three fit.
+            seedEqualWidths(100);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(400);
+
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['delete']);
+        });
+
+        it('respects a custom keepPriorityIds ordering', () => {
+            fixture.componentRef.setInput('items', buildActions(['a', 'b', 'c']));
+            fixture.componentRef.setInput('inlineIds', ['a', 'b', 'c']);
+            fixture.componentRef.setInput('keepPriorityIds', ['c']);
             seedEqualWidths(100);
             component['reservedWidth'].set(0);
             // 3 buttons (308px incl. gaps) don't fit a 200px row (available 192 after the safety margin, budget 154
-            // after the ellipsis and its gap), so exactly one 100px button can stay inline — it must be 'c', the first
-            // entry in inlineIds, even though it is last in display order.
+            // after the ellipsis and its gap), so exactly one 100px button can stay inline — it must be 'c', the sole
+            // entry in keepPriorityIds, even though it is last in display order.
             component['rowWidth'].set(200);
 
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['a', 'b', 'extra']);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['a', 'b']);
         });
 
         it('hides nothing when every button fits', () => {
-            fixture.componentRef.setInput('inlineIds', ['a', 'b']);
             fixture.componentRef.setInput('items', buildActions(['a', 'b']));
+            fixture.componentRef.setInput('inlineIds', ['a', 'b']);
             seedEqualWidths(50);
             component['reservedWidth'].set(0);
             component['rowWidth'].set(2000);
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
+        });
+
+        it('reports the width that shows every action once all buttons are measured', () => {
+            const reported: number[] = [];
+            component.naturalWidthChange.subscribe((width) => reported.push(width));
+            fixture.componentRef.setInput('items', buildActions(['a', 'b', 'c']));
+            fixture.componentRef.setInput('inlineIds', ['a', 'b', 'c']);
+            fixture.detectChanges();
+            expect(reported.at(-1)).toBe(0);
+
+            seedEqualWidths(30);
+            component['reservedWidth'].set(50);
+            fixture.detectChanges();
+            // 3 buttons and 2 gaps, then the reserved content and its gap, then the safety margin.
+            expect(reported.at(-1)).toBe(3 * 30 + 2 * 4 + 50 + 4 + 8);
         });
     });
 
@@ -165,6 +266,27 @@ describe('ExerciseActionBarComponent', () => {
     });
 
     describe('onDelete', () => {
+        it('opens the confirmation with empty translate values when the action sets none, e.g. end quiz', () => {
+            const openDeleteDialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            fixture.componentRef.setInput('items', [
+                {
+                    id: 'end-quiz',
+                    labelKey: 'label.end',
+                    icon: faTrash,
+                    severity: 'danger',
+                    kind: 'delete',
+                    delete: { actionType: ActionType.EndNow, entityTitle: 'Quiz', deleteQuestion: 'q', deleteConfirmationText: 'c', dialogError: of(''), onDelete: vi.fn() },
+                },
+            ]);
+            fixture.detectChanges();
+
+            fixture.nativeElement.querySelector('[data-testid="exercise-action-end-quiz"]').click();
+
+            expect(openDeleteDialog).toHaveBeenCalledOnce();
+            const [data] = openDeleteDialog.mock.calls[0];
+            expect(data.actionType).toBe(ActionType.EndNow);
+            expect(data.translateValues).toEqual({});
+        });
         it('delegates to the action delete config', () => {
             const onDelete = vi.fn();
             const action: ActionItem = {

@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     templateUrl: './exercise-group-date-notice.component.html',
     styleUrl: './exercise-group-date-notice.component.scss',
     host: {
-        class: 'd-block',
+        class: 'block',
         'data-testid': 'exercise-group-date-notice',
     },
     imports: [TumAetUiButtonDirective, FaIconComponent, TranslateDirective],

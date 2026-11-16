@@ -7,6 +7,8 @@ import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -280,6 +283,45 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(returnedResult.id()).isEqualTo(answer.getId());
         assertThat(returnedResult.correctionRound()).isEqualTo(1);
         assertThat(returnedResult.feedbacks()).anySatisfy(feedback -> assertThat(feedback.detailText()).isEqualTo("the tests were wrong"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
+    void updateAssessmentAfterComplaint_feedbackMarkedAsServerScored_creditsOutOfBounds() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
+        Result programmingAssessment = participationUtilService.addFeedbackToResult(
+                new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("stored manual feedback"), programmingSubmission.getLatestResult());
+        Complaint complaint = complaintRepo.save(new Complaint().result(programmingAssessment).complaintText("This is not fair"));
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
+        // the id of a stored feedback is kept and copied with the credits of the request, so a marker of an analysis finding does not exempt it
+        Feedback relabelled = programmingAssessment.getFeedbacks().stream().filter(feedback -> feedback.getId() != null).findFirst().orElseThrow();
+        relabelled.setType(FeedbackType.AUTOMATIC);
+        relabelled.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "forged");
+        relabelled.setCredits(1000.0);
+        String url = "/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint";
+        assertCreditsOutOfBounds(url, assessmentUpdateDTO(List.of(relabelled), complaintResponse));
+
+        // nor does a test case reference on a stored manual feedback
+        Feedback stored = programmingAssessment.getFeedbacks().stream().filter(feedback -> feedback.getId() != null).findFirst().orElseThrow();
+        Feedback withTestCase = new Feedback().credits(1000.0).type(FeedbackType.MANUAL).detailText("stored manual feedback").testCase(testCase);
+        withTestCase.setId(stored.getId());
+        assertCreditsOutOfBounds(url, assessmentUpdateDTO(List.of(withTestCase), complaintResponse));
+
+        // an id of zero is kept and copied as new manual feedback, so it is not exempted either
+        withTestCase.setId(0L);
+        assertCreditsOutOfBounds(url, assessmentUpdateDTO(List.of(withTestCase), complaintResponse));
+    }
+
+    private void assertCreditsOutOfBounds(String url, Object body) throws Exception {
+        var response = request.performMvcRequest(put(url).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(body)))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+        assertThat(request.getObjectMapper().readValue(response.getContentAsString(), Map.class)).containsEntry("errorKey", "feedbackCreditsOutOfBounds");
     }
 
     @Test
@@ -1709,7 +1751,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private static ProgrammingAssessmentUpdateDTO assessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse) {
         List<ProgrammingManualFeedbackDTO> feedbackDTOs = feedbacks.stream()
                 .map(feedback -> new ProgrammingManualFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(),
-                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null, null))
+                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null,
+                        feedback.getTestCase() == null ? null : new ProgrammingManualResultRequestDTO.TestCaseRefDTO(feedback.getTestCase().getId())))
                 .toList();
         var complaint = complaintResponse.getComplaint();
         var complaintResponseDTO = new ProgrammingAssessmentUpdateDTO.ComplaintResponseDTO(complaintResponse.getId(), complaintResponse.getResponseText(),

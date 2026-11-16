@@ -127,6 +127,7 @@ public abstract class AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        checkNotAssessingOwnParticipation(studentParticipation, user, isAtLeastInstructor);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
@@ -153,6 +154,8 @@ public abstract class AssessmentResource {
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
+        // example assessments are training material that is written by editors
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
@@ -216,6 +219,20 @@ public abstract class AssessmentResource {
     protected void checkAuthorization(Exercise exercise, User user) throws BadRequestAlertException {
         validateExercise(exercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
+    }
+
+    /**
+     * Refuses that a tutor or editor assesses a participation that belongs to themselves (or to their team). Instructors are exempt.
+     *
+     * @param participation       the participation that is assessed
+     * @param user                the user who assesses
+     * @param isAtLeastInstructor whether the user is an instructor of the exercise
+     * @throws AccessForbiddenException if the user owns the participation and is not an instructor
+     */
+    protected void checkNotAssessingOwnParticipation(StudentParticipation participation, User user, boolean isAtLeastInstructor) {
+        if (!isAtLeastInstructor && authCheckService.isOwnerOfParticipation(participation, user)) {
+            throw new AccessForbiddenException("The user is not allowed to assess their own submission");
+        }
     }
 
     void validateExercise(Exercise exercise) throws BadRequestAlertException {

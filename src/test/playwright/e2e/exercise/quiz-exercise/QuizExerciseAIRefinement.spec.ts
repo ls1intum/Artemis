@@ -60,7 +60,7 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
 
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
-        await expect(panel.locator('.refinement-textarea')).toBeVisible({ timeout: 5000 });
+        await expect(panel.getByTestId('refinement-textarea')).toBeVisible({ timeout: 5000 });
     });
 
     test('Submit per-question refinement updates question and shows reasoning', async ({ page }) => {
@@ -71,14 +71,14 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
-        const textarea = panel.locator('.refinement-textarea');
+        const textarea = panel.getByTestId('refinement-textarea');
         await textarea.fill('Make this question harder');
-        await panel.locator('.refinement-submit-button').click();
+        await panel.getByTestId('refinement-submit-button').click();
 
         // Reasoning card appears after successful refinement
-        const reasoningCard = panel.locator('.refinement-explanation-card');
+        const reasoningCard = panel.getByTestId('refinement-explanation-card');
         await expect(reasoningCard).toBeVisible({ timeout: 10000 });
-        await expect(reasoningCard.locator('.refinement-explanation-text')).toContainText(refinementSuccess.reasoning);
+        await expect(reasoningCard.getByTestId('refinement-explanation-text')).toContainText(refinementSuccess.reasoning);
     });
 
     test('Restore button appears after refinement and reverts the question', async ({ page }) => {
@@ -89,18 +89,18 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
-        await panel.locator('.refinement-textarea').fill('Make harder');
-        await panel.locator('.refinement-submit-button').click();
+        await panel.getByTestId('refinement-textarea').fill('Make harder');
+        await panel.getByTestId('refinement-submit-button').click();
 
         // Wait for reasoning card with restore button
-        const restoreBtn = panel.locator('.refinement-explanation-actions button').first();
+        const restoreBtn = panel.getByTestId('refinement-restore-button');
         await expect(restoreBtn).toBeVisible({ timeout: 10000 });
 
         // Click restore — question should revert to original text
         await restoreBtn.click();
 
         // Reasoning card disappears after restore
-        await expect(panel.locator('.refinement-explanation-card')).not.toBeVisible({ timeout: 5000 });
+        await expect(panel.getByTestId('refinement-explanation-card')).not.toBeVisible({ timeout: 5000 });
     });
 
     test('Shows loading spinner while refining', async ({ page }) => {
@@ -117,15 +117,15 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
-        await panel.locator('.refinement-textarea').fill('Make harder');
-        await panel.locator('.refinement-submit-button').click();
+        await panel.getByTestId('refinement-textarea').fill('Make harder');
+        await panel.getByTestId('refinement-submit-button').click();
 
         // Submit button shows spinner and is disabled while loading
-        await expect(panel.locator('.refinement-submit-button fa-icon[animation="spin"]')).toBeVisible({ timeout: 5000 });
-        await expect(panel.locator('.refinement-submit-button')).toBeDisabled();
+        await expect(panel.getByTestId('refinement-submit-button').locator('fa-icon[animation="spin"]')).toBeVisible({ timeout: 5000 });
+        await expect(panel.getByTestId('refinement-submit-button')).toBeDisabled();
 
         resolveRoute!();
-        await expect(panel.locator('.refinement-explanation-card')).toBeVisible({ timeout: 10000 });
+        await expect(panel.getByTestId('refinement-explanation-card')).toBeVisible({ timeout: 10000 });
     });
 
     test('Shows error alert on refinement failure', async ({ page }) => {
@@ -136,11 +136,11 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
-        await panel.locator('.refinement-textarea').fill('Make harder');
-        await panel.locator('.refinement-submit-button').click();
+        await panel.getByTestId('refinement-textarea').fill('Make harder');
+        await panel.getByTestId('refinement-submit-button').click();
 
         // No reasoning card shown; error alert appears
-        await expect(panel.locator('.refinement-explanation-card')).not.toBeVisible({ timeout: 5000 });
+        await expect(panel.getByTestId('refinement-explanation-card')).not.toBeVisible({ timeout: 5000 });
         await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toBeVisible({ timeout: 10000 });
     });
 
@@ -168,7 +168,7 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await submitBtn.click();
 
         // Both questions should show a reasoning card after bulk refinement
-        const reasoningCards = page.locator('jhi-quiz-ai-question-refinement-panel .refinement-explanation-card');
+        const reasoningCards = page.locator('jhi-quiz-ai-question-refinement-panel').getByTestId('refinement-explanation-card');
         await expect(reasoningCards).toHaveCount(2, { timeout: 15000 });
     });
 
@@ -181,11 +181,11 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.global-refinement-fab-textarea').fill('Add explanations');
         await page.locator('.global-refinement-fab-expanded .global-refinement-fab-action-button').last().click();
 
-        const reasoningCards = page.locator('jhi-quiz-ai-question-refinement-panel .refinement-explanation-card');
+        const reasoningCards = page.locator('jhi-quiz-ai-question-refinement-panel').getByTestId('refinement-explanation-card');
         await expect(reasoningCards).toHaveCount(2, { timeout: 15000 });
 
         // Restore only the first question
-        const restoreBtn = reasoningCards.first().locator('.refinement-explanation-actions button').first();
+        const restoreBtn = reasoningCards.first().getByTestId('refinement-restore-button');
         await restoreBtn.click();
 
         // First reasoning card disappears; second remains
@@ -206,16 +206,16 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
         // Textarea is empty by default — submit must be disabled
-        await expect(panel.locator('.refinement-textarea')).toHaveValue('');
-        await expect(panel.locator('.refinement-submit-button')).toBeDisabled();
+        await expect(panel.getByTestId('refinement-textarea')).toHaveValue('');
+        await expect(panel.getByTestId('refinement-submit-button')).toBeDisabled();
 
         // Typing enables it
-        await panel.locator('.refinement-textarea').fill('Make harder');
-        await expect(panel.locator('.refinement-submit-button')).toBeEnabled();
+        await panel.getByTestId('refinement-textarea').fill('Make harder');
+        await expect(panel.getByTestId('refinement-submit-button')).toBeEnabled();
 
         // Clearing disables it again
-        await panel.locator('.refinement-textarea').fill('');
-        await expect(panel.locator('.refinement-submit-button')).toBeDisabled();
+        await panel.getByTestId('refinement-textarea').fill('');
+        await expect(panel.getByTestId('refinement-submit-button')).toBeDisabled();
     });
 
     test('Dismiss reasoning ✕ closes card without restoring question', async ({ page }) => {
@@ -226,14 +226,14 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
-        await panel.locator('.refinement-textarea').fill('Make harder');
-        await panel.locator('.refinement-submit-button').click();
+        await panel.getByTestId('refinement-textarea').fill('Make harder');
+        await panel.getByTestId('refinement-submit-button').click();
 
-        const reasoningCard = panel.locator('.refinement-explanation-card');
+        const reasoningCard = panel.getByTestId('refinement-explanation-card');
         await expect(reasoningCard).toBeVisible({ timeout: 10000 });
 
-        // The ✕ dismiss button is the last .refinement-explanation-dismiss
-        const dismissBtn = reasoningCard.locator('.refinement-explanation-dismiss').last();
+        // The ✕ dismiss button
+        const dismissBtn = reasoningCard.getByTestId('refinement-dismiss-button');
         await dismissBtn.click();
 
         // Card gone — no restore, just dismissed
@@ -244,7 +244,7 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
         await page.locator('.question-action-btn--refine').first().click();
         const panel = page.locator('jhi-quiz-ai-question-refinement-panel').first();
 
-        const textarea = panel.locator('.refinement-textarea');
+        const textarea = panel.getByTestId('refinement-textarea');
         await expect(textarea).toBeVisible({ timeout: 5000 });
         await textarea.fill('Some instruction');
         await expect(textarea).toHaveValue('Some instruction');

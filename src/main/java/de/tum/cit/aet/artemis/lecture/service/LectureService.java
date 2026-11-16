@@ -352,6 +352,21 @@ public class LectureService {
     }
 
     /**
+     * Checks that the lecture unit is available for the user, i.e. that the user is at least a teaching assistant of the course, or a student of the course and the release
+     * date of the lecture unit has passed.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @param user          the requesting user
+     * @throws AccessForbiddenException if the lecture unit is not available for the user
+     */
+    public void checkLectureUnitVisibleToUserElseThrow(long lectureUnitId, User user) {
+        LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        if (!authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
+    }
+
+    /**
      * Loads a single lecture unit the way the lecture details page projects it, for the user requesting it.
      * <p>
      * The unit's lecture reference carries the course, since this response has no lecture envelope around it. Exercise

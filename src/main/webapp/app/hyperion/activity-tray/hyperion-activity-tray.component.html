@@ -28,7 +28,7 @@
         }
     </button>
     <tumaet-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.activity.title' | artemisTranslate" (openChange)="refresh($event)">
-        <section class="flex max-h-[calc(100dvh-6rem)] w-[min(26rem,calc(100vw-2rem))] flex-col gap-3" data-testid="ai-activity-tray">
+        <section class="flex max-h-[calc(100dvh-6rem)] w-[min(26rem,calc(100vw-2rem))] flex-col gap-4!" data-testid="ai-activity-tray">
             <div class="flex items-center justify-between gap-2">
                 <span role="heading" aria-level="2" class="text-base font-semibold">{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
                 @if (hiddenCount()) {
@@ -56,12 +56,12 @@
                 </tumaet-ui-message>
             }
             <ul
-                class="m-0 flex min-h-0 max-h-[min(65vh,36rem)] list-none flex-col gap-3 overflow-y-auto overscroll-contain p-0"
+                class="m-0 flex min-h-0 max-h-[min(65vh,36rem)] list-none flex-col gap-4! overflow-y-auto overscroll-contain p-0"
                 [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate"
             >
                 @for (row of visibleRows(); track row.key) {
                     <li
-                        class="activity-card rounded-xl border border-border p-4"
+                        class="activity-card rounded-xl border border-border p-6!"
                         [class.border-state-warning]="row.attention"
                         data-testid="ai-activity-entry"
                         [attr.data-job-key]="row.key"
@@ -109,7 +109,7 @@
                             <span data-testid="ai-activity-status">{{ row.statusKey | artemisTranslate }}</span>
                         </div>
                         @if (row.steps.length) {
-                            <ol class="my-4 flex list-none p-0" data-testid="ai-activity-steps">
+                            <ol class="my-6! flex list-none p-0" data-testid="ai-activity-steps">
                                 @for (step of row.steps; track step.labelKey; let i = $index) {
                                     <li
                                         class="activity-step relative flex min-w-0 flex-1 flex-col items-center gap-2 text-center text-xs"
@@ -135,7 +135,7 @@
                             </ol>
                         }
                         @if (row.message) {
-                            <p class="mt-3 mb-0 line-clamp-2 text-sm leading-relaxed text-muted-color" data-testid="ai-activity-message">{{ row.message }}</p>
+                            <p class="mt-4! mb-0 line-clamp-2 text-sm leading-relaxed text-muted-color" data-testid="ai-activity-message">{{ row.message }}</p>
                         }
                         @if (row.recoveryRequired) {
                             <p class="mt-2 mb-0 text-sm text-default" data-testid="ai-activity-recovery">

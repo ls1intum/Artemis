@@ -2,7 +2,7 @@
     [ngSrc]="logoUrl()"
     [width]="size() === IrisLogoSize.SMALL ? 279 : 557"
     [height]="size() === IrisLogoSize.SMALL ? 256 : 512"
-    alt="Iris Logo"
-    [classList]="'iris-logo ' + classList() + (spinning() ? ' spinning' : '')"
+    [alt]="decorative() ? '' : ('artemisApp.iris.logoAlt' | artemisTranslate)"
+    [classList]="'iris-logo ' + classList() + (spinning() ? ' iris-logo--spinning' : '')"
     [style.height.px]="numericHeight()"
 />
