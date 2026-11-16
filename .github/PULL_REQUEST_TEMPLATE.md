@@ -25,6 +25,7 @@
 - [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development) and the [REST API guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
 - [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course groups for all new REST Calls (security).
+- [ ] I went through the [security guideline](https://docs.artemis.tum.de/developer/guidelines/security): the ids of every request are checked against the course in the path, and tests cover a refused request.
 - [ ] I documented the Java code using JavaDoc style.
 
 

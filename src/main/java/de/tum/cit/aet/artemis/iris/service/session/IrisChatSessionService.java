@@ -315,6 +315,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
                 var exercise = exerciseRepository.findByIdElseThrow(session.getEntityId());
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+                checkExerciseIsReleasedOrUserIsStaff(exercise, user);
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getEntityId());
@@ -482,6 +483,19 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * is populated for entity-bound modes; for COURSE_CHAT both are {@code null} and the course itself
      * is the context. {@code course} is always set (the parent course for entity modes).
      */
+    /**
+     * Students may only chat about an exercise they can see, so a chat never exposes an exercise before its release date. Teaching assistants and
+     * above are not restricted. Exam exercises are not covered here: Iris refuses them when a run starts.
+     *
+     * @param exercise the exercise the chat is about
+     * @param user     the user who opens or continues the chat
+     */
+    private void checkExerciseIsReleasedOrUserIsStaff(Exercise exercise, User user) {
+        if (!exercise.isExamExercise() && !authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
+    }
+
     private record ResolvedContext(String entityName, Course course, Exercise exercise, Lecture lecture) {
     }
 
@@ -497,6 +511,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var exercise = exerciseRepository.findByIdElseThrow(entityId);
                 validateExerciseMode(exercise, mode);
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+                checkExerciseIsReleasedOrUserIsStaff(exercise, user);
                 var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
                 yield new ResolvedContext(exercise.getTitle(), course, exercise, null);

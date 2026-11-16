@@ -8,16 +8,16 @@ autoInstallPeers: true
 # Dependency overrides. pnpm reads overrides from this file in preference to
 # `pnpm.overrides` in package.json (which it silently ignores).
 overrides:
-  # Node 24 is the supported runtime. Many packages ask for any @types/node (`*`, `>=18`), which would resolve to the newest major,
-  # 26 at the time of writing, whose types describe APIs we do not support yet. Keep this on the 24.x line, in step with the root
+  # Node 26 is the supported runtime. Many packages ask for any @types/node (`*`, `>=18`), which would resolve to the newest major,
+  # whose types may describe APIs we do not support yet. Keep this on the 26.x line, in step with the root
   # catalog in ../../../pnpm-workspace.yaml, and move it to the next major together with the Node major.
-  '@types/node': '24.19.2'
-  brace-expansion: '5.0.12'
-  nodemailer: '9.1.1'
+  '@types/node': '26.6.6'
+  brace-expansion: '5.0.13'
+  nodemailer: '10.5.0'
   lodash: '4.18.1'
   # Must stay >= 11.0.1, which fixed GHSA-g3hv-75wg-m249 (denial of service through globparts amplification).
   # The 10.x line never got the fix, and eslint and typescript-estree ask for a range that does not reach 11.
-  minimatch: '11.0.5'
+  minimatch: '11.0.8'
   shell-quote: '1.12.0'
 
 allowBuilds:

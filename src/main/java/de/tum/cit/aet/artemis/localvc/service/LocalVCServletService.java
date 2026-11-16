@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +28,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -118,6 +122,10 @@ public class LocalVCServletService {
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
+    private final long maxRepositorySizeMb;
+
+    private final long maxTestsAndSolutionRepositorySizeMb;
+
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, RepositoryAccessService repositoryAccessService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
@@ -125,7 +133,8 @@ public class LocalVCServletService {
             RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             UserVcsAccessTokenService userVcsAccessTokenService, LocalVCRepositoryResolverService repositoryResolver, LocalVCAccessLogRecorderService accessLogRecorder,
             LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
+            @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}") long maxTestsAndSolutionRepositorySizeMb) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -144,6 +153,8 @@ public class LocalVCServletService {
         this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.maxRepositorySizeMb = maxRepositorySizeMb;
+        this.maxTestsAndSolutionRepositorySizeMb = maxTestsAndSolutionRepositorySizeMb;
     }
 
     /**
@@ -480,6 +491,28 @@ public class LocalVCServletService {
         return getBuildConfigOrThrow(projectKey).isAllowBranching();
     }
 
+    /**
+     * Returns the maximum size of the files of a repository, which a push must not exceed. Template repositories and student repositories (and everything that is not a tests or
+     * solution repository) have a smaller limit than tests and solution repositories.
+     *
+     * @param repository the repository that receives the push
+     * @return the limit in bytes, or {@link Long#MAX_VALUE} if the limit is disabled by configuration
+     */
+    public long getMaxRepositorySizeBytes(Repository repository) {
+        String repositoryTypeOrUserName = repositoryResolver.parseRepositoryUri(repository.getDirectory().toPath()).getRepositoryTypeOrUserName();
+        boolean isTestsOrSolutionRepository = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+        long limitInMegabytes = isTestsOrSolutionRepository ? maxTestsAndSolutionRepositorySizeMb : maxRepositorySizeMb;
+        return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
+    }
+
+    /** The longest branch name that is matched against the branch expression of an exercise. */
+    private static final int MAX_BRANCH_NAME_LENGTH = 255;
+
+    private static final int MAX_COMPILED_BRANCH_REGEXES = 1000;
+
+    private static final Cache<String, Pattern> COMPILED_BRANCH_REGEXES = Caffeine.newBuilder().maximumSize(MAX_COMPILED_BRANCH_REGEXES).build();
+
     public static enum BranchingStatus {
         BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
     }
@@ -501,12 +534,21 @@ public class LocalVCServletService {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
-        Pattern pattern;
-        try {
-            pattern = Pattern.compile(buildConfig.getBranchRegex());
-        }
-        catch (PatternSyntaxException e) {
+        if (branchName.length() > MAX_BRANCH_NAME_LENGTH) {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        }
+
+        // The expression is compiled once and then reused by the following pushes
+        String branchRegex = buildConfig.getBranchRegex();
+        Pattern pattern = COMPILED_BRANCH_REGEXES.getIfPresent(branchRegex);
+        if (pattern == null) {
+            try {
+                pattern = Pattern.compile(branchRegex);
+            }
+            catch (PatternSyntaxException e) {
+                return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+            }
+            COMPILED_BRANCH_REGEXES.put(branchRegex, pattern);
         }
 
         return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;

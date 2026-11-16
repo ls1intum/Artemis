@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
@@ -204,7 +206,8 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement
+     * Copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement.
+     * Only regular files with a file type that can be uploaded to the markdown folder are copied, all other files are skipped.
      *
      * @param importExerciseDir the directory where the extracted zip file is located
      **/
@@ -216,11 +219,25 @@ public class ProgrammingExerciseImportFromFileService {
         }
         try (var embeddedFiles = Files.list(embeddedFilesDir)) {
             for (Path file : embeddedFiles.toList()) {
+                if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS) || !hasAllowedMarkdownExtension(file)) {
+                    log.warn("Skipping embedded file {} of the imported exercise, as it is not an allowed type of file", file.getFileName());
+                    continue;
+                }
                 Path targetPath = FilePathConverter.getMarkdownFilePath().resolve(file.getFileName());
                 if (!Files.exists(targetPath)) {
                     FileUtils.copyFile(file.toFile(), targetPath.toFile());
                 }
             }
+        }
+    }
+
+    private static boolean hasAllowedMarkdownExtension(Path file) {
+        try {
+            FileUtil.validateExtension(file.getFileName().toString(), true);
+            return true;
+        }
+        catch (BadRequestAlertException e) {
+            return false;
         }
     }
 

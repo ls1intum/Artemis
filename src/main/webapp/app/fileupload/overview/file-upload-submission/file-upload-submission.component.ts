@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UpperCasePipe } from '@angular/common';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -44,6 +45,7 @@ import { firstValueFrom, map } from 'rxjs';
     templateUrl: './file-upload-submission.component.html',
     imports: [
         ResizeableContainerComponent,
+        TumAetUiTagComponent,
         TranslateDirective,
         ExerciseActionButtonComponent,
         UnifiedFeedbackComponent,

@@ -2,7 +2,7 @@
 id: client-theming
 title: Client Theming
 sidebar_label: Client Theming
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-15
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -222,7 +222,9 @@ emphasis use `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay
 `--tumaet-ui-button-active-overlay` in the same blocks.
 
 Most defaults alias existing semantic colors; primary has a contrast-checked fill/text pair that
-is independent of legacy host branding. Override the button properties to adjust buttons
+is independent of legacy host branding. In the light theme the Artemis application sets the solid success
+button (`--tumaet-ui-button-success-background` and `-contrast`) to a darker green with a white label,
+which stays above WCAG AA contrast, while the success status colour keeps its value. Override the button properties to adjust buttons
 without recoloring success/error messages, charts, status tags, or the rest of the brand palette.
 Always review the fill and its paired contrast color together; review text/outlined foregrounds
 against the actual surrounding surface. To customize a consuming application, declare unlayered

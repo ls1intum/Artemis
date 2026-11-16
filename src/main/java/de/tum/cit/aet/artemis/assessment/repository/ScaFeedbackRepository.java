@@ -54,4 +54,17 @@ public interface ScaFeedbackRepository extends ArtemisJpaRepository<ScaFeedback,
             WHERE feedback.result.id = :resultId
             """)
     void deleteByResultId(@Param("resultId") long resultId);
+
+    /**
+     * Removes the rows of several results at once, so a caller clearing a batch of results does not scale its query count with the batch size.
+     *
+     * @param resultIds ids of the results whose rows are removed; an empty collection removes nothing
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM ScaFeedback feedback
+            WHERE feedback.result.id IN :resultIds
+            """)
+    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
 }

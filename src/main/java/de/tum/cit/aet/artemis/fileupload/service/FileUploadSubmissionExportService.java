@@ -68,8 +68,9 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         else {
             String[] parts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
             String fileName = parts[parts.length - 1];
-            int endingIndex = fileName.indexOf(".");
-            return fileName.substring(endingIndex);
+            int endingIndex = fileName.indexOf('.');
+            // a file name without a dot has no ending
+            return endingIndex < 0 ? "" : fileName.substring(endingIndex);
         }
     }
 }
