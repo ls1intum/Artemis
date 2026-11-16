@@ -127,7 +127,9 @@ export class SecurityAddTestCasesDialogComponent {
     /** Whether the selection of this opening is set up; it waits for the test structure, which the first opening loads. */
     private initialized = false;
     /** What the instructor checked and unchecked before a newer structure started loading, to apply to it. */
-    private keptChanges: { added: string[]; removed: string[] } | undefined;
+    private keptChanges: { added: string[]; removed: string[]; wholeClasses: string[]; releasedClasses: string[] } | undefined;
+    /** The classes of the last structure shown, which a newer one replaces. */
+    private shownClasses: ClassNode[] = [];
 
     readonly packages = computed<PackageNode[]>(() => {
         const byPackage = new Map<string, ClassNode[]>();
@@ -236,6 +238,12 @@ export class SecurityAddTestCasesDialogComponent {
 
     constructor() {
         effect(() => {
+            const classes = this.packages().flatMap((group) => group.classes);
+            if (classes.length) {
+                this.shownClasses = classes;
+            }
+        });
+        effect(() => {
             // A whole class only expands to its test cases once the structure is there, so the selection is set up when it arrives. While a newer structure
             // loads, e.g. after a reload, the selection is set up again from it, because one made from the old test cases could release assignments; what the
             // instructor checked or unchecked meanwhile is kept and applied to it.
@@ -249,9 +257,17 @@ export class SecurityAddTestCasesDialogComponent {
                     untracked(() => {
                         const initial = this.initial();
                         const selection = this.selection();
+                        const classes = this.shownClasses;
                         this.keptChanges = {
                             added: [...selection].filter((key) => !initial.has(key)),
                             removed: [...initial].filter((key) => !selection.has(key)),
+                            // A class selected as a whole stays so, also with the test cases the new structure adds, and a released class stays released.
+                            wholeClasses: classes
+                                .filter((node) => node.cases.every((testCase) => !testCase.switchedOff && selection.has(testCase.key)))
+                                .map((node) => node.qualifiedName),
+                            releasedClasses: classes
+                                .filter((node) => node.cases.some((testCase) => initial.has(testCase.key)) && !node.cases.some((testCase) => selection.has(testCase.key)))
+                                .map((node) => node.qualifiedName),
                         };
                     });
                 }
@@ -268,10 +284,13 @@ export class SecurityAddTestCasesDialogComponent {
                 const kept = this.keptChanges;
                 if (kept) {
                     const available = new Set(this.packages().flatMap((group) => group.available));
+                    const classes = new Map(this.packages().flatMap((group) => group.classes.map((node) => [node.qualifiedName, node] as const)));
                     kept.added.filter((key) => available.has(key)).forEach((key) => selection.add(key));
                     kept.removed.forEach((key) => selection.delete(key));
+                    kept.wholeClasses.forEach((name) => classes.get(name)?.available.forEach((key) => selection.add(key)));
+                    kept.releasedClasses.forEach((name) => classes.get(name)?.cases.forEach((testCase) => selection.delete(testCase.key)));
                     // The new structure may add test cases to a class, so its overloaded ones follow its other test cases again.
-                    this.withOverloadsFollowing(selection, [...kept.added, ...kept.removed]);
+                    this.withOverloadsFollowing(selection, [...kept.added, ...kept.removed, ...kept.wholeClasses, ...kept.releasedClasses]);
                 } else {
                     this.toggled.set(new Set());
                     this.search.set('');
