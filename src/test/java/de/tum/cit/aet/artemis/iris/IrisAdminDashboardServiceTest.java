@@ -206,9 +206,10 @@ class IrisAdminDashboardServiceTest {
     @Test
     void overview_tokenCost_summedCorrectly() {
         stubAllRepositoryMethods();
-        when(repository.computeTokenCost(any(), any(), any())).thenReturn(List.of(new Object[] { 1, 1.50 }, new Object[] { 0, 0.75 }));
+        when(repository.computeTokenCost(any(), any(), any())).thenReturn(List.of(new Object[] { 1, 1.50, 2L }, new Object[] { 0, 0.75, 1L }));
         var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
-        assertThat(overview.totalTokenCostEur()).isEqualTo(2.25);
+        assertThat(overview.totalTokenCostUsd()).isEqualTo(2.25);
+        assertThat(overview.unpricedTokenCostRequests()).isEqualTo(3);
     }
 
     // -- Percentile tests -------------------------------------------------------
@@ -339,11 +340,12 @@ class IrisAdminDashboardServiceTest {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-26T00:00:00Z");
         when(repository.findTokenCostWithTimestamps(any(), any(), any()))
-                .thenReturn(List.of(new Object[] { Instant.parse("2026-05-25T10:00:00Z"), 1, 0.50 }, new Object[] { Instant.parse("2026-05-25T11:00:00Z"), 0, 0.25 }));
+                .thenReturn(List.of(new Object[] { Instant.parse("2026-05-25T10:00:00Z"), 1, 0.50, 2L }, new Object[] { Instant.parse("2026-05-25T11:00:00Z"), 0, 0.25, 1L }));
         var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.TOKEN_COST, IrisDashboardAiSelection.ALL);
         assertThat(result.entries().getFirst().series().get("chat")).isEqualTo(0.50);
         assertThat(result.entries().getFirst().series().get("other")).isEqualTo(0.25);
         assertThat(result.entries().getFirst().series().get("total")).isEqualTo(0.75);
+        assertThat(result.entries().getFirst().series().get("unpricedRequests")).isEqualTo(3);
     }
 
     // -- Breakdown tests --------------------------------------------------------
@@ -385,13 +387,15 @@ class IrisAdminDashboardServiceTest {
     void computeBreakdown_model_returnsCostAndTokens() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-27T00:00:00Z");
-        when(repository.computeTokenCostByModel(any(), any(), any())).thenReturn(List.of(new Object[] { "gpt-4o", 100000L, 1.25 }, new Object[] { "claude-sonnet", 50000L, 0.80 }));
+        when(repository.computeTokenCostByModel(any(), any(), any()))
+                .thenReturn(List.of(new Object[] { "gpt-4o", 100000L, 1.25, 2L }, new Object[] { "claude-sonnet", 50000L, 0.80, 0L }));
 
         var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.MODEL, IrisDashboardAiSelection.ALL);
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().label()).isEqualTo("gpt-4o");
         assertThat(result.getFirst().values().get("totalTokens")).isEqualTo(100000.0);
-        assertThat(result.getFirst().values().get("costEur")).isEqualTo(1.25);
+        assertThat(result.getFirst().values().get("costUsd")).isEqualTo(1.25);
+        assertThat(result.getFirst().values().get("unpricedRequests")).isEqualTo(2);
     }
 
     // -- mapResults test --------------------------------------------------------

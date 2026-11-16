@@ -16,12 +16,12 @@
     </p>
 
     <!-- No-activity banner -->
-    <th:block th:if="${digest.totalSessions() == 0 and digest.totalMessages() == 0 and digest.totalTokenCostEur() == 0}">
+    <th:block th:if="${digest.totalSessions() == 0 and digest.totalMessages() == 0 and digest.totalTokenCostUsd() == 0 and digest.unpricedTokenCostRequests() == 0}">
         <p><strong th:text="#{email.irisDashboardDigest.noActivity}">No Iris activity recorded in this period.</strong></p>
     </th:block>
 
     <!-- KPI Summary Table -->
-    <th:block th:if="${digest.totalSessions() > 0 or digest.totalMessages() > 0 or digest.totalTokenCostEur() > 0}">
+    <th:block th:if="${digest.totalSessions() > 0 or digest.totalMessages() > 0 or digest.totalTokenCostUsd() > 0 or digest.unpricedTokenCostRequests() > 0}">
         <table style="width:100%; border-collapse:collapse; margin:16px 0;">
             <tr>
                 <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.totalSessions}">Total Sessions</strong></td>
@@ -56,10 +56,12 @@
                 <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.thumbsDownCount()}">0</td>
             </tr>
             <tr>
-                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.tokenCost}">Token Cost (EUR)</strong></td>
-                <td style="padding:8px; border:1px solid #ddd;" th:text="${'€' + #numbers.formatDecimal(digest.totalTokenCostEur(), 1, 4)}">€0</td>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.tokenCost}">Token Cost (USD)</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${(digest.unpricedTokenCostRequests() > 0 ? '≥ USD ' : 'USD ') + #numbers.formatDecimal(digest.totalTokenCostUsd(), 1, 4)}">USD 0</td>
             </tr>
         </table>
+
+        <p th:if="${digest.unpricedTokenCostRequests() > 0}" th:text="#{email.irisDashboardDigest.unpricedCosts(${digest.unpricedTokenCostRequests()})}">Requests without a USD price are excluded.</p>
 
         <!-- Stale boundary note -->
         <p th:if="${digest.staleBefore() != null}" style="font-size:0.85em; color:#666;">
@@ -76,5 +78,6 @@
     <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
 </div>
 <th:block th:replace="~{mail/notification/fragments :: footer}"/>
+
 </body>
 </html>

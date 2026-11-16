@@ -782,8 +782,8 @@ final class GenerationJobReplayStore {
      * conflated: {@link ExerciseGenerationAccountingState#INCOMPLETE} is absorbing, and only a caller that can prove no further provider call is possible may seal.
      */
     private record JobUsage(long modelCalls, long toolCalls, long agentTurns, long attempts, long inputTokens, long outputTokens, long cachedInputTokens,
-            boolean cachedInputTokensComplete, double estimatedCostEur, boolean estimatedCostEurComplete, List<String> models, List<String> providerRequestIds,
-            boolean providerRequestIdsComplete, ExerciseGenerationAccountingState accountingState) implements Serializable {
+            boolean cachedInputTokensComplete, double costUsd, boolean costUsdComplete, List<String> models, List<String> providerRequestIds, boolean providerRequestIdsComplete,
+            ExerciseGenerationAccountingState accountingState) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 2L;
@@ -804,7 +804,7 @@ final class GenerationJobReplayStore {
 
         JobUsage add(GenerationUsage request) {
             long cached = request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens();
-            double cost = GenerationTokenUsageService.estimatedCostEur(request);
+            double cost = request.costUsd();
             LinkedHashSet<String> nextModels = new LinkedHashSet<>(models);
             if (request.model() != null && !request.model().isBlank()) {
                 nextModels.add(request.model());
@@ -815,24 +815,23 @@ final class GenerationJobReplayStore {
                 nextProviderRequestIds.add(request.providerRequestId());
             }
             return new JobUsage(modelCalls + 1, toolCalls, agentTurns, attempts, inputTokens + request.numInputTokens(), outputTokens + request.numOutputTokens(),
-                    cachedInputTokens + cached, cachedInputTokensComplete && request.numCachedInputTokens() != null, estimatedCostEur + cost,
-                    estimatedCostEurComplete && request.costEstimateComplete(), List.copyOf(nextModels), List.copyOf(nextProviderRequestIds),
-                    providerRequestIdsComplete && hasProviderRequestId, afterRecordedUsage());
+                    cachedInputTokens + cached, cachedInputTokensComplete && request.numCachedInputTokens() != null, costUsd + cost, costUsdComplete && request.costUsdComplete(),
+                    List.copyOf(nextModels), List.copyOf(nextProviderRequestIds), providerRequestIdsComplete && hasProviderRequestId, afterRecordedUsage());
         }
 
         JobUsage addToolCalls(long count) {
-            return new JobUsage(modelCalls, toolCalls + count, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
-                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
+            return new JobUsage(modelCalls, toolCalls + count, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, costUsd,
+                    costUsdComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
         }
 
         JobUsage addAgentTurn() {
-            return new JobUsage(modelCalls, toolCalls, agentTurns + 1, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
-                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
+            return new JobUsage(modelCalls, toolCalls, agentTurns + 1, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, costUsd, costUsdComplete,
+                    models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
         }
 
         JobUsage addAttempt() {
-            return new JobUsage(modelCalls, toolCalls, agentTurns, attempts + 1, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
-                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
+            return new JobUsage(modelCalls, toolCalls, agentTurns, attempts + 1, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, costUsd, costUsdComplete,
+                    models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
         }
 
         JobUsage markIncomplete() {
@@ -844,13 +843,13 @@ final class GenerationJobReplayStore {
         }
 
         private JobUsage withAccountingState(ExerciseGenerationAccountingState nextState) {
-            return new JobUsage(modelCalls, toolCalls, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
-                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, nextState);
+            return new JobUsage(modelCalls, toolCalls, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, costUsd, costUsdComplete,
+                    models, providerRequestIds, providerRequestIdsComplete, nextState);
         }
 
         ExerciseGenerationUsageDTO toDTO() {
-            return new ExerciseGenerationUsageDTO(modelCalls, toolCalls, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete,
-                    estimatedCostEur, estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete);
+            return new ExerciseGenerationUsageDTO(modelCalls, toolCalls, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, costUsd,
+                    costUsdComplete, models, providerRequestIds, providerRequestIdsComplete);
         }
     }
 }

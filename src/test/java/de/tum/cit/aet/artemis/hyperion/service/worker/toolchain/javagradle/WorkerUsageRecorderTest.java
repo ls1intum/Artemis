@@ -59,7 +59,7 @@ class WorkerUsageRecorderTest {
         assertThat(snapshot.models()).containsExactly("model");
         assertThat(snapshot.providerRequestIds()).containsExactly("request");
         assertThat(snapshot.providerRequestIdsComplete()).isTrue();
-        assertThat(snapshot.estimatedCostEurComplete()).isFalse();
+        assertThat(snapshot.costUsdComplete()).isFalse();
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
     }
 

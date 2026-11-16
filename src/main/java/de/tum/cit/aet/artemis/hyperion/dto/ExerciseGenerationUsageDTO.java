@@ -18,8 +18,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param outputTokens               total completion tokens billed across the run
  * @param cachedInputTokens          the share of {@code inputTokens} the provider reported as cache hits
  * @param cachedInputTokensComplete  whether every recorded response reported its cached-token split
- * @param estimatedCostEur           the estimated cost in EUR from the configured per-model prices
- * @param estimatedCostEurComplete   whether a price was configured for every recorded response
+ * @param costUsd                    the known cost in USD, reported by the provider or estimated from explicitly USD prices
+ * @param costUsdComplete            whether every recorded response has a reported or completely estimated USD cost
  * @param models                     the distinct model identifiers used, in first-use order
  * @param providerRequestIds         the distinct provider request identifiers, for reconciliation against a provider invoice
  * @param providerRequestIdsComplete whether every recorded response carried a provider request identifier
@@ -29,7 +29,7 @@ public record ExerciseGenerationUsageDTO(@Schema(requiredMode = Schema.RequiredM
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long agentTurns, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long attempts,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long inputTokens, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long outputTokens,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long cachedInputTokens, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean cachedInputTokensComplete,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double estimatedCostEur, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean estimatedCostEurComplete,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double costUsd, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean costUsdComplete,
         @JsonInclude @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<String> models,
         @JsonInclude @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<String> providerRequestIds,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean providerRequestIdsComplete) {

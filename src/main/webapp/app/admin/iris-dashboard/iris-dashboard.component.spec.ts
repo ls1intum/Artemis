@@ -32,7 +32,8 @@ describe('IrisDashboardComponent', () => {
         avgResponseTimeSeconds: 5.5,
         p50ResponseTimeSeconds: 4.0,
         p95ResponseTimeSeconds: 12.0,
-        totalTokenCostEur: 150.75,
+        totalTokenCostUsd: 150.75,
+        unpricedTokenCostRequests: 0,
     };
 
     beforeEach(async () => {
@@ -78,6 +79,41 @@ describe('IrisDashboardComponent', () => {
         expect(component.overview()).toEqual(mockOverview);
         expect(component.loading()).toBe(false);
         expect(component.error()).toBe(false);
+    });
+
+    it.each([
+        { cost: 150.75, unpriced: 0, expected: '150.75 USD' },
+        { cost: 0.004, unpriced: 0, expected: '0.004 USD' },
+        { cost: 0.00000001, unpriced: 0, expected: '0.00000001 USD' },
+        { cost: 0, unpriced: 0, expected: '0.00 USD' },
+        { cost: 1.5, unpriced: 4, expected: '≥ 1.50 USD' },
+        { cost: 0, unpriced: 4, expected: 'artemisApp.irisDashboard.costNotPriced' },
+    ])('reports USD pricing honestly for $cost with $unpriced unpriced requests', async ({ cost, unpriced, expected }) => {
+        vi.mocked(dashboardService.getOverview).mockReturnValue(of({ ...mockOverview, totalTokenCostUsd: cost, unpricedTokenCostRequests: unpriced }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const amount = fixture.nativeElement.querySelector('[data-testid="iris-dashboard-token-cost"]');
+        expect(amount.textContent.trim()).toBe(expected);
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-dashboard-unpriced-requests"]') !== null).toBe(unpriced > 0);
+    });
+
+    it('marks model totals as partial and never presents unpriced historical requests as free', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.activeBreakdownTab.set(2);
+        component.modelBreakdown.set([
+            { label: 'priced-model', values: { totalTokens: 500, costUsd: 0.25, unpricedRequests: 2 } },
+            { label: 'older-model', values: { totalTokens: 800, costUsd: 0, unpricedRequests: 3 } },
+        ]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const rows = fixture.nativeElement.querySelectorAll('[data-testid="iris-dashboard-model-cost"]');
+        expect(rows[0].textContent).toContain('≥ 0.25 USD');
+        expect(rows[1].textContent).toContain('artemisApp.irisDashboard.costNotPriced');
+        expect(rows[1].textContent).not.toContain('0.00 USD');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="iris-dashboard-model-unpriced-requests"]')).toHaveLength(2);
     });
 
     it('should reload data on time span change', async () => {

@@ -749,9 +749,10 @@ public class CompetencyOrchestrationService {
         }
         Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
         if (chatResponse != null) {
+            boolean usageComplete = !Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY));
             llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
-                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
-            if (Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY))) {
+                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId), usageComplete);
+            if (!usageComplete) {
                 if (chatResponse.getMetadata().getUsage() instanceof EmptyUsage) {
                     log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
                 }

@@ -106,7 +106,21 @@
                 <span class="text-2xl font-bold">{{ o.p50ResponseTimeSeconds | number: '1.1-1' }}s / {{ o.p95ResponseTimeSeconds | number: '1.1-1' }}s</span>
             </jhi-iris-kpi-card>
             <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.tokenCost" helpKey="artemisApp.irisDashboard.help.tokenCost">
-                <span class="text-2xl font-bold">{{ o.totalTokenCostEur | number: '1.2-4' }} EUR</span>
+                <span class="text-2xl font-bold" data-testid="iris-dashboard-token-cost">
+                    @if (o.totalTokenCostUsd === 0 && o.unpricedTokenCostRequests > 0) {
+                        <span jhiTranslate="artemisApp.irisDashboard.costNotPriced"></span>
+                    } @else {
+                        {{ o.unpricedTokenCostRequests > 0 ? '≥ ' : '' }}{{ o.totalTokenCostUsd | number: '1.2-8' }} USD
+                    }
+                </span>
+                @if (o.unpricedTokenCostRequests > 0) {
+                    <div
+                        class="text-muted-color text-sm"
+                        data-testid="iris-dashboard-unpriced-requests"
+                        jhiTranslate="artemisApp.irisDashboard.unpricedRequests"
+                        [translateValues]="{ count: o.unpricedTokenCostRequests }"
+                    ></div>
+                }
             </jhi-iris-kpi-card>
         </div>
 
@@ -167,7 +181,7 @@
                     <tr>
                         <th jhiTranslate="artemisApp.irisDashboard.breakdown.model"></th>
                         <th jhiTranslate="artemisApp.irisDashboard.breakdown.totalTokens"></th>
-                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.costEur"></th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.costUsd"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -175,7 +189,21 @@
                         <tr>
                             <td>{{ entry.label }}</td>
                             <td>{{ entry.values['totalTokens'] | number }}</td>
-                            <td>{{ entry.values['costEur'] | number: '1.2-4' }} EUR</td>
+                            <td data-testid="iris-dashboard-model-cost">
+                                @if (entry.values['costUsd'] === 0 && entry.values['unpricedRequests'] > 0) {
+                                    <span jhiTranslate="artemisApp.irisDashboard.costNotPriced"></span>
+                                } @else {
+                                    {{ entry.values['unpricedRequests'] > 0 ? '≥ ' : '' }}{{ entry.values['costUsd'] | number: '1.2-8' }} USD
+                                }
+                                @if (entry.values['unpricedRequests'] > 0) {
+                                    <div
+                                        class="text-muted-color text-sm"
+                                        data-testid="iris-dashboard-model-unpriced-requests"
+                                        jhiTranslate="artemisApp.irisDashboard.unpricedRequests"
+                                        [translateValues]="{ count: entry.values['unpricedRequests'] }"
+                                    ></div>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>

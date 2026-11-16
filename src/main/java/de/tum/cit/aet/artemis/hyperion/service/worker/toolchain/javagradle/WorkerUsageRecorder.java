@@ -47,6 +47,10 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
 
     private boolean requestIdsComplete = true;
 
+    private double costUsd;
+
+    private boolean costUsdComplete = true;
+
     private boolean uncertain;
 
     private boolean fatalAccountingFailure;
@@ -77,6 +81,12 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
         long cached = call.cachedInputTokens() == null ? 0 : call.cachedInputTokens();
         cachedTokens = Math.addExact(cachedTokens, cached);
         cachedTokensComplete &= call.cachedInputTokens() != null;
+        if (call.totalCostUsd() == null) {
+            costUsdComplete = false;
+        }
+        else {
+            costUsd += call.totalCostUsd();
+        }
         billableTokens = Math.addExact(billableTokens, Math.round((call.inputTokens() - cached) + cached * cachedInputWeight) + call.outputTokens());
         if (!call.model().isBlank()) {
             models.add(call.model());
@@ -148,7 +158,7 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
     }
 
     public synchronized GenerationUsage snapshot() {
-        return new GenerationUsage(modelCalls, toolCalls, turns, attempts, inputTokens, outputTokens, cachedTokens, cachedTokensComplete, 0, modelCalls == 0, List.copyOf(models),
-                List.copyOf(requestIds), requestIdsComplete);
+        return new GenerationUsage(modelCalls, toolCalls, turns, attempts, inputTokens, outputTokens, cachedTokens, cachedTokensComplete, costUsd, costUsdComplete,
+                List.copyOf(models), List.copyOf(requestIds), requestIdsComplete);
     }
 }

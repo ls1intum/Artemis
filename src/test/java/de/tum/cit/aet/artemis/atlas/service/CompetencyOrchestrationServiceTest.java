@@ -338,7 +338,7 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED);
         assertThat(result.appliedActions()).hasSize(1);
         assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
-        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(ChatResponse.class), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(ChatResponse.class), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any(), eq(true));
         verify(runMap).remove(COURSE_ID);
     }
 
@@ -420,7 +420,7 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.status()).isEqualTo(SUCCESS);
         assertThat(result.appliedActions()).isEmpty();
         assertThat(result.summary()).isEqualTo("Run summary");
-        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any(), eq(true));
         verify(runMap).remove(COURSE_ID);
 
         // The main orchestrator delegates mutations; only workers receive role-specific write tools.
@@ -451,7 +451,7 @@ class CompetencyOrchestrationServiceTest {
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(17L);
 
         assertThat(result.status()).isEqualTo(SUCCESS);
-        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any(), eq(false));
         verify(runMap).remove(COURSE_ID);
     }
 

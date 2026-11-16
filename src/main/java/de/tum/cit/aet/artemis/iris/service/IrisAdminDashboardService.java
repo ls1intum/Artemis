@@ -132,15 +132,17 @@ public class IrisAdminDashboardService {
         double p95ResponseTime = percentile(responseTimes, 0.95);
 
         // Token cost
-        double totalTokenCostEur = 0.0;
+        double totalTokenCostUsd = 0.0;
+        long unpricedTokenCostRequests = 0;
         List<Object[]> costRows = dashboardRepository.computeTokenCost(from, to, aiSelection);
         for (Object[] row : costRows) {
-            totalTokenCostEur += ((Number) row[1]).doubleValue();
+            totalTokenCostUsd += ((Number) row[1]).doubleValue();
+            unpricedTokenCostRequests += ((Number) row[2]).longValue();
         }
 
         return new IrisDashboardOverviewDTO(totalSessions, activeSessions, engagementRate, totalMessages, uniqueUsers, noResponseRate, noResponseMessageCount,
                 noResponseSessionIds.size(), thumbsUpRatio, thumbsDownRatio, thumbsUpAbsoluteRate, thumbsDownAbsoluteRate, sessionsWithThumbsUp, sessionsWithThumbsDown, thumbsUp,
-                thumbsDown, avgResponseTime, p50ResponseTime, p95ResponseTime, totalTokenCostEur);
+                thumbsDown, avgResponseTime, p50ResponseTime, p95ResponseTime, totalTokenCostUsd, unpricedTokenCostRequests);
     }
 
     // -- Digest -----------------------------------------------------------------
@@ -187,7 +189,7 @@ public class IrisAdminDashboardService {
                 overview.uniqueUsers(), overview.noResponseRate(), overview.noResponseMessageCount(), overview.noResponseSessionCount(), overview.thumbsUpRatio(),
                 overview.thumbsDownRatio(), overview.thumbsUpAbsoluteRate(), overview.thumbsDownAbsoluteRate(), overview.thumbsUpCount(), overview.thumbsDownCount(),
                 overview.sessionsWithThumbsUp(), overview.sessionsWithThumbsDown(), overview.avgResponseTimeSeconds(), overview.p50ResponseTimeSeconds(),
-                overview.p95ResponseTimeSeconds(), overview.totalTokenCostEur(), chatModeBreakdown, topCourses, "/admin/iris-dashboard");
+                overview.p95ResponseTimeSeconds(), overview.totalTokenCostUsd(), overview.unpricedTokenCostRequests(), chatModeBreakdown, topCourses, "/admin/iris-dashboard");
     }
 
     // -- Config -----------------------------------------------------------------
@@ -525,16 +527,18 @@ public class IrisAdminDashboardService {
             Instant bucketEnd = nextBucketStart(bucketStart, buckets, i, to);
             double chatCost = 0.0;
             double otherCost = 0.0;
+            double unpricedRequests = 0;
             for (Object[] row : rows) {
                 Instant traceTime = toInstant(row[0]);
                 if (!traceTime.isBefore(bucketStart) && traceTime.isBefore(bucketEnd)) {
                     int chatAttributed = ((Number) row[1]).intValue();
-                    double costEur = ((Number) row[2]).doubleValue();
+                    double costUsd = ((Number) row[2]).doubleValue();
+                    unpricedRequests += ((Number) row[3]).doubleValue();
                     if (chatAttributed == 1) {
-                        chatCost += costEur;
+                        chatCost += costUsd;
                     }
                     else {
-                        otherCost += costEur;
+                        otherCost += costUsd;
                     }
                 }
             }
@@ -542,6 +546,7 @@ public class IrisAdminDashboardService {
             series.put("chat", chatCost);
             series.put("other", otherCost);
             series.put("total", chatCost + otherCost);
+            series.put("unpricedRequests", unpricedRequests);
             entries.add(new IrisDashboardTimeSeriesEntryDTO(bucketStart, series));
         }
         return entries;
@@ -664,10 +669,11 @@ public class IrisAdminDashboardService {
         for (Object[] row : rows) {
             String model = row[0] != null ? row[0].toString() : "unknown";
             long totalTokens = ((Number) row[1]).longValue();
-            double costEur = ((Number) row[2]).doubleValue();
+            double costUsd = ((Number) row[2]).doubleValue();
             Map<String, Double> values = new LinkedHashMap<>();
             values.put("totalTokens", (double) totalTokens);
-            values.put("costEur", costEur);
+            values.put("costUsd", costUsd);
+            values.put("unpricedRequests", ((Number) row[3]).doubleValue());
             entries.add(new IrisDashboardBreakdownEntryDTO(model, values));
         }
         return entries;

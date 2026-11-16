@@ -40,6 +40,8 @@ import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/o
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { DecimalPipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -65,6 +67,8 @@ export enum DoughnutChartType {
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,
+        DecimalPipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {

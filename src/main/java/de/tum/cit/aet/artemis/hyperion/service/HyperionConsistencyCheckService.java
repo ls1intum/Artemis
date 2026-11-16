@@ -128,8 +128,7 @@ public class HyperionConsistencyCheckService {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return null;
         }
-        var usage = response.getMetadata().getUsage();
-        return llmTokenUsageService.buildLLMRequest(response.getMetadata().getModel(), usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
+        return llmTokenUsageService.buildLLMRequest(response, pipelineId);
     }
 
     /**
@@ -221,11 +220,12 @@ public class HyperionConsistencyCheckService {
         // Aggregate token usage and costs from LLMRequest data
         long totalPromptTokens = validRequests.stream().mapToLong(LLMRequest::numInputTokens).sum();
         long totalCompletionTokens = validRequests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
-        double promptCost = validRequests.stream().mapToDouble(r -> r.numInputTokens() * r.costPerMillionInputToken() / 1_000_000.0).sum();
-        double completionCost = validRequests.stream().mapToDouble(r -> r.numOutputTokens() * r.costPerMillionOutputToken() / 1_000_000.0).sum();
+        boolean costComplete = !validRequests.isEmpty() && validRequests.size() == usageCollector.size()
+                && validRequests.stream().allMatch(request -> request.totalCostUsd() != null);
+        double totalCostUsd = validRequests.stream().map(LLMRequest::totalCostUsd).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
 
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);
-        var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
+        var costsDto = new CostsDTO(costComplete || totalCostUsd > 0 ? totalCostUsd : null, costComplete);
 
         log.debug("Consistency check for exercise {} complete: {} issues", exerciseId, issueDTOs.size());
         issueDTOs.forEach(issue -> log.debug("Issue [{}] {}: {}", issue.severity(), issue.category(), issue.description()));

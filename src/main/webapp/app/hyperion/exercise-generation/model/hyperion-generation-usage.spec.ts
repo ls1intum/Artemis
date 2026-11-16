@@ -5,8 +5,8 @@ import {
     BUDGET_NEAR_PERCENT,
     BUDGET_OVER_PERCENT,
     budgetLevel,
-    formatEuro,
     formatTokenCount,
+    formatUsd,
     newestLiveUsage,
     spendHero,
     spendView,
@@ -22,8 +22,8 @@ function live(partial: Partial<ExerciseGenerationLiveUsage> = {}): ExerciseGener
         billableTokens: 60_000,
         tokenBudget: 1_000_000,
         modelCalls: 12,
-        estimatedCostEur: 0.42,
-        estimatedCostComplete: true,
+        costUsd: 0.42,
+        costUsdComplete: true,
         ...partial,
     };
 }
@@ -38,8 +38,8 @@ function sealed(partial: Partial<ExerciseGenerationUsage> = {}): ExerciseGenerat
         outputTokens: 20_000,
         cachedInputTokens: 80_000,
         cachedInputTokensComplete: true,
-        estimatedCostEur: 0.84,
-        estimatedCostEurComplete: true,
+        costUsd: 0.84,
+        costUsdComplete: true,
         models: ['gpt-5-mini'],
         providerRequestIds: ['req-1'],
         providerRequestIdsComplete: true,
@@ -55,7 +55,7 @@ describe('spendView', () => {
     });
 
     it('reports nothing before the run has been charged for anything', () => {
-        const untouched = live({ inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billableTokens: 0, modelCalls: 0, estimatedCostEur: 0 });
+        const untouched = live({ inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billableTokens: 0, modelCalls: 0, costUsd: 0 });
 
         expect(spendView({ liveUsage: untouched, ownedByCaller: true, terminal: false })).toBeUndefined();
     });
@@ -96,17 +96,24 @@ describe('spendView', () => {
     });
 
     it('reports an unpriced run as not priced rather than as free', () => {
-        const view = spendView({ liveUsage: live({ estimatedCostEur: undefined, estimatedCostComplete: false }), ownedByCaller: true, terminal: false })!;
+        const view = spendView({ liveUsage: live({ costUsd: undefined, costUsdComplete: false }), ownedByCaller: true, terminal: false })!;
 
         expect(view.cost).toEqual({ kind: 'notPriced' });
     });
 
+    it('keeps a reported zero USD cost distinct from an unpriced run', () => {
+        const view = spendView({ usage: sealed({ costUsd: 0, costUsdComplete: true }), accountingState: 'COMPLETE', ownedByCaller: true, terminal: true })!;
+
+        expect(view.cost).toEqual({ kind: 'amount', usd: 0 });
+        expect(spendHero(view)).toEqual({ kind: 'money', usd: 0, lowerBound: false });
+    });
+
     it('reports a partially priced total as a floor, and a floor of zero as not priced at all', () => {
-        const partial = spendView({ usage: sealed({ estimatedCostEurComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })!;
-        expect(partial.cost).toEqual({ kind: 'lowerBound', eur: 0.84 });
+        const partial = spendView({ usage: sealed({ costUsdComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })!;
+        expect(partial.cost).toEqual({ kind: 'lowerBound', usd: 0.84 });
 
         const nothingPriced = spendView({
-            usage: sealed({ estimatedCostEur: 0, estimatedCostEurComplete: false }),
+            usage: sealed({ costUsd: 0, costUsdComplete: false }),
             accountingState: 'INCOMPLETE',
             ownedByCaller: true,
             terminal: true,
@@ -134,7 +141,7 @@ describe('spendHero', () => {
     it('leads with money whenever money is known', () => {
         expect(hero({ liveUsage: live(), accountingState: 'PENDING', ownedByCaller: true, terminal: false })).toEqual({
             kind: 'money',
-            eur: 0.42,
+            usd: 0.42,
             lowerBound: false,
         });
     });
@@ -142,7 +149,7 @@ describe('spendHero', () => {
     it('leads with the tokens it did measure when nothing was priced, rather than with a word', () => {
         // The hero slot is for a figure. Spending it on the string "Not priced" makes the largest element on the
         // surface an admission that it has nothing to show, while a real, measured number is sitting right there.
-        expect(hero({ liveUsage: live({ estimatedCostEur: undefined, estimatedCostComplete: false }), ownedByCaller: true, terminal: false })).toEqual({
+        expect(hero({ liveUsage: live({ costUsd: undefined, costUsdComplete: false }), ownedByCaller: true, terminal: false })).toEqual({
             kind: 'tokens',
             unit: 'billable',
             tokens: 60_000,
@@ -153,7 +160,7 @@ describe('spendHero', () => {
     it('falls back to input plus output on a sealed total, which carries no billable figure', () => {
         // Cached input is discounted at a weight that is not part of the terminal account, so the sealed shape has no
         // billable count at all - and the two counts it does have are reported under their own, different word.
-        expect(hero({ usage: sealed({ estimatedCostEur: 0, estimatedCostEurComplete: false }), accountingState: 'COMPLETE', ownedByCaller: true, terminal: true })).toEqual({
+        expect(hero({ usage: sealed({ costUsd: 0, costUsdComplete: false }), accountingState: 'COMPLETE', ownedByCaller: true, terminal: true })).toEqual({
             kind: 'tokens',
             unit: 'total',
             tokens: 200_000,
@@ -162,14 +169,14 @@ describe('spendHero', () => {
     });
 
     it('marks a partly priced amount as a floor, and never "at least nothing"', () => {
-        expect(hero({ usage: sealed({ estimatedCostEurComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })).toEqual({
+        expect(hero({ usage: sealed({ costUsdComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })).toEqual({
             kind: 'money',
-            eur: 0.84,
+            usd: 0.84,
             lowerBound: true,
         });
 
         // A priced total of zero is not a lower bound of zero; it is a run whose cost is unknown, so tokens lead.
-        expect(hero({ usage: sealed({ estimatedCostEur: 0, estimatedCostEurComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })).toEqual({
+        expect(hero({ usage: sealed({ costUsd: 0, costUsdComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })).toEqual({
             kind: 'tokens',
             unit: 'total',
             tokens: 200_000,
@@ -220,7 +227,10 @@ describe('formatting', () => {
 
     it('never rounds a real cost down to nothing', () => {
         // Half a cent is not zero, and rendering it as "0.00" would say the run was free.
-        expect(formatEuro(0.004, 'en')).toBe('€0.0040');
-        expect(formatEuro(1.5, 'en')).toBe('€1.50');
+        expect(formatUsd(0.004, 'en')).toBe('$0.0040');
+        expect(formatUsd(0.00000001, 'en')).toBe('$0.000000010');
+        expect(formatUsd(1.5, 'en')).toBe('$1.50');
+        expect(formatUsd(0, 'en')).toBe('$0.00');
+        expect(formatUsd(1.5, 'de')).toBe('1,50 $');
     });
 });

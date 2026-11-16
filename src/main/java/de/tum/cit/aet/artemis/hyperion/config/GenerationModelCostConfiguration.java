@@ -34,6 +34,9 @@ public class GenerationModelCostConfiguration {
             requireValidPrice(key, "input", value.getInputCostPerMillionEur());
             requireValidPrice(key, "output", value.getOutputCostPerMillionEur());
             requireValidPrice(key, "cached input", value.getCachedInputCostPerMillionEur());
+            requireValidPrice(key, "USD input", value.getInputCostPerMillionUsd());
+            requireValidPrice(key, "USD output", value.getOutputCostPerMillionUsd());
+            requireValidPrice(key, "USD cached input", value.getCachedInputCostPerMillionUsd());
         });
     }
 
@@ -61,7 +64,7 @@ public class GenerationModelCostConfiguration {
         this.modelCosts = modelCosts == null ? new HashMap<>() : modelCosts;
     }
 
-    /** Properties for a single model's token costs in EUR. */
+    /** Explicit USD prices and retained legacy EUR prices. Neither currency has seeded defaults. */
     public static class ModelCostProperties {
 
         @Nullable
@@ -72,6 +75,42 @@ public class GenerationModelCostConfiguration {
 
         @Nullable
         private Float cachedInputCostPerMillionEur;
+
+        @Nullable
+        private Float inputCostPerMillionUsd;
+
+        @Nullable
+        private Float outputCostPerMillionUsd;
+
+        @Nullable
+        private Float cachedInputCostPerMillionUsd;
+
+        @Nullable
+        public Float getInputCostPerMillionUsd() {
+            return inputCostPerMillionUsd;
+        }
+
+        public void setInputCostPerMillionUsd(float inputCostPerMillionUsd) {
+            this.inputCostPerMillionUsd = inputCostPerMillionUsd;
+        }
+
+        @Nullable
+        public Float getOutputCostPerMillionUsd() {
+            return outputCostPerMillionUsd;
+        }
+
+        public void setOutputCostPerMillionUsd(float outputCostPerMillionUsd) {
+            this.outputCostPerMillionUsd = outputCostPerMillionUsd;
+        }
+
+        @Nullable
+        public Float getCachedInputCostPerMillionUsd() {
+            return cachedInputCostPerMillionUsd;
+        }
+
+        public void setCachedInputCostPerMillionUsd(float cachedInputCostPerMillionUsd) {
+            this.cachedInputCostPerMillionUsd = cachedInputCostPerMillionUsd;
+        }
 
         @Nullable
         public Float getInputCostPerMillionEur() {

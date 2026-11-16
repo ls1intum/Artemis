@@ -63,6 +63,35 @@ class GenerationModelCostConfigurationBindingTest {
     }
 
     @Test
+    void usdRatesBindWithoutReinterpretingLegacyPrices() throws IOException {
+        var configuration = bindYaml("""
+                artemis:
+                  llm:
+                    model-costs:
+                      '[model.example]':
+                        input-cost-per-million-usd: 2.0
+                        cached-input-cost-per-million-usd: 0.5
+                        output-cost-per-million-usd: 4.0
+                        input-cost-per-million-eur: 1.8
+                """);
+        configuration.validateModelCosts();
+        var model = configuration.getModelCosts().get("model.example");
+        assertThat(model.getInputCostPerMillionUsd()).isEqualTo(2f);
+        assertThat(model.getCachedInputCostPerMillionUsd()).isEqualTo(0.5f);
+        assertThat(model.getOutputCostPerMillionUsd()).isEqualTo(4f);
+        assertThat(model.getInputCostPerMillionEur()).isEqualTo(1.8f);
+    }
+
+    @Test
+    void invalidUsdRateFailsConfigurationRatherThanCreatingAFreeEstimate() {
+        var configuration = new GenerationModelCostConfiguration();
+        var model = new GenerationModelCostConfiguration.ModelCostProperties();
+        model.setInputCostPerMillionUsd(Float.NaN);
+        configuration.setModelCosts(Map.of("model", model));
+        assertThatThrownBy(configuration::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid USD input price");
+    }
+
+    @Test
     void dottedModelBindsFromEnvironmentVariablesViaStrippedKey() {
         // This is the Docker path: env-var keys cannot contain '.' or '-', so the collection renders
         // "gpt-5.4" as ARTEMIS_LLM_MODELCOSTS_GPT54_*. Prove Spring binds that into model-costs[gpt54].

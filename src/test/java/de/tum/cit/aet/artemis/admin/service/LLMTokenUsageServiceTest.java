@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 // Several tests assert log output through an appender on the service logger. A Spring context starting in parallel resets
 // Logback and detaches that appender mid-test, so the class runs alone.
@@ -53,6 +55,84 @@ class LLMTokenUsageServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, createCostConfiguration());
+    }
+
+    @Test
+    void responseCostTakesPrecedenceOverExplicitUsdRates() {
+        var config = createCostConfiguration();
+        config.getModelCosts().get("gpt-5-mini").setInputCostPerMillionUsd(100f);
+        config.getModelCosts().get("gpt-5-mini").setOutputCostPerMillionUsd(200f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD"));
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
+
+        LLMRequest request = service.buildLLMRequest(response, "PIPE");
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isEqualTo(0.0001);
+        assertThat(request.costSource()).isEqualTo("PROVIDER");
+    }
+
+    @Test
+    void incompleteUsageRetainsTokensWithoutReportingACompleteUsdAmount() {
+        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD"));
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
+
+        llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, "PARTIAL", builder -> builder.withCourse(42L), false);
+
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getNumInputTokens()).isEqualTo(100);
+            assertThat(request.getNumOutputTokens()).isEqualTo(20);
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getCostSource()).isNull();
+        });
+    }
+
+    @Test
+    void missingProviderCostUsesExplicitUsdEstimateWithoutRelabellingOldRates() {
+        var config = createCostConfiguration();
+        config.getModelCosts().get("gpt-5-mini").setInputCostPerMillionUsd(1f);
+        config.getModelCosts().get("gpt-5-mini").setOutputCostPerMillionUsd(2f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        LLMRequest estimated = service.buildLLMRequest("gpt-5-mini", 1_000_000, 500_000, "PIPE");
+        assertThat(estimated.totalCostUsd()).isEqualTo(2);
+        assertThat(estimated.costSource()).isEqualTo("CONFIGURATION");
+        assertThat(estimated.costPerMillionInputToken()).isEqualTo(0.23f);
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 100, 20, "PIPE").totalCostUsd()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "NaN,PROVIDER", "Infinity,PROVIDER", "-1,PROVIDER", "1,UNKNOWN", "1,null", "null,PROVIDER" }, nullValues = "null")
+    void persistenceDiscardsInvalidOrIncompleteCostPairs(Double amount, String source) {
+        var incoming = new LLMRequest("test", 12, 1f, 3, 2f, "PIPE", 0, 0f, 0, 0f, amount, source);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(incoming), LLMServiceType.IRIS, builder -> builder);
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getNumInputTokens()).isEqualTo(12);
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getCostSource()).isNull();
+        });
+    }
+
+    @Test
+    void malformedExternalCostMetadataDoesNotRejectTokenPersistence() {
+        var incoming = JsonObjectMapper.get().readValue("{\"numInputTokens\":12,\"totalCostUsd\":{},\"costSource\":\"future\"}", LLMRequest.class);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(incoming), LLMServiceType.IRIS, builder -> builder);
+        verify(llmTokenUsageTraceRepository).save(any());
+    }
+
+    @Test
+    void persistenceKeepsReportedZeroAndItsSource() {
+        var incoming = new LLMRequest("test", 12, 1f, 3, 2f, "PIPE", 0, 0f, 0, 0f, 0d, "PROVIDER");
+        llmTokenUsageService.saveLLMTokenUsage(List.of(incoming), LLMServiceType.IRIS, builder -> builder);
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getTotalCostUsd()).isZero();
+            assertThat(request.getCostSource()).isEqualTo("PROVIDER");
+        });
     }
 
     @Test

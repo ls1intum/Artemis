@@ -63,6 +63,8 @@ class LLMModelCostConfigurationBindingTest {
         assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionEur()).isCloseTo(13.80f, within(1e-4f));
         assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionEur()).isCloseTo(0.69f, within(1e-4f));
         assertThat(modelCosts.get("gpt-5.4-mini").getOutputCostPerMillionEur()).isCloseTo(4.14f, within(1e-4f));
+        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionUsd()).isEqualTo(2.50f);
+        assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionUsd()).isEqualTo(15f);
     }
 
     @Test
@@ -77,6 +79,7 @@ class LLMModelCostConfigurationBindingTest {
                 """);
         config.applyDefaultModelCosts();
         var modelCosts = config.getModelCosts();
+        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionUsd()).as("an explicit legacy entry must not acquire seeded USD prices").isNull();
 
         assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionEur()).isCloseTo(9.99f, within(1e-4f));
         assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionEur()).isCloseTo(11.11f, within(1e-4f));

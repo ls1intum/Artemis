@@ -6,5 +6,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record IrisDashboardOverviewDTO(long totalSessions, long activeSessions, double engagementRate, long totalMessages, long uniqueUsers, double noResponseRate,
         long noResponseMessageCount, long noResponseSessionCount, double thumbsUpRatio, double thumbsDownRatio, double thumbsUpAbsoluteRate, double thumbsDownAbsoluteRate,
         long sessionsWithThumbsUp, long sessionsWithThumbsDown, long thumbsUpCount, long thumbsDownCount, double avgResponseTimeSeconds, double p50ResponseTimeSeconds,
-        double p95ResponseTimeSeconds, double totalTokenCostEur) {
+        double p95ResponseTimeSeconds, double totalTokenCostUsd, long unpricedTokenCostRequests) {
 }

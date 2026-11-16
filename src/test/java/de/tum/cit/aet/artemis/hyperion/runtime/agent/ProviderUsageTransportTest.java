@@ -31,6 +31,24 @@ class ProviderUsageTransportTest {
     }
 
     @Test
+    void providerUsdCostAndSourceSurviveRoundTrip() {
+        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, 0.00001234, "PROVIDER");
+
+        assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call))).isEqualTo(call);
+    }
+
+    @Test
+    void invalidOrUnidentifiedCostDoesNotDiscardUsage() {
+        for (var call : List.of(new ProviderUsageUpdate.Call("model", "id", 10, 20, null, -1d, "PROVIDER"),
+                new ProviderUsageUpdate.Call("model", "id", 10, 20, null, Double.NaN, "PROVIDER"), new ProviderUsageUpdate.Call("model", "id", 10, 20, null, 1d, "unknown"),
+                new ProviderUsageUpdate.Call("model", "id", 10, 20, null, 1d, null))) {
+            assertThat(call.totalCostUsd()).isNull();
+            assertThat(call.costSource()).isNull();
+            assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call)).inputTokens()).isEqualTo(10);
+        }
+    }
+
+    @Test
     void capturesUsageWhenTheProviderDoesNotReportAModel() {
         var metadata = ChatResponseMetadata.builder().usage(new DefaultUsage(10, 20)).build();
 

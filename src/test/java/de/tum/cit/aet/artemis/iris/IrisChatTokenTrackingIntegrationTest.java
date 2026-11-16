@@ -164,13 +164,13 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCourseLlmCostBillsCachedAndCacheWriteTokensAtTheirOwnRates() {
+    void testCourseLlmCostUsesCompleteProviderUsdAmount() {
         // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
-        var request = new LLMRequest("gpt-6-luna", 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f);
+        var request = new LLMRequest("gpt-6-luna", 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f, 0.9, "PROVIDER");
         llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
 
-        // 0.6M x 1.0 + 1M x 0.1 + 0.4M x 1.25 + 0.1M x 4.0 = 0.6 + 0.1 + 0.5 + 0.4
-        assertThat(irisLLMTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId())).isCloseTo(1.6, Offset.offset(0.001));
+        // The reported USD amount supersedes the historical unit-rate estimate.
+        assertThat(irisLLMTokenUsageTraceRepository.calculateTotalLlmCostInUsdForCourse(course.getId())).isCloseTo(0.9, Offset.offset(0.001));
     }
 
     @Test

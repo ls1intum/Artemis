@@ -6,6 +6,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -60,6 +62,15 @@ public class LLMTokenUsageRequest extends DomainObject {
 
     @Column(name = "cost_per_million_cache_write_input_tokens")
     private float costPerMillionCacheWriteInputTokens;
+
+    /** Complete USD amount reported by the provider or estimated from explicitly USD rates. Null means unpriced in USD. */
+    @Nullable
+    @Column(name = "total_cost_usd")
+    private Double totalCostUsd;
+
+    @Nullable
+    @Column(name = "cost_source")
+    private String costSource;
 
     @ManyToOne
     @JoinColumn(nullable = false)
@@ -148,6 +159,24 @@ public class LLMTokenUsageRequest extends DomainObject {
 
     public LLMTokenUsageTrace getTrace() {
         return trace;
+    }
+
+    @Nullable
+    public Double getTotalCostUsd() {
+        return totalCostUsd;
+    }
+
+    public void setTotalCostUsd(@Nullable Double totalCostUsd) {
+        this.totalCostUsd = totalCostUsd;
+    }
+
+    @Nullable
+    public String getCostSource() {
+        return costSource;
+    }
+
+    public void setCostSource(@Nullable String costSource) {
+        this.costSource = costSource;
     }
 
     public void setTrace(LLMTokenUsageTrace trace) {

@@ -11,9 +11,9 @@ import {
     HyperionBudgetLevel,
     HyperionSpendView,
     budgetLevel,
-    formatEuro,
     formatPercent,
     formatTokenCount,
+    formatUsd,
     spendHero,
 } from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
 
@@ -149,7 +149,7 @@ export class HyperionRunUsageComponent {
         if (hero.kind === 'money') {
             return {
                 kind: 'money',
-                value: formatEuro(hero.eur, locale),
+                value: formatUsd(hero.usd, locale),
                 lowerBound: hero.lowerBound,
                 captionKey:
                     spend.cost.kind === 'lowerBound'

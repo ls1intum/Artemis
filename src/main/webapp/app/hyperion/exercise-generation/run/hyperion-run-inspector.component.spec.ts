@@ -72,8 +72,8 @@ function liveUsage(partial: Partial<ExerciseGenerationLiveUsage> = {}): Exercise
         billableTokens: 250_000,
         tokenBudget: 1_000_000,
         modelCalls: 12,
-        estimatedCostEur: 0.42,
-        estimatedCostComplete: true,
+        costUsd: 0.42,
+        costUsdComplete: true,
         ...partial,
     };
 }
@@ -88,8 +88,8 @@ function sealedUsage(partial: Partial<ExerciseGenerationUsage> = {}): ExerciseGe
         outputTokens: 20_000,
         cachedInputTokens: 80_000,
         cachedInputTokensComplete: true,
-        estimatedCostEur: 0.84,
-        estimatedCostEurComplete: true,
+        costUsd: 0.84,
+        costUsdComplete: true,
         models: ['gpt-5-mini'],
         providerRequestIds: ['req-1'],
         providerRequestIdsComplete: true,
@@ -677,7 +677,7 @@ describe('HyperionRunInspectorComponent', () => {
             const meter = fixture.nativeElement.querySelector('[role="progressbar"]') as HTMLElement;
             expect(meter.getAttribute('aria-valuetext')).toContain('artemisApp.hyperion.generation.usage.budgetValueText');
             expect(meter.getAttribute('aria-label')).toContain('artemisApp.hyperion.generation.usage.budgetAriaLabel');
-            expect(testId('hyperion-run-usage-cost-amount')!.textContent!.trim()).toBe('€0.42');
+            expect(testId('hyperion-run-usage-cost-amount')!.textContent!.trim()).toBe('$0.42');
             // A running run's figures are a running total, and the panel says so rather than leaving it to be inferred.
             expect(testId('hyperion-run-usage-accounting')!.textContent).toContain('artemisApp.hyperion.generation.usage.state.pending');
             expect(testId('hyperion-run-usage-cost-caption')!.textContent).toContain('artemisApp.hyperion.generation.usage.costSoFar');
@@ -706,7 +706,7 @@ describe('HyperionRunInspectorComponent', () => {
 
             const panel = testId('hyperion-run-usage')!;
             expect(panel.getAttribute('data-accounting')).toBe('COMPLETE');
-            expect(testId('hyperion-run-usage-cost-amount')!.textContent!.trim()).toBe('€0.84');
+            expect(testId('hyperion-run-usage-cost-amount')!.textContent!.trim()).toBe('$0.84');
             expect(panel.querySelector('[data-figure="input"]')!.textContent).toContain('180,000');
             expect(panel.querySelector('[data-figure="attempts"]')!.textContent).toContain('2');
             // The model list is diagnostic, so it lives in the technical log rather than on the surface reporting spend.
@@ -734,7 +734,7 @@ describe('HyperionRunInspectorComponent', () => {
                 status({
                     running: true,
                     accountingState: 'PENDING',
-                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage({ estimatedCostEur: undefined, estimatedCostComplete: false }) })],
+                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage({ costUsd: undefined, costUsdComplete: false }) })],
                 }),
             );
 
@@ -747,7 +747,7 @@ describe('HyperionRunInspectorComponent', () => {
             // The currency amount is demoted to a labelled sentence rather than deleted, and never shown as a zero.
             expect(testId('hyperion-run-usage-cost-caption')!.textContent).toContain('artemisApp.hyperion.generation.usage.notPricedHint');
             expect(cost.textContent).not.toContain('0.00');
-            expect(cost.textContent).not.toContain('€');
+            expect(cost.textContent).not.toContain('$');
         });
 
         it('renders spend without a proportion when the deployment configured no token ceiling', () => {
@@ -804,7 +804,7 @@ describe('HyperionRunInspectorComponent', () => {
             render(
                 status({
                     accountingState: 'INCOMPLETE',
-                    usage: sealedUsage({ cachedInputTokensComplete: false, estimatedCostEurComplete: false }),
+                    usage: sealedUsage({ cachedInputTokensComplete: false, costUsdComplete: false }),
                     events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'AGENT_ERROR' })],
                 }),
             );
@@ -851,7 +851,7 @@ describe('HyperionRunInspectorComponent', () => {
             // Cost is made prominent by position and persistence, not by size: the answer keeps the largest element.
             render(status({ running: true, accountingState: 'PENDING', events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage() })] }));
 
-            expect(fact('spend')!.textContent!.trim()).toBe('€0.42');
+            expect(fact('spend')!.textContent!.trim()).toBe('$0.42');
         });
 
         it('withholds the Spend column entirely from an instructor who does not own the run', () => {
@@ -874,14 +874,14 @@ describe('HyperionRunInspectorComponent', () => {
                 status({
                     running: true,
                     accountingState: 'PENDING',
-                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage({ estimatedCostEur: undefined, estimatedCostComplete: false }) })],
+                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage({ costUsd: undefined, costUsdComplete: false }) })],
                 }),
             );
 
             expect(fact('spend')!.textContent!.trim()).toBe('250,000');
             const column = fixture.nativeElement.querySelector('[data-fact="spend"]') as HTMLElement;
             expect(column.textContent).toContain('artemisApp.hyperion.generation.run.costNotPriced');
-            expect(column.textContent).not.toContain('€');
+            expect(column.textContent).not.toContain('$');
         });
 
         it('reports the position in the five stages, and never a completion percentage', () => {

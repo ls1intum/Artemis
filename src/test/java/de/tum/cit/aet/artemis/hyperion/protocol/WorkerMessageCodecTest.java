@@ -26,6 +26,39 @@ class WorkerMessageCodecTest {
 
     private final WorkerMessageCodecApi wire = new WorkerMessageCodecApi();
 
+    @Test
+    void usdUsageRoundTripPreservesTheProviderAmountAndSource() {
+        var update = new ProviderUsageUpdate(ProviderUsageUpdate.Kind.RESPONSE, 1, new ProviderUsageUpdate.Call("model", "request", 10, 2, null, 0d, "PROVIDER"));
+
+        assertThat(codec.decodePayload(codec.encodePayload(update), ProviderUsageUpdate.class)).isEqualTo(update);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\"bad\"", "{}", "[]", "-1" })
+    void malformedOptionalCostDoesNotRejectAWorkerUsageEvent(String malformed) {
+        var update = codec.decodePayload("""
+                {"kind":"RESPONSE","count":1,"call":{"model":"model","inputTokens":10,"outputTokens":2,
+                "totalCostUsd":%s,"costSource":"PROVIDER"}}
+                """.formatted(malformed), ProviderUsageUpdate.class);
+
+        assertThat(update.call().inputTokens()).isEqualTo(10);
+        assertThat(update.call().totalCostUsd()).isNull();
+        assertThat(update.call().costSource()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\"provider\"", "\"future-source\"", "{}", "null" })
+    void unknownOrAbsentCostSourceLeavesTheWorkerCostUnpriced(String source) {
+        var update = codec.decodePayload("""
+                {"kind":"RESPONSE","count":1,"call":{"model":"model","inputTokens":10,"outputTokens":2,
+                "totalCostUsd":1,"costSource":%s}}
+                """.formatted(source), ProviderUsageUpdate.class);
+
+        assertThat(update.call().totalCostUsd()).isNull();
+        assertThat(update.call().costSource()).isNull();
+        assertThat(update.call().outputTokens()).isEqualTo(2);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "modelCalls", "toolCalls", "agentTurns", "attempts", "inputTokens", "outputTokens", "cachedInputTokens" })
     void rejectsNegativeUsageCountersOnTheWire(String field) {
@@ -38,7 +71,7 @@ class WorkerMessageCodecTest {
     @ValueSource(doubles = { -0.01, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
     void rejectsInvalidUsageCostOnTheWire(double cost) {
         var json = completeUsageEvent();
-        ((ObjectNode) json.at("/payload/usage")).put("estimatedCostEur", cost);
+        ((ObjectNode) json.at("/payload/usage")).put("costUsd", cost);
         assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class);
     }
 

@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -271,12 +272,12 @@ class HyperionCodeGenerationServiceTest {
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+        when(llmTokenUsageService.buildLLMRequest(any(ChatResponse.class), eq(pipelineId))).thenReturn(llmRequest);
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
 
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(llmTokenUsageService).buildLLMRequest(modelName, 11, 7, pipelineId);
+        verify(llmTokenUsageService).buildLLMRequest(any(ChatResponse.class), eq(pipelineId));
         verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
     }
 
@@ -322,7 +323,7 @@ class HyperionCodeGenerationServiceTest {
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+        when(llmTokenUsageService.buildLLMRequest(any(ChatResponse.class), eq(pipelineId))).thenReturn(llmRequest);
         doThrow(new IllegalStateException("database unavailable")).when(llmTokenUsageService).saveLLMTokenUsage(any(), eq(LLMServiceType.HYPERION), any());
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
@@ -332,23 +333,18 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void callChatClient_withNegativeUsageMetadata_clampsTokenUsageToZeroBeforeTracking() throws Exception {
-        String expectedPlan = "Generated solution plan";
-        String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
+    void callChatClient_withUnusableUsageMetadata_doesNotFabricateTokenCounts() throws Exception {
+        String jsonResponse = "{\"solutionPlan\":\"Generated solution plan\",\"files\":[]}";
         Map<String, Object> templateVariables = Map.of("key", "value");
-        String modelName = "gpt-5-mini-2025-08-07";
-        String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
-        LLMRequest llmRequest = new LLMRequest(modelName, 0, 0.23f, 7, 1.84f, pipelineId);
-
+        ChatResponse response = createChatResponse(jsonResponse, "gpt-5-mini", -11, 7);
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, -11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 0, 7, pipelineId)).thenReturn(llmRequest);
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
 
-        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(llmTokenUsageService).buildLLMRequest(modelName, 0, 7, pipelineId);
-        verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
+        assertThat(result.getSolutionPlan()).isEqualTo("Generated solution plan");
+        verify(llmTokenUsageService, never()).buildLLMRequest(any(ChatResponse.class), any());
+        verify(llmTokenUsageService, never()).saveLLMTokenUsage(any(), any(), any());
     }
 
     @Test
@@ -363,12 +359,12 @@ class HyperionCodeGenerationServiceTest {
 
         when(templates.renderObject(promptPath, templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+        when(llmTokenUsageService.buildLLMRequest(any(ChatResponse.class), eq(pipelineId))).thenReturn(llmRequest);
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, promptPath, templateVariables);
 
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(llmTokenUsageService).buildLLMRequest(modelName, 11, 7, pipelineId);
+        verify(llmTokenUsageService).buildLLMRequest(any(ChatResponse.class), eq(pipelineId));
         verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
     }
 

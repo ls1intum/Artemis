@@ -20,5 +20,6 @@ export interface CourseManagementDetailViewDto {
     currentMaxAverageScore: number;
 
     // LLM Stats
-    currentTotalLlmCostInEur: number;
+    currentTotalLlmCostInUsd: number;
+    unpricedLlmRequestCount: number;
 }

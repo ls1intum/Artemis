@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 
 /**
@@ -52,12 +53,10 @@ public class LLMTokenUsageService {
             LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
-        this.costs = costConfiguration.getModelCosts().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
+        this.costs = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> modelCost(e.getValue())));
         this.costsByStrippedKey = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(entry -> LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
-                        entry -> new StrippedModelCost(entry.getKey(), LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
-                                new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur())),
+                        entry -> new StrippedModelCost(entry.getKey(), LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()), modelCost(entry.getValue())),
                         LLMTokenUsageService::throwOnStrippedCostCollision))
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
     }
@@ -72,19 +71,88 @@ public class LLMTokenUsageService {
      * @return LLMRequest with costs from configuration
      */
     public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
+        ModelCost cost = modelCost(model, inputTokens, outputTokens, pipelineId, true);
+        Double usd = estimateUsd(cost, inputTokens, outputTokens, 0, 0);
+        return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId, 0, 0f, 0, 0f, usd, usd == null ? null : "CONFIGURATION");
+    }
+
+    /**
+     * Builds accounting from the full response so that the provider's USD amount takes precedence over configured prices.
+     *
+     * @param response   response for one model call, or accumulated usage
+     * @param pipelineId the operation that made the call
+     * @return usage with a known USD amount when supplied or estimable; null when token counts are missing
+     */
+    @Nullable
+    public LLMRequest buildLLMRequest(ChatResponse response, String pipelineId) {
+        Usage usage = response.getMetadata().getUsage();
+        if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
+            return null;
+        }
+        Integer input = usage.getPromptTokens();
+        Integer output = usage.getCompletionTokens();
+        if (input == null || output == null) {
+            log.warn("Failed to store token usage for pipeline [{}]: usage metadata is incomplete (prompt tokens: {}, completion tokens: {}).", pipelineId, input, output);
+            return null;
+        }
+        String model = Objects.requireNonNullElse(response.getMetadata().getModel(), "");
+        Double usd = LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
+        int cached = safeCacheCount(usage.getCacheReadInputTokens(), input);
+        int written = safeCacheCount(usage.getCacheWriteInputTokens(), Math.max(0, input - cached));
+        if (usd == null && cached == 0 && written == 0) {
+            return buildLLMRequest(model, input, output, pipelineId);
+        }
+        ModelCost cost = modelCost(model, input, output, pipelineId, usd == null);
+        String source = usd == null ? null : "PROVIDER";
+        if (usd == null) {
+            usd = estimateUsd(cost, input, output, cached, written);
+            source = usd == null ? null : "CONFIGURATION";
+        }
+        return new LLMRequest(model, input, cost.input(), output, cost.output(), pipelineId, cached, 0f, written, 0f, usd, source);
+    }
+
+    private ModelCost modelCost(String model, int inputTokens, int outputTokens, String pipelineId, boolean warnMissing) {
         String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
         String stripped = LLMModelCostConfiguration.stripToAlphanumeric(normalized);
         ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.ZERO));
-        if (cost == ModelCost.ZERO && inputTokens + outputTokens > 0) {
+        if (warnMissing && cost == ModelCost.ZERO && (long) inputTokens + outputTokens > 0) {
             log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording zero cost. Known cost keys: {}", model, normalized,
                     stripped, pipelineId, costs.keySet());
         }
-        return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
+        return cost;
     }
 
-    private record ModelCost(float input, float output) {
+    private static int safeCacheCount(@Nullable Long count, int input) {
+        return count != null && count >= 0 && count <= input ? count.intValue() : 0;
+    }
 
-        static final ModelCost ZERO = new ModelCost(0f, 0f);
+    private static ModelCost modelCost(LLMModelCostConfiguration.ModelCostProperties properties) {
+        return new ModelCost(properties.getInputCostPerMillionEur(), properties.getOutputCostPerMillionEur(), properties.getInputCostPerMillionUsd(),
+                properties.getOutputCostPerMillionUsd(), properties.getCachedInputCostPerMillionUsd(), properties.getCacheWriteInputCostPerMillionUsd());
+    }
+
+    @Nullable
+    private static Double estimateUsd(ModelCost cost, int input, int output, int cached, int written) {
+        if (input < 0 || output < 0 || input > 0 && !validRate(cost.inputUsd()) || output > 0 && !validRate(cost.outputUsd())
+                || cached > 0 && cost.cachedUsd() != null && !validRate(cost.cachedUsd()) || written > 0 && cost.writeUsd() != null && !validRate(cost.writeUsd())) {
+            return null;
+        }
+        // The shared fallback remains a simple estimate: use the regular input rate where no separate cache rate is configured.
+        double inputRate = cost.inputUsd() == null ? 0 : cost.inputUsd();
+        double outputRate = cost.outputUsd() == null ? 0 : cost.outputUsd();
+        double cachedRate = cost.cachedUsd() == null ? inputRate : cost.cachedUsd();
+        double writeRate = cost.writeUsd() == null ? inputRate : cost.writeUsd();
+        double amount = ((input - cached - written) * inputRate + cached * cachedRate + written * writeRate + output * outputRate) / 1_000_000d;
+        return Double.isFinite(amount) && amount >= 0 ? amount : null;
+    }
+
+    private static boolean validRate(@Nullable Float rate) {
+        return rate != null && Float.isFinite(rate) && rate >= 0;
+    }
+
+    private record ModelCost(float input, float output, @Nullable Float inputUsd, @Nullable Float outputUsd, @Nullable Float cachedUsd, @Nullable Float writeUsd) {
+
+        static final ModelCost ZERO = new ModelCost(0f, 0f, null, null, null, null);
     }
 
     private record StrippedModelCost(String originalKey, String strippedKey, ModelCost cost) {
@@ -138,6 +206,15 @@ public class LLMTokenUsageService {
         llmTokenUsageRequest.setNumCacheWriteInputTokens(llmRequest.numCacheWriteInputTokens());
         llmTokenUsageRequest.setCostPerMillionCacheWriteInputTokens(llmRequest.costPerMillionCacheWriteInputToken());
         llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
+        Double amount = llmRequest.totalCostUsd();
+        String source = llmRequest.costSource();
+        if (amount != null && Double.isFinite(amount) && amount >= 0 && ("PROVIDER".equals(source) || "CONFIGURATION".equals(source))) {
+            llmTokenUsageRequest.setTotalCostUsd(amount);
+            llmTokenUsageRequest.setCostSource(source);
+        }
+        else if (amount != null || source != null) {
+            log.warn("Ignoring invalid or incomplete USD cost metadata for pipeline [{}]", llmRequest.pipelineId());
+        }
         return llmTokenUsageRequest;
     }
 
@@ -174,6 +251,20 @@ public class LLMTokenUsageService {
      */
     public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
+        trackChatResponseTokenUsage(chatResponse, serviceType, pipelineId, builderFunction, true);
+    }
+
+    /**
+     * Tracks known token counts while leaving USD pricing unknown when some calls have no usage.
+     *
+     * @param chatResponse    response containing the available token counts
+     * @param serviceType     the service that made the call
+     * @param pipelineId      the pipeline identifier
+     * @param builderFunction configures the trace
+     * @param usageComplete   whether the token counts cover every model call
+     */
+    public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
+            Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction, boolean usageComplete) {
         try {
             if (chatResponse == null) {
                 log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
@@ -193,10 +284,15 @@ public class LLMTokenUsageService {
                         completionTokens);
                 return;
             }
-            // The model is defaulted because mocked metadata (tests) can return null
-            String model = Objects.requireNonNullElse(metadata.getModel(), "");
-            LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId);
-            saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
+            LLMRequest llmRequest = buildLLMRequest(chatResponse, pipelineId);
+            if (llmRequest != null) {
+                if (!usageComplete) {
+                    llmRequest = new LLMRequest(llmRequest.model(), llmRequest.numInputTokens(), llmRequest.costPerMillionInputToken(), llmRequest.numOutputTokens(),
+                            llmRequest.costPerMillionOutputToken(), llmRequest.pipelineId(), llmRequest.numCachedInputTokens(), llmRequest.costPerMillionCachedInputToken(),
+                            llmRequest.numCacheWriteInputTokens(), llmRequest.costPerMillionCacheWriteInputToken());
+                }
+                saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
+            }
         }
         catch (Exception e) {
             log.warn("Failed to store token usage for pipeline [{}]: {}", pipelineId, e.getMessage(), e);

@@ -480,7 +480,9 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score",
-                "currentTotalLLMCostTitle": "Total LLM Cost"
+                "currentTotalLLMCostTitle": "LLM Cost (USD)",
+                "llmCostNotPriced": "No USD cost available",
+                "llmCostUnpricedRequests": "Requests without USD pricing: {{ count }}. Excluded from the total."
             },
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",

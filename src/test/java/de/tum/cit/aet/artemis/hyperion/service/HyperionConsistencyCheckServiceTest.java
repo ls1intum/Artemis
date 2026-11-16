@@ -214,8 +214,8 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.tokens().total()).isEqualTo(450L);
 
         assertThat(resp.costs()).isNotNull();
-        // Costs should be calculated based on configured rates (EUR)
-        assertThat(resp.costs().totalEur()).isGreaterThan(0);
+        // Costs use explicitly USD configured rates.
+        assertThat(resp.costs().totalUsd()).isGreaterThan(0);
     }
 
     @Test
@@ -438,6 +438,9 @@ class HyperionConsistencyCheckServiceTest {
         var props = new LLMModelCostConfiguration.ModelCostProperties();
         props.setInputCostPerMillionEur(inputEur);
         props.setOutputCostPerMillionEur(outputEur);
+        props.setInputCostPerMillionUsd(0.25f);
+        props.setOutputCostPerMillionUsd(2f);
+        props.setCachedInputCostPerMillionUsd(0.025f);
         return props;
     }
 
