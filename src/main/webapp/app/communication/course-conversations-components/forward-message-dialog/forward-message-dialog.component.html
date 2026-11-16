@@ -4,8 +4,7 @@
 </div>
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2 form-group">
-        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Pointer clicks on the wrapper focus the native input, which is already keyboard focusable. -->
-        <div class="tag-input-container form-control" (click)="focusInput()">
+        <div class="tag-input-container form-control">
             @for (channel of selectedChannels; track channel) {
                 <ng-container>
                     <span class="badge bg-primary me-1">
@@ -26,20 +25,36 @@
                 [attr.aria-label]="'artemisApp.communication.forward.searchBar' | artemisTranslate"
                 #searchInput
                 type="text"
+                role="combobox"
+                aria-autocomplete="list"
+                [attr.aria-expanded]="destinationListVisible()"
+                [attr.aria-controls]="destinationListVisible() ? destinationListboxId : null"
+                [attr.aria-activedescendant]="activeDestinationId()"
                 class="tag-input"
                 placeholder="{{ 'artemisApp.communication.forward.searchBar' | artemisTranslate }}"
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
                 (click)="onInputClick()"
+                (keydown)="onRecipientKeydown($event)"
                 (blur)="onInputBlur()"
             />
         </div>
-        @if (showDropdown() && filteredOptions().length > 0) {
-            <ul class="list-group autocomplete-dropdown" tabindex="0">
-                @for (option of filteredOptions(); track option) {
+        @if (destinationListVisible()) {
+            <ul
+                class="list-group autocomplete-dropdown"
+                role="listbox"
+                [id]="destinationListboxId"
+                [attr.aria-label]="'artemisApp.communication.forward.searchBar' | artemisTranslate"
+            >
+                @for (option of filteredOptions(); track option; let i = $index) {
                     <li
+                        #destinationOption
                         class="list-group-item list-group-item-action"
+                        role="option"
+                        [id]="destinationListboxId + '-option-' + i"
+                        [attr.aria-selected]="activeDestinationIndex() === i"
+                        [class.active]="activeDestinationIndex() === i"
                         data-testid="forward-destination-option"
                         [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
                         (mousedown)="selectOption(option)"

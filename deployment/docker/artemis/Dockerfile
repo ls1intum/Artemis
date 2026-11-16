@@ -24,6 +24,13 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS builder
 
+# The downloaded Node 26 ARM64 binary links libatomic.so.1, which the JDK base image
+# does not include. Install it before Gradle bootstraps pnpm.
+# hadolint ignore=DL3008
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libatomic1 \
+  && rm -rf /var/lib/apt/lists/*
+
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
 # pnpm step below fails loudly and these can be reinstated.

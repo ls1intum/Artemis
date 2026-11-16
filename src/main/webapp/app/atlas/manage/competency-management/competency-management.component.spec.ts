@@ -34,7 +34,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -42,7 +42,7 @@ describe('CompetencyManagementComponent', () => {
     let courseCompetencyApiService: CourseCompetencyApiService;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let alertService: AlertService;
     let localStorageService: LocalStorageService;
     let featureToggleService: MockFeatureToggleService;
@@ -89,7 +89,7 @@ describe('CompetencyManagementComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -135,7 +135,7 @@ describe('CompetencyManagementComponent', () => {
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
 
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
     });
 
     afterEach(() => {
@@ -253,12 +253,9 @@ describe('CompetencyManagementComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             ImportAllCourseCompetenciesModalComponent,
             expect.objectContaining({
-                style: { width: '90vw', maxWidth: '50rem' },
-                modal: true,
-                showHeader: false,
+                header: 'artemisApp.courseCompetency.importAll.title',
+                size: 'medium',
                 dismissableMask: false,
-                draggable: false,
-                resizable: false,
                 data: { courseId: 1 },
             }),
         );
@@ -266,7 +263,7 @@ describe('CompetencyManagementComponent', () => {
 
     it('should open agent chat modal and pass the courseId', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(null);
+        const openSpy = vi.spyOn(dialogService, 'open');
         fixture.detectChanges();
 
         component['openAgentChatModal']();
@@ -274,12 +271,10 @@ describe('CompetencyManagementComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             AgentChatModalComponent,
             expect.objectContaining({
-                style: { width: '90vw', maxWidth: '50rem' },
-                modal: true,
+                ariaLabel: 'AI Assistant',
                 showHeader: false,
+                size: 'medium',
                 dismissableMask: true,
-                draggable: false,
-                resizable: false,
                 data: expect.objectContaining({ courseId: 1 }),
             }),
         );
@@ -313,8 +308,8 @@ describe('CompetencyManagementComponent', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         let capturedData: Record<string, unknown> | undefined;
         vi.spyOn(dialogService, 'open').mockImplementation((_component, config) => {
-            capturedData = config?.['data'] as Record<string, unknown>;
-            return null;
+            capturedData = config?.data as Record<string, unknown>;
+            return undefined as never;
         });
         fixture.detectChanges();
         await fixture.whenStable();
