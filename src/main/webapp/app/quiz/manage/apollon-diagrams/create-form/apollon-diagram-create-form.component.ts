@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -33,7 +33,7 @@ const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
     providers: [ApollonDiagramService],
     imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent],
 })
-export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit {
+export class ApollonDiagramCreateFormComponent implements OnInit {
     private dialogRef = inject(TumAetUiDialogRef<ApollonDiagram>);
     private dialogConfig = inject(TumAetUiDialogConfig<{ apollonDiagram: ApollonDiagram }>);
     private apollonDiagramService = inject(ApollonDiagramService);
@@ -57,20 +57,12 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
         this._apollonDiagram.set(value);
     }
     readonly isSaving = signal(false);
-    readonly titleInput = viewChild.required<ElementRef>('titleInput');
 
     // Icons
     faSave = faSave;
 
     ngOnInit() {
         this.apollonDiagram = this.dialogConfig.data!.apollonDiagram;
-    }
-
-    /**
-     * Adds focus on the title input field
-     */
-    ngAfterViewInit() {
-        this.titleInput().nativeElement.focus();
     }
 
     /**

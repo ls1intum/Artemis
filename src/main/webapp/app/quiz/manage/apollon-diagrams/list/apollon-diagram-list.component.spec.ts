@@ -104,7 +104,10 @@ describe('ApollonDiagramList Component', () => {
 
         expect(openDialogSpy).toHaveBeenCalledOnce();
         // The kit dialog caps its width at the viewport, so the dialog stays within it on narrow screens.
-        expect(openDialogSpy).toHaveBeenCalledWith(ApollonDiagramCreateFormComponent, expect.objectContaining({ size: 'medium', contentPadding: 'none', showHeader: false }));
+        expect(openDialogSpy).toHaveBeenCalledWith(
+            ApollonDiagramCreateFormComponent,
+            expect.objectContaining({ size: 'medium', contentPadding: 'none', showHeader: false, autoFocus: 'first-tabbable' }),
+        );
 
         // dismiss (undefined) must not open a diagram
         onClose.next(undefined);

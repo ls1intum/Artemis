@@ -12,6 +12,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -74,6 +75,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     // Icons
     farListAlt = faListAlt;
+    faChevronDown = faChevronDown;
 
     /** The route segment of the statistic of the given question. */
     questionStatisticSegment(question: QuizQuestion): string | undefined {

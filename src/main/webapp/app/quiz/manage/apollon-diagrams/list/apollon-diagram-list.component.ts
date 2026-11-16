@@ -136,6 +136,7 @@ export class ApollonDiagramListComponent {
             dismissableMask: false,
             showHeader: false,
             contentPadding: 'none',
+            autoFocus: 'first-tabbable',
             ariaLabel: this.translateService.instant('artemisApp.apollonDiagram.home.createLabel'),
             // class diagram is the default value and can be changed by the user in the creation dialog
             data: { apollonDiagram: new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId) },
