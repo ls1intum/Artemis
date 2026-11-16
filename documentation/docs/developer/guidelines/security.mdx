@@ -1,0 +1,66 @@
+---
+id: security
+title: Security Guideline for Server Changes
+sidebar_label: Security
+last_reviewed: 2026-11-10
+---
+
+This guideline is the checklist for every server change that adds or modifies a REST endpoint, a websocket handler, a file or repository operation, or a build job. It complements the
+[REST API guideline](/developer/guidelines/rest-api#authorization), the [WebSocket topics guideline](/developer/guidelines/websocket) and the
+[security assurance case](/developer/security-assurance), which explains why these rules exist. Authors apply it before opening a pull request, and reviewers use it as their checklist.
+
+## Principles
+
+1. **Never trust an identifier from the client.** An id in the path, the query or the body only names something. The server decides whether the caller may use it.
+2. **Everything is scoped by the course in the path.** An entity that is reached through an id must belong to the course, exercise, conversation or participation that the request addresses.
+3. **Fail closed.** If a check cannot decide, because data is missing or the state is unexpected, the request is refused.
+4. **Allow, do not deny.** Accept a known set of values, roles and states. Do not enumerate the forbidden ones.
+5. **The client is not a control.** A hidden button, a disabled field and client-side validation help users. They never replace the server check.
+
+## Checklist for an endpoint
+
+### Authorization
+
+- [ ] The method carries the minimum `@EnforceRoleIn...` annotation, or `@EnforceAtLeastStudent` with `@ManualConfig` and an explicit check where the role depends on a participation, submission or exam.
+- [ ] Every entity that the request loads by id is checked against the course of the path. A mismatch between the course id and the entity is refused before anything else happens, with an error status (`400` for an id that does not belong to the course, `403` for a missing right), as the neighboring endpoints do.
+- [ ] A caller that holds a role in _another_ course is refused. Course roles never carry over.
+- [ ] Time and state rules are checked on the server: release dates, due dates, exam phases, conversation membership, and whether a resource is visible to students yet.
+- [ ] Users that the request names (members, owners, recipients) belong to the course, and have the role that the operation needs.
+- [ ] Data that is pushed over a websocket follows the same rule: the topic declares who may subscribe.
+
+### Input
+
+- [ ] The request body is a record (DTO) that lists the accepted fields. Entities are never bound from a request, so a client cannot set fields it should not control.
+- [ ] Lengths, ranges, enumerations and counts are bounded with Bean Validation, and the endpoint rejects what it does not expect instead of repairing it.
+- [ ] Values from the request never decide a file system path, a command, a network target, a container setting or a query fragment. Where a value names a file or path, it is resolved against a fixed root and the result is checked to stay inside it.
+- [ ] Uploaded and rendered content is handled in its own context: size and type limits, no execution, and escaping or sanitization for the place it is shown.
+- [ ] Responses contain only what the caller may see. Fields for staff, other users and solutions are not part of a student DTO.
+
+### Operational limits
+
+- [ ] An endpoint that anyone can reach without login, or that is expensive per request, is rate limited. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+- [ ] A limit counts the address of the client as the trusted proxies report it, not a header that the client chose.
+- [ ] A new public endpoint (without login) is added to the reviewed list of public endpoints. The architecture test fails until a maintainer has agreed to it.
+
+### Tests
+
+- [ ] An integration test covers an **allowed** request.
+- [ ] An integration test covers a **refused** request: a user of another course, a lower role, and an entity that belongs to another course than the one in the path.
+- [ ] An integration test covers a **malformed** request: missing, oversized or inconsistent values.
+- [ ] For a fix of a weakness, the test is written first and fails without the fix.
+
+## For reviewers
+
+Read the diff from the point of view of a caller who sends any HTTP or websocket message and guesses identifiers.
+
+- Follow each id from the request to the place where an entity is loaded. Where is the course compared?
+- Ask what happens when the entity, the course or a role is missing.
+- Check that a new test exists for the refused case, and that it would fail without the change.
+- Do not accept "the client does not offer this" as an answer.
+
+## Related automated checks
+
+The repository enforces part of this guideline automatically. Architecture tests require an authorization annotation on every endpoint and a declared websocket topic, the list of public
+endpoints is reviewed, and a test calls course-scoped endpoints as a user who is not a member of the course. A failing check is not a reason to add an exception. It is a reason to ask what the
+exception would allow. The checks are described in the
+[security assurance case](/developer/security-assurance#audits-and-continuous-checks).

@@ -1,8 +1,8 @@
 import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiTableSortEvent } from '@tumaet/ui-angular';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -66,7 +66,6 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     // Icons
-    readonly faSort = faSort;
     readonly faCheck = faCheck;
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
@@ -142,6 +141,16 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     /**
+     * Applies a sort request of a `tumAetUiSortableColumn` header and reloads the (server-sorted) page.
+     */
+    onTableSort(event: TumAetUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.setSearchParam({ sortedColumn: event.field, sortingOrder: event.order === 1 ? SortingOrder.ASCENDING : SortingOrder.DESCENDING });
+    }
+
+    /**
      *
      * Gives the ID for any item in the table, so that it can be tracked/identified by ngFor
      *
@@ -180,14 +189,6 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         if (pageNumber) {
             this.page = pageNumber;
         }
-    }
-
-    /**
-     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page
-     * used throughout this component before delegating to {@link onPageChange}.
-     */
-    onPaginatorPageChange(event: { page?: number }): void {
-        this.onPageChange((event.page ?? 0) + 1);
     }
 
     /**

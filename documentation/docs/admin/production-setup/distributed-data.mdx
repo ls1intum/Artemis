@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -29,7 +29,6 @@ artemis:distributed-data-schema:release
 The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
 to schema version `1` during startup. A release declaring a later schema runs every step in between during the same
 startup, so a store that has never been migrated goes from `0` through `1` to the version the release expects.
-The current schema version is `2`.
 
 ## Prepare an upgrade
 
@@ -66,35 +65,6 @@ these structures:
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
 
-The schema `1` to `2` migration preserves `buildJobQueue`, `processingJobs`, `buildResultQueue`,
-`deferredBuildResultQueue`, and the current Iris job map, `pyris-job-map-v2`. It also removes the obsolete `AtlasML`
-feature toggle and rewrites the keys of `features`, because stored keys identify a toggle by its position in the
-list of features. Every other runtime toggle keeps its value.
-
-Iris job state moves together: `pyris-chat-job-client-id-map` retains client correlation,
-`pyris-chat-material-version-map` and `pyris-global-search-material-version-map` retain stale-result checks, and
-`pyris-restart-watch` retains restart recovery. `struggle-inflight-map` and `struggle-cooldown-map` retain the
-in-flight and cooldown guards for proactive tutoring. Expiring entries keep their remaining lifetime.
-
-Atlas preserves `atlas-content-change-accumulator`, including pending exercise and lecture-unit changes, the last
-event time used for debouncing, and each course's daily orchestration count and date. Empty buckets with consumed
-quota are retained too, so an upgrade neither loses queued changes nor resets the daily cap. These entries have no
-expiry. The same data is preserved when missing schema metadata causes the migration path to be replayed.
-
-Hyperion authoring state also moves together. The migration preserves:
-
-| Structures | Why they are preserved |
-|---|---|
-| `hyperion-exercise-generation-jobs`, `hyperion-live-save-coordination` | Retain generation, undo and uncertain-save reservations that require explicit recovery. |
-| `hyperion-exercise-generation-cancellations`, `hyperion-generation-token-budget-reservations` | Keep cancellation decisions and conservative charges for provider usage that could not be accounted for completely. |
-| `hyperion-exercise-generation-transcripts`, `hyperion-exercise-generation-file-changes`, `hyperion-exercise-generation-artifacts`, `hyperion-exercise-generation-usage` | Retain reconnect replay, unsaved generated candidates and their usage account, which cannot be reconstructed from saved exercises. |
-| `hyperion-authoring-activity`, `hyperion-authoring-latest-mutation`, `hyperion-authoring-owner-runs`, `hyperion-authoring-activity-sequence` | Keep authoring history, pagination and the latest mutation's undo references consistent. |
-| `hyperion-exercise-variant-jobs` | Retain variant results and links to provisioned exercises, including those whose cleanup failed. |
-
-Expiring Hyperion entries keep their remaining lifetime; the upgrade does not restart their retention window.
-Moving a reservation does not restart its worker or clear an interrupted save. Inspect and reconcile retained
-reservations using the [Hyperion save and recovery procedure](/admin/hyperion#save-cancellation-and-recovery).
-
 `deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting exercise result-processing admission;
 future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
 result-queue listing and are retried every five seconds without queue-listener events. The admin clear operation
@@ -111,25 +81,42 @@ Do not mix this permit protocol with an earlier release that used one result-pro
 processes before starting replacements, including any core that can process results or delete exercises. Keep admission
 closed during the transition. Neither the retained result queues nor the distributed-data schema needs to be cleared.
 
+### Schema `1` to `2`
+
+Schema `2` stores the class of every test in the build result. Both result queues hold build results in the old layout, which
+the new release cannot read, so the migration **discards** them: `buildResultQueue` and `deferredBuildResultQueue`.
+A finished build whose result had not yet been written to the database at the moment of the upgrade loses its feedback,
+and the student needs a new build (a new push, or a retrigger by the instructor). To avoid this, first stop new builds from starting
+(**Pause All Agents** in the build agent administration), then wait until the running builds (`processingJobs`) have finished and both result queues are empty,
+and only then stop the old nodes. A build that is still running can add a result to a queue after you checked it. Builds that are queued stay queued
+and run after the upgrade. A build that was still running on a node you stopped is not continued: it is marked as missing and rebuilt automatically, which takes about
+five to ten minutes with the default `artemis.continuous-integration.retry-missing-jobs-interval-seconds`. The structures whose types did not change move over unchanged:
+
+| Structure | Why it is preserved |
+|---|---|
+| `buildJobQueue` | Contains queued student builds. |
+| `processingJobs` | Tracks builds that are already assigned to an agent. |
+| `features` | Contains runtime feature-toggle changes made by an administrator. |
+| `pyris-job-map-v2` | Tracks in-flight Iris jobs and their remaining expiry time. |
+
+Everything else starts empty, as in the first migration. A store that has never been migrated goes through `0` and `1` and
+ends at `2` in the same startup.
+
 Other distributed structures start empty in the initial schema `0` to `1` migration. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
 progress, for example an LTI launch, may need to retry it after the maintenance window.
 
 Entries are moved incrementally, and the schema version is published only after migration finishes. If the migrating
-node stops, start it again with the same new release. The migration resumes safely. If the schema metadata is missing,
-Artemis replays the whole adjacent migration path from version `0`, including over empty source structures, so data
-already moved into an intermediate namespace is recovered rather than skipped.
+node stops, start it again with the same new release. The migration resumes safely.
 
 ## Verify the migration
 
 The first new node logs messages similar to:
 
 ```text
-Distributed store carries no schema version, replaying migrations from version 0
+Distributed store predates schema versions, treating its contents as version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
-Migrating distributed data from schema version 1 to 2
-Distributed data is now at schema version 2
 ```
 
 A store that is already at a numbered version logs only the steps that are still missing.
@@ -160,6 +147,50 @@ bypassing this protection.
 
 Stop all new nodes before restoring the backup. Never let old and new Artemis releases use the restored store at the
 same time.
+
+## Types that Artemis reads from the store
+
+Both distributed data providers, Hazelcast and Redis or Valkey, only create objects of known types when they read a
+stored value. A class name found in the store that is not on the list is refused before the class is loaded, and the
+read fails with the message `Type <name> is not allowed in the distributed data store`. Hazelcast reports its own
+message, `Resolving class <name> is not allowed`. Artemis logs the refused name on the Redis or Valkey provider.
+
+The filter only restricts what is read. It does not change how values are written, the stored format or the schema
+version, so the migration described on this page is not affected. A mixed-version rollout needs one precaution: the result
+of a failed build job carries the exception of the failure with its causes, and an updated build agent replaces causes of
+types outside the list (for example a Git client exception of a failed clone) by plain exceptions before it publishes them.
+A build agent that is not updated yet still publishes the original types, and an updated core node refuses to read them.
+Update the build agents before or together with the core nodes. If an old agent can still publish results, or such a result
+is already queued, wait until the result queues are empty, or add the missing prefix, for example `org.eclipse.jgit.`, to
+`artemis.distributed-data.additional-allowed-types` until all agents are updated.
+
+The default list contains:
+
+| Entries                                                                                  | Reason                                                       |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `de.tum.cit.aet.artemis.` (everything below this prefix)                                 | Queue items, DTO records, enums and cache values of Artemis  |
+| `java.util.`, `java.time.`, `java.math.`                                                 | Collections, dates and numbers inside those records          |
+| A fixed set of `java.lang` classes, for example `String`, the number types and `Throwable` | Values and exceptions held by stored records                 |
+| `org.springframework.security.web.webauthn.api.`                                         | Passkey registration options                                 |
+| `org.springframework.security.oauth2.core.`                                              | Pending OpenID Connect sign-in requests                      |
+| `com.nimbusds.jose.`                                                                     | Signing keys of the LTI key set                              |
+| `com.github.dockerjava.api.exception.`                                                   | Exceptions of failed build jobs                              |
+| Two Spring cache markers, `NullValue` and `SimpleKey`                                    | A cached `null` and a composite cache key                    |
+| `com.hazelcast.`, `io.github.bucket4j.` (Hazelcast only)                                 | Classes that Hazelcast and the rate limiter store themselves |
+
+Types outside the default list, such as those in `java.net` or most of `java.io`, are refused. Most
+installations need no change. If a plugin or a locally patched Artemis stores additional types, add them with the
+property `artemis.distributed-data.additional-allowed-types`. It takes a comma separated list. An entry that ends with
+a dot allows every type below that prefix, any other entry allows exactly one class:
+
+```yaml
+artemis:
+    distributed-data:
+        additional-allowed-types: org.example.extension., org.example.other.StoredValue
+```
+
+Set the property identically on all core nodes and build agents, because every node reads values that another node
+wrote. A change takes effect when the node restarts.
 
 ## Legacy keys after the first migration
 

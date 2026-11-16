@@ -1,4 +1,4 @@
-<div class="container">
+<div class="mx-auto w-full px-2 min-[576px]:max-w-[540px] min-[768px]:max-w-[720px] min-[992px]:max-w-[960px] min-[1200px]:max-w-[1140px] min-[1400px]:max-w-[1320px]">
     <div class="flex items-center">
         <h5 *adminTitleBarTitle id="standardized-competency-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h5>
         <jhi-documentation-button [type]="documentationType" />
@@ -20,7 +20,7 @@
         (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
         (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
     />
-    <div class="mt-3 mb-2 flex flex-wrap items-center gap-2">
+    <div class="mt-4! mb-2 flex flex-wrap items-center gap-2">
         <h3 class="me-1 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <tumaet-ui-button
             size="small"
@@ -129,7 +129,7 @@
 
 <ng-template #detailTemplate>
     @if (selectedCompetency(); as competency) {
-        <div class="rounded-lg border bg-surface-0 p-3 dark:bg-surface-900" data-testid="competency-detail">
+        <div class="rounded-lg border bg-surface-0 p-4! dark:bg-surface-900" data-testid="competency-detail">
             <jhi-standardized-competency-edit
                 [competency]="competency"
                 [knowledgeAreas]="knowledgeAreasForSelect"
@@ -143,7 +143,7 @@
             />
         </div>
     } @else if (selectedKnowledgeArea(); as knowledgeArea) {
-        <div class="rounded-lg border bg-surface-0 p-3 dark:bg-surface-900" data-testid="knowledge-area-detail">
+        <div class="rounded-lg border bg-surface-0 p-4! dark:bg-surface-900" data-testid="knowledge-area-detail">
             <jhi-knowledge-area-edit
                 [knowledgeArea]="knowledgeArea"
                 [knowledgeAreas]="knowledgeAreasForSelect"

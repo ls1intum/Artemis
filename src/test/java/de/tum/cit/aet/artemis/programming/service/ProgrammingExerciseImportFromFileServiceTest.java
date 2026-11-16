@@ -162,18 +162,19 @@ class ProgrammingExerciseImportFromFileServiceTest {
     }
 
     @Test
-    void jenkinsImportRestoresBuildPlanAndEmbeddedFilesWithoutOverwritingExistingAssets() throws Exception {
+    void jenkinsImportRestoresBuildPlanAndAllowedEmbeddedFilesWithoutOverwritingExistingAssets() throws Exception {
         when(profileService.isJenkinsActive()).thenReturn(true);
         Path markdown = Files.createDirectories(tempDir.resolve("markdown"));
-        org.apache.commons.io.FileUtils.writeStringToFile((markdown.resolve("existing.txt")).toFile(), "Existing asset must remain", java.nio.charset.StandardCharsets.UTF_8);
+        org.apache.commons.io.FileUtils.writeStringToFile((markdown.resolve("existing.png")).toFile(), "Existing asset must remain", java.nio.charset.StandardCharsets.UTF_8);
         try (var locations = org.mockito.Mockito.mockStatic(de.tum.cit.aet.artemis.core.util.FilePathConverter.class)) {
             locations.when(de.tum.cit.aet.artemis.core.util.FilePathConverter::getMarkdownFilePath).thenReturn(markdown);
             String plan = "pipeline { agent any }";
-            var imported = importFixture("valid-import.zip", java.util.Map.of("buildPlan.txt", plan, "files/new.txt", "Imported asset", "files/existing.txt", "Replacement"), true);
+            var imported = importFixture("valid-import.zip",
+                    java.util.Map.of("buildPlan.txt", plan, "files/new.png", "Imported asset", "files/existing.png", "Replacement", "files/page.html", "<html></html>"), true);
             verify(buildPlanRepository).setBuildPlanForExercise(plan, imported);
             verify(staticCodeAnalysisService).createDefaultCategories(imported);
-            org.assertj.core.api.Assertions.assertThat(Files.readString(markdown.resolve("new.txt"))).isEqualTo("Imported asset");
-            org.assertj.core.api.Assertions.assertThat(Files.readString(markdown.resolve("existing.txt"))).isEqualTo("Existing asset must remain");
+            org.assertj.core.api.Assertions.assertThat(Files.readString(markdown.resolve("new.png"))).isEqualTo("Imported asset");
+            org.assertj.core.api.Assertions.assertThat(Files.readString(markdown.resolve("existing.png"))).isEqualTo("Existing asset must remain");
         }
     }
 

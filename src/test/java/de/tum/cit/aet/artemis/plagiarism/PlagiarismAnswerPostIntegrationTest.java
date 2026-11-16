@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,9 +24,11 @@ import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreateRequestDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDTO;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -40,6 +43,9 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private PlagiarismPostService plagiarismPostService;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -64,6 +70,17 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         courseId = existingPostsWithAnswers.getFirst().getPlagiarismCase().getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCheckUserMayInteractWithPost_postWithoutPlagiarismCase_badRequest() {
+        // a stored post always belongs to a conversation or to a plagiarism case, so the check is exercised with a post that is not stored
+        var course = existingPostsWithAnswers.getFirst().getPlagiarismCase().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        var user = userUtilService.getUserByLoginWithoutAuthorities(TEST_PREFIX + "instructor1");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> plagiarismPostService.checkUserMayInteractWithPostElseThrow(user, new Post(), course))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("postWithoutPlagiarismCase"));
     }
 
     @ParameterizedTest
@@ -93,6 +110,61 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         // @JsonInclude(NON_EMPTY) on AnswerPostResponseDTO strips empty Sets from the wire payload, so the
         // field comes back as null when there are no reactions yet.
         assertThat(createdAnswerPost.reactions()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testCreateAnswerPost_asStudentNotAffectedByCase_forbidden() throws Exception {
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "noncourseuser1", roles = "USER")
+    void testCreateAnswerPost_asUserWithoutCourseRole_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerPost_courseOfPathDoesNotMatchCase_conflict() throws Exception {
+        Long otherCourseId = courseUtilService.createEnrolledCourse(TEST_PREFIX).getId();
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + otherCourseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateAnswerPost_asInstructor() throws Exception {
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(createdAnswerPost.id()).isNotNull();
+        assertThat(createdAnswerPost.content()).isEqualTo("Content Answer Post");
+        assertThat(answerPostRepository.findById(createdAnswerPost.id())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateAnswerPost_asTutor_forbidden() throws Exception {
+        expectCreateAnswerPostOnPlagiarismCasePostForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testCreateAnswerPost_asEditor_forbidden() throws Exception {
+        expectCreateAnswerPostOnPlagiarismCasePostForbidden();
     }
 
     @Test
@@ -205,6 +277,34 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
         assertThat(updatedAnswerPost.id()).isEqualTo(answerPostToUpdate.getId());
         assertThat(updatedAnswerPost.content()).isEqualTo("New Test Answer Post");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEditAnswerPostContent_asInstructorWhoIsNotTheAuthor_forbidden() throws Exception {
+        // an instructor may change the resolving flag of an answer, but the content can only be changed by its author
+        AnswerPost answerPostNotToUpdate = existingAnswerPosts.getFirst();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
+                Boolean.TRUE.equals(answerPostNotToUpdate.doesResolvePost()));
+
+        request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(), updateRequest, AnswerPostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        assertThat(answerPostRepository.findById(answerPostNotToUpdate.getId()).orElseThrow().getContent()).isEqualTo(answerPostNotToUpdate.getContent());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEditAnswerPost_courseOfPathDoesNotMatchCase_conflict() throws Exception {
+        Long otherCourseId = courseUtilService.createEnrolledCourse(TEST_PREFIX).getId();
+        AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
+                Boolean.TRUE.equals(answerPostToUpdate.doesResolvePost()));
+
+        request.putWithResponseBody("/api/plagiarism/courses/" + otherCourseId + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest, AnswerPostResponseDTO.class,
+                HttpStatus.CONFLICT);
+
+        assertThat(answerPostRepository.findById(answerPostToUpdate.getId()).orElseThrow().getContent()).isEqualTo(answerPostToUpdate.getContent());
     }
 
     @ParameterizedTest
@@ -348,6 +448,29 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteAnswerPost_asInstructorWhoIsNotTheAuthor_forbidden() throws Exception {
+        var answerPostCount = answerPostRepository.count();
+        AnswerPost answerPostToNotDelete = existingAnswerPosts.getFirst();
+
+        request.delete("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(answerPostRepository.count()).isEqualTo(answerPostCount);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteAnswerPost_courseOfPathDoesNotMatchCase_conflict() throws Exception {
+        Long otherCourseId = courseUtilService.createEnrolledCourse(TEST_PREFIX).getId();
+        var answerPostCount = answerPostRepository.count();
+        AnswerPost answerPostToNotDelete = existingAnswerPosts.getFirst();
+
+        request.delete("/api/plagiarism/courses/" + otherCourseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.CONFLICT);
+
+        assertThat(answerPostRepository.count()).isEqualTo(answerPostCount);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteAnswerPost() throws Exception {
         var answerPostCount = answerPostRepository.count();
@@ -383,6 +506,16 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     // HELPER METHODS
+
+    private void expectCreateAnswerPostOnPlagiarismCasePostForbidden() throws Exception {
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+        var answerPostCount = answerPostRepository.count();
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(answerPostRepository.count()).isEqualTo(answerPostCount);
+    }
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");

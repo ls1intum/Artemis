@@ -1,3 +1,4 @@
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import {
@@ -8,7 +9,7 @@ import {
     StandardizedCompetencyForTree,
     sourceToString,
 } from 'app/atlas/shared/entities/standardized-competency.model';
-import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
@@ -56,6 +57,8 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected readonly importTitle: string = 'artemisApp.standardizedCompetency.courseImport.title';
 
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
+    protected selectedSortField: string | undefined = undefined;
+    protected selectedSortAscending = true;
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
     protected courseId!: number; // set in ngOnInit() from the route paramMap
@@ -74,7 +77,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected readonly faMinimize = faDownLeftAndUpRightToCenter;
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faTrash = faTrash;
-    protected readonly faSort = faSort;
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -160,7 +162,13 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
      *
      * @param sort the search object with the updated search predicate and sorting direction
      */
+    protected onSelectedSortChange(event: TumAetUiTableSortEvent) {
+        this.sortSelected({ predicate: event.field, ascending: event.order === 1 });
+    }
+
     sortSelected(sort: { predicate: string; ascending: boolean }) {
+        this.selectedSortField = sort.predicate;
+        this.selectedSortAscending = sort.ascending;
         this.selectedCompetencies = this.sortService.sortByProperty(this.selectedCompetencies, sort.predicate, sort.ascending);
     }
 

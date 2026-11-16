@@ -578,7 +578,7 @@ describe('BuildAgentDetailsComponent', () => {
 
         component.onPageChange({ page: 2, pageSize: 50, direction: 'next' });
 
-        expect(component.currentPage).toBe(2);
+        expect(component.currentPage()).toBe(2);
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
     });
 
@@ -587,11 +587,11 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
 
-        const initialPage = component.currentPage;
+        const initialPage = component.currentPage();
 
         component.onPageChange({} as any);
 
-        expect(component.currentPage).toBe(initialPage);
+        expect(component.currentPage()).toBe(initialPage);
     });
 
     it('should update running jobs when websocket receives jobs for this agent', () => {

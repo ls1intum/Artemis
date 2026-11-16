@@ -142,6 +142,9 @@ artemis:
     continuous-integration:
         build-job:
           retention-period: 365 # Number of days before build job entries are deleted
+        # Docker Desktop forwards connections to the host to its loopback interface, so the check reports the services of a local installation as reachable
+        network-isolation-check:
+            enabled: false
     security:
         internal:
             allowed-cidrs:

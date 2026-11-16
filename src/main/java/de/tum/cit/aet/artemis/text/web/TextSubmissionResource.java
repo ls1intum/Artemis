@@ -265,7 +265,10 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             throw new EntityNotFoundException("Student participation", "of text submission " + submissionId);
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), null);
-        return ResponseEntity.ok(TextSubmissionResponseDTO.of(submission, true));
+        // Tutors must not see the student behind a submission (double-blind); instructors and the owner may.
+        User user = userRepository.getUser();
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user) || authCheckService.isOwnerOfParticipation(participation, user);
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(submission, includeStudent));
     }
 
     /**
@@ -401,7 +404,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     private void checkPotentialPlagiarismCaseForStudent(TextSubmission textSubmission) {
         plagiarismAccessApi.ifPresent(api -> {
-            boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission, userRepository.getUser().getLogin());
+            boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission.getParticipation().getExercise().getId(), textSubmission, userRepository.getUser().getLogin());
             if (!wasNotified) {
                 throw new AccessForbiddenException("The user has not yet been notified about a plagiarism case.");
             }

@@ -1,5 +1,5 @@
 import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, haveSameCategoryName } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FilterDetails, RangeFilter } from 'app/foundation/types/exercise-filter';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
@@ -36,7 +36,7 @@ export function satisfiesCategoryFilter(sidebarElement: SidebarCardElement, sele
 
     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
     const isAnyExerciseCategoryMatchingASelectedCategory = sidebarElement.exercise.categories.some((category) =>
-        selectedCategories.some((selectedCategory) => selectedCategory.equals(category)),
+        selectedCategories.some((selectedCategory) => haveSameCategoryName(selectedCategory, category)),
     );
     return isAnyExerciseCategoryMatchingASelectedCategory;
 }

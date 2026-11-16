@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
@@ -9,7 +8,6 @@ import { PresentationAssessmentOverviewTableComponent } from 'app/presentation/m
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 import { PresentationAssessment, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PresentationAssessmentOverviewTableComponent', () => {
@@ -49,19 +47,19 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentOverviewTableComponent],
-            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }],
+            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentOverviewTableComponent);
         component = fixture.componentInstance;
     });
 
-    it('should render one row per student and presentation and a message when there are none', () => {
+    it('should render one row per student and presentation and no rows when there are none', () => {
         render([createRow(), exerciseRow()]);
         expect(bodyRows()).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="7"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(bodyRows()).toHaveLength(0);
     });
 
     it('should show the result points against the maximum of the row presentation', () => {

@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -48,6 +49,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PostTestRepository postRepository;
+
+    @Autowired
+    private ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -177,6 +181,137 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 HttpStatus.FORBIDDEN);
         assertThat(notCreatedReaction).isNull();
         assertThat(messageReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "noncourseuser1", roles = "USER")
+    void testCreateReactionOnCourseWideMessageAsUserWithoutCourseRole_forbiddenWithoutBecomingParticipant() throws Exception {
+        var userWithoutCourseRole = userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        Post courseWidePost = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).findFirst()
+                .orElseThrow();
+        int reactionsBefore = reactionRepository.findReactionsByPostId(courseWidePost.getId()).size();
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(courseWidePost), ReactionDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        assertThat(reactionRepository.findReactionsByPostId(courseWidePost.getId())).hasSize(reactionsBefore);
+        // the request is refused before the user is registered to the course-wide channel
+        assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(courseWidePost.getConversation().getId(), userWithoutCourseRole.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testCreateReactionOnPlagiarismCasePostAsStudentNotAffectedByCase_forbidden() throws Exception {
+        Post plagiarismCasePost = existingPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).findFirst().orElseThrow();
+        ReactionDTO reactionToSave = createReactionDTOOnPost(plagiarismCasePost);
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSave, ReactionDTO.class, HttpStatus.FORBIDDEN);
+        assertThat(reactionRepository.findReactionsByPostId(plagiarismCasePost.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateReactionOnPlagiarismCasePostAsAffectedStudent() throws Exception {
+        Post plagiarismCasePost = existingPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).findFirst().orElseThrow();
+        ReactionDTO reactionToSave = createReactionDTOOnPost(plagiarismCasePost);
+
+        ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSave, ReactionDTO.class,
+                HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSave, createdReaction);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateReactionOnPlagiarismCasePostAsInstructor() throws Exception {
+        Post plagiarismCasePost = plagiarismCasePost();
+        ReactionDTO reactionToSave = createReactionDTOOnPost(plagiarismCasePost);
+
+        ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSave, ReactionDTO.class,
+                HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSave, createdReaction);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateReactionOnPlagiarismCasePostAsTutor_forbidden() throws Exception {
+        Post plagiarismCasePost = plagiarismCasePost();
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(plagiarismCasePost), ReactionDTO.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(reactionRepository.findReactionsByPostId(plagiarismCasePost.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testCreateReactionOnPlagiarismCasePostAsEditor_forbidden() throws Exception {
+        Post plagiarismCasePost = plagiarismCasePost();
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(plagiarismCasePost), ReactionDTO.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(reactionRepository.findReactionsByPostId(plagiarismCasePost.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateReactionOnAnswerOfPlagiarismCasePostAsTutor_forbidden() throws Exception {
+        AnswerPost answerOfPlagiarismCasePost = plagiarismCasePost().getAnswers().iterator().next();
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnAnswerPost(answerOfPlagiarismCasePost), ReactionDTO.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(reactionRepository.findReactionsByAnswerPostId(answerOfPlagiarismCasePost.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteOwnReactionOnPlagiarismCasePostAsAffectedStudent() throws Exception {
+        Post plagiarismCasePost = plagiarismCasePost();
+        ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(plagiarismCasePost),
+                ReactionDTO.class, HttpStatus.CREATED);
+
+        request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.id(), HttpStatus.OK);
+
+        assertThat(reactionRepository.findById(createdReaction.id())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteOwnReactionOnAnswerOfPlagiarismCasePostAsAffectedStudent() throws Exception {
+        AnswerPost answerOfPlagiarismCasePost = plagiarismCasePost().getAnswers().iterator().next();
+        ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions",
+                createReactionDTOOnAnswerPost(answerOfPlagiarismCasePost), ReactionDTO.class, HttpStatus.CREATED);
+
+        request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.id(), HttpStatus.OK);
+
+        assertThat(reactionRepository.findById(createdReaction.id())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteOwnReactionOnPlagiarismCasePostAsInstructor() throws Exception {
+        Post plagiarismCasePost = plagiarismCasePost();
+        ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", createReactionDTOOnPost(plagiarismCasePost),
+                ReactionDTO.class, HttpStatus.CREATED);
+
+        request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.id(), HttpStatus.OK);
+
+        assertThat(reactionRepository.findById(createdReaction.id())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testDeleteOwnReactionOnPlagiarismCasePostAsTutor_forbidden() throws Exception {
+        // the reaction of the tutor exists already, e.g. because it was added before the post got attached to a plagiarism case
+        Post plagiarismCasePost = plagiarismCasePost();
+        Reaction reactionOfTutor = new Reaction();
+        reactionOfTutor.setEmojiId("smiley");
+        reactionOfTutor.setPost(plagiarismCasePost);
+        reactionOfTutor.setUser(userTestRepository.getUserWithAuthorities(TEST_PREFIX + "tutor1"));
+        reactionOfTutor = reactionRepository.save(reactionOfTutor);
+
+        request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + reactionOfTutor.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(reactionRepository.findById(reactionOfTutor.getId())).isPresent();
     }
 
     @Test
@@ -545,6 +680,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<Long> answerPostIdsInCourse() {
         return existingAnswerPosts.stream().map(AnswerPost::getId).toList();
+    }
+
+    private Post plagiarismCasePost() {
+        return existingPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).findFirst().orElseThrow();
     }
 
     private ReactionDTO createReactionDTOOnPost(Post postReactedOn) {

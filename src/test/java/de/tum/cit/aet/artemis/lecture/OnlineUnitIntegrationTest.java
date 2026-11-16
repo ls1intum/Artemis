@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.timeout;
@@ -19,8 +18,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +39,7 @@ import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewDocumentFetcher;
 import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
 import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
@@ -89,7 +87,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     private Competency competency;
 
-    private MockedStatic<Jsoup> jsoupMock;
+    private MockedStatic<LinkPreviewDocumentFetcher> documentFetcherMock;
 
     @BeforeEach
     void initTestCase() {
@@ -108,7 +106,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
         competency = competencyUtilService.createCompetency(lecture1.getCourse());
 
-        jsoupMock = mockStatic(Jsoup.class);
+        documentFetcherMock = mockStatic(LinkPreviewDocumentFetcher.class);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -119,7 +117,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @AfterEach
     void tearDown() {
-        jsoupMock.close();
+        documentFetcherMock.close();
     }
 
     @Test
@@ -376,17 +374,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getOnlineResource(String link) throws Exception {
         var url = new URI(link).toURL().toString();
-        var connectionMock = mock(Connection.class);
-        jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connectionMock);
-        when(connectionMock.timeout(anyInt())).thenReturn(connectionMock);
-        when(connectionMock.maxBodySize(anyInt())).thenReturn(connectionMock);
-        when(connectionMock.get()).thenReturn(new Document(url));
+        documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(url)).thenReturn(new Document(url));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("link", link);
         params.add("courseId", String.valueOf(lecture1.getCourse().getId()));
         OnlineResourceDTO onlineResourceDTO = request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.OK, OnlineResourceDTO.class, params);
         assertThat(onlineResourceDTO.url()).isEqualTo(url);
+        documentFetcherMock.verify(() -> LinkPreviewDocumentFetcher.fetch(url), times(1));
         assertThat(onlineResourceDTO.title()).isNull();
         assertThat(onlineResourceDTO.description()).isNull();
     }
@@ -397,11 +392,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         persistOnlineUnitWithLecture();
         long unitsBefore = onlineUnitRepository.count();
         String link = "https://example.com";
-        var connection = mock(Connection.class);
-        jsoupMock.when(() -> Jsoup.connect(link)).thenReturn(connection);
-        when(connection.timeout(anyInt())).thenReturn(connection);
-        when(connection.maxBodySize(anyInt())).thenReturn(connection);
-        when(connection.get()).thenReturn(new Document(link));
+        documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(link)).thenReturn(new Document(link));
 
         var properties = new RateLimitingProperties();
         properties.setEnabled(true);
@@ -419,7 +410,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
             request.performMvcRequest(
                     get("/api/lecture/lectures/online-units/fetch-online-resource").param("link", link).param("courseId", lecture1.getCourse().getId().toString()))
                     .andExpect(status().isTooManyRequests()).andExpect(header().exists("Retry-After"));
-            verify(connection, times(1)).get();
+            documentFetcherMock.verify(() -> LinkPreviewDocumentFetcher.fetch(link), times(1));
             assertThat(onlineUnitRepository.count()).isEqualTo(unitsBefore);
             assertThat(onlineUnitRepository.findById(onlineUnit.getId()).orElseThrow().getSource()).isEqualTo(onlineUnit.getSource());
         }
@@ -485,11 +476,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void onlineResourceReadsMetadataAndReportsNetworkFailure() throws Exception {
         String url = "https://example.com/metadata";
-        var connection = mock(Connection.class);
-        jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connection);
-        when(connection.timeout(anyInt())).thenReturn(connection);
-        when(connection.maxBodySize(anyInt())).thenReturn(connection);
-        when(connection.get()).thenReturn(org.jsoup.parser.Parser
+        documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(url)).thenReturn(org.jsoup.parser.Parser
                 .parse("<html><head><meta name='title' content='Course title'><meta property='og:description' content='Course description'></head></html>", url));
         var params = new LinkedMultiValueMap<String, String>();
         params.add("link", url);
@@ -498,7 +485,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         assertThat(response.url()).isEqualTo(url);
         assertThat(response.title()).isEqualTo("Course title");
         assertThat(response.description()).isEqualTo("Course description");
-        when(connection.get()).thenThrow(new java.io.IOException("external metadata unavailable"));
+        documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(url)).thenThrow(new java.io.IOException("external metadata unavailable"));
         request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.INTERNAL_SERVER_ERROR, OnlineResourceDTO.class, params);
     }
 
@@ -508,7 +495,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/lecture/lectures/online-units/fetch-online-resource")
                 .param("link", "").param("courseId", lecture1.getCourse().getId().toString()))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
-        jsoupMock.verifyNoInteractions();
+        documentFetcherMock.verifyNoInteractions();
     }
 
 }

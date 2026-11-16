@@ -54,6 +54,17 @@ describe('ChannelFormComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should offer the announcement channel type to users who can create announcement channels', () => {
+        expect(fixture.nativeElement.querySelector('[data-testid="channel-type-select"]')).not.toBeNull();
+    });
+
+    it('should not offer the announcement channel type to users who cannot create announcement channels', () => {
+        fixture.componentRef.setInput('canCreateAnnouncementChannel', false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="channel-type-select"]')).toBeNull();
+    });
+
     it('should block submit when channel name is missing', () => {
         setFormValid();
         setName(undefined);

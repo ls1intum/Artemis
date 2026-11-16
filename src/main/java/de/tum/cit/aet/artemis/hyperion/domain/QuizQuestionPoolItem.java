@@ -103,6 +103,10 @@ public class QuizQuestionPoolItem extends DomainObject {
     @Nullable
     private Boolean accepted;
 
+    /** Whether the filter's verdicts ask a reviewer to look at the question; {@code null} until the question is judged. */
+    @Column(name = "flagged")
+    private Boolean flagged;
+
     @Column(name = "claimed_at")
     @Nullable
     private ZonedDateTime claimedAt;
@@ -258,6 +262,14 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     public void setAccepted(@Nullable Boolean accepted) {
         this.accepted = accepted;
+    }
+
+    public @Nullable Boolean getFlagged() {
+        return flagged;
+    }
+
+    public void setFlagged(@Nullable Boolean flagged) {
+        this.flagged = flagged;
     }
 
     @Nullable

@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.buildagent.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ import com.github.dockerjava.api.model.HostConfig;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.RepositoryCheckoutPath;
@@ -135,6 +137,8 @@ public class BuildJobContainerService {
 
     private final BuildLogsMap buildLogsMap;
 
+    private final TempFileUtilService tempFileUtilService;
+
     @Value("${artemis.continuous-integration.proxies.use-system-proxy:false}")
     private boolean useSystemProxy;
 
@@ -156,9 +160,10 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
-    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap) {
+    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap, TempFileUtilService tempFileUtilService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildLogsMap = buildLogsMap;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -189,6 +194,11 @@ public class BuildJobContainerService {
         int cpuCount = runConfig.cpuCount();
         int memory = runConfig.memory();
         int memorySwap = runConfig.memorySwap();
+        // The named networks are limited to the allowed list when the exercise is saved and when the job is created on the server. The agent additionally refuses the values
+        // that do not give the build a network of its own.
+        if (DockerRunConfig.sharesNetworkNamespace(network)) {
+            throw new LocalCIException("The container network '" + network + "' is not allowed");
+        }
 
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
@@ -243,7 +253,7 @@ public class BuildJobContainerService {
         if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);
         }
-        return host;
+        return BuildAgentConfiguration.restrictPrivileges(host, buildAgentConfiguration.isPrivilegeEscalationAllowed());
     }
 
     private long convertMemoryFromMBToBytes(long memory) {
@@ -741,19 +751,25 @@ public class BuildJobContainerService {
         try {
             // Use retry mechanism for the entire copy operation (tar creation + upload)
             executeWithRetry(() -> {
-                ByteArrayOutputStream tarArchive = createTarArchiveWithRetry(sourcePath);
-                int tarArchiveSize = tarArchive.size();
-                log.debug("Created tar archive of size {} bytes for source path {} to upload to container {}", tarArchiveSize, sourcePath.toAbsolutePath(), containerId);
+                // The archive is written to a temporary file instead of being held in memory, as the repository was changed by the code of the student and can be large
+                Path tarArchive = createTarArchiveWithRetry(sourcePath);
+                try {
+                    log.debug("Created tar archive of size {} bytes for source path {} to upload to container {}", Files.size(tarArchive), sourcePath.toAbsolutePath(),
+                            containerId);
 
-                try (final var uploadStream = new ByteArrayInputStream(tarArchive.toByteArray());
-                        final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
-                                .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
-                    copyToContainerCommand.exec();
-                    log.debug("Successfully copied tar archive to container {}", containerId);
+                    try (final var uploadStream = new BufferedInputStream(Files.newInputStream(tarArchive));
+                            final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
+                                    .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
+                        copyToContainerCommand.exec();
+                        log.debug("Successfully copied tar archive to container {}", containerId);
+                    }
+                    catch (RuntimeException e) {
+                        // Wrap runtime exceptions (e.g., Docker connectivity issues) for retry handling
+                        throw new IOException("Failed to copy archive to container: " + e.getMessage(), e);
+                    }
                 }
-                catch (RuntimeException e) {
-                    // Wrap runtime exceptions (e.g., Docker connectivity issues) for retry handling
-                    throw new IOException("Failed to copy archive to container: " + e.getMessage(), e);
+                finally {
+                    FileUtils.deleteQuietly(tarArchive.toFile());
                 }
                 return null;
             }, "Copy to container " + containerId, buildJobId);
@@ -782,10 +798,10 @@ public class BuildJobContainerService {
      * to {@link IOException} to enable the retry mechanism in {@link #executeWithRetry}.
      *
      * @param sourcePath the path to archive
-     * @return a ByteArrayOutputStream containing the tar archive data
+     * @return the temporary file containing the tar archive, which the caller has to delete
      * @throws IOException if archive creation fails (enables retry handling)
      */
-    private ByteArrayOutputStream createTarArchiveWithRetry(Path sourcePath) throws IOException {
+    private Path createTarArchiveWithRetry(Path sourcePath) throws IOException {
         try {
             return createTarArchive(sourcePath);
         }
@@ -799,25 +815,35 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Creates an in-memory tar archive from a filesystem path.
+     * Creates a tar archive from a filesystem path in a temporary file.
      * <p>
-     * The archive is created in memory (ByteArrayOutputStream) to allow for easy upload to Docker.
+     * The archive is written to disk so that the size of the repository does not determine the memory the build agent needs.
      * Uses POSIX long file mode to support files with long names.
      *
      * @param sourcePath the path to archive (can be a file or directory)
-     * @return a ByteArrayOutputStream containing the complete tar archive
+     * @return the temporary file containing the complete tar archive, which the caller has to delete
      * @throws LocalCIException if any IO error occurs during archive creation
      */
-    private ByteArrayOutputStream createTarArchive(Path sourcePath) {
+    private Path createTarArchive(Path sourcePath) {
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Path tarFile;
+        try {
+            tarFile = tempFileUtilService.createTempFile("artemis-build-copy-", ".tar");
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not create a temporary file for the tar archive of source path: " + sourcePath.toAbsolutePath(), e);
+        }
 
-        try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream)) {
-            // Enable POSIX long file mode to support files with names > 100 characters
-            tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+        boolean created = false;
+        try {
+            try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(tarFile)))) {
+                // Enable POSIX long file mode to support files with names > 100 characters
+                tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
-            addFileToTar(tarArchiveOutputStream, sourcePath, "");
-            tarArchiveOutputStream.finish();
+                addFileToTar(tarArchiveOutputStream, sourcePath, "");
+                tarArchiveOutputStream.finish();
+            }
+            created = true;
         }
         catch (IOException e) {
             // Only log to application logs here - user-facing messages are logged by the caller after all retries fail
@@ -826,7 +852,13 @@ public class BuildJobContainerService {
             log.warn(errorMessage, e);
             throw new LocalCIException(errorMessage, e);
         }
-        return byteArrayOutputStream;
+        finally {
+            if (!created) {
+                // Also covers unchecked failures while listing directories and a failing close, so that failed attempts do not accumulate partial archives
+                FileUtils.deleteQuietly(tarFile.toFile());
+            }
+        }
+        return tarFile;
     }
 
     /**

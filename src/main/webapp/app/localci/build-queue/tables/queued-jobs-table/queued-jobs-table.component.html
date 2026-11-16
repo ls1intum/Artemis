@@ -1,6 +1,6 @@
 <div class="build-jobs-section">
-    @if (buildJobs()?.length) {
-        <table tumAetUiTable [size]="'small'" [striped]="true" style="width: max-content">
+    <tumaet-ui-table-layout [empty]="!buildJobs()?.length" emptyTitle="artemisApp.buildQueue.noQueuedBuilds" style="--table-layout-offset: 28rem">
+        <table tumAetUiTable [size]="'small'" [striped]="true">
             <thead>
                 <tr jhi-build-jobs-header [running]="false" [showCourseId]="showCourseId()"></tr>
             </thead>
@@ -20,7 +20,5 @@
                 }
             </tbody>
         </table>
-    } @else {
-        <p class="text-muted-color" jhiTranslate="artemisApp.buildQueue.noQueuedBuilds"></p>
-    }
+    </tumaet-ui-table-layout>
 </div>

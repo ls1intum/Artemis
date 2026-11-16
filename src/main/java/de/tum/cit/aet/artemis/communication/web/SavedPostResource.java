@@ -40,10 +40,13 @@ import de.tum.cit.aet.artemis.communication.service.SavedPostService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * REST controller for managing Message Posts.
@@ -71,14 +74,17 @@ public class SavedPostResource {
 
     private final ConversationService conversationService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository,
-            AnswerMessageService answerMessageService, ConversationService conversationService) {
+            AnswerMessageService answerMessageService, ConversationService conversationService, AuthorizationCheckService authorizationCheckService) {
         this.savedPostService = savedPostService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
         this.answerMessageService = answerMessageService;
         this.conversationService = conversationService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -96,6 +102,7 @@ public class SavedPostResource {
         log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, savedPostStatus);
         long start = System.nanoTime();
 
+        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         var savedPosts = savedPostService.getSavedPostsForCurrentUserByStatus(savedPostStatus);
         var user = userRepository.getUserWithAuthorities();
 
@@ -153,6 +160,12 @@ public class SavedPostResource {
         }
 
         var post = retrievePostingElseThrow(postId, postingType);
+        // the posting has to belong to a course the user is a member of
+        Course course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new BadRequestAlertException("The posting does not belong to a course.", ENTITY_NAME, "postingWithoutCourse");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         savedPostService.savePostForCurrentUser(post);
 

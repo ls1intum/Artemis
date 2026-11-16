@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+#
+# Checks that a build container on the given Docker network cannot reach what it must not reach: a service on the host, a container next to it, and the internal services
+# that you name. It starts a small container on the network that you pass and expects every one of these connections to fail.
+# Whether builds may reach the internet is a decision of the installation, because many builds download their dependencies. That is reported for information and only fails
+# the check with CHECK_INTERNET=1.
+#
+# Usage: supporting_scripts/security/check-container-isolation.sh [NETWORK]
+#   NETWORK  the Docker network of the build containers, default "none", the strictest one. For a network of your own, a failing check names what
+#            a build can reach there, and the firewall rules of your installation have to close it (see the hardening checklist of the administrator guide).
+#
+# Environment: CHECK_TARGETS    space separated host:port entries of internal services that must be unreachable, for example "10.0.0.5:5432 169.254.169.254:80"
+#              CHECK_INTERNET   1 to fail when the internet is reachable (default 0: reported only)
+#              LISTENER_PORT    the port of the listener on the host (default 48123)
+#
+# The script needs Docker and pulls the busybox image. It starts a listener on a port of the host that serves an empty directory, and removes everything it created.
+set -Eeuo pipefail
+
+NETWORK="${1:-none}"
+# Pinned by digest. The tag is in the comment.
+BUSYBOX_IMAGE="busybox@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec" # 1.37.0
+LISTENER_PORT="${LISTENER_PORT:-48123}"
+SIBLING_NAME="artemis-isolation-sibling-$$"
+LISTENER_PID=""
+LISTENER_DIRECTORY=""
+CHECK_TARGETS="${CHECK_TARGETS:-}"
+CHECK_INTERNET="${CHECK_INTERNET:-0}"
+FAILURES=0
+
+cleanup() {
+    if [ -n "${LISTENER_PID}" ]; then
+        kill "${LISTENER_PID}" 2>/dev/null || true
+    fi
+    docker rm --force "${SIBLING_NAME}" >/dev/null 2>&1 || true
+    if [ -n "${LISTENER_DIRECTORY}" ]; then
+        rmdir "${LISTENER_DIRECTORY}" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
+
+if [ "${NETWORK}" = "host" ] || [[ "${NETWORK}" == container:* ]]; then
+    echo "The network ${NETWORK} shares a network namespace and is refused by Artemis at startup. Nothing to check." >&2
+    exit 2
+fi
+
+echo "Starting a listener on port ${LISTENER_PORT} of the host"
+# The listener serves an empty directory, so that nothing of the current directory is published on every interface of the host
+LISTENER_DIRECTORY="$(mktemp -d)"
+python3 -m http.server "${LISTENER_PORT}" --bind 0.0.0.0 --directory "${LISTENER_DIRECTORY}" >/dev/null 2>&1 &
+LISTENER_PID=$!
+sleep 1
+if ! kill -0 "${LISTENER_PID}" 2>/dev/null || ! python3 -c "import socket;socket.create_connection(('127.0.0.1',${LISTENER_PORT}),2)"; then
+    echo "The listener on port ${LISTENER_PORT} did not start." >&2
+    exit 2
+fi
+
+# A sibling container that a build container must not reach either. It joins the network under test, so that containers on the same network are checked. A network of
+# the kind "none" has no neighbors, so the sibling stays on the default network there.
+SIBLING_NETWORK_ARGS=()
+if [ "${NETWORK}" != "none" ]; then
+    SIBLING_NETWORK_ARGS=(--network "${NETWORK}")
+fi
+docker run --detach --name "${SIBLING_NAME}" ${SIBLING_NETWORK_ARGS[@]+"${SIBLING_NETWORK_ARGS[@]}"} "${BUSYBOX_IMAGE}" sh -c 'nc -l -p 8080 -k -e true >/dev/null' >/dev/null
+SIBLING_IP="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${SIBLING_NAME}")"
+if [ -z "${SIBLING_IP}" ] || [ "${SIBLING_IP}" = "invalid IP" ]; then
+    echo "The sibling container did not get an address." >&2
+    exit 2
+fi
+# Wait until the sibling listens, so that an unreachable result means isolation and not a late start. The check runs inside the sibling, which works on every network.
+SIBLING_READY=0
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if docker exec "${SIBLING_NAME}" nc -w 1 -z 127.0.0.1 8080 >/dev/null 2>&1; then
+        SIBLING_READY=1
+        break
+    fi
+    sleep 1
+done
+if [ "${SIBLING_READY}" -ne 1 ]; then
+    echo "The sibling container does not listen." >&2
+    exit 2
+fi
+
+# Runs a command in a build-like container and reports whether it succeeded.
+in_container() {
+    docker run --rm --network "${NETWORK}" --add-host=host.docker.internal:host-gateway "${BUSYBOX_IMAGE}" sh -c "$1" >/dev/null 2>&1
+}
+
+expect_unreachable() {
+    local description="$1" command="$2"
+    if in_container "${command}"; then
+        echo "FAIL  a build container on '${NETWORK}' can reach ${description}"
+        FAILURES=$((FAILURES + 1))
+    else
+        echo "ok    ${description} is not reachable"
+    fi
+}
+
+expect_unreachable "a service on the host (host.docker.internal:${LISTENER_PORT})" "wget -q -T 3 -O /dev/null http://host.docker.internal:${LISTENER_PORT}/"
+expect_unreachable "a sibling container (${SIBLING_IP}:8080)" "nc -w 3 -z ${SIBLING_IP} 8080"
+# The same over IPv6, where the network has it. A container without an IPv6 address cannot connect, which is the result that is wanted.
+SIBLING_IPV6="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' "${SIBLING_NAME}")"
+# Docker prints the text "invalid IP" for an address that is not set
+if [ -n "${SIBLING_IPV6}" ] && [ "${SIBLING_IPV6}" != "invalid IP" ]; then
+    expect_unreachable "a sibling container over IPv6 (${SIBLING_IPV6}:8080)" "nc -w 3 -z ${SIBLING_IPV6} 8080"
+else
+    echo "info  the network has no IPv6 address for a sibling container, so no sibling is checked over IPv6"
+fi
+for target in ${CHECK_TARGETS}; do
+    # A target without a port would be passed to nc as a port and fail for that reason, which looks like isolation
+    if ! printf '%s' "${target}" | grep -Eq '^(\[[0-9A-Fa-f:.]+\]|[^:]+):[0-9]{1,5}$'; then
+        echo "CHECK_TARGETS entry '${target}' is not host:port." >&2
+        exit 2
+    fi
+    expect_unreachable "the internal service ${target}" "nc -w 3 -z ${target%:*} ${target##*:}"
+done
+
+# The internet is reported. Builds that download dependencies need it, so it only fails the check where the operator asks for it.
+report_internet() {
+    local description="$1" command="$2"
+    if in_container "${command}"; then
+        if [ "${CHECK_INTERNET}" = "1" ]; then
+            echo "FAIL  a build container on '${NETWORK}' can reach ${description}"
+            FAILURES=$((FAILURES + 1))
+        else
+            echo "info  a build container on '${NETWORK}' can reach ${description}"
+        fi
+    else
+        echo "ok    ${description} is not reachable"
+    fi
+}
+report_internet "the internet (1.1.1.1:443)" "nc -w 3 -z 1.1.1.1 443"
+report_internet "the internet over IPv6 ([2606:4700:4700::1111]:443)" "nc -w 3 -z 2606:4700:4700::1111 443"
+report_internet "a name server (example.com)" "nslookup -timeout=3 example.com"
+
+if [ "${FAILURES}" -ne 0 ]; then
+    echo "${FAILURES} check(s) failed for the network '${NETWORK}'." >&2
+    exit 1
+fi
+echo "All checks passed for the network '${NETWORK}'."

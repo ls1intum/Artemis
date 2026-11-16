@@ -19,8 +19,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
     // GlobalSearchReconcileOrphan disabled by default
     private static final int FEATURES_DISABLED_DEFAULT = 8;
 
-    // Memiris, which is never reported as enabled or disabled
-    private static final int FEATURES_RETIRED = 1;
+    // Retired features are never reported as enabled or disabled
+    private static final int FEATURES_RETIRED = 2;
 
     @Autowired
     private FeatureToggleService featureToggleService;

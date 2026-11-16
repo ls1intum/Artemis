@@ -258,4 +258,16 @@ describe('QueuedJobsTableComponent', () => {
             vi.useRealTimers();
         }
     });
+
+    it('should show the empty state without jobs and none with jobs', () => {
+        fixture.componentRef.setInput('buildJobs', []);
+        fixture.detectChanges();
+        const empty = fixture.nativeElement.querySelector('[data-testid="table-empty"]');
+        expect(empty).not.toBeNull();
+        expect(empty.textContent).toContain('artemisApp.buildQueue.noQueuedBuilds');
+
+        fixture.componentRef.setInput('buildJobs', [{ id: '1', name: 'Job' }]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+    });
 });

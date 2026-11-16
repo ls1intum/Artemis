@@ -19,7 +19,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DurationPipe } from 'app/foundation/pipes/artemis-duration.pipe';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -62,7 +61,6 @@ describe('Exam Management Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockRouterLinkDirective,
-                MockDirective(SortDirective),
                 MockPipe(DurationPipe),
             ],
             providers: [

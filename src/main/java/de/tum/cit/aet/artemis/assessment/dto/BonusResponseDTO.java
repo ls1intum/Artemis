@@ -31,4 +31,13 @@ public record BonusResponseDTO(Long id, double weight, BonusStrategy bonusStrate
 
         return new BonusResponseDTO(bonus.getId(), bonus.getWeight(), bonus.getBonusStrategy(), source, bonusTo);
     }
+
+    /**
+     * Returns a copy of this DTO that does not carry the source grading scale.
+     *
+     * @return the DTO without source grading scale details
+     */
+    public BonusResponseDTO withoutSourceGradingScale() {
+        return new BonusResponseDTO(id, weight, bonusStrategy, null, bonusToGradingScale);
+    }
 }

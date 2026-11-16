@@ -61,7 +61,8 @@ public class UserDemoService {
      * Password of every demo user. These credentials are intentionally well known: the demo course only exists on demo and manual testing instances, which are activated through
      * the opt-in {@code demo} profile and must never run in production. The secret scanner is suppressed on this line only, because a published password is not a leaked one.
      */
-    private static final String DEMO_PASSWORD = "demo1234"; // nosemgrep
+    // Reviewed false positive (Sonar S2068): see the Javadoc above, the password is published on purpose.
+    private static final String DEMO_PASSWORD = "demo1234"; // nosemgrep // NOSONAR
 
     private static final Logger log = LoggerFactory.getLogger(UserDemoService.class);
 

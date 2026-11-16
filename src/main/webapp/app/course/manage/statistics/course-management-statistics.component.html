@@ -14,7 +14,7 @@
     }
     <div class="row mb-5">
         <div class="col-md-2"></div>
-        <div jhi-statistics-span-selector [currentSpan]="currentSpan()" (spanChange)="onTabChanged($event)" class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons"></div>
+        <div jhi-statistics-span-selector [currentSpan]="currentSpan()" (spanChange)="onTabChanged($event)" class="col-md-9"></div>
     </div>
     @for (graph of graphTypes(); track graph; let i = $index) {
         <div id="graph-{{ i }}" class="graph">

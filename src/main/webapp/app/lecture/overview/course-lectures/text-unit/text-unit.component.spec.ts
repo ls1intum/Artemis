@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ScienceService } from 'app/foundation/science/science.service';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -7,7 +6,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
@@ -43,7 +41,6 @@ describe('TextUnitComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                { provide: ScienceService, useClass: MockScienceService },
                 { provide: ActivatedRoute, useFactory: () => routeStub },
                 MockProvider(CourseCompetencyService),
                 MockProvider(ProfileService),

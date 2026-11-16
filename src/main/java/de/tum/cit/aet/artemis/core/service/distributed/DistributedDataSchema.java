@@ -96,45 +96,25 @@ public final class DistributedDataSchema {
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     /**
-     * The name of the map holding the runtime feature toggles, keyed by {@link de.tum.cit.aet.artemis.core.service.feature.Feature}.
+     * The structures whose contents are moved from version 1 to version 2. Version 2 adds the class of a test to
+     * {@code LocalCITestJobDTO}, which is stored in {@code ResultQueueItem} and therefore in both result queues, {@code buildResultQueue} and {@code deferredBuildResultQueue}.
+     * Those queues are
+     * deliberately not listed: its entries are encoded positionally and cannot be read by the new layout, so finished results that were not yet written to the database at the
+     * moment of the deploy are discarded, and the affected submissions need a new build. Every other structure listed here stores types that did not change, so its
+     * entries move byte-for-byte.
+     *
+     * <p>
+     * As for {@link #LEGACY_TO_V1_STRUCTURES}, the bar is that the data is expensive or impossible to reconstruct.
      */
-    public static final String FEATURES = "features";
-
-    /**
-     * The structures the v1-to-v2 migration moves byte-for-byte. Version 2 removed {@code Feature.AtlasML}, and Kryo
-     * encodes an enum by its position, so every feature key after it changed its bytes: {@link #FEATURES} is therefore
-     * not listed here but transformed key by key, and everything else is unchanged and keeps its bytes.
-     */
-    public static final List<CarriedOverStructure> V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
-            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
-            new CarriedOverStructure("deferredBuildResultQueue", StructureKind.QUEUE), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP),
-            // Keep the originating browser tab and immutable material versions with the chat and search runs they describe.
-            new CarriedOverStructure("pyris-chat-job-client-id-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-chat-material-version-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-global-search-material-version-map", StructureKind.EXPIRING_MAP),
-            // A retained struggle run must keep its single-flight reservation, scoped cancellation lookup and admission charge.
-            new CarriedOverStructure("struggle-inflight-map", StructureKind.EXPIRING_MAP), new CarriedOverStructure("struggle-cooldown-map", StructureKind.EXPIRING_MAP),
-            // The previous boot id cannot be reconstructed if Pyris restarted while Artemis was stopped.
-            new CarriedOverStructure("pyris-restart-watch", StructureKind.MAP),
-            // Pending content-change events and consumed daily orchestration quota exist only in this per-course map.
-            new CarriedOverStructure("atlas-content-change-accumulator", StructureKind.MAP),
-            // Keep generation and uncertain-save reservations until explicit recovery, together with cancellation and unaccounted-spend guards.
-            new CarriedOverStructure("hyperion-exercise-generation-jobs", StructureKind.MAP), new CarriedOverStructure("hyperion-live-save-coordination", StructureKind.MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-cancellations", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-generation-token-budget-reservations", StructureKind.EXPIRING_MAP),
-            // Retained replay and unsaved candidates have no database equivalent; carry their remaining lifetime without restarting the retention window.
-            new CarriedOverStructure("hyperion-exercise-generation-transcripts", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-file-changes", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-artifacts", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-exercise-generation-usage", StructureKind.EXPIRING_MAP),
-            // Activity, latest-mutation ownership, its owner index and cursor must agree for history and undo to remain available.
-            new CarriedOverStructure("hyperion-authoring-activity", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-authoring-latest-mutation", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-authoring-owner-runs", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("hyperion-authoring-activity-sequence", StructureKind.MAP),
-            // Terminal variant jobs retain their output and the only pointer to a provisioned exercise whose cleanup failed.
-            new CarriedOverStructure("hyperion-exercise-variant-jobs", StructureKind.EXPIRING_MAP));
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(
+            // Queued student builds. Nothing else knows they were requested. BuildJobQueueItem does not contain a build result.
+            new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            // Builds already running on an agent, which SharedQueueManagementService re-queues when an agent disappears.
+            new CarriedOverStructure("processingJobs", StructureKind.MAP),
+            // Runtime feature toggles exist only here.
+            new CarriedOverStructure("features", StructureKind.MAP),
+            // Iris jobs waiting for a Pyris callback, moved with their remaining lifetime.
+            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

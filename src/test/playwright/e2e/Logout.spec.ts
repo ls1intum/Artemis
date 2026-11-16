@@ -26,9 +26,13 @@ test.describe('Logout tests', () => {
             await dialog.accept();
         });
 
+        // The client calls the logout endpoint only after the navigation to the sign-in page was confirmed. Wait for its response, because it
+        // clears the session cookie: if it arrived during the cleanup, it would log out the administrator who deletes the exercise there.
+        const logoutResponse = page.waitForResponse((response) => response.url().includes('api/core/public/logout'));
         await navigationBar.logout();
+        await logoutResponse;
 
-        await page.waitForURL(`${process.env.BASE_URL!}/**`);
+        await expect(page).toHaveURL(/\/sign-in/);
     });
 
     test('Stays logged in after dismissal of dialog for unsaved changes on exercise mode', async ({ login, page, courseOverview, textExerciseEditor, navigationBar }) => {

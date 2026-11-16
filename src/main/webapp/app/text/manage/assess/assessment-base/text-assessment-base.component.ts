@@ -9,6 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -95,6 +96,10 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
             return;
         }
+        if (isCreditsOutOfBounds(error)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            return;
+        }
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
         this.alertService.error(errorMessage);
     }
@@ -129,6 +134,8 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
                     captureException('Overlapping Text Blocks with nothing? previousIndex: ' + previousIndex + ' nextIndex: ' + nextIndex);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
                     captureException('Overlapping AUTOMATIC Text Blocks! previousIndex: ' + previousIndex + ' nextIndex: ' + nextIndex);
+                    // Preserve the prefix of the previous block instead of hiding part of the submission.
+                    TextAssessmentBaseComponent.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex, submission!, textBlockRefs);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
                     // Make sure to select a TextBlockRef that has a feedback.
                     let selectedRef = ref;

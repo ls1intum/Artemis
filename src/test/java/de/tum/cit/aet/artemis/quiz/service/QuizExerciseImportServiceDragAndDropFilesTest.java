@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 /**
  * Unit tests for the copy of the files of a drag and drop question during a quiz import.
  */
+@ResourceLock("FilePathConverter")
 class QuizExerciseImportServiceDragAndDropFilesTest {
 
     @TempDir

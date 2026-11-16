@@ -64,6 +64,16 @@ describe('TextResultComponent', () => {
         expect(spans[0].innerHTML).toContain('hello world');
     });
 
+    it('should render submission text literally instead of parsing markup', () => {
+        const submission: any = { text: 'a <img src="x" alt="probe"> <b>b</b> & c' };
+        fixture.componentRef.setInput('result', createResult(submission, []));
+        fixture.detectChanges();
+        const span = fixture.nativeElement.querySelector('.white-space') as HTMLElement;
+        expect(span.querySelector('img')).toBeNull();
+        expect(span.querySelector('b')).toBeNull();
+        expect(span.textContent).toBe('a <img src="x" alt="probe"> <b>b</b> & c');
+    });
+
     it('should create a block for numeric reference feedback', () => {
         const submission: any = { text: 'abc' };
         const fb: any = { reference: '1', credits: 1, text: 'good' };

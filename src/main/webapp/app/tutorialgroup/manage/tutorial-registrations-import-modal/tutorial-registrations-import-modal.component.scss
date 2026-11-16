@@ -9,18 +9,6 @@
         width: 100%;
     }
 
-    .table-container-scroll-container {
-        width: 100%;
-        overflow-x: auto;
-
-        .table-container {
-            display: flex;
-            justify-content: center;
-            width: max-content;
-            min-width: 100%;
-        }
-    }
-
     .success-content {
         display: flex;
         flex-direction: column;

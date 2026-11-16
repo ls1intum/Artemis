@@ -31,7 +31,15 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_ATLASLLM,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_LECTURE,
+    MODULE_FEATURE_LTI,
+    PROFILE_PROD,
+} from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
@@ -236,7 +244,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(of(new HttpResponse<CourseOperationProgressDTO | null>({ body: null, status: 204 })));
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
             gocastEnabled: true,
         } as unknown as ProfileInfo);
@@ -321,6 +329,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isTestServer).toBe(false);
         expect(component.atlasEnabled).toBe(true);
         expect(component.irisEnabled).toBe(true);
+        expect(component.hyperionEnabled).toBe(true);
         expect(component.ltiEnabled).toBe(true);
         expect(component.localCIActive).toBe(false);
     });
@@ -355,6 +364,7 @@ describe('CourseManagementContainerComponent', () => {
         component.atlasEnabled = true;
         component.ltiEnabled = true;
         component.irisEnabled = true;
+        component.hyperionEnabled = true;
         component.athenaEnabled = true;
         component.tutorialGroupEnabled = true;
         component.gocastEnabled = true;
@@ -367,6 +377,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Competency Management')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Smart Quizzes')).toBeTruthy();
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();

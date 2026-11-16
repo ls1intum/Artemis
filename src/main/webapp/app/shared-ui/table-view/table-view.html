@@ -1,178 +1,158 @@
-<div class="jhi-table-view-container flex min-h-0 flex-col gap-3" [class.jhi-flex-scrollable]="isFlexScroll()" [attr.aria-busy]="loading()">
-    @if (showCaption()) {
-        <div class="flex shrink-0 flex-wrap items-center gap-2">
-            @if (resolvedOptions().showSearch) {
-                <jhi-search-filter class="min-w-48 grow" [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
-            }
-            @if (tableActions()) {
-                <ng-container [ngTemplateOutlet]="tableActions()!" />
-            }
-        </div>
-    }
-    <div
-        class="relative min-h-0 overflow-auto"
-        [class.flex-1]="isFlexScroll()"
-        data-testid="table-viewport"
-        [style.max-height]="resolvedOptions().scrollable && !isFlexScroll() ? resolvedOptions().scrollHeight : undefined"
-    >
-        @if (loading()) {
-            <div class="absolute inset-0 z-20 flex items-center justify-center bg-surface-raised/70">
-                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
-            </div>
+<tumaet-ui-table-layout
+    [loading]="loading()"
+    [fill]="resolvedOptions().fill"
+    [empty]="visibleValues().length === 0 && !loading()"
+    [emptyTitle]="resolvedOptions().emptyMessageTranslation"
+>
+    <!-- `hidden` instead of @if: an @if around a projected node is not projected into its slot when whitespace is preserved (NG8011). -->
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!showCaption()">
+        @if (resolvedOptions().showSearch) {
+            <jhi-search-filter class="min-w-24 max-w-lg flex-1" [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
         }
-        <table
-            [attr.inert]="loading() ? '' : undefined"
-            tumAetUiTable
-            size="small"
-            [striped]="resolvedOptions().striped"
-            [scrollable]="resolvedOptions().scrollable"
-            [style]="resolvedOptions().tableStyle"
-        >
-            <thead>
-                <tr>
+        @if (tableActions()) {
+            <ng-container [ngTemplateOutlet]="tableActions()!" />
+        }
+    </div>
+    <table [attr.inert]="loading() ? '' : undefined" tumAetUiTable size="small" [striped]="resolvedOptions().striped" [style]="resolvedOptions().tableStyle">
+        <thead>
+            <tr>
+                @if (resolvedOptions().selectionMode === 'multiple') {
+                    <th scope="col" #selectionHeader class="w-12">
+                        <tumaet-ui-checkbox
+                            [ariaLabel]="'global.generic.selectAllRows' | artemisTranslate"
+                            [disabled]="!hasSelectableRows()"
+                            [checked]="allSelected()"
+                            [indeterminate]="someSelected()"
+                            (changed)="toggleAll($event.checked)"
+                        />
+                    </th>
+                }
+                @if (resolvedOptions().selectionMode === 'single') {
+                    <th scope="col" #selectionHeader></th>
+                }
+                @for (col of cols(); track $index; let index = $index) {
+                    <th
+                        scope="col"
+                        #columnHeader
+                        [style.width]="col.width"
+                        [style.left]="frozenOffset(index, 'left')"
+                        [style.right]="frozenOffset(index, 'right')"
+                        [attr.aria-sort]="col.sort && col.field ? (sortField() === col.field ? (sortOrder() === 1 ? 'ascending' : 'descending') : 'none') : undefined"
+                        [class.jhi-frozen-left]="col.frozen && col.alignFrozen !== 'right'"
+                        [class.jhi-frozen-right]="col.frozen && col.alignFrozen === 'right'"
+                    >
+                        <div class="flex items-center gap-1">
+                            @if (col.sort && col.field) {
+                                <button
+                                    type="button"
+                                    class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-inherit"
+                                    (click)="sortColumn(col.field)"
+                                >
+                                    <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
+                                    <fa-icon [icon]="sortField() === col.field ? (sortOrder() === 1 ? faSortUp : faSortDown) : faSort" />
+                                </button>
+                            } @else {
+                                <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
+                            }
+                            @if (col.headerIcon || col.headerTooltip) {
+                                <span tabindex="0" [tumAetUiTooltip]="col.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined">
+                                    <fa-icon [icon]="col.headerIcon?.includes('hashtag') ? faHashtag : col.headerIcon?.includes('comment') ? faComment : faCircleQuestion" />
+                                </span>
+                            }
+                        </div>
+                        @if (col.filterType && col.field) {
+                            @if (col.filterType === 'boolean') {
+                                <select
+                                    tumAetUiInput
+                                    class="mt-1 w-full"
+                                    [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
+                                    (change)="filterColumnInput(col.field, $event)"
+                                >
+                                    <option value=""></option>
+                                    <option value="true">{{ 'global.generic.yes' | artemisTranslate }}</option>
+                                    <option value="false">{{ 'global.generic.no' | artemisTranslate }}</option>
+                                </select>
+                            } @else {
+                                <input
+                                    tumAetUiInput
+                                    class="mt-1 w-full"
+                                    [type]="col.filterType === 'numeric' ? 'number' : col.filterType === 'date' ? 'date' : 'text'"
+                                    [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
+                                    (input)="filterColumnInput(col.field, $event)"
+                                />
+                            }
+                        }
+                    </th>
+                }
+                @if (rowActions()) {
+                    <th scope="col" #actionsHeader [class.jhi-frozen-right]="resolvedOptions().rowActionsFrozen"><span jhiTranslate="entity.actions"></span></th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (row of visibleValues(); track $index) {
+                <tr [ngClass]="rowClass()?.(row)" [attr.data-disabled]="isRowDisabled()?.(row) || undefined" [attr.data-selected]="selected(row) || undefined">
                     @if (resolvedOptions().selectionMode === 'multiple') {
-                        <th scope="col" #selectionHeader class="w-12">
+                        <td [tumAetUiTooltip]="isRowDisabled()?.(row) ? disabledRowTooltip() : undefined">
                             <tumaet-ui-checkbox
-                                [ariaLabel]="'global.generic.selectAllRows' | artemisTranslate"
-                                [disabled]="!hasSelectableRows()"
-                                [checked]="allSelected()"
-                                [indeterminate]="someSelected()"
-                                (changed)="toggleAll($event.checked)"
+                                [ariaLabel]="'entity.action.select' | artemisTranslate"
+                                [disabled]="!!isRowDisabled()?.(row)"
+                                [checked]="selected(row)"
+                                (changed)="toggleRow(row, $event.checked)"
                             />
-                        </th>
+                        </td>
                     }
                     @if (resolvedOptions().selectionMode === 'single') {
-                        <th scope="col" #selectionHeader></th>
+                        <td>
+                            <tumaet-ui-radio-button
+                                [name]="selectionName"
+                                [ariaLabel]="'entity.action.select' | artemisTranslate"
+                                [value]="row"
+                                [ngModel]="tableSelection"
+                                [disabled]="!!isRowDisabled()?.(row)"
+                                (ngModelChange)="toggleRow(row, true)"
+                            />
+                        </td>
                     }
                     @for (col of cols(); track $index; let index = $index) {
-                        <th
-                            scope="col"
-                            #columnHeader
-                            [style.width]="col.width"
+                        <td
+                            data-testid="table-cell"
+                            [attr.data-column]="col.field"
                             [style.left]="frozenOffset(index, 'left')"
                             [style.right]="frozenOffset(index, 'right')"
-                            [attr.aria-sort]="col.sort && col.field ? (sortField() === col.field ? (sortOrder() === 1 ? 'ascending' : 'descending') : 'none') : undefined"
                             [class.jhi-frozen-left]="col.frozen && col.alignFrozen !== 'right'"
                             [class.jhi-frozen-right]="col.frozen && col.alignFrozen === 'right'"
                         >
-                            <div class="flex items-center gap-1">
-                                @if (col.sort && col.field) {
-                                    <button
-                                        type="button"
-                                        class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-inherit"
-                                        (click)="sortColumn(col.field)"
-                                    >
-                                        <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
-                                        <fa-icon [icon]="sortField() === col.field ? (sortOrder() === 1 ? faSortUp : faSortDown) : faSort" />
-                                    </button>
-                                } @else {
-                                    <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
-                                }
-                                @if (col.headerIcon || col.headerTooltip) {
-                                    <span tabindex="0" [tumAetUiTooltip]="col.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined">
-                                        <fa-icon [icon]="col.headerIcon?.includes('hashtag') ? faHashtag : col.headerIcon?.includes('comment') ? faComment : faCircleQuestion" />
-                                    </span>
-                                }
-                            </div>
-                            @if (col.filterType && col.field) {
-                                @if (col.filterType === 'boolean') {
-                                    <select
-                                        tumAetUiInput
-                                        class="mt-1 w-full"
-                                        [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
-                                        (change)="filterColumnInput(col.field, $event)"
-                                    >
-                                        <option value=""></option>
-                                        <option value="true">{{ 'global.generic.yes' | artemisTranslate }}</option>
-                                        <option value="false">{{ 'global.generic.no' | artemisTranslate }}</option>
-                                    </select>
-                                } @else {
-                                    <input
-                                        tumAetUiInput
-                                        class="mt-1 w-full"
-                                        [type]="col.filterType === 'numeric' ? 'number' : col.filterType === 'date' ? 'date' : 'text'"
-                                        [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
-                                        (input)="filterColumnInput(col.field, $event)"
-                                    />
-                                }
+                            @let params = renderedRows().get(row)![index];
+                            @if (col.templateRef) {
+                                <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: params }" />
+                            } @else if (col.cellRenderer) {
+                                <ng-container [ngComponentOutlet]="col.cellRenderer" [ngComponentOutletInputs]="{ params }" />
+                            } @else {
+                                {{ params.value }}
                             }
-                        </th>
+                        </td>
                     }
                     @if (rowActions()) {
-                        <th scope="col" #actionsHeader [class.jhi-frozen-right]="resolvedOptions().rowActionsFrozen"><span jhiTranslate="entity.actions"></span></th>
+                        <td [style.text-align]="resolvedOptions().rowActionsAlignment" [class.jhi-frozen-right]="resolvedOptions().rowActionsFrozen">
+                            <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: row }" />
+                        </td>
                     }
                 </tr>
-            </thead>
-            <tbody>
-                @for (row of visibleValues(); track $index) {
-                    <tr [ngClass]="rowClass()?.(row)" [attr.data-disabled]="isRowDisabled()?.(row) || undefined" [attr.data-selected]="selected(row) || undefined">
-                        @if (resolvedOptions().selectionMode === 'multiple') {
-                            <td [tumAetUiTooltip]="isRowDisabled()?.(row) ? disabledRowTooltip() : undefined">
-                                <tumaet-ui-checkbox
-                                    [ariaLabel]="'entity.action.select' | artemisTranslate"
-                                    [disabled]="!!isRowDisabled()?.(row)"
-                                    [checked]="selected(row)"
-                                    (changed)="toggleRow(row, $event.checked)"
-                                />
-                            </td>
-                        }
-                        @if (resolvedOptions().selectionMode === 'single') {
-                            <td>
-                                <tumaet-ui-radio-button
-                                    [name]="selectionName"
-                                    [ariaLabel]="'entity.action.select' | artemisTranslate"
-                                    [value]="row"
-                                    [ngModel]="tableSelection"
-                                    [disabled]="!!isRowDisabled()?.(row)"
-                                    (ngModelChange)="toggleRow(row, true)"
-                                />
-                            </td>
-                        }
-                        @for (col of cols(); track $index; let index = $index) {
-                            <td
-                                data-testid="table-cell"
-                                [attr.data-column]="col.field"
-                                [style.left]="frozenOffset(index, 'left')"
-                                [style.right]="frozenOffset(index, 'right')"
-                                [class.jhi-frozen-left]="col.frozen && col.alignFrozen !== 'right'"
-                                [class.jhi-frozen-right]="col.frozen && col.alignFrozen === 'right'"
-                            >
-                                @let params = renderedRows().get(row)![index];
-                                @if (col.templateRef) {
-                                    <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: params }" />
-                                } @else if (col.cellRenderer) {
-                                    <ng-container [ngComponentOutlet]="col.cellRenderer" [ngComponentOutletInputs]="{ params }" />
-                                } @else {
-                                    {{ params.value }}
-                                }
-                            </td>
-                        }
-                        @if (rowActions()) {
-                            <td [style.text-align]="resolvedOptions().rowActionsAlignment" [class.jhi-frozen-right]="resolvedOptions().rowActionsFrozen">
-                                <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: row }" />
-                            </td>
-                        }
-                    </tr>
-                } @empty {
-                    <tr>
-                        <td [colSpan]="emptyMessageColSpan()" class="text-center text-text-secondary"><span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    @if (resolvedOptions().paginated) {
-        <tumaet-ui-paginator
-            class="shrink-0"
-            [totalRecords]="effectiveTotalRows()"
-            [page]="Math.floor(currentFirst() / effectivePageSize())"
-            [pageSize]="effectivePageSize()"
-            [pageSizeOptions]="resolvedOptions().pageSizeOptions ?? []"
-            [showRowsPerPage]="!!resolvedOptions().pageSizeOptions"
-            [showCurrentPageReport]="resolvedOptions().showCurrentPageReport"
-            [disabled]="loading()"
-            (pageChange)="goToPage($event)"
-            (pageSizeChange)="changePageSize($event)"
-        />
-    }
-</div>
+            }
+        </tbody>
+    </table>
+    <tumaet-ui-paginator
+        tumAetUiTableFooter
+        [hidden]="!resolvedOptions().paginated"
+        [totalRecords]="effectiveTotalRows()"
+        [page]="Math.floor(currentFirst() / effectivePageSize())"
+        [pageSize]="effectivePageSize()"
+        [pageSizeOptions]="resolvedOptions().pageSizeOptions ?? []"
+        [showRowsPerPage]="!!resolvedOptions().pageSizeOptions"
+        [showCurrentPageReport]="resolvedOptions().showCurrentPageReport"
+        [disabled]="loading()"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="changePageSize($event)"
+    />
+</tumaet-ui-table-layout>

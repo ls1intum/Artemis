@@ -1,0 +1,93 @@
+# Rules for patterns that the security guideline (documentation/docs/developer/guidelines/security.mdx) asks reviewers to look at.
+# They run in .github/workflows/security-scans.yml. On a pull request only findings that the change introduces are reported.
+# Test cases for every rule are next to this file (artemis-security.java and .ts) and run with `semgrep --test .semgrep`.
+rules:
+  - id: artemis-request-value-in-file-path
+    languages: [java]
+    severity: WARNING
+    message: >-
+      A value of the request reaches a file system path. Resolve it against a fixed root and check that the result stays inside the root,
+      or do not use the value in the path at all (see the security guideline, section Input).
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $RET $METHOD(..., @RequestParam(...) String $SRC, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @PathVariable(...) String $SRC, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @RequestParam String $SRC, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @PathVariable String $SRC, ...) { ... }
+          - focus-metavariable: $SRC
+    pattern-sinks:
+      - pattern-either:
+          - pattern: java.nio.file.Path.of(...)
+          - pattern: java.nio.file.Paths.get(...)
+          - pattern: new java.io.File(...)
+          - pattern: new java.io.FileInputStream(...)
+          - pattern: new java.io.FileOutputStream(...)
+    pattern-sanitizers:
+      - pattern: $X.getFileName()
+      - pattern: FilenameUtils.getName(...)
+
+  - id: artemis-request-value-in-process
+    languages: [java]
+    severity: ERROR
+    message: >-
+      A value of the request reaches a command. A request never decides what is executed or with which arguments.
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $RET $METHOD(..., @RequestParam(...) String $SRC, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @PathVariable(...) String $SRC, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @RequestBody String $SRC, ...) { ... }
+          - focus-metavariable: $SRC
+    pattern-sinks:
+      - pattern-either:
+          - pattern: new ProcessBuilder(...)
+          - pattern: Runtime.getRuntime().exec(...)
+
+  - id: artemis-forwarded-header-read-directly
+    languages: [java]
+    severity: WARNING
+    message: >-
+      The client address is read from a header that the client can set. Use HttpRequestUtils, which believes a header only from the proxies of the installation.
+    pattern-either:
+      - pattern: $REQ.getHeader("X-Forwarded-For")
+      - pattern: $REQ.getHeader("X-Real-IP")
+      - pattern: $REQ.getHeader("Forwarded")
+    paths:
+      exclude:
+        - "**/HttpRequestUtils.java"
+        - "**/src/test/**"
+
+  - id: artemis-public-request-matcher
+    languages: [java]
+    severity: WARNING
+    message: >-
+      A request matcher permits all requests. A path that is reachable without signing in changes who can reach the server and needs a reviewer to agree.
+    pattern: $X.requestMatchers(...).permitAll()
+    paths:
+      include:
+        - "**/SecurityConfiguration.java"
+
+  - id: artemis-bypass-security-trust
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      The sanitizer of Angular is bypassed. Content that is rendered this way must come from the server in a form that is already safe, and a reviewer has to agree.
+    pattern-either:
+      - pattern: $S.bypassSecurityTrustHtml(...)
+      - pattern: $S.bypassSecurityTrustScript(...)
+      - pattern: $S.bypassSecurityTrustUrl(...)
+      - pattern: $S.bypassSecurityTrustResourceUrl(...)
+      - pattern: $S.bypassSecurityTrustStyle(...)
+    paths:
+      exclude:
+        - "**/*.spec.ts"
