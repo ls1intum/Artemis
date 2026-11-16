@@ -644,9 +644,10 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Refuses a change if a policy changed in the repository since the editor loaded the policies: a policy file, which test classes point to which file, or
-     * an annotation of a test class or test method, e.g. a new override without a policy file, because the change rewrites the annotations from the state it
-     * was loaded with. Commits that change something else, e.g. a test, do not conflict.
+     * Refuses a change if a policy changed in the repository since the editor loaded the policies: a policy file, which test classes point to which file, an
+     * annotation of a test class or test method, e.g. a new override without a policy file, or the entries of a policy, e.g. a test added to a class assigned
+     * case by case, because the change rewrites the annotations from the state it was loaded with. Commits that change something else, e.g. the body of a
+     * test, do not conflict.
      */
     private static void requireUnchangedSince(Repository repository, String baseCommitHash) throws IOException {
         ObjectId head = repository.resolve(Constants.HEAD);
@@ -662,7 +663,7 @@ public class SecurityPolicyEditorService {
             RevTree headTree = revWalk.parseCommit(head).getTree();
             SecurityFrameworkState baseState = SecurityFrameworkCommitFiles.evaluate(repository, baseTree);
             SecurityFrameworkState headState = SecurityFrameworkCommitFiles.evaluate(repository, headTree);
-            if (!policyReferences(baseState).equals(policyReferences(headState)) || !annotations(repository, baseTree).equals(annotations(repository, headTree))) {
+            if (!policyReferences(baseState).equals(policyReferences(headState)) || !assignmentState(repository, baseTree).equals(assignmentState(repository, headTree))) {
                 throw policiesChanged();
             }
             for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {
@@ -687,10 +688,19 @@ public class SecurityPolicyEditorService {
     private record Annotations(boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods, Set<String> switchedOff) {
     }
 
-    private static Map<String, Annotations> annotations(Repository repository, RevTree tree) throws IOException {
-        return SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, tree)).values().stream().collect(Collectors.toMap(
-                SecurityTestAssignments.TestClass::qualifiedName,
+    /**
+     * The state of the {@code @Policy} annotations of a commit that a change is based on: the annotations of each test class and the entries they give each
+     * policy. A test added to a class assigned case by case changes the entries, because the change would assign the class without it; a test added to a
+     * class assigned as a whole does not, and neither does the body of a test.
+     */
+    private record AssignmentState(Map<String, Annotations> annotations, Map<String, List<String>> entries) {
+    }
+
+    private static AssignmentState assignmentState(Repository repository, RevTree tree) throws IOException {
+        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, tree));
+        Map<String, Annotations> annotations = testClasses.values().stream().collect(Collectors.toMap(SecurityTestAssignments.TestClass::qualifiedName,
                 testClass -> new Annotations(testClass.active(), testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.defaultMethods(), testClass.switchedOff())));
+        return new AssignmentState(annotations, SecurityTestAssignments.entriesByPolicy(testClasses.values()));
     }
 
     private static Map<String, List<String>> policyReferences(SecurityFrameworkState state) {

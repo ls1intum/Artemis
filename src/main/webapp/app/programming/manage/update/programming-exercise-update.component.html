@@ -10,6 +10,7 @@
         <jhi-documentation-button [type]="documentationType" />
     </div>
     <tumaet-ui-confirm-dialog key="hyperionSettingsReloadConfirmation" />
+    <tumaet-ui-confirm-dialog key="securityPolicyChangesOnSave" />
     @if (generationSaveBlocked()) {
         <div role="status" class="my-3 flex flex-wrap items-center gap-2" data-testid="hyperion-settings-save-blocked">
             @if (generationActivity.statusLoadFailed()) {

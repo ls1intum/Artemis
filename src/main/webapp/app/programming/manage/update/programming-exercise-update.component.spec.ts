@@ -629,6 +629,27 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(saveSpy).not.toHaveBeenCalled();
         });
 
+        it('asks before a save discards the unsaved changes of the security policies', async () => {
+            const confirmation = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            comp.securityComponent = (() => ({ unsavedPolicyChanges: () => 2 })) as unknown as typeof comp.securityComponent;
+            const saveSpy = vi.spyOn(comp, 'saveExercise').mockImplementation(() => {});
+            const checkSpy = vi.spyOn(TestBed.inject(ExerciseUpdateWarningService), 'checkExerciseBeforeUpdate');
+
+            comp.save();
+            await Promise.resolve();
+            expect(confirmation).toHaveBeenCalledOnce();
+            expect(confirmation.mock.calls[0][0]).toEqual(expect.objectContaining({ key: 'securityPolicyChangesOnSave', acceptSeverity: 'danger' }));
+            expect(checkSpy).not.toHaveBeenCalled();
+            expect(saveSpy).not.toHaveBeenCalled();
+
+            // Discarding them continues with the usual save, including the update warning.
+            confirmation.mock.calls[0][0].accept!();
+            await Promise.resolve();
+            expect(confirmation).toHaveBeenCalledOnce();
+            warning.confirmed.next();
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
         it('keeps the generation save guard when a warning is reevaluated', async () => {
             const updateSpy = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate');
             comp.save();

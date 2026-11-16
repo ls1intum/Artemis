@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
     TumAetUiButtonDirective,
@@ -128,6 +128,9 @@ export class ProgrammingExerciseSecurityComponent {
     readonly advancedMode = input<boolean>(false);
 
     readonly isEditMode = computed(() => this.mode() === 'edit');
+    private readonly policiesEditor = viewChild(ProgrammingExerciseSecurityPoliciesComponent);
+    /** The number of unsaved changes to the security policies; saving the exercise neither commits nor keeps them. */
+    readonly unsavedPolicyChanges = computed(() => this.policiesEditor()?.totalChanges() ?? 0);
     readonly isCreateMode = computed(() => this.mode() === 'create');
     readonly isImportMode = computed(() => this.mode() === 'import');
     readonly isSupportedLanguage = computed(() => {

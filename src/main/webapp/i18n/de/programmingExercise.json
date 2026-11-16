@@ -380,6 +380,11 @@
                     "aresLibraryStays": "Die Tests verwenden außerdem andere Teile von Ares ({{ apis }}), daher bleibt die Ares-Bibliothek in der Build-Datei.",
                     "confirm": "Deaktivieren"
                 },
+                "unsavedPoliciesOnSave": {
+                    "header": "Ungespeicherte Änderungen der Sicherheitsrichtlinien verwerfen?",
+                    "message": "Die Sicherheitsrichtlinien haben {{ count }} ungespeicherte Änderung(en). Das Speichern der Aufgabe committet sie nicht und verlässt diese Seite, daher werden sie verworfen. Um sie zu behalten, brich ab und committe sie zuerst unter Sicherheitsrichtlinien verwalten.",
+                    "confirm": "Verwerfen und speichern"
+                },
                 "stagedDeactivationHint": "Sobald die Aufgabe gespeichert ist, läuft der Code der Studierenden ohne Sandbox, und nichts, was die Sicherheitsrichtlinie für die Tests festlegt, gilt mehr. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis.",
                 "templateVersionUnsupported": "Die Vorlage verwendet Version {{ version }}, die nicht mehr unterstützt wird.",
                 "notApplied": {

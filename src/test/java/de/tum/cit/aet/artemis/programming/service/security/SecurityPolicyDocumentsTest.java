@@ -255,16 +255,17 @@ class SecurityPolicyDocumentsTest {
     void rejectsValuesNoAresVersionAccepts() {
         SecurityPolicyDocumentDTO document = new SecurityPolicyDocumentDTO("SecurityPolicy.yaml", "not a preset", " ", null, null, List.of("de.example.A", "de.example.A"),
                 List.of(new FilePermissionDTO("logs/", false, false, false, false, false)), List.of(new NetworkPermissionDTO("local host", 70000, false, false, false)),
-                List.of(new CommandPermissionDTO("", List.of())), List.of(new ThreadPermissionDTO("java.lang.Thread", 0)), List.of(new PackagePermissionDTO("org mockito")),
-                List.of(0L), new TestBehaviorDTO(new StrictTimeoutDTO(0, "FORTNIGHTS", null, null), new OutputMirroringDTO(true, 0L), new HiddenTestsDTO(null, " "),
+                List.of(new CommandPermissionDTO("", List.of())), List.of(new ThreadPermissionDTO("java.lang.Thread", 0)),
+                List.of(new PackagePermissionDTO("org mockito"), new PackagePermissionDTO("org mockito")), List.of(0L),
+                new TestBehaviorDTO(new StrictTimeoutDTO(0, "FORTNIGHTS", null, null), new OutputMirroringDTO(true, 0L), new HiddenTestsDTO(null, " "),
                         new PrivilegedExceptionsDTO(true, "two\nlines")));
 
         List<String> problems = SecurityPolicyDocuments.validate(document);
 
-        assertThat(problems).hasSize(15).anySatisfy(problem -> assertThat(problem).contains("is listed twice"))
-                .anySatisfy(problem -> assertThat(problem).contains("logs/ grants no permission")).anySatisfy(problem -> assertThat(problem).contains("70000"))
-                .anySatisfy(problem -> assertThat(problem).contains("at least one thread")).anySatisfy(problem -> assertThat(problem).contains("strict timeout"))
-                .anySatisfy(problem -> assertThat(problem).contains("single line"));
+        assertThat(problems).hasSize(17).anySatisfy(problem -> assertThat(problem).contains("is listed twice"))
+                .anySatisfy(problem -> assertThat(problem).contains("listed more than once")).anySatisfy(problem -> assertThat(problem).contains("logs/ grants no permission"))
+                .anySatisfy(problem -> assertThat(problem).contains("70000")).anySatisfy(problem -> assertThat(problem).contains("at least one thread"))
+                .anySatisfy(problem -> assertThat(problem).contains("strict timeout")).anySatisfy(problem -> assertThat(problem).contains("single line"));
     }
 
     @Test

@@ -645,6 +645,9 @@ public final class SecurityPolicyDocuments {
         if (document.timeouts().stream().anyMatch(timeout -> timeout == null || timeout <= 0)) {
             problems.add("A timeout must be positive.");
         }
+        if (listsAResourceTwice(document)) {
+            problems.add("A resource is listed more than once; the editor could not tell the entries apart afterwards.");
+        }
         if (document.testBehavior() != null) {
             validateTestBehavior(document.testBehavior(), problems);
         }

@@ -380,6 +380,11 @@
                     "aresLibraryStays": "The tests also use other parts of Ares ({{ apis }}), so the Ares library stays in the build file.",
                     "confirm": "Deactivate"
                 },
+                "unsavedPoliciesOnSave": {
+                    "header": "Discard the unsaved security policy changes?",
+                    "message": "The security policies have {{ count }} unsaved change(s). Saving the exercise does not commit them and leaves this page, so they are discarded. To keep them, cancel and commit them in Manage Security Policies first.",
+                    "confirm": "Discard and save"
+                },
                 "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox, and nothing the security policy configures for the tests applies. Hidden tests are then protected only by the test visibility settings of Artemis.",
                 "templateVersionUnsupported": "The template uses {{ version }}, which is no longer supported.",
                 "notApplied": {

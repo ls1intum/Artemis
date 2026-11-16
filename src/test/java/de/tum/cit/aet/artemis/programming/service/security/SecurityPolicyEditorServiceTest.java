@@ -508,6 +508,33 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesTheCommitIfATestWasAddedToAClassAssignedCaseByCaseSinceThePoliciesWereLoaded() throws Exception {
+        String withOverride = SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()");
+        pushToTests(SORTING_TEST_PATH, withOverride);
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactly("de.example.SortingTest#testMergeSort", "de.example.StressTest");
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        pushToTests(SORTING_TEST_PATH, withOverride.replace("    @Test\n    void testMergeSort() {\n    }",
+                "    @Test\n    void testMergeSort() {\n    }\n\n    @Test\n    void testQuickSort() {\n    }"));
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+    }
+
+    @Test
+    void acceptsTheCommitIfOnlyATestOfAClassAssignedAsAWholeChanged() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }",
+                "    @Test\n    void testMergeSort() {\n    }\n\n    @Test\n    void testQuickSort() {\n    }"));
+
+        editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user);
+
+        assertThat(loadedPolicy(editorService.getEditor(exercise())).files()).containsExactly(LOGS);
+    }
+
+    @Test
     void refusesTheCommitIfSomeonePushesWhileItIsPrepared() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
@@ -600,6 +627,17 @@ class SecurityPolicyEditorServiceTest {
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.preview(exercise(), change(editor, edited(document, BOTH_CLASSES))))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalid"));
+    }
+
+    @Test
+    void refusesToCommitAResourceListedTwice() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        String headBefore = pushedHead();
+        SecurityPolicyDocumentDTO twice = withFiles(loadedPolicy(editor), List.of(LOGS, LOGS));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(twice, BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalid"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
     }
 
     @Test

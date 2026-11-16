@@ -180,6 +180,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly stagedSecurityChoice = signal<SecurityFrameworkChoice | undefined>(undefined);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     buildTimeWindowComponent = viewChild(ProgrammingExerciseBuildTimeWindowComponent);
+    securityComponent = viewChild(ProgrammingExerciseSecurityComponent);
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
@@ -939,8 +940,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private saveWithModalCheck(
         onConfirmed: () => void,
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
+        policyChangesDiscarded = false,
     ) {
         if (this.isSaving() || this.generationFullSaveBlocked()) {
+            return;
+        }
+        // Saving leaves the page, which drops the unsaved changes of the security policies; they are committed separately, so the instructor decides first.
+        const unsavedPolicyChanges = this.securityComponent()?.unsavedPolicyChanges() ?? 0;
+        if (unsavedPolicyChanges > 0 && !policyChangesDiscarded) {
+            this.confirmationService.confirm({
+                key: 'securityPolicyChangesOnSave',
+                header: this.translateService.instant('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.header'),
+                message: this.translateService.instant('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.message', { count: unsavedPolicyChanges }),
+                acceptLabel: this.translateService.instant('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.confirm'),
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                acceptSeverity: 'danger',
+                accept: () => this.saveWithModalCheck(onConfirmed, onReEvaluated, true),
+            });
             return;
         }
         // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
