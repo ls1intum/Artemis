@@ -1,29 +1,24 @@
-<form class="conflict-modal" #confirmForm="ngForm" name="confirmForm" (ngSubmit)="importQuestions()">
-    <div class="conflict-modal__header">
-        <h4 class="fw-medium" jhiTranslate="artemisApp.quizExercise.importWarningShort"></h4>
-    </div>
-    <div class="conflict-modal__body">
-        <span class="conflict-modal__body__warning">
-            <fa-icon [icon]="faExclamationTriangle" />
+<form class="flex flex-col gap-6!" #confirmForm="ngForm" name="confirmForm" (ngSubmit)="importQuestions()">
+    <h4 class="m-0 pt-4! text-xl font-medium" jhiTranslate="artemisApp.quizExercise.importWarningShort"></h4>
+    <div class="flex items-start gap-2">
+        <fa-icon class="mt-1 text-state-warning" [icon]="faExclamationTriangle" />
+        <div class="flex flex-col gap-2">
             <div jhiTranslate="artemisApp.quizExercise.importWarningLong"></div>
-            <p></p>
             @for (reason of invalidFlaggedQuestions(); track reason) {
                 <div>
                     @if ((reason.translateValues | json) !== '{}') {
-                        <p jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>
+                        <p class="m-0" jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>
                     }
                     @if ((reason.translateValues | json) === '{}') {
-                        <p jhiTranslate="{{ reason.translateKey }}"></p>
+                        <p class="m-0" jhiTranslate="{{ reason.translateKey }}"></p>
                     }
                 </div>
             }
-        </span>
+        </div>
     </div>
-    <div class="conflict-modal__footer">
-        <button class="conflict-modal__footer__cancel" type="button" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
-        <button type="submit" class="conflict-modal__footer__submit" [disabled]="!confirmForm.valid">
+    <div class="flex justify-end gap-2">
+        <button tumAetUiButton severity="secondary" type="button" (click)="closeModal()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></button>
+        <button tumAetUiButton severity="danger" type="submit" [disabled]="!confirmForm.valid">
             <fa-icon [icon]="faTimes" /><span jhiTranslate="artemisApp.quizExercise.confirmImport"></span>
         </button>
     </div>

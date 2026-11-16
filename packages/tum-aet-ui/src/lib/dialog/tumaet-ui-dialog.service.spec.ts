@@ -57,6 +57,16 @@ describe('TumAetUiDialogService', () => {
         expect(dialog?.textContent).toContain('Updated exercise');
     });
 
+    it('insets the content by default and removes the inset for contentPadding none', async () => {
+        service.open(DialogContentComponent, { header: 'Padded', inputValues: { label: 'a' } });
+        await render();
+        expect(document.querySelector('.tumaet-ui-dialog-content')?.classList.contains('tumaet:px-4')).toBe(true);
+        service.closeAll();
+        service.open(DialogContentComponent, { header: 'Bleed', contentPadding: 'none', inputValues: { label: 'b' } });
+        await render();
+        expect(document.querySelector('.tumaet-ui-dialog-content')?.classList.contains('tumaet:px-4')).toBe(false);
+    });
+
     it('emits one result and destroys the view when content saves', async () => {
         const ref = service.open<DialogContentComponent, string>(DialogContentComponent, { header: 'Result', inputValues: { label: 'Review' } });
         const values: (string | undefined)[] = [];

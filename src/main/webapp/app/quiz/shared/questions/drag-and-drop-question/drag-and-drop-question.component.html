@@ -19,7 +19,9 @@
                     <span style="color: grey"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
                 </h2>
                 <p>
-                    <button type="button" class="btn btn-default" (click)="secureImageComponent().retryLoadImage()" jhiTranslate="artemisApp.quizQuestion.retry"></button>
+                    <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="secureImageComponent().retryLoadImage()"
+                        ><span jhiTranslate="artemisApp.quizQuestion.retry"></span
+                    ></tumaet-ui-button>
                 </p>
             </div>
         }
@@ -35,7 +37,7 @@
         @if (dragAndDropQuestion().hint || (dragAndDropQuestion().explanation && showResult())) {
             <div class="hint">
                 @if (dragAndDropQuestion().hint) {
-                    <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
+                    <span [tumAetUiTooltip]="renderedHint" tumAetUiTooltipPlacement="right">
                         <fa-icon [icon]="faQuestionCircle" />
                         <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                     </span>
@@ -45,7 +47,7 @@
                 </ng-template>
                 <br />
                 @if (dragAndDropQuestion().explanation && showResult()) {
-                    <span class="label label-primary" [ngbPopover]="renderedExplanation" triggers="mouseenter:mouseleave">
+                    <span [tumAetUiTooltip]="renderedExplanation" tumAetUiTooltipPlacement="right">
                         <fa-icon [icon]="faExclamationCircle" />
                         <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                     </span>
@@ -89,10 +91,14 @@
                 @if (!forceSampleSolution()) {
                     <div>
                         @if (!showingSampleSolution()) {
-                            <button type="button" class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></button>
+                            <tumaet-ui-button variant="outlined" (clicked)="showSampleSolution()"
+                                ><span jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></span
+                            ></tumaet-ui-button>
                         }
                         @if (showingSampleSolution()) {
-                            <button type="button" class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></button>
+                            <tumaet-ui-button variant="outlined" (clicked)="hideSampleSolution()"
+                                ><span jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></span
+                            ></tumaet-ui-button>
                         }
                     </div>
                 }
@@ -183,7 +189,7 @@
                                                 <span jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                                             }
                                             @if (dropLocation.invalid || dragAndDropQuestion().invalid || invalidDragItemForDropLocation(dropLocation)) {
-                                                <fa-icon ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct." [icon]="faQuestionCircle" />
+                                                <fa-icon tumAetUiTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct." [icon]="faQuestionCircle" />
                                             }
                                         </div>
                                         @if (dragItemForDropLocation(dropLocation)) {
@@ -244,7 +250,7 @@
                                                 <span jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                                             }
                                             @if (dropLocation.invalid || dragAndDropQuestion().invalid) {
-                                                <fa-icon ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct." [icon]="faQuestionCircle" />
+                                                <fa-icon tumAetUiTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct." [icon]="faQuestionCircle" />
                                             }
                                         </div>
                                         @if (dropLocation && correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !dragAndDropQuestion().invalid) {

@@ -1,23 +1,23 @@
 @if (quizExercise()) {
     <jhi-exercise-group-timeline-lock #variantLock [exercise]="quizExercise()" [courseId]="courseId()" (exerciseChange)="quizExercise.set($event)" />
-    <div class="row">
-        <div class="col-lg-12">
+    <div>
+        <div>
             @if (!quizExercise().isEditable && quizExercise().id) {
-                <div class="mt-3">
-                    <div class="alert alert-warning">
+                <div class="mt-4!">
+                    <tumaet-ui-message severity="warn">
                         @if (quizExercise().quizEnded) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
                         } @else {
                             <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
                         }
-                    </div>
-                    <div class="d-flex gap-2 mt-3">
+                    </tumaet-ui-message>
+                    <div class="mt-4! flex gap-2">
                         <button type="button" tumAetUiButton severity="secondary" size="small" (click)="navigateBack()">
                             <fa-icon [icon]="faArrowLeft" class="me-1" />
                             <span jhiTranslate="entity.action.back"></span>
                         </button>
                         @if (quizExercise().quizEnded && quizExercise().isAtLeastInstructor) {
-                            <a [routerLink]="reEvaluateUrl" class="btn btn-warning">
+                            <a tumAetUiButton severity="warn" [routerLink]="reEvaluateUrl">
                                 <fa-icon [icon]="faWrench" />
                                 <span jhiTranslate="entity.action.re-evaluate"></span>
                             </a>
@@ -25,9 +25,9 @@
                     </div>
                 </div>
             }
-            <div class="edit-quiz pt-3" [hidden]="!quizExercise().isEditable && quizExercise().id">
+            <div class="edit-quiz pt-4!" [hidden]="!quizExercise().isEditable && quizExercise().id">
                 <!-- Settings (single card with subsections) -->
-                <div class="section-card section-card--settings mb-3">
+                <div class="section-card section-card--settings mb-4!">
                     <div class="section-header">
                         <div class="section-header-icon">
                             <fa-icon [icon]="faGraduationCap" />
@@ -39,10 +39,10 @@
                             </h4>
                             <p jhiTranslate="artemisApp.quizExercise.sections.settings.description"></p>
                         </div>
-                        <span class="badge bg-info quiz-max-score-badge">
+                        <span class="quiz-max-score-badge">
                             <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
-                            <span class="badge max-score">{{ calculateMaxExerciseScore() }}</span>
-                            <span class="visually-hidden" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
+                            <span class="max-score">{{ calculateMaxExerciseScore() }}</span>
+                            <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
                         </span>
                     </div>
                     <div class="section-body">
@@ -65,8 +65,8 @@
                             />
                         </form>
                         @if (!isExamMode()) {
-                            <div class="form-group position-relative">
-                                <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+                            <div class="relative">
+                                <label jhiTranslate="artemisApp.exercise.categories"></label>
                                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                                 <jhi-category-selector
                                     [categories]="exerciseCategories()"
@@ -75,10 +75,10 @@
                                 />
                             </div>
                         }
-                        <div class="row mt-3">
-                            <div class="col-lg-4 col-sm-12">
-                                <div class="form-group">
-                                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                        <div class="mt-4! grid grid-cols-1 gap-x-6 lg:grid-cols-3">
+                            <div>
+                                <div>
+                                    <label jhiTranslate="artemisApp.exercise.difficulty"></label>
                                     <div class="quiz-toggle-group" role="group" [attr.aria-label]="'artemisApp.exercise.difficulty' | artemisTranslate">
                                         @for (opt of difficultyOptions(); track opt.label) {
                                             <button
@@ -97,10 +97,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-4 col-sm-12">
-                                <div class="form-group">
+                            <div>
+                                <div>
                                     <label
-                                        class="form-control-label label--truncate"
+                                        class="label--truncate"
                                         jhiTranslate="artemisApp.quizExercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}LabelShort"
                                     ></label>
                                     <div
@@ -124,9 +124,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-4 col-sm-12">
-                                <div class="form-group">
-                                    <label class="form-control-label label--truncate" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
+                            <div>
+                                <div>
+                                    <label class="label--truncate" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                                     <div class="quiz-toggle-group" role="group" [attr.aria-label]="'artemisApp.quizExercise.randomizeQuestionOrder' | artemisTranslate">
                                         @for (opt of randomizeOptions(); track opt.label) {
                                             <button
@@ -156,37 +156,37 @@
                             <div class="quiz-schedule-grid">
                                 <div>
                                     <tumaet-ui-form-field [label]="'artemisApp.quizExercise.duration' | artemisTranslate" controlId="quiz-duration-hours">
-                                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <label for="quiz-duration-hours" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.hours"></label>
-                                            <p-inputnumber
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <label for="quiz-duration-hours" class="sr-only" jhiTranslate="artemisApp.quizExercise.hours"></label>
+                                            <tumaet-ui-input-number
                                                 inputId="quiz-duration-hours"
+                                                class="duration-input"
                                                 [(ngModel)]="duration.hours"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
                                                 name="durationHours"
-                                                styleClass="duration-input"
                                             />
                                             <span jhiTranslate="artemisApp.quizExercise.hours"></span>
-                                            <label for="quiz-duration-minutes" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.minutes"></label>
-                                            <p-inputnumber
+                                            <label for="quiz-duration-minutes" class="sr-only" jhiTranslate="artemisApp.quizExercise.minutes"></label>
+                                            <tumaet-ui-input-number
                                                 inputId="quiz-duration-minutes"
+                                                class="duration-input"
                                                 [(ngModel)]="duration.minutes"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
                                                 [max]="59"
                                                 name="durationMinutes"
-                                                styleClass="duration-input"
                                             />
                                             <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
-                                            <label for="quiz-duration-seconds" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.seconds"></label>
-                                            <p-inputnumber
+                                            <label for="quiz-duration-seconds" class="sr-only" jhiTranslate="artemisApp.quizExercise.seconds"></label>
+                                            <tumaet-ui-input-number
                                                 inputId="quiz-duration-seconds"
+                                                class="duration-input"
                                                 [(ngModel)]="duration.seconds"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
                                                 [max]="59"
                                                 name="durationSeconds"
-                                                styleClass="duration-input"
                                             />
                                             <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                                         </div>
@@ -194,13 +194,13 @@
                                 </div>
                                 <div>
                                     @if (variantLock.locked()) {
-                                        <jhi-exercise-group-date-notice class="mb-3" (editGroupDates)="variantLock.openModal()" />
+                                        <jhi-exercise-group-date-notice class="mb-4!" (editGroupDates)="variantLock.openModal()" />
                                     }
                                     <!-- releaseDate works similar to Exam.visibleDate -->
                                     <tumaet-ui-form-field
                                         #releaseDateField
                                         id="pick-releaseDate"
-                                        class="form-element mb-3"
+                                        class="form-element mb-4!"
                                         [label]="'artemisApp.quizExercise.releaseDate' | artemisTranslate"
                                         controlId="pick-releaseDate-input"
                                     >
@@ -225,25 +225,23 @@
                                 <div>
                                     <tumaet-ui-form-field [label]="'artemisApp.quizExercise.quizMode.title' | artemisTranslate" controlId="quizMode">
                                         <jhi-help-icon tumAetUiFormFieldLabel text="artemisApp.quizExercise.quizMode.explanation" />
-                                        <p-select
+                                        <tumaet-ui-select
                                             inputId="quizMode"
+                                            class="flex! w-full!"
                                             [options]="quizModeOptions()"
                                             optionLabel="label"
                                             optionValue="value"
                                             [(ngModel)]="quizExercise().quizMode"
                                             (ngModelChange)="cacheValidation()"
                                             name="quizMode"
-                                            styleClass="w-100"
-                                            appendTo="body"
                                         />
                                     </tumaet-ui-form-field>
                                     @if (quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
-                                        <div class="d-flex align-items-center gap-2 mt-2 mb-2">
-                                            <p-checkbox
+                                        <div class="mt-2 mb-2 flex items-center gap-2">
+                                            <tumaet-ui-checkbox
                                                 inputId="cbScheduleQuizStart"
                                                 [(ngModel)]="scheduleQuizStart"
                                                 (ngModelChange)="cacheValidation()"
-                                                [binary]="true"
                                                 name="scheduleQuizStart"
                                             />
                                             <label for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"></label>
@@ -256,7 +254,7 @@
                                         <tumaet-ui-form-field
                                             #dueDateField
                                             id="pick-dueDate"
-                                            class="form-element mb-3"
+                                            class="form-element mb-4!"
                                             [label]="'artemisApp.exercise.dueDate' | artemisTranslate"
                                             controlId="pick-dueDate-input"
                                             [invalid]="!!quizExercise().dueDateError"
@@ -282,7 +280,7 @@
                                                 <!-- startTime works similar to Exam.startDate -->
                                                 <tumaet-ui-form-field
                                                     #startTimeField
-                                                    class="form-element mb-3"
+                                                    class="form-element mb-4!"
                                                     [label]="'artemisApp.quizExercise.startTime' | artemisTranslate"
                                                     [controlId]="'quiz-batch-start-time-' + $index"
                                                     [invalid]="quizBatch.startTimeError ?? false"
@@ -322,7 +320,7 @@
                                     </div>
                                     <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.competencies"></span>
                                 </div>
-                                <div class="form-group">
+                                <div>
                                     <jhi-competency-selection
                                         id="competencies"
                                         [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
@@ -353,7 +351,7 @@
                 }
 
                 <!-- Save -->
-                <div class="section-card section-card--save mb-3">
+                <div class="section-card section-card--save mb-4!">
                     <div class="section-header">
                         <div class="section-header-text">
                             @if (!pendingChangesCache() && !isSaving()) {
@@ -378,7 +376,7 @@
                                 }
                             </ng-template>
                             @if (warningQuizCache()) {
-                                <span class="save-status save-status--warning" [ngbTooltip]="warningTranslate" placement="top auto">
+                                <span class="save-status save-status--warning" [tumAetUiTooltip]="warningTranslate" tumAetUiTooltipPlacement="top">
                                     <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                                     <span>({{ invalidWarnings().length }})</span>
                                 </span>
@@ -391,8 +389,9 @@
                                     minlength="3"
                                     type="text"
                                     placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
-                                    pInputText
-                                    class="footer-notification-input p-inputtext-sm"
+                                    tumAetUiInput
+                                    tumAetUiInputSize="small"
+                                    class="footer-notification-input"
                                     name="notificationText"
                                     id="field_notification_text"
                                     [(ngModel)]="notificationText"
@@ -481,7 +480,7 @@
                         </button>
                         <textarea
                             [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
-                            pTextarea
+                            tumAetUiTextarea
                             class="global-refinement-fab-textarea"
                             [placeholder]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
                             maxlength="2000"
@@ -514,3 +513,4 @@
     </div>
     <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId()" (addQuestions)="appendAiGeneratedQuestions($event)" />
 }
+<tumaet-ui-confirm-dialog />

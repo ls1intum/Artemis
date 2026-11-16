@@ -301,7 +301,7 @@ describe('QuizParticipationComponent - live mode', () => {
         component.submission.set({ submitted: true });
         fixture.detectChanges();
 
-        const confirmation = () => fixture.nativeElement.querySelector('.quiz-submitted-overlay');
+        const confirmation = () => fixture.nativeElement.querySelector('[data-testid="quiz-submission-confirmation"]');
         expect(confirmation()?.textContent).toContain('artemisApp.quizExercise.successfullySubmittedText');
         const dismissButton = fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]') as HTMLButtonElement;
         expect(dismissButton).not.toBeNull();

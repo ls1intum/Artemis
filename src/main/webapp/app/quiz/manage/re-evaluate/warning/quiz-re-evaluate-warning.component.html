@@ -96,9 +96,9 @@
             }
         </h4>
         &nbsp;
-        <div class="form-group">
+        <div class="mb-4!">
             @if (!successful()) {
-                <button [disabled]="busy()" type="button" tumAetUiButton size="small" severity="secondary" data-dismiss="modal" (click)="clear()">
+                <button [disabled]="busy()" type="button" tumAetUiButton size="small" severity="secondary" (click)="clear()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
             }

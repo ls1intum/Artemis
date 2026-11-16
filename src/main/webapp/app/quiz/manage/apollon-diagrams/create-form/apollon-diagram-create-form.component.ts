@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -10,7 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 
 /** The diagram types Artemis offers for Apollon drag-and-drop quiz questions. */
 const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
@@ -35,8 +34,8 @@ const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
     imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent],
 })
 export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private dialogRef = inject(TumAetUiDialogRef<ApollonDiagram>);
+    private dialogConfig = inject(TumAetUiDialogConfig<{ apollonDiagram: ApollonDiagram }>);
     private apollonDiagramService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
@@ -64,7 +63,7 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
     faSave = faSave;
 
     ngOnInit() {
-        this.apollonDiagram = this.dialogConfig.data.apollonDiagram;
+        this.apollonDiagram = this.dialogConfig.data!.apollonDiagram;
     }
 
     /**
