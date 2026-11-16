@@ -102,10 +102,11 @@ final class SecurityTestAssignments {
                     methods.put(entry.substring(entry.indexOf(METHOD_SEPARATOR) + 1), path);
                 }
             });
+            String requestedClassPolicyPath = requested.get(qualifiedName);
             // An assigned test case loses its override without a policy file; assigning the whole class assigns every test case, while a switched-off one stays.
-            Set<String> defaults = requested.containsKey(qualifiedName) ? new LinkedHashSet<>() : new LinkedHashSet<>(defaultMethods);
+            Set<String> defaults = requestedClassPolicyPath != null ? new LinkedHashSet<>() : new LinkedHashSet<>(defaultMethods);
             defaults.removeAll(methods.keySet());
-            return new TestClass(qualifiedName, sourcePath, active, requested.get(qualifiedName), methods, defaults, switchedOff, overloaded, testCases);
+            return new TestClass(qualifiedName, sourcePath, active, requestedClassPolicyPath, methods, defaults, switchedOff, overloaded, testCases);
         }
     }
 

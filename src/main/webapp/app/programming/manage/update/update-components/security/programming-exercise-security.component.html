@@ -3,11 +3,11 @@
         <h4 class="mb-1 text-lg font-semibold">{{ 'artemisApp.programmingExercise.security.title' | artemisTranslate }}</h4>
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
-        @if (advancedViewMounted()) {
-            <!-- In simple mode, the Advanced view is only hidden, so that its unsaved changes survive switching back. -->
+        <!-- Keyed by the exercise, so the policy editor of another exercise is never reused; in simple mode it is only hidden, so its unsaved changes survive. -->
+        @for (exerciseId of advancedViewExercise(); track exerciseId) {
             <div [class.hidden]="!showAdvancedView()" data-testid="security-advanced-view">
                 <jhi-programming-exercise-security-policies
-                    [exerciseId]="programmingExercise().id!"
+                    [exerciseId]="exerciseId"
                     [config]="config()"
                     [versionOptions]="frameworkVersions()"
                     [latestVersion]="latestVersion()"

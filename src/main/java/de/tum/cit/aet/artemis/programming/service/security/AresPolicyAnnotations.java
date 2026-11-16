@@ -229,6 +229,23 @@ final class AresPolicyAnnotations {
     }
 
     /**
+     * @return whether the method annotation has arguments other than {@code value} and {@code activated} that the class annotation does not have alike
+     */
+    private static boolean hasOwnArguments(Annotation methodAnnotation, Annotation classAnnotation) {
+        return !otherArguments(methodAnnotation).isEmpty() && !otherArguments(methodAnnotation).equals(otherArguments(classAnnotation));
+    }
+
+    private static Map<String, String> otherArguments(Annotation annotation) {
+        Map<String, String> arguments = new LinkedHashMap<>();
+        annotation.arguments().forEach((name, argument) -> {
+            if (!VALUE_ARGUMENT.equals(name) && !ACTIVATED_ARGUMENT.equals(name)) {
+                arguments.put(name, argument.expression());
+            }
+        });
+        return arguments;
+    }
+
+    /**
      * Renders the annotation for a test method, written like the annotation of its class: with the same name and the same {@code withinPath} argument, so
      * Ares resolves the policy file the same way.
      *
@@ -249,7 +266,8 @@ final class AresPolicyAnnotations {
     /**
      * Rewrites the {@code @Policy} annotations of a test class so that its test cases use the given policy files: the annotation of the class points to
      * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, the annotations of the methods in
-     * {@code keptMethods} stay as they are, and the annotations of the other methods are removed. Annotations that already point to the right file are not
+     * {@code keptMethods} stay as they are, and the annotations of the other methods are removed, except one with arguments of its own, e.g. another
+     * {@code withinPath}, which points to {@code classPolicyPath} if the class has one. Annotations that already point to the right file are not
      * touched, and new method annotations go on their own line above the method's first test annotation, indented like it.
      *
      * @param path              the path of the file relative to the repository root
@@ -271,7 +289,10 @@ final class AresPolicyAnnotations {
             replacements.add(withPolicyPath(classAnnotation, classPolicyPath));
         }
         type.methodPolicies().forEach((method, annotation) -> {
-            String target = methodPolicyPaths.get(method);
+            // A method annotation with arguments of its own, e.g. another withinPath, is not redundant under a class annotation with a policy file: it points
+            // to that policy instead of being removed, so its arguments stay.
+            String target = methodPolicyPaths.getOrDefault(method,
+                    classPolicyPath != null && !keptMethods.contains(method) && hasOwnArguments(annotation, classAnnotation) ? classPolicyPath : null);
             if (target == null && keptMethods.contains(method)) {
                 return;
             }

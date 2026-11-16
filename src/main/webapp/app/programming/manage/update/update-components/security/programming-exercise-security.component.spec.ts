@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +21,7 @@ import {
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 
 const VERSIONS: SecurityFrameworkVersions = {
     selectableVersions: ['3.4.1', '3.3.0', '3.2.2'],
@@ -1357,5 +1360,61 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
         expect(query(element, 'security-import-action')?.querySelectorAll('button')).toHaveLength(3);
         expect(query(element, 'security-activate-toggle')).toBeNull();
         expect(query(element, 'security-framework-version-select')).toBeNull();
+    });
+});
+
+/** Stands in for the policy editor, whose lifetime the card decides. */
+@Component({ selector: 'jhi-programming-exercise-security-policies', template: '' })
+class PolicyEditorStubComponent {
+    readonly exerciseId = input.required<number>();
+    readonly config = input<SecurityFrameworkConfig>();
+    readonly versionOptions = input<unknown>();
+    readonly latestVersion = input<string>();
+    readonly activationVersion = input<string>();
+    readonly aresApiUses = input<unknown>();
+    readonly canCommit = input(false);
+    readonly locked = input(false);
+    readonly repositoryLink = input<unknown>();
+    readonly activateRequested = output<string>();
+    readonly deactivateRequested = output<void>();
+    readonly configChange = output<SecurityFrameworkConfig>();
+}
+
+describe('ProgrammingExerciseSecurityComponent policy editor', () => {
+    let fixture: ComponentFixture<ProgrammingExerciseSecurityComponent>;
+    let service: SecurityServiceMock;
+
+    beforeEach(() => {
+        service = createServiceMock();
+        service.getConfig.mockReturnValue(of(configuredConfig()));
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }, { provide: SecurityFrameworkService, useValue: service }],
+        });
+        TestBed.overrideComponent(ProgrammingExerciseSecurityComponent, {
+            remove: { imports: [ProgrammingExerciseSecurityPoliciesComponent] },
+            add: { imports: [PolicyEditorStubComponent] },
+        });
+        fixture = TestBed.createComponent(ProgrammingExerciseSecurityComponent);
+        fixture.componentRef.setInput('mode', 'edit');
+        fixture.componentRef.setInput('advancedMode', true);
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+    });
+
+    function showExercise(id: number): PolicyEditorStubComponent {
+        fixture.componentRef.setInput('programmingExercise', javaExercise(id));
+        fixture.detectChanges();
+        fixture.detectChanges();
+        return fixture.debugElement.query(By.directive(PolicyEditorStubComponent)).componentInstance as PolicyEditorStubComponent;
+    }
+
+    it('creates a new policy editor for another configured exercise instead of reusing the one with the changes of the previous exercise', () => {
+        const first = showExercise(42);
+        expect(first.exerciseId()).toBe(42);
+
+        const second = showExercise(43);
+
+        expect(second).not.toBe(first);
+        expect(second.exerciseId()).toBe(43);
+        expect(fixture.debugElement.queryAll(By.directive(PolicyEditorStubComponent))).toHaveLength(1);
     });
 });

@@ -786,6 +786,21 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void renamingAPolicyKeepsTheOtherArgumentsOfAMethodAnnotation() throws Exception {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()",
+                "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", withinPath = \"test\")\n    @Test\n    void testBubbleSort()"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+        SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
+
+        editorService.commit(exercise(), change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", renamed, BOTH_CLASSES)), user);
+
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("Policy(value = \"SortingPolicy.yaml\")\nclass SortingTest")
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SortingPolicy.yaml\", withinPath = \"test\")\n    @Test\n    void testBubbleSort()"));
+        assertThat(editorService.getEditor(exercise()).policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+    }
+
+    @Test
     void renamingAPolicyKeepsTheOverridesOfTestCasesWithoutAPolicyFile() throws Exception {
         pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()")
                 .replace("    @Test\n    void testMergeSort()", "    @de.tum.cit.ase.ares.api.Policy(activated = false)\n    @Test\n    void testMergeSort()"));

@@ -266,6 +266,8 @@ export class ProgrammingExerciseSecurityComponent {
     readonly advancedViewMounted = computed(
         () => this.isEditMode() && this.programmingExercise().id !== undefined && this.advancedViewOpenedFor() === this.programmingExercise().id,
     );
+    /** The exercise of the mounted Advanced view, as the key the template creates the policy editor for; empty while it is not mounted. */
+    protected readonly advancedViewExercise = computed(() => (this.advancedViewMounted() ? [this.programmingExercise().id!] : []));
 
     /** The route to the tests repository of a course exercise; exam exercises have none here. */
     readonly testsRepositoryLink = computed<(string | number)[] | undefined>(() => {
