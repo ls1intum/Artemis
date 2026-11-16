@@ -8,15 +8,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -346,9 +342,10 @@ public class JWTFilter extends GenericFilterBean {
             if ("/websocket/websocket".equals(requestUri) && "cookie".equals(source)) {
                 return null;
             }
-            // Log the invalid JWT token details to find out how it was created in case of accidental issues
-            log.debug("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, user_agent: {}, request_uri: {}, headers: {} }", source,
-                    httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader(HttpHeaders.USER_AGENT), requestUri, compactHeaders(httpServletRequest));
+            // Only a few request values are logged, never the headers of the request, as these carry the credentials of the client
+            log.debug("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, method: {}, request_uri: {}, host: {}, user_agent: {} }", source,
+                    httpServletRequest.getRemoteAddr(), httpServletRequest.getMethod(), requestUri, httpServletRequest.getHeader(HttpHeaders.HOST),
+                    httpServletRequest.getHeader(HttpHeaders.USER_AGENT));
             return null;
         }
 
@@ -359,25 +356,6 @@ public class JWTFilter extends GenericFilterBean {
         // The scheme of an Authorization header is case-insensitive; a token sent as "bearer art_pat_..." must not reach the JWT check, which logs the headers.
         return authorizationHeader != null && authorizationHeader.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())
                 && authorizationHeader.substring(BEARER_PREFIX.length()).trim().startsWith(PERSONAL_ACCESS_TOKEN_PREFIX);
-    }
-
-    private static String compactHeaders(HttpServletRequest request) {
-        if (request.getHeaderNames() == null) {
-            return "{}";
-        }
-        return Collections.list(request.getHeaderNames()).stream().map(name -> name + "=" + request.getHeader(name)).collect(Collectors.joining(", ", "{", "}"));
-    }
-
-    /**
-     * Collects the headers of the request and formats them as a JSON-like string
-     *
-     * @param request the http request
-     * @return the formatted headers
-     */
-    private static String collectHeaders(HttpServletRequest request) {
-        List<String> headerEntries = new ArrayList<>();
-        request.getHeaderNames().asIterator().forEachRemaining(headerName -> headerEntries.add("\"%s\": \"%s\"".formatted(headerName, request.getHeader(headerName))));
-        return "[\n" + String.join(",\n", headerEntries) + "\n]";
     }
 
     /**

@@ -18,6 +18,7 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -29,6 +30,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
@@ -395,5 +400,35 @@ class JWTFilterTest {
         jwtFilter.doFilter(request, response, filterChain);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void anInvalidTokenIsLoggedWithoutTheHeadersOfTheRequest() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(JWTFilter.class);
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        logger.setLevel(Level.DEBUG);
+        logger.addAppender(logAppender);
+        try {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/core/test");
+            request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + "not-a-valid-token-value");
+            request.addHeader(HttpHeaders.COOKIE, "other=cookie-value-1234");
+            request.addHeader("X-Custom-Header", "custom-header-value-5678");
+            request.addHeader(HttpHeaders.HOST, "artemis.example.org");
+            request.addHeader(HttpHeaders.USER_AGENT, "test-agent/1.0");
+
+            jwtFilter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+            assertThat(logAppender.list).isNotEmpty();
+            String logged = logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).reduce("", String::concat);
+            assertThat(logged).contains("GET", "/api/core/test", "artemis.example.org", "test-agent/1.0");
+            assertThat(logged).doesNotContain("not-a-valid-token-value", "cookie-value-1234", "custom-header-value-5678");
+        }
+        finally {
+            logger.detachAppender(logAppender);
+            logAppender.stop();
+            logger.setLevel(previousLevel);
+        }
     }
 }
