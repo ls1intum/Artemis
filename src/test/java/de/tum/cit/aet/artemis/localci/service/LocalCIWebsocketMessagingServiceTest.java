@@ -76,8 +76,8 @@ class LocalCIWebsocketMessagingServiceTest {
     @Test
     void finishedBuildJobUpdateSendsTheDisplayNameInsteadOfTheAddressToTheCourseTopic() {
         FinishedBuildJobDTO job = new FinishedBuildJobDTO("job2", "job2", "[10.0.0.1]:5701", 1L, COURSE_ID, 3L, BuildStatus.SUCCESSFUL, RepositoryType.USER, "repo",
-                RepositoryType.USER, ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), "commit", null);
-        // the port of an agent changes when it reconnects, so the agent is found by its host
+                RepositoryType.USER, ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), "commit", null, "Original Agent One");
+        // A replacement agent on the same host must not overwrite the name recorded for this job.
         var agent = new BuildAgentInformation(new BuildAgentDTO("agent1", "[10.0.0.1]:5999", "Agent One"), 1, 0, List.of(), null, null, null, 0);
 
         messagingService.sendFinishedBuildJobUpdate(job, List.of(agent));
@@ -93,11 +93,11 @@ class LocalCIWebsocketMessagingServiceTest {
         assertThat(byDestination.get(LocalCIWebsocketTopics.ADMIN_FINISHED_JOBS.at())).isEqualTo(job);
         assertThat(byDestination.get(LocalCIWebsocketTopics.ADMIN_BUILD_JOB.at("job2"))).isEqualTo(job);
         var courseList = (CourseFinishedBuildJobDTO) byDestination.get(LocalCIWebsocketTopics.COURSE_FINISHED_JOBS.at(COURSE_ID));
-        assertThat(courseList.buildAgentDisplayName()).isEqualTo("Agent One");
-        assertThat(JsonObjectMapper.get().writeValueAsString(courseList)).doesNotContain("10.0.0.1", "buildAgentAddress");
-        // an agent that is not known (anymore) has no display name, the address is not sent instead
+        assertThat(courseList.buildAgentDisplayName()).isEqualTo("Original Agent One");
+        assertThat(JsonObjectMapper.get().writeValueAsString(courseList)).contains("Original Agent One").doesNotContain("10.0.0.1", "buildAgentAddress");
+        // The recorded name survives the agent leaving and takes precedence over a current agent on the same host.
         var courseDetail = (CourseFinishedBuildJobDTO) byDestination.get(LocalCIWebsocketTopics.COURSE_BUILD_JOB.at(COURSE_ID, "job2"));
-        assertThat(courseDetail.buildAgentDisplayName()).isNull();
-        assertThat(JsonObjectMapper.get().writeValueAsString(courseDetail)).doesNotContain("10.0.0.1", "buildAgentAddress");
+        assertThat(courseDetail.buildAgentDisplayName()).isEqualTo("Original Agent One");
+        assertThat(JsonObjectMapper.get().writeValueAsString(courseDetail)).contains("Original Agent One").doesNotContain("10.0.0.1", "buildAgentAddress");
     }
 }

@@ -6,20 +6,27 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
  * Unit tests for turning a finished build job into the row that is kept in the build history.
  * <p>
- * The conversion copies twenty-one fields out of four nested records, and several of them have the same type: three
+ * The conversion copies the build fields out of four nested records, and several of them have the same type: three
  * timestamps, two repository types, and a handful of ids and hashes. Two of those swapped still compiles, still stores,
  * and still renders - the build history simply shows a build that started after it finished, or attributes a push to the
  * wrong repository. Giving every field a value that could only have come from one place is what makes such a swap
@@ -34,7 +41,11 @@ class BuildJobTest {
     private static final ZonedDateTime COMPLETED_AT = ZonedDateTime.parse("2026-03-01T10:07:30Z");
 
     private static BuildJobQueueItem finishedQueueItem() {
-        return new BuildJobQueueItem("job-id", "job-name", new BuildAgentDTO("agent-name", "10.0.0.5:5701", "agent-display-name"), 10L, 1L, 3L, 2, 4, BuildStatus.BUILDING,
+        return finishedQueueItem("agent-display-name");
+    }
+
+    private static BuildJobQueueItem finishedQueueItem(String displayName) {
+        return new BuildJobQueueItem("job-id", "job-name", new BuildAgentDTO("agent-name", "10.0.0.5:5701", displayName), 10L, 1L, 3L, 2, 4, BuildStatus.BUILDING,
                 new RepositoryInfo("abc-student", RepositoryType.USER, RepositoryType.TESTS, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(SUBMITTED_AT, STARTED_AT, COMPLETED_AT, null, 150), new BuildConfig("script", "ghcr.io/example/image:1", "commit-to-build", "assignment-commit",
                         "test-commit", "main", null, null, false, false, List.of(), 0, null, null, null, null),
@@ -80,4 +91,56 @@ class BuildJobTest {
         assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.FAILED);
         assertThat(buildJob.getBuildJobId()).isEqualTo("job-id");
     }
+
+    @Test
+    void finishedJobRetainsAgentNameWhenTheAgentHasLeft() {
+        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(), BuildStatus.SUCCESSFUL, null));
+        var courseView = CourseFinishedBuildJobDTO.of(finished, List.of());
+
+        assertThat(courseView.buildAgentDisplayName()).isEqualTo("agent-display-name");
+        assertThat(JsonObjectMapper.get().writeValueAsString(courseView)).contains("agent-display-name").doesNotContain("10.0.0.5", "buildAgentAddress");
+        assertThat(JsonObjectMapper.get().writeValueAsString(finished)).contains("10.0.0.5:5701").doesNotContain("buildAgentDisplayName");
+    }
+
+    @Test
+    void finishedJobBoundsAnUnrestrictedConfiguredNameToTheStorageLimit() {
+        String displayName = "Long agent name ".repeat(30);
+        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(displayName), BuildStatus.SUCCESSFUL, null));
+
+        assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isEqualTo(displayName.substring(0, 255));
+    }
+
+    @Test
+    void finishedJobDoesNotSplitASupplementaryCharacterAtTheStorageLimit() {
+        String expectedName = "a".repeat(254) + "😀";
+        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(expectedName + " suffix"), BuildStatus.SUCCESSFUL, null));
+
+        assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isEqualTo(expectedName);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t\n" })
+    void finishedJobRetainsShortNameWhenConfiguredDisplayNameIsBlank(String displayName) {
+        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(displayName), BuildStatus.SUCCESSFUL, null));
+
+        assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isEqualTo("agent-name");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t\n" })
+    void legacyJobUsesCurrentAgentShortNameWhenConfiguredDisplayNameIsBlank(String displayName) {
+        var legacyJob = new BuildJob();
+        legacyJob.setBuildAgentAddress("10.0.0.5:5701");
+        legacyJob.setParticipationId(10L);
+        legacyJob.setCourseId(1L);
+        legacyJob.setExerciseId(3L);
+        var agent = new BuildAgentInformation(new BuildAgentDTO("agent-name", "10.0.0.5:5999", displayName), 1, 0, List.of(), null, null, null, 0);
+        var finished = FinishedBuildJobDTO.of(legacyJob);
+
+        assertThat(CourseFinishedBuildJobDTO.of(finished, List.of(agent)).buildAgentDisplayName()).isEqualTo("agent-name");
+        assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isNull();
+    }
+
 }

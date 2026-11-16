@@ -26,6 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -35,6 +36,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -509,6 +512,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFinishedBuildJobViewsOfACourseOmitTheAddressOfTheBuildAgent() throws Exception {
         finishedJob1.setBuildAgentAddress("[10.20.30.40]:5701");
+        buildAgentInformation.clear();
         buildJobRepository.save(finishedJob1);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
 
@@ -518,7 +522,30 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         assertThat(list).hasSize(1).allSatisfy(view -> assertThat(view).doesNotContainKey("buildAgentAddress"));
         assertThat(single).doesNotContainKey("buildAgentAddress");
+        String expectedName = buildAgentDisplayName == null || buildAgentDisplayName.isBlank() ? buildAgentShortName : buildAgentDisplayName;
+        assertThat(single).containsEntry("buildAgentDisplayName", expectedName);
+        assertThat(list.getFirst()).containsEntry("buildAgentDisplayName", expectedName);
         assertThat(list.toString() + single).doesNotContain("10.20.30.40");
+    }
+
+    private static Stream<Arguments> longAgentNames() {
+        return Stream.of(Arguments.of("a".repeat(256), "a".repeat(255)), Arguments.of("a".repeat(254) + "😀 suffix", "a".repeat(254) + "😀"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("longAgentNames")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testFinishedJobPersistsALongConfiguredAgentNameWithoutRejectingTheBuild(String configuredName, String expectedName) throws Exception {
+        var queueItem = new BuildJobQueueItem(job1, new BuildAgentDTO("agent-short-name", "[10.20.30.40]:5701", configuredName), 0);
+        var finishedJob = new BuildJob(queueItem, BuildStatus.SUCCESSFUL, null);
+        finishedJob.setBuildJobId("long-agent-name-job");
+        buildJobRepository.save(finishedJob);
+        buildAgentInformation.clear();
+
+        var single = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + finishedJob.getBuildJobId(), HttpStatus.OK, Map.class);
+
+        assertThat(single).containsEntry("buildAgentDisplayName", expectedName).doesNotContainKey("buildAgentAddress");
+        assertThat(single.toString()).doesNotContain("10.20.30.40");
     }
 
     @Test
