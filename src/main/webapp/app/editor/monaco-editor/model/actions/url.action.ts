@@ -1,8 +1,29 @@
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
-import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
+import { isHttpUrl, sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TranslateService } from '@ngx-translate/core';
+import { isInLinkOrCode } from 'app/editor/monaco-editor/model/actions/markdown-link-context';
+
+/** Punctuation that Markdown would read in a link destination: escapes, table cell borders, entities, code spans and math formulas. */
+const DESTINATION_ESCAPED_CHARACTERS = ['\\', '|', '&', '`', '$'];
+
+/**
+ * Writes a URL as a Markdown link destination that renders to the same address. The punctuation Markdown would read is escaped with a
+ * backslash, which CommonMark allows for any punctuation in a destination, and the parentheses that would end the link early are
+ * percent-encoded. Query separators such as `&` are kept.
+ * @param url The URL as copied.
+ * @return the destination to put between the parentheses of the link
+ */
+function toLinkDestination(url: string): string {
+    let destination = url;
+    for (const character of DESTINATION_ESCAPED_CHARACTERS) {
+        destination = destination.replaceAll(character, `\\${character}`);
+    }
+    return destination.replaceAll('(', '%28').replaceAll(')', '%29');
+}
 
 interface UrlArguments {
     text: string;
@@ -18,12 +39,33 @@ export class UrlAction extends TextStyleTextEditorAction {
     static readonly DEFAULT_LINK_PLACEHOLDER = 'https://';
     static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](${this.DEFAULT_LINK_PLACEHOLDER})`;
 
+    private disposablePasteInterceptor?: Disposable;
+
     constructor(private canExecute: () => boolean = () => true) {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
     }
 
     setExecutionGuard(canExecute: () => boolean): void {
         this.canExecute = canExecute;
+    }
+
+    /**
+     * Registers the action with the given editor and adds a paste interceptor that turns the selected text into a link when a URL is pasted over it.
+     * @param editor The editor to register the action in.
+     * @param translateService The translation service to use for translating the action label.
+     */
+    override register(editor: TextEditor, translateService: TranslateService) {
+        super.register(editor, translateService);
+        this.disposablePasteInterceptor = editor.addPasteInterceptor((pastedText) => this.wrapSelectionWithPastedUrl(editor, pastedText));
+    }
+
+    /**
+     * Disposes the action and removes the paste interceptor from the editor it was registered in.
+     */
+    override dispose() {
+        super.dispose();
+        this.disposablePasteInterceptor?.dispose();
+        this.disposablePasteInterceptor = undefined;
     }
 
     /**
@@ -55,6 +97,46 @@ export class UrlAction extends TextStyleTextEditorAction {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
         editor.focus();
+    }
+
+    /**
+     * If the pasted text is a single http(s) URL and text on one line is selected, replaces the selection with "[selectedText](url)"
+     * and places the cursor after the link. The selected text is kept as it is, only its backslashes and square brackets are escaped.
+     * The paste is left to the editor if the action may not run, or if the selection is blank, is itself a URL, or lies inside an
+     * existing link or in code.
+     * @param editor The editor in which the text was pasted.
+     * @param pastedText The text the user pasted.
+     * @return true if the selection was replaced by a link, false if the editor should paste the text as usual.
+     */
+    private wrapSelectionWithPastedUrl(editor: TextEditor, pastedText: string): boolean {
+        const selection = editor.getSelection();
+        const start = selection.getStartPosition();
+        const end = selection.getEndPosition();
+        if (!this.canExecute() || !isHttpUrl(pastedText) || start.getLineNumber() !== end.getLineNumber() || start.getColumn() === end.getColumn()) {
+            return false;
+        }
+        const selectedText = this.getTextAtRange(editor, selection) ?? '';
+        if (!selectedText.trim() || isHttpUrl(selectedText) || this.isInLinkOrCode(editor, selection)) {
+            return false;
+        }
+        const label = selectedText.replace(/[\\[\]]/g, '\\$&');
+        const url = toLinkDestination(pastedText.trim());
+        const link = `[${label}](${url})`;
+        this.replaceTextAtRange(editor, selection, link);
+        editor.setPosition(start.withColumn(start.getColumn() + link.length));
+        return true;
+    }
+
+    /**
+     * Checks whether a selection on one line lies where a pasted link would not work, such as inside an existing link or in code.
+     * @param editor The editor that contains the selection.
+     * @param selection The selection, which starts and ends on the same line.
+     * @return true if the paste must be left to the editor
+     */
+    private isInLinkOrCode(editor: TextEditor, selection: TextEditorRange): boolean {
+        const lines = Array.from({ length: this.getLineCount(editor) }, (_, index) => this.getLineText(editor, index + 1) ?? '');
+        const start = selection.getStartPosition();
+        return isInLinkOrCode(lines, start.getLineNumber() - 1, start.getColumn() - 1, selection.getEndPosition().getColumn() - 1);
     }
 
     /**

@@ -61,6 +61,29 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         }
     });
 
+    it('setBackgroundInert keeps an existing overlay container interactive, so dialogs and menus opened from the fullscreen sidebar stay usable', () => {
+        const host = fixture.nativeElement as HTMLElement;
+        const wrapper = document.createElement('div');
+        const overlayContainer = document.createElement('div');
+        overlayContainer.className = 'cdk-overlay-container';
+        const otherSibling = document.createElement('div');
+        wrapper.append(overlayContainer, otherSibling, host);
+        document.body.appendChild(wrapper);
+
+        try {
+            component['setBackgroundInert'](true);
+
+            expect(overlayContainer.hasAttribute('inert')).toBe(false);
+            expect(overlayContainer.hasAttribute('aria-hidden')).toBe(false);
+            // The rest of the page is still made inert.
+            expect(otherSibling.hasAttribute('inert')).toBe(true);
+            expect(otherSibling.getAttribute('aria-hidden')).toBe('true');
+        } finally {
+            component['setBackgroundInert'](false);
+            wrapper.remove();
+        }
+    });
+
     it('renders the vertical tumaet-ui-splitter when fullscreen with sidebar', async () => {
         fixture.componentRef.setInput('showSidebar', true);
         component.open();

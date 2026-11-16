@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { ArtemisNavigationUtilService, getOnlineEditorLink } from 'app/foundation/util/navigation.utils';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('Navigation Util Service', () => {
@@ -79,5 +79,32 @@ describe('Navigation Util Service', () => {
         expect(creationMock).toHaveBeenCalledOnce();
         expect(serializationMock).toHaveBeenCalledWith(urlTreeMock);
         expect(windowStub).toHaveBeenCalledWith('serializationMockTestValue', '_blank');
+    });
+});
+
+describe('getOnlineEditorLink', () => {
+    it('should open the participation in the code editor of the course management', () => {
+        expect(getOnlineEditorLink(10, 1, 3)).toEqual(['/course-management', '10', 'programming-exercises', '1', 'code-editor', 'participations', '3']);
+    });
+
+    it('should open the participation of an exam exercise below its exam and exercise group', () => {
+        expect(getOnlineEditorLink(10, 1, 3, 8, 9)).toEqual([
+            '/course-management',
+            '10',
+            'exams',
+            '9',
+            'exercise-groups',
+            '8',
+            'programming-exercises',
+            '1',
+            'code-editor',
+            'participations',
+            '3',
+        ]);
+    });
+
+    it('should never address the student route, which shows only the own participation of the viewer', () => {
+        expect(getOnlineEditorLink(10, 1, 3)).not.toContain('courses');
+        expect(getOnlineEditorLink(10, 1, 3, 8, 9)).not.toContain('courses');
     });
 });

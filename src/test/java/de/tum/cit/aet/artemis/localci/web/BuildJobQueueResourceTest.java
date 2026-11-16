@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.localci.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,10 +29,13 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -60,11 +65,18 @@ class BuildJobQueueResourceTest {
     @Mock
     private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
+    @Mock
+    private ParticipationTestRepository participationRepository;
+
+    @Mock
+    private ParticipationAuthorizationCheckService participationAuthorizationCheckService;
+
     private BuildJobQueueResource buildJobQueueResource;
 
     @BeforeEach
     void setUp() {
-        buildJobQueueResource = new BuildJobQueueResource(localCIBuildJobQueueService, buildJobRepository, distributedDataAccessService);
+        buildJobQueueResource = new BuildJobQueueResource(localCIBuildJobQueueService, buildJobRepository, distributedDataAccessService, participationRepository,
+                participationAuthorizationCheckService);
     }
 
     private static BuildJobQueueItem job(String id, long courseId) {
@@ -201,7 +213,7 @@ class BuildJobQueueResourceTest {
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", COURSE_ID))));
 
         assertThat(buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(localCIBuildJobQueueService).cancelBuildJob("job-1");
+        verify(localCIBuildJobQueueService).cancelBuildJobOfCourse("job-1", COURSE_ID);
     }
 
     @Test
@@ -210,7 +222,7 @@ class BuildJobQueueResourceTest {
         when(processingJobs.get("job-1")).thenReturn(job("job-1", COURSE_ID));
 
         assertThat(buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(localCIBuildJobQueueService).cancelBuildJob("job-1");
+        verify(localCIBuildJobQueueService).cancelBuildJobOfCourse("job-1", COURSE_ID);
     }
 
     @Test
@@ -220,7 +232,7 @@ class BuildJobQueueResourceTest {
         when(processingJobs.get("job-1")).thenReturn(job("job-1", 999L));
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1"));
-        verify(localCIBuildJobQueueService, never()).cancelBuildJob(any());
+        verify(localCIBuildJobQueueService, never()).cancelBuildJobOfCourse(any(), anyLong());
     }
 
     @Test
@@ -230,7 +242,7 @@ class BuildJobQueueResourceTest {
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", 999L))));
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1"));
-        verify(localCIBuildJobQueueService, never()).cancelBuildJob(any());
+        verify(localCIBuildJobQueueService, never()).cancelBuildJobOfCourse(any(), anyLong());
     }
 
     @Test
@@ -241,7 +253,7 @@ class BuildJobQueueResourceTest {
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>());
 
         assertThat(buildJobQueueResource.cancelBuildJob(COURSE_ID, "job-1").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(localCIBuildJobQueueService).cancelBuildJob("job-1");
+        verify(localCIBuildJobQueueService).cancelBuildJobOfCourse("job-1", COURSE_ID);
     }
 
     @Test
@@ -303,7 +315,18 @@ class BuildJobQueueResourceTest {
     void getBuildJobEstimatedStartDate_returnsTheEstimateForThatParticipation() {
         ZonedDateTime estimate = ZonedDateTime.now().plusMinutes(2);
         when(localCIBuildJobQueueService.getBuildJobEstimatedStartDate(10L)).thenReturn(estimate);
+        when(participationRepository.findByIdElseThrow(10L)).thenReturn(new ProgrammingExerciseStudentParticipation());
 
         assertThat(buildJobQueueResource.getBuildJobEstimatedStartDate(10L).getBody()).isEqualTo(estimate);
+    }
+
+    @Test
+    void getBuildJobEstimatedStartDate_forAParticipationTheUserCannotAccess_isRefusedBeforeTheQueueIsSearched() {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        when(participationRepository.findByIdElseThrow(10L)).thenReturn(participation);
+        doThrow(new AccessForbiddenException("participation", 10L)).when(participationAuthorizationCheckService).checkCanAccessParticipationElseThrow(participation);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> buildJobQueueResource.getBuildJobEstimatedStartDate(10L));
+        verify(localCIBuildJobQueueService, never()).getBuildJobEstimatedStartDate(anyLong());
     }
 }

@@ -1,13 +1,9 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 
 import org.jspecify.annotations.Nullable;
 
@@ -22,6 +18,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Scoping the repositories per container is what enforces isolation between trusted and untrusted code: a container
  * that runs student-authored tests can be provisioned with the assignment repository only, so that the instructor's
  * test files are never copied into it.
+ * <p>
+ * The name, repositories, phases and timeout carry no bean validation constraints: {@code BuildPlanConfigurationValidator}
+ * checks them on every path that saves a build plan and names the container in its error, which a constraint violation
+ * on the build plan endpoint would replace by a generic validation error.
  *
  * @param name           the name of the container, unique within the build plan
  * @param dockerImage    the Docker image the container runs, or null to use the default image of the exercise
@@ -40,9 +40,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param dockerFlags    the Docker flags this container sets for its own job, or null to use the exercise's flags
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildContainerDTO(@NotBlank @Pattern(regexp = BuildContainerDTO.BUILD_CONTAINER_NAME_REGEX) String name, String dockerImage,
-        @JsonInclude List<@NotNull @Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases, @Nullable @Positive Integer timeoutSeconds,
-        @Valid BuildContainerDockerFlagsDTO dockerFlags) {
+public record BuildContainerDTO(String name, String dockerImage, @JsonInclude List<BuildContainerRepositoryDTO> repositories, List<BuildPhaseDTO> phases,
+        @Nullable Integer timeoutSeconds, @Valid BuildContainerDockerFlagsDTO dockerFlags) {
 
     /**
      * Creates a container that checks out the repositories configured on the exercise, i.e. one that does not scope its
@@ -95,9 +94,9 @@ public record BuildContainerDTO(@NotBlank @Pattern(regexp = BuildContainerDTO.BU
         this(name, dockerImage, repositories, phases, null, dockerFlags);
     }
 
-    public static final String BUILD_CONTAINER_NAME_REGEX = "^[A-Za-z_][A-Za-z0-9_]*$";
+    private static final String BUILD_CONTAINER_NAME_REGEX = "^[A-Za-z_][A-Za-z0-9_]*$";
 
-    public static final java.util.regex.Pattern BUILD_CONTAINER_NAME_PATTERN = java.util.regex.Pattern.compile(BUILD_CONTAINER_NAME_REGEX);
+    public static final Pattern BUILD_CONTAINER_NAME_PATTERN = Pattern.compile(BUILD_CONTAINER_NAME_REGEX);
 
     /**
      * The name given to the container that a legacy build plan configuration, which only carries phases and a single

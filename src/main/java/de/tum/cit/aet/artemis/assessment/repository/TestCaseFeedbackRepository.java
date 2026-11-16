@@ -127,4 +127,17 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
                 AND feedback.testCase.id IN :testCaseIds
             """)
     void deleteByResultIdAndTestCaseIdIn(@Param("resultId") long resultId, @Param("testCaseIds") Collection<Long> testCaseIds);
+
+    /**
+     * Removes the rows of several results at once, so a caller clearing a batch of results does not scale its query count with the batch size.
+     *
+     * @param resultIds ids of the results whose rows are removed; an empty collection removes nothing
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM TestCaseFeedback feedback
+            WHERE feedback.result.id IN :resultIds
+            """)
+    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
 }

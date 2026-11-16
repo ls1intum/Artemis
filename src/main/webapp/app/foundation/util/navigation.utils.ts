@@ -177,6 +177,27 @@ export const getLocalRepositoryLink = (
 };
 
 /**
+ * The link that opens the repository of a participation in the editable code editor of the course management.
+ * <p>
+ * The student route `/courses/:courseId/exercises/programming-exercises/:exerciseId/code-editor/:participationId` is the
+ * exercise page of the viewer: it always shows the participation of the viewer, so it redirects an instructor to their own
+ * participation, or shows no editor at all when they never started the exercise. It cannot show the code of a student.
+ *
+ * @param courseId        the id of the course
+ * @param exerciseId      the id of the programming exercise
+ * @param participationId the id of the participation whose repository is opened
+ * @param exerciseGroupId the id of the exercise group, for an exam exercise
+ * @param examId          the id of the exam, for an exam exercise
+ */
+export const getOnlineEditorLink = (courseId: number, exerciseId: number, participationId: number, exerciseGroupId: number = 0, examId = 0): string[] => {
+    const suffix = ['programming-exercises', exerciseId.toString(), 'code-editor', 'participations', participationId.toString()];
+
+    return examId > 0
+        ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'exercise-groups', exerciseGroupId.toString(), ...suffix]
+        : ['/course-management', courseId.toString(), ...suffix];
+};
+
+/**
  * A generic method which navigates into a subpage of an exam exercise
  * @router the router th component uses to navigate into different webpages
  * @subPage the subpage of an exercise which we want to navigate into, e.g. participations

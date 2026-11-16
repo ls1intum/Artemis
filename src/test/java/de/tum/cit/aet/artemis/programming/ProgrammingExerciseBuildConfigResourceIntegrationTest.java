@@ -7,7 +7,10 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -20,10 +23,15 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -438,6 +446,59 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
     }
 
+    private void releaseTheExercise() {
+        // the fixture exercise is not released yet, and students may not see it before
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private void setBuildTimeWindow(BuildTimeWindow window) {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEditingTheBuildPlanKeepsTheBuildTimeWindow() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        setBuildTimeWindow(window);
+
+        var response = request.putWithResponseBody(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 240), UpdateProgrammingExerciseBuildConfigDTO.class,
+                HttpStatus.OK);
+
+        assertThat(response.advancedSettings().buildTimeWindow()).isEqualTo(window);
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow().getBuildTimeWindow()).isEqualTo(window);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentsSeeOnlyTheBuildTimeWindowOfTheBuildConfig() throws Exception {
+        releaseTheExercise();
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        setBuildTimeWindow(window);
+
+        String body = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, String.class);
+
+        var buildConfig = JsonMapper.builder().build().readTree(body).get("exercise").get("buildConfig");
+        assertThat(buildConfig).as("the details of an exercise with a window carry it").isNotNull();
+        assertThat(ZonedDateTime.parse(buildConfig.get("advancedSettings").get("buildTimeWindow").get("start").asString()).toInstant()).isEqualTo(window.start().toInstant());
+        assertThat(ZonedDateTime.parse(buildConfig.get("advancedSettings").get("buildTimeWindow").get("end").asString()).toInstant()).isEqualTo(window.end().toInstant());
+        // nothing else of the build configuration is for students: not the build plan, not the Docker flags, not the images
+        assertThat(buildConfig.propertyNames()).doesNotContain("buildPlanConfiguration", "dockerFlags", "theiaImage", "testCheckoutPath", "assignmentCheckoutPath",
+                "solutionCheckoutPath");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentsGetNoBuildConfigWithoutABuildTimeWindow() throws Exception {
+        releaseTheExercise();
+        String body = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, String.class);
+
+        assertThat(JsonMapper.builder().build().readTree(body).get("exercise").has("buildConfig")).isFalse();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateBuildConfigForExamExercise() throws Exception {
@@ -486,7 +547,10 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsContainerWithoutPhases() throws Exception {
-        request.put(buildConfigEndpoint(), configurationWith(List.of(new BuildContainerDTO("tests", DOCKER_IMAGE, List.of()))), HttpStatus.BAD_REQUEST);
+        // the endpoint returns the error of the shared validator that names the container, as the exercise update does
+        var body = request.getObjectMapper().writeValueAsString(configurationWith(List.of(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of()))));
+        request.performMvcRequest(MockMvcRequestBuilders.put(new URI(buildConfigEndpoint())).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("emptyBuildContainer")).andExpect(jsonPath("$.params.container").value("student_tests"));
     }
 
     @Test

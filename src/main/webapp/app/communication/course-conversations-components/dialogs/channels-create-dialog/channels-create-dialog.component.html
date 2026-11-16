@@ -16,6 +16,7 @@
         <div class="modal-body">
             <p jhiTranslate="artemisApp.dialogs.createChannel.description"></p>
             <jhi-channel-form
+                [canCreateAnnouncementChannel]="!!course()?.isAtLeastInstructor"
                 (channelTypeChanged)="onChannelTypeChanged($event)"
                 (isAnnouncementChannelChanged)="onIsAnnouncementChannelChanged($event)"
                 (isCourseWideChannelChanged)="onIsCourseWideChannelChanged($event)"

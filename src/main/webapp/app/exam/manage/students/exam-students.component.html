@@ -1,5 +1,5 @@
 <div class="flex h-full flex-col gap-2">
-    <div *titleBarTitle class="flex items-center gap-3">
+    <div *titleBarTitle class="flex items-center gap-4!">
         <h5 class="my-0!">
             <span jhiTranslate="artemisApp.examManagement.students"></span>
         </h5>
@@ -94,7 +94,7 @@
             }
         </button>
         <tumaet-ui-popover #individualExamsStatusPopover [ariaLabel]="'artemisApp.studentExams.individualExamsStatus' | artemisTranslate" placement="bottom">
-            <div class="flex w-96 max-w-full flex-col gap-4">
+            <div class="flex w-96 max-w-full flex-col gap-6!">
                 <h6 class="my-0!" jhiTranslate="artemisApp.studentExams.individualExamsStatus"></h6>
                 <jhi-student-exam-status [isTestExam]="isTestExam()" [hasStudentsWithoutExam]="isMissingIndividualExams()" />
                 @if (!isTestExam() && !isMissingIndividualExams()) {

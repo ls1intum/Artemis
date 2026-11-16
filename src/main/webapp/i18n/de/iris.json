@@ -237,7 +237,12 @@
                 "questionOf": "Frage {{ current }} von {{ total }}",
                 "viewScore": "Ergebnis anzeigen",
                 "reviewQuestions": "Fragen überprüfen",
-                "score": "Ergebnis"
+                "score": "Ergebnis",
+                "previousQuestion": "Vorherige Frage",
+                "nextQuestion": "Nächste Frage",
+                "questionCorrect": "Frage {{ number }}: richtig beantwortet",
+                "questionIncorrect": "Frage {{ number }}: falsch beantwortet",
+                "questionUnanswered": "Frage {{ number }}: noch nicht abgegeben"
             },
             "contextSelection": {
                 "label": "Chat-Kontext auswählen",
@@ -250,7 +255,9 @@
                 "chatTopicCleared": "Chat-Thema entfernt",
                 "chatTopicSwitched": "Chat-Thema gewechselt:",
                 "addContextTooltip": "Vorlesung oder Aufgabe wählen",
-                "tutorSuggestionContext": "Tutor-Vorschlag"
+                "tutorSuggestionContext": "Tutor-Vorschlag",
+                "searchLabel": "Vorlesungen und Aufgaben suchen",
+                "removeContext": "Chat-Kontext entfernen"
             },
             "citation": {
                 "unitLabel": "Einheit:",
@@ -259,7 +266,9 @@
                     "stale": "Das zitierte Material wurde seit dieser Antwort geändert, daher wird die genaue Seite bzw. der Zeitstempel nicht angesprungen.",
                     "gone": "Das zitierte Material existiert nicht mehr, daher kann die genaue Seite bzw. der Zeitstempel nicht angesprungen werden.",
                     "unverified": "Das zitierte Material lässt sich gerade nicht überprüfen, daher wird die genaue Seite bzw. der Zeitstempel vorsichtshalber nicht angesprungen."
-                }
+                },
+                "previous": "Vorherige Quellenangabe",
+                "next": "Nächste Quellenangabe"
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
@@ -356,7 +365,8 @@
                 "deleteSessionSuccess": "Chat-Sitzung gelöscht.",
                 "deleteSessionError": "Chat-Sitzung konnte nicht gelöscht werden.",
                 "sessionMenuAriaLabel": "Chat-Sitzungsaktionen",
-                "switchSession": "Chat-Sitzung wechseln"
+                "switchSession": "Chat-Sitzung wechseln",
+                "closeChat": "Chat schließen"
             },
             "aboutIrisModal": {
                 "learnMore": "Mehr erfahren",
@@ -383,7 +393,9 @@
                 "privacyDisclaimer": "Lies die Datenschutzerklärung deiner Einrichtung für Details.",
                 "tryIris": "Iris ausprobieren",
                 "close": "Schließen"
-            }
+            },
+            "logoAlt": "Iris-Logo",
+            "logoButtonLabel": "Iris"
         },
         "pyrisSearchAskRequest": {
             "limit": "Limit"

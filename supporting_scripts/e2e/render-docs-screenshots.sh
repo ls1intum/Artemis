@@ -28,7 +28,7 @@ set -Eeuo pipefail
 #
 # Environment (all optional): DOCS_SHOTS_SERVER_PORT (18080), DOCS_SHOTS_CLIENT_PORT (19000), DOCS_SHOTS_SSH_PORT (17921),
 # DOCS_SHOTS_DB_PORT (15432), DOCS_SHOTS_DB_CONTAINER (docs-shots-pg, give each checkout that renders at the same time its own), SERVER_READY_TIMEOUT in seconds (900), PLAYWRIGHT_IMAGE.
-# Needs Docker, Java 25 (JAVA_HOME), Node 24 and pnpm, as described in the local setup guide.
+# Needs Docker, Java 25 (JAVA_HOME), Node 26 and pnpm, as described in the local setup guide.
 # =============================================================================
 
 UPDATE=false

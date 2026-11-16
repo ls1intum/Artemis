@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -91,7 +94,8 @@ class PyrisSubmittedRepositoryTest {
         // the committed contents instead, every file would look changed. Only the repository fetch is mocked, so the
         // merge and the diff below it are the production ones.
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class))).thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/Main.java", "COMMITTED"));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
                 mock(IrisProactiveProperties.class));
 
@@ -108,5 +112,71 @@ class PyrisSubmittedRepositoryTest {
         assertThat(service.toPyrisSubmissionDTO(submission, Map.of()).submittedRepository()).isEmpty();
         // The committed side really was read, so the empty diff means "nothing changed", not "nothing fetched".
         assertThat(service.toPyrisSubmissionDTO(submission).repository()).containsExactly(entry("src/Main.java", "COMMITTED"));
+    }
+
+    @Test
+    void testsRepository_isFilteredByLanguageLikeTheOtherRepositories() throws IOException {
+        // A tests repository can hold large data sets next to the tests. Only the files of the exercise language are context for Iris.
+        var repositoryService = mock(RepositoryService.class);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/test/MainTest.java", "TEST", "data/scenario.xml", "HUGE"));
+        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
+                mock(IrisProactiveProperties.class));
+        var exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(JAVA);
+        exercise.setId(1L);
+        exercise.setTestRepositoryUri("http://localhost:8080/git/ABC/abc-tests.git");
+
+        assertThat(service.toPyrisProgrammingExerciseDTO(exercise).testRepository()).containsExactly(entry("src/test/MainTest.java", "TEST"));
+    }
+
+    @Test
+    void aChangedFileThatTheBoundedReadLeftOutKeepsItsCommittedBaseline() throws IOException {
+        // The bounded read leaves out a committed file above the size limit. The edited file must still be diffed against its committed content, not sent as new.
+        var repositoryService = mock(RepositoryService.class);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getCommittedContentOfPaths(any(LocalVCRepositoryUri.class), eq(Set.of("src/Huge.java", "src/New.java"))))
+                .thenReturn(new RepositoryService.CommittedPathContents(Map.of("src/Huge.java", "COMMITTED HUGE"), Set.of()));
+        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
+                mock(IrisProactiveProperties.class));
+        var exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(JAVA);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(exercise);
+        participation.setRepositoryUri("http://localhost:8080/git/ABC/abc-student1.git");
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setParticipation(participation);
+
+        var dto = service.toPyrisSubmissionDTO(submission, Map.of("src/Huge.java", "EDITED HUGE", "src/New.java", "NEW"));
+
+        assertThat(dto.submittedRepository()).containsOnly(entry("src/Huge.java", "COMMITTED HUGE"), entry("src/New.java", ""));
+    }
+
+    @Test
+    void aBaselineThatDoesNotFitTheLimitsIsNotSentAndMakesTheDiffIncomplete() throws IOException {
+        // A large committed file that the student replaces by a small local edit must not bring its content back into the request
+        var repositoryService = mock(RepositoryService.class);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getCommittedContentOfPaths(any(LocalVCRepositoryUri.class), eq(Set.of("src/Huge.java", "src/New.java"))))
+                .thenReturn(new RepositoryService.CommittedPathContents(Map.of(), Set.of("src/Huge.java")));
+        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
+                mock(IrisProactiveProperties.class));
+        var exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(JAVA);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(exercise);
+        participation.setRepositoryUri("http://localhost:8080/git/ABC/abc-student1.git");
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setParticipation(participation);
+
+        var dto = service.toPyrisSubmissionDTO(submission, Map.of("src/Huge.java", "SMALL EDIT", "src/New.java", "NEW"));
+
+        // The file is neither sent with its committed content nor as a new file, and the diff is marked incomplete
+        assertThat(dto.submittedRepository()).containsOnly(entry("src/New.java", ""));
+        assertThat(dto.submittedRepositoryAvailable()).isFalse();
     }
 }

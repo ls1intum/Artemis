@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -96,9 +96,33 @@ public final class DistributedDataSchema {
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     /**
-     * The structures carried over from schema version 1 to 2. Version 2 changed the encoding of build job queue items, so
-     * the build queue, the processing jobs and the result queue are flushed; the missing-job retry rebuilds what they held,
-     * so such a build may run twice, and a queued result is lost and its build retried.
+     * The structures whose contents are moved from version 1 to version 2. Version 2 adds the class of a test to
+     * {@code LocalCITestJobDTO}, which is stored in {@code ResultQueueItem} and therefore in both result queues, {@code buildResultQueue} and {@code deferredBuildResultQueue}.
+     * Those queues are
+     * deliberately not listed: its entries are encoded positionally and cannot be read by the new layout, so finished results that were not yet written to the database at the
+     * moment of the deploy are discarded, and the affected submissions need a new build. Every other structure listed here stores types that did not change, so its
+     * entries move byte-for-byte.
+     *
+     * <p>
+     * As for {@link #LEGACY_TO_V1_STRUCTURES}, the bar is that the data is expensive or impossible to reconstruct.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(
+            // Queued student builds. Nothing else knows they were requested. BuildJobQueueItem does not contain a build result.
+            new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            // Builds already running on an agent, which SharedQueueManagementService re-queues when an agent disappears.
+            new CarriedOverStructure("processingJobs", StructureKind.MAP),
+            // Runtime feature toggles exist only here.
+            new CarriedOverStructure("features", StructureKind.MAP),
+            // Iris jobs waiting for a Pyris callback, moved with their remaining lifetime, together with what such a callback reads.
+            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP), new CarriedOverStructure("pyris-chat-job-client-id-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-chat-material-version-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-global-search-material-version-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * The structures carried over from schema version 2 to 3. Version 3 adds the build group membership to build job queue
+     * items, so the build queue, the processing jobs and both result queues, whose items contain a build job, are flushed;
+     * the missing-job retry rebuilds what they held, so such a build may run twice, and a queued result is lost and its build
+     * retried.
      *
      * <p>
      * The Iris maps are moved with the remaining lifetime of their entries. A Pyris callback is accepted only for a job in
@@ -107,7 +131,7 @@ public final class DistributedDataSchema {
      * its citations refer to. The struggle in-flight markers and cooldowns are not moved: losing them at most admits one
      * more proactive struggle run per student and exercise.
      */
-    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("features", StructureKind.MAP),
+    public static final List<CarriedOverStructure> V2_TO_V3_STRUCTURES = List.of(new CarriedOverStructure("features", StructureKind.MAP),
             new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP), new CarriedOverStructure("pyris-chat-job-client-id-map", StructureKind.EXPIRING_MAP),
             new CarriedOverStructure("pyris-chat-material-version-map", StructureKind.EXPIRING_MAP),
             new CarriedOverStructure("pyris-global-search-material-version-map", StructureKind.EXPIRING_MAP));

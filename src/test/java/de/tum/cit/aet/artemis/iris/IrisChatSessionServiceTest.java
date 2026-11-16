@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -59,6 +61,9 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
 
     @Override
     protected String getTestPrefix() {
@@ -181,6 +186,26 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
                     .withMessageContaining("Iris Session");
         }
 
+        @ParameterizedTest
+        @EnumSource(value = IrisChatMode.class, names = { "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+        void throwsForStudentWhenTheExerciseIsNotReleased(IrisChatMode mode) {
+            IrisChatSession session = newSessionFor(mode, student1());
+            session.setId(1L);
+            makeUnreleased(mode == IrisChatMode.TEXT_EXERCISE_CHAT ? textExercise : programmingExercise);
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> irisChatSessionService.checkHasAccessTo(student1(), session));
+        }
+
+        @Test
+        void allowsTutorWhenTheExerciseIsNotReleased() {
+            User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+            IrisChatSession session = new IrisChatSession(textExercise, tutor, IrisChatMode.TEXT_EXERCISE_CHAT);
+            session.setId(1L);
+            makeUnreleased(textExercise);
+
+            assertThatNoException().isThrownBy(() -> irisChatSessionService.checkHasAccessTo(tutor, session));
+        }
+
         @Test
         void throwsWhenUserNotEnrolledInCourse() {
             Course otherCourse = courseUtilService.createCourse();
@@ -256,6 +281,14 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
             assertThatExceptionOfType(AccessForbiddenAlertException.class)
                     .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.COURSE_CHAT, course.getId(), student1()));
+        }
+
+        @Test
+        void throwsForStudentWhenTheExerciseIsNotReleased() {
+            makeUnreleased(textExercise);
+
+            assertThatExceptionOfType(AccessForbiddenException.class)
+                    .isThrownBy(() -> irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.TEXT_EXERCISE_CHAT, textExercise.getId(), student1()));
         }
 
         @Test
@@ -470,6 +503,11 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     private void saveSessionWithMessages(IrisChatSession session) {
         irisChatSessionRepository.save(session);
         irisMessageRepository.saveAll(session.getMessages());
+    }
+
+    private void makeUnreleased(Exercise exercise) {
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(3));
+        exerciseRepository.save(exercise);
     }
 
     private TextExercise createExamTextExercise() {

@@ -59,7 +59,6 @@ export function pillsFitInTitleBar(barWidth: number, fixedContentWidth: number, 
         ExerciseHeadersInformationComponent,
         ProgrammingBuildNotificationsComponent,
     ],
-    styleUrl: './exercise-header.component.scss',
 })
 export class ExerciseHeaderComponent {
     private readonly changeDetectorRef = inject(ChangeDetectorRef);

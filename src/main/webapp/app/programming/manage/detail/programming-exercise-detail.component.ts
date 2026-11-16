@@ -63,6 +63,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
+import { getBuildTimeWindow } from 'app/programming/shared/utils/build-time-window.utils';
 import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
@@ -575,6 +576,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         // only decides whether the legacy build script is shown; the images are listed per container below
         const hasDockerImage = buildContainers.some((container) => !!container.dockerImage);
         const diffReportDetail = this.getDiffReportDetail();
+        const buildTimeWindow = getBuildTimeWindow(exercise);
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
             details: [
@@ -633,6 +635,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: DetailType.Text,
                     title: 'artemisApp.programmingExercise.packageName',
                     data: { text: exercise.packageName },
+                },
+                !!buildTimeWindow?.start && {
+                    type: DetailType.Date,
+                    title: 'artemisApp.programmingExercise.buildTimeWindow.start',
+                    data: { date: buildTimeWindow.start },
+                },
+                !!buildTimeWindow?.end && {
+                    type: DetailType.Date,
+                    title: 'artemisApp.programmingExercise.buildTimeWindow.end',
+                    data: { date: buildTimeWindow.end },
                 },
             ],
         };

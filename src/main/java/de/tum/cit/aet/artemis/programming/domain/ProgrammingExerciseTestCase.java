@@ -39,8 +39,17 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     private static final int MAX_TEST_NAME_LENGTH = 255;
 
+    private static final int MAX_TEST_CLASS_LENGTH = 255;
+
     @Column(name = "test_name")
     private String testName;
+
+    /**
+     * Binary name of the test class that declares this test, as reported by the solution build (e.g. {@code de.tum.Foo$Bar} for a nested class).
+     * {@code null} for test cases registered before the class was tracked, or when the build did not report it.
+     */
+    @Column(name = "test_class", length = MAX_TEST_CLASS_LENGTH)
+    private String testClass;
 
     @Column(name = "weight")
     private Double weight;
@@ -109,6 +118,50 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         }
         // Reserving the closing parenthesis can remove an opener exactly at the prefix boundary.
         return testName.substring(0, prefixLength) + suffix + (truncatedParameters && parameterStart < prefixLength ? ")" : "");
+    }
+
+    @JsonIgnore
+    public String getTestClass() {
+        return testClass;
+    }
+
+    public void setTestClass(String testClass) {
+        this.testClass = normalizeTestClass(testClass);
+    }
+
+    /**
+     * Brings a reported test class name into the form that is stored: blank, missing or too long names carry no usable information and become {@code null}.
+     *
+     * @param testClass the class name reported by CI, may be null
+     * @return the class name to store, or null
+     */
+    public static String normalizeTestClass(String testClass) {
+        if (testClass == null || testClass.isBlank() || testClass.length() > MAX_TEST_CLASS_LENGTH) {
+            return null;
+        }
+        return testClass;
+    }
+
+    /**
+     * Checks whether this test is declared in the given class or in a class nested inside it. A failing {@code @BeforeAll} of a class keeps the tests of its nested classes from
+     * running as well, whereas a failure in a nested class leaves the tests of the outer class alone.
+     *
+     * @param failedClass the normalized binary name of the class that failed, e.g. {@code de.tum.Foo}
+     * @return true if the class of this test is known and equals {@code failedClass} or starts with {@code failedClass$}
+     */
+    public boolean isDeclaredInOrBelow(String failedClass) {
+        return isClassInOrBelow(testClass, failedClass);
+    }
+
+    /**
+     * Checks whether a class is the given class or nested inside it, going by binary names ({@code Outer$Inner}).
+     *
+     * @param testClass   the class to check, may be null
+     * @param failedClass the enclosing class, may be null
+     * @return true if both are known and {@code testClass} equals {@code failedClass} or starts with {@code failedClass$}
+     */
+    public static boolean isClassInOrBelow(String testClass, String failedClass) {
+        return testClass != null && failedClass != null && (testClass.equals(failedClass) || testClass.startsWith(failedClass + "$"));
     }
 
     public ProgrammingExerciseTestCase testName(String testName) {
@@ -235,6 +288,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     public ProgrammingExerciseTestCase clone() {
         ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive())
                 .bonusPoints(this.getBonusPoints()).bonusMultiplier(this.getBonusMultiplier()).visibility(visibility).exercise(this.exercise);
+        clone.setTestClass(this.testClass);
         clone.setId(this.getId());
         return clone;
     }

@@ -85,11 +85,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getKeys().flushall();
     }
 
-    /**
-     * The version the first migration lands in. The tests of that step target it explicitly: from version 2 on, the
-     * build structures are flushed, so what the unversioned store carries into version 1 is not what the current
-     * version holds.
-     */
+    /** The namespace the unversioned store is migrated into first; the tests of that step target it explicitly, because later steps move on from it. */
     private static final int FIRST_VERSION = 1;
 
     private static RedissonDistributedDataMigrator migrationService() {
@@ -179,10 +175,9 @@ class RedissonDistributedDataMigratorTest {
     void testAnExpiringEntryKeepsItsRemainingLifetime() {
         redissonClient.getMapCache("pyris-job-map").put("job-1", "session-1", 1, TimeUnit.HOURS);
 
-        // the unversioned-to-first step carries this map; the next one no longer does, as current builds read pyris-job-map-v2
-        migrationServiceFor(1).migrateToCurrentVersion();
+        migrationServiceFor(FIRST_VERSION).migrateToCurrentVersion();
 
-        RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(1, "pyris-job-map"));
+        RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(FIRST_VERSION, "pyris-job-map"));
         assertThat(migrated.get("job-1")).isEqualTo("session-1");
         // Carried over rather than reset: an entry that was minutes from expiring must not become permanent.
         assertThat(migrated.remainTimeToLive("job-1")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
@@ -265,6 +260,60 @@ class RedissonDistributedDataMigratorTest {
         assertThat(redissonClient.getMap(keyFor(current, "processingJobs"))).hasSize(1).containsEntry("running", "agent-1");
     }
 
+    /**
+     * Version 2 adds the class of a test to the build result, which is stored in the result queue and cannot be read by the new layout. Everything else keeps its
+     * types, so it moves byte-for-byte.
+     */
+    @Test
+    void testVersionTwoCarriesTheCompatibleStructuresAndDiscardsTheResultQueue() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-in-old-layout");
+        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("job-1");
+        redissonClient.getMap(keyFor(1, "processingJobs")).put("running", "agent-1");
+        redissonClient.<Feature, Boolean>getMap(keyFor(1, "features")).put(Feature.Science, Boolean.FALSE);
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map-v2")).put("job-1", "session-1", 1, TimeUnit.HOURS);
+        redissonClient.getMap(keyFor(1, "buildAgentInformation")).put("agent-1", "details");
+
+        migrationServiceFor(2).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
+        assertThat(redissonClient.getMap(keyFor(2, "processingJobs"))).containsEntry("running", "agent-1");
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features"))).containsOnlyKeys(Feature.Science).containsEntry(Feature.Science, Boolean.FALSE);
+        RMapCache<Object, Object> iris = redissonClient.getMapCache(keyFor(2, "pyris-job-map-v2"));
+        assertThat(iris.get("job-1")).isEqualTo("session-1");
+        assertThat(iris.remainTimeToLive("job-1")).as("the remaining lifetime is carried over, not reset").isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue"))).as("the result queue is the one structure that is discarded").isEmpty();
+        assertThat(redissonClient.getMap(keyFor(2, "buildAgentInformation"))).as("rebuilds itself, not carried over").isEmpty();
+        assertThat(redissonClient.getKeys().countExists(keyFor(1, "buildResultQueue"), keyFor(1, "buildJobQueue"), keyFor(1, "processingJobs"), keyFor(1, "features"),
+                keyFor(1, "buildAgentInformation"))).as("nothing is left behind in the old namespace").isZero();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testAnUnversionedStoreContinuesThroughVersionOneToVersionTwo() {
+        redissonClient.getQueue("buildResultQueue").add("result-1");
+        redissonClient.getPriorityQueue("buildJobQueue").add("job-1");
+
+        migrationServiceFor(2).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue"))).isEmpty();
+        assertThat(redissonClient.getQueue(keyFor(1, "buildResultQueue"))).isEmpty();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testVersionTwoRerunAfterAPartialDrainNeitherLosesNorDuplicatesJobs() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).add("already-moved");
+        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("still-waiting");
+
+        migrationServiceFor(2).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactlyInAnyOrder("already-moved", "still-waiting");
+        assertThat(redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue"))).isEmpty();
+    }
+
     @Test
     void testIsIdempotent() {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("result-1");
@@ -288,37 +337,39 @@ class RedissonDistributedDataMigratorTest {
     }
 
     /**
-     * Version 2 changed the shape of a queued build job, so the three build structures are flushed rather than moved;
-     * DistributedDataSchema.V1_TO_V2_STRUCTURES explains why a dropped entry heals itself. What cannot be rebuilt moves.
+     * Version 3 changed the shape of a queued build job, so the build structures are flushed rather than moved;
+     * DistributedDataSchema.V2_TO_V3_STRUCTURES explains why a dropped entry heals itself. What cannot be rebuilt moves.
      */
     @Test
-    void testDropsTheBuildStructuresOfVersionOneAndKeepsWhatCannotBeRebuilt() {
-        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
-        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("job-1");
-        redissonClient.getMap(keyFor(1, "processingJobs")).put("running", "agent-1");
-        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
-        redissonClient.getMap(keyFor(1, "features")).put("Science", Boolean.FALSE);
+    void testDropsTheBuildStructuresOfVersionTwoAndKeepsWhatCannotBeRebuilt() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("2");
+        redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).add("job-1");
+        redissonClient.getMap(keyFor(2, "processingJobs")).put("running", "agent-1");
+        redissonClient.getQueue(keyFor(2, "buildResultQueue")).add("result-1");
+        redissonClient.getQueue(keyFor(2, "deferredBuildResultQueue")).add("result-2");
+        redissonClient.getMap(keyFor(2, "features")).put("Science", Boolean.FALSE);
         // the maps the live Iris services read when a Pyris callback of a run in flight arrives
         List<String> irisMaps = List.of("pyris-job-map-v2", "pyris-chat-job-client-id-map", "pyris-chat-material-version-map", "pyris-global-search-material-version-map");
         for (String irisMap : irisMaps) {
-            redissonClient.getMapCache(keyFor(1, irisMap)).put("run-1", irisMap + "-value", 1, TimeUnit.HOURS);
+            redissonClient.getMapCache(keyFor(2, irisMap)).put("run-1", irisMap + "-value", 1, TimeUnit.HOURS);
         }
 
-        migrationServiceFor(2).migrateToCurrentVersion();
+        migrationServiceFor(3).migrateToCurrentVersion();
 
-        assertThat(redissonClient.getMap(keyFor(2, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.getMap(keyFor(3, "features")).get("Science")).isEqualTo(Boolean.FALSE);
         for (String irisMap : irisMaps) {
-            RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(2, irisMap));
+            RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(3, irisMap));
             assertThat(migrated.get("run-1")).as(irisMap).isEqualTo(irisMap + "-value");
             // carried over with the lifetime it had left, so an abandoned run still expires
             assertThat(migrated.remainTimeToLive("run-1")).as(irisMap).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
         }
-        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue"))).isEmpty();
-        assertThat(redissonClient.getMap(keyFor(2, "processingJobs"))).isEmpty();
-        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue"))).isEmpty();
+        assertThat(redissonClient.getPriorityQueue(keyFor(3, "buildJobQueue"))).isEmpty();
+        assertThat(redissonClient.getMap(keyFor(3, "processingJobs"))).isEmpty();
+        assertThat(redissonClient.getQueue(keyFor(3, "buildResultQueue"))).isEmpty();
+        assertThat(redissonClient.getQueue(keyFor(3, "deferredBuildResultQueue"))).isEmpty();
         // the namespace migrated away from is emptied, so the incompatible entries are gone rather than stranded
-        assertThat(redissonClient.getKeys().getKeysByPattern(keyPatternFor(1))).isEmpty();
-        assertThat(storedVersion()).isEqualTo("2");
+        assertThat(redissonClient.getKeys().getKeysByPattern(keyPatternFor(2))).isEmpty();
+        assertThat(storedVersion()).isEqualTo("3");
     }
 
     @Test

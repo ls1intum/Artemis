@@ -62,8 +62,10 @@
             "actions": {
                 "copy": "Kopieren",
                 "goodResponse": "Gute Antwort",
-                "badResponse": "Schlechte Antwort"
-            }
+                "badResponse": "Schlechte Antwort",
+                "send": "Nachricht senden"
+            },
+            "scrollToBottom": "Zur neuesten Nachricht scrollen"
         }
     }
 }
