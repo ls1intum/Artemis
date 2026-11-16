@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace;
+package de.tum.cit.aet.artemis.hyperion.runtime.workspace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,6 +31,7 @@ class BinaryContentTest {
         assertThat(BinaryContent.isBinary("public class A {}\n".getBytes(StandardCharsets.UTF_8))).isFalse();
         assertThat(BinaryContent.isBinary("café — déjà vu ✅\n".getBytes(StandardCharsets.UTF_8))).isFalse();
         assertThat(BinaryContent.isBinary(new byte[0])).isFalse();
+        assertThat(BinaryContent.isBinary(null)).isFalse();
     }
 
     @Test
