@@ -215,8 +215,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private newPolicyCounter = 0;
     /** The last commit request that failed, for Retry. */
     private failedRequest: CommitRequest | undefined;
-    /** The number of YAML imports started per policy. */
+    /** The number of the latest YAML import started for each policy, from {@link importSequence}. */
     private readonly importGenerations = new Map<string, number>();
+    /** The number of YAML imports started. */
+    private importSequence = 0;
     /** The number of previews of unsaved YAML started. */
     private yamlPreviewCount = 0;
     private structureRequested = false;
@@ -959,7 +961,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return;
         }
         // Only the latest import of a policy applies, so an earlier one that answers later does not replace it.
-        const generation = (this.importGenerations.get(policy.id) ?? 0) + 1;
+        // The numbers keep increasing across discards, so an import from before one never matches the latest import of the policy.
+        const generation = ++this.importSequence;
         this.importGenerations.set(policy.id, generation);
         const isLatest = () => this.importGenerations.get(policy.id) === generation;
         this.securityService.importPolicy(this.exerciseId(), path, selected.content).subscribe({

@@ -720,4 +720,20 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.totalChanges()).toBe(0);
         expect(comp.importNotice()).toBeUndefined();
     });
+
+    it('drops an import from before a discard also when a newer import of the policy answers first', () => {
+        create(configured(), false);
+        const discarded = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        const latest = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(discarded).mockReturnValueOnce(latest);
+        handlers.openYaml(comp.policies()[0]);
+        handlers.importYaml({ content: 'before', policyPath: 'SecurityPolicy.yaml' });
+        handlers.discard();
+        handlers.importYaml({ content: 'after', policyPath: 'SecurityPolicy.yaml' });
+
+        latest.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.after' } });
+        discarded.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.before' } });
+
+        expect(comp.policies()[0].working?.supervisedPackage).toBe('de.after');
+    });
 });
