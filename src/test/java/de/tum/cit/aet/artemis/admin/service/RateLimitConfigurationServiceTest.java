@@ -165,6 +165,11 @@ class RateLimitConfigurationServiceTest {
         assertThat(configurationService.getEffectiveRpm(RateLimitType.APOLLON_CONVERSION)).isEqualTo(RateLimitType.APOLLON_CONVERSION.getDefaultRpm());
         assertThat(configurationService.getEffectiveRpm(RateLimitType.QUIZ_BATCH_JOIN)).isEqualTo(RateLimitType.QUIZ_BATCH_JOIN.getDefaultRpm());
         assertThat(configurationService.getEffectiveRpm(RateLimitType.PROGRAMMING_BUILD_TRIGGER)).isEqualTo(RateLimitType.PROGRAMMING_BUILD_TRIGGER.getDefaultRpm());
+
+        when(properties.getCourseRequestRequestsPerMinute()).thenReturn(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.COURSE_REQUEST)).isEqualTo(7);
+        when(properties.getCourseRequestRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.COURSE_REQUEST)).isEqualTo(RateLimitType.COURSE_REQUEST.getDefaultRpm());
     }
 
     @Test

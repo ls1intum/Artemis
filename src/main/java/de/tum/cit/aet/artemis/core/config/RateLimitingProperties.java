@@ -147,6 +147,12 @@ public class RateLimitingProperties {
      */
     private Integer programmingBuildTriggerRequestsPerMinute;
 
+    /**
+     * Requests per minute and user for sending a course request.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#COURSE_REQUEST}.
+     */
+    private Integer courseRequestRequestsPerMinute;
+
     public List<String> getExemptAddresses() {
         return exemptAddresses;
     }
@@ -297,5 +303,13 @@ public class RateLimitingProperties {
 
     public void setProgrammingBuildTriggerRequestsPerMinute(Integer programmingBuildTriggerRequestsPerMinute) {
         this.programmingBuildTriggerRequestsPerMinute = programmingBuildTriggerRequestsPerMinute;
+    }
+
+    public Integer getCourseRequestRequestsPerMinute() {
+        return courseRequestRequestsPerMinute;
+    }
+
+    public void setCourseRequestRequestsPerMinute(Integer courseRequestRequestsPerMinute) {
+        this.courseRequestRequestsPerMinute = courseRequestRequestsPerMinute;
     }
 }

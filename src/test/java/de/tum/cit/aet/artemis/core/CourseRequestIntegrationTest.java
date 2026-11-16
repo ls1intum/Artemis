@@ -24,8 +24,10 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.RateLimitTestUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseRequest;
 import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
@@ -52,6 +54,9 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private CourseConfigurationRepository courseConfigurationRepository;
+
+    @Autowired
+    private LimitRequestsPerMinuteAspect requestLimitAspect;
 
     private User student;
 
@@ -275,6 +280,20 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         decided.setStatus(CourseRequestStatus.REJECTED);
         courseRequestRepository.save(decided);
         request.postWithResponseBody("/api/course/course-requests", createDTO, CourseRequestDTO.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createCourseRequest_tooOften_shouldBeRejected() throws Exception {
+        CourseRequestCreateDTO first = new CourseRequestCreateDTO("Rate One", "RATELIM1", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, null,
+                "Reason for request.");
+        CourseRequestCreateDTO second = new CourseRequestCreateDTO("Rate Two", "RATELIM2", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, null,
+                "Reason for request.");
+
+        RateLimitTestUtil.withRateLimits(requestLimitAspect, properties -> properties.setCourseRequestRequestsPerMinute(1), () -> {
+            request.postWithResponseBody("/api/course/course-requests", first, CourseRequestDTO.class, HttpStatus.CREATED);
+            request.postWithoutResponseBody("/api/course/course-requests", second, HttpStatus.TOO_MANY_REQUESTS);
+        });
     }
 
     @Test

@@ -61,7 +61,7 @@ public class CourseRequestService {
     private static final int MAX_TITLE_LENGTH = 255;
 
     /**
-     * The number of course requests of one user that can wait for a decision at the same time.
+     * The number of course requests of one user that can wait for a decision at the same time. Raise this value to allow more.
      */
     private static final int MAX_PENDING_REQUESTS_PER_USER = 5;
 

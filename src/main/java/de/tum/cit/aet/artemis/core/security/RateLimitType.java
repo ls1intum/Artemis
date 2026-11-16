@@ -217,7 +217,16 @@ public enum RateLimitType {
      * Default: 10 requests per minute per user, overridable with
      * {@code artemis.rate-limiting.programming-build-trigger-requests-per-minute}.
      */
-    PROGRAMMING_BUILD_TRIGGER(10);
+    PROGRAMMING_BUILD_TRIGGER(10),
+
+    /**
+     * Rate limit for sending a course request. The number of requests of a user that wait for a decision is capped separately, this limit keeps parallel requests
+     * from passing that cap together. It is counted per signed-in user, so users on one network address do not share it.
+     * <p>
+     * Default: 5 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.course-request-requests-per-minute}.
+     */
+    COURSE_REQUEST(5);
 
     private final int defaultRpm;
 
