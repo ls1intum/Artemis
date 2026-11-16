@@ -72,9 +72,15 @@ describe('E2E Docker storage preparation', () => {
     it('recovers low headroom by trimming unused build cache and checking the filesystem again', () => {
         const result = checkStorage(19 * 1024 * 1024, undefined, undefined, { afterCacheKiB: 21 * 1024 * 1024 });
         expect(result.status).toBe(0);
-        expect(result.calls).toContain('buildx prune --builder default --force --max-used-space 2GB --reserved-space 2GB');
+        expect(result.calls).toContain('buildx prune --builder default --force --min-free-space 21474836480 --reserved-space 512MB');
         expect(result.calls).not.toContain('system df');
         expect(result.stdout).toContain(`${21 * 1024 * 1024} KiB available`);
+    });
+
+    it('targets the filesystem reserve rather than a fixed cache budget on larger disks', () => {
+        const result = checkStorage(109 * 1024 * 1024, 1000 * 1024 * 1024, undefined, { afterCacheKiB: 111 * 1024 * 1024 });
+        expect(result.status).toBe(0);
+        expect(result.calls).toContain('buildx prune --builder default --force --min-free-space 118111600640 --reserved-space 512MB');
     });
 
     it('attempts cache cleanup once before reporting persistent disk pressure', () => {

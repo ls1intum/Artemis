@@ -23,11 +23,12 @@ read_headroom() {
 read_headroom
 
 if ((available_kib < required_kib)); then
-    echo 'Docker disk headroom is low; trimming unused build cache to 2 GB before checking again.'
+    echo 'Docker disk headroom is low; reclaiming unused build cache to meet the reserve before checking again.'
     # Use the daemon's default builder, whose storage is checked above. Buildx
-    # evicts least-recently-used, reclaimable cache; retain 2 GB and leave cached
-    # exercise/browser/database images, containers and volumes alone.
-    if ! docker buildx prune --builder default --force --max-used-space 2GB --reserved-space 2GB; then
+    # evicts least-recently-used, reclaimable cache only until the required free
+    # space is available, with a 512 MB cache floor. Cached application/exercise/
+    # browser/database images, containers and volumes remain untouched.
+    if ! docker buildx prune --builder default --force --min-free-space "$((required_kib * 1024))" --reserved-space 512MB; then
         echo '::error::Cannot reclaim unused Docker build cache on the E2E runner.' >&2
         exit 1
     fi

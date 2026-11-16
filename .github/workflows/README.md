@@ -396,9 +396,9 @@ After stopping the dedicated E2E runner's containers, setup prunes unused images
 than 24 hours carrying this repository's OCI source label. Exercise, browser and database
 images remain cached. Setup then checks the Docker data filesystem for the broker's
 10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. If space is
-low, it trims the default builder's unused build cache to a 2 GB budget and reads the
-filesystem statistics again, keeping the same reserve. Persistent insufficient space or
-failed cleanup is a setup failure: reclaim space or expand the runner disk rather than
+low, it evicts unused default-builder cache until the reserve is met, retaining a
+512 MB cache floor. It then reads the filesystem statistics again against the same reserve.
+Persistent insufficient space or failed cleanup is a setup failure: reclaim space or expand the runner disk rather than
 raising the broker's disk limit or retrying websocket-dependent tests. Setup failures
 still run teardown, but do not require or classify reports from tests that never started;
 missing reports after test execution starts remain fatal.
