@@ -434,6 +434,14 @@ $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
 
+// Page ribbon (development, test server and exam test run)
+$page-ribbon-box-background: $white;
+$page-ribbon-box-shadow: rgba($black, 0.1);
+$page-ribbon-background: #a00;
+$page-ribbon-color: $white;
+$page-ribbon-shadow: rgba($black, 0.25);
+$page-ribbon-text-shadow: rgba($black, 0.35);
+
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;
 $notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
