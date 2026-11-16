@@ -232,7 +232,7 @@ Do not add `|| true` to the teardown: it would hide the next real teardown failu
 
 A forcibly killed container can bypass that exit trap. The same self-hosted large runners
 also execute server and client jobs, so those jobs and full server reporting restore ownership
-of only `src/test/playwright/test-results` and `test-reports` before checkout, as E2E jobs do.
+of only the generated Playwright result and report directories before checkout, as E2E jobs do.
 Recovery is best-effort; checkout remains authoritative and still fails on any unrepaired
 permission problem. Keep checkout cleanup enabled and do not recursively change the whole workspace.
 
