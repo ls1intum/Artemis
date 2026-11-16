@@ -187,10 +187,33 @@ describe('ImageCropperComponent', () => {
             expect(comp.imageVisible()).toBeFalsy();
         });
 
-        it('updates safeTransformStyle when transform changes', () => {
+        it('updates transformStyle when transform changes', () => {
             fixture.componentRef.setInput('transform', { scale: 2, rotate: 90 });
             fixture.detectChanges();
-            expect(comp.safeTransformStyle()).toBeDefined();
+            expect(comp.transformStyle()).toBe('scaleX(2)scaleY(2)rotate(90deg)');
+        });
+
+        it('applies the transform to the rendered image', () => {
+            fixture.componentRef.setInput('transform', { scale: 2, rotate: 90 });
+            fixture.detectChanges();
+            const image = (fixture.nativeElement as HTMLElement).querySelector('img');
+            expect(image?.style.transform).toBe('scaleX(2)scaleY(2)rotate(90deg)');
+        });
+
+        it.each(['data:image/png;base64,iVBORw0KGgo=', 'data:image/jpeg;base64,/9j/4AAQSkZJRg==', 'data:image/webp;base64,UklGRg=='])(
+            'renders the data URL %s without Angular rewriting it',
+            (dataUrl) => {
+                comp.imageDataUrl.set(dataUrl);
+                fixture.detectChanges();
+                const image = (fixture.nativeElement as HTMLElement).querySelector('img');
+                expect(image?.getAttribute('src')).toBe(dataUrl);
+            },
+        );
+
+        it('mirrors the image through a plain transform string', () => {
+            fixture.componentRef.setInput('transform', { scale: 1.5, flipH: true, flipV: true, rotate: 0 });
+            fixture.detectChanges();
+            expect(comp.transformStyle()).toBe('scaleX(-1.5)scaleY(-1.5)rotate(0deg)');
         });
 
         it('does not throw when transform is bound to undefined', () => {

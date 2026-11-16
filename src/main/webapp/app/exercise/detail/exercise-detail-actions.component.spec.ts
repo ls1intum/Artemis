@@ -14,6 +14,7 @@ import { ExerciseDetailActionsComponent } from './exercise-detail-actions.compon
         <jhi-exercise-detail-actions>
             <ng-container detailNavigationActions><a href="#participations">Participations</a><a href="#statistics">Statistics</a></ng-container>
             <ng-container detailEditingActions><a href="#edit">Edit</a><button type="button">Create Variant</button></ng-container>
+            <ng-container detailLifecycleActions><button type="button">Start Quiz</button></ng-container>
             <ng-container detailMoreActions><button type="button">More actions</button></ng-container>
         </jhi-exercise-detail-actions>
     `,
@@ -35,6 +36,7 @@ describe('Exercise detail action projection', () => {
             'Statistics',
             'Edit',
             'Create Variant',
+            'Start Quiz',
             'More actions',
         ]);
         expect(actions.textContent).not.toContain('History');

@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -102,6 +103,8 @@ public class FileResource {
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private static final int DAYS_TO_CACHE = 1;
+
+    private static final CacheControl CONVERSATION_FILE_CACHE_CONTROL = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate();
 
     private enum AttachmentCachePolicy {
 
@@ -138,6 +141,8 @@ public class FileResource {
 
     private final Optional<ExamUserApi> examUserApi;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final QuizQuestionRepository quizQuestionRepository;
@@ -149,7 +154,7 @@ public class FileResource {
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi, Optional<LectureAttachmentApi> lectureAttachmentApi,
             Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository,
-            CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi, Optional<ExamAccessApi> examAccessApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.fileDownloadService = fileDownloadService;
@@ -159,6 +164,7 @@ public class FileResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserApi = examUserApi;
+        this.examAccessApi = examAccessApi;
         this.quizQuestionRepository = quizQuestionRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitApi = lectureUnitApi;
@@ -205,6 +211,7 @@ public class FileResource {
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
             throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
+        fileUploadService.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userRepository.getUser().getId());
         var filePathInformation = FileUtil.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
@@ -222,26 +229,26 @@ public class FileResource {
      * @param courseId       The ID of the course the conversation belongs to.
      * @param conversationId The ID of the conversation the file is used in.
      * @param filename       The filename of the file to get.
-     * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
+     * @return The requested file, or 404 if the file doesn't exist. Only the browser of the user may cache the response.
      */
     @FeatureUsage(UserFeature.MESSAGING)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
-        // TODO: Improve the access check
-        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
+        fileUploadService.checkCanReadConversationFileElseThrow(courseId, conversationId, filename, userRepository.getUser());
+        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
 
         var serverFilePath = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
         var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
         var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), CONVERSATION_FILE_CACHE_CONTROL, true);
         }
 
-        return buildFileResponse(serverFilePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, Optional.empty(), CONVERSATION_FILE_CACHE_CONTROL, true);
     }
 
     /**
@@ -261,6 +268,27 @@ public class FileResource {
     }
 
     /**
+     * Pictures of a course quiz are only available for students once the quiz is released, those of an exam quiz once the exam content is available to them.
+     *
+     * @param question the drag and drop question the picture belongs to
+     * @param course   the course of the quiz
+     * @param user     the current user, loaded with its course roles
+     * @throws AccessForbiddenException if the pictures are not available yet for the user
+     */
+    private void checkQuizPicturesAvailableElseThrow(DragAndDropQuestion question, Course course, User user) {
+        var exercise = question.getExercise();
+        if (exercise.isExamExercise()) {
+            examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class)).checkExamContentAvailableForStudentElseThrow(exercise, user);
+        }
+        else if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this quiz");
+        }
+        else if (!exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("The quiz is not released yet");
+        }
+    }
+
+    /**
      * GET /files/drag-and-drop/questions/:questionId/backgrounds/:filename : Get the background file with the given name for the given drag and drop question
      *
      * @param questionId ID of the drag and drop question, the file belongs to
@@ -274,7 +302,7 @@ public class FileResource {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        checkQuizPicturesAvailableElseThrow(question, course, userRepository.getUserWithCourseRolesAndAuthorities());
         String backgroundFilePath = question.getBackgroundFilePath();
         if (backgroundFilePath == null) {
             throw new EntityNotFoundException("Drag and drop question " + questionId + " has no background file");
@@ -303,7 +331,7 @@ public class FileResource {
         log.debug("REST request to get file for drag item {} of question {}", dragItemId, questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        checkQuizPicturesAvailableElseThrow(question, course, userRepository.getUserWithCourseRolesAndAuthorities());
         DragItem dragItem = question.findDragItemById(dragItemId);
         String pictureFilePath = dragItem == null ? null : dragItem.getPictureFilePath();
         if (pictureFilePath == null) {
@@ -802,18 +830,6 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
-     * @param path     to the file including the file name
-     * @param filename the name of the file
-     * @param cache    true if the response should contain a header that allows caching; false otherwise
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
-        return buildFileResponse(path, filename, Optional.empty(), cache);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path containing the file name
-     *
      * @param path      to the file including the file name
      * @param filename  the name of the file
      * @param cacheDays the number of days to cache the response
@@ -821,17 +837,6 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, int cacheDays) {
         return buildFileResponse(path, filename, Optional.empty(), cacheDays);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path and file name
-     *
-     * @param path            to the file
-     * @param replaceFilename replaces the downloaded file's name, if provided
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, Optional<String> replaceFilename) {
-        return buildFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, false);
     }
 
     /**
@@ -857,6 +862,20 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays) {
+        return buildFileResponse(path, filename, replaceFilename, cacheDays > 0 ? CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic() : null, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path                to the file
+     * @param filename            the name of the file
+     * @param replaceFilename     replaces the downloaded file's name, if provided
+     * @param cacheControl        the caching policy of the response, or null for none
+     * @param varyByAuthorization true if a cached response depends on who asks, which is the case when the access to the file is checked per user
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, CacheControl cacheControl, boolean varyByAuthorization) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -867,9 +886,11 @@ public class FileResource {
             HttpHeaders headers = fileDownloadService.createFileHeaders(filename, replaceFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(fileDownloadService.getMediaTypeFromFilename(filename)).header("filename", filename);
-            if (cacheDays > 0) {
-                var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
+            if (cacheControl != null) {
                 response = response.cacheControl(cacheControl);
+            }
+            if (varyByAuthorization) {
+                response = response.varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
             }
             return response.body(file);
         }

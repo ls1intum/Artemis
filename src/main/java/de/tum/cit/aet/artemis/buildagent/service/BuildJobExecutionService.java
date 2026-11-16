@@ -71,6 +71,12 @@ public class BuildJobExecutionService {
 
     private static final int MAX_CLONE_RETRIES = 3;
 
+    /** The largest result file that is read into memory. */
+    static final long MAX_RESULT_FILE_BYTES = 16L * 1024 * 1024;
+
+    /** The most that all result files of a build job add up to. */
+    static final long MAX_TOTAL_RESULT_BYTES = 64L * 1024 * 1024;
+
     private static final Pattern SAFE_BUILD_JOB_ID = Pattern.compile("[A-Za-z0-9_-]{1,100}");
 
     @Value("${artemis.version-control.default-branch:main}")
@@ -156,6 +162,8 @@ public class BuildJobExecutionService {
     public BuildResult runBuildJob(BuildJobQueueItem buildJob) {
         // The id is used as a folder name, so it is validated before the build starts.
         validateBuildJobId(buildJob.id());
+        // The repository names and checkout directories end up in folder names, so they are validated as well.
+        BuildJobQueueItemValidator.validate(buildJob);
         // Bind this job's clone token to the executing thread for the whole job. Every git operation below reaches
         // the credential through BuildJobGitService, including the ones inherited from AbstractGitService that carry
         // no build job context. The finally is essential: executor threads are reused, and a token left behind would
@@ -313,6 +321,7 @@ public class BuildJobExecutionService {
         List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
+        long totalResultBytes = 0;
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextEntry()) != null) {
             // Go through all tar entries that are test result files.
@@ -320,10 +329,24 @@ public class BuildJobExecutionService {
                 continue;
             }
 
-            // Read the contents of the tar entry as a string.
-            String fileContent = readTarEntryContent(testResultsTarInputStream);
             // Get the file name of the tar entry.
             String fileName = getFileName(tarEntry);
+
+            // The files are produced by the code of the student: only files within the limits are read into memory, the others are skipped
+            if (tarEntry.getSize() > MAX_RESULT_FILE_BYTES || totalResultBytes + tarEntry.getSize() > MAX_TOTAL_RESULT_BYTES) {
+                String msg = "The file " + fileName + " is too large and is ignored.";
+                buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+                log.warn("Ignoring the result file {} of build job {} because it exceeds the size limits ({} bytes)", fileName, buildJobId, tarEntry.getSize());
+                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                    // A missing report must not count as a report without findings, so the job fails instead of continuing without it
+                    throw new LocalCIException("The static code analysis report " + fileName + " is too large to be processed");
+                }
+                continue;
+            }
+            totalResultBytes += tarEntry.getSize();
+
+            // Read the contents of the tar entry as a string.
+            String fileContent = readTarEntryContent(testResultsTarInputStream);
 
             try {
                 // Check if the file is a static code analysis report file

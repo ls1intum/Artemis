@@ -105,11 +105,11 @@ public class PushNotificationResource {
             expirationDate = tokenProvider.getExpirationDate(token);
         }
         catch (ExpiredJwtException e) {
-            log.error("Expired token {}", token, e);
+            log.error("Expired token of a push notification registration", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         catch (Exception ex) {
-            log.error("Cannot parse token {}", token, ex);
+            log.error("Cannot parse the token of a push notification registration", ex);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 

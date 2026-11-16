@@ -1963,7 +1963,7 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
         });
     });
 
-    test('shortens the hint below the editor to at most two lines and keeps the full text in a tooltip', async ({ page, composer }) => {
+    test('shortens the hint below the editor to at most two lines and puts the remaining details in a tooltip', async ({ page, composer }) => {
         const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
         const hint = host.getByTestId('message-editor-hint');
         await forEachViewport(page, async (viewport) => {
@@ -1981,7 +1981,7 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             await expectNoHorizontalOverflow(page, [host], { name: 'message editor hint' });
         });
         await host.getByTestId('message-editor-help').hover();
-        await expect(page.getByRole('tooltip')).toContainText('Shift+Enter adds a new line or the next list item');
+        await expect(page.getByRole('tooltip')).toContainText('Shift+Enter adds the next list item');
         await expect(page.getByRole('tooltip')).not.toContainText('Ctrl+Enter');
     });
 

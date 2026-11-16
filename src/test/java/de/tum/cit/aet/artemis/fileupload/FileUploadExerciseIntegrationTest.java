@@ -1103,6 +1103,16 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                 FileUploadExerciseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { ".png", "png, pdf!", "toolongending" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importFileUploadExerciseWithInvalidFilePatternIsRejected(String filePattern) throws Exception {
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        fileUploadExercise.setFilePattern(filePattern);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), inputDTO(fileUploadExercise),
+                FileUploadExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {

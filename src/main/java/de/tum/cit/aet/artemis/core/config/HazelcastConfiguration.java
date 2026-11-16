@@ -59,6 +59,8 @@ import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastTypeFilter;
 import de.tum.cit.aet.artemis.localci.service.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
@@ -176,6 +178,9 @@ public class HazelcastConfiguration {
 
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
+
+    @Value("${artemis.distributed-data.additional-allowed-types:}")
+    private List<String> additionalAllowedTypes;
 
     /**
      * Creates the HazelcastConfiguration with required dependencies.
@@ -396,6 +401,7 @@ public class HazelcastConfiguration {
         configureMemberAttributes(config);
         configureSplitBrainProtection(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+        HazelcastTypeFilter.apply(config.getSerializationConfig(), DistributedDataTypeFilter.withAdditional(additionalAllowedTypes));
 
         // The build job queue must be configured here as well, otherwise it silently degrades to FIFO in tests while
         // production dispatches by priority, which would make any test of priority-based dispatch meaningless.
@@ -492,6 +498,7 @@ public class HazelcastConfiguration {
         configureMemberAttributes(config);
         configureSpringIntegration(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+        HazelcastTypeFilter.apply(config.getSerializationConfig(), DistributedDataTypeFilter.withAdditional(additionalAllowedTypes));
 
         configureNetworkBindingAndDiscovery(config);
         configureCacheMaps(config, artemisProperties);
@@ -1031,6 +1038,7 @@ public class HazelcastConfiguration {
         configureClientHeartbeat(clientConfig);
         configureClientNetworking(clientConfig);
         clientConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+        HazelcastTypeFilter.apply(clientConfig.getSerializationConfig(), DistributedDataTypeFilter.withAdditional(additionalAllowedTypes));
 
         log.info("Creating Hazelcast client with Eureka-based dynamic discovery");
 

@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.core.util.IpRangeSet;
  * would mean refusing every build agent - and which treats an address of another family as a plain non-match rather
  * than an error.
  * <p>
- * This deliberately does not use {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest} to
- * obtain the address it is asked about. That helper returns the first {@code X-Forwarded-For} value whenever the
- * header is present, and any client can set that header, so it cannot be the basis of an allowlist. Callers resolve
- * the peer with {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getPeerIpString} instead.
+ * Callers resolve the peer with {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getPeerIpString}, which walks
+ * the forwarding header only through the proxies listed in {@link BuildAgentNetworkConfiguration}, and not with
+ * {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest}, which reports what the servlet
+ * container resolved.
  *
  * @see BuildAgentNetworkConfiguration
  */

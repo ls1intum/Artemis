@@ -57,7 +57,7 @@ class PyrisConnectorFailureTest {
 
     @ParameterizedTest
     @ValueSource(ints = { 400, 500 })
-    void jsonNullErrorBodyKeepsTheIrisErrorFallback(int status) {
+    void jsonNullErrorBodyOnlyRelaysTheStatus(int status) {
         var code = HttpStatus.valueOf(status);
         byte[] body = "null".getBytes(StandardCharsets.UTF_8);
         var failure = status == 400 ? HttpClientErrorException.create(code, "Pyris error", HttpHeaders.EMPTY, body, StandardCharsets.UTF_8)
@@ -65,6 +65,19 @@ class PyrisConnectorFailureTest {
         when(rest.postForEntity(anyString(), any(), eq(PyrisLectureSearchResultDTO[].class))).thenThrow(failure);
 
         assertThatThrownBy(() -> service.searchLectures("Java", 5, null, null, null)).isExactlyInstanceOf(IrisInternalPyrisErrorException.class)
-                .satisfies(error -> assertThat(((IrisInternalPyrisErrorException) error).getTranslationParams()).containsEntry("pyrisErrorMessage", ""));
+                .satisfies(error -> assertThat(((IrisInternalPyrisErrorException) error).getTranslationParams()).containsEntry("pyrisErrorMessage", status + " Pyris error"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 400, 500 })
+    void detailOfThePyrisErrorIsNotRelayedToTheUser(int status) {
+        var code = HttpStatus.valueOf(status);
+        byte[] body = "{\"detail\":{\"errorMessage\":\"internal host db-7 failed with token abc\"}}".getBytes(StandardCharsets.UTF_8);
+        var failure = status == 400 ? HttpClientErrorException.create(code, "Pyris error", HttpHeaders.EMPTY, body, StandardCharsets.UTF_8)
+                : HttpServerErrorException.create(code, "Pyris error", HttpHeaders.EMPTY, body, StandardCharsets.UTF_8);
+        when(rest.postForEntity(anyString(), any(), eq(PyrisLectureSearchResultDTO[].class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> service.searchLectures("Java", 5, null, null, null)).isExactlyInstanceOf(IrisInternalPyrisErrorException.class)
+                .satisfies(error -> assertThat(((IrisInternalPyrisErrorException) error).getTranslationParams().get("pyrisErrorMessage")).isEqualTo(status + " Pyris error"));
     }
 }
