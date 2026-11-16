@@ -527,6 +527,7 @@ public class SecurityPolicyEditorService {
             boolean pointsToVacated = testClass.classPolicyPath() != null && vacated.contains(testClass.classPolicyPath());
             if (testClass.active() && (pointsToVacated || !assigned.entries().equals(testClass.entries()))) {
                 requireKeptOverloadPolicy(testClass, assigned);
+                requireKeptInheritedPolicy(testClass, assigned);
                 reassigned.add(assigned);
             }
         }
@@ -543,6 +544,21 @@ public class SecurityPolicyEditorService {
             throw refused("The change would leave the Security Framework " + after.status() + ", so it was not committed.", "securityPolicyBreaksConfiguration",
                     Map.of("status", after.status().name()));
         }
+    }
+
+    /**
+     * The test methods a class inherits from another test class are not among its test cases, so they cannot be assigned one by one; they follow its class
+     * annotation, which therefore must not lose its policy file while some of its own test cases keep theirs, e.g. when one test case is released.
+     */
+    private static void requireKeptInheritedPolicy(SecurityTestAssignments.TestClass testClass, SecurityTestAssignments.TestClass assigned) {
+        String classPolicyPath = testClass.classPolicyPath();
+        if (!testClass.inheritsTests() || classPolicyPath == null || assigned.classPolicyPath() != null || assigned.methodPolicyPaths().isEmpty()) {
+            return;
+        }
+        throw refused(
+                "The test class " + testClass.qualifiedName() + " inherits test methods that use the policy " + classPolicyPath
+                        + " through its class annotation. Assign the whole class to a policy, or release it completely.",
+                "securityPolicyInheritedTestsLosePolicy", Map.of("testClass", testClass.qualifiedName(), "path", classPolicyPath));
     }
 
     /**

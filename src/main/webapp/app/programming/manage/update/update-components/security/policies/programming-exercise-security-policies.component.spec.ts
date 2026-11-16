@@ -479,6 +479,29 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'failed', message: 'Invalid policy' }));
     });
 
+    it('shows only the latest review of the change and previews a change made while it is open before committing it', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        const first = new Subject<SecurityPolicyPreview>();
+        const second = new Subject<SecurityPolicyPreview>();
+        const third = { verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [{ path: 'SecurityPolicy.yaml', after: 'third' }] };
+        service.previewPolicies.mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(of(third));
+        handlers.openReview();
+        comp.reviewOpen.set(false);
+        handlers.onPolicyChange({ ...comp.policies()[0], working: withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.second' }]) });
+        handlers.openReview();
+
+        second.next({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [{ path: 'SecurityPolicy.yaml', after: 'second' }] });
+        first.next({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [{ path: 'SecurityPolicy.yaml', after: 'first' }] });
+        expect(comp.reviewPreview()?.files?.[0].after).toBe('second');
+
+        // A change while the review is open, e.g. by a late import, is previewed before anything is committed.
+        handlers.onPolicyChange({ ...comp.policies()[0], working: withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.third' }]) });
+        handlers.commit('Update');
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+        expect(comp.reviewPreview()?.files?.[0].after).toBe('third');
+    });
+
     it('retries a failed commit with its message and names an unknown author of a conflict', () => {
         create(configured(), false);
         handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));

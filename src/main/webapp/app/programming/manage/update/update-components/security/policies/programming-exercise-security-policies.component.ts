@@ -219,6 +219,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private readonly importGenerations = new Map<string, number>();
     /** The number of YAML imports started. */
     private importSequence = 0;
+    /** The change the review shows, serialized, and the number of review previews requested. */
+    private reviewedChange: string | undefined;
+    private reviewRequests = 0;
     /** The number of previews of unsaved YAML started. */
     private yamlPreviewCount = 0;
     private structureRequested = false;
@@ -416,6 +419,18 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             const exerciseId = this.exerciseId();
             const status = this.status();
             untracked(() => this.onStatus(exerciseId, status));
+        });
+        // The open review shows the diff of the change as it is, also after it changed meanwhile, e.g. because an import answered.
+        effect(() => {
+            if (!this.reviewOpen()) {
+                return;
+            }
+            const change = JSON.stringify(this.buildChange());
+            untracked(() => {
+                if (change !== this.reviewedChange) {
+                    this.previewReview();
+                }
+            });
         });
         // Check the unsaved changes against the version they are committed with a moment after the last change, so the banner warns before the review.
         effect(() => {
@@ -808,16 +823,35 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         if (!this.totalChanges()) {
             return;
         }
-        this.reviewPreview.set(undefined);
         this.reviewOpen.set(true);
+        this.previewReview();
+    }
+
+    /**
+     * Shows the diff of the change as it is now. The review and its commit belong to this change: a newer preview replaces it, and an older one answering late
+     * is ignored, so the diff shown is always the one committed.
+     */
+    private previewReview(): void {
+        const change = this.buildChange();
+        this.reviewedChange = JSON.stringify(change);
+        const request = ++this.reviewRequests;
+        const isCurrent = () => request === this.reviewRequests && this.reviewOpen();
+        this.reviewPreview.set(undefined);
         if (this.problems().length) {
             // The problems show in the review; the server would refuse the preview of an incomplete change anyway.
             this.reviewPreview.set({ verdict: SecurityVersionCompatibilityVerdict.UNVERIFIED, files: [], frameworkVersion: this.shownVersion() });
             return;
         }
-        this.securityService.previewPolicies(this.exerciseId(), this.buildChange()).subscribe({
-            next: (preview) => this.reviewPreview.set(preview),
+        this.securityService.previewPolicies(this.exerciseId(), change).subscribe({
+            next: (preview) => {
+                if (isCurrent()) {
+                    this.reviewPreview.set(preview);
+                }
+            },
             error: (error: HttpErrorResponse) => {
+                if (!isCurrent()) {
+                    return;
+                }
                 this.reviewOpen.set(false);
                 // Retry opens the review again, so nothing is committed without the diff; a failed commit from before is no longer retried.
                 this.failedRequest = undefined;
@@ -827,6 +861,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected commit(commitMessage: string): void {
+        // The review commits what its diff shows; a change made since, e.g. by an import that answered late, is shown first.
+        if (this.reviewOpen() && JSON.stringify(this.buildChange()) !== this.reviewedChange) {
+            this.previewReview();
+            return;
+        }
         this.runCommit(this.buildChange(commitMessage), false, undefined);
     }
 

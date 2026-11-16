@@ -48,9 +48,11 @@ final class SecurityTestAssignments {
      * @param overloaded        the test cases that more than one test method has, see {@link AresTestCases#overloadedTestCases(String)}; they cannot be
      *                              assigned one by one
      * @param testCases         the names of its test methods, in their order in the source
+     * @param inheritsTests     whether it extends another test class of the repository, whose test methods it inherits; they are not among its test cases
+     *                              and use the policy of its class annotation
      */
     record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods,
-            Set<String> switchedOff, Set<String> overloaded, List<String> testCases) {
+            Set<String> switchedOff, Set<String> overloaded, List<String> testCases, boolean inheritsTests) {
 
         /**
          * @return the test methods whose annotation stays as it is when the assignments of the class are rewritten, unless the method is assigned
@@ -106,7 +108,7 @@ final class SecurityTestAssignments {
             // An assigned test case loses its override without a policy file; assigning the whole class assigns every test case, while a switched-off one stays.
             Set<String> defaults = requestedClassPolicyPath != null ? new LinkedHashSet<>() : new LinkedHashSet<>(defaultMethods);
             defaults.removeAll(methods.keySet());
-            return new TestClass(qualifiedName, sourcePath, active, requestedClassPolicyPath, methods, defaults, switchedOff, overloaded, testCases);
+            return new TestClass(qualifiedName, sourcePath, active, requestedClassPolicyPath, methods, defaults, switchedOff, overloaded, testCases, inheritsTests);
         }
     }
 
@@ -119,7 +121,8 @@ final class SecurityTestAssignments {
      */
     static Map<String, TestClass> read(Map<String, String> javaSources) {
         Map<String, TestClass> testClasses = new TreeMap<>();
-        testClassPaths(javaSources).forEach((qualifiedName, sourcePath) -> {
+        Map<String, String> testClassPaths = testClassPaths(javaSources);
+        testClassPaths.forEach((qualifiedName, sourcePath) -> {
             String source = javaSources.get(sourcePath);
             AresTestSources.relevantType(AresTestSources.analyze(sourcePath, source))
                     .filter(type -> type.qualifiedName().equals(qualifiedName) && type.policies().size() == 1 && type.policies().getFirst().isEvaluable()).ifPresent(type -> {
@@ -138,7 +141,8 @@ final class SecurityTestAssignments {
                         });
                         testClasses.put(qualifiedName,
                                 new TestClass(qualifiedName, sourcePath, annotation.isActivated(), annotation.policyPath().orElse(null), Map.copyOf(methodPolicyPaths),
-                                        Set.copyOf(defaultMethods), Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source)));
+                                        Set.copyOf(defaultMethods), Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
+                                        type.superclass().stream().anyMatch(testClassPaths::containsKey)));
                     });
         });
         return testClasses;
