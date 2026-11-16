@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -44,7 +44,9 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            this.updateChecklistState();
+            const exam = this.exam();
+            const course = this.course();
+            untracked(() => this.updateChecklistState(exam, course));
         });
     }
 
@@ -76,6 +78,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     readonly numberOfStarted = signal(0);
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
+    private statisticsSubscription?: Subscription;
 
     // Icons
     faTimes = faTimes;
@@ -91,20 +94,21 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
         this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => {
             this.numberOfStarted.update((count) => count + 1);
-            // A test exam creates the student exam of a student when the student starts, the student exams of a regular exam exist before
-            if (this.isTestExam()) {
-                this.numberOfGeneratedStudentExams.update((count) => count + 1);
+            if (this.exam().testExam) {
+                // Opening the coverpage already creates an attempt, so a start does not necessarily increase the total.
+                this.updateChecklistState(this.exam(), this.course(), false);
             }
         });
     }
 
-    private updateChecklistState() {
-        this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
+    private updateChecklistState(exam: Exam, course: Course, updateConductionCounts = true) {
+        this.statisticsSubscription?.unsubscribe();
+        this.statisticsSubscription = this.examChecklistService.getExamStatistics(exam).subscribe((examStats) => {
             this.examChecklist.set(examStats);
             this.numberOfGeneratedStudentExams.set(this.examChecklist().numberOfGeneratedStudentExams ?? 0);
-            this.isTestExam.set(this.exam().testExam!);
+            this.isTestExam.set(exam.testExam!);
 
-            if (this.course()?.isAtLeastInstructor) {
+            if (course?.isAtLeastInstructor) {
                 // Step 1:
                 this.setExamPreparation();
             }
@@ -118,14 +122,18 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
                 this.setCorrectionState();
             }
 
-            this.numberOfStarted.set(this.examChecklist().numberOfExamsStarted);
-            this.numberOfSubmitted.set(this.examChecklist().numberOfExamsSubmitted);
+            // The start event is sent before the started state is persisted. Keep the live counters during its refresh.
+            if (updateConductionCounts) {
+                this.numberOfStarted.set(this.examChecklist().numberOfExamsStarted);
+                this.numberOfSubmitted.set(this.examChecklist().numberOfExamsSubmitted);
+            }
         });
     }
 
     ngOnDestroy(): void {
         this.submittedSubscription?.unsubscribe();
         this.startedSubscription?.unsubscribe();
+        this.statisticsSubscription?.unsubscribe();
     }
 
     /**

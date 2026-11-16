@@ -9,7 +9,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -231,19 +231,52 @@ describe('ExamChecklistComponent', () => {
             expect(component.numberOfStarted()).toBe(4);
         });
 
-        it('should count the student exam of a test exam that is started as one more generated student exam', () => {
-            // a test exam creates the student exam of a student when the student starts, so the total grows with every started exam
-            setUp({ testExam: true }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 12 });
+        it.each([
+            { description: 'already generated on the coverpage', initialGenerated: 1, generatedAfterStart: 1 },
+            { description: 'created after the initial statistics', initialGenerated: 0, generatedAfterStart: 2 },
+        ])('should use the authoritative total for a test exam $description', ({ initialGenerated, generatedAfterStart }) => {
+            setUp({ testExam: true }, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0 });
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
             examChecklistComponentFixture.detectChanges();
-            expect(component.numberOfGeneratedStudentExams()).toBe(12);
+            expect(component.numberOfGeneratedStudentExams()).toBe(initialGenerated);
+            vi.mocked(examChecklistService.getExamStatistics).mockReturnValue(
+                of(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: generatedAfterStart, numberOfExamsStarted: 0, numberOfExamsSubmitted: 2 })),
+            );
 
             websocketService.emit('/topic/exam/1/started', undefined);
             examChecklistComponentFixture.detectChanges();
 
-            expect(component.numberOfStarted()).toBe(13);
-            expect(component.numberOfGeneratedStudentExams()).toBe(13);
-            expect(examChecklistComponentFixture.nativeElement.textContent).not.toContain('108');
+            expect(component.numberOfStarted()).toBe(1);
+            expect(component.numberOfGeneratedStudentExams()).toBe(generatedAfterStart);
+        });
+
+        it('should cancel superseded test-exam statistics and pending requests on destroy', () => {
+            setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+            examChecklistComponentFixture.detectChanges();
+            const earlierRefresh = new Subject<ExamChecklist>();
+            const latestRefresh = new Subject<ExamChecklist>();
+            const destroyedRefresh = new Subject<ExamChecklist>();
+            vi.mocked(examChecklistService.getExamStatistics).mockReturnValueOnce(earlierRefresh).mockReturnValueOnce(latestRefresh).mockReturnValue(destroyedRefresh);
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+            expect(earlierRefresh.observed).toBe(true);
+            websocketService.emit('/topic/exam/1/started', undefined);
+            expect(earlierRefresh.observed).toBe(false);
+            websocketService.emit('/topic/exam/1/submitted', undefined);
+            // The event is published before the started state is persisted, so the server can still report zero starts.
+            latestRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 3, numberOfExamsStarted: 0, numberOfExamsSubmitted: 2 }));
+            earlierRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 }));
+            expect(component.numberOfGeneratedStudentExams()).toBe(3);
+            expect(component.numberOfStarted()).toBe(2);
+            expect(component.numberOfSubmitted()).toBe(3);
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+            expect(destroyedRefresh.observed).toBe(true);
+            examChecklistComponentFixture.destroy();
+            expect(destroyedRefresh.observed).toBe(false);
+            destroyedRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1 }));
+            expect(component.numberOfGeneratedStudentExams()).toBe(3);
         });
 
         it('should keep the number of generated student exams of a regular exam when a student starts', () => {
@@ -256,6 +289,7 @@ describe('ExamChecklistComponent', () => {
 
             expect(component.numberOfStarted()).toBe(4);
             expect(component.numberOfGeneratedStudentExams()).toBe(12);
+            expect(examChecklistService.getExamStatistics).toHaveBeenCalledExactlyOnceWith(component.exam());
         });
 
         it.each([

@@ -104,6 +104,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
+    private statisticsSubscription?: Subscription;
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
@@ -111,9 +112,9 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
         this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => {
             this.numberOfStarted.update((value) => value + 1);
-            // A test exam creates the student exam of a student when the student starts, the student exams of a regular exam exist before
-            if (this.isTestExam()) {
-                this.numberOfGeneratedStudentExams.update((value) => value + 1);
+            if (this.exam().testExam) {
+                // Opening the coverpage already creates an attempt, so a start does not necessarily increase the total.
+                this.updateChecklistState(false);
             }
         });
         const exam = this.exam();
@@ -133,20 +134,24 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         );
     }
 
-    private updateChecklistState() {
+    private updateChecklistState(updateConductionCounts = true) {
         this.isTestExam.set(this.exam().testExam!);
         this.pointsExercisesEqual.set(this.examChecklistService.checkPointsExercisesEqual(this.exam()));
         this.totalPoints.set(this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual(), this.exam()));
         this.allGroupsContainExercise.set(this.examChecklistService.checkEachGroupContainsExercise(this.exam()));
         this.countMandatoryExercises.set(this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0);
         this.hasOptionalExercises.set(this.countMandatoryExercises() < (this.exam().exerciseGroups?.length ?? 0));
-        this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
+        this.statisticsSubscription?.unsubscribe();
+        this.statisticsSubscription = this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
             this.examChecklist.set(examStats);
             const exam = this.exam();
             this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
-            this.numberOfStarted.set(examStats.numberOfExamsStarted);
             this.numberOfGeneratedStudentExams.set(examStats.numberOfGeneratedStudentExams ?? 0);
-            this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
+            // The start event is sent before the started state is persisted. Keep the live counters during its refresh.
+            if (updateConductionCounts) {
+                this.numberOfStarted.set(examStats.numberOfExamsStarted);
+                this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
+            }
             if (this.isExamOver()) {
                 if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
                     const lastAssessmentFinished = examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
@@ -161,6 +166,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.submittedSubscription?.unsubscribe();
         this.startedSubscription?.unsubscribe();
+        this.statisticsSubscription?.unsubscribe();
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }

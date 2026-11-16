@@ -10,7 +10,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -176,22 +176,59 @@ describe('ExamStatusComponent', () => {
         expect(component.numberOfGeneratedStudentExams()).toBe(0);
     });
 
-    it('should count the student exam of a test exam that is started as one more generated student exam', () => {
-        const examChecklist = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 12, numberOfExamsSubmitted: 0 });
-        vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+    it.each([
+        { description: 'already generated on the coverpage', initialGenerated: 1, generatedAfterStart: 1 },
+        { description: 'created after the initial statistics', initialGenerated: 0, generatedAfterStart: 2 },
+    ])('should use the authoritative total for a test exam $description', ({ initialGenerated, generatedAfterStart }) => {
+        const initialStats = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+        const startedStats = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: generatedAfterStart, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+        vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValueOnce(of(initialStats)).mockReturnValue(of(startedStats));
         prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
         testExam.id = 7;
         fixture.detectChanges();
         const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-        expect(component.numberOfGeneratedStudentExams()).toBe(12);
+        expect(component.numberOfGeneratedStudentExams()).toBe(initialGenerated);
 
         websocketService.emit('/topic/exam/7/started', undefined);
         fixture.detectChanges();
 
-        expect(component.numberOfStarted()).toBe(13);
-        expect(component.numberOfGeneratedStudentExams()).toBe(13);
-        // the share of started exams is relative to the exams that exist now and cannot exceed 100 %
-        expect(fixture.nativeElement.textContent).not.toContain('108');
+        expect(component.numberOfStarted()).toBe(1);
+        expect(component.numberOfGeneratedStudentExams()).toBe(generatedAfterStart);
+    });
+
+    it('should cancel superseded test-exam statistics and pending requests on destroy', () => {
+        const initialStats = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+        const earlierRefresh = new Subject<ExamChecklist>();
+        const latestRefresh = new Subject<ExamChecklist>();
+        const destroyedRefresh = new Subject<ExamChecklist>();
+        vi.spyOn(examChecklistService, 'getExamStatistics')
+            .mockReturnValueOnce(of(initialStats))
+            .mockReturnValueOnce(earlierRefresh)
+            .mockReturnValueOnce(latestRefresh)
+            .mockReturnValue(destroyedRefresh);
+        prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
+        testExam.id = 7;
+        fixture.detectChanges();
+        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+        websocketService.emit('/topic/exam/7/started', undefined);
+        expect(earlierRefresh.observed).toBe(true);
+        websocketService.emit('/topic/exam/7/started', undefined);
+        expect(earlierRefresh.observed).toBe(false);
+        websocketService.emit('/topic/exam/7/submitted', undefined);
+        // The event is published before the started state is persisted, so the server can still report zero starts.
+        latestRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 3, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 }));
+        earlierRefresh.next(initialStats);
+        expect(component.numberOfGeneratedStudentExams()).toBe(3);
+        expect(component.numberOfStarted()).toBe(2);
+        expect(component.numberOfSubmitted()).toBe(1);
+
+        websocketService.emit('/topic/exam/7/started', undefined);
+        expect(destroyedRefresh.observed).toBe(true);
+        fixture.destroy();
+        expect(destroyedRefresh.observed).toBe(false);
+        destroyedRefresh.next(initialStats);
+        expect(component.numberOfGeneratedStudentExams()).toBe(3);
     });
 
     it('should keep the number of generated student exams of a regular exam when a student starts', () => {
@@ -206,6 +243,7 @@ describe('ExamStatusComponent', () => {
 
         expect(component.numberOfStarted()).toBe(4);
         expect(component.numberOfGeneratedStudentExams()).toBe(12);
+        expect(examChecklistService.getExamStatistics).toHaveBeenCalledExactlyOnceWith(exam);
     });
 
     it('should set examConductionState correctly if TestExam is started but not finished yet', () => {
