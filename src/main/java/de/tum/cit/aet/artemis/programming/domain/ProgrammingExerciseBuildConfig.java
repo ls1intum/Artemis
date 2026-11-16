@@ -321,6 +321,12 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
     }
 
+    /**
+     * The value is only used by the server to build and check build plan access addresses, so it is not part of the JSON representation.
+     *
+     * @return the build plan access value, null if none was generated
+     */
+    @JsonIgnore
     @Nullable
     public String getBuildPlanAccessSecret() {
         return buildPlanAccessSecret;
