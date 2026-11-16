@@ -151,7 +151,7 @@
     <jhi-finished-builds-filter-modal
         [(visible)]="filterModalVisible"
         [finishedBuildJobFilterInput]="finishedBuildJobFilter()"
-        [buildAgentFilterable]="true"
+        [buildAgentFilterable]="courseId() === 0"
         [finishedBuildJobsInput]="finishedBuildJobs()"
         (confirmed)="onFilterConfirmed($event)"
     />

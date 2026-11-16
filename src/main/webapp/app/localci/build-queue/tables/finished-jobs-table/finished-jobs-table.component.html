@@ -82,7 +82,7 @@
                             {{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}
                         </a>
                     } @else {
-                        <span>{{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}</span>
+                        <span>{{ finishedBuildJob.buildAgentDisplayName ?? getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}</span>
                     }
                 </td>
                 @if (showCourseId()) {

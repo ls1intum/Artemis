@@ -283,6 +283,13 @@ describe('BuildJobDetailComponent', () => {
         expect(component.getRetryCount()).toBe(0);
     });
 
+    it('should use the display name of the build agent that the course view of a finished job carries', () => {
+        vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of({ ...mockFinishedJob, buildAgentAddress: undefined, buildAgentDisplayName: 'Agent One' }));
+        fixture.detectChanges();
+
+        expect(component.getBuildAgentName()).toBe('Agent One');
+    });
+
     it('should return helper values from finished build job', () => {
         vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(mockFinishedJob));
         fixture.detectChanges();

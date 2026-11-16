@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
@@ -40,6 +39,8 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
+import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
@@ -104,7 +105,8 @@ public class BuildJobQueueResource {
         }
 
         // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
-        return buildJobRepository.findWithDataByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId).<BuildJobDTO>map(FinishedBuildJobDTO::of)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId)
+                .<BuildJobDTO>map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobDTO.of(buildJob), distributedDataAccessService.getBuildAgentInformation()))
                 .map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -214,10 +216,14 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/finished-jobs")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, FinishedBuildJobPageableSearchDTO search) {
+    public ResponseEntity<List<CourseFinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, FinishedBuildJobPageableSearchDTO search) {
         log.debug("REST request to get the finished build jobs for course {}", courseId);
-        Slice<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(search, courseId);
-        Slice<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsSlice(buildJobPage);
+        // Filtering by the address of a build agent is a function of the administration pages
+        var courseSearch = new FinishedBuildJobPageableSearchDTO(search.buildStatus(), null, search.startDate(), search.endDate(), search.buildDurationLower(),
+                search.buildDurationUpper(), search.pageable());
+        Slice<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(courseSearch, courseId);
+        var agents = distributedDataAccessService.getBuildAgentInformation();
+        Slice<CourseFinishedBuildJobDTO> finishedBuildJobDTOs = buildJobPage.map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobDTO.of(buildJob), agents));
         HttpHeaders headers = SliceUtil.generateSliceHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }

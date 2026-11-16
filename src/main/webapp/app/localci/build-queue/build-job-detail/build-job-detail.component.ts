@@ -316,6 +316,10 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         if (job.buildAgent?.displayName || job.buildAgent?.name) {
             return job.buildAgent.displayName || job.buildAgent.name;
         }
+        // The course view of a finished job carries the display name instead of the address
+        if (job.buildAgentDisplayName) {
+            return job.buildAgentDisplayName;
+        }
         // For finished jobs, try to resolve address to displayName using online agents
         if (job.buildAgentAddress) {
             const agentInfo = getAgentInfoByAddress(job.buildAgentAddress, this.addressToAgentInfoMap());

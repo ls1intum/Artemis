@@ -27,10 +27,10 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -255,9 +255,10 @@ public class LocalCIQueueWebsocketService {
         if (finishedBuildJob == null) {
             return;
         }
-        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
+        var agents = distributedDataAccessService.getBuildAgentInformation();
+        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob, agents);
         // Also send to the individual build job topic for the build job detail page
-        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob, agents);
     }
 
     /**

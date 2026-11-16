@@ -102,6 +102,14 @@ describe('FinishedJobsTableComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should show the display name of the build agent in the course view, where no address is sent', () => {
+        fixture.componentRef.setInput('isAdminView', false);
+        fixture.componentRef.setInput('buildJobs', [{ ...mockFinishedJobs[0], buildAgentAddress: undefined, buildAgentDisplayName: 'Agent One' }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('Agent One');
+    });
+
     it('should display finished jobs', () => {
         fixture.componentRef.setInput('buildJobs', mockFinishedJobs);
         fixture.detectChanges();

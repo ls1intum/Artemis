@@ -22,9 +22,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
+import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
 
 /**
  * This service sends out websocket messages for the local continuous integration system.
@@ -129,15 +130,16 @@ public class LocalCIWebsocketMessagingService {
      * Sends to both the admin topic and the course-specific topic.
      *
      * @param finishedBuildJob the finished build job DTO to send
+     * @param agents           the known build agents, to resolve the display name of the agent for the course topic
      */
-    public void sendFinishedBuildJobUpdate(FinishedBuildJobDTO finishedBuildJob) {
+    public void sendFinishedBuildJobUpdate(FinishedBuildJobDTO finishedBuildJob, List<BuildAgentInformation> agents) {
         var adminChannel = ADMIN_FINISHED_JOBS.at();
         log.debug("Sending finished build job update on topic {}", adminChannel);
         websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
 
         var courseChannel = COURSE_FINISHED_JOBS.at(finishedBuildJob.courseId());
         log.debug("Sending finished build job update on topic {}", courseChannel);
-        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+        websocketMessagingService.sendMessage(courseChannel, CourseFinishedBuildJobDTO.of(finishedBuildJob, agents));
     }
 
     /**
@@ -146,15 +148,16 @@ public class LocalCIWebsocketMessagingService {
      * Sends to both the admin topic and the course-specific topic.
      *
      * @param finishedBuildJob the finished build job DTO to send
+     * @param agents           the known build agents, to resolve the display name of the agent for the course topic
      */
-    public void sendFinishedBuildJobDetailUpdate(FinishedBuildJobDTO finishedBuildJob) {
+    public void sendFinishedBuildJobDetailUpdate(FinishedBuildJobDTO finishedBuildJob, List<BuildAgentInformation> agents) {
         var adminChannel = ADMIN_BUILD_JOB.at(finishedBuildJob.id());
         log.debug("Sending finished build job detail update on topic {}", adminChannel);
         websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
 
         var courseChannel = COURSE_BUILD_JOB.at(finishedBuildJob.courseId(), finishedBuildJob.id());
         log.debug("Sending finished build job detail update on topic {}", courseChannel);
-        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+        websocketMessagingService.sendMessage(courseChannel, CourseFinishedBuildJobDTO.of(finishedBuildJob, agents));
     }
 
     public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {

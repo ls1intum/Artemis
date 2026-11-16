@@ -26,6 +26,7 @@ export class FinishedBuildJob implements StringBaseEntity {
     public id?: string;
     public name?: string;
     public buildAgentAddress?: string;
+    public buildAgentDisplayName?: string;
     public participationId?: number;
     public courseId?: number;
     public exerciseId?: number;
@@ -53,6 +54,7 @@ export type BuildJobDetail = {
     name?: string;
     buildAgent?: BuildAgent;
     buildAgentAddress?: string;
+    buildAgentDisplayName?: string;
     participationId?: number;
     courseId?: number;
     exerciseId?: number;

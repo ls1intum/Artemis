@@ -1,9 +1,12 @@
-package de.tum.cit.aet.artemis.buildagent.dto;
+package de.tum.cit.aet.artemis.localci.dto;
 
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
