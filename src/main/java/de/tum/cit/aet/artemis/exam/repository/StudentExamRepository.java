@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -494,6 +494,26 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
 
+    /**
+     * The submitted flags of the attempts of a user at a real exam (no test runs) that contain the given exercise.
+     * An empty result means the exercise is not part of any student exam of the user.
+     *
+     * @param examId     the id of the exam
+     * @param userId     the id of the user
+     * @param exerciseId the id of the exercise
+     * @return the submitted flag of each matching attempt
+     */
+    @Query("""
+            SELECT se.submitted
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE (se.testRun IS NULL OR se.testRun = FALSE)
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+                AND e.id = :exerciseId
+            """)
+    List<Boolean> findSubmittedFlagsOfAttemptsContainingExercise(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+
     @Query("""
             SELECT COUNT(studentExam) > 0
             FROM StudentExam studentExam
@@ -763,7 +783,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<Long> userIds) {
         List<StudentExam> studentExams = new ArrayList<>();
-        SecureRandom random = new SecureRandom();
 
         // In case the total number of exercises in the exam is not set by the instructor
         if (exam.getNumberOfExercisesInExam() == null) {
@@ -802,7 +821,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
             for (Integer index : assembledIndices) {
                 // We get one random exercise from all preselected exercise groups
-                studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(index)));
+                studentExam.addExercise(selectRandomExercise(exam.getExerciseGroups().get(index)));
             }
 
             // Apply random exercise order
@@ -831,9 +850,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         return indices;
     }
 
-    private Exercise selectRandomExercise(SecureRandom random, ExerciseGroup exerciseGroup) {
+    private Exercise selectRandomExercise(ExerciseGroup exerciseGroup) {
         List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
-        int randomIndex = random.nextInt(exercises.size());
+        int randomIndex = RandomUtil.nextInt(exercises.size());
         return exercises.get(randomIndex);
     }
 

@@ -35,8 +35,6 @@
         {
             "files": [
                 "src/main/webapp/app/course/request/**/*.scss",
-                "src/main/webapp/app/atlas/shared/standardized-competencies/**/*.scss",
-                "src/main/webapp/app/atlas/shared/competency-selection/**/*.scss",
                 "src/main/webapp/app/shared-ui/form/title-channel-name/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-import/**/*.scss",
                 "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",
@@ -80,6 +78,9 @@
                 "src/main/webapp/app/sharing/**/*.scss",
                 "src/main/webapp/app/tutorialgroup/**/*.scss",
                 "src/main/webapp/app/videosource/**/*.scss",
+                "src/main/webapp/app/atlas/**/*.scss",
+                "src/main/webapp/app/editor/**/*.scss",
+                "src/main/webapp/app/text/**/*.scss",
                 "src/main/webapp/app/core/alert/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-registration-modal/**/*.scss",
                 "src/main/webapp/app/core/navbar/global-search/components/modal/**/*.scss",
@@ -88,7 +89,6 @@
                 "src/main/webapp/app/quiz/manage/detail/**/*.scss",
                 "src/main/webapp/app/quiz/manage/manage-buttons/**/*.scss",
                 "src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.scss",
-                "src/main/webapp/app/text/manage/detail/**/*.scss",
                 "src/main/webapp/app/shared-ui/table-view/**/*.scss",
                 "src/main/webapp/app/shared-ui/components/buttons/button/**/*.scss",
                 "src/main/webapp/app/shared-ui/components/resizable-panels/**/*.scss",
@@ -98,9 +98,6 @@
                 "src/main/webapp/app/shared-ui/components/checklist-check/**/*.scss",
                 "src/main/webapp/app/shared-ui/information-box/**/*.scss",
                 "src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.scss",
-                "src/main/webapp/app/atlas/shared/competency-contribution/**/*.scss",
-                "src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.scss",
-                "src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.scss",
                 "src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.scss"
             ],
             "customSyntax": "postcss-scss",
@@ -137,6 +134,9 @@
                 "src/main/webapp/app/sharing/**/*.scss",
                 "src/main/webapp/app/tutorialgroup/**/*.scss",
                 "src/main/webapp/app/videosource/**/*.scss",
+                "src/main/webapp/app/atlas/**/*.scss",
+                "src/main/webapp/app/editor/**/*.scss",
+                "src/main/webapp/app/text/**/*.scss",
                 "src/main/webapp/app/core/alert/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-registration-modal/**/*.scss",
                 "src/main/webapp/app/core/navbar/global-search/components/modal/**/*.scss"

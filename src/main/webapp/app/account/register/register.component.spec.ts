@@ -1,7 +1,7 @@
 /**
  * Vitest tests for RegisterComponent.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -13,9 +13,11 @@ import { RegisterComponent } from 'app/account/register/register.component';
 import { User } from 'app/account/user/user.model';
 import { ElementRef } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_URL } from 'app/account/shared/email-allowed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Register Component Tests', () => {
     describe('RegisterComponent', () => {
@@ -34,6 +36,7 @@ describe('Register Component Tests', () => {
                     ProfileService,
                     { provide: TranslateService, useClass: MockTranslateService },
                     provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             })
                 .overrideTemplate(RegisterComponent, '')
@@ -51,6 +54,115 @@ describe('Register Component Tests', () => {
             comp = fixture.componentInstance;
             translateService.use('en');
             comp.registerForm.patchValue({ firstName: 'Test', lastName: 'User', login: 'testuser', email: 'test@example.org' });
+        });
+
+        describe('email restriction', () => {
+            let http: HttpTestingController;
+
+            function createWith(profileInfo: object): RegisterComponent {
+                vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ registrationEnabled: true, ...profileInfo } as any);
+                return TestBed.createComponent(RegisterComponent).componentInstance;
+            }
+
+            beforeEach(() => {
+                vi.useFakeTimers();
+                http = TestBed.inject(HttpTestingController);
+            });
+
+            afterEach(() => {
+                vi.useRealTimers();
+            });
+
+            it('should ask the server after typing has paused and show its answer, whatever the pattern looks like', async () => {
+                // a pattern that JavaScript could not even compile: only the server can decide, and it does
+                const component = createWith({ allowedEmailPattern: '(?i)[\\p{L}.]+@example\\.com' });
+                const email = component.registerForm.controls.email;
+
+                email.setValue('ada@exam');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS / 2);
+                email.setValue('ada@other.org');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+
+                const request = http.expectOne(EMAIL_ALLOWED_URL);
+                expect(request.request.body).toEqual({ email: 'ada@other.org' });
+                request.flush({ allowed: false });
+                expect(email.errors?.['emailNotAllowed']).toBeTruthy();
+                expect(component.registerForm.invalid).toBe(true);
+
+                email.setValue('Ada@EXAMPLE.com');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+                http.expectOne(EMAIL_ALLOWED_URL).flush({ allowed: true });
+                expect(email.valid).toBe(true);
+            });
+
+            it('should not hold the user up when the server cannot answer, because it decides again when the form is sent', async () => {
+                const component = createWith({ allowedEmailPattern: '.*@example\\.com' });
+                const email = component.registerForm.controls.email;
+
+                email.setValue('ada@example.com');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+                http.expectOne(EMAIL_ALLOWED_URL).flush('Too many requests', { status: 429, statusText: 'Too Many Requests' });
+
+                expect(email.valid).toBe(true);
+            });
+
+            it('should leave the judgement of the address to the server with a restriction, also for an address that the browser would not accept', async () => {
+                // the server accepts non-ASCII addresses, which the format check of Angular refuses
+                const component = createWith({ allowedEmailPattern: '.*@example\\.com' });
+                const email = component.registerForm.controls.email;
+
+                email.setValue('Jörg.Müller@example.com');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+                http.expectOne(EMAIL_ALLOWED_URL).flush({ allowed: true });
+
+                expect(email.valid).toBe(true);
+            });
+
+            it('should not ask the server about an address that is too short to be one', async () => {
+                const component = createWith({ allowedEmailPattern: '.*@example\\.com' });
+
+                component.registerForm.controls.email.setValue('a@b');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+
+                http.expectNone(EMAIL_ALLOWED_URL);
+                expect(component.registerForm.controls.email.errors?.['minlength']).toBeTruthy();
+            });
+
+            it('should not send the form while the answer about the address is on its way', async () => {
+                const component = createWith({ allowedEmailPattern: '.*@example\\.com' });
+                const registerSpy = vi.spyOn(TestBed.inject(RegisterService), 'registerUser').mockReturnValue(of(undefined));
+                component.registerForm.patchValue({
+                    firstName: 'Ada',
+                    lastName: 'Lovelace',
+                    login: 'adal',
+                    password: 'Str0ng!Passw0rd#2026',
+                    confirmPassword: 'Str0ng!Passw0rd#2026',
+                });
+
+                component.registerForm.controls.email.setValue('ada@example.com');
+                expect(component.registerForm.pending).toBe(true);
+                component.register();
+                expect(registerSpy).not.toHaveBeenCalled();
+
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+                http.expectOne(EMAIL_ALLOWED_URL).flush({ allowed: true });
+                component.register();
+
+                expect(registerSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should check the format only, and never ask the server, without a restriction', async () => {
+                const component = createWith({});
+                const email = component.registerForm.controls.email;
+
+                email.setValue('ada@example.org');
+                await vi.advanceTimersByTimeAsync(EMAIL_ALLOWED_DEBOUNCE_MS + 50);
+
+                http.expectNone(EMAIL_ALLOWED_URL);
+                expect(email.valid).toBe(true);
+                email.setValue('not-an-address');
+                expect(email.errors?.['email']).toBeTruthy();
+            });
         });
 
         it('should ensure the two passwords entered match', () => {
@@ -123,6 +235,30 @@ describe('Register Component Tests', () => {
             expect(comp.errorEmailExists()).toBe(true);
             expect(comp.errorUserExists()).toBe(false);
             expect(comp.error()).toBe(false);
+        });
+
+        it('should tell the user that the email address is not allowed instead of a generic failure when the server refuses it', () => {
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(
+                throwError(() => ({
+                    status: 400,
+                    error: { errorKey: 'emailInvalid' },
+                })),
+            );
+            comp.registerForm.patchValue({
+                password: 'password',
+                confirmPassword: 'password',
+            });
+
+            comp.register();
+
+            expect(comp.errorEmailNotAllowed()).toBe(true);
+            expect(comp.errorEmailExists()).toBe(false);
+            expect(comp.error()).toBe(false);
+
+            // the message disappears with the next attempt
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(of(undefined));
+            comp.register();
+            expect(comp.errorEmailNotAllowed()).toBe(false);
         });
 
         it('should notify of generic error', () => {
