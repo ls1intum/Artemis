@@ -134,8 +134,14 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
         SecurityPolicyPreviewDTO preview = request.postWithResponseBody(basePath + "/policies/preview", addLogsPermission(editor), SecurityPolicyPreviewDTO.class, HttpStatus.OK);
         assertThat(preview.verdict()).isEqualTo("COMPATIBLE");
         assertThat(preview.files().getFirst().after()).contains("onThisPathAndAllPathsBelow: \"logs/\"");
-        assertThat(request.get(basePath + "/test-structure", HttpStatus.OK, SecurityTestStructureDTO.class).testClasses())
-                .containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort"), true, false, List.of()));
+        assertThat(request.get(basePath + "/test-structure", HttpStatus.OK, SecurityTestStructureDTO.class).testClasses()).singleElement().satisfies(testClass -> {
+            assertThat(testClass.qualifiedName()).isEqualTo("de.example.SortingTest");
+            assertThat(testClass.testCases()).containsExactly("testBubbleSort");
+            assertThat(testClass.testClass()).isTrue();
+            assertThat(testClass.switchedOff()).isFalse();
+            // An empty list is left out of the JSON, so it arrives as null.
+            assertThat(testClass.fixedCases()).isNullOrEmpty();
+        });
         assertThat(request.get(basePath + "/template-files", HttpStatus.OK, SecurityTemplateFilesDTO.class).paths()).contains("data/input.txt", "src/de/example/Client.java");
 
         assertThat(request.postWithResponseBody(basePath + "/policies/import", new SecurityPolicyImportDTO("SecurityPolicy.yaml", POLICY), SecurityPolicyEditorDTO.PolicyDTO.class,

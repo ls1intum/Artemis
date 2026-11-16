@@ -263,14 +263,15 @@ public class SecurityPolicyEditorService {
         if (change.policies().isEmpty() && change.removedPolicyPaths().isEmpty() && change.frameworkVersion() == null) {
             throw new BadRequestAlertException("The change contains nothing to commit.", ENTITY_NAME, "securityPolicyNoChange");
         }
-        if (change.baseCommitHash() == null || !ObjectId.isId(change.baseCommitHash())) {
+        String baseCommitHash = change.baseCommitHash();
+        if (baseCommitHash == null || !ObjectId.isId(baseCommitHash)) {
             throw new BadRequestAlertException("The change does not name the commit the policies were loaded from.", ENTITY_NAME, "securityPolicyNoBaseCommit");
         }
         String fingerprint = fingerprint(change);
         SecurityFrameworkConfigDTO config = securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION,
                 CHANGE_TRAILER + fingerprint + "\n", true, repository -> {
-                    if (!isAlreadyApplied(repository, change.baseCommitHash(), fingerprint)) {
-                        applyChange(repository, change);
+                    if (!isAlreadyApplied(repository, baseCommitHash, fingerprint)) {
+                        applyChange(repository, change, baseCommitHash);
                     }
                 });
         log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
@@ -415,10 +416,10 @@ public class SecurityPolicyEditorService {
      * request whose push succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself, and the
      * pending processing is resumed instead. A different change, even of the same base commit, has another fingerprint and still fails as a conflict.
      */
-    private static boolean isAlreadyApplied(Repository repository, @Nullable String baseCommitHash, String fingerprint) {
+    private static boolean isAlreadyApplied(Repository repository, String baseCommitHash, String fingerprint) {
         try (RevWalk revWalk = new RevWalk(repository)) {
             ObjectId head = repository.resolve(Constants.HEAD);
-            if (head == null || baseCommitHash == null) {
+            if (head == null) {
                 return false;
             }
             RevCommit commit = revWalk.parseCommit(head);
@@ -434,10 +435,10 @@ public class SecurityPolicyEditorService {
      * Applies a change to the checkout: checks that the policies did not change since the editor loaded them, pins the requested version, writes, renames and
      * deletes the policy files and rewrites the {@code @Policy} annotations of the test classes whose assignment changes.
      */
-    private void applyChange(Repository repository, SecurityPolicyChangeDTO change) {
+    private void applyChange(Repository repository, SecurityPolicyChangeDTO change, String baseCommitHash) {
         Path root = repository.getLocalPath();
         try {
-            requireUnchangedSince(repository, Objects.requireNonNull(change.baseCommitHash()));
+            requireUnchangedSince(repository, baseCommitHash);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
