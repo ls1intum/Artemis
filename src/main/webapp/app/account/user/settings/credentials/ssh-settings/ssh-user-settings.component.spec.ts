@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
-import { DialogService } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -60,7 +58,6 @@ describe('SshUserSettingsComponent', () => {
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
-                DialogService,
             ],
         })
             .overrideComponent(SshUserSettingsComponent, {
@@ -135,7 +132,6 @@ describe('SshUserSettingsComponent', () => {
                     { provide: AlertService, useValue: alertServiceMock },
                     { provide: TranslateService, useClass: MockTranslateService },
                     provideRouter([]),
-                    DialogService,
                 ],
             }).compileComponents();
 

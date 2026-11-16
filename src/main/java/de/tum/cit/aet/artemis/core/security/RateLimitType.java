@@ -134,6 +134,20 @@ public enum RateLimitType {
     CONTENT_SEARCH(300),
 
     /**
+     * Rate limit for the lookup that tells a form whether an email address is allowed by the configured restriction. The registration form
+     * and the account settings send one request per pause in typing, so the limit has to be far above the 5 requests per minute of
+     * {@link #ACCOUNT_MANAGEMENT}, which would otherwise be used up before the person has even registered.
+     * <p>
+     * Kept in its own bucket for that reason: a form that checks while typing must never draw down the allowance of registration itself.
+     * The endpoint only answers whether an address matches the restriction, which anybody can also find out by trying it in the form. Sized for a shared
+     * address, not for one person: the limit is per client address, and a lecture hall or campus network can sit behind one NAT.
+     * <p>
+     * Default: 300 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.email-address-check-requests-per-minute}.
+     */
+    EMAIL_ADDRESS_CHECK(300),
+
+    /**
      * Rate limit for the editor-facing fetch of an online resource's metadata. Each request makes the server open an
      * outbound connection to a user-supplied link, so the limit bounds that use of the server as an HTTP client.
      * <p>

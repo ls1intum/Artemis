@@ -124,6 +124,7 @@ public class RateLimitConfigurationService {
             case STRUGGLE_INTERVENTION ->
                 properties.getStruggleInterventionRequestsPerMinute() != null ? properties.getStruggleInterventionRequestsPerMinute() : type.getDefaultRpm();
             case CONTENT_SEARCH -> properties.getContentSearchRequestsPerMinute() != null ? properties.getContentSearchRequestsPerMinute() : type.getDefaultRpm();
+            case EMAIL_ADDRESS_CHECK -> properties.getEmailAddressCheckRequestsPerMinute() != null ? properties.getEmailAddressCheckRequestsPerMinute() : type.getDefaultRpm();
             case BUILD_AGENT_CLONE_TOKEN ->
                 properties.getBuildAgentCloneTokenRequestsPerMinute() != null ? properties.getBuildAgentCloneTokenRequestsPerMinute() : type.getDefaultRpm();
             case ONLINE_RESOURCE_FETCH ->

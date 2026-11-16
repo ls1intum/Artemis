@@ -76,6 +76,24 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     List<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
 
+    /**
+     * The commit hashes of the submissions of a participation that were submitted not later than the given date, latest first.
+     *
+     * @param participationId the participation the submissions belong to
+     * @param date            the latest submission date to consider
+     * @param limit           the maximum number of rows
+     * @return the commit hashes, latest submission first
+     */
+    @Query("""
+            SELECT ps.commitHash
+            FROM ProgrammingSubmission ps
+            WHERE ps.participation.id = :participationId
+                AND ps.commitHash IS NOT NULL
+                AND ps.submissionDate <= :date
+            ORDER BY ps.submissionDate DESC, ps.id DESC
+            """)
+    List<String> findCommitHashesSubmittedUntil(@Param("participationId") long participationId, @Param("date") ZonedDateTime date, Pageable limit);
+
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
 
