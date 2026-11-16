@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -296,6 +298,56 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
 
         assertThat(reload(firstHandshake).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
         assertThat(reload(secondHandshake).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AuthenticationMechanism.class, names = { "PASSWORD", "PARTICIPATION_VCS_ACCESS_TOKEN", "USER_VCS_ACCESS_TOKEN", "REPOSITORY_VCS_ACCESS_TOKEN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testHttpsCloneClaimsItsHandshakeInsteadOfANewerSshPull(AuthenticationMechanism httpsMechanism) {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var service = vcsAccessLogService.orElseThrow();
+        var httpsHandshake = service.createAccessLog(user, participation, RepositoryActionType.PULL, httpsMechanism, "https-head", "10.0.0.1");
+        var sshPull = service.createAccessLog(user, participation, RepositoryActionType.PULL, AuthenticationMechanism.SSH, "ssh-head", "10.0.0.2");
+
+        service.markNewestPullAsClone(user.getId(), participation.getId());
+
+        assertThat(reload(httpsHandshake).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+        assertThat(reload(sshPull).getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        assertThat(reload(sshPull).getCommitHash()).isEqualTo("ssh-head");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AuthenticationMechanism.class, names = { "PASSWORD", "PARTICIPATION_VCS_ACCESS_TOKEN", "USER_VCS_ACCESS_TOKEN", "REPOSITORY_VCS_ACCESS_TOKEN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testHttpsPushAmendsItsHandshakeInsteadOfANewerSshPush(AuthenticationMechanism httpsMechanism) {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var service = vcsAccessLogService.orElseThrow();
+        var httpsHandshake = service.createAccessLog(user, participation, RepositoryActionType.PUSH, httpsMechanism, "https-before", "10.0.0.1");
+        var sshPush = service.createAccessLog(user, participation, RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "ssh-before", "10.0.0.2");
+
+        service.setCommitHashOfNewestPush(user.getId(), participation.getId(), "https-pushed");
+
+        assertThat(reload(httpsHandshake).getCommitHash()).isEqualTo("https-pushed");
+        assertThat(reload(sshPush).getCommitHash()).isEqualTo("ssh-before");
+        assertThat(reload(sshPush).getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testHttpsAmendmentsLeaveSshEntriesAloneWhenTheirHandshakeIsMissing() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var service = vcsAccessLogService.orElseThrow();
+        var sshPull = service.createAccessLog(user, participation, RepositoryActionType.PULL, AuthenticationMechanism.SSH, "ssh-pull", "10.0.0.2");
+        var sshPush = service.createAccessLog(user, participation, RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "ssh-push", "10.0.0.2");
+
+        service.markNewestPullAsClone(user.getId(), participation.getId());
+        service.setCommitHashOfNewestPush(user.getId(), participation.getId(), "https-pushed");
+
+        assertThat(reload(sshPull).getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        assertThat(reload(sshPush).getCommitHash()).isEqualTo("ssh-push");
     }
 
     @Test

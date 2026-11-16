@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLog, Long> {
 
     /**
-     * Retrieves the newest {@link VcsAccessLog} that one user wrote for one participation, restricted to the given kinds of action.
+     * Retrieves the newest HTTPS {@link VcsAccessLog} that one user wrote for one participation, restricted to the given kinds of action.
      * <p>
      * This is how the second half of a git operation finds the entry its first half wrote. The scope is deliberately narrow, because the lookup stands in for an identity that an
      * HTTPS git operation does not carry from one request to the next:
@@ -42,6 +42,8 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * <li>The user and the participation keep the entry of somebody else, or of another repository, from being amended. A build agent entry has no user, so it never matches.</li>
      * <li>The kinds of action keep a push entry from being amended as a clone and the other way round: the fetch half asks for {@code PULL}, the push half for {@code PUSH}.
      * Whatever entry is the newest, an operation cannot change which kind of operation it was.</li>
+     * <li>The authentication mechanism limits amendments to successful HTTPS requests. An overlapping SSH operation stores and updates its own entry by id, so neither its
+     * action nor its commit hash may be changed by an HTTPS request.</li>
      * <li>The age keeps an operation whose own entry was never written from amending the entry of an earlier one.</li>
      * </ul>
      *
@@ -57,6 +59,12 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
             WHERE vcsAccessLog.user.id = :userId
                 AND vcsAccessLog.participation.id = :participationId
                 AND vcsAccessLog.repositoryActionType IN :actionTypes
+                AND vcsAccessLog.authenticationMechanism IN (
+                    de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism.PASSWORD,
+                    de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN,
+                    de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism.USER_VCS_ACCESS_TOKEN,
+                    de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN
+                )
                 AND vcsAccessLog.timestamp >= :since
             ORDER BY vcsAccessLog.id DESC
             LIMIT 1

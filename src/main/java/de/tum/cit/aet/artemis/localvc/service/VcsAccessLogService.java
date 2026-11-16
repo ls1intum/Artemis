@@ -146,9 +146,9 @@ public class VcsAccessLogService {
      * Turns the entry of the fetch that is running into a clone.
      * <p>
      * The handshake request of a fetch writes its entry as a pull, because it cannot tell yet whether the client already has the repository. The data transfer request that
-     * follows can: a client that offers no objects is cloning. That request finds the entry by user and participation, and only among the entries that are still a pull, so it
-     * cannot reach the entry of a push. Looking only at entries that are still a pull is also what lets clones that run at the same moment each find an entry of their own: the
-     * entry that one clone has turned into a clone is not offered to the next.
+     * follows can: a client that offers no objects is cloning. That request finds the entry by user and participation, and only among HTTPS entries that are still a pull, so it
+     * cannot reach the entry of a push or an overlapping SSH operation. Looking only at entries that are still a pull also lets overlapping clones each find an entry of their
+     * own: the entry that one clone has turned into a clone is not offered to the next.
      *
      * @param userId          the id of the user that is fetching
      * @param participationId the id of the participation that owns the repository
@@ -168,7 +168,7 @@ public class VcsAccessLogService {
      * Sets the commit hash of the push that has just been received.
      * <p>
      * The handshake request of a push writes its entry with the hash the repository had before the push, because the pushed commit is not known yet. Once it is, the entry is
-     * found by user and participation, and only among the entries of a push, so a fetch that was written in between cannot take the hash.
+     * found by user and participation, and only among HTTPS entries of a push, so a fetch or an SSH push that was written in between cannot take the hash.
      *
      * @param userId          the id of the user that pushed
      * @param participationId the id of the participation that owns the repository
