@@ -57,7 +57,7 @@
     </div>
 }
 @if (!resultsArePublished) {
-    <div class="mb-6!">
+    <div class="mb-6!" data-testid="exam-summary-results-unpublished">
         <fa-icon [icon]="faInfoCircle" class="info-icon" />
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>

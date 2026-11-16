@@ -1885,6 +1885,48 @@ describe('ExamParticipationComponent', () => {
         expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 
+    it('reloads and remounts the full published summary when its deadline event fires', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const initial = new StudentExam();
+        initial.id = 3;
+        initial.submitted = true;
+        initial.exam = new Exam();
+        initial.exam.id = 2;
+        comp.exam.set(initial.exam);
+        comp.studentExam.set(initial);
+        comp.showExamSummary.set(true);
+        comp.loadingExam.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        const oldSummary = fixture.debugElement.query(By.directive(ExamResultSummaryComponent)).componentInstance as ExamResultSummaryComponent;
+
+        const response = new Subject<StudentExam>();
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(response);
+        oldSummary.refreshSummary.emit();
+        expect(load).toHaveBeenCalledExactlyOnceWith(1, 2, 3);
+        expect(comp.loadingExam()).toBe(true);
+        expect(comp.showExamSummary()).toBe(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.debugElement.query(By.directive(ExamResultSummaryComponent))).toBeNull();
+
+        const published = new StudentExam();
+        published.id = 3;
+        published.submitted = true;
+        published.exam = initial.exam;
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.studentParticipations = [{ submissions: [{ id: 9, results: [{ id: 10, completionDate: dayjs(), score: 70 }] }] }];
+        published.exercises = [exercise];
+        response.next(published);
+        response.complete();
+        fixture.changeDetectorRef.detectChanges();
+
+        const refreshed = fixture.debugElement.query(By.directive(ExamResultSummaryComponent)).componentInstance as ExamResultSummaryComponent;
+        expect(refreshed).not.toBe(oldSummary);
+        expect(refreshed.studentExam()).toBe(published);
+        expect(refreshed.studentExam().exercises![0].studentParticipations![0].submissions![0].results![0].score).toBe(70);
+        expect(comp.loadingExam()).toBe(false);
+    });
+
     it('should not reset Exam Layout in loadAndDisplaySummary if it is a test exam', () => {
         const examLayoutStub = vi.spyOn(examParticipationService, 'resetExamLayout');
         const studentExam = new StudentExam();
