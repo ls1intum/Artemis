@@ -183,6 +183,24 @@ describe('ExamUpdateComponent', () => {
             expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
         });
 
+        it('should place the title and channel name messages below their inputs instead of pulling them up into the input', () => {
+            fixture.detectChanges();
+            component.hideChannelNameInput.set(false);
+            const exam = deepClone(component.exam);
+            exam.title = '';
+            exam.channelName = '';
+            component.exam = exam;
+            fixture.detectChanges();
+
+            const messages: HTMLElement[] = ['title-validation-message', 'channel-name-validation-message'].map((testId) =>
+                fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
+            );
+            expect(messages.every((message) => message !== null)).toBe(true);
+            // a negative top margin moves the message over the lower edge of the input field above it
+            expect(messages.map((message) => Array.from(message.classList).filter((cssClass) => cssClass.startsWith('-mt-')))).toEqual([[], []]);
+            expect(messages.map((message) => message.classList.contains('mt-1'))).toEqual([true, true]);
+        });
+
         describe('explanations of invalid fields', () => {
             // One fixed reference time: two separate dayjs() calls differ by milliseconds, which would make equal offsets compare as different dates
             const now = dayjs();

@@ -231,6 +231,33 @@ describe('ExamChecklistComponent', () => {
             expect(component.numberOfStarted()).toBe(4);
         });
 
+        it('should count the student exam of a test exam that is started as one more generated student exam', () => {
+            // a test exam creates the student exam of a student when the student starts, so the total grows with every started exam
+            setUp({ testExam: true }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 12 });
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+            examChecklistComponentFixture.detectChanges();
+            expect(component.numberOfGeneratedStudentExams()).toBe(12);
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+            examChecklistComponentFixture.detectChanges();
+
+            expect(component.numberOfStarted()).toBe(13);
+            expect(component.numberOfGeneratedStudentExams()).toBe(13);
+            expect(examChecklistComponentFixture.nativeElement.textContent).not.toContain('108');
+        });
+
+        it('should keep the number of generated student exams of a regular exam when a student starts', () => {
+            // the student exams of a regular exam exist before anybody starts, so a start does not create one
+            setUp({ testExam: false }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3 });
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+            examChecklistComponentFixture.detectChanges();
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+
+            expect(component.numberOfStarted()).toBe(4);
+            expect(component.numberOfGeneratedStudentExams()).toBe(12);
+        });
+
         it.each([
             { description: 'is still running', startedSecondsAgo: 1800, gracePeriod: undefined, over: false },
             { description: 'has ended', startedSecondsAgo: 7200, gracePeriod: undefined, over: true },

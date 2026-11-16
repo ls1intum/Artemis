@@ -85,6 +85,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
 
     readonly numberOfSubmitted = signal(0);
     readonly numberOfStarted = signal(0);
+    readonly numberOfGeneratedStudentExams = signal(0);
 
     readonly disabledExercises = signal<Exercise[]>([]);
     readonly plagiarismEnabled = signal(false);
@@ -108,7 +109,13 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((value) => value + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((value) => value + 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => {
+            this.numberOfStarted.update((value) => value + 1);
+            // A test exam creates the student exam of a student when the student starts, the student exams of a regular exam exist before
+            if (this.isTestExam()) {
+                this.numberOfGeneratedStudentExams.update((value) => value + 1);
+            }
+        });
         const exam = this.exam();
         if (exam?.course?.id && exam?.id) {
             this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
@@ -138,6 +145,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
             const exam = this.exam();
             this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
             this.numberOfStarted.set(examStats.numberOfExamsStarted);
+            this.numberOfGeneratedStudentExams.set(examStats.numberOfGeneratedStudentExams ?? 0);
             this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
             if (this.isExamOver()) {
                 if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {

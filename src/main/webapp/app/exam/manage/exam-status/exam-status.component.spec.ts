@@ -176,6 +176,38 @@ describe('ExamStatusComponent', () => {
         expect(component.numberOfGeneratedStudentExams()).toBe(0);
     });
 
+    it('should count the student exam of a test exam that is started as one more generated student exam', () => {
+        const examChecklist = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 12, numberOfExamsSubmitted: 0 });
+        vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+        prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
+        testExam.id = 7;
+        fixture.detectChanges();
+        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+        expect(component.numberOfGeneratedStudentExams()).toBe(12);
+
+        websocketService.emit('/topic/exam/7/started', undefined);
+        fixture.detectChanges();
+
+        expect(component.numberOfStarted()).toBe(13);
+        expect(component.numberOfGeneratedStudentExams()).toBe(13);
+        // the share of started exams is relative to the exams that exist now and cannot exceed 100 %
+        expect(fixture.nativeElement.textContent).not.toContain('108');
+    });
+
+    it('should keep the number of generated student exams of a regular exam when a student starts', () => {
+        const examChecklist = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3, numberOfExamsSubmitted: 0 });
+        vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+        prepareForExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
+        exam.id = 7;
+        fixture.detectChanges();
+        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+        websocketService.emit('/topic/exam/7/started', undefined);
+
+        expect(component.numberOfStarted()).toBe(4);
+        expect(component.numberOfGeneratedStudentExams()).toBe(12);
+    });
+
     it('should set examConductionState correctly if TestExam is started but not finished yet', () => {
         prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
         component.mandatoryPreparationFinished.set(true);

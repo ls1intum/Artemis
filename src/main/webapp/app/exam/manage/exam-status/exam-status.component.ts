@@ -89,7 +89,13 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((count) => count + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((count) => count + 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => {
+            this.numberOfStarted.update((count) => count + 1);
+            // A test exam creates the student exam of a student when the student starts, the student exams of a regular exam exist before
+            if (this.isTestExam()) {
+                this.numberOfGeneratedStudentExams.update((count) => count + 1);
+            }
+        });
     }
 
     private updateChecklistState() {
