@@ -65,6 +65,9 @@ class LLMModelCostConfigurationBindingTest {
         assertThat(modelCosts.get("gpt-5.4-mini").getOutputCostPerMillionEur()).isCloseTo(4.14f, within(1e-4f));
         assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionUsd()).isEqualTo(2.50f);
         assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionUsd()).isEqualTo(15f);
+        assertThat(modelCosts.get("gpt-5-mini").getCachedInputCostPerMillionUsd()).isEqualTo(0.025f);
+        assertThat(modelCosts.get("gpt-5.4").getCachedInputCostPerMillionUsd()).isEqualTo(0.25f);
+        assertThat(modelCosts.get("gpt-5.4-mini").getCachedInputCostPerMillionUsd()).isEqualTo(0.075f);
     }
 
     @Test
