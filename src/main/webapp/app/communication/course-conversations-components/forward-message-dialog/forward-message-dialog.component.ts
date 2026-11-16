@@ -187,7 +187,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.userSearchSubscription?.unsubscribe();
         this.userSearchSubscription = undefined;
         const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
-        this.filteredUsers.set(lowerCaseSearchTerm ? [] : [...this.users()]);
+        this.filteredUsers.set(lowerCaseSearchTerm ? this.users().filter((user) => user.name?.toLowerCase().includes(lowerCaseSearchTerm)) : [...this.users()]);
         this.filteredChannels = lowerCaseSearchTerm ? this.channels().filter((channel) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm)) : [...this.channels()];
         this.updateCombinedOptions();
 

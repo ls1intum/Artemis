@@ -342,6 +342,23 @@ describe('ForwardMessageDialogComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="forward-destination-option"]')).toBeNull();
     });
 
+    it.each([
+        { query: 'Us', courseId: 123 },
+        { query: 'User1', courseId: undefined },
+    ])('keeps supplied users searchable for $query with course $courseId without a remote request', ({ query, courseId }) => {
+        component.courseId.set(courseId);
+        const search = vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers');
+        searchInput.value = query;
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.filteredOptions().map((option) => option.name)).toEqual(['User1']);
+        expect(search).not.toHaveBeenCalled();
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(component.selectedUsers).toEqual(component.users());
+    });
+
     it('ignores an older search response that arrives after the latest query results', () => {
         component.courseId.set(123);
         const older = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
