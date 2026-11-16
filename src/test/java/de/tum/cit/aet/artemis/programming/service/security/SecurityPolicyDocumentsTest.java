@@ -220,6 +220,22 @@ class SecurityPolicyDocumentsTest {
         assertThat(parsed.reason()).isEqualTo(SecurityPolicyDocuments.ReadOnlyReason.UNSUPPORTED_CONTENT);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "files", "packages" })
+    void keepsAPolicyReadOnlyIfItListsAResourceTwice(String kind) {
+        String rendered = SecurityPolicyDocuments.render(fullDocument(), null);
+        String twice = kind.equals("files") ? rendered.replace("onThisPathAndAllPathsBelow: \"logs/\"", "onThisPathAndAllPathsBelow: \"data/input.txt\"")
+                : rendered.replace("      - importTheFollowingPackage: \"org.apache.commons.lang3\"\n",
+                        "      - importTheFollowingPackage: \"org.apache.commons.lang3\"\n      - importTheFollowingPackage: \"org.apache.commons.lang3\"\n");
+        assertThat(twice).isNotEqualTo(rendered);
+
+        SecurityPolicyDocuments.Parsed parsed = SecurityPolicyDocuments.parse("SecurityPolicy.yaml", twice, null);
+
+        assertThat(parsed.document()).isNull();
+        assertThat(parsed.reason()).isEqualTo(SecurityPolicyDocuments.ReadOnlyReason.DUPLICATE_RESOURCE);
+        assertThat(SecurityPolicyDocuments.parse("SecurityPolicy.yaml", rendered, null).document()).isNotNull();
+    }
+
     @Test
     void reportsWhyAFileCannotBeRead() {
         assertThat(SecurityPolicyDocuments.parse("SecurityPolicy.yaml", null, SecurityFrameworkState.PolicyFileProblem.MISSING).reason())

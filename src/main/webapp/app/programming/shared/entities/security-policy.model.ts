@@ -100,6 +100,7 @@ export enum SecurityPolicyReadOnlyReason {
     INVALID_PATH = 'INVALID_PATH',
     YAML_ERROR = 'YAML_ERROR',
     UNSUPPORTED_CONTENT = 'UNSUPPORTED_CONTENT',
+    DUPLICATE_RESOURCE = 'DUPLICATE_RESOURCE',
 }
 
 /** A policy file as the server loaded it. */

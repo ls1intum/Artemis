@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
@@ -54,7 +55,12 @@ public final class SecurityPolicyDocuments {
         /** The file is no valid YAML. */
         YAML_ERROR,
         /** The file uses a field or a value the editor cannot represent, so rewriting it would change the policy. */
-        UNSUPPORTED_CONTENT
+        UNSUPPORTED_CONTENT,
+        /**
+         * The file lists a resource more than once, e.g. two file permissions for one path. The editor identifies a permission by its resource, so it could
+         * neither show nor change the two apart.
+         */
+        DUPLICATE_RESOURCE
     }
 
     /**
@@ -208,7 +214,27 @@ public final class SecurityPolicyDocuments {
         if (rendered.isEmpty() || !normalized(rendered.get()).equals(normalized(tree.get()))) {
             return Parsed.readOnly(ReadOnlyReason.UNSUPPORTED_CONTENT);
         }
+        if (listsAResourceTwice(document.get())) {
+            return Parsed.readOnly(ReadOnlyReason.DUPLICATE_RESOURCE);
+        }
         return new Parsed(document.get(), null, null);
+    }
+
+    /**
+     * @return whether the document lists a resource more than once, with the identity the editor gives a permission: the path of a file, the host and port
+     *         of an endpoint, the command with its arguments, the thread class and the package
+     */
+    private static boolean listsAResourceTwice(SecurityPolicyDocumentDTO document) {
+        return hasDuplicates(document.files().stream().map(FilePermissionDTO::path))
+                || hasDuplicates(document.network().stream().map(endpoint -> List.of(endpoint.host(), endpoint.port())))
+                || hasDuplicates(document.commands().stream().map(command -> Stream.concat(Stream.of(command.command()), command.arguments().stream()).toList()))
+                || hasDuplicates(document.threads().stream().map(ThreadPermissionDTO::threadClass))
+                || hasDuplicates(document.packages().stream().map(PackagePermissionDTO::packageName));
+    }
+
+    private static boolean hasDuplicates(Stream<?> keys) {
+        Set<Object> seen = new HashSet<>();
+        return keys.anyMatch(key -> !seen.add(key));
     }
 
     /**

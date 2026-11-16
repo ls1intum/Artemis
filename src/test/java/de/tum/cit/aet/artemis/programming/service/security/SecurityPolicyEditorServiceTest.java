@@ -493,6 +493,21 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesTheCommitIfATestMethodGotAnOverrideSinceThePoliciesWereLoaded() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()"));
+        String concurrentHead = pushedHead();
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(concurrentHead);
+        assertThat(readPushed(SORTING_TEST_PATH))
+                .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()"));
+    }
+
+    @Test
     void refusesTheCommitIfSomeonePushesWhileItIsPrepared() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
@@ -594,11 +609,15 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO.PolicyDTO imported = editorService.importPolicy(exercise(),
                 new SecurityPolicyImportDTO("SecurityPolicy.yaml", POLICY.replace("regardingTimeouts: [ ]", "regardingTimeouts:\n      - timeout: 1000")));
         SecurityPolicyEditorDTO.PolicyDTO broken = editorService.importPolicy(exercise(), new SecurityPolicyImportDTO("SecurityPolicy.yaml", "a: [\n"));
+        SecurityPolicyEditorDTO.PolicyDTO twice = editorService.importPolicy(exercise(), new SecurityPolicyImportDTO("SecurityPolicy.yaml",
+                POLICY.replace("regardingPackageImports: [ ]", "regardingPackageImports:\n      - importTheFollowingPackage: \"a\"\n      - importTheFollowingPackage: \"a\"")));
 
         assertThat(imported.document()).isNotNull();
         assertThat(imported.document().timeouts()).containsExactly(1000L);
         assertThat(broken.document()).isNull();
         assertThat(broken.readOnlyReason()).isEqualTo("YAML_ERROR");
+        assertThat(twice.document()).isNull();
+        assertThat(twice.readOnlyReason()).isEqualTo("DUPLICATE_RESOURCE");
         assertThat(pushedHead()).isEqualTo(headBefore);
     }
 

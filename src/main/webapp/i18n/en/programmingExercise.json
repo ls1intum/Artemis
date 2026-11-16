@@ -541,7 +541,8 @@
                             "TOO_LARGE": "{{ path }} is too large to be edited here.",
                             "INVALID_PATH": "The path {{ path }} leaves the repository or is not a regular file, so it cannot be edited here.",
                             "YAML_ERROR": "{{ path }} has a YAML error on line {{ line }} and cannot be edited here without overwriting it.",
-                            "UNSUPPORTED_CONTENT": "{{ path }} uses fields or values the editor cannot show, so it cannot be edited here without changing them."
+                            "UNSUPPORTED_CONTENT": "{{ path }} uses fields or values the editor cannot show, so it cannot be edited here without changing them.",
+                            "DUPLICATE_RESOURCE": "{{ path }} lists a resource more than once, e.g. a path or a package, so it cannot be edited here without merging those entries."
                         }
                     },
                     "resources": {

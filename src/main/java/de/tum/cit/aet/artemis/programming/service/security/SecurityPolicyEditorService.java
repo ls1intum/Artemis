@@ -644,8 +644,9 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Refuses a change if a policy changed in the repository since the editor loaded the policies: a policy file, or which test classes point to which file.
-     * Commits that change something else, e.g. a test, do not conflict.
+     * Refuses a change if a policy changed in the repository since the editor loaded the policies: a policy file, which test classes point to which file, or
+     * an annotation of a test class or test method, e.g. a new override without a policy file, because the change rewrites the annotations from the state it
+     * was loaded with. Commits that change something else, e.g. a test, do not conflict.
      */
     private static void requireUnchangedSince(Repository repository, String baseCommitHash) throws IOException {
         ObjectId head = repository.resolve(Constants.HEAD);
@@ -661,7 +662,7 @@ public class SecurityPolicyEditorService {
             RevTree headTree = revWalk.parseCommit(head).getTree();
             SecurityFrameworkState baseState = SecurityFrameworkCommitFiles.evaluate(repository, baseTree);
             SecurityFrameworkState headState = SecurityFrameworkCommitFiles.evaluate(repository, headTree);
-            if (!policyReferences(baseState).equals(policyReferences(headState))) {
+            if (!policyReferences(baseState).equals(policyReferences(headState)) || !annotations(repository, baseTree).equals(annotations(repository, headTree))) {
                 throw policiesChanged();
             }
             for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {
@@ -672,6 +673,24 @@ public class SecurityPolicyEditorService {
                 }
             }
         }
+    }
+
+    /**
+     * The {@code @Policy} annotations of a test class, without its test cases, which a change of the tests may change without changing a policy.
+     *
+     * @param active            whether its annotation enforces a policy
+     * @param classPolicyPath   the policy file of its annotation
+     * @param methodPolicyPaths the policy files of the annotations of its test methods
+     * @param defaultMethods    the test methods whose annotation gives them the strict default policy
+     * @param switchedOff       the test methods whose annotation switches the sandbox off
+     */
+    private record Annotations(boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods, Set<String> switchedOff) {
+    }
+
+    private static Map<String, Annotations> annotations(Repository repository, RevTree tree) throws IOException {
+        return SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, tree)).values().stream().collect(Collectors.toMap(
+                SecurityTestAssignments.TestClass::qualifiedName,
+                testClass -> new Annotations(testClass.active(), testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.defaultMethods(), testClass.switchedOff())));
     }
 
     private static Map<String, List<String>> policyReferences(SecurityFrameworkState state) {

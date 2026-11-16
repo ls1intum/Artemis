@@ -541,7 +541,8 @@
                             "TOO_LARGE": "{{ path }} ist zu groß, um hier bearbeitet zu werden.",
                             "INVALID_PATH": "Der Pfad {{ path }} verlässt das Repository oder ist keine reguläre Datei und kann daher hier nicht bearbeitet werden.",
                             "YAML_ERROR": "{{ path }} hat einen YAML-Fehler in Zeile {{ line }} und kann hier nicht bearbeitet werden, ohne ihn zu überschreiben.",
-                            "UNSUPPORTED_CONTENT": "{{ path }} verwendet Felder oder Werte, die der Editor nicht anzeigen kann, und kann daher hier nicht bearbeitet werden, ohne sie zu ändern."
+                            "UNSUPPORTED_CONTENT": "{{ path }} verwendet Felder oder Werte, die der Editor nicht anzeigen kann, und kann daher hier nicht bearbeitet werden, ohne sie zu ändern.",
+                            "DUPLICATE_RESOURCE": "{{ path }} führt eine Ressource mehrfach auf, z. B. einen Pfad oder ein Paket, und kann daher hier nicht bearbeitet werden, ohne diese Einträge zusammenzuführen."
                         }
                     },
                     "resources": {
