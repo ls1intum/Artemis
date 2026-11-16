@@ -77,6 +77,10 @@ runs:
       shell: bash
       run: supporting_scripts/ci/E2E-tests/cleanup.sh
 
+    - name: Reclaim old application images and verify Docker disk headroom
+      shell: bash
+      run: bash supporting_scripts/ci/E2E-tests/prepare-docker-storage.sh
+
     # Must run after the cleanup (which stops containers but leaves images) and before the tests, so
     # no build job ever races a multi-gigabyte on-demand pull. See the script header for the failure
     # this prevents.

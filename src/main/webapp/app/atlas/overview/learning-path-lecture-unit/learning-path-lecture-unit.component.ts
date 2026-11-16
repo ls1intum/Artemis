@@ -1,3 +1,4 @@
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -11,14 +12,22 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TextUnitComponent, AttachmentVideoUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective, ExerciseUnitComponent],
+    imports: [
+        TextUnitComponent,
+        AttachmentVideoUnitComponent,
+        OnlineUnitComponent,
+        DiscussionSectionComponent,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
+        ExerciseUnitComponent,
+    ],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {

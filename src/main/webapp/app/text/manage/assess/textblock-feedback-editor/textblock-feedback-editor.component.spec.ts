@@ -5,8 +5,7 @@ import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblo
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ChangeDetectorRef } from '@angular/core';
@@ -50,7 +49,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            imports: [FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,
@@ -252,6 +251,26 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture.componentRef.setInput('criteria', [criterion]);
         fixture.detectChanges();
 
-        expect(compiled.querySelector('.unified-feedback-detail-row [ngbDropdown]')).toBeTruthy();
+        expect(compiled.querySelector('.unified-feedback-detail-row [data-testid="feedback-instruction-menu"]')).toBeTruthy();
+    });
+
+    it('should update the assessment when a grading instruction is chosen from the menu', () => {
+        const instruction = { id: 2, credits: 1 } as GradingInstruction;
+        const changeSpy = vi.spyOn(component.feedbackChange, 'emit');
+
+        component.updateAssessmentWithDropdown(instruction);
+
+        expect(changeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().gradingInstruction).toEqual(instruction);
+        expect(component.feedback().credits).toBe(1);
+        expect(component.feedback().correctionStatus).toBeUndefined();
+    });
+
+    it('should colour a grading instruction by its credits', () => {
+        expect(component.getInstrColour({ credits: 1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
+        expect(component.getInstrColour({ credits: 0 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
+        expect(component.getInstrColour({ credits: -1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+        // an instruction without a usable credit value keeps the default colour
+        expect(component.getInstrColour({ credits: undefined } as unknown as GradingInstruction)).toBeUndefined();
     });
 });

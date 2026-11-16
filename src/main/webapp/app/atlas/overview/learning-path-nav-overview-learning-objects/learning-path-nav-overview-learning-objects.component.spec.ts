@@ -60,7 +60,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
         component.learningObjects.set([learningObject]);
         fixture.componentRef.setInput('currentCompetencyIdOnPath', competencyId);
         fixture.detectChanges();
-        const row = fixture.nativeElement.querySelector('.bg-light > div') as HTMLElement;
+        const row = fixture.nativeElement.querySelector('[data-testid="learning-object"]') as HTMLElement;
         const navigate = vi.spyOn(TestBed.inject(LearningPathNavigationService), 'loadRelativeLearningPathNavigation').mockResolvedValue();
         const selected = vi.spyOn(component.onLearningObjectSelected, 'emit');
 
@@ -105,7 +105,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
         const navigation = TestBed.inject(LearningPathNavigationService).learningPathNavigation;
         navigation.set({ currentLearningObject: exercise, progress: 0 });
         fixture.detectChanges();
-        const rows = fixture.nativeElement.querySelectorAll('.bg-light > div') as NodeListOf<HTMLElement>;
+        const rows = fixture.nativeElement.querySelectorAll('[data-testid="learning-object"]') as NodeListOf<HTMLElement>;
 
         expect(Array.from(rows, (row) => row.getAttribute('aria-current'))).toEqual(['true', null, null, null]);
 

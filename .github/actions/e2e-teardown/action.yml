@@ -80,6 +80,7 @@ runs:
         retention-days: 7
 
     - name: Run cleanup script (after E2E)
+      if: ${{ !cancelled() }}
       shell: bash
       # Best-effort: tearing down containers/networks must not flip the E2E job result.
       continue-on-error: true
