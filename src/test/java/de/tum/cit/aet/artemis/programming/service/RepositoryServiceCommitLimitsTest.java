@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
@@ -50,17 +52,101 @@ class RepositoryServiceCommitLimitsTest {
 
     @Test
     void commitChangesRefusesAFileAboveTheSizeLimitWithoutCommitting() throws Exception {
-        Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call().close();
-        FileUtils.writeByteArrayToFile(workingTree.resolve("big.bin").toFile(), new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+        Path barePath = workingTree.resolve("ABC/abc-exercise.git");
+        Git.init().setDirectory(barePath.toFile()).setBare(true).setInitialBranch("main").call().close();
+        Path checkout = workingTree.resolve("checkout");
+        Git.init().setDirectory(checkout.toFile()).setInitialBranch("main").call().close();
+        FileUtils.writeByteArrayToFile(checkout.resolve("big.bin").toFile(), new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
         GitService gitService = new GitService();
         BareGitRepositoryService bareGitRepositoryService = mock(BareGitRepositoryService.class);
+        when(bareGitRepositoryService.getBareRepository(any(), anyBoolean()))
+                .thenAnswer(invocation -> AbstractGitService.linkRepositoryForExistingGit(barePath, invocation.getArgument(0), "main", true, false));
         when(bareGitRepositoryService.getMaxRepositorySizeBytes(any())).thenReturn(20L * 1024 * 1024);
         RepositoryService repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
 
-        try (Repository repository = AbstractGitService.linkRepositoryForExistingGit(workingTree,
+        try (Repository repository = AbstractGitService.linkRepositoryForExistingGit(checkout,
                 new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise"), "main", false, true)) {
             assertThatThrownBy(() -> repositoryService.commitChanges(repository, new User())).isInstanceOf(BadRequestAlertException.class);
             assertThat(repository.resolve(org.eclipse.jgit.lib.Constants.HEAD)).as("no commit is created for rejected content").isNull();
+        }
+    }
+
+    @Test
+    void commitRetryAfterRejectedPushAndPullCannotPublishMergedContentAboveTheQuota() throws Exception {
+        Path barePath = workingTree.resolve("ABC/abc-exercise.git");
+        Git.init().setDirectory(barePath.toFile()).setBare(true).setInitialBranch("main").call().close();
+        Path checkout = workingTree.resolve("checkout");
+        try (Git seed = Git.init().setDirectory(checkout.toFile()).setInitialBranch("main").call()) {
+            FileUtils.writeStringToFile(checkout.resolve("base.txt").toFile(), "0123456789", StandardCharsets.UTF_8);
+            seed.add().addFilepattern(".").call();
+            GitService.commit(seed).setMessage("Seed").setCommitter("Artemis", "artemis@example.com").call();
+            seed.push().setRemote(barePath.toUri().toString()).call();
+            seed.getRepository().getConfig().setString("user", null, "name", "Artemis");
+            seed.getRepository().getConfig().setString("user", null, "email", "artemis@example.com");
+            seed.getRepository().getConfig().setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+            seed.getRepository().getConfig().setString("branch", "main", "remote", "origin");
+            seed.getRepository().getConfig().setString("branch", "main", "merge", "refs/heads/main");
+            seed.getRepository().getConfig().save();
+        }
+        Path remoteCheckout = workingTree.resolve("remote-checkout");
+        String remoteCommit;
+        try (Git remote = Git.cloneRepository().setURI(barePath.toUri().toString()).setDirectory(remoteCheckout.toFile()).call()) {
+            FileUtils.writeStringToFile(remoteCheckout.resolve("remote.txt").toFile(), "remote01", StandardCharsets.UTF_8);
+            remote.add().addFilepattern(".").call();
+            remoteCommit = GitService.commit(remote).setMessage("Remote addition").setCommitter("Artemis", "artemis@example.com").call().getName();
+        }
+        FileUtils.writeStringToFile(checkout.resolve("editor.txt").toFile(), "editor01", StandardCharsets.UTF_8);
+        GitService gitService = spy(new GitService());
+        ReflectionTestUtils.setField(gitService, "localVCBasePath", workingTree);
+        ReflectionTestUtils.setField(gitService, "artemisGitName", "Artemis");
+        ReflectionTestUtils.setField(gitService, "artemisGitEmail", "artemis@example.com");
+        BareGitRepositoryService bareGitRepositoryService = mock(BareGitRepositoryService.class);
+        when(bareGitRepositoryService.getBareRepository(any(), anyBoolean()))
+                .thenAnswer(invocation -> AbstractGitService.linkRepositoryForExistingGit(barePath, invocation.getArgument(0), "main", true, false));
+        when(bareGitRepositoryService.getMaxRepositorySizeBytes(any())).thenReturn(20L);
+        RepositoryService repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
+        AtomicBoolean publishRemoteChange = new AtomicBoolean(true);
+        doAnswer(invocation -> {
+            if (publishRemoteChange.getAndSet(false)) {
+                // Publish after validation so the editor's independently valid 18-byte commit cannot fast-forward the destination.
+                try (Git remote = Git.open(remoteCheckout.toFile())) {
+                    remote.push().call();
+                }
+            }
+            return invocation.callRealMethod();
+        }).when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
+
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        try (Repository repository = AbstractGitService.linkRepositoryForExistingGit(checkout, uri, "main", false, true); Git destination = Git.open(barePath.toFile())) {
+            repositoryService.commitChanges(repository, null);
+            assertThat(destination.getRepository().resolve("refs/heads/main").getName()).as("the editor push was rejected after the remote advanced").isEqualTo(remoteCommit);
+            assertThat(committedBytes(repository)).isEqualTo(18L);
+            assertThat(committedBytes(destination.getRepository())).isEqualTo(18L);
+
+            gitService.pullIgnoreConflicts(repository);
+            String mergedCommit = repository.resolve(org.eclipse.jgit.lib.Constants.HEAD).getName();
+            assertThat(committedBytes(repository)).as("the pull merges both independently valid additions").isEqualTo(26L);
+
+            assertThatThrownBy(() -> repositoryService.commitChanges(repository, null)).isInstanceOf(BadRequestAlertException.class);
+
+            assertThat(destination.getRepository().resolve("refs/heads/main").getName()).as("retrying must not publish the oversized merged tree").isEqualTo(remoteCommit);
+            assertThat(committedBytes(destination.getRepository())).isEqualTo(18L);
+            assertThat(repository.resolve(org.eclipse.jgit.lib.Constants.HEAD).getName()).as("the rejected merge remains available for correction").isEqualTo(mergedCommit);
+            assertThat(committedBytes(repository)).isEqualTo(26L);
+            assertThat(checkout.resolve("editor.txt")).hasContent("editor01");
+            assertThat(checkout.resolve("remote.txt")).hasContent("remote01");
+        }
+    }
+
+    private static long committedBytes(org.eclipse.jgit.lib.Repository repository) throws IOException {
+        try (TreeWalk files = new TreeWalk(repository)) {
+            files.addTree(repository.resolve("HEAD^{tree}"));
+            files.setRecursive(true);
+            long bytes = 0;
+            while (files.next()) {
+                bytes += repository.open(files.getObjectId(0)).getSize();
+            }
+            return bytes;
         }
     }
 
@@ -83,6 +169,8 @@ class RepositoryServiceCommitLimitsTest {
         ReflectionTestUtils.setField(gitService, "artemisGitName", "Artemis");
         ReflectionTestUtils.setField(gitService, "artemisGitEmail", "artemis@example.com");
         BareGitRepositoryService bareGitRepositoryService = mock(BareGitRepositoryService.class);
+        when(bareGitRepositoryService.getBareRepository(any(), anyBoolean()))
+                .thenAnswer(invocation -> AbstractGitService.linkRepositoryForExistingGit(barePath, invocation.getArgument(0), "main", true, false));
         when(bareGitRepositoryService.getMaxRepositorySizeBytes(any())).thenReturn(10L);
         RepositoryService repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
         CountDownLatch validated = new CountDownLatch(1);
@@ -168,6 +256,8 @@ class RepositoryServiceCommitLimitsTest {
         ReflectionTestUtils.setField(gitService, "artemisGitName", "Artemis");
         ReflectionTestUtils.setField(gitService, "artemisGitEmail", "artemis@example.com");
         BareGitRepositoryService bareGitRepositoryService = mock(BareGitRepositoryService.class);
+        when(bareGitRepositoryService.getBareRepository(any(), anyBoolean()))
+                .thenAnswer(invocation -> AbstractGitService.linkRepositoryForExistingGit(barePath, invocation.getArgument(0), "main", true, false));
         when(bareGitRepositoryService.getMaxRepositorySizeBytes(any())).thenReturn(20L);
         RepositoryService repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
         CountDownLatch validated = new CountDownLatch(1);

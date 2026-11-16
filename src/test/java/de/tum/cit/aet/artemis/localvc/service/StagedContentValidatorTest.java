@@ -80,7 +80,45 @@ class StagedContentValidatorTest {
     @Test
     void acceptsRegularFiles() throws Exception {
         stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void acceptedDestinationCanContainObjectsMissingFromTheWorkingCopy(@TempDir Path destinationPath) throws Exception {
+        try (Git destination = Git.init().setDirectory(destinationPath.toFile()).setInitialBranch(repository.getBranch()).call()) {
+            FileUtils.writeStringToFile(destinationPath.resolve("nested/accepted.txt").toFile(), "Only present at the destination", StandardCharsets.UTF_8);
+            destination.add().addFilepattern(".").call();
+            var accepted = GitService.commit(destination).setMessage("Accepted remote content").setCommitter("a", "a@example.com").call();
+            assertThat(repository.getObjectDatabase().has(accepted.getTree())).isFalse();
+
+            stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
+
+            assertThatCode(() -> StagedContentValidator.validate(repository, destination.getRepository(), QUOTA)).doesNotThrowAnyException();
+        }
+    }
+
+    @Test
+    void anUnpushedLocalCommitCannotGrandfatherAnOversizedFile(@TempDir Path destinationPath) throws Exception {
+        try (Git destination = Git.init().setDirectory(destinationPath.toFile()).setInitialBranch(repository.getBranch()).call()) {
+            stage("unaccepted.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
+            commit();
+
+            assertThatThrownBy(() -> StagedContentValidator.validate(repository, destination.getRepository(), QUOTA)).isInstanceOf(BadRequestAlertException.class)
+                    .hasMessageContaining("unaccepted.bin");
+        }
+    }
+
+    @Test
+    void anUnpushedLocalCommitCannotGrandfatherExcessEntries(@TempDir Path destinationPath) throws Exception {
+        try (Git destination = Git.init().setDirectory(destinationPath.toFile()).setInitialBranch(repository.getBranch()).call()) {
+            for (int i = 0; i < 3; i++) {
+                stage("dir" + i + "/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
+            }
+            commit();
+
+            assertThatThrownBy(() -> StagedContentValidator.validate(repository, destination.getRepository(), QUOTA, 5)).isInstanceOf(BadRequestAlertException.class)
+                    .hasMessageContaining("files and directories");
+        }
     }
 
     @Test
@@ -146,7 +184,7 @@ class StagedContentValidatorTest {
     }
 
     private void assertRejection(String reason, Map<String, Object> parameters) {
-        BadRequestAlertException exception = catchThrowableOfType(BadRequestAlertException.class, () -> StagedContentValidator.validate(repository, QUOTA));
+        BadRequestAlertException exception = catchThrowableOfType(BadRequestAlertException.class, () -> StagedContentValidator.validate(repository, repository, QUOTA));
         assertThat(exception).isNotNull();
         String errorKey = "stagedContentNotAllowed." + reason;
         ExceptionTranslator translator = new ExceptionTranslator();
@@ -172,7 +210,7 @@ class StagedContentValidatorTest {
 
         stage("src/Main.java", FileMode.REGULAR_FILE, "class Main {}".getBytes(StandardCharsets.UTF_8));
 
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
     }
 
     @Test
@@ -182,7 +220,7 @@ class StagedContentValidatorTest {
 
         stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 2]);
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -192,7 +230,7 @@ class StagedContentValidatorTest {
 
         stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("big.bin");
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, repository, QUOTA)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("big.bin");
     }
 
     @Test
@@ -200,7 +238,7 @@ class StagedContentValidatorTest {
         stage("big.bin", FileMode.REGULAR_FILE, new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1]);
         commit();
 
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
     }
 
     private void unstage(String path) throws IOException {
@@ -221,10 +259,10 @@ class StagedContentValidatorTest {
     @Test
     void growthAcrossSuccessiveCommitsIsRefusedOnceTheQuotaIsExceeded() throws Exception {
         stageMegabytes("a.bin", 8);
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
         commit();
         stageMegabytes("b.bin", 8);
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
         commit();
 
         stageMegabytes("c.bin", 8);
@@ -241,7 +279,7 @@ class StagedContentValidatorTest {
 
         stageMegabytes("d.bin", 8);
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -254,7 +292,7 @@ class StagedContentValidatorTest {
 
         stage("notes.txt", FileMode.REGULAR_FILE, "other".getBytes(StandardCharsets.UTF_8));
 
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
     }
 
     @Test
@@ -266,7 +304,7 @@ class StagedContentValidatorTest {
 
         stage("notes.txt", FileMode.REGULAR_FILE, "more".getBytes(StandardCharsets.UTF_8));
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -278,7 +316,7 @@ class StagedContentValidatorTest {
 
         unstage("c.bin");
 
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA)).doesNotThrowAnyException();
     }
 
     @Test
@@ -288,8 +326,9 @@ class StagedContentValidatorTest {
             stage("dir" + i + "/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
         }
 
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA, 10)).doesNotThrowAnyException();
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("files and directories");
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA, 10)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("files and directories");
     }
 
     @Test
@@ -300,9 +339,9 @@ class StagedContentValidatorTest {
         commit();
 
         stage("dir0/file.txt", FileMode.REGULAR_FILE, new byte[] { 2 });
-        assertThatCode(() -> StagedContentValidator.validate(repository, QUOTA, 9)).doesNotThrowAnyException();
+        assertThatCode(() -> StagedContentValidator.validate(repository, repository, QUOTA, 9)).doesNotThrowAnyException();
 
         stage("dir5/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class);
     }
 }

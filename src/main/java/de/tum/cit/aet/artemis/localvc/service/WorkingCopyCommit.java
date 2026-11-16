@@ -18,18 +18,21 @@ public final class WorkingCopyCommit {
     /**
      * Stages all changes of a working copy, checks the staged content against the limits for the files of a repository, commits it and pushes the commit.
      *
-     * @param gitService             the service that stages, commits and pushes
-     * @param repository             the working copy
-     * @param maxRepositorySizeBytes the size that the files of the repository may add up to
-     * @param message                the commit message
-     * @param user                   the user who has committed the changes
+     * @param gitService               the service that stages, commits and pushes
+     * @param bareGitRepositoryService the service that opens the accepted destination and supplies its quota
+     * @param repository               the working copy
+     * @param message                  the commit message
+     * @param user                     the user who has committed the changes
      * @return the id of the commit that was created
      * @throws GitAPIException if staging, committing or pushing fails
      */
-    public static String commitChanges(GitService gitService, Repository repository, long maxRepositorySizeBytes, String message, User user) throws GitAPIException {
+    public static String commitChanges(GitService gitService, BareGitRepositoryService bareGitRepositoryService, Repository repository, String message, User user)
+            throws GitAPIException {
         return WorkingCopyLocks.shared().withLock(AbstractGitService.workingCopyPath(repository), () -> {
             gitService.stageAllChanges(repository);
-            StagedContentValidator.validate(repository, maxRepositorySizeBytes);
+            try (Repository destination = bareGitRepositoryService.getBareRepository(repository.getRemoteRepositoryUri(), false)) {
+                StagedContentValidator.validate(repository, destination, bareGitRepositoryService.getMaxRepositorySizeBytes(repository));
+            }
             return gitService.commitAndPush(repository, message, true, user);
         });
     }

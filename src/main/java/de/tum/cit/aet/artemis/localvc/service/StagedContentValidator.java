@@ -13,7 +13,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
@@ -27,7 +26,8 @@ import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
  * Checks the staged content of a working copy against the same limits that the pre-receive hook applies to a push, before a commit of the online editor is created. A commit of
  * the online editor is pushed directly into the repository of the server, so the checks of the hook are not run for it.
  * <p>
- * The files that are new or changed compared to the last commit are checked one by one, and the whole tree against the limits for its size, so that content that is part of the
+ * The files that are new or changed compared to the accepted destination branch are checked one by one, and the whole tree against the limits for its size, so that content that is
+ * part of the
  * repository already (for example from a template) does not prevent a commit that does not make the repository larger.
  */
 public final class StagedContentValidator {
@@ -49,23 +49,25 @@ public final class StagedContentValidator {
     /**
      * Validates the staged content of a repository like the pre-receive hook validates a push.
      * <ul>
-     * <li>The files that are new or changed compared to the last commit are checked for the depth of the directories, the length of the paths, the size of the file, the names of
+     * <li>The files that are new or changed compared to the accepted destination branch are checked for the depth of the directories, the length of the paths, the size of the
+     * file, the names of
      * the entries, and that they are no symbolic links or submodules.</li>
      * <li>The whole staged tree is checked for the number of entries (files and directories) and the size of all files together. A staged tree above a limit is refused only if it
-     * is larger than the tree of the last commit, so that a commit that does not make an oversized repository larger is accepted.</li>
+     * is larger than the accepted destination tree, so that a commit that does not make an oversized repository larger is accepted. Unpushed local commits are not a baseline.</li>
      * </ul>
      *
      * @param repository             the working copy whose index is examined
+     * @param destination            the repository receiving the push, whose matching branch supplies the accepted baseline
      * @param maxRepositorySizeBytes the size that the files of the repository may add up to, as for a push to that repository
      * @throws BadRequestAlertException if the staged content violates one of the limits, or cannot be read
      */
-    public static void validate(Repository repository, long maxRepositorySizeBytes) {
-        validate(repository, maxRepositorySizeBytes, LocalVCPrePushHook.MAX_TREE_ENTRIES);
+    public static void validate(Repository repository, Repository destination, long maxRepositorySizeBytes) {
+        validate(repository, destination, maxRepositorySizeBytes, LocalVCPrePushHook.MAX_TREE_ENTRIES);
     }
 
-    static void validate(Repository repository, long maxRepositorySizeBytes, int maxEntries) {
+    static void validate(Repository repository, Repository destination, long maxRepositorySizeBytes, int maxEntries) {
         try {
-            validateStagedTree(repository, Math.min(maxRepositorySizeBytes, LocalVCPrePushHook.MAX_TREE_BYTES), maxEntries);
+            validateStagedTree(repository, destination, Math.min(maxRepositorySizeBytes, LocalVCPrePushHook.MAX_TREE_BYTES), maxEntries);
         }
         catch (IOException e) {
             log.warn("The staged content of {} could not be examined: {}", repository.getDirectory(), e.getMessage());
@@ -73,12 +75,20 @@ public final class StagedContentValidator {
         }
     }
 
-    private static void validateStagedTree(Repository repository, long maxBytes, int maxEntries) throws IOException {
+    private static void validateStagedTree(Repository repository, Repository destination, long maxBytes, int maxEntries) throws IOException {
         DirCache dirCache = repository.readDirCache();
-        ObjectId headTree = repository.resolve(Constants.HEAD + "^{tree}");
-        try (ObjectReader reader = repository.newObjectReader(); TreeWalk treeWalk = new TreeWalk(repository, reader)) {
-            AbstractTreeIterator head = headTree == null ? new EmptyTreeIterator() : new CanonicalTreeParser(null, reader, headTree);
-            treeWalk.addTree(head);
+        String branch = repository.getFullBranch();
+        if (branch == null || !branch.startsWith(Constants.R_HEADS)) {
+            throw new IOException("The working copy is not on a branch");
+        }
+        ObjectId acceptedTree = destination.resolve(branch + "^{tree}");
+        try (ObjectReader reader = repository.newObjectReader();
+                ObjectReader destinationReader = destination.newObjectReader();
+                TreeWalk treeWalk = new TreeWalk(repository, reader)) {
+            // The destination can have accepted objects that the working copy has not fetched. Materialize its index
+            // with its own reader so recursive comparison never tries to load those objects from the working copy.
+            AbstractTreeIterator accepted = acceptedTree == null ? new EmptyTreeIterator() : new DirCacheIterator(DirCache.read(destinationReader, acceptedTree));
+            treeWalk.addTree(accepted);
             treeWalk.addTree(new DirCacheIterator(dirCache));
             treeWalk.setRecursive(true);
             long stagedBytes = 0;
@@ -102,10 +112,10 @@ public final class StagedContentValidator {
                 }
             }
             long stagedEntries = stagedFiles + stagedDirectories.size();
-            if (stagedEntries > maxEntries && stagedEntries > countEntries(reader, headTree)) {
+            if (stagedEntries > maxEntries && stagedEntries > countEntries(destinationReader, acceptedTree)) {
                 reject("The repository contains too many files and directories", "tooManyEntries", Map.of("limit", maxEntries));
             }
-            if (stagedBytes > maxBytes && stagedBytes > sizeOfFiles(reader, headTree)) {
+            if (stagedBytes > maxBytes && stagedBytes > sizeOfFiles(destinationReader, acceptedTree)) {
                 reject("The repository would be %.1f MB large, but the limit is %d MB. Remove large files and commit again.".formatted(stagedBytes / (1024.0 * 1024.0),
                         maxBytes / (1024 * 1024)), "repositoryTooLarge", Map.of("size", stagedBytes, "limit", maxBytes));
             }

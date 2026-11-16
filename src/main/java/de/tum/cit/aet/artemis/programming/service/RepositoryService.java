@@ -946,7 +946,7 @@ public class RepositoryService {
      * @throws GitAPIException if the staging/committing process fails.
      */
     public String commitChanges(Repository repository, User user) throws GitAPIException {
-        return WorkingCopyCommit.commitChanges(gitService, repository, bareGitRepositoryService.getMaxRepositorySizeBytes(repository), "Changes by Online Editor", user);
+        return WorkingCopyCommit.commitChanges(gitService, bareGitRepositoryService, repository, "Changes by Online Editor", user);
     }
 
     /**
