@@ -206,6 +206,34 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(applied[0]).toEqual(['de.a.SortingTest']);
     });
 
+    it('restores a class of overloaded test cases only that was selected as a whole, and leaves unchanged classes to the new assignments', () => {
+        const withOverloads = {
+            testClasses: [
+                ...STRUCTURE.testClasses!,
+                { qualifiedName: 'de.d.OnlyOverloads', testCases: ['check', 'verify'], testClass: true, overloadedCases: ['check', 'verify'] },
+            ],
+        };
+        fixture.componentRef.setInput('structure', withOverloads);
+        fixture.componentRef.setInput('ownTests', ['de.a.SortingTest']);
+        comp.visible.set(false);
+        fixture.detectChanges();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        handlers.toggleKeys(['de.d.OnlyOverloads#check', 'de.d.OnlyOverloads#verify']);
+
+        // Meanwhile the repository released SortingTest, which the instructor did not change here.
+        fixture.componentRef.setInput('structure', undefined);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('ownTests', []);
+        fixture.componentRef.setInput('structure', withOverloads);
+        fixture.detectChanges();
+
+        expect(comp.selection().has('de.d.OnlyOverloads#check')).toBe(true);
+        expect(comp.selection().has('de.a.SortingTest#bubble')).toBe(false);
+        handlers.apply();
+        expect(applied[0]).toEqual(['de.d.OnlyOverloads']);
+    });
+
     it('lets the kept overloaded test cases follow the other test cases of a class a newer structure changes', () => {
         const withOverloads = (testCases: string[]) => ({
             testClasses: [...STRUCTURE.testClasses!, { qualifiedName: 'de.c.OverloadTest', testCases, testClass: true, overloadedCases: ['check'] }],

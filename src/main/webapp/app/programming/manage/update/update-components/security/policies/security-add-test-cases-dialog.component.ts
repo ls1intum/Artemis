@@ -261,9 +261,14 @@ export class SecurityAddTestCasesDialogComponent {
                         this.keptChanges = {
                             added: [...selection].filter((key) => !initial.has(key)),
                             removed: [...initial].filter((key) => !selection.has(key)),
-                            // A class selected as a whole stays so, also with the test cases the new structure adds, and a released class stays released.
+                            // A class the instructor selected as a whole stays so, also with the test cases the new structure adds, and a released class stays
+                            // released. Classes the instructor did not change follow the new structure and assignments, e.g. one removed meanwhile.
                             wholeClasses: classes
-                                .filter((node) => node.cases.every((testCase) => !testCase.switchedOff && selection.has(testCase.key)))
+                                .filter(
+                                    (node) =>
+                                        node.cases.some((testCase) => !initial.has(testCase.key)) &&
+                                        node.cases.every((testCase) => !testCase.switchedOff && selection.has(testCase.key)),
+                                )
                                 .map((node) => node.qualifiedName),
                             releasedClasses: classes
                                 .filter((node) => node.cases.some((testCase) => initial.has(testCase.key)) && !node.cases.some((testCase) => selection.has(testCase.key)))
@@ -287,10 +292,12 @@ export class SecurityAddTestCasesDialogComponent {
                     const classes = new Map(this.packages().flatMap((group) => group.classes.map((node) => [node.qualifiedName, node] as const)));
                     kept.added.filter((key) => available.has(key)).forEach((key) => selection.add(key));
                     kept.removed.forEach((key) => selection.delete(key));
-                    kept.wholeClasses.forEach((name) => classes.get(name)?.available.forEach((key) => selection.add(key)));
-                    kept.releasedClasses.forEach((name) => classes.get(name)?.cases.forEach((testCase) => selection.delete(testCase.key)));
+                    const wholeKeys = kept.wholeClasses.flatMap((name) => classes.get(name)?.available ?? []);
+                    const releasedKeys = kept.releasedClasses.flatMap((name) => classes.get(name)?.cases.map((testCase) => testCase.key) ?? []);
+                    wholeKeys.forEach((key) => selection.add(key));
+                    releasedKeys.forEach((key) => selection.delete(key));
                     // The new structure may add test cases to a class, so its overloaded ones follow its other test cases again.
-                    this.withOverloadsFollowing(selection, [...kept.added, ...kept.removed, ...kept.wholeClasses, ...kept.releasedClasses]);
+                    this.withOverloadsFollowing(selection, [...kept.added, ...kept.removed, ...wholeKeys, ...releasedKeys]);
                 } else {
                     this.toggled.set(new Set());
                     this.search.set('');
