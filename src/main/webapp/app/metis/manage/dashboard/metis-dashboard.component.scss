@@ -1,0 +1,46 @@
+// Layout is Tailwind in the template; the surfaces and the muted text come from the Artemis theme properties.
+.metis-card {
+    padding: 1rem;
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.metis-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.metis-tile-value {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+// The first tile answers the instructor's first question, so it is the one that stands out.
+.metis-tile-hero .metis-tile-value {
+    font-size: 2.5rem;
+    color: var(--primary);
+}
+
+.metis-tile-label,
+.metis-tile-note {
+    font-size: 0.875rem;
+    color: var(--text-body-secondary);
+}
+
+.metis-tile-note {
+    font-size: 0.75rem;
+}
+
+.metis-answer {
+    padding: 0.5rem 0.75rem;
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}

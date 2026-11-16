@@ -1,0 +1,10 @@
+// Layout is Tailwind in the template; the surfaces and the muted text use the Artemis theme properties.
+.metis-settings-card {
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.metis-settings-hint {
+    color: var(--text-body-secondary);
+}

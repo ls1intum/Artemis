@@ -83,6 +83,7 @@ const migratedModules = [
     'localvc',
     'logos',
     'lti',
+    'metis',
     'modeling',
     'notification',
     'plagiarism',
