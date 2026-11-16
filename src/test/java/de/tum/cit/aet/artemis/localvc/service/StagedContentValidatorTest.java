@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheBuilder;
@@ -21,8 +24,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
+import de.tum.cit.aet.artemis.core.exception.ExceptionTranslator;
 
 /**
  * Unit tests for the checks of the staged content before a commit of the online editor is created.
@@ -78,32 +86,33 @@ class StagedContentValidatorTest {
     @Test
     void rejectsSymbolicLink() throws Exception {
         stage("link", FileMode.SYMLINK, "../outside".getBytes(StandardCharsets.UTF_8));
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertRejection("linksNotAllowed", Map.of("path", "link"));
     }
 
     @Test
     void rejectsSubmodule() throws Exception {
         stage("module", FileMode.GITLINK, new byte[0]);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertRejection("linksNotAllowed", Map.of("path", "module"));
     }
 
     @Test
     void rejectsTooDeepPath() throws Exception {
-        stage("d/".repeat(LocalVCPrePushHook.MAX_TREE_DEPTH + 1) + "file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        String path = "d/".repeat(LocalVCPrePushHook.MAX_TREE_DEPTH + 1) + "file.txt";
+        stage(path, FileMode.REGULAR_FILE, new byte[] { 1 });
+        assertRejection("pathTooDeep", Map.of("path", "d/".repeat(100) + "...", "limit", LocalVCPrePushHook.MAX_TREE_DEPTH));
     }
 
     @Test
     void rejectsTooLongPath() throws Exception {
         stage("a".repeat(StagedContentValidator.MAX_PATH_LENGTH + 1), FileMode.REGULAR_FILE, new byte[] { 1 });
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertRejection("pathTooLong", Map.of("path", "a".repeat(200) + "...", "limit", StagedContentValidator.MAX_PATH_LENGTH));
     }
 
     @Test
     void rejectsTooLargeFile() throws Exception {
         byte[] content = new byte[(int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1];
         stage("big.bin", FileMode.REGULAR_FILE, content);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertRejection("fileTooLarge", Map.of("path", "big.bin", "limit", LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES));
     }
 
     @Test
@@ -121,7 +130,32 @@ class StagedContentValidatorTest {
             }
             builder.commit();
         }
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class);
+        assertRejection("tooManyEntries", Map.of("limit", LocalVCPrePushHook.MAX_TREE_ENTRIES));
+    }
+
+    @Test
+    void rejectsGitMetadataNamesWithALocalizableReason() throws Exception {
+        stage("git~2/config", FileMode.REGULAR_FILE, new byte[] { 1 });
+        assertRejection("pathNotAllowed", Map.of("path", "git~2/config"));
+    }
+
+    @Test
+    void unreadableIndexHasALocalizableReason() throws Exception {
+        FileUtils.writeByteArrayToFile(repository.getIndexFile(), "invalid index".getBytes(StandardCharsets.UTF_8));
+        assertRejection("unreadable", Map.of());
+    }
+
+    private void assertRejection(String reason, Map<String, Object> parameters) {
+        BadRequestAlertException exception = catchThrowableOfType(BadRequestAlertException.class, () -> StagedContentValidator.validate(repository, QUOTA));
+        assertThat(exception).isNotNull();
+        String errorKey = "stagedContentNotAllowed." + reason;
+        ExceptionTranslator translator = new ExceptionTranslator();
+        ReflectionTestUtils.setField(translator, "applicationName", "ArtemisApp");
+        var response = translator.handleBadRequestAlertException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getHeaders().getFirst("X-ArtemisApp-error")).isEqualTo("error." + errorKey);
+        assertThat(response.getBody().getType()).isEqualTo(ErrorConstants.PARAMETERIZED_TYPE);
+        assertThat(response.getBody().getProperties()).containsEntry("errorKey", errorKey).containsEntry("message", "error." + errorKey).containsEntry("params", parameters);
     }
 
     private void commit() throws Exception {
@@ -195,7 +229,7 @@ class StagedContentValidatorTest {
 
         stageMegabytes("c.bin", 8);
 
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("limit");
+        assertRejection("repositoryTooLarge", Map.of("size", 24 * MB, "limit", QUOTA));
     }
 
     @Test
@@ -270,24 +304,5 @@ class StagedContentValidatorTest {
 
         stage("dir5/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
         assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    void rejectionsCarryTheTranslatableKeyOfTheirReason() throws Exception {
-        stage("link", FileMode.SYMLINK, "target".getBytes(StandardCharsets.UTF_8));
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOfSatisfying(BadRequestAlertException.class,
-                e -> assertThat(e.getErrorKey()).isEqualTo(StagedContentValidator.KEY_LINK_NOT_ALLOWED));
-        unstage("link");
-
-        stageMegabytes("big.bin", 11);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOfSatisfying(BadRequestAlertException.class,
-                e -> assertThat(e.getErrorKey()).isEqualTo(StagedContentValidator.KEY_FILE_TOO_LARGE));
-        unstage("big.bin");
-
-        stageMegabytes("a.bin", 9);
-        stageMegabytes("b.bin", 9);
-        stageMegabytes("c.bin", 9);
-        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOfSatisfying(BadRequestAlertException.class,
-                e -> assertThat(e.getErrorKey()).isEqualTo(StagedContentValidator.KEY_TOO_LARGE));
     }
 }

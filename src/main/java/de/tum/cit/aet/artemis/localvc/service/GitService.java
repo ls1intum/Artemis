@@ -31,7 +31,6 @@ import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
-import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -87,8 +86,6 @@ public class GitService extends AbstractGitService {
 
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
-
-    private final WorkingCopyLocks workingCopyLocks = WorkingCopyLocks.shared();
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -415,9 +412,12 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit failed.
      */
     public void commit(Repository repo, String message) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
-        }
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            }
+            return null;
+        });
     }
 
     /**
@@ -445,18 +445,20 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit failed.
      */
     public String commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
-        String name = user != null ? user.getName() : artemisGitName;
-        String email = user != null ? user.getEmail() : artemisGitEmail;
-        try (Git git = new Git(repo)) {
-            RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
-            log.debug("commitAndPush -> Push {}", repo.getLocalPath());
-            setRemoteUrl(repo);
-            pushCommand(git).call();
-            // Returned rather than discarded so callers can identify the commit they just created. Reading the repository head
-            // afterwards is not equivalent: the online editor shares one working copy per repository, so a concurrent commit
-            // to the same repository can move the head between the commit and the read.
-            return commit.getName();
-        }
+        return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            String name = user != null ? user.getName() : artemisGitName;
+            String email = user != null ? user.getEmail() : artemisGitEmail;
+            try (Git git = new Git(repo)) {
+                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+                log.debug("commitAndPush -> Push {}", repo.getLocalPath());
+                setRemoteUrl(repo);
+                pushCommand(git).call();
+                // Returned rather than discarded so callers can identify the commit they just created. Reading the repository head
+                // afterwards is not equivalent: the online editor shares one working copy per repository, so a concurrent commit
+                // to the same repository can move the head between the commit and the read.
+                return commit.getName();
+            }
+        });
     }
 
     /**
@@ -469,12 +471,14 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit fails
      */
     public String commitStagedChanges(Repository repo, String message, @Nullable User user) throws GitAPIException {
-        String name = user != null ? user.getName() : artemisGitName;
-        String email = user != null ? user.getEmail() : artemisGitEmail;
-        try (Git git = new Git(repo)) {
-            RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
-            return commit.getName();
-        }
+        return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            String name = user != null ? user.getName() : artemisGitName;
+            String email = user != null ? user.getEmail() : artemisGitEmail;
+            try (Git git = new Git(repo)) {
+                RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
+                return commit.getName();
+            }
+        });
     }
 
     /**
@@ -531,41 +535,6 @@ public class GitService extends AbstractGitService {
             if (!pushed) {
                 resetToOriginHead(repo);
             }
-        }
-    }
-
-    /**
-     * Stages all changes in the repository, including new, modified, and deleted files.
-     *
-     * <p>
-     * The method first updates the index for deleted files (using {@code setUpdate(true)})
-     * and then stages new or modified files. It returns {@code true} if any files were staged
-     * (i.e., if there were changes in the working tree that were added to the index),
-     * or {@code false} if the repository was already clean.
-     *
-     * <p>
-     * This operation is safe for both normal and bare repositories.
-     *
-     * @param repo the local {@link Repository} to stage changes in.
-     * @return {@code true} if any changes were staged, {@code false} if nothing changed.
-     * @throws GitAPIException if staging fails.
-     */
-    public boolean stageAllChanges(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            // Check repository status before staging
-            Status preStatus = git.status().call();
-            boolean hasChanges = !preStatus.isClean();
-
-            if (hasChanges) {
-                // Stage deleted files
-                git.add().setUpdate(true).addFilepattern(".").call();
-
-                // Stage new and modified files
-                git.add().addFilepattern(".").call();
-            }
-
-            // Return true only if there were any changes to stage
-            return hasChanges;
         }
     }
 

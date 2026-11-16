@@ -68,6 +68,18 @@ class BuildResultLimitsTest {
     }
 
     @Test
+    void failuresAcrossJobsStillRespectTheTotalTestLimit() {
+        BuildResult limited = BuildResultLimits
+                .limit(result(List.of(new LocalCIJobDTO(Collections.nCopies(BuildResultLimits.MAX_TESTS, TEST), List.of(TEST)), new LocalCIJobDTO(List.of(TEST), List.of(TEST))),
+                        List.of(), List.of()));
+
+        assertThat(limited.jobs().getFirst().failedTests()).hasSize(BuildResultLimits.MAX_TESTS);
+        assertThat(limited.jobs().getFirst().successfulTests()).isEmpty();
+        assertThat(limited.jobs().getLast().failedTests()).isEmpty();
+        assertThat(limited.jobs().getLast().successfulTests()).isEmpty();
+    }
+
+    @Test
     void tooManyIssuesAreShortenedOverAllReports() {
         StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue("File.java", 1, 1, 1, 1, "rule", "category", "message", "priority", 1.0);
         List<StaticCodeAnalysisIssue> issues = Collections.nCopies(BuildResultLimits.MAX_STATIC_CODE_ANALYSIS_ISSUES, issue);

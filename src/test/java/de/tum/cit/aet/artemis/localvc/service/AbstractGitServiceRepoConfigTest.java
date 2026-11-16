@@ -19,6 +19,9 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
@@ -152,6 +155,27 @@ class AbstractGitServiceRepoConfigTest {
         // where the setting that exists to prevent remote code execution is not in force.
         assertThat(storedString(repositoryPath, ConfigConstants.CONFIG_CORE_SECTION, ConfigConstants.CONFIG_KEY_SYMLINKS)).as("the malformed boolean is overwritten")
                 .isEqualTo("false");
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "true", "invalid" })
+    void setRepoConfig_repairsPersistedSymlinksWhenAllOtherSettingsAlreadyMatch(String symlinks) throws Exception {
+        Path repositoryPath = createBareRepository("abc-stale-symlinks");
+        openForWriting(repositoryPath, "abc-stale-symlinks").close();
+        try (org.eclipse.jgit.lib.Repository repository = new FileRepositoryBuilder().setGitDir(repositoryPath.toFile()).build()) {
+            if (symlinks == null) {
+                repository.getConfig().unset(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS);
+            }
+            else {
+                repository.getConfig().setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, symlinks);
+            }
+            repository.getConfig().save();
+        }
+
+        openForWriting(repositoryPath, "abc-stale-symlinks").close();
+
+        assertThat(storedString(repositoryPath, ConfigConstants.CONFIG_CORE_SECTION, ConfigConstants.CONFIG_KEY_SYMLINKS)).isEqualTo("false");
     }
 
     @Test

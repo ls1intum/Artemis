@@ -250,25 +250,29 @@ public class LocalCIResultProcessingService {
 
     /**
      * Checks that the ids that a queued build job declares belong together in the database: the exercise of the participation is the exercise of the job, the course of that
-     * exercise is the course of the job, and an existing record of the job id is a record of the same participation and exercise.
+     * exercise is the course of the job, and an existing record of the job id belongs to the same participation, exercise and course.
+     * Existing job ownership is checked even when the participation has been deleted.
      * <p>
      * The processing list of the build agents is deliberately not consulted: an agent removes a job from it before it delivers the result.
      */
-    private boolean isConsistentWithDatabase(BuildJobQueueItem buildJob, Participation participation) {
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            return false;
-        }
-        ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
-        if (exercise == null || !Objects.equals(exercise.getId(), buildJob.exerciseId())) {
-            return false;
-        }
-        Optional<Long> courseId = programmingExerciseRepository.findCourseIdById(buildJob.exerciseId());
-        if (courseId.isEmpty() || !Objects.equals(courseId.get(), buildJob.courseId())) {
-            return false;
+    private boolean isConsistentWithDatabase(BuildJobQueueItem buildJob, Optional<Participation> participation) {
+        if (participation.isPresent()) {
+            if (!(participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+                return false;
+            }
+            ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+            if (exercise == null || !Objects.equals(exercise.getId(), buildJob.exerciseId())) {
+                return false;
+            }
+            Optional<Long> courseId = programmingExerciseRepository.findCourseIdById(buildJob.exerciseId());
+            if (courseId.isEmpty() || !Objects.equals(courseId.get(), buildJob.courseId())) {
+                return false;
+            }
         }
         return buildJobRepository.findByBuildJobId(buildJob.id())
                 .map(existing -> (existing.getParticipationId() == null || Objects.equals(existing.getParticipationId(), buildJob.participationId()))
-                        && (existing.getExerciseId() == null || Objects.equals(existing.getExerciseId(), buildJob.exerciseId())))
+                        && (existing.getExerciseId() == null || Objects.equals(existing.getExerciseId(), buildJob.exerciseId()))
+                        && (existing.getCourseId() == null || Objects.equals(existing.getCourseId(), buildJob.courseId())))
                 .orElse(true);
     }
 
@@ -296,7 +300,7 @@ public class LocalCIResultProcessingService {
         Optional<Participation> participationOptional;
         try {
             participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
-            if (participationOptional.isPresent() && !isConsistentWithDatabase(buildJob, participationOptional.get())) {
+            if (!isConsistentWithDatabase(buildJob, participationOptional)) {
                 // The ids of the item come from the queue, so a result is processed only for the participation, exercise and course that the database holds together.
                 // A job whose result is dropped here is recorded as missing and is retried by the LocalCIMissingJobService.
                 log.error("Dropping the result of build job {}: its participation {}, exercise {} and course {} do not belong together", buildJob.id(), buildJob.participationId(),

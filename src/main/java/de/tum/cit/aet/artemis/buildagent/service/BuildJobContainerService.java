@@ -227,17 +227,18 @@ public class BuildJobContainerService implements EnvironmentAware {
         removeExistingContainer(containerName);
         // get all record fields here because we need them more than once
         List<String> exerciseEnvVars = runConfig.env();
-        String network = runConfig.network();
+        String network = StringUtils.trimToNull(runConfig.network());
+        String effectiveNetwork = network == null ? DEFAULT_DOCKER_NETWORK : network;
         int cpuCount = runConfig.cpuCount();
         int memory = runConfig.memory();
         int memorySwap = runConfig.memorySwap();
         // The named networks are limited to the allowed list when the exercise is saved and when the job is created on the server. The agent additionally refuses the values
         // that do not give the build a network of its own.
         if (DockerRunConfig.sharesNetworkNamespace(network)) {
-            throw new LocalCIException("The container network '" + network + "' is not allowed");
+            throw new ContainerNetworkNotAllowedException("The container network '" + effectiveNetwork + "' is not allowed");
         }
         if (!isNetworkAllowedOnThisAgent(network)) {
-            throw new ContainerNetworkNotAllowedException("The container network '" + network + "' is not allowed on this build agent");
+            throw new ContainerNetworkNotAllowedException("The container network '" + effectiveNetwork + "' is not allowed on this build agent");
         }
 
         List<String> envVars = new ArrayList<>();
@@ -991,7 +992,8 @@ public class BuildJobContainerService implements EnvironmentAware {
         TarArchiveEntry entry = new TarArchiveEntry(entryName, TarConstants.LF_SYMLINK);
         // An absolute target is a path on this host. It is written relative to the directory of the link, so that it still leads to the copied file in the container.
         Path archivedTarget = linkTarget.isAbsolute() && parentDirectory != null ? parentDirectory.relativize(resolvedTarget) : linkTarget;
-        entry.setLinkName(archivedTarget.toString().replace(link.getFileSystem().getSeparator(), "/"));
+        String linkName = archivedTarget.toString().replace(link.getFileSystem().getSeparator(), "/");
+        entry.setLinkName(linkName.isEmpty() ? "." : linkName);
         entry.setMode(0777);
         tarArchiveOutputStream.putArchiveEntry(entry);
         tarArchiveOutputStream.closeArchiveEntry();

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.buildagent.config.KubernetesBuildRunnerProperties;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import io.fabric8.kubernetes.api.model.CapabilitiesBuilder;
 import io.fabric8.kubernetes.api.model.Container;
@@ -296,7 +297,7 @@ public class KubernetesBuildJobFactory {
             throw new LocalCIException("Custom memory swap is not supported by the Kubernetes build runner");
         }
         if (runConfig.network() != null && !runConfig.network().isBlank() && !"none".equals(runConfig.network())) {
-            throw new LocalCIException("Named Docker networks are not supported by the Kubernetes build runner. Supported values are empty and 'none'.");
+            throw new ContainerNetworkNotAllowedException("Named Docker networks are not supported by the Kubernetes build runner. Supported values are empty and 'none'.");
         }
     }
 }

@@ -56,6 +56,8 @@ public abstract class AbstractGitService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
+    protected final WorkingCopyLocks workingCopyLocks = WorkingCopyLocks.shared();
+
     protected AbstractGitService() {
         log.debug("file.encoding={}", Charset.defaultCharset().displayName());
         log.debug("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
@@ -530,6 +532,47 @@ public abstract class AbstractGitService {
         if (!foundTargetRef) {
             throw new TransportException("Push result did not contain an update for " + remoteRef);
         }
+    }
+
+    protected static Path workingCopyPath(Repository repo) {
+        return repo.isBare() ? repo.getDirectory().toPath() : repo.getWorkTree().toPath();
+    }
+
+    /**
+     * Stages all changes in the repository, including new, modified, and deleted files.
+     *
+     * <p>
+     * The method first updates the index for deleted files (using {@code setUpdate(true)})
+     * and then stages new or modified files. It returns {@code true} if any files were staged
+     * (i.e., if there were changes in the working tree that were added to the index),
+     * or {@code false} if the repository was already clean.
+     *
+     * <p>
+     * This operation is safe for both normal and bare repositories.
+     *
+     * @param repo the local {@link Repository} to stage changes in.
+     * @return {@code true} if any changes were staged, {@code false} if nothing changed.
+     * @throws GitAPIException if staging fails.
+     */
+    public boolean stageAllChanges(Repository repo) throws GitAPIException {
+        return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                // Check repository status before staging
+                Status preStatus = git.status().call();
+                boolean hasChanges = !preStatus.isClean();
+
+                if (hasChanges) {
+                    // Stage deleted files
+                    git.add().setUpdate(true).addFilepattern(".").call();
+
+                    // Stage new and modified files
+                    git.add().addFilepattern(".").call();
+                }
+
+                // Return true only if there were any changes to stage
+                return hasChanges;
+            }
+        });
     }
 
     /**

@@ -31,6 +31,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -374,6 +376,46 @@ class LocalCIResultProcessingServiceTest {
         verify(buildJobRepository, never()).save(any(BuildJob.class));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "participation", "exercise", "course" })
+    void aMissingParticipationCannotOverwriteAnotherJobsRecord(String mismatchedOwner) {
+        withSavedBuildJob();
+        BuildJob recorded = new BuildJob();
+        recorded.setId(55L);
+        recorded.setParticipationId(PARTICIPATION_ID + (mismatchedOwner.equals("participation") ? 1 : 0));
+        recorded.setExerciseId(EXERCISE_ID + (mismatchedOwner.equals("exercise") ? 1 : 0));
+        recorded.setCourseId(COURSE_ID + (mismatchedOwner.equals("course") ? 1 : 0));
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aMissingParticipationStillRecordsItsOwnBuild() {
+        withSavedBuildJob();
+        BuildJob recorded = new BuildJob();
+        recorded.setId(55L);
+        recorded.setParticipationId(PARTICIPATION_ID);
+        recorded.setExerciseId(EXERCISE_ID);
+        recorded.setCourseId(COURSE_ID);
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getId()).isEqualTo(55L);
+        assertThat(saved.getValue().getParticipationId()).isEqualTo(PARTICIPATION_ID);
+        verifyNoInteractions(programmingExerciseGradingService);
+    }
+
     @Test
     void aResultIsKeptForALaterAttemptWhenTheConsistencyCheckCannotReadTheDatabase() {
         when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
@@ -402,6 +444,23 @@ class LocalCIResultProcessingServiceTest {
 
         verify(deferredResultQueue, times(2)).add(item);
         verifyNoInteractions(programmingExerciseGradingService);
+    }
+
+    @Test
+    void aDeferredResultIsKeptWhenItsParticipationCannotBeReadOnRetry() {
+        when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(participation))
+                .thenThrow(new DataAccessResourceFailureException("still no connection"));
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+        when(deferredResultQueue.poll()).thenReturn(item);
+
+        resultProcessingService.processResultAsync();
+        resultProcessingService.processDeferredResultAsync();
+
+        verify(deferredResultQueue, times(2)).add(item);
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
     }
 
     // --- lifecycle and health --------------------------------------------------------------------------------------

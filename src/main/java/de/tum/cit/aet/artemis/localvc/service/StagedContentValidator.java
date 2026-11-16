@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
 
 /**
@@ -33,18 +34,8 @@ public final class StagedContentValidator {
 
     private static final Logger log = LoggerFactory.getLogger(StagedContentValidator.class);
 
-    /** The error keys of the responses when the staged content violates a limit. They are translated in the error bundles of the client. */
-    static final String KEY_UNREADABLE = "stagedContentUnreadable";
-
-    static final String KEY_PATH_NOT_ALLOWED = "stagedContentPathNotAllowed";
-
-    static final String KEY_LINK_NOT_ALLOWED = "stagedContentLinkNotAllowed";
-
-    static final String KEY_FILE_TOO_LARGE = "stagedContentFileTooLarge";
-
-    static final String KEY_TOO_MANY_ENTRIES = "stagedContentTooManyEntries";
-
-    static final String KEY_TOO_LARGE = "stagedContentTooLarge";
+    /** The prefix of the error keys when the staged content cannot be committed. */
+    public static final String ERROR_KEY = "stagedContentNotAllowed";
 
     /** The longest path of a file that is accepted. */
     static final int MAX_PATH_LENGTH = 4096;
@@ -78,7 +69,7 @@ public final class StagedContentValidator {
         }
         catch (IOException e) {
             log.warn("The staged content of {} could not be examined: {}", repository.getDirectory(), e.getMessage());
-            throw new BadRequestAlertException("The staged content of the repository could not be examined", ENTITY_NAME, KEY_UNREADABLE);
+            reject("The staged content of the repository could not be examined", "unreadable", Map.of());
         }
     }
 
@@ -112,30 +103,33 @@ public final class StagedContentValidator {
             }
             long stagedEntries = stagedFiles + stagedDirectories.size();
             if (stagedEntries > maxEntries && stagedEntries > countEntries(reader, headTree)) {
-                reject("The repository contains too many files and directories", KEY_TOO_MANY_ENTRIES, Map.of());
+                reject("The repository contains too many files and directories", "tooManyEntries", Map.of("limit", maxEntries));
             }
             if (stagedBytes > maxBytes && stagedBytes > sizeOfFiles(reader, headTree)) {
                 reject("The repository would be %.1f MB large, but the limit is %d MB. Remove large files and commit again.".formatted(stagedBytes / (1024.0 * 1024.0),
-                        maxBytes / (1024 * 1024)), KEY_TOO_LARGE, Map.of("sizeMb", stagedBytes / (1024 * 1024), "limitMb", maxBytes / (1024 * 1024)));
+                        maxBytes / (1024 * 1024)), "repositoryTooLarge", Map.of("size", stagedBytes, "limit", maxBytes));
             }
         }
     }
 
     private static void validateChangedEntry(TreeWalk treeWalk, FileMode newMode) throws IOException {
         String path = treeWalk.getPathString();
-        if (path.length() > MAX_PATH_LENGTH || treeWalk.getDepth() > LocalVCPrePushHook.MAX_TREE_DEPTH) {
-            reject("The path of a file is too long or too deeply nested: " + abbreviate(path), KEY_PATH_NOT_ALLOWED, Map.of("path", abbreviate(path)));
+        if (path.length() > MAX_PATH_LENGTH) {
+            reject("The path of a file is too long: " + abbreviate(path), "pathTooLong", Map.of("path", abbreviate(path), "limit", MAX_PATH_LENGTH));
+        }
+        if (treeWalk.getDepth() > LocalVCPrePushHook.MAX_TREE_DEPTH) {
+            reject("The path of a file is too deeply nested: " + abbreviate(path), "pathTooDeep", Map.of("path", abbreviate(path), "limit", LocalVCPrePushHook.MAX_TREE_DEPTH));
         }
         if (GitPathNames.containsGitMetadataName(path)) {
-            reject("The path is not allowed: " + abbreviate(path), KEY_PATH_NOT_ALLOWED, Map.of("path", abbreviate(path)));
+            reject("The path is not allowed: " + abbreviate(path), "pathNotAllowed", Map.of("path", abbreviate(path)));
         }
         if (FileMode.SYMLINK.equals(newMode) || FileMode.GITLINK.equals(newMode)) {
-            reject("Symbolic links and submodules are not allowed: " + abbreviate(path), KEY_LINK_NOT_ALLOWED, Map.of("path", abbreviate(path)));
+            reject("Symbolic links and submodules are not allowed: " + abbreviate(path), "linksNotAllowed", Map.of("path", abbreviate(path)));
         }
         long size = treeWalk.getObjectReader().getObjectSize(treeWalk.getObjectId(1), Constants.OBJ_BLOB);
         if (size > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
-            reject("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes: " + abbreviate(path), KEY_FILE_TOO_LARGE,
-                    Map.of("path", abbreviate(path), "limitMb", LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES / (1024 * 1024)));
+            reject("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes: " + abbreviate(path), "fileTooLarge",
+                    Map.of("path", abbreviate(path), "limit", LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES));
         }
     }
 
@@ -186,9 +180,10 @@ public final class StagedContentValidator {
         return size;
     }
 
-    private static void reject(String message, String errorKey, Map<String, Object> translationParameters) {
+    private static void reject(String message, String reason, Map<String, Object> parameters) {
         log.warn("Rejected the staged content of an online editor commit: {}", message);
-        throw new BadRequestAlertException(message, ENTITY_NAME, errorKey, translationParameters);
+        String errorKey = ERROR_KEY + "." + reason;
+        throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, message, ENTITY_NAME, errorKey, Map.of("message", "error." + errorKey, "params", parameters));
     }
 
     private static String abbreviate(String path) {
