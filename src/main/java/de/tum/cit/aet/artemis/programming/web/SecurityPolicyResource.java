@@ -153,7 +153,8 @@ public class SecurityPolicyResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<SecurityTemplateFilesDTO> getTemplateFiles(@PathVariable Long exerciseId) {
         log.debug("REST request to get the template files of programming exercise {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // The template repository is known through the template participation, which is not loaded with the exercise.
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exerciseId);
         return ResponseEntity.ok(securityPolicyEditorService.getTemplateFiles(exercise));
     }
 }
