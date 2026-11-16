@@ -632,16 +632,17 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Deletes the policy file, if present.
+     * Deletes the policy file the activation writes, {@link #POLICY_FILE_NAME}, if it is present and a YAML mapping. It goes even if the pinned Ares version
+     * would refuse it, because it is the file of the Security Framework; a file there that is no policy at all, e.g. one whose YAML is broken, stays, like any
+     * other file that an annotation points to and that is no policy.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
      */
     public static void deletePolicy(Path repositoryRoot) {
-        try {
-            Files.deleteIfExists(repositoryRoot.resolve(POLICY_FILE_NAME));
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        SecurityFrameworkState.PolicyFile policyFile = policyFile(POLICY_FILE_NAME, List.of(), path -> readPolicyFile(root, path), false);
+        if (policyFile.problem() == null || !policyFile.problem().breaksTheSandbox()) {
+            deletePolicyFile(root, POLICY_FILE_NAME);
         }
     }
 

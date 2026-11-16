@@ -1069,6 +1069,17 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void deactivationKeepsADefaultPolicyFileThatIsNoPolicy() throws Exception {
+        String broken = "regardingTheSupervisedCode: [\n";
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), broken, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        securityFrameworkService.deactivate(exercise, user);
+
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(broken);
+    }
+
+    @Test
     void addingTheDiscoveredTestClassesListsTheMissingOnesOnceAndKeepsEveryEntry() throws Exception {
         pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(), NEW_TEST_CLASS, StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);

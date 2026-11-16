@@ -648,7 +648,7 @@ public class SecurityFrameworkService {
             return;
         }
         // Every policy file an active annotation points to is deleted, not only SecurityPolicy.yaml, because the policy editor can add more of them. A file
-        // that is no valid policy, e.g. an annotation that points to build.gradle, is not deleted.
+        // that is no valid policy, e.g. an annotation that points to build.gradle or a SecurityPolicy.yaml with broken YAML, is not deleted.
         SecurityPolicyRepositoryFiles.deletePolicy(root);
         state.policyFiles().stream().filter(policyFile -> policyFile.problem() == null || !policyFile.problem().breaksTheSandbox())
                 .forEach(policyFile -> SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath())

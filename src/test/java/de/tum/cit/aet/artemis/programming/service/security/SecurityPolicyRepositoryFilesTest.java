@@ -197,6 +197,16 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void keepsAPolicyFileWhoseYamlIsBroken() throws IOException {
+        writeBuildFile();
+        FileUtils.writeStringToFile(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), "regardingTheSupervisedCode: [\n", StandardCharsets.UTF_8);
+
+        SecurityPolicyRepositoryFiles.deletePolicy(root);
+
+        assertThat(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).exists();
+    }
+
+    @Test
     void findsSymbolicLinksButNotTheGitDirectory() throws IOException {
         Path outside = Files.createDirectories(root.resolve("outside"));
         Path repository = Files.createDirectories(root.resolve("repository"));
