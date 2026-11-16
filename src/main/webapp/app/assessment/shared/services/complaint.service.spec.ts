@@ -1,23 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintListQuery, ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { provideHttpClient } from '@angular/common/http';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
+import type { ComplaintsForTutorQuery } from 'app/openapi/model/complaints-for-tutor-query';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
@@ -27,6 +29,9 @@ describe('ComplaintService', () => {
     const dayjsTime1 = dayjs().utc().year(2022).month(3).date(14).hour(10).minute(35).second(12).millisecond(332);
     const stringTime1 = '2022-04-14T10:35:12.332Z';
     const dayjsTime3 = dayjs();
+
+    const serverComplaint1: ComplaintDTO = { id: 42, complaintType: 'MORE_FEEDBACK', result: {}, submittedTime: stringTime1, complaintText: 'Test text' };
+    const serverComplaint2: ComplaintDTO = { id: 43, complaintType: 'COMPLAINT', result: {}, submittedTime: '2022-05-12T18:12:11.140Z', complaintText: 'Test text' };
 
     let exercise: Exercise;
     let emptyResult: Result;
@@ -295,6 +300,129 @@ describe('ComplaintService', () => {
         });
     });
 
+    /** Expects one GET request and returns it with its path and query parameters, independent of the order the parameters were appended in. */
+    function expectGet(): { request: TestRequest; path: string; query: Record<string, string> } {
+        const request = httpMock.expectOne(() => true);
+        expect(request.request.method).toBe('GET');
+        const url = new URL(request.request.urlWithParams, 'http://localhost');
+        return { request, path: url.pathname, query: Object.fromEntries(url.searchParams) };
+    }
+
+    describe('findAll', () => {
+        it.each<[string, ComplaintListQuery, Record<string, string>]>([
+            ['the test run of an exercise', { exerciseId: 7 }, { exerciseId: '7' }],
+            ['a course', { courseId: 3, complaintType: 'COMPLAINT' }, { courseId: '3', complaintType: 'COMPLAINT' }],
+            ['a course and assessor', { courseId: 3, complaintType: 'COMPLAINT', tutorId: 9 }, { courseId: '3', complaintType: 'COMPLAINT', tutorId: '9' }],
+            ['an exercise', { exerciseId: 7, complaintType: 'MORE_FEEDBACK' }, { exerciseId: '7', complaintType: 'MORE_FEEDBACK' }],
+            ['an exercise and assessor', { exerciseId: 7, complaintType: 'COMPLAINT', tutorId: 9 }, { exerciseId: '7', complaintType: 'COMPLAINT', tutorId: '9' }],
+            ['an exam', { courseId: 3, examId: 4 }, { courseId: '3', examId: '4' }],
+        ])('requests the complaints of %s', (_scope, query, expectedQuery) => {
+            let received: Complaint[] | undefined;
+            complaintService.findAll(query).subscribe((complaints) => (received = complaints));
+
+            const { request, path, query: sentQuery } = expectGet();
+            expect(path).toBe('/api/assessment/complaints');
+            expect(sentQuery).toEqual(expectedQuery);
+            request.flush([serverComplaint1, serverComplaint2]);
+
+            expect(received?.map((complaint) => complaint.id)).toEqual([42, 43]);
+            expect(received?.[0]).toBeInstanceOf(Complaint);
+            expect(received?.[0].complaintType).toBe(ComplaintType.MORE_FEEDBACK);
+            expect(received?.[0].submittedTime?.toISOString()).toBe(dayjsTime1.toISOString());
+        });
+
+        it('passes an error response on', () => {
+            let error: HttpErrorResponse | undefined;
+            complaintService.findAll({ courseId: 3, complaintType: 'COMPLAINT' }).subscribe({ error: (received) => (error = received) });
+
+            expectGet().request.flush(null, { status: 403, statusText: 'Forbidden' });
+
+            expect(error?.status).toBe(403);
+        });
+    });
+
+    describe('findAllForTutor', () => {
+        it.each<[string, ComplaintsForTutorQuery, Record<string, string>]>([
+            ['the own complaints of a course', { courseId: 3, complaintType: 'COMPLAINT' }, { courseId: '3', complaintType: 'COMPLAINT' }],
+            ['the own complaints of an exercise', { exerciseId: 7, complaintType: 'COMPLAINT' }, { exerciseId: '7', complaintType: 'COMPLAINT' }],
+            [
+                'all complaints of a course',
+                { courseId: 3, complaintType: 'COMPLAINT', allComplaintsForTutor: true },
+                { courseId: '3', complaintType: 'COMPLAINT', allComplaintsForTutor: 'true' },
+            ],
+            [
+                'all complaints of an exercise',
+                { exerciseId: 7, complaintType: 'MORE_FEEDBACK', allComplaintsForTutor: true },
+                { exerciseId: '7', complaintType: 'MORE_FEEDBACK', allComplaintsForTutor: 'true' },
+            ],
+        ])('requests %s without student information', (_scope, query, expectedQuery) => {
+            let received: Complaint[] | undefined;
+            complaintService.findAllForTutor(query).subscribe((complaints) => (received = complaints));
+
+            const { request, path, query: sentQuery } = expectGet();
+            expect(path).toBe('/api/assessment/complaints/for-tutor');
+            expect(sentQuery).toEqual(expectedQuery);
+            request.flush([serverComplaint2]);
+
+            expect(received?.map((complaint) => complaint.id)).toEqual([43]);
+        });
+    });
+
+    describe('findBySubmissionId', () => {
+        it('requests the complaint of the submission for its owner', () => {
+            let received: ComplaintDTO | undefined;
+            complaintService.findBySubmissionId(5).subscribe((complaint) => (received = complaint));
+
+            const { request, path, query } = expectGet();
+            expect(path).toBe('/api/assessment/complaints');
+            expect(query).toEqual({ submissionId: '5' });
+            request.flush(serverComplaint1);
+
+            expect(received).toEqual(serverComplaint1);
+        });
+
+        it('emits undefined when the server answers with an empty body', () => {
+            const emitted: (ComplaintDTO | undefined)[] = [];
+            complaintService.findBySubmissionId(5).subscribe((complaint) => emitted.push(complaint));
+
+            expectGet().request.flush(null);
+
+            expect(emitted).toEqual([undefined]);
+        });
+
+        it('emits undefined for a list body, which the submission query never returns', () => {
+            const emitted: (ComplaintDTO | undefined)[] = [];
+            complaintService.findBySubmissionId(5).subscribe((complaint) => emitted.push(complaint));
+
+            expectGet().request.flush([serverComplaint1]);
+
+            expect(emitted).toEqual([undefined]);
+        });
+    });
+
+    describe('findBySubmissionIdForAssessment', () => {
+        it('requests the complaint of the submission for its assessors', () => {
+            let received: ComplaintDTO | undefined;
+            complaintService.findBySubmissionIdForAssessment(42).subscribe((complaint) => (received = complaint));
+
+            const { request, path, query } = expectGet();
+            expect(path).toBe('/api/assessment/complaints/for-assessment');
+            expect(query).toEqual({ submissionId: '42' });
+            request.flush(serverComplaint2);
+
+            expect(received).toEqual(serverComplaint2);
+        });
+
+        it('emits undefined when the server answers with an empty body', () => {
+            const emitted: (ComplaintDTO | undefined)[] = [];
+            complaintService.findBySubmissionIdForAssessment(42).subscribe((complaint) => emitted.push(complaint));
+
+            expectGet().request.flush(null);
+
+            expect(emitted).toEqual([undefined]);
+        });
+    });
+
     it('should remove result references from feedbacks for update after complaint', () => {
         const result = new Result();
         result.id = 1;
@@ -445,6 +573,27 @@ describe('ComplaintService', () => {
             expect(complaint.assessorKey).toBe('42');
             expect(complaint.assessorLabel).toBe('Foreign Tutor');
             expect(complaint.result?.assessor).toBeUndefined();
+        });
+
+        it('should keep the test case a feedback of the complained result names', () => {
+            let received: Complaint[] | undefined;
+            complaintService.findAll({ exerciseId: 7, complaintType: 'COMPLAINT' }).subscribe((complaints) => (received = complaints));
+
+            expectGet().request.flush([
+                {
+                    id: 14,
+                    result: {
+                        id: 57,
+                        feedbacks: [{ id: 2, type: 'AUTOMATIC', credits: 1, positive: false, visibility: 'AFTER_DUE_DATE', testCaseName: 'testSort()', text: 'failed' }],
+                    },
+                } satisfies ComplaintDTO,
+            ]);
+
+            const feedback = received?.[0].result?.feedbacks?.[0];
+            expect(feedback).toBeInstanceOf(Feedback);
+            expect(feedback?.type).toBe(FeedbackType.AUTOMATIC);
+            expect(feedback?.testCase).toEqual({ testName: 'testSort()', visibility: Visibility.AfterDueDate });
+            expect(Feedback.isTestCaseFeedback(feedback!)).toBe(true);
         });
     });
 });
