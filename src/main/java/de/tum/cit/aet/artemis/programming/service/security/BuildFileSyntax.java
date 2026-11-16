@@ -43,6 +43,9 @@ final class BuildFileSyntax {
     /** An assignment of an empty file collection. */
     private static final Pattern EMPTY_COLLECTION = Pattern.compile("\\s*+=\\s*+(?:files|objects\\s*+\\.\\s*+fileCollection)\\s*+\\(\\s*+\\)\\s*+");
 
+    /** An interpolation in a Gradle or Maven string, e.g. {@code ${agentJar.singleFile}} or {@code $agentJar}. */
+    private static final Pattern INTERPOLATION = Pattern.compile("\\$\\{[^}]*+}|\\$[A-Za-z_]\\w*+");
+
     /** The last characters of a line after which a Gradle statement continues on the next line. */
     private static final String CONTINUING_ENDS = "=(,.+:";
 
@@ -155,8 +158,12 @@ final class BuildFileSyntax {
         return JAVA_AGENT.matcher(code).results().map(match -> match.group(1));
     }
 
+    /**
+     * Whether the literal part of an agent path names Ares, e.g. {@code ares-agent.jar}. Interpolations are left out, because a variable is named freely, e.g.
+     * {@code ${aresAgentJar}} may hold JaCoCo; an interpolated agent counts only through {@link #takesFileFrom(String, String, String)}.
+     */
     private static boolean namesAres(String agent) {
-        return agent.toLowerCase(Locale.ROOT).contains("ares");
+        return INTERPOLATION.matcher(agent).replaceAll("").toLowerCase(Locale.ROOT).contains("ares");
     }
 
     /** @return the content without the marked characters */
