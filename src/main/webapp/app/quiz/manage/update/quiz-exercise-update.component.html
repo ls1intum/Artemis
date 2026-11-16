@@ -155,7 +155,8 @@
                             </div>
                             <div class="quiz-schedule-grid">
                                 <div>
-                                    <tumaet-ui-form-field [label]="'artemisApp.quizExercise.duration' | artemisTranslate" controlId="quiz-duration-hours">
+                                    <div class="flex flex-col gap-1" role="group" aria-labelledby="quiz-duration-label">
+                                        <span id="quiz-duration-label" class="text-sm font-medium" jhiTranslate="artemisApp.quizExercise.duration"></span>
                                         <div class="flex flex-wrap items-center gap-2">
                                             <label for="quiz-duration-hours" class="sr-only" jhiTranslate="artemisApp.quizExercise.hours"></label>
                                             <tumaet-ui-input-number
@@ -190,7 +191,7 @@
                                             />
                                             <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                                         </div>
-                                    </tumaet-ui-form-field>
+                                    </div>
                                 </div>
                                 <div>
                                     @if (variantLock.locked()) {

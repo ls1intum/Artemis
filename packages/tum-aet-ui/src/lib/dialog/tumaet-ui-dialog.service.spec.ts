@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, inject, input } from '@angular/core';
+import { AfterViewInit, ApplicationRef, Component, inject, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TumAetUiDialogService } from './tumaet-ui-dialog.service';
 import { TumAetUiDialogConfig, TumAetUiDialogRef } from './tumaet-ui-dialog.types';
@@ -11,6 +11,15 @@ class DialogContentComponent {
     readonly ref = inject(TumAetUiDialogRef<string>);
     readonly config = inject(TumAetUiDialogConfig<{ course: number }>);
     readonly label = input.required<string>();
+}
+
+@Component({ template: `<input data-testid="field" />` })
+class FirstPassContentComponent implements AfterViewInit {
+    initialised = false;
+
+    ngAfterViewInit(): void {
+        this.initialised = true;
+    }
 }
 
 @Component({ template: `<button (click)="ref.dismiss('back')">Back</button>` })
@@ -55,6 +64,12 @@ describe('TumAetUiDialogService', () => {
         ref.setInputs({ label: 'Updated exercise' });
         await render();
         expect(dialog?.textContent).toContain('Updated exercise');
+    });
+
+    it('runs the first change detection of the content before open returns', () => {
+        const ref = service.open<FirstPassContentComponent>(FirstPassContentComponent, { ariaLabel: 'First pass' });
+        // A form control must be set up before anyone can type into it, or its model overwrites the first input.
+        expect(ref.componentInstance.initialised).toBe(true);
     });
 
     it('insets the content by default and removes the inset for contentPadding none', async () => {
