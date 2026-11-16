@@ -180,7 +180,8 @@ public class GenerationTokenUsageService {
             Double reportedCost = LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
             if (reportedCost != null) {
                 llmRequest = new GenerationUsage(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
-                        metadata.getId(), cachedInputTokens, llmRequest.costPerMillionCachedInputToken(), true, reportedCost, "PROVIDER");
+                        metadata.getId(), cachedInputTokens, llmRequest.costPerMillionCachedInputToken(), true, reportedCost,
+                        LLMResponseCost.reportedSource(usage.getNativeUsage()));
             }
             LLMRequest persisted = new LLMRequest(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
                     cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), llmRequest.costPerMillionCachedInputToken(), 0, 0f,

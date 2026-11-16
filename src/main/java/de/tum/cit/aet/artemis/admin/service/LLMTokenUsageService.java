@@ -103,7 +103,7 @@ public class LLMTokenUsageService {
             return buildLLMRequest(model, input, output, pipelineId);
         }
         ModelCost cost = modelCost(model, input, output, pipelineId, usd == null);
-        String source = usd == null ? null : "PROVIDER";
+        String source = usd == null ? null : LLMResponseCost.reportedSource(usage.getNativeUsage());
         if (usd == null) {
             usd = estimateUsd(cost, input, output, cached, written);
             source = usd == null ? null : "CONFIGURATION";
@@ -133,15 +133,16 @@ public class LLMTokenUsageService {
 
     @Nullable
     private static Double estimateUsd(ModelCost cost, int input, int output, int cached, int written) {
-        if (input < 0 || output < 0 || input > 0 && !validRate(cost.inputUsd()) || output > 0 && !validRate(cost.outputUsd())
+        boolean usesRegularInputRate = input > cached + written || cached > 0 && cost.cachedUsd() == null || written > 0 && cost.writeUsd() == null;
+        if (input < 0 || output < 0 || usesRegularInputRate && !validRate(cost.inputUsd()) || output > 0 && !validRate(cost.outputUsd())
                 || cached > 0 && cost.cachedUsd() != null && !validRate(cost.cachedUsd()) || written > 0 && cost.writeUsd() != null && !validRate(cost.writeUsd())) {
             return null;
         }
         // The shared fallback remains a simple estimate: use the regular input rate where no separate cache rate is configured.
-        double inputRate = cost.inputUsd() == null ? 0 : cost.inputUsd();
-        double outputRate = cost.outputUsd() == null ? 0 : cost.outputUsd();
-        double cachedRate = cost.cachedUsd() == null ? inputRate : cost.cachedUsd();
-        double writeRate = cost.writeUsd() == null ? inputRate : cost.writeUsd();
+        double inputRate = validRate(cost.inputUsd()) ? cost.inputUsd() : 0;
+        double outputRate = validRate(cost.outputUsd()) ? cost.outputUsd() : 0;
+        double cachedRate = validRate(cost.cachedUsd()) ? cost.cachedUsd() : inputRate;
+        double writeRate = validRate(cost.writeUsd()) ? cost.writeUsd() : inputRate;
         double amount = ((input - cached - written) * inputRate + cached * cachedRate + written * writeRate + output * outputRate) / 1_000_000d;
         return Double.isFinite(amount) && amount >= 0 ? amount : null;
     }

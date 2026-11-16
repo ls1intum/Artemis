@@ -37,10 +37,10 @@ class GenerationTokenUsageServiceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "0", "0.000123" })
-    void reportedUsdCostWinsWithoutConfiguredPricesOrCacheSplit(double cost) {
+    @CsvSource({ "0,PROVIDER", "0,CONFIGURATION", "0.000123,PROVIDER", "0.000123,CONFIGURATION" })
+    void reportedUsdCostWinsWithoutConfiguredPricesOrCacheSplit(double cost, String source) {
         var response = de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageTransport
-                .restore(new de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Call("unknown", "request", 10, 2, null, cost, "PROVIDER"));
+                .restore(new de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Call("unknown", "request", 10, 2, null, cost, source));
         var observed = new java.util.concurrent.atomic.AtomicReference<GenerationUsage>();
 
         assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION, "generation", builder -> builder,
@@ -48,13 +48,13 @@ class GenerationTokenUsageServiceTest {
 
         assertThat(observed.get().costUsd()).isEqualTo(cost);
         assertThat(observed.get().costUsdComplete()).isTrue();
-        assertThat(observed.get().costSource()).isEqualTo("PROVIDER");
+        assertThat(observed.get().costSource()).isEqualTo(source);
         org.mockito.ArgumentCaptor<java.util.List<de.tum.cit.aet.artemis.admin.domain.LLMRequest>> saved = org.mockito.ArgumentCaptor.captor();
         org.mockito.Mockito.verify(persistence).saveLLMTokenUsage(saved.capture(), org.mockito.ArgumentMatchers.eq(de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION),
                 org.mockito.ArgumentMatchers.any());
         assertThat(saved.getValue()).singleElement().satisfies(request -> {
             assertThat(request.totalCostUsd()).isEqualTo(cost);
-            assertThat(request.costSource()).isEqualTo("PROVIDER");
+            assertThat(request.costSource()).isEqualTo(source);
         });
     }
 

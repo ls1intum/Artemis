@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -30,9 +32,10 @@ class ProviderUsageTransportTest {
         assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call)).cachedInputTokens()).isNull();
     }
 
-    @Test
-    void providerUsdCostAndSourceSurviveRoundTrip() {
-        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, 0.00001234, "PROVIDER");
+    @ParameterizedTest
+    @ValueSource(strings = { "PROVIDER", "CONFIGURATION" })
+    void providerUsdCostAndSourceSurviveRoundTrip(String source) {
+        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, 0.00001234, source);
 
         assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call))).isEqualTo(call);
     }

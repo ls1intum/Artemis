@@ -247,6 +247,7 @@ public class HyperionConsistencyCheckService {
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "structural check")).parentObservation(parentObs).start();
         final var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
+        boolean usageRecorded = false;
         try (Observation.Scope scope = child.openScope()) {
             // @formatter:off
             var structuralIssuesResponse = chatClient
@@ -257,9 +258,13 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
             // @formatter:on
             usageCollector.add(buildRequestFromResponse(structuralIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            usageRecorded = true;
             return toGenericConsistencyIssue(structuralIssuesResponse.entity());
         }
         catch (RuntimeException e) {
+            if (!usageRecorded) {
+                usageCollector.add(null);
+            }
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
@@ -283,6 +288,7 @@ public class HyperionConsistencyCheckService {
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "semantic check")).parentObservation(parentObs).start();
         final var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
+        boolean usageRecorded = false;
         try (Observation.Scope scope = child.openScope()) {
             // @formatter:off
             var semanticIssuesResponse = chatClient
@@ -293,9 +299,13 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
             // @formatter:on
             usageCollector.add(buildRequestFromResponse(semanticIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            usageRecorded = true;
             return toGenericConsistencyIssue(semanticIssuesResponse.entity());
         }
         catch (RuntimeException e) {
+            if (!usageRecorded) {
+                usageCollector.add(null);
+            }
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
@@ -325,15 +335,20 @@ public class HyperionConsistencyCheckService {
 
         final var resourcePath = "/prompts/hyperion/consistency_verification.st";
         final String renderedPrompt = templates.render(resourcePath, input);
+        boolean usageRecorded = false;
         try (Observation.Scope scope = child.openScope()) {
             var verificationResponse = chatClient.prompt().system("You are a senior educational quality assurance engineer. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
 
             usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            usageRecorded = true;
             var entity = verificationResponse.entity();
             return (entity == null || entity.issues == null) ? List.of() : List.copyOf(entity.issues);
         }
         catch (RuntimeException e) {
+            if (!usageRecorded) {
+                usageCollector.add(null);
+            }
             child.error(e);
             log.warn("Verification call failed — caller will fall back to pre-verification results", e);
             return null;

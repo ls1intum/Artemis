@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -57,24 +58,25 @@ class LLMTokenUsageServiceTest {
         llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, createCostConfiguration());
     }
 
-    @Test
-    void responseCostTakesPrecedenceOverExplicitUsdRates() {
+    @ParameterizedTest
+    @ValueSource(strings = { "PROVIDER", "CONFIGURATION" })
+    void transportedCostTakesPrecedenceAndKeepsItsSource(String source) {
         var config = createCostConfiguration();
         config.getModelCosts().get("gpt-5-mini").setInputCostPerMillionUsd(100f);
         config.getModelCosts().get("gpt-5-mini").setOutputCostPerMillionUsd(200f);
         var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
-        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD"));
+        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD", "cost_source", source));
         var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
 
         LLMRequest request = service.buildLLMRequest(response, "PIPE");
         assertThat(request).isNotNull();
         assertThat(request.totalCostUsd()).isEqualTo(0.0001);
-        assertThat(request.costSource()).isEqualTo("PROVIDER");
+        assertThat(request.costSource()).isEqualTo(source);
     }
 
     @Test
     void incompleteUsageRetainsTokensWithoutReportingACompleteUsdAmount() {
-        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD"));
+        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD", "cost_source", "PROVIDER"));
         var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
 
         llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, "PARTIAL", builder -> builder.withCourse(42L), false);
@@ -100,6 +102,59 @@ class LLMTokenUsageServiceTest {
         assertThat(estimated.costSource()).isEqualTo("CONFIGURATION");
         assertThat(estimated.costPerMillionInputToken()).isEqualTo(0.23f);
         assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 100, 20, "PIPE").totalCostUsd()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "1000,0,0.001", "0,1000,0.003", "400,600,0.0022" })
+    void fullyCachedInputNeedsOnlyTheUsedCacheRates(long cached, long written, double expectedCost) {
+        var config = createCostConfiguration();
+        var rates = config.getModelCosts().get("gpt-5-mini");
+        rates.setCachedInputCostPerMillionUsd(1f);
+        rates.setCacheWriteInputCostPerMillionUsd(3f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(1000, 0, 1000, null, cached, written)).build());
+
+        var request = service.buildLLMRequest(response, "CACHED");
+
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isEqualTo(expectedCost);
+        assertThat(request.costSource()).isEqualTo("CONFIGURATION");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "1000,0,0.001", "0,1000,0.003" })
+    void unusedNonfiniteRatesDoNotInvalidateTheUsedCachePrice(long cached, long written, double expectedCost) {
+        var config = createCostConfiguration();
+        var rates = config.getModelCosts().get("gpt-5-mini");
+        rates.setInputCostPerMillionUsd(Float.NaN);
+        rates.setOutputCostPerMillionUsd(Float.NaN);
+        rates.setCachedInputCostPerMillionUsd(cached > 0 ? 1f : Float.NaN);
+        rates.setCacheWriteInputCostPerMillionUsd(written > 0 ? 3f : Float.NaN);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(1000, 0, 1000, null, cached, written)).build());
+
+        var request = service.buildLLMRequest(response, "CACHED");
+
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isEqualTo(expectedCost);
+        assertThat(request.costSource()).isEqualTo("CONFIGURATION");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "999,0", "0,999", "400,599" })
+    void uncachedInputStillNeedsTheRegularInputRate(long cached, long written) {
+        var config = createCostConfiguration();
+        var rates = config.getModelCosts().get("gpt-5-mini");
+        rates.setCachedInputCostPerMillionUsd(1f);
+        rates.setCacheWriteInputCostPerMillionUsd(3f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(1000, 0, 1000, null, cached, written)).build());
+
+        var request = service.buildLLMRequest(response, "CACHED");
+
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isNull();
+        assertThat(request.costSource()).isNull();
     }
 
     @ParameterizedTest

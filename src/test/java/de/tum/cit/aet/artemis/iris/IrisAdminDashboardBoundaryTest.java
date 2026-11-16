@@ -72,9 +72,9 @@ class IrisAdminDashboardBoundaryTest {
                 expected = Map.of("thumbsUp", 1.0, "thumbsDown", 1.0, "total", 3.0);
             }
             case TOKEN_COST -> {
-                when(repository.findTokenCostWithTimestamps(FROM, TO, "ALL")).thenReturn(List.of(new Object[] { FROM.minusSeconds(1), 1, 99.0 }, new Object[] { FROM, 1, 0.25 },
-                        new Object[] { FROM.plusSeconds(1), 0, 0.75 }, new Object[] { TO, 1, 99.0 }));
-                expected = Map.of("chat", 0.25, "other", 0.75, "total", 1.0);
+                when(repository.findTokenCostWithTimestamps(FROM, TO, "ALL")).thenReturn(List.of(new Object[] { FROM.minusSeconds(1), 1, 99.0, 99 },
+                        new Object[] { FROM, 1, 0.25, 1 }, new Object[] { FROM.plusSeconds(1), 0, 0.75, 2 }, new Object[] { TO, 1, 99.0, 99 }));
+                expected = Map.of("chat", 0.25, "other", 0.75, "total", 1.0, "unpricedRequests", 3.0);
             }
             case NO_RESPONSE_RATE -> {
                 when(repository.findUserMessagesWithNextMessageFullRange(FROM, TO, "ALL"))

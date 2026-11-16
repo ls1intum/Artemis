@@ -566,6 +566,8 @@ class CourseStudentDataExportServiceCsvTest {
         request.setCostPerMillionCachedInputTokens(0.1f);
         request.setNumCacheWriteInputTokens(10);
         request.setCostPerMillionCacheWriteInputTokens(0.2f);
+        request.setTotalCostUsd(0.123456789);
+        request.setCostSource("PROVIDER");
         var trace = new LLMTokenUsageTrace();
         trace.setId(10L);
         trace.setServiceType(LLMServiceType.IRIS);
@@ -583,8 +585,8 @@ class CourseStudentDataExportServiceCsvTest {
 
         assertThat(files).containsExactly(outputDirectory.resolve("student-data/llm-token-usage.csv"));
         assertThat(readCsv(files.getFirst()).rows()).containsExactly(
-                List.of("10", "IRIS", "2", "3", "2026-01-02 03:04:05", "test-model", "IRIS_CHAT", "200", "20", "1.1", "2.2", "100", "0.1", "10", "0.2"),
-                List.of("11", "", "", "", "", "", "", "0", "0", "0.0", "0.0", "0", "0.0", "0", "0.0"));
+                List.of("10", "IRIS", "2", "3", "2026-01-02 03:04:05", "test-model", "IRIS_CHAT", "200", "20", "1.1", "2.2", "100", "0.1", "10", "0.2", "0.123456789", "PROVIDER"),
+                List.of("11", "", "", "", "", "", "", "0", "0", "0.0", "0.0", "0", "0.0", "0", "0.0", "", ""));
     }
 
     @Test

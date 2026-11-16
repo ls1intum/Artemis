@@ -112,6 +112,8 @@ A tool-calling response may contain accumulated token counts without a matching 
 
 Upgrade Pyris to a version that forwards USD cost metadata for Iris requests. Until that upgrade, new Iris requests without an explicit USD amount are included in the unpriced count. API responses with malformed cost metadata still deliver their content and token counts; unusable amounts are ignored. For whole-exercise generation, upgrade Artemis core and its workers together: worker protocol version 5 carries the USD amount, and version 4 workers are rejected rather than silently losing accounting data.
 
+Drain active generation runs and stop all writers before upgrading. Retained generation transcripts and usage records remain readable: their JDK-serialized map values match fields by name, so previous EUR amounts are not reused as USD amounts. Their token counts remain available, while the renamed USD fields are unpriced until new USD evidence is recorded. The reverse direction also leaves the previous EUR fields unpriced rather than relabelling USD amounts. These two maps have used JDK map-value serialization since their introduction and have no map-notification consumers; their field rename does not require resetting the global distributed-data namespace. This does not make changed Kryo payloads generally compatible or permit mixed-version generation writers.
+
 ### Observability (Optional)
 
 Enabling observability during development helps you understand how LLM-based features behave, why they produce certain outputs, and how to optimize them. Since LLMs are non-deterministic and sensitive to prompts, parameters, and context, traditional logging is often not enough.

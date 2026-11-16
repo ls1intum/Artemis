@@ -38,7 +38,7 @@ public final class ProviderUsageTransport {
         }
         Double totalCostUsd = LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
         return new ProviderUsageUpdate.Call(Objects.toString(metadata.getModel(), ""), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(),
-                usage.getCacheReadInputTokens(), totalCostUsd, totalCostUsd == null ? null : "PROVIDER");
+                usage.getCacheReadInputTokens(), totalCostUsd, totalCostUsd == null ? null : LLMResponseCost.reportedSource(usage.getNativeUsage()));
     }
 
     /**
