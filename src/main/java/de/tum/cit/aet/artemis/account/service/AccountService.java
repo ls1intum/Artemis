@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.web.AccountResource;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
@@ -101,6 +102,8 @@ public class AccountService {
      * @return the e-mail change that is now waiting for confirmation, which is empty if there is none
      * @throws AccessForbiddenException  if registration is disabled and the current user is not an internal user
      * @throws EmailAlreadyUsedException if the requested e-mail is already used by another user
+     * @throws BadRequestAlertException  with {@code emailInvalid} if a restriction of the allowed addresses is configured and the new address of an account that is saved without
+     *                                       a confirmation does not match it
      */
     public BasicInformationUpdateResultDTO updateBasicInformationOfCurrentUser(UserDTO userDTO) {
         User currentUser = userRepository.getUser();
@@ -130,6 +133,10 @@ public class AccountService {
         // different one. It is not compared with the address read above either: a confirmation that completes after that read has
         // changed the address, and saving the one that was read would silently undo it.
         String emailToSave = emailChangeService.requiresConfirmation(currentUser) ? null : userDTO.getEmail();
+        if (emailDiffers && emailToSave != null) {
+            // An account that does not confirm its address is not checked by the change request, so the configured restriction is applied here, before anything is saved.
+            emailChangeService.requireAddressAllowed(emailToSave);
+        }
         if (emailChangeNeedsConfirmation) {
             // Asked for before anything is saved, so a refused address leaves the account as it was. What is saved below keeps the
             // address the account has: the new one is applied when both addresses have confirmed.
