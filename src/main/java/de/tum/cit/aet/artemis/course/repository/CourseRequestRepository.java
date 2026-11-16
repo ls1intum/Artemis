@@ -31,6 +31,8 @@ public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequ
 
     Optional<CourseRequest> findOneByShortNameIgnoreCase(String shortName);
 
+    long countByRequesterIdAndStatus(long requesterId, CourseRequestStatus status);
+
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCreatedCourseId(long courseId);

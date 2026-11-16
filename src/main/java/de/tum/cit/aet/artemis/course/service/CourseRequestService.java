@@ -60,6 +60,11 @@ public class CourseRequestService {
 
     private static final int MAX_TITLE_LENGTH = 255;
 
+    /**
+     * The number of course requests of one user that can wait for a decision at the same time.
+     */
+    private static final int MAX_PENDING_REQUESTS_PER_USER = 5;
+
     private final ResourceLoaderService resourceLoaderService;
 
     @Value("${info.contact:}")
@@ -96,6 +101,10 @@ public class CourseRequestService {
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
         var requester = userRepository.getUserWithAuthorities();
+        if (courseRequestRepository.countByRequesterIdAndStatus(requester.getId(), CourseRequestStatus.PENDING) >= MAX_PENDING_REQUESTS_PER_USER) {
+            throw new BadRequestAlertException("There are too many course requests waiting for a decision, please wait for a decision before you send another one",
+                    CourseRequest.ENTITY_NAME, "courseRequestTooManyPending");
+        }
         validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
         boolean gradeRelevant = resolveGradeRelevant(createDTO);
 

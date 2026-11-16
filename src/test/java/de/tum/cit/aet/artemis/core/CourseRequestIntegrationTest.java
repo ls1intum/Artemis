@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +60,9 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         student = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
         userUtilService.addAdmin(TEST_PREFIX);
+        // the requests of earlier tests would count towards the limit of pending requests of the user
+        courseRequestRepository
+                .deleteAll(courseRequestRepository.findAll().stream().filter(courseRequest -> student.getId().equals(courseRequest.getRequester().getId())).toList());
     }
 
     // ==================== CourseRequestResource Tests ====================
@@ -249,6 +253,28 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         String suggestedShortName = (String) params.get("suggestedShortName");
         // Suggested short name should be based on title "New Course" -> "NC" + semester "2025" -> "NC2025"
         assertThat(suggestedShortName).isEqualTo("NC2025");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createCourseRequest_withTooManyPendingRequests_shouldReturnBadRequestUntilOneIsDecided() throws Exception {
+        List<CourseRequest> pending = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            pending.add(createTestCourseRequest("Pending " + i, "PNDLIM" + i));
+        }
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("One More", "PNDLIMX", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, null,
+                "Reason for request.");
+
+        Map<String, Object> errorResponse = performPostAndGetErrorResponse(createDTO);
+
+        assertThat(errorResponse.get("errorKey")).isEqualTo("courseRequestTooManyPending");
+        assertThat(courseRequestRepository.findOneByShortNameIgnoreCase("PNDLIMX")).isEmpty();
+
+        // a request that was decided does not count anymore
+        CourseRequest decided = pending.getFirst();
+        decided.setStatus(CourseRequestStatus.REJECTED);
+        courseRequestRepository.save(decided);
+        request.postWithResponseBody("/api/course/course-requests", createDTO, CourseRequestDTO.class, HttpStatus.CREATED);
     }
 
     @Test
