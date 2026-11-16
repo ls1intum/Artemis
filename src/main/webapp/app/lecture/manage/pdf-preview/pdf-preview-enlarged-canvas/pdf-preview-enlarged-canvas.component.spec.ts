@@ -105,7 +105,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
         it('moves keyboard focus to the close button when the preview opens', async () => {
             await fixture.whenStable();
 
-            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.close-preview-button'));
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('button[aria-label="entity.action.close"]'));
         });
 
         it.each([
@@ -131,7 +131,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
 
             expect(component.currentPage()).toBe(boundary);
             expect(navigation.isConnected).toBe(false);
-            const close = fixture.nativeElement.querySelector('.close-preview-button') as HTMLButtonElement;
+            const close = fixture.nativeElement.querySelector('button[aria-label="entity.action.close"]') as HTMLButtonElement;
             expect(document.activeElement).toBe(close);
             close.dispatchEvent(new KeyboardEvent('keydown', { key: returnKey, bubbles: true }));
             expect(component.currentPage()).toBe(2);
@@ -146,11 +146,60 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             component.isEnlargedViewOutput.subscribe(closed);
             const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
 
-            fixture.nativeElement.querySelector('.enlarged-container').dispatchEvent(event);
+            fixture.nativeElement.querySelector('[role="dialog"]').dispatchEvent(event);
 
             expect(closed).toHaveBeenCalledExactlyOnceWith(false);
             expect(mockContainer.style.overflow).toBe('auto');
             expect(event.defaultPrevented).toBe(true);
+        });
+
+        describe('boundary navigation by keyboard', () => {
+            it.each([
+                { buttonLabel: 'Next page', initialPage: 4, targetPage: 5, key: 'ArrowRight' },
+                { buttonLabel: 'Previous page', initialPage: 2, targetPage: 1, key: 'ArrowLeft' },
+            ])('keeps focus in the dialog when $buttonLabel disappears', async ({ buttonLabel, initialPage, targetPage, key }) => {
+                fixture.componentRef.setInput('totalPages', 5);
+                component.currentPage.set(initialPage);
+                fixture.detectChanges();
+                await fixture.whenStable();
+                const host: HTMLElement = fixture.nativeElement;
+                const navigationButton = host.querySelector<HTMLButtonElement>(`button[aria-label="${buttonLabel}"]`)!;
+                const closeButton = host.querySelector<HTMLButtonElement>('button[aria-label="entity.action.close"]')!;
+                navigationButton.focus();
+                expect(document.activeElement).toBe(navigationButton);
+                const closed = vi.fn();
+                component.isEnlargedViewOutput.subscribe(closed);
+
+                navigationButton.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+                fixture.detectChanges();
+
+                expect(component.currentPage()).toBe(targetPage);
+                expect(host.contains(navigationButton)).toBe(false);
+                expect(document.activeElement).toBe(closeButton);
+                document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+                expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+                expect(mockContainer.style.overflow).toBe('auto');
+            });
+        });
+
+        it.each([
+            { buttonLabel: 'Previous page', initialPage: 4, targetPage: 5, key: 'ArrowRight' },
+            { buttonLabel: 'Next page', initialPage: 2, targetPage: 1, key: 'ArrowLeft' },
+        ])('preserves focus on $buttonLabel when it remains available at the boundary', async ({ buttonLabel, initialPage, targetPage, key }) => {
+            fixture.componentRef.setInput('totalPages', 5);
+            component.currentPage.set(initialPage);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const host: HTMLElement = fixture.nativeElement;
+            const navigationButton = host.querySelector<HTMLButtonElement>(`button[aria-label="${buttonLabel}"]`)!;
+            navigationButton.focus();
+
+            navigationButton.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+
+            expect(component.currentPage()).toBe(targetPage);
+            expect(host.contains(navigationButton)).toBe(true);
+            expect(document.activeElement).toBe(navigationButton);
         });
 
         it('keeps page navigation inside the preview instead of handling keys elsewhere on the page', () => {

@@ -299,7 +299,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     /** Keep combobox focus in the input while navigating and selecting its destinations. */
     onRecipientKeydown(event: KeyboardEvent): void {
-        if (event.target !== this.searchInput()?.nativeElement) {
+        if (event.isComposing || event.target !== this.searchInput()?.nativeElement) {
             return;
         }
 

@@ -433,7 +433,8 @@ public class BuildJobContainerService {
      */
     public void stopUnresponsiveContainer(String containerId) {
         boolean interrupted = Thread.interrupted();
-        try (final var executor = Executors.newSingleThreadExecutor()) {
+        try {
+            final var executor = Executors.newSingleThreadExecutor();
             try {
                 // Attempt to stop the container. It should stop the container and auto-remove it.
                 // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
@@ -468,9 +469,17 @@ public class BuildJobContainerService {
                 }
             }
             finally {
-                // Executor.close reacts to interruption with shutdownNow, which discards queued fallback commands.
-                // Clear it while the executor drains, then restore it after every command has finished.
-                interrupted |= Thread.interrupted();
+                // Keep queued fallback commands even when cancellation interrupts the caller while the executor drains.
+                executor.shutdown();
+                boolean terminated = false;
+                while (!terminated) {
+                    try {
+                        terminated = executor.awaitTermination(1, TimeUnit.DAYS);
+                    }
+                    catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
             }
         }
         finally {

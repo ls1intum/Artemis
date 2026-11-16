@@ -146,6 +146,25 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.hasSelections()).toBe(false);
     });
 
+    it.each(['ArrowDown', 'ArrowUp', 'Enter', 'Escape'])('leaves composing %s events to the input method', (key) => {
+        searchInput.value = 'General';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        const activeOption = searchInput.getAttribute('aria-activedescendant');
+        expect(activeOption).toBeTruthy();
+        const event = new KeyboardEvent('keydown', { key, isComposing: true, bubbles: true, cancelable: true });
+
+        searchInput.dispatchEvent(event);
+        fixture.detectChanges();
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(component.hasSelections()).toBe(false);
+        expect(searchInput.value).toBe('General');
+        expect(component.showDropdown()).toBe(true);
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(activeOption);
+    });
+
     it('dismisses destinations with Escape without propagating dismissal to the dialog', () => {
         searchInput.click();
         fixture.detectChanges();
