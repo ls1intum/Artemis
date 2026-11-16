@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -289,7 +290,10 @@ public class JWTFilter extends GenericFilterBean {
         if (jwtToken != null) {
             Claims claims = this.tokenProvider.parseClaims(jwtToken);
             ToolTokenType tool = this.tokenProvider.getTools(claims);
-            if (tool != null && !isReachableWithToolToken(httpServletRequest.getRequestURI())) {
+            // The container dispatches an error that ToolsInterceptor reports, such as 403, to /error and runs this filter again. That dispatch must keep the tool token, as the
+            // answer would otherwise become 401 instead of the original error.
+            boolean errorDispatch = httpServletRequest.getDispatcherType() == DispatcherType.ERROR;
+            if (tool != null && !errorDispatch && !isReachableWithToolToken(httpServletRequest.getRequestURI())) {
                 // A token issued for a tool is meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks, and for the native websocket endpoint.
                 // On every other path the token does not authenticate the request, which then continues like a request without credentials.
                 filterChain.doFilter(servletRequest, servletResponse);

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -462,6 +463,20 @@ class JWTFilterTest {
             assertThat(filterChain.getRequest()).as(path).isNotNull();
             assertThat(SecurityContextHolder.getContext().getAuthentication()).as(path).isNull();
         }
+    }
+
+    @Test
+    void aToolTokenKeepsAuthenticatingTheErrorDispatchOfARejectedRequest() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/error");
+        request.setDispatcherType(DispatcherType.ERROR);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        jwtFilter.doFilter(request, response, filterChain);
+
+        assertThat(filterChain.getRequest()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
     }
 
     @Test
