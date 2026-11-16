@@ -224,9 +224,8 @@ public class ProgrammingExerciseExportImportResource {
         }
 
         // Map the request onto a transient exercise at the boundary; everything below keeps working on entities.
-        // Unlike the two other import paths, this one never resolves the posted competency links: it copies an exercise
-        // of another course, competencies are course-specific, and the entity handler cleared them here too. Binding
-        // them would also produce detached entity errors for serialized competencies of the source instance.
+        // The request does not bind the competency links itself: they need managed competencies, which are resolved once the
+        // role in the target course is checked.
         ProgrammingExercise newExercise = newExerciseRequest.toEntity();
         // The build configuration is a row of its own that names the exercise, so it is bound next to it. The import
         // falls back to the source exercise's configuration when the request carries none.
@@ -245,6 +244,11 @@ public class ProgrammingExerciseExportImportResource {
 
         // Validate course settings
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
+
+        // The client drops the competencies of the source exercise, which belong to the source course, and lets the author pick competencies of the target course instead.
+        // They are carried on the new exercise as references, as for a created exercise: the import takes them off it before the first save and, once the exercise has an id,
+        // resolves them to managed competencies, skipping those of another course.
+        newExercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(newExerciseRequest, newExercise, ENTITY_NAME));
 
         final var originalProgrammingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(sourceExerciseId)
