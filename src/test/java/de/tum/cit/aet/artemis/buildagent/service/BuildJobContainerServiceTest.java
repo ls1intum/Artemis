@@ -32,6 +32,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.async.ResultCallback;
@@ -205,6 +206,25 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testAnAllowedNetworkListWithoutAnyNetworkIsAConfigurationError() {
+        MockEnvironment environment = new MockEnvironment().withProperty("artemis.continuous-integration.container-flags-limit.allowed-custom-networks[0]", "  ");
+        Object previous = ReflectionTestUtils.getField(buildJobContainerService, "allowedCustomNetworks");
+        try {
+            assertThatThrownBy(() -> buildJobContainerService.setEnvironment(environment)).isInstanceOf(LocalCIException.class).hasMessageContaining("names no network");
+
+            // a list that is not set at all does not check the network, and a list with a network is trimmed
+            buildJobContainerService.setEnvironment(new MockEnvironment());
+            assertThat(ReflectionTestUtils.getField(buildJobContainerService, "allowedCustomNetworks")).isEqualTo(List.of());
+            buildJobContainerService
+                    .setEnvironment(new MockEnvironment().withProperty("artemis.continuous-integration.container-flags-limit.allowed-custom-networks[0]", " mirror-only "));
+            assertThat(ReflectionTestUtils.getField(buildJobContainerService, "allowedCustomNetworks")).isEqualTo(List.of("mirror-only"));
+        }
+        finally {
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", previous);
+        }
+    }
+
+    @Test
     void testNonEmptyNetworkIsTaken() {
         var runConfig = new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
@@ -315,16 +335,22 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         FileUtils.writeStringToFile(outsideDirectory.resolve("outside.txt").toFile(), "outside content", StandardCharsets.UTF_8);
         FileUtils.writeStringToFile(repository.resolve("file.txt").toFile(), "content", StandardCharsets.UTF_8);
         Files.createSymbolicLink(repository.resolve("inside-link"), Path.of("file.txt"));
+        Files.createDirectories(repository.resolve("sub"));
+        Files.createSymbolicLink(repository.resolve("sub/absolute-inside-link"), repository.resolve("file.txt").toAbsolutePath());
         Files.createSymbolicLink(repository.resolve("outside-file-link"), outsideDirectory.resolve("outside.txt"));
         Files.createSymbolicLink(repository.resolve("outside-directory-link"), outsideDirectory);
 
         Path archive = ReflectionTestUtils.invokeMethod(buildJobContainerService, "createTarArchive", repository);
 
         List<String> names = new ArrayList<>();
+        String absoluteLinkTarget = null;
         try (TarArchiveInputStream tar = new TarArchiveInputStream(Files.newInputStream(archive))) {
             TarArchiveEntry entry;
             while ((entry = tar.getNextEntry()) != null) {
                 names.add(entry.getName());
+                if (entry.getName().endsWith("absolute-inside-link")) {
+                    absoluteLinkTarget = entry.getLinkName();
+                }
                 Assertions.assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).doesNotContain("outside content");
             }
         }
@@ -332,6 +358,7 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
             Files.deleteIfExists(archive);
         }
         Assertions.assertThat(names).contains("repository/file.txt", "repository/inside-link");
+        Assertions.assertThat(absoluteLinkTarget).as("an absolute target inside the repository is archived relative to the link").isEqualTo("../file.txt");
         assertThat(names.stream().noneMatch(name -> name.contains("outside"))).as("links leaving the repository are not archived").isTrue();
     }
 }

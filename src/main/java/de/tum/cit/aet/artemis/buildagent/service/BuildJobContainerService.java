@@ -180,7 +180,12 @@ public class BuildJobContainerService implements EnvironmentAware {
 
     @Override
     public void setEnvironment(@NonNull Environment environment) {
-        allowedCustomNetworks = Binder.get(environment).bind(ALLOWED_NETWORKS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
+        List<String> configured = Binder.get(environment).bind(ALLOWED_NETWORKS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
+        allowedCustomNetworks = configured.stream().filter(Objects::nonNull).map(String::trim).filter(entry -> !entry.isEmpty()).toList();
+        if (!configured.isEmpty() && allowedCustomNetworks.isEmpty()) {
+            // a list that is set, but names no network, is a mistake: it must neither switch the check off nor refuse every network without a hint
+            throw new LocalCIException("The property " + ALLOWED_NETWORKS_PROPERTY + " is set but names no network. Remove it or list at least one network.");
+        }
         if (allowedCustomNetworks.isEmpty()) {
             log.info("The build agent does not configure the allowed container networks and does not check the network of a build");
         }
@@ -283,12 +288,11 @@ public class BuildJobContainerService implements EnvironmentAware {
      * (none) is always allowed.
      */
     private boolean isNetworkAllowedOnThisAgent(String network) {
-        if (network == null || network.isBlank() || allowedCustomNetworks == null) {
+        if (network == null || network.isBlank() || allowedCustomNetworks.isEmpty()) {
             return true;
         }
-        List<String> configured = allowedCustomNetworks.stream().filter(Objects::nonNull).map(String::trim).filter(entry -> !entry.isEmpty()).toList();
         String requested = network.trim();
-        return configured.isEmpty() || "none".equals(requested) || configured.contains(requested);
+        return "none".equals(requested) || allowedCustomNetworks.contains(requested);
     }
 
     private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
@@ -981,7 +985,9 @@ public class BuildJobContainerService implements EnvironmentAware {
             return;
         }
         TarArchiveEntry entry = new TarArchiveEntry(entryName, TarConstants.LF_SYMLINK);
-        entry.setLinkName(linkTarget.toString().replace(link.getFileSystem().getSeparator(), "/"));
+        // An absolute target is a path on this host. It is written relative to the directory of the link, so that it still leads to the copied file in the container.
+        Path archivedTarget = linkTarget.isAbsolute() && parentDirectory != null ? parentDirectory.relativize(resolvedTarget) : linkTarget;
+        entry.setLinkName(archivedTarget.toString().replace(link.getFileSystem().getSeparator(), "/"));
         entry.setMode(0777);
         tarArchiveOutputStream.putArchiveEntry(entry);
         tarArchiveOutputStream.closeArchiveEntry();
