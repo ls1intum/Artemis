@@ -112,6 +112,29 @@ describe('SecurityYamlDialogComponent', () => {
         expect(reading).toEqual([true, false]);
     });
 
+    it('stops reporting a read that a newer selection or a replacement of the unsaved changes made obsolete', async () => {
+        const reading: boolean[] = [];
+        comp.readingChange.subscribe((value) => reading.push(value));
+        const finishers: ((content: string) => void)[] = [];
+        const select = () =>
+            handlers.onFileSelected({
+                target: { files: [{ size: 10, text: () => new Promise<string>((resolve) => finishers.push(resolve)) }], value: 'x' },
+            } as unknown as Event);
+
+        const first = select();
+        const second = select();
+        finishers[0]('a: 1\n');
+        await first;
+        expect(reading).toEqual([true]);
+
+        fixture.componentRef.setInput('importEpoch', 1);
+        fixture.detectChanges();
+        expect(reading).toEqual([true, false]);
+        finishers[1]('b: 2\n');
+        await second;
+        expect(reading).toEqual([true, false]);
+    });
+
     it('drops a file that is still being read when the parent replaces the unsaved changes', async () => {
         const imported: { content: string; policyPath: string }[] = [];
         comp.imported.subscribe((content) => imported.push(content));

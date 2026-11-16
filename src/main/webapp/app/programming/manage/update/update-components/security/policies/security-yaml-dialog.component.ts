@@ -78,8 +78,8 @@ export class SecurityYamlDialogComponent {
 
     /** Counts the selected files, so that a slow read is dropped once a newer file was selected. */
     private importCount = 0;
-    /** The number of selected files that are being read. */
-    private readsInFlight = 0;
+    /** The selection whose file is being read and can still become an import. */
+    private readingSelection: number | undefined;
     private destroyed = false;
 
     readonly view = signal<YamlView>('unsaved');
@@ -111,6 +111,11 @@ export class SecurityYamlDialogComponent {
 
     constructor() {
         this.destroyRef.onDestroy(() => (this.destroyed = true));
+        // Once the parent replaces the unsaved changes, a file that is still being read can no longer become an import.
+        effect(() => {
+            this.importEpoch();
+            untracked(() => this.setReading(undefined));
+        });
         effect(() => {
             if (this.visible()) {
                 untracked(() => {
@@ -161,6 +166,7 @@ export class SecurityYamlDialogComponent {
         // Every selection supersedes a file that is still being read, even one that is refused.
         const selection = ++this.importCount;
         if (file.size > MAX_IMPORT_SIZE) {
+            this.setReading(undefined);
             this.importError.set('artemisApp.programmingExercise.security.advanced.yaml.importTooLarge');
             return;
         }
@@ -168,20 +174,28 @@ export class SecurityYamlDialogComponent {
         const target = this.policyPath();
         const epoch = this.importEpoch();
         // The parent counts the read as a pending import, so nothing is committed before the file it imports is read.
-        this.readsInFlight++;
-        this.readingChange.emit(true);
+        this.setReading(selection);
         let content: string;
         try {
             content = await file.text();
         } finally {
-            this.readsInFlight--;
-            // Once the dialog is gone, the parent no longer listens and has cleared the state itself.
-            if (!this.readsInFlight && !this.destroyed) {
-                this.readingChange.emit(false);
+            // A read that a newer selection or a replacement of the unsaved changes made obsolete no longer counts, and its end changes nothing.
+            if (this.readingSelection === selection) {
+                this.setReading(undefined);
             }
         }
         if (selection === this.importCount && epoch === this.importEpoch()) {
             this.imported.emit({ content, policyPath: target });
+        }
+    }
+
+    /** Reports to the parent whether the file of a selection that can still become an import is being read. */
+    private setReading(selection: number | undefined): void {
+        const wasReading = this.readingSelection !== undefined;
+        this.readingSelection = selection;
+        // Once the dialog is gone, the parent no longer listens and has cleared the state itself.
+        if (wasReading !== (selection !== undefined) && !this.destroyed) {
+            this.readingChange.emit(selection !== undefined);
         }
     }
 }
