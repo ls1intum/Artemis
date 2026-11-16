@@ -88,6 +88,7 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
                 { method: 'get', path: `${examBase}/export-students` },
                 { method: 'get', path: `${examBase}/verify-exam-users` },
                 { method: 'get', path: `${examBase}/students/search?searchTerm=student` },
+                { method: 'get', path: `${examBase}/exam-students/paged?page=0&pageSize=10&sortingOrder=ASCENDING&sortedColumn=name&searchTerm=` },
                 {
                     method: 'post',
                     path: `${examBase}/exam-users-save-images`,
@@ -100,7 +101,6 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
                 { method: 'get', path: `${examBase}/stats-for-exam-assessment-dashboard` },
                 { method: 'get', path: `${examBase}/latest-end-date` },
                 { method: 'get', path: `${base}/exams` },
-                { method: 'get', path: `${examBase}/exam-students/paged?page=0&pageSize=10&sortingOrder=ASCENDING&sortedColumn=name&searchTerm=` },
                 { method: 'post', path: `${examBase}/students/${studentOne.username}/attendance-check`, data: 'Forbidden check' },
                 {
                     method: 'post',
