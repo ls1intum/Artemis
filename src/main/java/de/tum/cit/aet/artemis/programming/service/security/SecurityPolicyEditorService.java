@@ -553,13 +553,14 @@ public class SecurityPolicyEditorService {
         String classPolicyPath = testClass.classPolicyPath();
         // A class assigned as a whole shows the overloads as part of it, so releasing or deleting that assignment is what the instructor asked for.
         boolean assignedAsAWhole = testClass.entries().containsKey(testClass.qualifiedName());
-        if (classPolicyPath == null || assigned.classPolicyPath() != null || assignedAsAWhole || testClass.inheritingOverloads().isEmpty()) {
+        // The annotations are read by the name of the method, so whether every overload has one of its own is unknown; any of them may use the class policy.
+        if (classPolicyPath == null || assigned.classPolicyPath() != null || assignedAsAWhole || testClass.overloaded().isEmpty()) {
             return;
         }
-        String overload = testClass.inheritingOverloads().iterator().next();
+        String overload = testClass.overloaded().stream().sorted().findFirst().orElseThrow();
         throw refused(
-                "The test class " + testClass.qualifiedName() + " has several test methods called " + overload + ", which use the policy " + classPolicyPath
-                        + " of the class. Assign the whole class to a policy, or give these methods an annotation of their own.",
+                "The test class " + testClass.qualifiedName() + " has several test methods called " + overload + ", which can use the policy " + classPolicyPath
+                        + " of the class only through the class annotation. Assign the whole class to a policy, or change these annotations in the repository.",
                 "securityPolicyOverloadsLosePolicy", Map.of("testClass", testClass.qualifiedName(), "test", overload, "path", classPolicyPath));
     }
 

@@ -697,6 +697,22 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesARenameWhenOnlyOneOverloadedTestMethodHasAnAnnotationOfItsOwn() {
+        pushToTests(SORTING_TEST_PATH,
+                SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()").replace(
+                        "    @Test\n    void testMergeSort() {\n    }",
+                        "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n    @Test\n    void testMergeSort() {\n    }\n\n"
+                                + "    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(),
+                        change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", renamed, List.of("de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyOverloadsLosePolicy"));
+    }
+
+    @Test
     void renamesAPolicyAndPointsItsTestsToTheNewFile() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);

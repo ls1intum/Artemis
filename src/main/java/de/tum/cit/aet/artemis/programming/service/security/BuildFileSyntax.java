@@ -23,6 +23,9 @@ final class BuildFileSyntax {
     private static final Pattern GRADLE_ARES_AGENT = Pattern.compile("([A-Za-z_$][\\w$]*+)\\s*+\\(?\\s*+['\"]de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent['\"]");
 
     /** The argument of a {@code -javaagent} option; group 1 is the agent, up to the end of the string or argument. */
+    /** The variable, property or object an interpolation in a Gradle string starts with, e.g. {@code agentJar} in {@code ${agentJar.singleFile}}. */
+    private static final Pattern INTERPOLATED_NAME = Pattern.compile("\\$\\{?\\s*+([A-Za-z_]\\w*+)");
+
     private static final Pattern JAVA_AGENT = Pattern.compile("-javaagent:([^'\"\\s,)<]*)");
 
     /** The Ares agent as a Maven artifact: the {@code agent} classifier of the {@code ares} artifact. */
@@ -55,9 +58,28 @@ final class BuildFileSyntax {
         if (!dependency.find()) {
             return false;
         }
-        boolean configurationUsed = Pattern.compile("configurations\\s*\\.\\s*" + Pattern.quote(dependency.group(1)) + "\\b").matcher(code).find();
-        // An interpolated agent, as in "-javaagent:${agentJar.singleFile.absolutePath}", comes from the configuration the build uses for it.
-        return javaAgents(code).anyMatch(agent -> namesAres(agent) || (configurationUsed && agent.contains("${")));
+        Pattern configuration = Pattern.compile("configurations\\s*+\\.\\s*+" + Pattern.quote(dependency.group(1)) + "\\b");
+        return javaAgents(code).anyMatch(agent -> namesAres(agent) || takesFileFrom(code, agent, configuration));
+    }
+
+    /**
+     * Whether an interpolated agent takes its file from the configuration: directly, as in {@code "-javaagent:${configurations.aresAgent.singleFile}"}, or
+     * through the variable or property it starts with, as the templates do with {@code "-javaagent:${agentJar.singleFile.absolutePath}"} and
+     * {@code aresJvmArguments.agentJar.from(configurations.aresAgent)}.
+     */
+    private static boolean takesFileFrom(String code, String agent, Pattern configuration) {
+        Matcher interpolation = INTERPOLATED_NAME.matcher(agent);
+        if (!interpolation.find()) {
+            return false;
+        }
+        if (configuration.matcher(agent).find()) {
+            return true;
+        }
+        Pattern name = Pattern.compile("\\b" + Pattern.quote(interpolation.group(1)) + "\\b");
+        return code.lines().anyMatch(line -> {
+            Matcher source = name.matcher(line);
+            return source.find() && configuration.matcher(line).find(source.end());
+        });
     }
 
     private static Stream<String> javaAgents(String code) {
