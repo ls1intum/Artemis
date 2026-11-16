@@ -2,6 +2,7 @@
 core.web.open.PublicAccountResource#activateAccount(String)
 core.web.open.PublicAccountResource#authenticatedLogin(HttpServletRequest)
 core.web.open.PublicAccountResource#changeLanguageKey(String)
+core.web.open.PublicAccountResource#checkEmailAllowed(EmailAllowedRequestDTO)
 core.web.open.PublicAccountResource#finishPasswordReset(KeyAndPasswordVM)
 core.web.open.PublicAccountResource#getAccount(HttpServletRequest)
 core.web.open.PublicAccountResource#getLoginOptions(String)
