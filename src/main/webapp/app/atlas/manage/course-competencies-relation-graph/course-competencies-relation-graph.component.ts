@@ -1,7 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faFileImport } from '@fortawesome/free-solid-svg-icons';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRelationDTO, CourseCompetency, CourseCompetencyGraphNode } from 'app/atlas/shared/entities/competency.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CourseCompetencyRelationNodeComponent } from 'app/atlas/manage/course-competency-relation-node/course-competency-relation-node.component';
@@ -12,13 +9,11 @@ import { DagGraphEdge } from 'app/atlas/shared/dag-graph/dag-graph.model';
 @Component({
     selector: 'jhi-course-competencies-relation-graph',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, NgbAccordionModule, DagGraphComponent, CourseCompetencyRelationNodeComponent, ArtemisTranslatePipe],
+    imports: [DagGraphComponent, CourseCompetencyRelationNodeComponent, ArtemisTranslatePipe],
     templateUrl: './course-competencies-relation-graph.component.html',
     styleUrl: './course-competencies-relation-graph.component.scss',
 })
 export class CourseCompetenciesRelationGraphComponent {
-    protected readonly faFileImport = faFileImport;
-
     readonly courseCompetencies = input.required<CourseCompetency[]>();
     readonly relations = input.required<CompetencyRelationDTO[]>();
 

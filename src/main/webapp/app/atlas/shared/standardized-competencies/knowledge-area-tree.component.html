@@ -1,39 +1,92 @@
-<p-tree
-    class="block w-full"
-    styleClass="w-full"
-    [pt]="{ nodeContent: { class: 'bg-surface-0 dark:bg-surface-900' } }"
-    [value]="nodes()"
-    (onNodeExpand)="onNodeExpand($event.node)"
-    (onNodeCollapse)="onNodeCollapse($event.node)"
-    data-testid="knowledge-area-tree"
->
-    <ng-template let-node pTemplate="knowledgeArea">
-        <div class="flex items-center" data-testid="knowledge-area-node">
-            <h5
-                class="mb-0 me-2 clickable"
-                (click)="toggle(node.data)"
-                #keyboardAction12
-                role="button"
-                tabindex="0"
-                [attr.aria-expanded]="isExpanded(node.data)"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
-            >
-                {{ node.data.title }}
-            </h5>
-            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
-        </div>
-    </ng-template>
-    <ng-template let-node pTemplate="competency">
-        <div class="flex items-center" data-testid="competency-node">
-            <ng-container
-                [ngTemplateOutlet]="competencyTemplate() ?? null"
-                [ngTemplateOutletContext]="{ competency: node.data.competency, knowledgeArea: node.data.knowledgeArea }"
-            />
-        </div>
-    </ng-template>
-    <ng-template pTemplate="emptyKnowledgeArea">
-        <h6 class="mb-0" jhiTranslate="artemisApp.knowledgeArea.empty" data-testid="empty-node"></h6>
-    </ng-template>
-</p-tree>
+<ul role="tree" class="m-0! block w-full list-none rounded-md bg-surface-0 p-4! dark:bg-surface-900" data-testid="knowledge-area-tree">
+    <ng-container [ngTemplateOutlet]="nodeList" [ngTemplateOutletContext]="{ nodes: nodes(), level: 1 }" />
+</ul>
+
+<ng-template #nodeList let-nodes="nodes" let-level="level">
+    @for (node of nodes; track node.key) {
+        @switch (node.type) {
+            @case (KNOWLEDGE_AREA_NODE_TYPE) {
+                <li
+                    role="treeitem"
+                    aria-selected="false"
+                    class="list-none py-0.5"
+                    [attr.aria-label]="node.data.title"
+                    [attr.aria-expanded]="node.expanded"
+                    [attr.aria-level]="level"
+                    [tabindex]="tabStopKey() === node.key ? 0 : -1"
+                    (focus)="focusedKey.set(node.key)"
+                    (keydown)="onNodeKeydown($event, node)"
+                >
+                    <div class="flex items-center gap-1 rounded-md p-2 hover:bg-(--hover-slightly-darker-body-bg)" data-testid="knowledge-area-node">
+                        <!-- The row owns keyboard navigation; these controls retain pointer activation. -->
+                        <button
+                            type="button"
+                            tabindex="-1"
+                            aria-hidden="true"
+                            class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-inherit"
+                            (click)="toggle(node.data)"
+                        >
+                            <fa-icon size="sm" [icon]="node.expanded ? faChevronDown : faChevronRight" />
+                        </button>
+                        <h5
+                            class="me-2 mb-0! cursor-pointer"
+                            (click)="toggle(node.data)"
+                            #keyboardAction12
+                            role="button"
+                            tabindex="-1"
+                            [attr.aria-expanded]="isExpanded(node.data)"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
+                        >
+                            {{ node.data.title }}
+                        </h5>
+                        <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
+                    </div>
+                    @if (node.expanded) {
+                        <ul role="group" class="m-0! list-none p-0! ps-4!">
+                            <ng-container [ngTemplateOutlet]="nodeList" [ngTemplateOutletContext]="{ nodes: node.children, level: level + 1 }" />
+                        </ul>
+                    }
+                </li>
+            }
+            @case (COMPETENCY_NODE_TYPE) {
+                <li
+                    role="treeitem"
+                    aria-selected="false"
+                    class="list-none py-0.5"
+                    [attr.aria-label]="node.data.competency.title"
+                    [attr.aria-level]="level"
+                    [tabindex]="tabStopKey() === node.key ? 0 : -1"
+                    (focus)="focusedKey.set(node.key)"
+                    (keydown)="onNodeKeydown($event, node)"
+                >
+                    <div class="flex items-center gap-1 rounded-md p-2 hover:bg-(--hover-slightly-darker-body-bg)" data-testid="competency-node">
+                        <span class="size-7 shrink-0" aria-hidden="true"></span>
+                        <ng-container
+                            [ngTemplateOutlet]="competencyTemplate() ?? null"
+                            [ngTemplateOutletContext]="{ competency: node.data.competency, knowledgeArea: node.data.knowledgeArea }"
+                        />
+                    </div>
+                </li>
+            }
+            @case (EMPTY_NODE_TYPE) {
+                <li
+                    role="treeitem"
+                    aria-selected="false"
+                    class="list-none py-0.5"
+                    [attr.aria-level]="level"
+                    [tabindex]="tabStopKey() === node.key ? 0 : -1"
+                    (focus)="focusedKey.set(node.key)"
+                    (keydown)="onNodeKeydown($event, node)"
+                >
+                    <div class="flex items-center gap-1 rounded-md p-2">
+                        <span class="size-7 shrink-0" aria-hidden="true"></span>
+                        <h6 class="mb-0!" jhiTranslate="artemisApp.knowledgeArea.empty" data-testid="empty-node"></h6>
+                    </div>
+                </li>
+            }
+            @default {}
+        }
+    }
+</ng-template>

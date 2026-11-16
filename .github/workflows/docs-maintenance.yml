@@ -58,6 +58,7 @@ jobs:
             echo "To review a page, compare it with the code, correct it, and set \`last_reviewed\` in its front matter to the date of the review."
             echo "This issue is kept up to date by \`.github/workflows/docs-maintenance.yml\`."
           } > "${RUNNER_TEMP}/body.md"
+          node .github/scripts/limit-issue-body.cjs "${RUNNER_TEMP}/body.md" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ -n "$existing" ]; then
             gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
           else
@@ -104,6 +105,7 @@ jobs:
             echo "A listed image may still be correct: look at the page first. To render the images again, run \`./supporting_scripts/e2e/render-docs-screenshots.sh\`, check what differs, and add \`--update\` to replace the images, as described in \"Generated screenshots\" in the documentation guideline."
             echo "This issue is kept up to date by \`.github/workflows/docs-maintenance.yml\`."
           } > "${RUNNER_TEMP}/body.md"
+          node .github/scripts/limit-issue-body.cjs "${RUNNER_TEMP}/body.md" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ -n "$existing" ]; then
             gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
           else
@@ -123,13 +125,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Only external http(s) links of the documentation and the README files. Internal links and anchors are checked by the
       # site build, which fails on a broken one. A server that rate limits or blocks bots answers 403 or 429, which is not
-      # a broken link, so those statuses are accepted.
+      # a broken link, so those statuses are accepted. The root directory lets Lychee resolve root-relative
+      # site URLs before the scheme filter excludes them; they are validated by the site build.
       - name: Check the links
         id: lychee
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           args: >-
             --no-progress --scheme http --scheme https --max-concurrency 8 --max-retries 3 --retry-wait-time 5 --timeout 30
+            --root-dir '${{ github.workspace }}/documentation/docs'
             --accept '200..=299,403,429' --exclude-path documentation/docs/developer/assets
             --exclude '^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)' --exclude '^https?://[^/]*\.(example|invalid|local)(/|$)'
             --exclude '^https?://[^/]*example\.(com|org)(/|$)' --exclude '^https?://[^/]*(<|\$|\{)'
@@ -158,6 +162,7 @@ jobs:
             echo
             echo "This issue is kept up to date by \`.github/workflows/docs-maintenance.yml\`. A link that is only unreachable from a runner can be listed in the exclusions of that file."
           } > "${RUNNER_TEMP}/body.md"
+          node .github/scripts/limit-issue-body.cjs "${RUNNER_TEMP}/body.md" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ -n "$existing" ]; then
             gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
           else

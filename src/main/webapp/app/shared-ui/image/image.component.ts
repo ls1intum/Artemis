@@ -49,7 +49,8 @@ export class ImageComponent implements OnDestroy {
                 URL.revokeObjectURL(oldRawLocalImageUrl);
             }
             this.rawLocalImageUrl = URL.createObjectURL(blob);
-            return this.domSanitizer.bypassSecurityTrustUrl(this.rawLocalImageUrl); // we need DomSanitizer to trust the url
+            // Reviewed false positive (Sonar S6268): the URL is a blob: URL created by URL.createObjectURL in this component, never a user-supplied string.
+            return this.domSanitizer.bypassSecurityTrustUrl(this.rawLocalImageUrl); // NOSONAR - we need DomSanitizer to trust the url // nosemgrep
         },
     });
 

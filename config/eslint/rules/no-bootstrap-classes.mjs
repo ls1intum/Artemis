@@ -1,6 +1,6 @@
 /**
- * Forbid Bootstrap CSS classes in templates of modules that have been migrated to Tailwind + PrimeNG.
- * This is the regression lock for the incremental Bootstrap → PrimeNG/Tailwind migration: once a module's
+ * Forbid Bootstrap CSS classes in templates of modules that have been migrated to Tailwind + TUM AET UI.
+ * This is the regression lock for the incremental Bootstrap → TUM AET UI/Tailwind migration: once a module's
  * templates are clean, this rule (scoped to that module in eslint.config.mjs) prevents Bootstrap classes
  * from creeping back in.
  *
@@ -100,6 +100,49 @@ const BANNED = [
     /^(close|btn-close)$/,
     /^visually-hidden(-focusable)?$/,
     /^text-truncate$/, // -> Tailwind `truncate`
+    // Typography helpers -> Tailwind `font-bold`, `italic`, `text-sm`, `uppercase`, `no-underline`, `break-words`, ...
+    /^fw-(light|lighter|normal|medium|semibold|bold|bolder)$/,
+    /^fst-(italic|normal)$/,
+    /^fs-[1-6]$/,
+    /^lh-(1|sm|base|lg)$/,
+    /^(h[1-6]|display-[1-6]|lead|small|mark|blockquote|blockquote-footer)$/,
+    /^text-(break|monospace|uppercase|lowercase|capitalize|decoration-(none|underline|line-through))$/,
+    /^font-(monospace|italic)$/,
+    // Background and text colour helpers with no brand-bound Tailwind equivalent -> semantic tokens
+    /^bg-(light|dark|body(-secondary|-tertiary)?|gradient)$/,
+    /^(text|bg|border|link)-(primary|secondary|success|danger|warning|info|light|dark)-(subtle|emphasis)$/,
+    /^(bg|text|border)-opacity-(10|25|50|75|100)$/,
+    /^link-(primary|secondary|success|danger|warning|info|light|dark|body-emphasis|underline.*|offset-.+|opacity.*)$/,
+    // Borders and rounding -> Tailwind `rounded-lg`, `rounded-full`, `border-t`, ...
+    /^rounded-(circle|pill|top|bottom|start|end)(-[0-5])?$/,
+    /^rounded-[0-5]$/,
+    /^border-(top|bottom|start|end)(-0)?$/,
+    // Sizing and positioning. `top-50` and `h-100` collide with a Tailwind spacing utility of the same name.
+    /^(mw|mh|vw|vh|min-vw|min-vh)-100$/,
+    /^(top|bottom|start|end)-(50|100)$/,
+    /^position-(static|relative|absolute|fixed|sticky)$/,
+    /^translate-middle(-x|-y)?$/,
+    /^(sticky|fixed)-(top|bottom)$/,
+    /^sticky-(sm|md|lg|xl|xxl)-(top|bottom)$/,
+    /^(clearfix|stretched-link|ratio|hstack|vstack|vr)$/,
+    /^ratio-.+$/,
+    // Layout helpers. Bare `container` exists in Tailwind too, but never generates the Bootstrap behaviour.
+    /^container(-fluid|-(sm|md|lg|xl|xxl))?$/,
+    /^row-cols(-(sm|md|lg|xl|xxl))?-([1-6]|auto)$/,
+    /^offset(-(sm|md|lg|xl|xxl))?-([0-9]|1[01])$/,
+    /^flex-(sm|md|lg|xl|xxl)-(row|column|row-reverse|column-reverse|wrap|nowrap|fill|grow-[01]|shrink-[01])$/,
+    /^order-(sm|md|lg|xl|xxl)-.+$/,
+    /^[mp][trblxyse]?-n[1-5]$/, // negative margins -> `-mb-4`
+    /^d-print-.+$/,
+    /^user-select-(all|auto|none)$/,
+    /^pe-(none|auto|all)$/,
+    // Media, lists, tables and validation state
+    /^img-(fluid|thumbnail)$/,
+    /^list-(inline|inline-item|unstyled)$/,
+    /^figure(-.+)?$/,
+    /^table-(primary|secondary|success|danger|warning|info|light|dark)$/,
+    /^thead-(light|dark)$/,
+    /^(is-valid|is-invalid|valid-tooltip|invalid-tooltip|was-validated|needs-validation)$/,
 ];
 
 export function isBanned(token) {
@@ -132,11 +175,11 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Forbid Bootstrap CSS classes in migrated module templates; use Tailwind utilities + PrimeNG components instead.',
+            description: 'Forbid Bootstrap CSS classes in migrated module templates; use Tailwind utilities + TUM AET UI components instead.',
         },
         messages: {
             bootstrapClass:
-                "Bootstrap class '{{cls}}' is not allowed in a migrated module — use a Tailwind utility or a PrimeNG component (btn->p-button, badge->p-tag, alert->p-message, card->p-card, form-control->PrimeNG input, row/col->grid|flex, d-flex->flex). See client-development.mdx (### Styling).",
+                "Bootstrap class '{{cls}}' is not allowed in a migrated module — use a Tailwind utility or a TUM AET UI component (btn->tumaet-ui-button, badge->tumaet-ui-tag, alert->tumaet-ui-message, card->tumaet-ui-card, form-control->tumAetUiInput, row/col->grid|flex, d-flex->flex). See client-development.mdx (### Styling).",
         },
         schema: [],
     },

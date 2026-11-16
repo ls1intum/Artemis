@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261112085346-01-test-case-test-class" author="krusche">
+        <comment>Track the class that declares a test case, so an error in the class itself (e.g. in @BeforeAll) can be shown on its tests.
+            Nullable on purpose: existing rows are filled in by the next solution build, and builds that do not report a class leave it empty.</comment>
+        <addColumn tableName="programming_exercise_test_case">
+            <column name="test_class" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

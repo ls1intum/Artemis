@@ -152,6 +152,7 @@
                 />
                 <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
             </div>
+            <jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" [hideTryButton]="true" />
         }
 
         @if (athenaEnabled) {

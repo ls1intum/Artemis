@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Column } from 'app/shared-ui/import/import.component';
@@ -10,8 +9,6 @@ import {
     ImportCourseCompetenciesSettingsComponent,
 } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -43,7 +40,7 @@ export interface ImportAllCourseCompetenciesModalData {
 
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
-    imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent, FaIconComponent, TranslateDirective],
+    imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent],
     providers: [
         {
             provide: PagingService,
@@ -53,13 +50,11 @@ export interface ImportAllCourseCompetenciesModalData {
     templateUrl: './import-all-course-competencies-modal.component.html',
 })
 export class ImportAllCourseCompetenciesModalComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private readonly dialogRef = inject<TumAetUiDialogRef<ImportAllCourseCompetenciesResult>>(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<ImportAllCourseCompetenciesModalData>>(TumAetUiDialogConfig, { optional: true });
     private readonly alertService = inject(AlertService);
 
     protected readonly tableColumns = tableColumns;
-
-    protected readonly closeIcon = faXmark;
 
     readonly courseId = signal<number>(0);
     readonly disabledIds = computed(() => [+this.courseId()]);
@@ -69,7 +64,7 @@ export class ImportAllCourseCompetenciesModalComponent {
     readonly referenceDateTextValid = signal(true);
 
     constructor() {
-        const data = this.dialogConfig?.data as ImportAllCourseCompetenciesModalData | undefined;
+        const data = this.dialogConfig?.data;
         if (data) {
             this.courseId.set(data.courseId);
         }
@@ -87,9 +82,5 @@ export class ImportAllCourseCompetenciesModalComponent {
             course,
             courseCompetencyImportOptions,
         });
-    }
-
-    protected closeModal(): void {
-        this.dialogRef.close();
     }
 }

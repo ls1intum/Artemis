@@ -1,5 +1,5 @@
 <div
-    class="search-result-item p-3 cursor-pointer position-relative"
+    class="search-result-item relative cursor-pointer p-4!"
     [class.selected]="isSelected()"
     (click)="onClick()"
     (keydown.enter)="onClick()"
@@ -9,33 +9,33 @@
     role="option"
     tabindex="-1"
 >
-    <div class="d-flex align-items-start gap-3">
+    <div class="flex items-start gap-4!">
         <!-- Icon -->
-        <div class="result-icon flex-shrink-0">
+        <div class="result-icon shrink-0">
             <fa-icon [icon]="icon()" size="lg" class="text-primary" aria-hidden="true" />
         </div>
 
         <!-- Content -->
-        <div class="result-content flex-grow-1 min-width-0">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <h6 class="result-title mb-0 text-truncate">{{ result().title }}</h6>
+        <div class="result-content min-w-0 flex-1">
+            <div class="mb-1 flex items-center gap-2">
+                <h6 class="result-title mt-0 mb-0 truncate leading-[1.2]">{{ result().title }}</h6>
                 @if (isExamExercise()) {
-                    <span class="badge badge-exam d-inline-flex align-items-center gap-1 px-2 py-1 small">
+                    <tumaet-ui-tag severity="warn" size="sm" data-testid="search-result-exam-tag">
                         <fa-icon [icon]="faGraduationCap" size="xs" aria-hidden="true" />
                         {{ 'global.search.results.examExercise' | artemisTranslate }}
-                    </span>
+                    </tumaet-ui-tag>
                 }
                 @if (isReply()) {
-                    <span class="badge badge-reply d-inline-flex align-items-center gap-1 px-2 py-1 small">
+                    <tumaet-ui-tag severity="info" size="sm" data-testid="search-result-reply-tag">
                         <fa-icon [icon]="faReply" size="xs" aria-hidden="true" />
                         {{ 'global.search.results.reply' | artemisTranslate }}
-                    </span>
+                    </tumaet-ui-tag>
                 }
             </div>
 
             <!-- Metadata Row -->
             @if (result().badgeKey || hasAnyMetadata()) {
-                <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
+                <div class="result-metadata mb-2 flex items-center gap-2">
                     @if (result().badgeKey) {
                         <span class="result-type">{{ badgeLabelKey() | artemisTranslate }}</span>
                         @if (hasAnyMetadata()) {
@@ -43,7 +43,7 @@
                         }
                     }
                     @if (courseName()) {
-                        <span class="d-flex align-items-center gap-1">
+                        <span class="flex items-center gap-1">
                             <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
                             <span>{{ courseName() }}</span>
                         </span>
@@ -62,7 +62,7 @@
                         @if (courseName()) {
                             <span>•</span>
                         }
-                        <span class="d-flex align-items-center gap-1">
+                        <span class="flex items-center gap-1">
                             <fa-icon [icon]="faHashtag" size="sm" aria-hidden="true" />
                             <span>{{ channelName() }}</span>
                         </span>
@@ -71,13 +71,13 @@
                         <span>•</span>
                     }
                     @if (dueDate()) {
-                        <span class="d-flex align-items-center gap-1">
+                        <span class="flex items-center gap-1">
                             <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
                             <span>{{ 'global.search.results.due' | artemisTranslate: { date: formattedDueDate() } }}</span>
                         </span>
                     }
                     @if (showStartDateOnly()) {
-                        <span class="d-flex align-items-center gap-1">
+                        <span class="flex items-center gap-1">
                             <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
                             <span>{{ formattedStartDate() }}</span>
                         </span>
@@ -86,7 +86,7 @@
                         <span>•</span>
                     }
                     @if (points()) {
-                        <span class="d-flex align-items-center gap-1">
+                        <span class="flex items-center gap-1">
                             <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
                             <span>{{ points() }} {{ (points() === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span>
                         </span>
@@ -95,14 +95,14 @@
                         <span>•</span>
                     }
                     @if (difficulty()) {
-                        <span class="text-capitalize">{{ difficulty() }}</span>
+                        <span class="capitalize">{{ difficulty() }}</span>
                     }
                 </div>
             }
 
             @if (cleanedDescription()) {
                 <div
-                    class="result-description mb-0 text-secondary small"
+                    class="result-description mb-0"
                     [jhiMarkdown]="cleanedDescription()"
                     [markdownAllowedTags]="PREVIEW_ALLOWED_TAGS"
                     [markdownAllowedAttributes]="PREVIEW_ALLOWED_ATTRS"
@@ -113,7 +113,7 @@
 
     <!-- Navigation hint for selected item (positioned absolutely) -->
     @if (isSelected()) {
-        <div class="result-nav-hint position-absolute text-secondary">
+        <div class="result-nav-hint absolute">
             <kbd class="key-hint-small" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate">
                 <fa-icon [icon]="faLevelDownAlt" />
             </kbd>
