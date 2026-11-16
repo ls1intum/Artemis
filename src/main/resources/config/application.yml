@@ -93,7 +93,7 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-assembler-docker:v1.0.0"
                 swift:
                     # possible overrides: xcode
-                    default: "ghcr.io/ls1intum/artemis-swift-swiftlint-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-swift-swiftlint-docker:v1.1.0"
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
                 rust:

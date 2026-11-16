@@ -49,7 +49,7 @@ private void test() {
         swift build
 
         # swift test
-        swift test || true
+        swift test --xunit-output tests.xml || true
         '''
     }
 }
@@ -79,9 +79,9 @@ void postBuildTasks() {
     sh '''
     rm -rf results
     mkdir results
-    if [ -e assignment/tests.xml ]
+    if [ -e assignment/tests-swift-testing.xml ]
     then
-        cp assignment/tests.xml $WORKSPACE/results/ || true
+        cp assignment/tests-swift-testing.xml $WORKSPACE/results/ || true
         sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     fi
     '''
