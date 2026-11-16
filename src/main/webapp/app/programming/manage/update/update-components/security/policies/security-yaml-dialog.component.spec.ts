@@ -97,6 +97,21 @@ describe('SecurityYamlDialogComponent', () => {
         expect(comp.importError()).toBeUndefined();
     });
 
+    it('reports while a selected file is being read', async () => {
+        const reading: boolean[] = [];
+        comp.readingChange.subscribe((value) => reading.push(value));
+        let finishReading: (content: string) => void = () => {};
+
+        const read = handlers.onFileSelected({
+            target: { files: [{ size: 10, text: () => new Promise<string>((resolve) => (finishReading = resolve)) }], value: 'x' },
+        } as unknown as Event);
+        expect(reading).toEqual([true]);
+        finishReading('a: 1\n');
+        await read;
+
+        expect(reading).toEqual([true, false]);
+    });
+
     it('drops a file that is still being read when the parent replaces the unsaved changes', async () => {
         const imported: { content: string; policyPath: string }[] = [];
         comp.imported.subscribe((content) => imported.push(content));

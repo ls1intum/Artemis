@@ -103,7 +103,7 @@
                                     <button
                                         type="button"
                                         tumAetUiButton
-                                        [disabled]="editingDisabled() || loading() || pendingImports() > 0"
+                                        [disabled]="editingDisabled() || loading() || importPending()"
                                         (click)="openReview()"
                                         data-testid="security-policies-commit"
                                     >
@@ -267,7 +267,7 @@
     [summary]="reviewSummary()"
     [baseCommit]="shortBaseCommit()"
     [defaultMessage]="defaultCommitMessage()"
-    [busy]="isCommitting() || loading() || pendingImports() > 0"
+    [busy]="isCommitting() || loading() || importPending()"
     (commitRequested)="commit($event)"
 />
 
@@ -284,6 +284,7 @@
         [notice]="importNotice()"
         [importEpoch]="yamlImportEpoch()"
         (unsavedRequested)="renderYamlUnsaved()"
+        (readingChange)="yamlFileReading.set($event)"
         (imported)="importYaml($event)"
     />
 }

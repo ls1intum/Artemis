@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleCheck, faCircleInfo, faCircleXmark, faCopy, faDownload, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -45,6 +45,8 @@ export interface SecurityYamlImport {
     ],
 })
 export class SecurityYamlDialogComponent {
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faCircleXmark = faCircleXmark;
@@ -69,11 +71,16 @@ export class SecurityYamlDialogComponent {
     readonly importEpoch = input(0);
 
     readonly unsavedRequested = output<void>();
+    /** Emits whether a selected file is being read, before it becomes an import. */
+    readonly readingChange = output<boolean>();
     /** Emits an imported file with the path of the policy it was selected for, so it never replaces another policy. */
     readonly imported = output<SecurityYamlImport>();
 
     /** Counts the selected files, so that a slow read is dropped once a newer file was selected. */
     private importCount = 0;
+    /** The number of selected files that are being read. */
+    private readsInFlight = 0;
+    private destroyed = false;
 
     readonly view = signal<YamlView>('unsaved');
     readonly copied = signal(false);
@@ -103,6 +110,7 @@ export class SecurityYamlDialogComponent {
     readonly changedLines = computed(() => this.lines().filter((line) => line.highlighted).length);
 
     constructor() {
+        this.destroyRef.onDestroy(() => (this.destroyed = true));
         effect(() => {
             if (this.visible()) {
                 untracked(() => {
@@ -159,7 +167,19 @@ export class SecurityYamlDialogComponent {
         this.importError.set(undefined);
         const target = this.policyPath();
         const epoch = this.importEpoch();
-        const content = await file.text();
+        // The parent counts the read as a pending import, so nothing is committed before the file it imports is read.
+        this.readsInFlight++;
+        this.readingChange.emit(true);
+        let content: string;
+        try {
+            content = await file.text();
+        } finally {
+            this.readsInFlight--;
+            // Once the dialog is gone, the parent no longer listens and has cleared the state itself.
+            if (!this.readsInFlight && !this.destroyed) {
+                this.readingChange.emit(false);
+            }
+        }
         if (selection === this.importCount && epoch === this.importEpoch()) {
             this.imported.emit({ content, policyPath: target });
         }

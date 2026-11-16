@@ -228,6 +228,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The numbers of the YAML imports that have not answered yet and can still apply; the unsaved changes cannot be committed until they have. */
     private readonly pendingImportGenerations = signal<ReadonlySet<number>>(new Set());
     readonly pendingImports = computed(() => this.pendingImportGenerations().size);
+    /** Whether the YAML dialog is reading a selected file, which becomes an import once it is read. */
+    readonly yamlFileReading = signal(false);
+    /** Whether an import is on its way, from reading the file to applying the answer; the unsaved changes cannot be committed meanwhile. */
+    readonly importPending = computed(() => this.yamlFileReading() || this.pendingImports() > 0);
     /** The change the review shows, serialized, and the number of review previews requested. */
     private reviewedChange: string | undefined;
     private reviewRequests = 0;
@@ -430,6 +434,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             const exerciseId = this.exerciseId();
             const status = this.status();
             untracked(() => this.onStatus(exerciseId, status));
+        });
+        // A YAML dialog that is gone, e.g. because its policy was discarded, reads no file any more.
+        effect(() => {
+            if (!this.yamlPolicy()) {
+                untracked(() => this.yamlFileReading.set(false));
+            }
         });
         // The open review shows the diff of the change as it is, also after it changed meanwhile, e.g. because an import answered.
         effect(() => {
@@ -910,7 +920,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected commit(commitMessage: string): void {
-        if (this.pendingImports() > 0) {
+        if (this.importPending()) {
             return;
         }
         // The review commits what its diff shows; a change made since, e.g. by an import that answered late, is shown first.

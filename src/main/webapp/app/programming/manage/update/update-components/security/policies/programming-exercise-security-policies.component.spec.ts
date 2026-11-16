@@ -312,6 +312,21 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(lastChange().policies[0].document.supervisedPackage).toBe('de.imported');
     });
 
+    it('does not commit while the YAML dialog reads a file that becomes an import', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        handlers.openYaml(comp.policies()[0]);
+        service.commitPolicies.mockReturnValue(of({ editor: editor('e'.repeat(40)), config: configured() }));
+
+        comp.yamlFileReading.set(true);
+        handlers.commit('Update');
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+
+        comp.yamlFileReading.set(false);
+        handlers.commit('Update');
+        expect(service.commitPolicies).toHaveBeenCalledOnce();
+    });
+
     it('counts only the imports that can still apply', () => {
         create(configured(), false);
         const first = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
