@@ -400,6 +400,11 @@ images remain cached. Setup then checks the Docker data filesystem for the broke
 10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. If space is
 low, it evicts unused default-builder cache until the reserve is met, retaining a
 512 MB cache floor. It then reads the filesystem statistics again against the same reserve.
+If space remains low, setup removes the age restriction for unused Artemis images carrying
+the same source label and checks space again. Images referenced by containers and the
+exercise, browser and database image caches remain protected. Recent application images
+are kept whenever the reserve is already met; a busy runner can otherwise accumulate
+more than a day's available space before the normal retention window expires.
 Persistent insufficient space or failed cleanup is a setup failure: reclaim space or expand the runner disk rather than
 raising the broker's disk limit or retrying websocket-dependent tests. Setup failures
 still run teardown, but do not require or classify reports from tests that never started;
