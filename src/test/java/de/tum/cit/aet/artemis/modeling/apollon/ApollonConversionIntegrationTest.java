@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
+import de.tum.cit.aet.artemis.core.util.RateLimitTestUtil;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -24,6 +26,9 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;
+
+    @Autowired
+    private LimitRequestsPerMinuteAspect requestLimitAspect;
 
     @BeforeEach
     void init() {
@@ -51,6 +56,23 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
         final var apollonModel = new ApollonModelDTO("model");
         String response = request.postWithResponseBodyString("/api/modeling/apollon/convert-to-pdf", apollonModel, HttpStatus.OK);
         assertThat(response).isEqualTo(mockPdf);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "USER")
+    void testConvertingModelTooOftenIsRejected() throws Exception {
+        apollonRequestMockProvider.mockConvertModel(true, resourceOf("pdf"));
+        RateLimitTestUtil.withRateLimits(requestLimitAspect, properties -> properties.setApollonConversionRequestsPerMinute(1), () -> {
+            var apollonModel = new ApollonModelDTO("model");
+            request.postWithResponseBodyString("/api/modeling/apollon/convert-to-pdf", apollonModel, HttpStatus.OK);
+            request.postWithResponseBodyString("/api/modeling/apollon/convert-to-pdf", apollonModel, HttpStatus.TOO_MANY_REQUESTS);
+        });
+    }
+
+    private static Resource resourceOf(String content) throws Exception {
+        Resource mockResource = Mockito.mock(Resource.class);
+        Mockito.when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream(content.getBytes()));
+        return mockResource;
     }
 
     @ParameterizedTest
