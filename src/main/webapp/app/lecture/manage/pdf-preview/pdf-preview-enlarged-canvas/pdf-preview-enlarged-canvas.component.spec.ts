@@ -7,6 +7,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { signal } from '@angular/core';
+import { InteractivityChecker } from '@angular/cdk/a11y';
 
 // Mock canvas 2d context for jsdom
 function createMockContext() {
@@ -73,6 +74,8 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             ],
         }).compileComponents();
 
+        // jsdom has no layout, so CDK's real visibility check would reject every focusable element.
+        vi.spyOn(TestBed.inject(InteractivityChecker), 'isVisible').mockReturnValue(true);
         fixture = TestBed.createComponent(PdfPreviewEnlargedCanvasComponent);
         component = fixture.componentInstance;
 
@@ -92,11 +95,40 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        fixture.destroy();
+        vi.clearAllTimers();
+        vi.restoreAllMocks();
         vi.useRealTimers();
     });
 
     describe('Keyboard Navigation', () => {
+        it('moves keyboard focus to the close button when the preview opens', async () => {
+            await fixture.whenStable();
+
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.close-preview-button'));
+        });
+
+        it('closes the enlarged preview with Escape and restores scrolling', () => {
+            const closed = vi.fn();
+            component.isEnlargedViewOutput.subscribe(closed);
+            const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+            fixture.nativeElement.querySelector('.enlarged-container').dispatchEvent(event);
+
+            expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+            expect(mockContainer.style.overflow).toBe('auto');
+            expect(event.defaultPrevented).toBe(true);
+        });
+
+        it('keeps page navigation inside the preview instead of handling keys elsewhere on the page', () => {
+            fixture.componentRef.setInput('totalPages', 5);
+            component.currentPage.set(3);
+
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+            expect(component.currentPage()).toBe(3);
+        });
+
         it('should navigate through pages using keyboard in enlarged view', () => {
             component.isEnlargedViewOutput.emit(true);
             const mockCanvas = createMockCanvas();

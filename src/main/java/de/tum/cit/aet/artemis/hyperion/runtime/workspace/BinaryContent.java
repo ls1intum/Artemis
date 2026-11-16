@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
+package de.tum.cit.aet.artemis.hyperion.runtime.workspace;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

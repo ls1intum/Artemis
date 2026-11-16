@@ -38,6 +38,15 @@ class AthenaSecretHandlingTest {
     }
 
     @Test
+    void testInternalResourceRefusesRequestsWhenSecretIsNull() {
+        AthenaRepositoryExportService exportService = mock(AthenaRepositoryExportService.class);
+        AthenaInternalResource resource = new AthenaInternalResource(exportService, rateLimitService, null);
+
+        assertThatThrownBy(() -> resource.getTestRepository(1L, "secret")).isInstanceOf(AccessForbiddenException.class);
+        verifyNoInteractions(exportService);
+    }
+
+    @Test
     void testInternalResourceRefusesEmptyHeaderWhenSecretIsConfigured() {
         AthenaRepositoryExportService exportService = mock(AthenaRepositoryExportService.class);
         AthenaInternalResource resource = new AthenaInternalResource(exportService, rateLimitService, "configured-secret");

@@ -109,6 +109,100 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('opens destinations with ArrowDown and selects the active recipient with Enter', () => {
+        searchInput.focus();
+        const down = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+        searchInput.dispatchEvent(down);
+        fixture.detectChanges();
+
+        const firstOption = fixture.nativeElement.querySelector('[data-testid="forward-destination-option"]') as HTMLElement;
+        expect(down.defaultPrevented).toBe(true);
+        expect(searchInput.getAttribute('aria-expanded')).toBe('true');
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(firstOption.id);
+        expect(firstOption.getAttribute('aria-selected')).toBe('true');
+
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+
+        expect(component.selectedChannels.map((channel) => channel.name)).toEqual(['General']);
+        expect(searchInput.getAttribute('aria-expanded')).toBe('false');
+        expect(searchInput.getAttribute('aria-activedescendant')).toBeNull();
+        expect(document.activeElement).toBe(searchInput);
+    });
+
+    it('selects the last recipient with ArrowUp and clears a stale active recipient after filtering', () => {
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        const options = fixture.nativeElement.querySelectorAll('[data-testid="forward-destination-option"]') as NodeListOf<HTMLElement>;
+        expect(options).toHaveLength(4);
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(options[options.length - 1].id);
+
+        searchInput.value = 'General';
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(searchInput.getAttribute('aria-activedescendant')).toBeNull();
+
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(component.hasSelections()).toBe(false);
+    });
+
+    it('dismisses destinations with Escape without propagating dismissal to the dialog', () => {
+        searchInput.click();
+        fixture.detectChanges();
+        const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        const parentKeydown = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', parentKeydown);
+
+        searchInput.dispatchEvent(escape);
+        fixture.detectChanges();
+
+        expect(component.showDropdown()).toBe(false);
+        expect(escape.defaultPrevented).toBe(true);
+        expect(parentKeydown).not.toHaveBeenCalled();
+    });
+
+    it('scrolls the active destination into view when navigating a long list', () => {
+        searchInput.click();
+        fixture.detectChanges();
+        const options = fixture.nativeElement.querySelectorAll('[data-testid="forward-destination-option"]') as NodeListOf<HTMLElement>;
+        const lastOption = options[options.length - 1];
+        lastOption.scrollIntoView = vi.fn();
+
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+
+        expect(lastOption.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+    });
+
+    it('keeps Tab and recipient removal buttons independent from combobox navigation', () => {
+        component.selectOption(component.combinedOptions()[0]);
+        searchInput.click();
+        fixture.detectChanges();
+        const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+        searchInput.dispatchEvent(tab);
+        expect(tab.defaultPrevented).toBe(false);
+
+        const removeButton = fixture.nativeElement.querySelector('.tag-input-container button') as HTMLButtonElement;
+        const down = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+        removeButton.dispatchEvent(down);
+        expect(down.defaultPrevented).toBe(false);
+        removeButton.click();
+        expect(component.selectedChannels).toHaveLength(0);
+    });
+
+    it('reports the destination list as collapsed when filtering has no matches', () => {
+        searchInput.value = 'Nonexistent destination';
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(searchInput.getAttribute('aria-expanded')).toBe('false');
+        expect(searchInput.getAttribute('aria-controls')).toBeNull();
+        expect(searchInput.getAttribute('aria-activedescendant')).toBeNull();
+        const down = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+        searchInput.dispatchEvent(down);
+        expect(down.defaultPrevented).toBe(false);
+    });
+
     it('should initialize combined options with channels and users', () => {
         expect(component.combinedOptions()).toEqual([
             { id: 1, name: 'General', type: 'channel', img: '' },

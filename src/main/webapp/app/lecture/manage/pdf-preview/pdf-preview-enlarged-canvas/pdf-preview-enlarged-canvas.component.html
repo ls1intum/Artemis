@@ -1,5 +1,15 @@
-<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Pointer clicks outside the canvas close the overlay; the close button is keyboard focusable. -->
-<div #enlargedContainer class="enlarged-container" (click)="closeIfOutside($event)">
+<div
+    #enlargedContainer
+    class="enlarged-container"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.fullscreenDialog' | artemisTranslate"
+    tabindex="-1"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+    (click)="closeIfOutside($event)"
+    (keydown)="handleKeyboardEvents($event)"
+>
     @if (isEnlargedCanvasLoading()) {
         <div class="flex justify-center absolute">
             <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
@@ -12,6 +22,7 @@
         variant="solid"
         size="default"
         type="button"
+        cdkFocusInitial
         class="close-preview-button"
         [attr.aria-label]="'entity.action.close' | artemisTranslate"
         (click)="closeEnlargedView($event)"

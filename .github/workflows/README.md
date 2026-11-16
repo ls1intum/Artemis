@@ -378,6 +378,10 @@ These workflows are intentionally NOT folded into the umbrella:
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
 
+The documentation maintenance link check resolves root-relative site URLs against the checked-out documentation
+root before filtering to external HTTP(S) links. Maintenance issue bodies stay below GitHub's limit; oversized
+reports link to the full workflow logs, which retain every finding. Transient external outages remain report findings.
+
 ## E2E image identity and readiness
 
 PR images are deliberately retained after a PR closes. Immediate deletion is housekeeping,
@@ -387,6 +391,13 @@ The same image version carries both `pr-<number>` and `sha-<commit>` tags; delet
 can break CI still pulling it after a merge and remove images needed for later reproduction or
 redeployment.
 Registry deletion also does not reclaim Docker disk space on self-hosted runners.
+
+After stopping the dedicated E2E runner's containers, setup prunes unused images older
+than 24 hours carrying this repository's OCI source label. Exercise, browser and database
+images remain cached. Setup then checks the Docker data filesystem for the broker's
+10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. Insufficient
+space is a setup failure: reclaim space or expand the runner disk rather than raising
+the broker's disk limit or retrying websocket-dependent tests.
 
 There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
 access, expanding the capabilities of repository jobs with package-write tokens across the shared

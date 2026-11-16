@@ -180,6 +180,21 @@ context has its own cookie jar and verifies the administrator's identity. Remove
 build-result waits from rendering-only fixtures; retain build completion checks where the test
 actually asserts on a result.
 
+## Multi-node E2E timeouts after the broker reaches its disk limit
+
+**Symptom.** Saves, results, collaboration or dialogs time out across unrelated specs, and cluster
+formation reports no node connected to the websocket broker.
+
+**Tell.** Before the assertion failures, the server's `StompBrokerRelayMessageHandler` logs
+`AMQ229119` with disk usage beyond `<max-disk-usage>`. ActiveMQ blocks producers at 90% usage;
+reconnecting cannot restore message delivery while the filesystem remains full.
+
+**What to do.** Inspect Docker disk usage on the dedicated E2E runner. Setup removes unused
+Artemis-labelled application images older than 24 hours and verifies space below the broker limit
+plus 10 GiB for the run. If that check fails, reclaim space or expand the runner disk. Do not raise
+the broker's disk threshold, retry the assertions, or prune unrelated machines. Registry image
+deletion does not reclaim a runner's local Docker storage.
+
 ## Helios is unavailable or rejects the E2E credential
 
 **Symptom.** The log warns that Helios flakiness history is unavailable, for example with HTTP 401.
@@ -224,3 +239,15 @@ one working directory, so neither can show it. nginx round-robins, so it is flak
 **What to do.** Reproduce it on the container topology with
 `run-e2e-tests-local-multinode.sh --filter "<test name>"`, which uses CI's compose file. The folder
 the file lives in has to be a volume shared by the nodes; compare with the test-server compose files.
+
+## Documentation maintenance cannot publish its link report
+
+**Symptom.** The external-link check succeeds as a reporting step, but opening or updating its issue fails with
+`Body is too long (maximum is 65536 characters)`.
+
+**Tell.** Root-relative site links reported as `Cannot resolve root-relative link` indicate a missing absolute
+`--root-dir`: Lychee resolves those links before applying its HTTP(S) scheme filter.
+
+**What to do.** Preserve the workflow's documentation root and `limit-issue-body.cjs` call. The limiter links oversized
+issues to the complete report in the run logs. Classify actual external 404s separately from private-repository links,
+transient test-server outages and timeouts; do not rewrite working site links or suppress those failures wholesale.

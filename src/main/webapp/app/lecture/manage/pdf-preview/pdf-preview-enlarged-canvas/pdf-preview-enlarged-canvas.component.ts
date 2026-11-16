@@ -1,6 +1,7 @@
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -8,7 +9,7 @@ type NavigationDirection = 'next' | 'prev';
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent],
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, CdkTrapFocus],
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {
     // Injected services
@@ -46,11 +47,17 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
      * Handles navigation within the PDF viewer using keyboard arrow keys.
      * @param event - The keyboard event captured for navigation.
      */
-    @HostListener('document:keydown', ['$event'])
     handleKeyboardEvents(event: KeyboardEvent) {
-        if (event.key === 'ArrowRight' && this.currentPage() < this.totalPages()) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            this.closeEnlargedView(event);
+        } else if (event.key === 'ArrowRight' && this.currentPage() < this.totalPages()) {
+            event.preventDefault();
+            event.stopPropagation();
             this.navigatePages('next');
         } else if (event.key === 'ArrowLeft' && this.currentPage() > 1) {
+            event.preventDefault();
+            event.stopPropagation();
             this.navigatePages('prev');
         }
     }
@@ -183,7 +190,7 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     /**
      * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
      */
-    closeEnlargedView(event: MouseEvent) {
+    closeEnlargedView(event: Event) {
         this.isEnlargedViewOutput.emit(false);
         this.adjustPdfContainerSize(false);
         this.toggleBodyScroll(false);

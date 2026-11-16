@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, afterRenderEffect, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -29,6 +29,8 @@ interface CombinedOption {
     img: string;
 }
 
+let nextDestinationListboxId = 0;
+
 @Component({
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
@@ -56,15 +58,32 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     newPost = new Post();
     isInputFocused = false;
     readonly showDropdown = signal(false);
+    protected readonly destinationListVisible = computed(() => this.showDropdown() && this.filteredOptions().length > 0);
+    protected readonly activeDestinationIndex = signal(-1);
+    protected readonly destinationListboxId = `forward-message-destinations-${nextDestinationListboxId++}`;
+    protected readonly activeDestinationId = computed(() =>
+        this.destinationListVisible() && this.activeDestinationIndex() >= 0 && this.activeDestinationIndex() < this.filteredOptions().length
+            ? `${this.destinationListboxId}-option-${this.activeDestinationIndex()}`
+            : null,
+    );
     readonly showFullForwardedMessage = signal(false);
     readonly isContentLong = signal(false);
 
-    protected searchInput = viewChild<ElementRef>('searchInput');
+    protected searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+    private readonly destinationOptions = viewChildren<ElementRef<HTMLElement>>('destinationOption');
     protected messageContent = viewChild<ElementRef>('messageContent');
     readonly maxContentLength = MAX_CONTENT_LENGTH;
 
     protected readonly faPeopleGroup = faPeopleGroup;
     protected readonly faHashtag = faHashtag;
+
+    constructor() {
+        afterRenderEffect(() => {
+            if (this.showDropdown()) {
+                this.destinationOptions()[this.activeDestinationIndex()]?.nativeElement.scrollIntoView?.({ block: 'nearest' });
+            }
+        });
+    }
 
     ngOnInit(): void {
         // Populate signals from DynamicDialogConfig data if available
@@ -181,6 +200,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Combines filtered channels and users into a unified options list.
      */
     private updateCombinedOptions(): void {
+        this.activeDestinationIndex.set(-1);
         this.filteredOptions.set([
             ...this.filteredChannels.map((channel) => ({
                 id: channel.id!,
@@ -277,6 +297,30 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.showDropdown.set(true);
     }
 
+    /** Keep combobox focus in the input while navigating and selecting its destinations. */
+    onRecipientKeydown(event: KeyboardEvent): void {
+        if (event.target !== this.searchInput()?.nativeElement) {
+            return;
+        }
+
+        const options = this.filteredOptions();
+        const index = this.activeDestinationIndex();
+        if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length > 0) {
+            event.preventDefault();
+            this.showDropdown.set(true);
+            const nextIndex = event.key === 'ArrowDown' ? Math.min(index + 1, options.length - 1) : index < 0 ? options.length - 1 : Math.max(index - 1, 0);
+            this.activeDestinationIndex.set(nextIndex);
+        } else if (event.key === 'Enter' && this.showDropdown() && index >= 0 && index < options.length) {
+            event.preventDefault();
+            this.selectOption(options[index]);
+        } else if (event.key === 'Escape' && this.showDropdown()) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.showDropdown.set(false);
+            this.activeDestinationIndex.set(-1);
+        }
+    }
+
     /** Hides dropdown when input loses focus */
     onInputBlur(): void {
         this.isInputFocused = false;
@@ -295,7 +339,8 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      */
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
-        if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
+        const input = this.searchInput()?.nativeElement;
+        if (input && (!(event.target instanceof Node) || !input.contains(event.target))) {
             this.showDropdown.set(false);
         }
     }
