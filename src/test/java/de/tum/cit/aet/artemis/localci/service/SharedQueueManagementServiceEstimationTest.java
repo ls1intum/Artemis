@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
@@ -295,6 +299,37 @@ class SharedQueueManagementServiceEstimationTest {
         assertThat(pageRequest.getValue().getPageSize()).isEqualTo(20);
         assertThat(pageRequest.getAllValues().getFirst().getSort().getOrderFor("id").isAscending()).isTrue();
         assertThat(pageRequest.getValue().getSort().getOrderFor("id").isDescending()).isTrue();
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_rejectAnUnknownSortColumn() {
+        SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+        pageable.setPage(1);
+        pageable.setPageSize(20);
+        pageable.setSortedColumn("result.participation.student.password");
+        pageable.setSortingOrder(SortingOrder.ASCENDING);
+        pageable.setSearchTerm("");
+
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
+                .isInstanceOf(BadRequestAlertException.class);
+        verify(buildJobRepository, never()).findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_acceptEveryColumnTheClientSortsBy() {
+        when(buildJobRepository.findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new SliceImpl<>(List.of(), PageRequest.of(0, 20), false));
+        for (String column : List.of("name", "buildStatus", "buildAgentAddress", "courseId", "buildCompletionDate", "buildSubmissionDate")) {
+            SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+            pageable.setPage(1);
+            pageable.setPageSize(20);
+            pageable.setSortedColumn(column);
+            pageable.setSortingOrder(SortingOrder.ASCENDING);
+            pageable.setSearchTerm("");
+
+            assertThatCode(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
+                    .doesNotThrowAnyException();
+        }
     }
 
     @Test
