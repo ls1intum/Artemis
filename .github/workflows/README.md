@@ -39,7 +39,7 @@ ci.yml                                                            (single entry 
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
-├── exercise-images ── uses ci-exercise-images.yml (if has_exercise_images; the Java and Kotlin templates pin only versions their default image holds, compared without Docker or downloads)
+├── exercise-images ── uses ci-exercise-images.yml (if has_exercise_images; the Java, Kotlin, Rust, JavaScript, TypeScript and Swift templates pin only versions their default image holds, compared without Docker or downloads)
 ├── helm            ── uses ci-helm.yml           (if has_helm; deployment/helm/artemis lints, renders in its variants and validates against the Kubernetes schemas, without a cluster)
 ├── docs-checks     ── uses ci-docs-checks.yml    (always; sidebars, paths, class names, properties and labels in the docs exist, review dates, diagrams match their generator; advises which pages a PR may have made wrong)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
@@ -371,7 +371,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
-| `nightly-exercise-images.yml` | Scheduled (daily, 05:00 UTC) and manually dispatchable offline build of the Java and Kotlin exercise templates in their default images (no network, so a missing dependency fails); opens a tracking issue on failure; not part of PR/push CI. |
+| `nightly-exercise-images.yml` | Scheduled (daily, 05:00 UTC) and manually dispatchable offline build of the Java, Kotlin, Rust, JavaScript, TypeScript and Swift exercise templates in their default images (no network, so a missing dependency fails); opens a tracking issue on failure; not part of PR/push CI. |
 | `nightly-iris-e2e.yml`, `nightly-hyperion-e2e.yml` | Scheduled (daily, 02:00 and 04:00 UTC) and manually dispatchable E2E checks of the latest `develop` with a mocked LLM (Iris against the real Pyris service, Hyperion with a local mock); non-blocking monitoring, not part of PR/push CI. |
 | `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `docs-maintenance.yml` | Weekly `schedule:` cron (cannot live in a `workflow_call` child). Keeps one issue open for the pages that were not reviewed for a year and one for external links that no longer work, and closes them when the problem is gone. |

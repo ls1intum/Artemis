@@ -14,8 +14,18 @@ from .phases import Phase, load_phases
 
 WORKING_DIRECTORY = "/var/tmp/testing-dir"
 # Maven reports what it could not get as [ERROR] lines (the same lookups in [WARNING] lines are only metadata refreshes), Gradle as
-# "Could not resolve/GET" lines.
-MISSING_ARTIFACT = re.compile(r"^(?:\[ERROR\]\s*)(.*(?:Could not transfer artifact|could not be resolved|Could not find artifact)[^\n]*)|^\s*(?:> )?(Could not (?:resolve|GET)[^\n]*)", re.MULTILINE)
+# "Could not resolve/GET" lines, cargo as "error: failed to get/download" lines. Other tools (npm, SwiftPM) have no pattern; the log
+# tail of a failed build is reported instead.
+MISSING_ARTIFACT = re.compile(
+    r"^(?:\[ERROR\]\s*)(.*(?:Could not transfer artifact|could not be resolved|Could not find artifact)[^\n]*)"
+    r"|^\s*(?:> )?(Could not (?:resolve|GET)[^\n]*)"
+    r"|^error: (failed to (?:get|download)[^\n]*)",
+    re.MULTILINE,
+)
+LOG_TAIL_LINES = 5
+# The Swift compiler sometimes fails with this error when it compiles in parallel, and succeeds with the same inputs on the next try.
+# It has nothing to do with a missing dependency, so a build that failed only with it is run once more.
+KNOWN_FLAKY_FAILURE = re.compile(r"error: module '\w+' is defined in both")
 
 
 @dataclass(frozen=True)
@@ -25,6 +35,7 @@ class Result:
     passed: bool
     log: Path
     missing: list[str]
+    attempts: int = 1
 
 
 def build_script(phases: list[Phase]) -> str:
@@ -84,9 +95,18 @@ def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, pl
     script.write_text(build_script(load_phases(templates_dir, variant.language, variant.phases_file)), encoding="utf-8")
     log = work_dir / variant.name / "build.log"
 
-    with log.open("w", encoding="utf-8") as output:
-        completed = subprocess.run(docker_command(repository, script, image, platform), stdout=output, stderr=subprocess.STDOUT, check=False)
+    attempts = 0
+    while True:
+        attempts += 1
+        with log.open("w", encoding="utf-8") as output:
+            completed = subprocess.run(docker_command(repository, script, image, platform), stdout=output, stderr=subprocess.STDOUT, check=False)
+        output = log.read_text(encoding="utf-8", errors="replace")
+        if completed.returncode == 0 or attempts > 1 or not KNOWN_FLAKY_FAILURE.search(output):
+            break
+        # The failed attempt left build products behind, start from the assembled repository again
+        assemble(templates_dir, variant, repository)
 
-    findings = MISSING_ARTIFACT.findall(log.read_text(encoding="utf-8", errors="replace"))
-    missing = sorted({maven or gradle for maven, gradle in findings})
-    return Result(variant, image, completed.returncode == 0, log, missing)
+    missing = sorted({next(finding for finding in findings if finding) for findings in MISSING_ARTIFACT.findall(output)})
+    if completed.returncode != 0 and not missing:
+        missing = [line for line in output.splitlines() if line.strip()][-LOG_TAIL_LINES:]
+    return Result(variant, image, completed.returncode == 0, log, missing, attempts)

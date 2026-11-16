@@ -16,13 +16,17 @@ class ImageSource:
     """The repository an image is built from. The image tag is also a git tag of that repository."""
 
     github_repository: str
-    template_directory: str
+    # The directory of the image repository that holds the cached project, empty when the repository has several
+    template_directory: str = ""
 
 
 # Image repository (without the tag) -> where its dependency cache is defined.
 IMAGE_SOURCES = {
     "ls1tum/artemis-maven-template": ImageSource("ls1intum/artemis-maven-docker", "artemis-java-template"),
     "ghcr.io/ls1intum/artemis-kotlin-docker": ImageSource("ls1intum/artemis-kotlin-docker", "artemis-kotlin-template"),
+    "ghcr.io/ls1intum/artemis-rust-docker": ImageSource("ls1intum/artemis-rust-docker", "test"),
+    "ghcr.io/ls1intum/artemis-javascript-docker": ImageSource("ls1intum/artemis-javascript-docker"),
+    "ghcr.io/ls1intum/artemis-swift-swiftlint-docker": ImageSource("ls1intum/artemis-swift-swiftlint-docker", "test"),
 }
 
 
