@@ -458,11 +458,6 @@ public class ProgrammingSubmissionResource {
             }
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
-        else if (programmingExercise.isTeamMode() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
-                && programmingSubmission.getResultForCorrectionRound(correctionRound).getAssessor() == null
-                && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
-        }
 
         // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);

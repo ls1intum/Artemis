@@ -530,31 +530,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
-    /**
-     * Reuses existing team results, claiming only drafts without an assessor.
-     *
-     * @param submission      the submission whose result may be reused
-     * @param correctionRound the requested correction round
-     * @return the reusable result, or empty when a new result is needed
-     */
-    private Optional<Result> reuseTeamAssessmentResult(Submission submission, int correctionRound) {
-        var assignedResult = submission.getResultForCorrectionRound(correctionRound);
-        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && assignedResult != null && (assignedResult.getAssessor() != null || assignedResult.isManual()
-                        || assignedResult.getAssessmentType() == null && assignedResult.getCompletionDate() == null)) {
-            if (assignedResult.getCompletionDate() == null && assignedResult.getAssessor() == null) {
-                checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
-                if (assignedResult.getAssessmentType() == null) {
-                    assignedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                }
-                assignedResult.setAssessor(userRepository.getUser());
-                resultRepository.save(assignedResult);
-            }
-            return Optional.of(assignedResult);
-        }
-        return Optional.empty();
-    }
-
     /** Checks submission state and deadlines only when starting a new team assessment. */
     private void checkTeamSubmissionDeadline(Submission submission) {
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
@@ -584,10 +559,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
-        var assignedResult = reuseTeamAssessmentResult(submission, correctionRound);
-        if (assignedResult.isPresent()) {
-            return assignedResult.get();
-        }
         checkTeamSubmissionDeadline(submission);
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {

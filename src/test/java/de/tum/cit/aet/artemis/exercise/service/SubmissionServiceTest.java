@@ -315,78 +315,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void inaccessibleTeamDraftsDoNotConsumeTutorLockAllowance(boolean instructor) throws Exception {
-        var exercise = teamExercise(ExerciseType.TEXT);
-        var first = teamSubmission(exercise, tutor1, "own");
-        var participation = (StudentParticipation) first.getParticipation();
-        var assessor = instructor ? userUtilService.getUserByLogin(TEST_PREFIX + "instructor1") : tutor1;
-        for (int i = 0; i < MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR; i++) {
-            var submission = i == 0 ? first : participationUtilService.addSubmission(participation, new TextSubmission().text("Draft"));
-            var result = new Result();
-            result.setSubmission(submission);
-            result.setExerciseId(exercise.getId());
-            result.setAssessmentType(AssessmentType.MANUAL);
-            result.setCorrectionRound(0);
-            result.setAssessor(assessor);
-            resultRepository.save(result);
-        }
-        userUtilService.changeUser(assessor.getLogin());
-        var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
-        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var team = teamRepository.findWithStudentsByIdElseThrow(participation.getTeam().orElseThrow().getId());
-        team.setOwner(tutor2);
-        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
-        userUtilService.changeUser(assessor.getLogin());
-        int expected = instructor ? Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) : 0;
-        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(expected);
-        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(assessor.getId(), courseId, instructor)).isEqualTo(expected);
-        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(first.getId()).getLatestResult().getAssessor()).isEqualTo(assessor);
-        var own = teamSubmission(exercise, tutor1, "anotherown");
-        request.get(assessmentStartUrl(ExerciseType.TEXT, own.getId()), instructor ? HttpStatus.BAD_REQUEST : HttpStatus.OK, String.class);
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void formerTeamTutorCanCancelTheirDraft(ExerciseType type) throws Exception {
-        var exercise = teamExercise(type);
-        var submission = teamSubmission(exercise, tutor1, "own");
-        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
-        var result = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResultForCorrectionRound(0);
-        var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow().getId());
-        team.setOwner(tutor2);
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
-        var cancelUrl = switch (type) {
-            case TEXT -> "/api/text/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/cancel-assessment";
-            case MODELING -> "/api/modeling/modeling-submissions/" + submission.getId() + "/cancel-assessment";
-            case FILE_UPLOAD -> "/api/fileupload/file-upload-submissions/" + submission.getId() + "/cancel-assessment";
-            case PROGRAMMING -> "/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment";
-            default -> throw new IllegalArgumentException();
-        };
-        cancelUrl += "?resultId=" + result.getId();
-        userUtilService.changeUser(TEST_PREFIX + "tutor2");
-        if (type == ExerciseType.TEXT) {
-            request.postWithoutResponseBody(cancelUrl, null, HttpStatus.FORBIDDEN);
-        }
-        else {
-            request.put(cancelUrl, null, HttpStatus.FORBIDDEN);
-        }
-        assertThat(resultRepository.findById(result.getId())).isPresent();
-        userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        if (type == ExerciseType.TEXT) {
-            request.postWithoutResponseBody(cancelUrl, null, HttpStatus.OK);
-        }
-        else {
-            request.put(cancelUrl, null, HttpStatus.OK);
-        }
-        assertThat(resultRepository.findById(result.getId())).isEmpty();
-    }
-
-    @ParameterizedTest
     @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void teamQueueAndDirectStartsRespectOwnership(ExerciseType type) throws Exception {
@@ -527,7 +455,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         draft = resultRepository.save(draft);
         var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         assertThat(submissionService.getLockedSubmissions(courseId)).extracting(Submission::getId).contains(submission.getId());
-        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(tutor1.getId(), courseId, false)).isEqualTo(1);
+        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(tutor1.getId(), courseId)).isEqualTo(1);
         var url = assessmentStartUrl(ExerciseType.TEXT, submission.getId());
         request.get(url, HttpStatus.OK, String.class);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
@@ -588,6 +516,28 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             default -> throw new IllegalArgumentException();
         };
         request.put(cancelUrl + submission.getId() + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void openingUnassignedProgrammingTeamDraftDoesNotClaimIt() throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var url = assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId());
+        var opened = request.get(url, HttpStatus.OK, de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var draft = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        draft.setAssessor(null);
+        resultRepository.save(draft);
+
+        var reopened = request.get(url, HttpStatus.OK, de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+
+        assertThat(reopened.results()).singleElement().satisfies(result -> {
+            assertThat(result.id()).isEqualTo(resultId);
+            assertThat(result.assessor()).isNull();
+        });
+        assertThat(resultRepository.findById(resultId).orElseThrow().getAssessor()).isNull();
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).hasSize(1);
     }
 
@@ -702,67 +652,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         }
         request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.FORBIDDEN, String.class);
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingReclaimsUnassignedManualDraft() throws Exception {
-        var exercise = teamExercise(ExerciseType.PROGRAMMING);
-        var original = teamSubmission(exercise, tutor1, "own");
-        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
-                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
-        var resultId = opened.results().getFirst().id();
-        var draft = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
-        draft.setAssessor(null);
-        var note = new de.tum.cit.aet.artemis.assessment.domain.AssessmentNote();
-        note.setNote("Unassigned saved draft");
-        draft.setAssessmentNote(note);
-        resultRepository.save(draft);
-        var reclaimed = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
-                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
-        assertThat(reclaimed.results()).extracting(result -> result.id()).contains(resultId);
-        var saved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
-        assertThat(saved.getAssessor()).isEqualTo(tutor1);
-        assertThat(saved.getAssessmentNote().getNote()).isEqualTo("Unassigned saved draft");
-        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(opened.id()).getManualResults()).hasSize(1);
-    }
-
-    @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingRecoversUntypedDraftInRequestedRound(boolean completed) throws Exception {
-        var exercise = teamExercise(ExerciseType.PROGRAMMING);
-        var original = teamSubmission(exercise, tutor1, "own");
-        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
-                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
-        var resultId = opened.results().getFirst().id();
-        var result = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
-        result.setAssessor(null);
-        result.setAssessmentType(completed ? AssessmentType.SEMI_AUTOMATIC : null);
-        result.setCompletionDate(completed ? ZonedDateTime.now() : null);
-        resultRepository.save(result);
-        var locked = programmingSubmissionService
-                .lockSubmission(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(completed ? original.getId() : opened.id()), 0);
-        if (completed) {
-            assertThat(locked.getId()).isEqualTo(resultId);
-            var savedSubmission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(opened.id());
-            assertThat(savedSubmission.getManualResults()).hasSize(1);
-            assertThat(savedSubmission.getResultForCorrectionRound(0).getId()).isEqualTo(resultId);
-        }
-        else {
-            assertThat(locked.getId()).isEqualTo(resultId);
-            assertThat(locked.getCorrectionRound()).isZero();
-            assertThat(locked.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-            assertThat(locked.getAssessor()).isEqualTo(tutor1);
-        }
-        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
-                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
-        assertThat(reopened.results()).singleElement().satisfies(returned -> {
-            assertThat(returned.id()).isEqualTo(resultId);
-            assertThat(returned.correctionRound()).isZero();
-        });
-        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(original.getId()).getManualResults()).hasSize(1);
-        assertThat(resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId).getAssessor()).isEqualTo(completed ? null : tutor1);
     }
 
     /** Direct service callers enforce the same team deadlines as dashboard links. */

@@ -1,6 +1,5 @@
-import { Component, inject, input, output, signal } from '@angular/core';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -40,7 +39,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     `,
     imports: [ButtonComponent],
 })
-export class ProgrammingExerciseTriggerAllButtonComponent {
+export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     private submissionService = inject(ProgrammingSubmissionService);
     private programmingBuildRunService = inject(ProgrammingBuildRunService);
     private dialogService = inject(DialogService);
@@ -57,19 +56,14 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
     readonly onBuildTriggered = output();
-    readonly isTriggeringBuildAll = toSignal(
-        toObservable(this.exercise).pipe(
-            switchMap((exercise) =>
-                this.programmingBuildRunService.getBuildRunUpdates(exercise.id!).pipe(
-                    map((state) => state === BuildRunState.RUNNING),
-                    startWith(false),
-                ),
-            ),
-        ),
-        { initialValue: false },
-    );
+    readonly isTriggeringBuildAll = signal(false);
     // Icons
     faRedo = faRedo;
+
+    ngOnInit() {
+        // The info that the builds were triggered comes from a websocket channel.
+        this.subscribeBuildRunUpdates();
+    }
 
     /**
      * Opens a modal in that the user has to confirm to trigger all participations.
@@ -100,6 +94,13 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
                     this.onBuildTriggered.emit();
                 });
         });
+    }
+
+    private subscribeBuildRunUpdates() {
+        this.programmingBuildRunService
+            .getBuildRunUpdates(this.exercise().id!)
+            .pipe(tap((buildRunState) => this.isTriggeringBuildAll.set(buildRunState === BuildRunState.RUNNING)))
+            .subscribe();
     }
 }
 

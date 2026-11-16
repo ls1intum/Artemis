@@ -161,8 +161,7 @@ public class SubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
-                authCheckService.isAtLeastInstructorInCourse(courseId));
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -175,8 +174,7 @@ public class SubmissionService {
      * @return the locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
-                authCheckService.isAtLeastInstructorInCourse(courseId));
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
     }
 
     /**
@@ -296,7 +294,10 @@ public class SubmissionService {
     }
 
     /**
-     * Selects an unclaimed submission, excluding exam test runs and the tutor's own previous-round assessments.
+     * Given an exercise, find a random submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.
      *
      * @param exercise        the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound the correction round we want our submission to have results for
@@ -309,7 +310,7 @@ public class SubmissionService {
     }
 
     /**
-     * Selects a random submission, if any.
+     * Given a list of submissions, find a random one.
      *
      * @param assessableSubmissions the list of submissions to choose from
      * @return a random submission or an empty Optional if no submission was passed
@@ -319,7 +320,8 @@ public class SubmissionService {
     }
 
     /**
-     * Gets unfinished assessments across the given exercises (used for an exam).
+     * Get all currently locked submissions across the given exercises (used for an exam).
+     * These are all submissions for which users started, but did not yet finish the assessment.
      *
      * @param exerciseIds - the ids of the exam's exercises
      * @param user        - the user trying to access the locked submissions
@@ -335,7 +337,10 @@ public class SubmissionService {
     }
 
     /**
-     * Removes sensitive submission details according to the user's role. Call outside a transaction to avoid persisting removals.
+     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
+     * submission to the client.
+     * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * database without explicitly saving them.
      *
      * @param submission Submission to be modified.
      * @param user       the currently logged-in user which is used for hiding specific submission details based on instructor and teaching assistant rights
@@ -458,7 +463,9 @@ public class SubmissionService {
     }
 
     /**
-     * Copies the previous correction round, retaining its work for editing in the new round.
+     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
+     * because an assessment with current correctionRound > 1 contains all previous work,
+     * which the tutor can then edit. Assigns the newly created Result to the submission
      *
      * @param submission submission to which the new Result is assigned
      * @param oldResult  result to copy from
@@ -532,7 +539,8 @@ public class SubmissionService {
     }
 
     /**
-     * Saves and associates a result; the submission's results must be loaded.
+     * used to assign and save results to submissions
+     * Make sure submission.results is loaded
      *
      * @param submission the parent submission of the result
      * @param result     the result which we want to save and order
@@ -644,7 +652,10 @@ public class SubmissionService {
     }
 
     /**
-     * Rejects negative rounds only. Validate the upper bound separately using the fully loaded exercise.
+     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
+     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
+     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
+     * necessarily have its exam loaded.
      *
      * @param correctionRound the correction round to check
      * @throws BadRequestAlertException if the correction round is negative
@@ -656,7 +667,8 @@ public class SubmissionService {
     }
 
     /**
-     * Creates or reuses an assessment for the requested round. Completed team results are returned unchanged.
+     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
+     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -671,7 +683,7 @@ public class SubmissionService {
             return result;
         }
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && (result == null || result.getCompletionDate() == null && result.getAssessor() == null)) {
+                && participation.getTeam().isPresent() && result == null) {
             checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
         if (result == null && correctionRound > 0) {
@@ -686,10 +698,15 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
-        // The requested correction round takes precedence over the round derived by Submission.addResult.
+        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
+        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
+        // Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Return the instance already held by the submission to avoid stale copies and lazy merge proxies.
+        // Deliberately keep (and return) the object the submission's result set already holds instead of the
+        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
+        // would keep the stale instance. Returning the original also avoids the assessor (and every other
+        // association) turning into an uninitialized proxy, which the merge result does.
         resultRepository.save(result);
         return result;
     }
@@ -714,7 +731,8 @@ public class SubmissionService {
     }
 
     /**
-     * Prefers on-time submissions when available; otherwise returns the original list.
+     * Filters the submissions to contain only in-time submissions if there are any.
+     * If not, the original list is returned.
      *
      * @param submissions The submissions to filter
      * @param <T>         Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
@@ -770,7 +788,9 @@ public class SubmissionService {
     }
 
     /**
-     * Validates that the requested round is within {@code [0, exercise.getNumberOfCorrectionRounds())}.
+     * The correction round is a request parameter, so a caller can send any int. A round outside {@code [0, numberOfCorrectionRounds)}
+     * would otherwise be stored on a new manual result that no dashboard, lookup or score calculation ever reaches again.
+     * Call this before locking a submission, at a point where the exercise (and its exam, for exam exercises) is loaded.
      *
      * @param exercise        the exercise the submission belongs to
      * @param correctionRound the requested correction round
@@ -784,7 +804,9 @@ public class SubmissionService {
     }
 
     /**
-     * Validates the requested round, also allowing existing manual results beyond configured rounds, such as complaint responses.
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
      *
      * @param exercise        the exercise the submission belongs to
      * @param submissionId    the id of the submission that is opened
@@ -844,13 +866,14 @@ public class SubmissionService {
     }
 
     /**
-     * Returns each participation's latest submission with results; {@code submittedOnly} skips unsubmitted latest entries.
+     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode      - set flag to ignore exam test run submissions
      * @param <T>           the submission type
-     * @return the latest submissions for the given exercise
+     * @return a list of modeling submissions for the given exercise id
      */
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
         Collection<StudentParticipation> participations;
@@ -954,11 +977,13 @@ public class SubmissionService {
     }
 
     /**
-     * Returns the latest available submission from each participation on the requested search-results page.
+     * Search for all submissions fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of submissions if there are that many in Artemis.
      *
      * @param search     DTO containing the search term and information required for pagination and sorting
      * @param exerciseId Id of the exercise the submissions belongs to
-     * @return the page's latest submissions and the total number of matching participation pages
+     * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
     public SearchResultPageDTO<SubmissionResponseDTO> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);

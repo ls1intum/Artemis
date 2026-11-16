@@ -317,6 +317,8 @@
                                                 </ng-container>
                                             } @else {
                                                 <a
+                                                    severity="primary"
+                                                    variant="outlined"
                                                     [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
                                                     [queryParams]="{ filter: TeamFilterProp.OWN }"
                                                     [attr.aria-label]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
