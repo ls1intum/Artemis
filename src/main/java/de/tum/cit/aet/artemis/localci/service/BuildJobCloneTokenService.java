@@ -208,6 +208,9 @@ public class BuildJobCloneTokenService {
      * @return whether that repository is one of the job's own
      */
     public boolean coversRepository(@Nullable BuildJobQueueItem buildJob, LocalVCRepositoryUri localVCRepositoryUri) {
+        if (buildJob == null) {
+            return false;
+        }
         RepositoryIdentity requested = RepositoryIdentity.of(localVCRepositoryUri);
         // The declaration is compared first, so that a repository that the job does not declare costs no database access
         if (!getDeclaredRepositoryIdentities(buildJob).contains(requested)) {
