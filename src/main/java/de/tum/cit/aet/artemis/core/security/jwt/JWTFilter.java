@@ -46,6 +46,9 @@ public class JWTFilter extends GenericFilterBean {
 
     private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
 
+    /** The endpoint of the native websocket connection. */
+    private static final String WEBSOCKET_ENDPOINT = "/websocket/websocket";
+
     private final TokenProvider tokenProvider;
 
     private final JWTCookieService jwtCookieService;
@@ -287,7 +290,7 @@ public class JWTFilter extends GenericFilterBean {
             Claims claims = this.tokenProvider.parseClaims(jwtToken);
             ToolTokenType tool = this.tokenProvider.getTools(claims);
             if (tool != null && !isReachableWithToolToken(httpServletRequest.getRequestURI())) {
-                // A token issued for a tool is meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks, and for the websocket connection.
+                // A token issued for a tool is meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks, and for the native websocket endpoint.
                 // On every other path the token does not authenticate the request, which then continues like a request without credentials.
                 filterChain.doFilter(servletRequest, servletResponse);
                 return;
@@ -411,13 +414,14 @@ public class JWTFilter extends GenericFilterBean {
 
     /**
      * Whether a tool token authenticates a request to the given path. These are the REST endpoints below {@code /api/}, which {@code ToolsInterceptor} restricts to the
-     * endpoints annotated with {@code @AllowedTools}, and the websocket connection that the tools use for live updates.
+     * endpoints annotated with {@code @AllowedTools}, and the native websocket endpoint that the tools use for live updates. The SockJS fallback paths below {@code /websocket} are
+     * not included.
      *
      * @param uri the path of the request
      * @return true if a tool token may be used for the path
      */
     private static boolean isReachableWithToolToken(final String uri) {
-        return uri.startsWith("/api/") || uri.startsWith("/websocket/");
+        return uri.startsWith("/api/") || WEBSOCKET_ENDPOINT.equals(uri);
     }
 
     /**

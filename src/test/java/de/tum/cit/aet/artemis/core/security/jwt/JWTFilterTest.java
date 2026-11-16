@@ -434,7 +434,7 @@ class JWTFilterTest {
     }
 
     @Test
-    void aToolTokenAuthenticatesTheWebsocketHandshake() throws Exception {
+    void aToolTokenAuthenticatesTheNativeWebsocketEndpoint() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/websocket/websocket");
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -449,7 +449,7 @@ class JWTFilterTest {
 
     @Test
     void aToolTokenDoesNotAuthenticateOtherPathsButTheRequestContinues() throws Exception {
-        for (String path : List.of("/management/info", "/management/health", "/other")) {
+        for (String path : List.of("/management/info", "/management/health", "/other", "/websocket/info", "/websocket/123/abc/websocket")) {
             SecurityContextHolder.getContext().setAuthentication(null);
             MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
             request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
