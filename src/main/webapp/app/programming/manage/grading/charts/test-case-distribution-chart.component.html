@@ -3,7 +3,14 @@
         <div class="d-flex justify-content-between">
             <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title"></h4>
             @if (tableFiltered) {
-                <button type="button" class="btn btn-info" (click)="resetTableFilter()" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"></button>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    severity="secondary"
+                    (click)="resetTableFilter()"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
+                ></button>
             }
         </div>
         <p>

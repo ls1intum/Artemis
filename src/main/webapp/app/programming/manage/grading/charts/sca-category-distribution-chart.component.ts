@@ -1,3 +1,4 @@
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
@@ -7,7 +8,6 @@ import { getColor } from 'app/programming/manage/grading/charts/programming-grad
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { normalizedStackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -24,7 +24,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                     @if (tableFiltered) {
                         <button
                             type="button"
-                            class="btn btn-info"
+                            tumAetUiButton
+                            size="small"
+                            severity="secondary"
                             (click)="resetTableFilter()"
                             jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
                         ></button>
@@ -44,7 +46,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             </div>
         </div>
     `,
-    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);

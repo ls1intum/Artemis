@@ -103,8 +103,9 @@ File browser tree
             }
 
             button {
-                padding: 0;
-                border: none;
+                min-width: 1.5rem;
+                height: 1.5rem;
+                padding: 0.1rem;
                 pointer-events: auto;
 
                 fa-icon {

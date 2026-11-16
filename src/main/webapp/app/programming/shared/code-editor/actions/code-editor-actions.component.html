@@ -1,6 +1,9 @@
 @if (isInCourseManagement()) {
     <a
-        class="btn btn-secondary navbar-btn me-3 open-repository-button"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        class="me-3 open-repository-button"
         [routerLink]="repositoryLink()"
         target="_blank"
         rel="noopener noreferrer"
@@ -15,7 +18,10 @@
         <button
             id="resolve_conflict_button"
             type="button"
-            class="btn btn-danger navbar-btn me-3"
+            tumAetUiButton
+            size="small"
+            severity="danger"
+            class="me-3"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [forceDisabled]="disableActions() || isResolvingConflict()"
             (click)="resetRepository()"
@@ -36,7 +42,10 @@
     <button
         id="refresh_button"
         type="button"
-        class="btn btn-primary navbar-btn me-3"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        class="me-3"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [forceDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
         (click)="onRefresh()"
@@ -55,7 +64,9 @@
     <button
         id="submit_button"
         type="button"
-        class="btn btn-success navbar-btn"
+        tumAetUiButton
+        size="small"
+        severity="success"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [forceDisabled]="
             disableActions() ||

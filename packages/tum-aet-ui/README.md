@@ -93,6 +93,11 @@ Colors:
   `--tumaet-ui-highlight-focus-background`;
 - states: `--tumaet-ui-state-{danger,success,warning,info}` and each corresponding
   `--tumaet-ui-state-*-contrast` and `--tumaet-ui-state-*-foreground`;
+- button-only palette: `--tumaet-ui-button-{primary,secondary,success,info,warn,danger,contrast}-background`,
+  `-contrast`, and `-foreground`, plus `--tumaet-ui-button-secondary-border`,
+  `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay`, and
+  `--tumaet-ui-button-active-overlay`; most default to semantic aliases and can be overridden
+  independently of status messages/tags;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
   `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
@@ -101,6 +106,13 @@ Primary is the brand fill; accent is the brand foreground for content and contro
 token is a fill or border, its `-contrast` token is text on that fill, and its `-foreground` token
 is text on content or a tinted state surface. Maintain readable contrast in both themes and keep
 focus indicators distinguishable from adjacent surfaces.
+
+Solid primary buttons use their own background/contrast pair so that a host brand override cannot
+silently make their text unreadable. Override `--tumaet-ui-button-primary-background` and
+`--tumaet-ui-button-primary-contrast` together to customize that pair; changing
+`--tumaet-ui-primary-color` alone does not recolor primary buttons. Use
+`--tumaet-ui-button-primary-foreground` for outlined/text buttons. Define and check these overrides
+in both themes.
 
 Responsive thresholds are fixed at 40rem, 48rem, 64rem, 80rem, and 96rem; host Tailwind
 configuration does not change them.

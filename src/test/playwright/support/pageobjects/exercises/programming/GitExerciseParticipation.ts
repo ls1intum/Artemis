@@ -59,7 +59,7 @@ export class GitExerciseParticipation {
         const page = await context.newPage();
         const sshKeyPath = path.join(SSH_KEYS_PATH, `${SSH_KEY_NAMES[sshAlgorithm]}.pub`);
         const sshKey = await fs.readFile(sshKeyPath, 'utf8');
-        await page.goto('user-settings/ssh');
+        await page.goto('/user-settings/credentials');
         await page.getByTestId('addNewSshKeyButton').click();
         await page.getByTestId('sshKeyField').fill(sshKey!);
         const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-keys`);

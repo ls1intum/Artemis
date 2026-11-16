@@ -2,6 +2,7 @@
 id: intro
 title: Welcome to the Administrator Guide
 sidebar_label: Introduction
+last_reviewed: 2026-11-03
 ---
 
 Welcome to the Artemis **Administrator Guide**, designed for system administrators who deploy and manage Artemis instances.

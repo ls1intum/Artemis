@@ -7,13 +7,26 @@
             }
             @if (isLoadingSummary()) {
                 <p class="mb-4! text-(--text-body-secondary)" jhiTranslate="loading"></p>
-            } @else if (summaryKeys().length > 0) {
-                <dl class="mb-6! grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 rounded-md border border-(--border-color) p-4!" data-testid="delete-dialog-summary">
-                    @for (summaryKey of summaryKeys(); track summaryKey) {
-                        <dt class="font-normal" [jhiTranslate]="summaryKey"></dt>
-                        <dd class="m-0 font-semibold">{{ entitySummary()![summaryKey] }}</dd>
+            } @else if (categorizedSummary(); as categories) {
+                @if (categories.length > 0) {
+                    @if (hasLargeCount()) {
+                        <p class="mb-2! font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
+                            <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                            <span jhiTranslate="entity.delete.summary.largeCountWarning"></span>
+                        </p>
                     }
-                </dl>
+                    <div class="mb-6! rounded-md border border-(--border-color) p-4!" data-testid="delete-dialog-summary">
+                        @for (category of categories; track category.titleKey) {
+                            <p class="mt-2 mb-1! font-semibold text-(--text-body-secondary) first:mt-0" [jhiTranslate]="category.titleKey"></p>
+                            <dl class="mb-0! grid grid-cols-[1fr_auto] gap-x-6 gap-y-1">
+                                @for (item of category.items; track item.labelKey) {
+                                    <dt class="font-normal" [jhiTranslate]="item.labelKey"></dt>
+                                    <dd class="m-0 text-right font-semibold tabular-nums" [class.text-state-danger]="item.highlight">{{ item.value }}</dd>
+                                }
+                            </dl>
+                        }
+                    </div>
+                }
             }
             @for (checkKey of additionalCheckKeys(); track checkKey; let i = $index) {
                 <div class="mb-6! flex items-center gap-2">

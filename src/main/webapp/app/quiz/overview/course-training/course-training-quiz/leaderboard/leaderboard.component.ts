@@ -1,4 +1,5 @@
 import { Component, computed, input } from '@angular/core';
+import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
@@ -7,7 +8,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-leaderboard',
-    imports: [FontAwesomeModule, ProfilePictureComponent, TranslateDirective],
+    imports: [FontAwesomeModule, ProfilePictureComponent, TranslateDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent],
     templateUrl: './leaderboard.component.html',
     styleUrl: './leaderboard.component.scss',
 })

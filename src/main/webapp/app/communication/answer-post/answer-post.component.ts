@@ -24,7 +24,7 @@ import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangle
 import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TextareaModule } from 'primeng/textarea';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -52,7 +52,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         SavedPostingBannerComponent,
         NgClass,
         FormsModule,
-        ButtonModule,
+        TumAetUiButtonDirective,
         TextareaModule,
         FaIconComponent,
         TranslateDirective,

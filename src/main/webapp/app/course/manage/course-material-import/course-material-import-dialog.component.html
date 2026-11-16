@@ -2,50 +2,65 @@
     @if (currentStep() === 'selectCourse') {
         <!-- Step 1: Course Selection -->
         <div class="course-selection-step">
-            <div class="search-container mb-3">
-                <span class="p-input-icon-left w-100">
+            <tumaet-ui-table-layout
+                class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]"
+                [loading]="isLoadingCourses()"
+                [empty]="courses().length === 0 && !isLoadingCourses()"
+                emptyTitle="artemisApp.course.import.noCourses"
+            >
+                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                     <input
+                        tumAetUiInput
+                        tumAetUiInputSize="small"
+                        type="search"
+                        class="max-w-lg min-w-24 flex-1"
                         [attr.aria-label]="'artemisApp.course.import.searchPlaceholder' | artemisTranslate"
-                        pInputText
-                        type="text"
                         [ngModel]="searchTerm()"
                         (ngModelChange)="searchTerm.set($event)"
                         (input)="onSearchChange()"
                         [placeholder]="'artemisApp.course.import.searchPlaceholder' | artemisTranslate"
-                        class="w-100"
                     />
-                </span>
-            </div>
-
-            <p-table [value]="courses()" [tableStyle]="{ 'min-width': '100%' }" class="p-datatable-sm p-datatable-striped" [loading]="isLoadingCourses()">
-                <ng-template #header>
-                    <tr>
-                        <th scope="col" jhiTranslate="artemisApp.course.title"></th>
-                        <th scope="col" jhiTranslate="artemisApp.course.shortName"></th>
-                        <th scope="col" jhiTranslate="artemisApp.course.semester"></th>
-                        <th scope="col"></th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-course>
-                    <tr>
-                        <td>{{ course.title }}</td>
-                        <td>{{ course.shortName }}</td>
-                        <td>{{ course.semester }}</td>
-                        <td>
-                            <button type="button" pButton severity="primary" size="small" (click)="selectCourse(course)" jhiTranslate="entity.action.select"></button>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #emptymessage>
-                    <tr>
-                        <td colspan="4" class="text-center" jhiTranslate="artemisApp.course.import.noCourses"></td>
-                    </tr>
-                </ng-template>
-            </p-table>
-
-            @if (totalRecords() > rows()) {
-                <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" (onPageChange)="onPageChange($event)" />
-            }
+                </div>
+                <table tumAetUiTable size="small" striped>
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.course.title"></th>
+                            <th scope="col" jhiTranslate="artemisApp.course.shortName"></th>
+                            <th scope="col" jhiTranslate="artemisApp.course.semester"></th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (course of courses(); track course.id) {
+                            <tr>
+                                <td>{{ course.title }}</td>
+                                <td>{{ course.shortName }}</td>
+                                <td>{{ course.semester }}</td>
+                                <td class="text-end">
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="primary"
+                                        size="small"
+                                        (click)="selectCourse(course)"
+                                        jhiTranslate="entity.action.select"
+                                    ></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <!-- The total is estimated from the page count, so it supports navigation but not an item range. -->
+                <tumaet-ui-paginator
+                    tumAetUiTableFooter
+                    [page]="first() / rows()"
+                    [pageSize]="rows()"
+                    [totalRecords]="totalRecords()"
+                    [showCurrentPageReport]="false"
+                    [showRowsPerPage]="false"
+                    (pageChange)="onPageChange($event)"
+                />
+            </tumaet-ui-table-layout>
         </div>
     } @else {
         <!-- Step 2: Import Options -->
@@ -150,17 +165,15 @@
 
     <ng-template #footer>
         @if (currentStep() === 'selectCourse') {
-            <button type="button" pButton severity="secondary" (click)="close()" jhiTranslate="entity.action.cancel"></button>
+            <button type="button" tumAetUiButton severity="secondary" (click)="close()" jhiTranslate="entity.action.cancel"></button>
         } @else {
-            <button type="button" pButton severity="secondary" (click)="backToCourseSelection()" jhiTranslate="entity.action.back"></button>
-            <button
-                type="button"
-                pButton
-                [disabled]="!canImport() || isImporting()"
-                [loading]="isImporting()"
-                (click)="executeImport()"
-                jhiTranslate="entity.action.import"
-            ></button>
+            <button type="button" tumAetUiButton severity="secondary" (click)="backToCourseSelection()" jhiTranslate="entity.action.back"></button>
+            <button severity="secondary" type="button" tumAetUiButton [disabled]="!canImport() || isImporting()" [attr.aria-busy]="isImporting()" (click)="executeImport()">
+                @if (isImporting()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span jhiTranslate="entity.action.import"></span>
+            </button>
         }
     </ng-template>
 </p-dialog>

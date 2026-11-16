@@ -1,8 +1,8 @@
 @if (form()) {
-    <div class="card form-group" [formGroup]="form()!">
-        <div class="card-header">
+    <div class="mb-2 rounded-md border border-border bg-(--overview-light-background-color)" [formGroup]="form()!">
+        <div class="flex flex-wrap justify-between gap-y-2 overflow-hidden border-b border-border bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4! py-2">
             <div
-                class="d-flex align-items-center mw-100 clickable"
+                class="clickable flex max-w-full items-center"
                 (click)="toggle()"
                 [attr.aria-expanded]="!isCollapsed()"
                 #keyboardAction4
@@ -12,14 +12,14 @@
                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
             >
-                <div class="me-3">
+                <div class="me-4!">
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
                 </div>
-                <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl()?.value ?? '' }}</h6>
+                <h6 class="mb-0 truncate">{{ titleControl()?.value ?? '' }}</h6>
             </div>
-            <div class="d-flex align-items-center flex-grow-1 justify-content-end">
-                <div class="d-flex me-3">
-                    <input class="me-1" type="checkbox" id="viewed-{{ index() }}" formControlName="viewed" />
+            <div class="flex grow items-center justify-end">
+                <div class="me-4! flex items-center gap-1">
+                    <tumaet-ui-checkbox [inputId]="'viewed-' + index()" formControlName="viewed" />
                     <label for="viewed-{{ index() }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
                 </div>
                 @if (!isInEditMode()) {
@@ -37,7 +37,7 @@
                     <jhi-button
                         class="me-1"
                         id="saveButton-{{ index() }}"
-                        [btnType]="ButtonType.SUCCESS"
+                        [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.SMALL"
                         [title]="'entity.action.save'"
                         [icon]="faSave"
@@ -57,22 +57,29 @@
                 />
             </div>
         </div>
-        <div class="card-body border-0" [ngbCollapse]="isCollapsed()" formGroupName="competency">
-            <div class="form-group">
+        <div class="p-4!" [hidden]="isCollapsed()" formGroupName="competency">
+            <div class="mb-4!">
                 <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
-                <input type="text" class="form-control" id="title-{{ index() }}" formControlName="title" />
+                <input
+                    type="text"
+                    tumAetUiInput
+                    class="block w-full"
+                    id="title-{{ index() }}"
+                    formControlName="title"
+                    [tumAetUiInputInvalid]="!!titleControl()?.invalid && (!!titleControl()?.dirty || !!titleControl()?.touched)"
+                />
                 @if (titleControl()?.invalid && (titleControl()?.dirty || titleControl()?.touched)) {
-                    <div class="alert alert-danger">
+                    <tumaet-ui-message severity="error" class="mt-2">
                         @if (titleControl()?.errors?.required) {
                             <div jhiTranslate="artemisApp.competency.create.titleRequiredValidationError"></div>
                         }
                         @if (titleControl()?.errors?.maxlength) {
                             <div jhiTranslate="artemisApp.competency.create.titleMaxLengthValidationError" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
                         }
-                    </div>
+                    </tumaet-ui-message>
                 }
             </div>
-            <div class="form-group">
+            <div class="mb-4!">
                 <label for="description-{{ index() }}" jhiTranslate="artemisApp.competency.description"></label>
                 @if (isInEditMode()) {
                     <jhi-markdown-editor-monaco
@@ -83,20 +90,25 @@
                         [enableFileUpload]="false"
                     />
                 } @else {
-                    <div id="description-{{ index() }}" disabled="true" class="markdown-preview border rounded p-1" [jhiMarkdown]="descriptionControl()?.value || '&nbsp;'"></div>
+                    <div
+                        id="description-{{ index() }}"
+                        disabled="true"
+                        class="markdown-preview rounded-md border border-border p-1"
+                        [jhiMarkdown]="descriptionControl()?.value || '&nbsp;'"
+                    ></div>
                 }
                 @if (descriptionControl()?.invalid && descriptionControl()?.dirty) {
-                    <div class="alert alert-danger">
+                    <tumaet-ui-message severity="error" class="mt-2">
                         @if (descriptionControl()?.errors?.maxlength) {
                             <div
                                 jhiTranslate="artemisApp.competency.create.descriptionMaxLengthValidationError"
                                 [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
                             ></div>
                         }
-                    </div>
+                    </tumaet-ui-message>
                 }
             </div>
-            <div class="form-group">
+            <div class="mb-4!">
                 <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
                 <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl()!" />
             </div>

@@ -171,11 +171,8 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
         });
 
         /**
-         * Security regression for the course-scoped question lookup: a {@code quizQuestionId} that belongs to a
-         * different course's quiz exercise than the path {@code courseId} must 404 from
-         * {@link QuizQuestionRepository#findByIdAndCourseIdElseThrow}. Without the course scope the endpoint would
-         * return {@code QuizQuestionWithSolutionDTO} for the foreign question — even though the student is enrolled
-         * in BOTH seed courses here (so the auth guard alone wouldn't prevent the lookup from succeeding).
+         * Validation of the id pair: a {@code quizQuestionId} that belongs to a different course's quiz exercise
+         * than the path {@code courseId} must 404, even though the student is enrolled in BOTH seed courses here.
          */
         test('Training submit with a question id that does not belong to the path course returns 404', async ({ login, page, exerciseAPIRequests }) => {
             // Create a second quiz on the OTHER seed course (quizAssessment) so we have a question id that genuinely

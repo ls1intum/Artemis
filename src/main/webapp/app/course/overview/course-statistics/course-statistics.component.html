@@ -162,7 +162,7 @@
                     } @else if (materialsFailed()) {
                         <tumaet-ui-message severity="warn"
                             ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialError"></span
-                            ><tumaet-ui-button variant="text" size="small" (clicked)="loadLearningStatistics()"
+                            ><tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="loadLearningStatistics()"
                                 ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
                         ></tumaet-ui-message>
                     } @else {
@@ -170,8 +170,9 @@
                             @for (row of materialBreakdown(); track row.type) {
                                 <div>
                                     <div class="mb-2! flex justify-between gap-4! text-sm">
-                                        <span>{{ 'artemisApp.courseOverview.statistics.redesign.materialTypes.' + row.type | artemisTranslate }}</span
-                                        ><span class="tabular-nums">{{ row.completed }} / {{ row.total }}</span>
+                                        <span>{{ 'artemisApp.courseOverview.statistics.redesign.materialTypes.' + row.type | artemisTranslate }}</span><span class="tabular-nums"
+                                            >{{ row.completed }} / {{ row.total }}</span
+                                        >
                                     </div>
                                     <tumaet-ui-progress-bar
                                         size="small"
@@ -197,7 +198,7 @@
                 } @else if (competenciesFailed()) {
                     <tumaet-ui-message severity="warn" class="m-5!"
                         ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.competencyError"></span
-                        ><tumaet-ui-button variant="text" size="small" (clicked)="loadLearningStatistics()"
+                        ><tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="loadLearningStatistics()"
                             ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
                     ></tumaet-ui-message>
                 } @else {

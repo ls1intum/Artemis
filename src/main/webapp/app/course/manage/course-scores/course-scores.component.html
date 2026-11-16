@@ -12,7 +12,7 @@
                 <jhi-help-icon class="mb-1" text="artemisApp.instructorDashboard.courseScoresTooltip" />
             </div>
             @if (course()?.isAtLeastInstructor) {
-                <a *titleBarActions [routerLink]="['/course-management', course()!.id, 'grading']" class="btn btn-info btn-sm">
+                <a *titleBarActions [routerLink]="['/course-management', course()!.id, 'grading']" tumAetUiButton severity="warn" size="small">
                     <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                 </a>
             }
@@ -33,8 +33,8 @@
                 }
             </div>
             <div class="col-lg-3 mt-3">
-                <table class="table table-bordered table-sm table-striped">
-                    <thead class="table-dark">
+                <table tumAetUiTable size="small" striped>
+                    <thead>
                         <tr>
                             <th scope="col"></th>
                             <th scope="col">
@@ -105,75 +105,68 @@
             </div>
         </div>
         <div class="separator"></div>
-        <div class="d-flex justify-content-end">
-            @if (exportReady()) {
-                <jhi-csv-export-button
-                    title="entity.action.export"
-                    [icon]="faDownload"
-                    [disabled]="!(studentStatistics().length > 0)"
-                    [buttonSize]="ButtonSize.SMALL"
-                    (onExport)="exportResults($event)"
-                />
-            }
-        </div>
         @if (exportReady()) {
-            <div class="table-responsive">
-                <table class="table table-striped">
+            <tumaet-ui-table-layout [empty]="studentStatistics().length === 0">
+                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                    <span class="flex-1"></span>
+                    <jhi-csv-export-button
+                        title="entity.action.export"
+                        [icon]="faDownload"
+                        [disabled]="!(studentStatistics().length > 0)"
+                        [buttonSize]="ButtonSize.SMALL"
+                        (onExport)="exportResults($event)"
+                    />
+                </div>
+                <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                     <thead>
-                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                            <th scope="col" jhiSortBy="user.name">
+                        <tr>
+                            <th scope="col" tumAetUiSortableColumn="student.name">
                                 <span jhiTranslate="artemisApp.instructorDashboard.name"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="user.login">
+                            <th scope="col" tumAetUiSortableColumn="student.login">
                                 <span jhiTranslate="artemisApp.instructorDashboard.username"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="numberOfParticipatedExercises">
+                            <th scope="col" tumAetUiSortableColumn="numberOfParticipatedExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.participated"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="numberOfSuccessfulExercises">
+                            <th scope="col" tumAetUiSortableColumn="numberOfSuccessfulExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.successful"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType().get(exerciseType)! > 0) {
-                                    <th scope="col" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
+                                    <th scope="col" [tumAetUiSortableColumn]="'sumPointsPerExerciseType.' + exerciseType">
                                         <span jhiTranslate="artemisApp.instructorDashboard.{{ exerciseType }}Points"></span>
-                                        <fa-icon [icon]="faSort" />
                                     </th>
                                 }
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
-                                <th scope="col" jhiSortBy="presentationPoints">
-                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" />
+                                <th scope="col" tumAetUiSortableColumn="presentationPoints">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span>
                                 </th>
                             }
                             @if (variantCapReducesPoints()) {
-                                <th scope="col" jhiSortBy="overallPointsUncapped">
+                                <th scope="col" tumAetUiSortableColumn="overallPointsUncapped">
                                     <span jhiTranslate="artemisApp.instructorDashboard.uncappedPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.uncappedPointsTooltip" />
-                                    <fa-icon [icon]="faSort" />
                                 </th>
-                                <th scope="col" jhiSortBy="excessVariantPoints">
+                                <th scope="col" tumAetUiSortableColumn="excessVariantPoints">
                                     <span jhiTranslate="artemisApp.instructorDashboard.excessVariantPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.excessVariantPointsTooltip" />
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
-                            <th scope="col" jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
+                            <th scope="col" tumAetUiSortableColumn="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span></th>
                             @if (gradingScaleExists()) {
-                                <th scope="col" jhiSortBy="overallPoints">
+                                <th scope="col" tumAetUiSortableColumn="overallPoints">
                                     <span
                                         jhiTranslate="{{
                                             isBonus() ? 'artemisApp.courseScoreCalculation.gradingSystemBonus' : 'artemisApp.courseScoreCalculation.gradingSystemGrade'
                                         }}"
                                     ></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                         </tr>
+                    </thead>
+                    <tbody>
                         <tr>
                             <th scope="row"><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
                             <td class="font-bold"></td>
@@ -242,8 +235,6 @@
                                 </td>
                             }
                         </tr>
-                    </thead>
-                    <tbody>
                         @for (studentStat of studentStatistics(); track studentStat) {
                             <tr>
                                 <td>{{ studentStat.student.name }}</td>
@@ -294,7 +285,7 @@
                         }
                     </tbody>
                 </table>
-            </div>
+            </tumaet-ui-table-layout>
         }
     </div>
 }

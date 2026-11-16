@@ -165,8 +165,7 @@ visible for long, the cache belongs in the distributed manager instead.
 **Cache records, not entities.** A cached Hibernate entity carries its proxies and its association
 graph with it. Cache a DTO or a projection.
 
-**Always pair it with explicit eviction.** Either `@CacheEvict` on the writing service, or a
-Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. For propagating the eviction of a
+**Always pair it with explicit eviction.** `@CacheEvict` on the writing service. For propagating the eviction of a
 per-node entry to every node, the pattern is
 `src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. It
 broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL, so the

@@ -1,0 +1,107 @@
+---
+id: network-model
+title: Network Model
+sidebar_label: Network Model
+last_reviewed: 2026-11-11
+---
+
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+
+This page describes which component of an Artemis installation may connect to which other component, and how you check that your installation follows this model. Artemis runs student code in build
+containers, so the network around these containers matters as much as the settings of Artemis itself. Some of the rules below cannot be enforced by the application, because only the host and its firewall decide what
+a container can reach. For these, Artemis and the scripts of the repository check the result instead of trusting the configuration.
+
+## Components and Connections
+
+| Component                                 | Default port       | Reachable from the internet | Reachable from users' browsers | Reachable from build containers |
+| ----------------------------------------- | ------------------ | --------------------------- | ------------------------------ | ------------------------------- |
+| Reverse proxy (nginx)                     | 80, 443            | yes                         | yes                            | yes (public content only)       |
+| Git over SSH (LocalVC), if offered        | 7921               | optional                    | optional                       | no                              |
+| Artemis core node (HTTP behind the proxy) | 8080               | no                          | no                             | no                              |
+| Database (PostgreSQL, MySQL)              | 5432, 3306         | no                          | no                             | no                              |
+| Queue store: Valkey or Redis              | 6379               | no                          | no                             | no                              |
+| Cluster port of the Hazelcast provider    | 5701 and following | no                          | no                             | no                              |
+| Message broker (ActiveMQ)                 | 61613, 61616       | no                          | no                             | no                              |
+| Build agents                              | none               | no                          | no                             | no                              |
+| Service registry, if used                 | 8761               | no                          | no                             | no                              |
+
+Only the reverse proxy, and where Git over SSH is offered the SSH port, is connected to the internet. Everything else is reachable only from the core nodes and the build agents, on a private network or on the
+loopback interface of the host.
+
+The services that hold the state of the installation need special care:
+
+- **Queue store.** The build queue and the results travel through the [distributed data provider](/admin/production-setup/distributed-data). A Valkey or Redis server accepts connections only with a user and a password,
+  and listens on the loopback interface or on a private address.
+- **Cluster port.** The Hazelcast provider has no authentication on its cluster port. Bind it to the private interface of the node with `spring.hazelcast.interface`, and let only the other nodes connect.
+- **Build agents** receive build jobs from the queue and clone repositories from the core nodes. A build agent is trusted by the core nodes, so it must not run on a machine that students or other untrusted parties can reach.
+
+## Build Containers
+
+Student code runs in the build containers, so a build container must be treated like a computer of a student. It can reach the networks that its Docker network and the firewall of the host allow. The default network of
+Docker is a bridge: a container on it reaches the internet and, unless the host prevents it, the addresses of the host and of the private network behind it.
+
+Keep the services above out of the reach of build containers:
+
+1. **Choose the networks.** Builds run on the default network of the container runtime unless an exercise selects another one. Set `container-defaults.network: none` where the builds need no network, and list only the networks
+   that exercises must select in `container-flags-limit.allowed-custom-networks`. See [build environment](/admin/production-setup/localci-build-environment). Artemis refuses a network that shares the namespace of the
+   host (`host`) or of another container (`container:<name>`), for exercises and for the defaults.
+2. **Restrict the container subnets.** Add firewall rules that drop connections from the subnets that Docker assigns to its networks to the addresses of the services above. Two paths need a rule each: traffic from a
+   container to another machine or to another container is forwarded and passes the `DOCKER-USER` chain, which is evaluated before the rules of Docker, while traffic to a service that runs on the Docker host itself
+   passes the `INPUT` chain. A rule in `DOCKER-USER` alone does not protect the cluster port or the queue store of the host. The `firewall` role of the Ansible collection offers
+   `firewall_container_subnets_ipv4` and `firewall_container_restricted_destinations_ipv4` (and the `_ipv6` variants) for the forwarded path, and its default policy for `INPUT` drops what is not allowed explicitly.
+   Check both paths, see below.
+3. **Keep IPv6 in mind.** If you enable IPv6 on the Docker bridge, the same rules are needed for IPv6, because a container then reaches the services over the IPv6 addresses of the host.
+4. **Keep private addresses private.** The metadata endpoint of a cloud provider and the management interfaces of your infrastructure are internal services too.
+
+## What Artemis Checks
+
+- **Validation of the configured networks.** A core node checks the default network of the builds (`container-defaults.network`) at startup, and a default that shares the network namespace of the host (`host`) or of another container (`container:<name>`) stops the start. An exercise that selects such a network is rejected when it is saved, and a build agent refuses to create a container on it. A network in the list of allowed networks that nobody selects is not checked at startup.
+- **At startup of a build agent that runs builds in Docker**, Artemis starts a short-lived container on every network that builds can use, and tries to connect to the queue store, to the cluster port of the node (when the node is a member of the cluster, and
+  not a client of it) and to the services that you list. The networks are the default network of the build containers and the networks in the list of allowed networks of this agent, so set `container-defaults.network` and
+  `container-flags-limit.allowed-custom-networks` on the agent as on the core nodes. The log names the networks that were checked. Cluster ports of the core nodes are checked from an agent only when you list them. The check runs about one minute after the start and does not delay it. If a container can connect, the agent logs an error that names the network and the service, for example
+  `Build containers on the network 'default' can reach [10.0.0.5:6379]`. The log lines are the result: watch for this error after the start of the agent. The check runs once per start, so restart the agent after every change of the network, the firewall or the Docker configuration.
+  The check only reports. It never stops the agent, and it is skipped, with an information message, when the image is not available because the agent cannot reach a registry.
+
+| Property                                                         | Default          | Meaning                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `artemis.continuous-integration.network-isolation-check.enabled` | see below        | The check is on unless this is `false`. The `dev` profile turns it off, because Docker Desktop forwards connections to the host to its loopback interface.                                                                                                                          |
+| `artemis.continuous-integration.network-isolation-check.image`   | `busybox:1.37.0` | The image of the probe container. It needs `sh`, `sleep`, `awk`, `sort`, `nslookup` and an `nc` that supports `-l`, `-e`, `-w` and `-z` (BusyBox has all of them). Without `nslookup` a target that is given by name is reported as undecided. A mirror of the image works as well. |
+| `artemis.continuous-integration.network-isolation-check.targets` | empty            | Further services as `host:port`, for example the database and the broker. The queue store (`spring.data.redis.host` and `port`) and, on a node with the `core` profile, the cluster port (`spring.hazelcast.interface` and `port`) are added automatically.                         |
+
+A service that is configured with a loopback address, such as `localhost`, is a service of the host. Inside a container the address names the container itself, so it is probed through the name that a container uses for its host. If the agent itself runs in a container, the address names the namespace of the agent and not the host, so a refused connection is reported as undecided, not as isolated.
+A service that listens on every interface of the host, for example a published port of a container, is reachable that way and is reported. A service that listens only on the loopback interface is not reachable from a container on Linux, which is the strongest
+form of isolation. Docker Desktop forwards connections to the host to its loopback interface too, so it reports such a service as reachable.
+
+## Checking Your Installation
+
+Run the checks after the initial setup, after every change of the network or the firewall, and after an upgrade of Docker or of the operating system of a host.
+
+**From outside.** On a machine that is not part of the installation, run the exposure check once per host that has a public or student-facing address:
+
+```bash
+supporting_scripts/security/check-network-exposure.sh artemis.example.org
+```
+
+It tries to connect to the ports of the internal services above and fails when one of them answers. It also fails when the HTTPS port is not reachable. Use `INTERNAL_PORTS`, `EXPECTED_PORTS` and `OPTIONAL_PORTS` to
+adjust the lists, for example when the database listens on a non-standard port.
+
+**From a build container.** Start a container on the network of your builds and try to connect to a service. The agents do the same at startup, so the log is the first place to look. To try it by hand:
+
+```bash
+docker run --rm --network <network of your builds> busybox:1.37.0 nc -w 3 -z <address of the service> <port>
+```
+
+An exit code of 0 means the container reached the service. A refused connection or a timeout gives 1, which is the expected result for a service that must be unreachable. But 1 is also the code of `nc` for a name that it cannot resolve and
+for an option that it does not accept, so use an IP address and add `-v`: the message says "refused" or "timed out" for a connection that was tried. An exit code of 125, 126 or 127 from Docker means that the container did not run.
+The check of the agents handles this itself: it resolves the names, starts with a connection that has to succeed inside the container, and reports everything it cannot decide as inconclusive.
+
+<Callout variant={CalloutVariant.info}>
+    A check that passes proves only what it tried. Add every internal service of your installation to the `targets` list, and repeat the checks when you add a service.
+</Callout>
+
+## Related Pages
+
+- [Security configuration](/admin/production-setup/security)
+- [Build environment](/admin/production-setup/localci-build-environment)
+- [Distributed data](/admin/production-setup/distributed-data)

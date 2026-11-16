@@ -93,6 +93,39 @@ class KubernetesBuildJobFactoryTest {
     }
 
     @Test
+    void administratorCanRestrictPrivilegeGain() {
+        ReflectionTestUtils.setField(factory, "allowPrivilegeEscalation", false);
+
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), null, 0, 0, 0)), "local-ci-job-r3", "agent");
+
+        Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isFalse();
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactlyInAnyOrder("MKNOD", "SYS_CHROOT", "SETFCAP", "AUDIT_WRITE");
+    }
+
+    @Test
+    void networkNoneAlsoDropsRawSockets() {
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), "none", 0, 0, 0)), "local-ci-job-r2", "agent");
+
+        Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactlyInAnyOrder("NET_RAW", "MKNOD", "SYS_CHROOT", "SETFCAP");
+        assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
+        assertThat(builder.getSecurityContext().getCapabilities().getAdd()).isNullOrEmpty();
+        // the helper container keeps dropping everything
+        assertThat(container(job, KubernetesBuildJobFactory.HELPER_CONTAINER).getSecurityContext().getCapabilities().getDrop()).containsExactly("ALL");
+    }
+
+    @Test
+    void theDefaultNetworkDropsTheUnusualCapabilitiesAndKeepsRawSockets() {
+        for (String network : new String[] { null, "", " " }) {
+            Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), network, 0, 0, 0)), "local-ci-job-r2", "agent");
+            Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+            assertThat(builder.getSecurityContext().getCapabilities().getDrop()).as("network '%s'", network).containsExactlyInAnyOrder("MKNOD", "SYS_CHROOT", "SETFCAP");
+            assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isNull();
+        }
+    }
+
+    @Test
     void rejectsUnsupportedRunFlagsAndMalformedEnvironment() {
         assertThatThrownBy(() -> factory.createJob(buildJob(new DockerRunConfig(List.of(), "course-network", 0, 0, 0)), "job", "agent")).isInstanceOf(LocalCIException.class)
                 .hasMessageContaining("Named Docker networks");

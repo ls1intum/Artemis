@@ -173,6 +173,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -229,6 +230,9 @@ public class CourseTestService {
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -783,7 +787,8 @@ public class CourseTestService {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), null);
             }
-            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
         }
 
         // Verify exercises are removed from Weaviate after course deletion
@@ -2310,6 +2315,9 @@ public class CourseTestService {
         parameters.set("nameOfUser", "student2");
         List<CourseMemberDTO> student2 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(student2).as("Another student in course found").hasSize(1);
+        // the search result only carries the data needed to pick a user
+        assertThat(student2.getFirst().login()).isNotNull();
+        assertThat(student2.getFirst().email()).isNull();
 
         // find a tutor for course
         parameters.set("nameOfUser", "tutor1");
@@ -3024,12 +3032,22 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitle() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setTitle("Test Course");
-        course = courseRepo.saveWithDefaultConfigurations(course);
+        course = courseRepo.save(course);
 
         final var title = request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
+    }
+
+    // Test
+    public void testGetCourseTitleAndAllowedComplaintsForUserOutsideTheCourse(String outsiderLogin) throws Exception {
+        userUtilService.createAndSaveUser(outsiderLogin);
+        Course course = courseUtilService.createCourse();
+        course = courseRepo.saveWithDefaultConfigurations(course);
+
+        request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/course/courses/" + course.getId() + "/allowed-complaints", HttpStatus.FORBIDDEN, Long.class);
     }
 
     // Test
@@ -3398,7 +3416,9 @@ public class CourseTestService {
         course = courseRepo.saveWithDefaultConfigurations(course);
         OnlineCourseConfiguration configuration = saveOnlineConfiguration(course, "prefix");
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         assertThat(onlineCourseConfigurationRepository.findById(configuration.getId())).isNotPresent();
     }

@@ -4,7 +4,7 @@
     </span>
 }
 <tumaet-ui-popover #resultsPopover padding="none" [ariaLabel]="'artemisApp.result.progressString.title' | artemisTranslate">
-    <div class="flex items-center justify-between px-3 bg-surface-raised border-b" style="height: 40px">
+    <div class="flex items-center justify-between px-4! bg-surface-raised border-b" style="height: 40px">
         <div class="flex items-center gap-2">
             <fa-icon [icon]="faClock" class="text-text-secondary" style="font-size: 14px" />
             <span class="font-medium text-text-secondary" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
@@ -18,7 +18,7 @@
         @for (result of displayedResults(); track result.id ?? $index) {
             <div
                 data-testid="result-history-row"
-                class="px-3 py-2 flex items-center gap-2"
+                class="px-4! py-2 flex items-center gap-2"
                 [class.cursor-pointer]="isRowClickable(result)"
                 [class.bg-active-row]="result.id === activeResultId()"
                 [attr.role]="isRowClickable(result) ? 'button' : undefined"

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.repository;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.persistence.LockModeType;
 
@@ -29,6 +30,25 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage, Long> {
 
     List<IrisMessage> findAllBySessionIdOrderBySentAtAscIdAsc(long sessionId);
+
+    /**
+     * Counts the messages that users and Iris exchanged in the chat sessions of the given courses: the questions of the users and the final answers of Iris.
+     * Intermediate status messages, summaries and tool artifacts are no messages in this sense. Only the number is returned, never who wrote what.
+     *
+     * @param courseIds the courses of the chat sessions
+     * @return the number of user messages and final Iris answers
+     */
+    @Query("""
+            SELECT COUNT(m.id)
+            FROM IrisMessage m
+                JOIN TREAT (m.session AS IrisChatSession) s
+            WHERE s.courseId IN :courseIds
+                AND m.sender IN (
+                    de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER,
+                    de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.LLM)
+                AND (m.intermediate IS NULL OR m.intermediate = FALSE)
+            """)
+    long countUserMessagesAndAnswersInCourses(@Param("courseIds") Set<Long> courseIds);
 
     /**
      * Counts the number of final LLM responses the user got within the given timeframe. Proactive responses count

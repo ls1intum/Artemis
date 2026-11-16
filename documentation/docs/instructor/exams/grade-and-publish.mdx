@@ -2,6 +2,7 @@
 id: grade-and-publish
 title: Grade an Exam and Publish Results
 sidebar_label: Grade and Publish
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -58,7 +59,7 @@ their results in their summary. It is usually the end of assessment, but nothing
 result. Average, median and standard deviation are given for the exam as a whole, and students' own difficulty
 ratings per exercise are collected alongside them, which is the most useful input into next year's exam.
 
-Two filters change what the figures are computed from — **only include submitted exams** and **only include
+Two filters change what the figures are computed from — **Include only submitted exams** and **Include only
 exercises with at least one non-empty submission**. Both exist because unsubmitted exams and undrawn exercises
 distort an average badly:
 
@@ -74,6 +75,8 @@ distort an average badly:
 the exercises they were assigned, their score per exercise, overall exam points and score, grade before any bonus,
 presentation score, and whether they submitted and passed. The file also carries the aggregated per-exercise
 statistics — number of participations and average score.
+
+For test exams, each attempt is scored from its own automatically assessed exercises. The score export includes **Maximum Exam Points** for each attempt, so the points and percentage use the same automatic subtotal even when attempts have different maxima.
 
 Three things appear only when they apply: bonus grades and the final grade when a bonus is configured, plagiarism
 verdicts when the exam has at least one, and plagiarism verdicts from the bonus source when that has one.

@@ -188,4 +188,29 @@ describe('DeleteDialogComponent', () => {
             { value: '5', headers: ['exam', 'exercises'] },
         ]);
     });
+    it('warns about a large amount of data and emphasises the large counts', () => {
+        fixture.detectChanges();
+        comp.categorizedEntitySummary.set([
+            {
+                titleKey: 'work',
+                items: [
+                    { labelKey: 'participations', value: 500, highlight: true },
+                    { labelKey: 'posts', value: 3, highlight: false },
+                ],
+            },
+        ]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="delete-dialog-large-count-warning"]')).not.toBeNull();
+        const cells = Array.from(fixture.nativeElement.querySelectorAll('td.item-value-cell')).filter((cell) => (cell as HTMLElement).textContent?.trim()) as HTMLElement[];
+        expect(cells.map((cell) => cell.classList.contains('font-bold'))).toEqual([true, false]);
+    });
+
+    it('does not warn when all counts are small', () => {
+        fixture.detectChanges();
+        comp.categorizedEntitySummary.set([{ titleKey: 'work', items: [{ labelKey: 'participations', value: 5, highlight: false }] }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="delete-dialog-large-count-warning"]')).toBeNull();
+    });
 });

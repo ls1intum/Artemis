@@ -113,7 +113,14 @@
                 <tumaet-ui-button severity="secondary" variant="outlined" [disabled]="importing()" (clicked)="visible.set(false)">
                     <span jhiTranslate="entity.action.cancel"></span>
                 </tumaet-ui-button>
-                <tumaet-ui-button [icon]="faFileImport" [disabled]="selectedCount() === 0" [loading]="importing()" (clicked)="importSelected()" data-testid="faq-import-submit">
+                <tumaet-ui-button
+                    severity="secondary"
+                    [icon]="faFileImport"
+                    [disabled]="selectedCount() === 0"
+                    [loading]="importing()"
+                    (clicked)="importSelected()"
+                    data-testid="faq-import-submit"
+                >
                     <span jhiTranslate="artemisApp.faq.import.importSelected" [translateValues]="{ count: selectedCount() }"></span>
                 </tumaet-ui-button>
             </div>

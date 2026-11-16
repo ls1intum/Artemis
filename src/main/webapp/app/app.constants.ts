@@ -145,6 +145,7 @@ export const PROFILE_DEV = 'dev';
 
 export const PROFILE_TEST = 'test';
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): remove the profile constant and its union member below
 export const PROFILE_JENKINS = 'jenkins';
 
 export type ProfileFeature =

@@ -34,13 +34,14 @@
         [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
     />
     @if (submission) {
-        <div class="row">
-            <jhi-resizeable-container class="col-12">
+        <div class="flex flex-wrap">
+            <jhi-resizeable-container class="w-full">
                 <!--region Left Panel-->
                 <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore()" [course]="course()" />
                 <jhi-text-assessment-area
                     left-body
                     [submission]="submission!"
+                    [allFeedbacks]="allAssessmentFeedbacks()"
                     [(textBlockRefs)]="textBlockRefs"
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences()"
@@ -52,12 +53,14 @@
                 <!--region Right Panel-->
                 <fa-icon right-header [icon]="farListAlt" />&nbsp;
                 <span right-header jhiTranslate="artemisApp.textAssessment.instructions"></span>
-                <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
+                <tumaet-ui-message right-body severity="info" class="mb-6! block text-center">
+                    <span jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></span>
+                </tumaet-ui-message>
                 <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview" />
                 <!--endregion-->
             </jhi-resizeable-container>
         </div>
-        <div class="row mt-3">
+        <div class="mt-4!">
             @if (result() && result()!.id) {
                 <jhi-unreferenced-feedback
                     [feedbacks]="unreferencedFeedback()"
@@ -78,12 +81,12 @@
         } @else if (!loadingInitialSubmission()) {
             <div>
                 @if (noNewSubmissions()) {
-                    <div class="alert alert-warning text-center mt-4" role="alert">
+                    <tumaet-ui-message severity="warn" class="mt-6! block text-center">
                         <p jhiTranslate="artemisApp.textAssessment.notFound"></p>
-                        <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                        <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">
+                            <span class="hidden md:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                         </a>
-                    </div>
+                    </tumaet-ui-message>
                 }
                 @if (!noNewSubmissions()) {
                     <p>No Submission for specified ID</p>

@@ -44,7 +44,12 @@
                 <div class="question-action-buttons">
                     <button
                         type="button"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
                         class="question-action-btn question-action-btn--delete"
+                        data-testid="quiz-question-delete"
                         attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
                         (click)="deleteQuestion()"
                     >

@@ -35,6 +35,7 @@ describe('ExamExerciseImportDialogComponent', () => {
 
     function open(exerciseType: ExerciseType): void {
         fixture.componentRef.setInput('exerciseType', exerciseType);
+        fixture.componentRef.setInput('courseId', 3);
         component.visible.set(true);
         fixture.detectChanges();
     }
@@ -48,15 +49,9 @@ describe('ExamExerciseImportDialogComponent', () => {
         expect(component['headerKey']()).toBe(headerKey);
     });
 
-    it('should offer the import from a file only for programming exercises', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
-        expect(component['fromFileAvailable']()).toBe(false);
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
-        expect(component['fromFileAvailable']()).toBe(true);
-    });
-
-    it('should show the existing exercises first and the file import after switching the tab', () => {
-        open(ExerciseType.PROGRAMMING);
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.TEXT])('should show the existing %s exercises first and the file import after switching the tab', (type) => {
+        open(type);
+        expect(document.body.querySelector('[data-testid="exercise-import-tabs"]')).not.toBeNull();
         expect(document.body.querySelector('jhi-exercise-import')).not.toBeNull();
         expect(document.body.querySelector('jhi-exercise-import-from-file')).toBeNull();
 
@@ -79,11 +74,5 @@ describe('ExamExerciseImportDialogComponent', () => {
 
         expect(document.body.querySelector('jhi-exercise-import')).not.toBeNull();
         expect(document.body.querySelector('jhi-exercise-import-from-file')).toBeNull();
-    });
-
-    it('should show no tabs for an exercise type that cannot be imported from a file', () => {
-        open(ExerciseType.QUIZ);
-        expect(document.body.querySelector('[data-testid="exercise-import-tabs"]')).toBeNull();
-        expect(document.body.querySelector('jhi-exercise-import')).not.toBeNull();
     });
 });

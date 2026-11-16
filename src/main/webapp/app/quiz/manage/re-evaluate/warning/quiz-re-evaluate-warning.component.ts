@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
@@ -18,7 +19,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
     styleUrls: ['../../../shared/quiz.scss'],
-    imports: [TranslateDirective, FaIconComponent],
+    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     private dialogRef = inject(DynamicDialogRef);

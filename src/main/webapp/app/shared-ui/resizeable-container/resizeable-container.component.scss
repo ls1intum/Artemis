@@ -121,23 +121,34 @@
 
 // for smaller screens (tablets, phones)
 @media (max-width: 992px) {
-    :host {
+    .resizable-container {
         flex-flow: column-reverse;
+        height: auto;
+        overflow: visible;
+        gap: var(--spacing-divider);
+    }
+
+    .left,
+    .right {
+        height: auto;
+        max-height: none;
+        flex-shrink: 0;
+    }
+
+    .right {
+        touch-action: auto;
     }
 
     .expanded {
         width: 100% !important;
         max-width: none;
 
-        // There is no handle to drag, but the panels keep the distance the divider has where there is one.
-        margin-left: var(--spacing-divider);
-
         .draggable-left {
             display: none;
         }
 
         .card {
-            margin-bottom: 30px;
+            min-width: 0;
         }
 
         #right-header-icon {

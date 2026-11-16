@@ -90,7 +90,7 @@ class OrchestratorDelegationToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L);
         service = new OrchestratorDelegationToolsService(templateService, delegationService, new AtlasToolSurface(readTools), new AtlasToolSurface(creatorTools),
                 new AtlasToolSurface(assignerTools), new AtlasToolSurface(editorTools), new AtlasToolSurface(terminalTools), properties, llmTokenUsageService, userRepository);
         workerTerminal = new AtlasWorkerTerminalToolService(new JsonMapper());
@@ -133,7 +133,7 @@ class OrchestratorDelegationToolsServiceTest {
 
     @Test
     void blankWorkerReasoningEffortFallsBackToTemperature() {
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 0.4, "xhigh", "gpt-4.1", " ", true, 300, 10, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 0.4, "xhigh", "gpt-4.1", " ", true, 300, 10, 30000L);
         OrchestratorDelegationToolsService nonReasoningService = new OrchestratorDelegationToolsService(templateService, delegationService, new AtlasToolSurface(readTools),
                 new AtlasToolSurface(creatorTools), new AtlasToolSurface(assignerTools), new AtlasToolSurface(editorTools), new AtlasToolSurface(terminalTools), properties,
                 llmTokenUsageService, userRepository);

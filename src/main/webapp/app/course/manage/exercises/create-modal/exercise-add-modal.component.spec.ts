@@ -4,7 +4,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as downloadUtil from 'app/foundation/util/download.util';
 
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -15,7 +19,6 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { ExerciseAddModalComponent } from 'app/course/manage/exercises/create-modal/exercise-add-modal.component';
 import { IMPORT_DIALOG_BACK } from 'app/course/manage/exercises/create-modal/import-dialog-footer.component';
-import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
@@ -237,17 +240,11 @@ describe('ExerciseAddModalComponent', () => {
             fixture.componentRef.setInput('courseId', 42);
         });
 
-        it('opens the tabbed import dialog for programming and the plain list for other types', () => {
-            component.startImport(ExerciseType.PROGRAMMING);
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.QUIZ])('opens the tabbed import dialog with the import from a file for %s', (type) => {
+            component.startImport(type);
             expect(dialogService.open).toHaveBeenLastCalledWith(
                 ExerciseImportTabsComponent,
-                expect.objectContaining({ data: expect.objectContaining({ exerciseType: ExerciseType.PROGRAMMING }) }),
-            );
-
-            component.startImport(ExerciseType.TEXT);
-            expect(dialogService.open).toHaveBeenLastCalledWith(
-                ExerciseImportComponent,
-                expect.objectContaining({ data: expect.objectContaining({ exerciseType: ExerciseType.TEXT }) }),
+                expect.objectContaining({ data: expect.objectContaining({ exerciseType: type, courseId: 42 }) }),
             );
         });
 
@@ -287,13 +284,21 @@ describe('ExerciseAddModalComponent', () => {
         );
 
         it('routes a from-file programming import (no id) to the import-from-file page with state', () => {
-            const fromFile = { title: 'from file' } as Exercise;
+            const fromFile = { title: 'from file', type: ExerciseType.PROGRAMMING } as Exercise;
             component.startImport(ExerciseType.PROGRAMMING);
             onClose.next(fromFile);
 
             expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import-from-file'], {
                 state: { programmingExerciseForImportFromFile: fromFile },
             });
+        });
+
+        it('routes a from-file import of another type (no id) to the editor of a new exercise with state', () => {
+            const fromFile = { title: 'from file', type: ExerciseType.FILE_UPLOAD } as Exercise;
+            component.startImport(ExerciseType.FILE_UPLOAD);
+            onClose.next(fromFile);
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'file-upload-exercises', 'new'], { state: { exerciseForImportFromFile: fromFile } });
         });
 
         it('does nothing when the dialog is dismissed without a result', () => {
@@ -310,22 +315,69 @@ describe('ExerciseAddModalComponent', () => {
         });
     });
 
-    describe('export and group creation', () => {
+    describe('export tab', () => {
+        const textExercise = { id: 1, title: 'Essay', type: ExerciseType.TEXT } as Exercise;
+        const quizExercise = { id: 2, title: 'Quiz', type: ExerciseType.QUIZ } as Exercise;
+
         beforeEach(() => {
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
             createComponent();
+            fixture.componentRef.setInput('exercises', [textExercise, quizExercise]);
+            fixture.componentRef.setInput('canExport', true);
+            fixture.componentRef.setInput('mode', 'export');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
         });
 
-        it('emits exportRequested and closes', () => {
-            const exported = vi.fn();
-            const emitted: boolean[] = [];
-            component.exportRequested.subscribe(exported);
-            component.visibleChange.subscribe((v) => emitted.push(v));
+        function query(testId: string): HTMLElement | null {
+            return document.querySelector(`[data-testid="${testId}"]`);
+        }
 
-            component.requestExport();
+        it('lists the exercises of the chosen type and goes back to the type cards', () => {
+            query('export-text-exercise')!.click();
+            fixture.detectChanges();
 
-            expect(exported).toHaveBeenCalledOnce();
-            expect(emitted).toEqual([false]);
+            expect(query('export-row-1')).not.toBeNull();
+            expect(query('export-row-2')).toBeNull();
+
+            query('export-back')!.click();
+            fixture.detectChanges();
+            expect(query('export-row-1')).toBeNull();
+            expect(query('export-text-exercise')).not.toBeNull();
+        });
+
+        it('downloads the exported zip file', () => {
+            const response = new HttpResponse({ body: new Blob(['zip']), headers: new HttpHeaders({ filename: 'Essay.zip' }) });
+            const exportSpy = vi.spyOn(TestBed.inject(ExerciseService), 'exportToFile').mockReturnValue(of(response));
+            const downloadSpy = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => {});
+
+            (component as unknown as { exportExercise: (exercise: Exercise) => void }).exportExercise(textExercise);
+
+            expect(exportSpy).toHaveBeenCalledExactlyOnceWith(textExercise);
+            expect(downloadSpy).toHaveBeenCalledExactlyOnceWith(response);
+        });
+
+        it('shows an error when the export fails', () => {
+            vi.spyOn(TestBed.inject(ExerciseService), 'exportToFile').mockReturnValue(throwError(() => new Error('failed')));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            (component as unknown as { exportExercise: (exercise: Exercise) => void }).exportExercise(textExercise);
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exerciseManagement.addModal.export.failed');
+        });
+
+        it('hides the export tab from users who may not export', () => {
+            expect(query('export-tab')).not.toBeNull();
+            fixture.componentRef.setInput('canExport', false);
+            fixture.detectChanges();
+            expect(query('export-tab')).toBeNull();
+        });
+    });
+
+    describe('group creation', () => {
+        beforeEach(() => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            createComponent();
         });
 
         it('emits groupCreate and closes', () => {

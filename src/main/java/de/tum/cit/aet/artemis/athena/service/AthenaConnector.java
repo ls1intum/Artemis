@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -61,8 +62,8 @@ class AthenaConnector<RequestType, ResponseType> {
         try {
             response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
         }
-        catch (ResourceAccessException e) {
-            log.error("Athena did not respond successfully in time", e);
+        catch (ResourceAccessException | RestClientResponseException e) {
+            log.error("Athena did not respond successfully", e);
             throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.", e);
         }
 

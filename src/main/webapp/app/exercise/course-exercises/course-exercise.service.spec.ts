@@ -25,7 +25,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { UMLDiagramType } from '@tumaet/apollon';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
@@ -299,6 +299,22 @@ describe('Course Management Service', () => {
         expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
         expect(programmingExercise.studentParticipations).toEqual([gradedParticipation]);
         expect(programmingExercise.releaseDate).toBe(originalReleaseDate);
+    });
+
+    it.each(['start', 'resume'])('surfaces a %s conflict immediately without an automatic retry', async (operation) => {
+        vi.useFakeTimers();
+        try {
+            let error: HttpErrorResponse | undefined;
+            const url = `api/exercise/exercises/${exerciseId}/participations${operation === 'resume' ? '/12345/resume-programming-participation' : ''}`;
+            const request = operation === 'resume' ? service.resumeProgrammingExercise(exerciseId, 12345, textExercise) : service.startExercise(exerciseId, textExercise);
+            request.subscribe({ error: (value) => (error = value) });
+            httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
+            expect(error?.status).toBe(409);
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should resume programming exercise', () => {

@@ -1,24 +1,22 @@
 @if (fileUploadExercise()) {
     <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
         <!--region Left Panel-->
-        <div left-body class="pe-2 pb-2 w-100" [class.ps-2]="!displayedInExamSummary()">
-            <div class="row">
+        <div left-body class="pe-2 pb-2 w-full" [class.ps-2]="!displayedInExamSummary()">
+            <div>
                 @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
-                    <div class="col-12 col-md-6">
-                        <div class="form-group">
-                            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
-                            <div class="input-group background-file">
-                                <div class="custom-file overflow-ellipsis">
-                                    <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
+                    <div class="w-full md:w-1/2">
+                        <div class="mb-4!">
+                            <label for="fileUploadInput" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
+                            <div class="flex w-full flex-wrap items-stretch">
+                                <div class="truncate">
+                                    <input #fileInput id="fileUploadInput" type="file" (change)="setFileSubmissionForExercise($event)" />
                                 </div>
                             </div>
-                            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
+                            <p class="inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
                             @if (fileUploadExercise()?.filePattern; as filePattern) {
                                 @for (extension of filePattern.split(','); track extension) {
-                                    <div class="d-inline-block">
-                                        <span class="ms-1 badge bg-info">
-                                            {{ extension | uppercase }}
-                                        </span>
+                                    <div class="inline-block">
+                                        <tumaet-ui-tag class="ms-1" severity="info" size="sm" [value]="extension | uppercase" />
                                     </div>
                                 }
                             }
@@ -27,7 +25,7 @@
                 }
             </div>
             @if (submittedFileName() && submission()?.filePathUrl) {
-                <div class="card-text">
+                <div data-testid="submitted-file">
                     @if (!displayedInExamSummary()) {
                         <h6>
                             {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() } }}
@@ -43,6 +41,7 @@
                     <div class="mt-2">
                         @if (submission()?.filePathUrl; as filePathUrl) {
                             <button
+                                severity="secondary"
                                 type="button"
                                 jhi-exercise-action-button
                                 [smallButton]="true"
@@ -52,9 +51,7 @@
                             ></button>
                         }
                         @if (submittedFileExtension()) {
-                            <span class="ms-2 badge bg-info">
-                                {{ submittedFileExtension() | uppercase }}
-                            </span>
+                            <tumaet-ui-tag class="ms-2" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
                         }
                     </div>
                 </div>
@@ -63,10 +60,10 @@
                 <div>
                     <br />
                     <h5 class="text-base! font-semibold!"><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
-                    <div class="row">
+                    <div>
                         @if (unreferencedFeedback(); as feedback) {
                             @if (feedback.length) {
-                                <div id="additional-feedback" class="col-xl-8">
+                                <div id="additional-feedback" class="w-full xl:w-2/3">
                                     @for (f of feedback; track f.id) {
                                         <jhi-unified-feedback
                                             [feedback]="f"
@@ -79,9 +76,9 @@
                             }
                         }
                     </div>
-                    <div class="row">
+                    <div>
                         @if (isOwnerOfParticipation() && result() && participation()) {
-                            <div class="col-xl-8 mt-2">
+                            <div class="mt-2 w-full xl:w-2/3">
                                 <jhi-rating [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
                             </div>
                         }

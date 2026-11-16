@@ -14,6 +14,12 @@
                 <span class="ms-2" jhiTranslate="loading"></span>
             </div>
         } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {
+            @if (hasLargeCount()) {
+                <p class="mb-2! font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
+                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                    <span jhiTranslate="entity.delete.summary.largeCountWarning"></span>
+                </p>
+            }
             <div class="entity-summary-table">
                 <table tumAetUiTable size="small">
                     <tbody>
@@ -28,7 +34,12 @@
                                     <th [id]="summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-0'" class="item-label-cell">
                                         <span [jhiTranslate]="pair[0].labelKey"></span>
                                     </th>
-                                    <td headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-0" class="item-value-cell">
+                                    <td
+                                        headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-0"
+                                        class="item-value-cell"
+                                        [class.font-bold]="pair[0].highlight"
+                                        [class.text-state-danger]="pair[0].highlight"
+                                    >
                                         {{ pair[0].value }}
                                     </td>
                                     @if (pair[1]) {
@@ -38,6 +49,8 @@
                                         <td
                                             headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-1"
                                             class="item-value-cell"
+                                            [class.font-bold]="pair[1].highlight"
+                                            [class.text-state-danger]="pair[1].highlight"
                                         >
                                             {{ pair[1].value }}
                                         </td>

@@ -3,11 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { User } from 'app/account/user/user.model';
+import { By } from '@angular/platform-browser';
+import { ExternalSubmissionStudentSearchComponent } from 'app/exercise/external-submission/external-submission-student-search.component';
+import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/external-submission-candidate.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -87,7 +89,8 @@ describe('ExternalSubmissionDialogComponent', () => {
         component.result = result;
         const exercise = { id: 2 } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
-        component.student = { id: 3 } as User;
+        const student: ExternalSubmissionCandidate = { login: 'student3', name: 'Student Three' };
+        component.selectedStudent.set(student);
 
         const subject: Subject<HttpResponse<Result>> = new Subject<HttpResponse<Result>>();
         const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(subject.asObservable());
@@ -106,7 +109,7 @@ describe('ExternalSubmissionDialogComponent', () => {
         expect(result.feedbacks).toBe(component.feedbacks);
         expect(result.feedbacks?.every((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
         expect(createMock).toHaveBeenCalledOnce();
-        expect(createMock).toHaveBeenCalledWith(exercise, component.student, result);
+        expect(createMock).toHaveBeenCalledWith(exercise, student, result);
         expect(dialogRefCloseSpy).not.toHaveBeenCalled();
 
         subject.next(new HttpResponse<Result>({ body: result }));
@@ -122,6 +125,7 @@ describe('ExternalSubmissionDialogComponent', () => {
         component.result = new Result();
         component.isSaving.set(true);
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
+        component.selectedStudent.set({ login: 'student1' });
 
         const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const onSaveErrorSpy = vi.spyOn(component, 'onSaveError');
@@ -130,6 +134,78 @@ describe('ExternalSubmissionDialogComponent', () => {
         expect(createMock).toHaveBeenCalledOnce();
         expect(onSaveErrorSpy).toHaveBeenCalledOnce();
         expect(component.isSaving()).toBe(false);
+    });
+
+    describe('student selection', () => {
+        const student: ExternalSubmissionCandidate = { login: 'ga12abc', name: 'Jane Doe' };
+
+        const saveButton = (): HTMLButtonElement => fixture.nativeElement.querySelector('button[type="submit"]');
+        const studentSearch = (): ExternalSubmissionStudentSearchComponent => fixture.debugElement.query(By.directive(ExternalSubmissionStudentSearchComponent)).componentInstance;
+
+        const render = async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        };
+
+        beforeEach(async () => {
+            fixture.componentRef.setInput('exercise', { id: 2, title: 'Sorting review' } as Exercise);
+            await render();
+        });
+
+        it('keeps Save disabled until a student is selected and disables it again when the selection is cleared', async () => {
+            expect(saveButton().disabled).toBe(true);
+
+            studentSearch().studentSelected.emit(student);
+            await render();
+            expect(saveButton().disabled).toBe(false);
+
+            studentSearch().studentSelected.emit(undefined);
+            await render();
+            expect(saveButton().disabled).toBe(true);
+        });
+
+        it('shows the missing student only once under the field, and not when the exercise takes no external submissions yet', async () => {
+            const searchField = (): HTMLInputElement => fixture.nativeElement.querySelector('input[role="combobox"]');
+            const leaveField = async () => {
+                searchField().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+                await render();
+            };
+            const occurrences = (key: string) => (fixture.nativeElement.textContent as string).split(key).length - 1;
+
+            await leaveField();
+            expect(occurrences('artemisApp.result.studentLoginRequired')).toBe(1);
+
+            vi.spyOn(externalSubmissionService, 'searchCandidates').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-error': 'error.externalSubmissionBeforeDueDate' }) })),
+            );
+            searchField().dispatchEvent(new FocusEvent('focus'));
+            searchField().value = 'jane';
+            searchField().dispatchEvent(new Event('input', { bubbles: true }));
+            await new Promise((resolve) => setTimeout(resolve, 350));
+            await leaveField();
+
+            expect(occurrences('error.externalSubmissionBeforeDueDate')).toBeGreaterThan(0);
+            expect(occurrences('artemisApp.result.studentLoginRequired')).toBe(0);
+        });
+
+        it('posts the login of the selected student when saving', async () => {
+            const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(new Subject<HttpResponse<Result>>().asObservable());
+            studentSearch().studentSelected.emit(student);
+            await render();
+
+            saveButton().click();
+
+            expect(createMock).toHaveBeenCalledOnce();
+            expect(createMock.mock.calls[0][1].login).toBe('ga12abc');
+        });
+
+        it('does not save without a selected student', () => {
+            const createMock = vi.spyOn(externalSubmissionService, 'create');
+            component.save();
+            expect(createMock).not.toHaveBeenCalled();
+            expect(component.isSaving()).toBe(false);
+        });
     });
 
     it('should add a new feedback on pushFeedback and remove last on popFeedback', () => {

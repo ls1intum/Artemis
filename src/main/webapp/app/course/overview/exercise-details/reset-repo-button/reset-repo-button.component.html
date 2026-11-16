@@ -4,9 +4,12 @@
         (gradedParticipation()?.initializationState === INITIALIZED && beforeIndividualDueDate())
     ) {
         <button
+            data-button-intent="destructive"
+            data-button-intent-reason="Resets the exercise repository and discards the participation work"
             type="button"
             jhi-exercise-action-button
-            class="btn-danger"
+            data-testid="reset-repository-action"
+            severity="danger"
             [buttonIcon]="faBackward"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.resetRepository.label' | artemisTranslate"
@@ -46,11 +49,17 @@
                 />
             }
             <div class="button-footer">
-                <button class="btn btn-danger" type="submit" [disabled]="resetForm.invalid || isLoading()" (click)="resetRepository()">
+                <button data-button-intent="destructive" class="btn btn-danger" type="submit" [disabled]="resetForm.invalid || isLoading()" (click)="resetRepository()">
                     <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate"></span>
                 </button>
                 @if (gradedParticipation() && practiceParticipation()) {
-                    <button class="btn btn-danger ms-2" type="submit" [disabled]="resetForm.invalid || isLoading()" (click)="resetRepository(gradedParticipation()?.id)">
+                    <button
+                        data-button-intent="destructive"
+                        class="btn btn-danger ms-2"
+                        type="submit"
+                        [disabled]="resetForm.invalid || isLoading()"
+                        (click)="resetRepository(gradedParticipation()?.id)"
+                    >
                         <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation"></span>
                     </button>
                 }

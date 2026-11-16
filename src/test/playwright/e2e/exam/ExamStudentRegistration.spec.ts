@@ -12,8 +12,8 @@ const course = { id: SEED_COURSES.examManagement.id } as any;
 
 /**
  * Registering students and taking them off an exam again. Removing a student takes their access and their individual exam; the work they handed in
- * stays, unless the instructor explicitly asks to delete it, too. Students who are registered after the individual exams were generated get theirs
- * from "Generate missing individual exams" without touching the exams of the others.
+ * stays, unless the instructor explicitly asks to delete it, too. Students registered after generation receive their individual exams automatically,
+ * without touching the exams of the others.
  */
 test.describe('Exam student registration', { tag: '@slow' }, () => {
     let exam: Exam;
@@ -114,7 +114,7 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
         expect(await handedInTexts(page, exercise.id!), 'only the submission of the removed student is deleted').toEqual([`Answer of ${studentOne.username}`]);
     });
 
-    test('Individual exams that are missing are generated without touching the existing ones', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
+    test('Late registration generates individual exams without touching the existing ones', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
         exam = await examAPIRequests.createExam({ course, visibleDate: dayjs().subtract(1, 'day'), startDate: dayjs().add(2, 'days'), endDate: dayjs().add(3, 'days') });
         const exerciseGroup: ExerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
@@ -126,28 +126,34 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
         const existing: StudentExam[] = await examAPIRequests.getAllStudentExams(exam);
         expect(existing).toHaveLength(2);
 
-        // Two more students are registered afterwards, and the exam has none for them.
+        // Registering two more students automatically generates their missing individual exams.
         for (const student of [studentThree, studentFour]) {
             await examAPIRequests.registerStudentForExam(exam, student);
         }
-        await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
-        await page.getByRole('button', { name: 'Individual exams', exact: true }).click();
-        const generated = page.waitForResponse((response) => response.url().includes('generate-missing-student-exams'));
-        await page.locator('[data-testid="exam-students-menu-item"]', { hasText: 'Generate missing individual exams' }).last().click();
-        expect((await generated).status()).toBe(200);
-
-        await login(admin);
         const all: StudentExam[] = await examAPIRequests.getAllStudentExams(exam);
         expect(all, 'one individual exam per registered student').toHaveLength(4);
+        expect(new Set(all.map((studentExam) => studentExam.id)).size).toBe(4);
         for (const studentExam of existing) {
             expect(
                 all.map((candidate) => candidate.id),
                 `the existing individual exam ${studentExam.id} is kept`,
             ).toContain(studentExam.id);
         }
-        // Nothing is left to generate: the menu entry is disabled.
+        // The student list contains all four students, and nothing is left to generate.
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
+        await expect(page.getByTestId('remove-student-button')).toHaveCount(4);
+        for (const student of [studentOne, studentTwo, studentThree, studentFour]) {
+            await expect(page.getByTestId('exam-students-table').getByText(student.username, { exact: true })).toBeVisible();
+        }
         await page.getByRole('button', { name: 'Individual exams', exact: true }).click();
-        await expect(page.locator('[data-testid="exam-students-menu-entry"]', { hasText: 'Generate missing individual exams' })).toHaveAttribute('aria-disabled', 'true');
+        await expect(page.getByTestId('exam-students-menu-entry').filter({ hasText: 'Generate missing individual exams' })).toHaveAttribute('aria-disabled', 'true');
+
+        // Repeating the API action is also a no-op and preserves all four saved IDs.
+        await login(admin);
+        await examAPIRequests.generateMissingIndividualExams(exam);
+        const afterNoOp: StudentExam[] = await examAPIRequests.getAllStudentExams(exam);
+        expect(afterNoOp.map((studentExam) => studentExam.id).sort((left, right) => left! - right!)).toEqual(
+            all.map((studentExam) => studentExam.id).sort((left, right) => left! - right!),
+        );
     });
 });

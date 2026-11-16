@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     TumAetUiButtonDirective,
@@ -18,9 +18,10 @@ import {
     EntitySummaryItem,
     triggerDeleteDialogDelete,
 } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { hasLargeSummaryCount } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faExclamationTriangle, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -61,6 +62,7 @@ export class DeleteDialogComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faCheck = faCheck;
     protected readonly faUndo = faUndo;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     readonly actionTypes = ActionType;
     protected readonly ButtonType = ButtonType;
@@ -73,6 +75,8 @@ export class DeleteDialogComponent implements OnInit {
     entitySummary = signal<EntitySummary | undefined>({});
     categorizedEntitySummary = signal<EntitySummaryCategory[] | undefined>(undefined);
     isLoadingSummary = signal(false);
+    // warn when the summary lists a lot of data, so nobody deletes an entity with much student work by accident
+    readonly hasLargeCount = computed(() => hasLargeSummaryCount(this.categorizedEntitySummary()));
 
     // Regular properties for ngModel two-way binding
     confirmEntityName = '';

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -58,6 +59,9 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "gtsettingtest";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -292,7 +296,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1);
 
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseGroupDeletion(exam1.getId(), exerciseGroup1.getId());
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
 
@@ -334,7 +339,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Long secondId = exam.getExerciseGroups().get(1).getId();
         Long thirdId = exam.getExerciseGroups().get(2).getId();
 
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups/" + secondId, HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups/" + secondId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseGroupDeletion(exam.getId(), secondId);
 
         Exam reloaded = examRepository.findWithExerciseGroupsById(exam.getId()).orElseThrow();
         assertThat(reloaded.getExerciseGroups()).as("the ordered exercise-group list must not contain a null gap").doesNotContainNull();

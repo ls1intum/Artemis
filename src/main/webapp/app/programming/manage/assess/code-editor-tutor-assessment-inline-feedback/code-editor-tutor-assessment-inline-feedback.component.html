@@ -24,7 +24,15 @@
         <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
             @if (!isNewOrManual()) {
                 <div class="inline-feedback-actions">
-                    <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+                    <button
+                        data-testid="feedback-save"
+                        type="submit"
+                        [disabled]="feedback.credits === undefined"
+                        tumAetUiButton
+                        severity="primary"
+                        size="small"
+                        (click)="updateFeedback()"
+                    >
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                 </div>
@@ -43,7 +51,7 @@
             />
         </div>
         @if (!readOnly()) {
-            <button type="submit" (click)="editFeedback(codeLine())" class="btn btn-primary btn-sm">
+            <button type="submit" (click)="editFeedback(codeLine())" tumAetUiButton severity="warn" variant="text" size="small">
                 <fa-icon [icon]="faPencilAlt" />
                 <span jhiTranslate="entity.action.edit"></span>
             </button>

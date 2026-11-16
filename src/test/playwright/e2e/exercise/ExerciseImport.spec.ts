@@ -66,6 +66,34 @@ test.describe('Import exercises', () => {
         });
 
         test(
+            'Exports a text exercise to a file and imports it into another course',
+            { tag: '@fast' },
+            async ({ login, page, courseManagementExercises, textExerciseCreation }, testInfo) => {
+                await login(instructor, `/course-management/${course.id}/exercises`);
+                const download = await courseManagementExercises.exportExercise('text', textExercise.id!);
+                const exportedFile = testInfo.outputPath(download.suggestedFilename());
+                await download.saveAs(exportedFile);
+
+                await page.goto(`/course-management/${secondCourse.id}/exercises`);
+                await courseManagementExercises.importExerciseFromFile('text', exportedFile);
+
+                await textExerciseCreation.waitForFormToLoad();
+                await expect(page.locator('#field_title')).toHaveValue(textExercise.title!);
+                await expect(page.locator('#field_points')).toHaveValue(`${textExercise.maxPoints!}`);
+
+                await textExerciseCreation.setReleaseDate(dayjs());
+                await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+                await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+
+                const createResponse = await textExerciseCreation.create();
+                expect(createResponse.status()).toBe(201);
+                const exercise: TextExercise = await readResponseJson(createResponse);
+                expect(exercise.id).not.toBe(textExercise.id);
+                expect(exercise.title).toBe(textExercise.title);
+            },
+        );
+
+        test(
             'Imports multiple choice quiz exercise',
             { tag: '@fast' },
             async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseMultipleChoice }) => {

@@ -41,7 +41,7 @@
         </tumaet-ui-message>
     } @else if (programmingRun(); as run) {
         <jhi-hyperion-run-inspector [showStepCounter]="false" [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
-        <div class="mt-4 flex justify-end border-t border-border pt-4">
+        <div class="mt-6! flex justify-end border-t border-border pt-6!">
             <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
                 {{
                     (programmingRunActive() ? 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' : 'artemisApp.exerciseVariantGeneration.wizard.close')
@@ -65,7 +65,7 @@
                 }
             </div>
             @if (adaptations().length > 0) {
-                <div class="flex flex-wrap gap-1 mb-4" data-testid="variant-wizard-adaptations">
+                <div class="flex flex-wrap gap-1 mb-6!" data-testid="variant-wizard-adaptations">
                     @for (chip of adaptations(); track chip) {
                         <span class="info-chip">{{ chip }}</span>
                     }
@@ -89,7 +89,7 @@
 
         <!-- ── Step 1: Select ─────────────────────────────────────────────────────── -->
         @if (wizardStep() === 1) {
-            <p class="text-muted-color text-sm mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
+            <p class="text-muted-color text-sm mb-6!">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
 
             <div class="option-cards mb-6" [class.option-cards--three]="isExamExercise()">
                 @if (!isExamExercise()) {
@@ -175,7 +175,7 @@
                 @if (changeDifficulty()) {
                     <div class="field-group">
                         <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.targetDifficulty' | artemisTranslate }}</p>
-                        <div class="flex gap-4 flex-wrap">
+                        <div class="flex gap-6! flex-wrap">
                             @for (d of availableDifficulties(); track d.value) {
                                 <div class="radio-item">
                                     <tumaet-ui-radio-button
@@ -207,7 +207,7 @@
                 @if (changeNarrative()) {
                     <div class="field-group">
                         <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.narrative' | artemisTranslate }}</p>
-                        <div class="flex gap-4 flex-wrap">
+                        <div class="flex gap-6! flex-wrap">
                             @for (style of narrativeStyles; track style.value) {
                                 <div
                                     class="radio-item"
@@ -487,13 +487,21 @@
                         </li>
                     }
                 </ol>
-                <tumaet-ui-message severity="info" styleClass="mt-4 mb-0 text-sm" data-testid="variant-wizard-background-hint">
+                <tumaet-ui-message severity="info" styleClass="mt-6! mb-0 text-sm" data-testid="variant-wizard-background-hint">
                     <fa-icon [icon]="faInfoCircle" class="mr-1" />
                     <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</span>
                 </tumaet-ui-message>
                 @if (isRunning()) {
-                    <div class="flex justify-end gap-2 mt-4">
-                        <tumaet-ui-button severity="danger" variant="outlined" size="small" (clicked)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
+                    <div class="flex justify-end gap-2 mt-6!">
+                        <tumaet-ui-button
+                            data-button-intent="destructive"
+                            data-button-intent-reason="Stops the running generation job"
+                            severity="danger"
+                            variant="outlined"
+                            size="small"
+                            (clicked)="cancelGeneration($event)"
+                            data-testid="variant-wizard-cancel"
+                        >
                             <fa-icon [icon]="faBan" class="mr-1" />
                             {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
                         </tumaet-ui-button>
@@ -508,7 +516,7 @@
         <!-- ── Step 5: Result ───────────────────────────── -->
         @if (wizardStep() === 5) {
             @if (jobPhase() === 'FAILED') {
-                <div class="ai-warning mb-4" data-testid="variant-wizard-failed">
+                <div class="ai-warning mb-6!" data-testid="variant-wizard-failed">
                     <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                     <div>
                         <div class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.failedTitle' | artemisTranslate }}</div>
@@ -530,13 +538,13 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                        <tumaet-ui-button severity="warn" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                         </tumaet-ui-button>
                     }
                 </div>
             } @else if (jobPhase() === 'CANCELLED') {
-                <div class="ai-warning mb-4" data-testid="variant-wizard-cancelled">
+                <div class="ai-warning mb-6!" data-testid="variant-wizard-cancelled">
                     <fa-icon [icon]="faBan" class="ai-warning__icon" />
                     <div>
                         <span>{{ 'artemisApp.exerciseVariantGeneration.phase.CANCELLED' | artemisTranslate }}</span>
@@ -552,7 +560,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
+                        <tumaet-ui-button severity="warn" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                         </tumaet-ui-button>
                     }
@@ -560,7 +568,7 @@
             } @else {
                 <!-- Title/type live in the flow card above; this row only adds the variant's key facts. -->
                 @if (generatedVariant(); as variant) {
-                    <div class="flex flex-wrap items-center gap-1 mb-4" data-testid="variant-wizard-result">
+                    <div class="flex flex-wrap items-center gap-1 mb-6!" data-testid="variant-wizard-result">
                         @if (variant.maxPoints) {
                             <span class="info-chip">{{ 'artemisApp.exerciseVariantGeneration.wizard.points' | artemisTranslate: { points: variant.maxPoints } }}</span>
                         }
@@ -573,7 +581,7 @@
                  AI post-mortem explains how to continue, and the raw gate messages stay one click away
                  instead of dominating the dialog as an unreadable wall of yellow. -->
                 @if (jobPhase() === 'DRAFT_WITH_WARNINGS') {
-                    <div class="ai-warning mb-4" data-testid="variant-wizard-warnings">
+                    <div class="ai-warning mb-6!" data-testid="variant-wizard-warnings">
                         <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                         <div class="min-w-0">
                             <div class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
@@ -599,17 +607,17 @@
                     <ng-container *ngTemplateOutlet="nextSteps" />
                 }
                 <ng-container *ngTemplateOutlet="stepSummary" />
-                <div class="ai-warning mt-4">
+                <div class="ai-warning mt-6!">
                     <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                     <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.aiDisclaimer' | artemisTranslate }}</span>
                 </div>
 
-                <div class="flex justify-end gap-2 mt-4">
+                <div class="flex justify-end gap-2 mt-6!">
                     <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     <tumaet-ui-button
-                        severity="primary"
+                        severity="warn"
                         size="small"
                         [icon]="faPenToSquare"
                         [disabled]="!generatedVariant()"
@@ -626,7 +634,7 @@
          guidance for that outcome. ── -->
         <ng-template #nextSteps>
             @if (instructorSummary(); as summary) {
-                <div class="step-summary mb-4" data-testid="variant-wizard-instructor-summary">
+                <div class="step-summary mb-6!" data-testid="variant-wizard-instructor-summary">
                     <div class="step-summary__title">
                         <fa-icon [icon]="faRobot" class="mr-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.nextStepsTitle' | artemisTranslate }}
@@ -634,14 +642,14 @@
                     <div class="instructor-summary-text">{{ summary }}</div>
                 </div>
             } @else {
-                <p class="text-sm text-muted-color mb-4" data-testid="variant-wizard-failed-guidance">{{ fallbackGuidanceKey() | artemisTranslate }}</p>
+                <p class="text-sm text-muted-color mb-6!" data-testid="variant-wizard-failed-guidance">{{ fallbackGuidanceKey() | artemisTranslate }}</p>
             }
         </ng-template>
 
         <!-- ── "What the AI did" summary — shared by the failed and result views ── -->
         <ng-template #stepSummary>
             @if (recordedStepOutputs().length > 0) {
-                <div class="step-summary mb-4" data-testid="variant-wizard-summary">
+                <div class="step-summary mb-6!" data-testid="variant-wizard-summary">
                     <div class="flex items-center justify-between">
                         <div class="step-summary__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.summaryTitle' | artemisTranslate }}</div>
                         @if (totalTokensUsed(); as tokens) {

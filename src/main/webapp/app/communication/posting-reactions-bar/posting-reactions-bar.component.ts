@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -76,6 +77,7 @@ interface ReactionMetaDataMap {
     templateUrl: './posting-reactions-bar.component.html',
     styleUrls: ['./posting-reactions-bar.component.scss'],
     imports: [
+        TumAetUiButtonDirective,
         NgbTooltip,
         EmojiComponent,
         CdkOverlayOrigin,

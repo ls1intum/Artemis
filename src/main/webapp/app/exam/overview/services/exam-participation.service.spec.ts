@@ -136,6 +136,21 @@ describe('ExamParticipationService', () => {
         req.flush(returnedFromService);
     });
 
+    it('surfaces an own exam load conflict immediately without an automatic retry', async () => {
+        vi.useFakeTimers();
+        try {
+            let error: HttpErrorResponse | undefined;
+            service.getOwnStudentExam(1, 2).subscribe({ error: (value) => (error = value) });
+            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
+            expect(error?.status).toBe(409);
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('should load a StudentExam', async () => {
         const sendExam = Object.assign(
             {

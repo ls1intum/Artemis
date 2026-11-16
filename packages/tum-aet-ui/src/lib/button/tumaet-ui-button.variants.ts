@@ -13,33 +13,33 @@ const BASE =
     'tumaet-ui-btn tumaet:inline-flex tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:gap-2 tumaet:rounded-md tumaet:border tumaet:font-normal tumaet:transition-colors tumaet:focus-visible:outline-none tumaet:disabled:opacity-60 tumaet:disabled:pointer-events-none';
 
 const SOLID: Record<TumAetUiButtonSeverity, string> = {
-    primary: 'tumaet:bg-primary tumaet:text-primary-contrast tumaet:border-primary',
-    secondary: 'tumaet:bg-hover-background tumaet:text-text tumaet:border-hover-background',
-    success: 'tumaet:bg-state-success tumaet:text-state-success-contrast tumaet:border-state-success',
-    info: 'tumaet:bg-state-info tumaet:text-state-info-contrast tumaet:border-state-info',
-    warn: 'tumaet:bg-state-warning tumaet:text-state-warning-contrast tumaet:border-state-warning',
-    danger: 'tumaet:bg-state-danger tumaet:text-state-danger-contrast tumaet:border-state-danger',
-    contrast: 'tumaet:bg-contrast-background tumaet:text-contrast tumaet:border-contrast-background',
+    primary: 'tumaet:bg-button-primary tumaet:text-button-primary-contrast tumaet:border-button-primary',
+    secondary: 'tumaet:bg-button-secondary tumaet:text-button-secondary-contrast tumaet:border-button-secondary',
+    success: 'tumaet:bg-button-success tumaet:text-button-success-contrast tumaet:border-button-success',
+    info: 'tumaet:bg-button-info tumaet:text-button-info-contrast tumaet:border-button-info',
+    warn: 'tumaet:bg-button-warn tumaet:text-button-warn-contrast tumaet:border-button-warn',
+    danger: 'tumaet:bg-button-danger tumaet:text-button-danger-contrast tumaet:border-button-danger',
+    contrast: 'tumaet:bg-button-contrast tumaet:text-button-contrast-contrast tumaet:border-button-contrast',
 };
 
 const OUTLINED: Record<TumAetUiButtonSeverity, string> = {
-    primary: 'tumaet:bg-transparent tumaet:text-accent tumaet:border-primary',
-    secondary: 'tumaet:bg-transparent tumaet:text-text tumaet:border-border',
-    success: 'tumaet:bg-transparent tumaet:text-state-success-foreground tumaet:border-state-success',
-    info: 'tumaet:bg-transparent tumaet:text-state-info-foreground tumaet:border-state-info',
-    warn: 'tumaet:bg-transparent tumaet:text-state-warning-foreground tumaet:border-state-warning',
-    danger: 'tumaet:bg-transparent tumaet:text-state-danger-foreground tumaet:border-state-danger',
-    contrast: 'tumaet:bg-transparent tumaet:text-contrast-background tumaet:border-contrast-background',
+    primary: 'tumaet:bg-transparent tumaet:text-button-primary-foreground tumaet:border-button-primary',
+    secondary: 'tumaet:bg-transparent tumaet:text-button-secondary-foreground tumaet:border-button-secondary-border',
+    success: 'tumaet:bg-transparent tumaet:text-button-success-foreground tumaet:border-button-success',
+    info: 'tumaet:bg-transparent tumaet:text-button-info-foreground tumaet:border-button-info',
+    warn: 'tumaet:bg-transparent tumaet:text-button-warn-foreground tumaet:border-button-warn',
+    danger: 'tumaet:bg-transparent tumaet:text-button-danger-foreground tumaet:border-button-danger',
+    contrast: 'tumaet:bg-transparent tumaet:text-button-contrast-foreground tumaet:border-button-contrast',
 };
 
 const TEXT: Record<TumAetUiButtonSeverity, string> = {
-    primary: 'tumaet:bg-transparent tumaet:text-accent tumaet:border-transparent',
-    secondary: 'tumaet:bg-transparent tumaet:text-muted tumaet:border-transparent',
-    success: 'tumaet:bg-transparent tumaet:text-state-success-foreground tumaet:border-transparent',
-    info: 'tumaet:bg-transparent tumaet:text-state-info-foreground tumaet:border-transparent',
-    warn: 'tumaet:bg-transparent tumaet:text-state-warning-foreground tumaet:border-transparent',
-    danger: 'tumaet:bg-transparent tumaet:text-state-danger-foreground tumaet:border-transparent',
-    contrast: 'tumaet:bg-transparent tumaet:text-contrast-background tumaet:border-transparent',
+    primary: 'tumaet:bg-transparent tumaet:text-button-primary-foreground tumaet:border-transparent',
+    secondary: 'tumaet:bg-transparent tumaet:text-button-secondary-foreground tumaet:border-transparent',
+    success: 'tumaet:bg-transparent tumaet:text-button-success-foreground tumaet:border-transparent',
+    info: 'tumaet:bg-transparent tumaet:text-button-info-foreground tumaet:border-transparent',
+    warn: 'tumaet:bg-transparent tumaet:text-button-warn-foreground tumaet:border-transparent',
+    danger: 'tumaet:bg-transparent tumaet:text-button-danger-foreground tumaet:border-transparent',
+    contrast: 'tumaet:bg-transparent tumaet:text-button-contrast-foreground tumaet:border-transparent',
 };
 
 const SIZE: Record<TumAetUiButtonSize, string> = {

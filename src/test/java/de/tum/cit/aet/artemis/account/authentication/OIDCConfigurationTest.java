@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.SecurityFilterChain;
 
 import de.tum.cit.aet.artemis.account.config.OIDCConfiguration;
+import de.tum.cit.aet.artemis.account.repository.oidc.DistributedOIDCAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
@@ -52,6 +53,11 @@ class OIDCConfigurationTest {
         @Bean
         OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler() {
             return Mockito.mock(OIDCAuthenticationFailureHandler.class);
+        }
+
+        @Bean
+        DistributedOIDCAuthorizationRequestRepository distributedOIDCAuthorizationRequestRepository() {
+            return Mockito.mock(DistributedOIDCAuthorizationRequestRepository.class);
         }
     }
 

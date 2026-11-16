@@ -18,7 +18,8 @@
     } @else if (failed()) {
         <tumaet-ui-message severity="warn"
             ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.comparisonError"></span
-            ><tumaet-ui-button size="small" variant="text" (clicked)="reload()"><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
+            ><tumaet-ui-button severity="secondary" size="small" variant="text" (clicked)="reload()"
+                ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
         ></tumaet-ui-message>
     } @else if (exercises().length) {
         <div class="max-w-full overflow-x-auto" tabindex="0" role="region" [attr.aria-label]="'artemisApp.exercise-scores-chart.title' | artemisTranslate">

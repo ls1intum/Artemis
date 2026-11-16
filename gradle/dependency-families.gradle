@@ -282,11 +282,14 @@ tasks.register('verifyDependencyFamilies') {
  *
  *   * com.google.guava:guava - plugin dependencies resolve 33.7.1-jre, affected by CVE-2026-102554.
  *   * org.jsoup:jsoup - org.owasp.dependencycheck (dependency-check-core 13.0.0) resolves 1.23.1, which is affected
- *     by CVE-2026-75140. The shipped WAR declares 1.23.2 directly.
+ *     by CVE-2026-75140. The shipped WAR declares 1.24.1 directly.
+ *   * org.json:json - org.owasp.dependencycheck (dependency-check-core 13.0.0) resolves 20260522, which is affected by
+ *     an unbounded numeric string resource exhaustion in JSONTokener (fixed in 20260719).
  */
 def buildscriptClasspathMinimums = [
     'com.google.guava:guava': '33.7.2-jre',
-    'org.jsoup:jsoup': '1.23.2',
+    'org.jsoup:jsoup': '1.24.1',
+    'org.json:json': '20260814',
 ]
 
 tasks.register('verifyBuildscriptClasspathPins') {

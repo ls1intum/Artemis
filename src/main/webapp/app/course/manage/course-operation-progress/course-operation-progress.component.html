@@ -11,7 +11,7 @@
     (onHide)="onClose()"
     styleClass="course-operation-progress-dialog"
 >
-    <div class="operation-content">
+    <div class="operation-content" data-testid="course-operation-progress" [attr.data-status]="bufferedProgress()?.status">
         <div class="d-flex align-items-center mb-3">
             @if (isInProgress()) {
                 <fa-icon [icon]="faSpinner" animation="spin" class="me-2 status-icon text-primary" />
@@ -45,6 +45,14 @@
         @if (bufferedProgress()?.errorMessage) {
             <div class="alert alert-danger mt-3 mb-0">
                 {{ bufferedProgress()?.errorMessage }}
+            </div>
+        }
+
+        @if (isCompleted() || isFailed()) {
+            <div class="mt-3 d-flex justify-content-end">
+                <button tumAetUiButton severity="secondary" type="button" data-testid="course-operation-close" (click)="onClose()">
+                    {{ 'artemisApp.deletionProgress.dismiss' | artemisTranslate }}
+                </button>
             </div>
         }
     </div>

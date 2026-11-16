@@ -1,7 +1,7 @@
 <tumaet-ui-tabs [(value)]="activeTab">
     <tumaet-ui-tab-list>
         <tumaet-ui-tab [value]="1"><span jhiTranslate="artemisApp.exercise.import.tabTitle"></span></tumaet-ui-tab>
-        <tumaet-ui-tab [value]="2"><span jhiTranslate="artemisApp.exercise.importFromFile.tabTitle"></span></tumaet-ui-tab>
+        <tumaet-ui-tab [value]="2" data-testid="import-from-file-tab"><span jhiTranslate="artemisApp.exercise.importFromFile.tabTitle"></span></tumaet-ui-tab>
     </tumaet-ui-tab-list>
     <tumaet-ui-tab-panels>
         <tumaet-ui-tab-panel [value]="1"><jhi-exercise-import [exerciseType]="selectedExerciseType()" /></tumaet-ui-tab-panel>

@@ -213,6 +213,22 @@ describe('FaqComponent', () => {
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 
+    it('should apply the column header sort and re-sort the filtered faqs', () => {
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation((array) => array);
+
+        faqComponent.onSort({ field: 'questionTitle', order: 1 });
+
+        expect(faqComponent.predicate()).toBe('questionTitle');
+        expect(faqComponent.ascending()).toBe(true);
+        expect(sortSpy).toHaveBeenCalledWith(faqComponent.filteredFaqs(), 'questionTitle', true);
+
+        faqComponent.onSort({ field: 'faqState', order: -1 });
+
+        expect(faqComponent.predicate()).toBe('faqState');
+        expect(faqComponent.ascending()).toBe(false);
+        expect(sortSpy).toHaveBeenLastCalledWith(faqComponent.filteredFaqs(), 'faqState', false);
+    });
+
     it('should reject faq properly', () => {
         vi.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
@@ -304,6 +320,25 @@ describe('FaqComponent', () => {
         expect(faqComponent.searchInput.getValue()).toBe('matching');
         faqsResponse.complete();
         categoriesResponse.complete();
+    });
+
+    it('keeps the edit and delete actions of an FAQ row inline in one group', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+
+        const row = faqComponentFixture.nativeElement.querySelector('#faq-2') as HTMLElement;
+        const actions = row.querySelector('[data-testid="faq-row-actions"]') as HTMLElement;
+        const edit = actions.querySelector('a[tumAetUiButton]') as HTMLElement;
+        const deleteButton = actions.querySelector('#delete-faq-2') as HTMLElement;
+
+        expect(edit).not.toBeNull();
+        expect(deleteButton).not.toBeNull();
+        // Both buttons are direct children of the same wrapping row, so they share a line when there is room.
+        expect(edit.parentElement).toBe(actions);
+        expect(deleteButton.parentElement).toBe(actions);
+        expect(actions.classList).toContain('flex-wrap');
+        expect(actions.querySelector('.flex-col')).toBeNull();
     });
 
     it('offers FAQ import to instructors and hides it from tutors', () => {

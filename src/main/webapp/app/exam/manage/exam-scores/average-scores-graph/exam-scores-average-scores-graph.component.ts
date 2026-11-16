@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
@@ -77,29 +77,38 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         },
     }));
 
+    constructor() {
+        effect(() => this.initializeChart());
+    }
+
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
-        this.initializeChart();
     }
 
     private initializeChart(): void {
         const entries: ChartSeriesEntry[] = [];
         const colors: string[] = [];
         let xScaleMax = 100;
-        this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
-        const exerciseGroupAverage = this.averageScores().averagePercentage ?? 0;
-        entries.push({ name: this.averageScores().title, value: exerciseGroupAverage });
-        colors.push(this.determineColor(true, exerciseGroupAverage));
-        xScaleMax = Math.max(xScaleMax, exerciseGroupAverage);
+        this.lookup = {};
+        const exerciseGroupAverage = this.averageScores().averagePercentage;
+        if (exerciseGroupAverage != null && Number.isFinite(exerciseGroupAverage) && Number.isFinite(this.averageScores().averagePoints)) {
+            this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
+            entries.push({ name: this.averageScores().title, value: exerciseGroupAverage });
+            colors.push(this.determineColor(true, exerciseGroupAverage));
+            xScaleMax = Math.max(xScaleMax, exerciseGroupAverage);
+        }
         this.averageScores().exerciseResults.forEach((exercise) => {
-            const exerciseAverage = exercise.averagePercentage ?? 0;
+            const exerciseAverage = exercise.averagePercentage;
+            if (exerciseAverage == null || !Number.isFinite(exerciseAverage) || !Number.isFinite(exercise.averagePoints)) {
+                return;
+            }
             xScaleMax = Math.max(xScaleMax, exerciseAverage);
             entries.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
             this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
-                absoluteValue: exercise.averagePoints ?? 0,
+                absoluteValue: exercise.averagePoints,
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };

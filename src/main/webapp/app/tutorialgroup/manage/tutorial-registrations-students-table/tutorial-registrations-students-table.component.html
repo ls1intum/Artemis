@@ -1,55 +1,52 @@
-<div class="table-frame">
-    @let actionColumn = removeActionColumnInfo();
-    <div class="scroll-container">
-        <table tumAetUiTable class="table-header table-body">
-            <thead>
-                <tr class="header-row">
-                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
-                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
-                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
-                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
+@let actionColumn = removeActionColumnInfo();
+<tumaet-ui-table-layout [empty]="sortedStudents().length === 0" [emptyTitle]="emptyTitle() ?? 'tumAetUi.table.empty'">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!hasToolbar()">
+        <ng-content select="[studentsTableToolbar]" />
+    </div>
+    <table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="onSort($event)">
+        <thead>
+            <tr>
+                <th scope="col" [tumAetUiSortableColumn]="'name'"><span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'login'"><span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'email'"><span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'registrationNumber'">
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></span>
+                </th>
+                @if (actionColumn) {
+                    <th scope="col" class="action-column text-end" [jhiTranslate]="actionColumn.headerStringKey"></th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @for (student of sortedStudents(); track student.id) {
+                <tr>
+                    <td>
+                        <span class="flex items-center gap-2">
+                            <jhi-profile-picture imageSizeInRem="2" [isBoxShadow]="true" [imageUrl]="student.profilePictureUrl" />
+                            {{ student.name }}
+                        </span>
+                    </td>
+                    <td>{{ student.login }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>{{ student.registrationNumber }}</td>
                     @if (actionColumn) {
-                        <th scope="col" class="action-column" [jhiTranslate]="actionColumn.headerStringKey"></th>
+                        <td class="action-column text-end">
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                size="small"
+                                severity="danger"
+                                variant="text"
+                                [attr.aria-label]="'entity.action.remove' | artemisTranslate"
+                                (click)="actionColumn.onRemove($event, student)"
+                            >
+                                <fa-icon [icon]="faXmark" />
+                            </button>
+                        </td>
                     }
                 </tr>
-            </thead>
-
-            <tbody>
-                @for (student of studentsWithCompleteProfilePictureUrl(); track student.id) {
-                    <tr class="table-row">
-                        <td>
-                            <span class="student-property">
-                                <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="student.profilePictureUrl" />
-                                {{ student.name }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="student-property">{{ student.login }}</span>
-                        </td>
-                        <td>
-                            <span class="student-property">{{ student.email }}</span>
-                        </td>
-                        <td>
-                            <span class="student-property">{{ student.registrationNumber }}</span>
-                        </td>
-                        @if (actionColumn) {
-                            <td class="action-column">
-                                <button
-                                    type="button"
-                                    tumAetUiButton
-                                    size="small"
-                                    severity="danger"
-                                    variant="text"
-                                    [attr.aria-label]="'entity.action.remove' | artemisTranslate"
-                                    (click)="actionColumn.onRemove($event, student)"
-                                >
-                                    <fa-icon [icon]="faXmark" />
-                                </button>
-                            </td>
-                        }
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
+            }
+        </tbody>
+    </table>
+</tumaet-ui-table-layout>

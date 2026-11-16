@@ -37,7 +37,7 @@
  * `a { color: $link-color }` rule in global.scss (unlayered beats layered), so the color must be set here.
  */
 .nav-link-sidebar {
-    color: var(--p-text-color);
+    color: var(--tumaet-ui-text-color);
 }
 
 /*

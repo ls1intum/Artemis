@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -11,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-course-registration-button',
     templateUrl: './course-registration-button.component.html',
-    imports: [ConfirmAutofocusButtonComponent, TranslateDirective],
+    imports: [ConfirmAutofocusButtonComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class CourseRegistrationButtonComponent implements OnInit {
     private accountService = inject(AccountService);

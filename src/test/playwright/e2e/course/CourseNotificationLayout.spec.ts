@@ -1,7 +1,9 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
+import { expectWithinViewport, forEachViewport } from '../../support/layout';
 import { generateUUID } from '../../support/utils';
+import { trackWebsocketSubscriptions } from '../../support/websocketSubscriptions';
 
 test('Conversation notifications leave Send accessible, preserve the draft and open the reply', async ({
     browser,
@@ -44,15 +46,12 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         expect(currentMessage.ok()).toBe(true);
 
         const studentPage = await studentContext.newPage();
-        let subscribedToNotifications = false;
-        studentPage.on('websocket', (socket) => {
-            socket.on('framesent', ({ payload }) => {
-                if (payload.toString().includes(`/user/topic/notification/${course.id}`)) subscribedToNotifications = true;
-            });
-        });
+        const subscriptions = trackWebsocketSubscriptions(studentPage);
         await studentPage.goto(`/courses/${course.id}/communication?conversationId=${currentChannel.id}`);
         await expect(studentPage.getByTestId('conversation-name')).toContainText(currentChannel.name!);
-        await expect.poll(() => subscribedToNotifications).toBe(true);
+        await subscriptions.waitFor(`/user/topic/notification/${course.id}`);
+        // The notifications are addressed to the user: every node has to know the new session before the replies are sent.
+        await subscriptions.waitUntilKnownToAllNodes();
         const input = studentPage.getByTestId('formatted-message-input');
         const draft = 'Continue typing while another reply arrives';
         await input.fill(draft);
@@ -79,6 +78,7 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         expect(await input.evaluate(() => window.getSelection()?.anchorOffset)).toBe(selectionBefore);
         await studentPage.screenshot({ path: testInfo.outputPath('conversation-notification-layout.png') });
 
+        const cards = studentPage.getByTestId('notification-popup-card');
         let latestContent = 'Reply notification layout regression';
         for (let index = 1; index <= 7; index++) {
             latestContent = `Long notification ${index}: ${'Long message for the notification layout. '.repeat(30)}`;
@@ -87,8 +87,9 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
             });
             expect(response.ok()).toBe(true);
             reply = await response.json();
+            // Notifications are delivered asynchronously. Wait for each popup, so a delayed delivery is not mistaken for a missing one.
+            await expect(cards).toHaveCount(index + 1);
         }
-        const cards = studentPage.getByTestId('notification-popup-card');
         await expect(cards).toHaveCount(8);
         await studentPage.setViewportSize({ width: 390, height: 844 });
         const latestCard = cards.last();
@@ -115,4 +116,54 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         await studentContext.close();
         await courseManagementAPIRequests.deleteCourse(course, admin);
     }
+});
+
+test('Long system notifications stay inside the viewport and scroll to their final text', async ({ page }) => {
+    const finalText = 'End of maintenance announcement.';
+    const text = `${'The platform will be unavailable during planned maintenance. '.repeat(60)}${finalText}`;
+    await page.route('**/api/notification/public/system-notifications/active', (route) =>
+        route.fulfill({
+            json: [
+                {
+                    id: Date.now(),
+                    title: 'Planned maintenance',
+                    text,
+                    type: 'WARNING',
+                    notificationDate: new Date(Date.now() - 60_000).toISOString(),
+                    expireDate: new Date(Date.now() + 3_600_000).toISOString(),
+                },
+            ],
+        }),
+    );
+    await page.goto('/sign-in');
+    const trigger = page.getByTestId('system-notification-message');
+    const details = page.getByTestId('system-notification-details');
+
+    await forEachViewport(page, async () => {
+        await trigger.focus();
+        await trigger.press('Enter');
+        await expect(details).toContainText(finalText);
+        await expectWithinViewport(details, ['top', 'right', 'bottom', 'left'], { name: 'full system notification' });
+        await expect.poll(() => details.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        await details.focus();
+        await details.press('End');
+        await expect.poll(() => details.evaluate((element) => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(1);
+        await expect
+            .poll(() =>
+                details.evaluate((element, ending) => {
+                    const textNode = element.querySelector('p')?.firstChild;
+                    if (!textNode) return false;
+                    const length = textNode.textContent?.length ?? 0;
+                    const range = document.createRange();
+                    range.setStart(textNode, Math.max(0, length - ending.length));
+                    range.setEnd(textNode, length);
+                    const finalLine = range.getBoundingClientRect();
+                    const panel = element.getBoundingClientRect();
+                    return finalLine.top >= panel.top && finalLine.bottom <= panel.bottom + 1;
+                }, finalText),
+            )
+            .toBe(true);
+        await details.press('Escape');
+        await expect(details).toBeHidden();
+    });
 });

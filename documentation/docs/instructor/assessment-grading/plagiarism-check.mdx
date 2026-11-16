@@ -2,6 +2,7 @@
 id: plagiarism-check
 title: Plagiarism checks
 sidebar_label: Plagiarism checks
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -175,7 +176,9 @@ We visualized the process in the following diagram.
 
 <Image src={studentNotificationImg} alt={"student-notification"} size={ImageSize.medium} />
 
-6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
+    Notified students see the programming submissions of the case in the state that was compared by the check, even if a repository changed afterwards. For checks that did not store the compared commit, the last commit submitted before the check was created is shown. Tutors and instructors see the current state of the repository.
+
+6. Make a final verdict by selecting one of 4 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
 
     a. No plagiarism. The instructor can deem the accusation invalid and resolve the plagiarism case.
 

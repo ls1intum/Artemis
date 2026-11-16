@@ -88,7 +88,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 ## Repository boundaries
 
 - The server uses Spring Boot 4.1 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
-  Node 24, and the pnpm version pinned in `package.json` (`corepack enable`). Exact versions live
+  Node 26, and the pnpm version pinned in `package.json` (`npm install --global corepack`, then `corepack enable`). Exact versions live
   in `gradle.properties`, `pnpm-workspace.yaml`, and `package.json`.
 - Server features live under `src/main/java/de/tum/cit/aet/artemis/`; the Angular application is
   under `src/main/webapp/app/`. Keep reusable TUM AET UI components in `packages/tum-aet-ui`, with no
@@ -106,6 +106,11 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   READMEs stay beside their tools. Do not create a top-level `docs/` directory.
 - When writing documentation, follow the [documentation guideline](documentation/docs/developer/guidelines/documentation.mdx).
   Register new pages in the matching sidebar and link them from related pages.
+- Add documentation and screenshots only when they help users complete a task or understand a decision.
+  Do not document cosmetic layout details merely to satisfy a checklist.
+- Screenshots in documentation and PRs must be captured from a running Artemis instance with realistic data
+  and the actual theme and background colours. Never use synthetic, AI-generated, mocked or isolated-component
+  screenshots, or override theme colours or recolour a capture. Automated browser capture of the real application is allowed.
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 

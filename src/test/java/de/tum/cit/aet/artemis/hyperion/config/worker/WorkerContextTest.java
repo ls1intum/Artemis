@@ -154,7 +154,7 @@ class WorkerContextTest {
             "artemis.text.enabled=true", "artemis.modeling.enabled=true", "artemis.fileupload.enabled=true", "artemis.lecture.enabled=true", "artemis.tutorialgroup.enabled=true",
             "artemis.user-management.passkey.enabled=true", "artemis.sharing.enabled=true", "artemis.lti.enabled=true", "artemis.athena.enabled=true",
             "artemis.apollon.enabled=true", "artemis.user-management.ldap.enabled=true", "artemis.user-management.saml2.enabled=true", "artemis.theia.enabled=true",
-            "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true", "spring.ai.model.chat=openai", "spring.ai.openai.api-key=worker-isolation-test-key" })
+            "artemis.atlas.atlasllm.enabled=true", "spring.ai.model.chat=openai", "spring.ai.openai.api-key=worker-isolation-test-key" })
     abstract static class GenericChecksTest extends WorkerChecks {
 
         @Test

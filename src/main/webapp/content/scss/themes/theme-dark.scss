@@ -112,27 +112,6 @@ html {
     }
 }
 
-.btn-outline-primary:not(.list-group-item) {
-    color: $link-color;
-}
-
-.btn-outline-primary:not(.list-group-item):hover {
-    color: white;
-}
-
-.btn-outline-secondary:not(.list-group-item) {
-    color: $gray-400;
-}
-
-.btn-outline-secondary:not(.list-group-item):hover {
-    color: white;
-}
-
-.btn-outline-dark:not(.list-group-item) {
-    color: $gray-200;
-    border-color: $gray-300;
-}
-
 .mat-form-field-outline {
     color: $border-color;
 }

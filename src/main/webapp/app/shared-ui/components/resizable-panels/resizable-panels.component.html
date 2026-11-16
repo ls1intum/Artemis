@@ -83,7 +83,7 @@
 } @else {
     <tumaet-ui-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="panel-surface flex flex-col h-full w-full overflow-hidden rounded-lg">
         @if (showCombinedTabHeader()) {
-            <tumaet-ui-tab-list class="shrink-0">
+            <tumaet-ui-tab-list class="compact-tab-list shrink-0">
                 @for (panel of panels(); track panel; let i = $index) {
                     <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
                         @if (panel.iconTemplate()) {

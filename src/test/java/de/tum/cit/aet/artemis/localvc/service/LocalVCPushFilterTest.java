@@ -29,7 +29,8 @@ class LocalVCPushFilterTest {
     @Test
     void authorizedReceivePackHoldsMutationLeaseForCompleteFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
+        LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         GitRepositoryAccessDTO exercise = exercise();
@@ -38,7 +39,7 @@ class LocalVCPushFilterTest {
         var lease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> released.set(true));
         request.setAttribute(ServletUtils.ATTRIBUTE_REPOSITORY, repository);
         request.setAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
-        when(localVCServletService.claimProgrammingExerciseMutation(repository, exercise.exerciseId())).thenReturn(lease);
+        when(pushProcessingService.claimProgrammingExerciseMutation(repository, exercise.exerciseId())).thenReturn(lease);
         FilterChain filterChain = (_, _) -> assertThat(released).isFalse();
 
         filter.doFilterInternal(request, response, filterChain);
@@ -49,7 +50,8 @@ class LocalVCPushFilterTest {
     @Test
     void authorizedReceivePackReleasesMutationLeaseWhenFilterChainThrows() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
+        LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         GitRepositoryAccessDTO exercise = exercise();
@@ -57,7 +59,7 @@ class LocalVCPushFilterTest {
         AtomicBoolean released = new AtomicBoolean();
         request.setAttribute(ServletUtils.ATTRIBUTE_REPOSITORY, repository);
         request.setAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
-        when(localVCServletService.claimProgrammingExerciseMutation(repository, exercise.exerciseId()))
+        when(pushProcessingService.claimProgrammingExerciseMutation(repository, exercise.exerciseId()))
                 .thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(() -> released.set(true)));
         FilterChain filterChain = (_, _) -> {
             throw new IllegalStateException("disconnect");
@@ -70,7 +72,8 @@ class LocalVCPushFilterTest {
     @Test
     void busyExerciseReturnsRetryableConflictWithoutEnteringReceivePack() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
+        LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         GitRepositoryAccessDTO exercise = exercise();
@@ -78,7 +81,7 @@ class LocalVCPushFilterTest {
         FilterChain filterChain = mock(FilterChain.class);
         request.setAttribute(ServletUtils.ATTRIBUTE_REPOSITORY, repository);
         request.setAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
-        when(localVCServletService.claimProgrammingExerciseMutation(repository, exercise.exerciseId()))
+        when(pushProcessingService.claimProgrammingExerciseMutation(repository, exercise.exerciseId()))
                 .thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "exerciseGenerationRunning"));
 
         filter.doFilterInternal(request, response, filterChain);
@@ -91,7 +94,8 @@ class LocalVCPushFilterTest {
     @Test
     void getRequestSkipsTheMutationGuardAndPassesThroughTheFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
+        LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = new MockHttpServletRequest(HttpMethod.GET.name(), "/git/TEST/test-exercise.git/info/refs");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
@@ -99,7 +103,7 @@ class LocalVCPushFilterTest {
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(localVCServletService, never()).claimProgrammingExerciseMutation(any(), anyLong());
+        verify(pushProcessingService, never()).claimProgrammingExerciseMutation(any(), anyLong());
     }
 
     private static MockHttpServletRequest receivePackRequest() {

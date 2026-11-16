@@ -13,6 +13,7 @@ type TumAetUiSortDirection = 'asc' | 'desc' | 'none';
     host: {
         '[class]': 'hostClasses()',
         '[attr.aria-sort]': 'ariaSort()',
+        '(click)': 'onHostClick($event)',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,5 +60,12 @@ export class TumAetUiTableSortableColumnComponent {
 
     protected onActivate(): void {
         this.table.requestSort(this.field());
+    }
+
+    /** The whole header cell sorts, not only the label: a click on the button itself is handled by the button. */
+    protected onHostClick(event: MouseEvent): void {
+        if (!this.disabled() && !(event.target as Element | null)?.closest('button')) {
+            this.onActivate();
+        }
     }
 }

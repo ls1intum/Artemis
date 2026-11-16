@@ -166,11 +166,6 @@
                     "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
                     "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
                 },
-                "AtlasML": {
-                    "name": "Atlas Machine Learning",
-                    "description": "Lets Artemis use the external AtlasML service to suggest exercise competencies and competency relations to editors and instructors, and keeps AtlasML in sync with course competencies and exercise links. Automatic competency updates also use it to find similar competencies. Requires the AtlasML service to be configured (artemis.atlas.atlasml.enabled).",
-                    "disableWarning": "Editors and instructors no longer see AtlasML suggestions in the exercise forms and the relation form, Artemis stops syncing competency changes to AtlasML, and automatic competency updates run without AtlasML similarity hints."
-                },
                 "AtlasAgent": {
                     "name": "Atlas Agent",
                     "description": "Lets instructors build and maintain course competencies with AI. The AI Competency Assistant in Competency Management proposes competencies, relations and exercise links and saves them after the instructor approves. Atlas can also change competencies and their exercise and lecture-unit links without asking first: when an instructor clicks \"Suggest competencies\", or automatically in courses where an administrator turned on Atlas auto-orchestration. Course content, including example solutions, is sent to the configured language model. Requires the Atlas AI (LLM) module.",

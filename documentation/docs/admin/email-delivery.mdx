@@ -2,6 +2,7 @@
 id: email-delivery
 title: E-Mail Delivery
 sidebar_label: E-Mail Delivery
+last_reviewed: 2026-11-03
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -20,7 +21,7 @@ Test users are the accounts that end-to-end tests, benchmarks and course scripts
 and every mail they trigger counts against the quota of the shared SMTP account. A script that sets the password of 2,000 of them
 sends 2,000 mails.
 
-An account is a test user when its **test user** flag is set. Administrators set the flag in **Administration > User Management**
+An account is a test user when its **test user** flag is set. Administrators set the flag in **Administration > Account > Users**
 and with the `isTestUser` column of the user CSV import. The flag is also what the usage statistics use to leave such accounts out.
 The course scripts in `supporting_scripts/course-scripts` set it for the `artemis_test_user_` accounts they create. An account that
 is created without the flag is an ordinary account and receives its e-mail, so set the flag when you create accounts in bulk.

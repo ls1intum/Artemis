@@ -229,13 +229,23 @@ export class TutorialCreateOrEditComponent {
         if (!this.configureSessionPlan() || !firstSessionStart || !firstSessionEnd || !tutorialPeriodEnd) {
             return undefined;
         }
+        const original = this.schedule();
         return {
-            firstSessionStart: firstSessionStart.format('YYYY-MM-DDTHH:mm:ss'),
-            firstSessionEnd: firstSessionEnd.format('YYYY-MM-DDTHH:mm:ss'),
+            firstSessionStart: this.serializeUnchangedOrFormatted(firstSessionStart, original?.firstSessionStart),
+            firstSessionEnd: this.serializeUnchangedOrFormatted(firstSessionEnd, original?.firstSessionEnd),
             repetitionFrequency: this.repetitionFrequency(),
             tutorialPeriodEnd: tutorialPeriodEnd.format('YYYY-MM-DD'),
             location: this.location(),
         };
+    }
+
+    // Keep the server's exact date-time string when the field has not changed, so a round-trip never rewrites it. Reformatting a
+    // value whose local time falls in a DST gap would otherwise normalize it to a different hour and silently move the sessions.
+    private serializeUnchangedOrFormatted(value: dayjs.Dayjs, original: string | undefined): string {
+        if (original !== undefined && dayjs(original).valueOf() === value.valueOf()) {
+            return original;
+        }
+        return value.format('YYYY-MM-DDTHH:mm:ss');
     }
 
     private computeTitleValidation(): Validation {
@@ -388,18 +398,22 @@ export class TutorialCreateOrEditComponent {
         return { status: ValidationStatus.VALID };
     }
 
+    // Compare instants, not formatted strings: the server serializes LocalDateTime without trailing zero seconds
+    // (e.g. 10:15, not 10:15:00), so a formatted comparison would always differ and warn on every edit.
+    private scheduleFieldsChanged(schedule: TutorialGroupSchedule): boolean {
+        const firstSessionStartChanged = this.firstSessionStart()?.valueOf() !== dayjs(schedule.firstSessionStart).valueOf();
+        const firstSessionEndChanged = this.firstSessionEnd()?.valueOf() !== dayjs(schedule.firstSessionEnd).valueOf();
+        const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
+        const tutorialPeriodEndChanged = this.tutorialPeriodEnd()?.valueOf() !== dayjs(schedule.tutorialPeriodEnd).valueOf();
+        const locationChanged = this.location() !== schedule.location;
+        return firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
+    }
+
     private computeIfScheduleChangeOverwritesSessions(): boolean {
         const schedule = this.schedule();
         if (!schedule) return false;
-        if (this.configureSessionPlan()) {
-            const firstSessionStartChanged = this.firstSessionStart()?.format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionStart;
-            const firstSessionEndChanged = this.firstSessionEnd()?.format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionEnd;
-            const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
-            const tutorialPeriodEndChanged = this.tutorialPeriodEnd()?.format('YYYY-MM-DD') !== schedule.tutorialPeriodEnd;
-            const locationChanged = this.location() !== schedule.location;
-            return firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
-        }
-        return true;
+        if (!this.configureSessionPlan()) return true;
+        return this.scheduleFieldsChanged(schedule);
     }
 
     private computeSaveDisabledReasons(): string[] {
@@ -439,13 +453,7 @@ export class TutorialCreateOrEditComponent {
         const additionalInformationChanged = this.additionalInformation() !== (tutorialGroup.additionalInformation ?? '');
         const tutorialGroupChanged = titleChanged || tutorChanged || languageChanged || modeChanged || campusChanged || capacityChanged || additionalInformationChanged;
         if (schedule) {
-            const firstSessionStartChanged = this.firstSessionStart()?.valueOf() !== dayjs(schedule.firstSessionStart).valueOf();
-            const firstSessionEndChanged = this.firstSessionEnd()?.valueOf() !== dayjs(schedule.firstSessionEnd).valueOf();
-            const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
-            const tutorialPeriodEndChanged = this.tutorialPeriodEnd()?.valueOf() !== dayjs(schedule.tutorialPeriodEnd).valueOf();
-            const locationChanged = this.location() !== schedule.location;
-            const scheduleChanged =
-                !this.configureSessionPlan() || firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
+            const scheduleChanged = !this.configureSessionPlan() || this.scheduleFieldsChanged(schedule);
             return tutorialGroupChanged || scheduleChanged;
         }
         return tutorialGroupChanged || this.configureSessionPlan();

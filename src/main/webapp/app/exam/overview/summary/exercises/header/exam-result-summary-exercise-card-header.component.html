@@ -6,11 +6,11 @@
         }
         <span class="min-w-0 truncate">{{ exercise().exerciseGroup?.title }}</span>
     </h5>
-    <div class="ml-4 shrink-0" data-testid="exercise-result-score">
+    <div class="ml-6! shrink-0" data-testid="exercise-result-score">
         @if (resultsPublished() && exerciseInfo()?.achievedPoints !== undefined) {
             <div class="flex items-center">
                 [{{ exerciseInfo()?.achievedPoints }} / {{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
-                <div class="ml-4">
+                <div class="ml-6!">
                     @if (exerciseInfo()?.resultIconClass) {
                         <fa-icon [class]="exerciseInfo()?.colorClass" [icon]="exerciseInfo()?.resultIconClass!" size="lg" />
                     }

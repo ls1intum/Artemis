@@ -2,6 +2,7 @@
 id: course-configuration
 title: Course Configuration
 sidebar_label: Course Configuration
+last_reviewed: 2026-11-08
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -134,7 +135,7 @@ See [Communication](/instructor/communication-support/communication) for managin
 
 ## Student Course Enrollment
 
-<Image src={studentEnrollment} alt="Student course enrollment section" size={ImageSize.large} caption="Student enrollment" />
+<Image src={studentEnrollment} alt="Student course enrollment section, with the enrollment period and the confirmation message" size={ImageSize.large} caption="Student enrollment" />
 
 **Student Course Enrollment Enabled** lets students join the course themselves while it is active. It opens four
 further settings.
@@ -165,10 +166,13 @@ makes for themselves about whether to use AI at all.
 
 ## AI-Assisted Feedback
 
-Athena's AI feedback is not on this form either. Its two switches sit in the **Athena AI Feedback** panel on the
-course overview, next to Iris, and each takes effect as soon as you set it — there is nothing to save. The panel
-appears only where an administrator has configured Athena for the instance. The general step of the course onboarding
-wizard offers the same two switches.
+Athena's AI feedback is not on this form either. The **Athena AI Feedback** panel on the course overview, next to
+Iris, carries a single Enabled/Disabled toggle that switches both kinds of feedback together and takes effect as soon
+as you set it — there is nothing to save. **Configure** opens the dedicated Athena settings page, where
+**Formative feedback requests** and **Grading feedback suggestions** can be switched independently; **Athena** in the
+course management sidebar opens the same page. The panel and the sidebar entry appear only where an administrator has
+configured Athena for the instance. The general step of the course onboarding wizard
+offers the same two independent switches.
 
 **Formative feedback requests** lets students ask Athena for preliminary feedback on a draft *before* the due date. It
 is feedback to learn from rather than a mark, and it does not replace the assessment that follows. With it off,
@@ -183,3 +187,15 @@ Both switches cover text, modeling and programming exercises, but a programming 
 semi-automatically, with manual assessment enabled alongside the tests. There is no per-exercise switch: every
 exercise in the course follows these two, as far as its type supports them. See
 [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for the details.
+
+## Deleting a Course
+
+Administrators delete a course on its **Settings** page. The confirmation dialog first lists what the deletion removes
+with the course, such as users, exercises, exams, lectures, student work, posts and builds, and asks you to type the
+course title.
+
+The deletion runs in the background. After you confirm, a progress dialog shows the current step and how far the
+deletion is. Large courses with many student repositories can take several minutes, and the request no longer has to
+wait for them, so it does not time out. If you reload the page while the deletion runs, the progress dialog opens again.
+When the deletion is completed, close the dialog to return to your courses. While a deletion, an archive or a reset of
+the course is running, no other one of these can be started for it.

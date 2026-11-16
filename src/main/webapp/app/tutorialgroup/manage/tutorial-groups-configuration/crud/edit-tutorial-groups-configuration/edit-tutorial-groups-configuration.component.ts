@@ -79,7 +79,6 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
-                    void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
@@ -87,6 +86,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                 next: (configuration) => {
                     this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                     this.courseStorageService.updateCourse(this.course());
+                    // Navigate only on success; finalize would also run on error and bounce the user as if the update worked.
+                    void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

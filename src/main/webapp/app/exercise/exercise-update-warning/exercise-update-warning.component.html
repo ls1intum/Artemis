@@ -38,6 +38,8 @@
             @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
                 @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
                     <button
+                        data-button-intent="authoring"
+                        data-button-intent-reason="Saves assessment-related changes without re-evaluating existing results"
                         tumAetUiButton
                         type="submit"
                         id="no-reevaluate-button"

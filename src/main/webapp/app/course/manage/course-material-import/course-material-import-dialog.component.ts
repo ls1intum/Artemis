@@ -2,10 +2,10 @@ import { Component, computed, effect, inject, input, output, signal, untracked }
 import { FormsModule } from '@angular/forms';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { CheckboxModule } from 'primeng/checkbox';
-import { TableModule } from 'primeng/table';
-import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +18,6 @@ import { CourseForImportDTOPagingService } from 'app/course/shared/services/cour
 import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { lastValueFrom } from 'rxjs';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type DialogStep = 'selectCourse' | 'selectOptions';
@@ -28,13 +27,15 @@ type DialogStep = 'selectCourse' | 'selectOptions';
     imports: [
         FormsModule,
         DialogModule,
-        ButtonModule,
+        TumAetUiButtonDirective,
+        FaIconComponent,
         CheckboxModule,
-        TableModule,
-        InputTextModule,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiInputDirective,
+        TumAetUiPaginatorComponent,
         ProgressSpinnerModule,
         TranslateDirective,
-        PaginatorModule,
         ArtemisTranslatePipe,
     ],
     templateUrl: './course-material-import-dialog.component.html',
@@ -46,6 +47,8 @@ export class CourseMaterialImportDialogComponent {
     private readonly courseSearchService = inject(CourseForImportDTOPagingService);
     private readonly alertService = inject(AlertService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    protected readonly faSpinner = faSpinner;
 
     // Input for target course ID
     readonly targetCourseId = input.required<number>();
@@ -200,9 +203,8 @@ export class CourseMaterialImportDialogComponent {
     /**
      * Handles pagination changes.
      */
-    onPageChange(event: PaginatorState): void {
-        this.first.set(event.first ?? 0);
-        this.rows.set(event.rows ?? 10);
+    onPageChange(page: number): void {
+        this.first.set(page * this.rows());
         void this.loadCourses();
     }
 

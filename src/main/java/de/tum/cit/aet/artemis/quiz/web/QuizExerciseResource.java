@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.beans.PropertyEditorSupport;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -11,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -23,23 +26,29 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -90,10 +99,12 @@ public class QuizExerciseResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
+    private final QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService,
-            ExerciseVariantGroupService exerciseVariantGroupService) {
+            ExerciseVariantGroupService exerciseVariantGroupService, QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -105,6 +116,7 @@ public class QuizExerciseResource {
         this.quizSubmissionService = quizSubmissionService;
         this.exerciseVersionService = exerciseVersionService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
+        this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
     }
 
     /**
@@ -133,13 +145,14 @@ public class QuizExerciseResource {
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId the id of the quiz exercise to start
-     * @param action         the action to perform on the quiz (allowed actions: "start-now", "end-now", "set-visible")
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible"; ending a quiz has its own
+     *                           endpoint, {@link #endQuizExercise(Long)}, which takes precedence for the path "end-now")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId,
-            @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "end-now", "set-visible" })) @PathVariable QuizAction action) {
+            @Parameter(schema = @Schema(type = "string", allowableValues = { "start-now", "set-visible" })) @PathVariable QuizAction action) {
         return performQuizAction(quizExerciseId, action);
     }
 
@@ -285,5 +298,26 @@ public class QuizExerciseResource {
         }
         QuizExerciseDatesDTO quizExerciseDatesDTO = QuizExerciseDatesDTO.of(quizExercise);
         return new ResponseEntity<>(quizExerciseDatesDTO, HttpStatus.OK);
+    }
+
+    /**
+     * GET /quiz-exercises/:exerciseId/export : sends the exercise definition as zip, without any submissions
+     *
+     * @param exerciseId the id of the quiz exercise to export
+     * @return ResponseEntity with the zip file containing the exercise details and the images of the drag and drop questions
+     */
+    @GetMapping("quiz-exercises/{exerciseId}/export")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureUsage(UserFeature.QUIZ_AUTHORING)
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
+        try {
+            return ResponseUtil.ok(quizExerciseWithSubmissionsExportService.exportQuizExerciseForDownload(quizExercise));
+        }
+        catch (IOException e) {
+            log.error("Error while exporting quiz exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting quiz exercise with id " + exerciseId + " for instructor");
+        }
     }
 }

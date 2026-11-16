@@ -1,6 +1,7 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,6 +30,9 @@ export class ExternalSubmissionButtonComponent {
 
     readonly exercise = input.required<Exercise>();
 
+    /** Emitted with the new result once the dialog saved it, so the page can show it without a reload. */
+    readonly resultCreated = output<Result>();
+
     // Icons
     faPlus = faPlus;
 
@@ -38,13 +42,18 @@ export class ExternalSubmissionButtonComponent {
      */
     openExternalSubmissionDialog(event: MouseEvent) {
         event.stopPropagation();
-        this.dialogService.open(ExternalSubmissionDialogComponent, {
+        const dialogRef = this.dialogService.open<ExternalSubmissionDialogComponent, Result>(ExternalSubmissionDialogComponent, {
             header: this.translateService.instant('artemisApp.submission.createExternal'),
             size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
             inputValues: { exercise: this.exercise() },
+        });
+        dialogRef.onClose.subscribe((result) => {
+            if (result) {
+                this.resultCreated.emit(result);
+            }
         });
     }
 }

@@ -34,6 +34,7 @@
         <button
             type="button"
             tumAetUiButton
+            severity="secondary"
             variant="outlined"
             size="small"
             class="me-2! rounded-full!"
@@ -49,10 +50,12 @@
         <button
             type="button"
             tumAetUiButton
+            severity="secondary"
             variant="outlined"
             size="small"
             class="notification-popup-clear rounded-full!"
             data-testid="notification-popup-clear"
+            [attr.aria-label]="'artemisApp.notification.hideAllCurrentlyDisplayedNotifications' | artemisTranslate"
             [attr.tabindex]="isExpanded() ? 0 : -1"
             (click)="clearAllNotifications()"
         >

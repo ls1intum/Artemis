@@ -40,7 +40,7 @@
                         </a>
                     </div>
                 }
-                <hr class="my-4 border-(--border-color)" />
+                <hr class="my-6! border-(--border-color)" />
                 @if (exam()?.course?.isAtLeastInstructor) {
                     <div>
                         <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam()" />
@@ -64,7 +64,7 @@
                     [(visible)]="deleteDialogVisible"
                     [entityTitle]="exam()?.title || ''"
                     entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
-                    [fetchEntitySummary]="examDeletionSummary()"
+                    [fetchCategorizedEntitySummary]="examDeletionSummary()"
                     deleteQuestion="artemisApp.examManagement.delete.question"
                     deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
                     [dialogError]="dialogError$"

@@ -17,13 +17,15 @@
                 [cdkDragData]="page"
             >
                 <button
+                    data-button-intent="utility"
+                    data-button-intent-reason="Enlarges a page canvas within the existing PDF preview"
                     tumAetUiButton
                     severity="secondary"
                     variant="text"
                     size="small"
                     type="button"
                     [id]="'pdf-page-' + page.slideId"
-                    class="relative block w-full border-0 bg-transparent p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="relative block w-full border-0 p-0 focus-visible:outline-2 focus-visible:outline-offset-2"
                     [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
                     (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
                 >
@@ -132,13 +134,15 @@
         @for (page of orderedPages(); track page.slideId) {
             <div class="pdf-canvas-container">
                 <button
+                    data-button-intent="utility"
+                    data-button-intent-reason="Enlarges a page canvas within the existing PDF preview"
                     tumAetUiButton
                     severity="secondary"
                     variant="text"
                     size="small"
                     type="button"
                     [id]="'pdf-page-' + page.slideId"
-                    class="relative block w-full border-0 bg-transparent p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="relative block w-full border-0 p-0 focus-visible:outline-2 focus-visible:outline-offset-2"
                     [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
                     (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
                 >

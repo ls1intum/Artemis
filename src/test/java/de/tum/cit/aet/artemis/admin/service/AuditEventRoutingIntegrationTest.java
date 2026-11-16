@@ -13,7 +13,9 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
@@ -95,6 +97,47 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(applicationAuditEventRepository.count()).isEqualTo(applicationCountBefore + 1);
         assertThat(persistenceAuditEventRepository.count()).isEqualTo(generalCountBefore);
         assertThat(securityAuditEventRepository.count()).isEqualTo(securityCountBefore);
+    }
+
+    @Test
+    void attendanceUpdateByPasskeyAuthenticatedInstructorStaysInApplicationLog() {
+        var previousAuthentication = SecurityContextHolder.getContext().getAuthentication();
+        String instructor = TEST_PREFIX + "-instructor";
+        Instant before = Instant.now().minusSeconds(1);
+        try {
+            SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createWebAuthnAuthentication(instructor));
+            auditEventRepository.add(new AuditEvent(instructor, Constants.UPDATE_EXAM_ATTENDANCE, Map.of("examId", "42", "oldDidCheckName", "false", "newDidCheckName", "true")));
+
+            assertThat(applicationAuditEventRepository.count()).isEqualTo(applicationCountBefore + 1);
+            assertThat(persistenceAuditEventRepository.count()).isEqualTo(generalCountBefore);
+            assertThat(securityAuditEventRepository.count()).isEqualTo(securityCountBefore);
+            assertThat(auditEventRepository.find(instructor, before, Constants.UPDATE_EXAM_ATTENDANCE)).singleElement().satisfies(event -> {
+                assertThat(event.getPrincipal()).isEqualTo(instructor);
+                assertThat(event.getData()).containsEntry("examId", "42").containsEntry("oldDidCheckName", "false").containsEntry("newDidCheckName", "true");
+            });
+        }
+        finally {
+            SecurityContextHolder.getContext().setAuthentication(previousAuthentication);
+        }
+    }
+
+    @Test
+    void passkeyAuthenticationSuccessRetainsItsLoginEventType() {
+        var previousAuthentication = SecurityContextHolder.getContext().getAuthentication();
+        String instructor = TEST_PREFIX + "-passkey-login";
+        Instant before = Instant.now().minusSeconds(1);
+        try {
+            SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createWebAuthnAuthentication(instructor));
+            auditEventRepository.add(new AuditEvent(instructor, AuditEventConstants.AUTHENTICATION_SUCCESS));
+
+            assertThat(persistenceAuditEventRepository.count()).isEqualTo(generalCountBefore + 1);
+            assertThat(applicationAuditEventRepository.count()).isEqualTo(applicationCountBefore);
+            assertThat(securityAuditEventRepository.count()).isEqualTo(securityCountBefore);
+            assertThat(auditEventRepository.find(instructor, before, AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS)).hasSize(1);
+        }
+        finally {
+            SecurityContextHolder.getContext().setAuthentication(previousAuthentication);
+        }
     }
 
     @Test

@@ -8,18 +8,6 @@
             @if (labelTooltip()) {
                 <fa-icon [icon]="faQuestionCircle" class="text-muted-color" role="img" tabindex="0" [attr.aria-label]="labelTooltip()" [tumAetUiTooltip]="labelTooltip()" />
             }
-            <tumaet-ui-button
-                severity="warn"
-                size="small"
-                [disabled]="isSuggesting() || disabled() || !exerciseDescription()?.trim()"
-                (clicked)="suggestCompetencies()"
-                [tumAetUiTooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
-                [ariaLabel]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
-                [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
-                [icon]="faLightbulb"
-                [loading]="isSuggesting()"
-                data-testid="suggest-competencies"
-            />
         </legend>
         <div class="flex max-h-50 flex-col flex-wrap gap-x-6! overflow-x-auto rounded border border-(--border-color) p-2" id="competency-selector">
             @for (competencyLink of competencyLinks(); track competencyLink) {
@@ -38,17 +26,6 @@
                                     <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
                                     <span>{{ competency.title }}</span>
                                 </label>
-                                @if (isSuggested(competency.id)) {
-                                    <fa-icon
-                                        [icon]="faLightbulb"
-                                        class="text-state-warning"
-                                        role="img"
-                                        tabindex="0"
-                                        [attr.aria-label]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate"
-                                        [tumAetUiTooltip]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate"
-                                        data-testid="suggested-competency"
-                                    />
-                                }
                             </div>
                             @if (checkboxStates()[competency.id]) {
                                 <tumaet-ui-select

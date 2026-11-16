@@ -59,7 +59,7 @@ export class FeedbackNodeComponent implements OnInit {
     }
 
     /**
-     * Maps the legacy Bootstrap alert color of a feedback item (`success` / `info` / `warning` / `danger`)
+     * Maps the color name of a feedback item (`success` / `info` / `warning` / `danger`)
      * to the corresponding TUM AET UI message severity.
      */
     messageSeverity(color: string | undefined): 'success' | 'info' | 'warn' | 'error' | 'secondary' {

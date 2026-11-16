@@ -2,6 +2,7 @@
 id: setup
 title: Setup Guide
 sidebar_label: Setup Guide
+last_reviewed: 2026-11-14
 ---
 
 import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
@@ -33,27 +34,28 @@ Before installing Artemis, install and configure the following dependencies:
 
 2. **Database Server**
    Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
-   You can either use MySQL or PostgreSQL as the database server. See [Database Setup](#database-setup) for details.
+   PostgreSQL is the default and recommended database server. MySQL is still supported but deprecated and removed in Artemis 11 (see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)). See [Database Setup](#database-setup) for details.
 
-3. **Node.js (LTS ≥ 24.18.0 < 25)**
+3. **Node.js (LTS ≥ 26.13.1 < 27)**
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
 4. **[pnpm](https://pnpm.io) (≥ 12.15.0) — the package manager Artemis uses for the Angular client**
 
    The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference for `pnpm install` is at [pnpm.io/cli/install](https://pnpm.io/cli/install) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
-   Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
+   Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` in the repository, with the single exception of the one-time global Corepack install below; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
 
-   You don't need to follow the official pnpm install steps manually — Node.js 24 ships with [Corepack](https://nodejs.org/api/corepack.html), a small shim that downloads and runs the pinned package manager on demand. This is also the [installation method recommended by the pnpm team](https://pnpm.io/installation#using-corepack). Activate it **once** per machine:
+   You don't need to follow the official pnpm install steps manually — [Corepack](https://nodejs.org/api/corepack.html) is a small shim that downloads and runs the pinned package manager on demand. This is also the [installation method recommended by the pnpm team](https://pnpm.io/installation#using-corepack). Node.js 25 and later no longer bundle Corepack, so install it once with `npm install --global corepack`, then activate it **once** per machine:
 
    ```bash
+   npm install --global corepack
    corepack enable
    ```
 
    After that, any `pnpm` command run inside the Artemis repository automatically uses the pinned version. Verify the setup with:
 
    ```bash
-   pnpm --version          # should print 12.15.0 (matches packageManager in package.json)
+   pnpm --version          # should print 12.18.0 (matches packageManager in package.json)
    which pnpm              # should point at the Corepack shim, e.g. ~/.nvm/.../bin/pnpm
    ```
 
@@ -64,10 +66,11 @@ Before installing Artemis, install and configure the following dependencies:
    ```
 
    **Troubleshooting `corepack enable`:**
-   - **Permission denied / EACCES on macOS or Linux:** Corepack writes shim symlinks next to the Node.js binary. If Node.js was installed system-wide (e.g. via `apt`/`brew install node`), run `sudo corepack enable` once. With [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or [Volta](https://volta.sh), no `sudo` is needed.
-   - **`corepack: command not found`:** Your Node.js install is too old or was built without Corepack. Reinstall Node.js 24+ from [nodejs.org](https://nodejs.org/en/download); Corepack is included by default.
+   - **Permission denied / EACCES on macOS or Linux:** Both `npm install --global corepack` and `corepack enable` write next to the Node.js binary. If Node.js was installed system-wide (e.g. via `apt`/`brew install node`), run `sudo npm install --global corepack` and `sudo corepack enable` once. With [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or [Volta](https://volta.sh), no `sudo` is needed.
+   - **`corepack: command not found`:** Node.js 25 and later do not bundle Corepack. Run `npm install --global corepack` once, then `corepack enable`.
+   - **`npm install --global corepack` fails with `EEXIST`:** A global `pnpm` or `yarn` executable already occupies the path Corepack wants to write. Remove the old installation, for example with `npm uninstall --global yarn` for a global Yarn (or delete the executables that `which -a pnpm` lists for a global pnpm), then run the installation again. An old global `pnpm` on the `PATH` can also shadow the pinned version.
    - **`pnpm: command not found` after `corepack enable`:** Restart your shell so the new shim is picked up on `PATH`.
-   - **Behind a corporate proxy:** Corepack fetches the pinned pnpm tarball from npmjs.org on first use. Set `HTTPS_PROXY` / `HTTP_PROXY` env vars if your network requires it.
+   - **Behind a corporate proxy:** Corepack fetches the pinned pnpm tarball from npmjs.org on first use. Set `HTTPS_PROXY` / `HTTP_PROXY` env vars if your network requires it, together with `NODE_USE_ENV_PROXY=1`, which makes Node honor them.
 
    We migrated from npm to pnpm to get deterministic, content-addressable installs (faster cold installs locally and in CI, byte-identical `node_modules` across machines, stricter override semantics, and patch application via `pnpm.patchedDependencies` instead of a `postinstall` `patch-package` step).
 
@@ -96,6 +99,10 @@ Start by following the [Database Setup](#database-setup) guide, then proceed wit
 ## Database Setup
 
 Artemis supports MySQL and PostgreSQL databases. The required Artemis schema is created or updated automatically when the server application starts.
+
+<Callout variant={CalloutVariant.warning}>
+    MySQL support is deprecated and removed in Artemis 11 (March 2027), which leaves PostgreSQL as the only database. The `dev` profile still defaults to a local MySQL datasource for now. For new setups, use [PostgreSQL](#postgresql-setup). See [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11).
+</Callout>
 
 ### MySQL Setup
 
@@ -187,7 +194,7 @@ spring:
 
     1. **Database**: Ensure a database is running. See [Database Setup](#database-setup) for instructions.
     2. **Configuration**: Create `application-local.yml` in `src/main/resources/config` (see [Configuration Setup](#configuration-setup) below).
-    3. **Deployment**: We recommend deploying **Artemis (Server, LocalVC & LocalCI)** for local development.
+    3. **Deployment**: We recommend deploying **Artemis Server (Dev, BuildAgent+LocalCI)** for local development.
 </Callout>
 
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
@@ -213,7 +220,7 @@ Instead, follow these best practices:
     - If needed, you can modify values such as database credentials, authentication and application settings.
 
 3. **Set the installation metadata (optional)**
-    - The About page shows who operates the installation. A development server starts without these values; only the production profile, as in the **Artemis (Server, Prod, LocalCI)** run configuration, requires them unless `info.testServer` is `true`. To set them, add them to `application-local.yml`, replacing the examples with your own:
+    - The About page shows who operates the installation. A development server starts without these values; only the production profile, as in the **Artemis Server (Prod, Core, LocalCI)** run configuration, requires them unless `info.testServer` is `true`. To set them, add them to `application-local.yml`, replacing the examples with your own:
 
     ```yaml
     info:
@@ -303,7 +310,7 @@ If you are setting up **programming exercises**, additional configuration is req
 Refer to one of the following guides based on your preferred setup:
 
 - **[Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) (Recommended)**
-- **[LocalVC + Jenkins Setup](/admin/jenkins-localvc)**
+- **[LocalVC + Jenkins Setup](/admin/jenkins-localvc)** (deprecated, removed in Artemis 11, see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11))
 
 ### Run the server via a run configuration in IntelliJ
 
@@ -313,20 +320,12 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot module replacement in the client.
 
 - **Artemis (Client):** Will execute `pnpm install` and `pnpm start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
-- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your `application-local.yml`.
-- **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
-- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. Enable Athena via `artemis.athena.enabled=true` in your `application-local.yml`.
-- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
-- **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
-- **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,localvc,localci,scheduling,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your environment config. This configuration is used for production-like testing.
-
-<details>
-<summary>Deprecated Options</summary>
-
-- **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-- **Artemis (Server & Client):** Will start the server and the client. The client will be available at [http://localhost:8080/](http://localhost:8080/) with hot module replacement disabled.
-
-</details>
+- **Artemis Server (Dev, BuildAgent+LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your `application-local.yml`.
+- **Artemis Server (Dev, Core, Jenkins):** (deprecated, removed in Artemis 11) The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
+- **Artemis Server (Dev, LocalCI+BuildAgent, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. Enable Athena via `artemis.athena.enabled=true` in your `application-local.yml`.
+- **Artemis Server (Dev, LocalCI+BuildAgent, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local` and the VM option `-Dartemis.iris.enabled=true`.
+- **Artemis BuildAgent (Prod):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+- **Artemis Server (Prod, Core, LocalCI):** The server will be started separated from the client with the profiles `prod,core,localvc,localci,scheduling,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your environment config. This configuration is used for production-like testing.
 
 ### Run the server via Docker
 
@@ -352,8 +351,8 @@ You can find the latest Artemis Dockerfile at `deployment/docker/artemis/Dockerf
     - **/opt/artemis/config:**
 
       This can be used to store additional configurations of Artemis in YAML files.
-      The usage is optional, and we recommend using the environment files for overriding your custom configurations instead of using `src/main/resources/application-local.yml` as such an additional configuration file.
-      The other configurations like `src/main/resources/application.yml`, ... are built into the `.war` file and therefore are not needed in this directory.
+      The usage is optional, and we recommend using the environment files for overriding your custom configurations instead of using `src/main/resources/config/application-local.yml` as such an additional configuration file.
+      The other configurations like `src/main/resources/config/application.yml`, ... are built into the `.war` file and therefore are not needed in this directory.
 
       <Callout variant={CalloutVariant.info}>
         Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the [Spring relaxed binding](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables). You can either place those environment variables directly in the `environment` section, or create a [.env-file](https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file). When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the `--env-file` option. To ease the transition of an existing set of YAML configuration files into the environment variable style, a [helper script](https://github.com/b-fein/spring-yaml-to-env) can be used.
@@ -454,25 +453,25 @@ This is possible by setting `suspend=y`.
 The Artemis server should startup by running the main class `de.tum.cit.aet.artemis.ArtemisApp` using Spring Boot.
 
 <Callout variant={CalloutVariant.info}>
-    Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for Jenkins and LocalVC:
+    Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for LocalCI and LocalVC:
 </Callout>
 
 ```
---spring.profiles.active=dev,jenkins,localvc,artemis,scheduling
+--spring.profiles.active=dev,artemis,localci,localvc,scheduling,buildagent,core,local
 ```
 
 If you use IntelliJ (Community or Ultimate) you can set the active profiles by:
 
 - Choosing **Run | Edit Configurations...**
 - Going to the **Configuration** tab
-- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
+- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,artemis,localci,localvc,scheduling,buildagent,core,local`
 
 #### Set Spring profiles with IntelliJ Ultimate
 
 If you use IntelliJ Ultimate, add the following entry to the **Active Profiles** field (within **Spring Boot**) in the server run configuration:
 
 ```
-dev,jenkins,localvc,artemis,scheduling
+dev,artemis,localci,localvc,scheduling,buildagent,core,local
 ```
 
 ### Run the server with the command line (Gradle wrapper)
@@ -480,7 +479,7 @@ dev,jenkins,localvc,artemis,scheduling
 If you want to run the application via the command line instead, make sure to pass the active profiles to the `gradlew` command like this:
 
 ```bash
-./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+./gradlew bootRun --args='--spring.profiles.active=dev,artemis,localci,localvc,scheduling,buildagent,core,local'
 ```
 
 ### Demo data (Optional)
@@ -603,7 +602,7 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 ### Client
 
 - If you are using a machine with limited RAM *(e.g. ~8 GB RAM)* you might have issues starting the Artemis Client. You can resolve this by following the description in [Using the command line](#using-the-command-line).
-- **`pnpm: command not found`** after cloning the repo: run `corepack enable` once (see [step 4 of Required Dependencies](#required-dependencies)). If `corepack` itself is missing, your Node.js install is too old; reinstall Node.js 24+ from [nodejs.org](https://nodejs.org/en/download).
+- **`pnpm: command not found`** after cloning the repo: run `corepack enable` once (see [step 4 of Required Dependencies](#required-dependencies)). If `corepack` itself is missing, run `npm install --global corepack` first (Node.js 25 and later do not bundle it).
 - **Accidentally ran `npm install` and got a `package-lock.json`:** delete `package-lock.json` and `node_modules`, then run `pnpm install`. The repository's `.gitignore` blocks `package-lock.json` from being committed, but a stray copy still confuses tooling.
 - **`pnpm install` complains the lockfile is out of date:** the lockfile is authoritative; running `pnpm install` locally without `--frozen-lockfile` updates it. If your edit was intentional (e.g. you bumped a dependency in `package.json`), commit the updated `pnpm-lock.yaml`. If not, run `git checkout pnpm-lock.yaml` and rerun `pnpm install --frozen-lockfile`.
 
@@ -644,7 +643,7 @@ For detailed instructions on setting up Artemis with Helios, refer to the offici
 
 For more advanced setup scenarios and development tools, see the following guides:
 
-- **[Jenkins and LocalVC Setup](/admin/jenkins-localvc)** - Alternative CI/CD setup using Jenkins with LocalVC
+- **[Jenkins and LocalVC Setup](/admin/jenkins-localvc)** - Deprecated CI/CD setup using Jenkins with LocalVC, removed in Artemis 11
 - **[OpenAPI and API-driven Development](/developer/openapi)** - Working with OpenAPI specifications
 - **[Docker Compose Setup](/developer/docker-compose)** - Alternative Docker Compose-based deployment
 - **[Docker Debugging](/developer/docker-debugging)** - Debugging Artemis in Docker containers

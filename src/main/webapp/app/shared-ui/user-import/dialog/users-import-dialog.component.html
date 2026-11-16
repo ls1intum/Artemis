@@ -17,7 +17,7 @@
         </div>
         @if (!examUserMode()) {
             <div class="flex justify-center items-center">
-                <table class="csv-example-table w-auto">
+                <table tumAetUiTable size="small" class="w-auto">
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -49,7 +49,7 @@
         }
         @if (examUserMode()) {
             <div class="flex justify-center items-center">
-                <table class="csv-example-table w-auto">
+                <table tumAetUiTable size="small" class="w-auto">
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -111,39 +111,43 @@
                     <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
-                <p-table [value]="usersToImport()" [scrollable]="true" scrollHeight="max(300px, 100vh - 500px)" class="p-datatable-sm p-datatable-striped header-fixed mt-2">
-                    <ng-template #header>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col" style="width: 300px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
-                            <th scope="col">Login</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
-                            @if (adminUserMode()) {
-                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.testUser'">Test user</th>
-                            }
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-user let-i="rowIndex">
-                        <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
-                            <td>{{ i + 1 }}</td>
-                            <td style="width: 300px">{{ user.registrationNumber }}</td>
-                            <td>{{ user.login }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>{{ user.firstName }}</td>
-                            <td>{{ user.lastName }}</td>
-                            @if (adminUserMode()) {
-                                <td>
-                                    @if (user.isTestUser) {
-                                        <fa-icon [icon]="faCheck" />
-                                        <span class="sr-only" jhiTranslate="artemisApp.importUsers.testUser"></span>
+                <tumaet-ui-table-layout class="mt-2 [--table-layout-offset:32rem] max-md:[--table-layout-offset:40rem]">
+                    <table tumAetUiTable size="small" striped>
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" class="w-72" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
+                                <th scope="col">Login</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
+                                @if (adminUserMode()) {
+                                    <th scope="col" [jhiTranslate]="'artemisApp.importUsers.testUser'">Test user</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (user of usersToImport(); track $index; let i = $index) {
+                                <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
+                                    <td>{{ i + 1 }}</td>
+                                    <td>{{ user.registrationNumber }}</td>
+                                    <td>{{ user.login }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.firstName }}</td>
+                                    <td>{{ user.lastName }}</td>
+                                    @if (adminUserMode()) {
+                                        <td>
+                                            @if (user.isTestUser) {
+                                                <fa-icon [icon]="faCheck" />
+                                                <span class="sr-only" jhiTranslate="artemisApp.importUsers.testUser"></span>
+                                            }
+                                        </td>
                                     }
-                                </td>
+                                </tr>
                             }
-                        </tr>
-                    </ng-template>
-                </p-table>
+                        </tbody>
+                    </table>
+                </tumaet-ui-table-layout>
             </div>
         }
         @if (examUsersToImport() && examUsersToImport().length > 0 && examUserMode()) {
@@ -152,32 +156,36 @@
                     <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
-                <p-table [value]="examUsersToImport()" [scrollable]="true" scrollHeight="max(300px, 100vh - 500px)" class="p-datatable-sm p-datatable-striped header-fixed mt-2">
-                    <ng-template #header>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col" style="width: 350px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
-                            <th scope="col">Login</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.room'">Room</th>
-                            <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.seat'">Seat</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-user let-i="rowIndex">
-                        <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
-                            <td>{{ i + 1 }}</td>
-                            <td style="width: 350px">{{ user.registrationNumber }}</td>
-                            <td>{{ user.login }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>{{ user.firstName }}</td>
-                            <td>{{ user.lastName }}</td>
-                            <td>{{ user.room }}</td>
-                            <td>{{ user.seat }}</td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+                <tumaet-ui-table-layout class="mt-2 [--table-layout-offset:32rem] max-md:[--table-layout-offset:40rem]">
+                    <table tumAetUiTable size="small" striped>
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" class="w-72" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
+                                <th scope="col">Login</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.room'">Room</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.seat'">Seat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (user of examUsersToImport(); track $index; let i = $index) {
+                                <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
+                                    <td>{{ i + 1 }}</td>
+                                    <td>{{ user.registrationNumber }}</td>
+                                    <td>{{ user.login }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.firstName }}</td>
+                                    <td>{{ user.lastName }}</td>
+                                    <td>{{ user.room }}</td>
+                                    <td>{{ user.seat }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </tumaet-ui-table-layout>
             </div>
         }
     </form>
@@ -237,16 +245,16 @@
             }
             <div class="grow flex justify-end">
                 @if (!hasImported()) {
-                    <button pButton type="button" severity="secondary" size="small" class="cancel me-2" (click)="clear()">
+                    <button tumAetUiButton type="button" severity="secondary" size="small" class="cancel me-2" (click)="clear()">
                         <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button pButton type="submit" id="import" name="importButton" severity="primary" size="small" [disabled]="isSubmitDisabled" (click)="importUsers()">
+                    <button tumAetUiButton type="submit" id="import" name="importButton" severity="secondary" size="small" [disabled]="isSubmitDisabled" (click)="importUsers()">
                         <fa-icon [icon]="faUpload" class="me-2" />
                         <span jhiTranslate="entity.action.to-import"></span>
                         <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                     </button>
                 } @else {
-                    <button type="button" pButton severity="success" size="small" id="finish-button" (click)="onFinish()">
+                    <button type="button" tumAetUiButton severity="primary" size="small" id="finish-button" (click)="onFinish()">
                         <fa-icon [icon]="faCheck" class="me-2" />
                         <span jhiTranslate="entity.action.finish"></span>
                     </button>

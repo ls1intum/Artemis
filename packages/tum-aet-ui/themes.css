@@ -60,6 +60,34 @@
     --tumaet-ui-table-striped-background: #f9fafb;
     --tumaet-ui-tooltip-background: #334155;
     --tumaet-ui-tooltip-color: #fff;
+
+    /* Button palette: change these roles per theme without recoloring status indicators.
+       Primary uses a contrast-checked pair independently of the host brand fill. */
+    --tumaet-ui-button-primary-background: #3779b4;
+    --tumaet-ui-button-primary-contrast: #fff;
+    --tumaet-ui-button-primary-foreground: var(--tumaet-ui-accent-color);
+    --tumaet-ui-button-secondary-background: var(--tumaet-ui-hover-background);
+    --tumaet-ui-button-secondary-contrast: var(--tumaet-ui-text-color);
+    --tumaet-ui-button-secondary-foreground: var(--tumaet-ui-text-color);
+    --tumaet-ui-button-success-background: var(--tumaet-ui-state-success);
+    --tumaet-ui-button-success-contrast: var(--tumaet-ui-state-success-contrast);
+    --tumaet-ui-button-success-foreground: var(--tumaet-ui-state-success-foreground);
+    --tumaet-ui-button-info-background: var(--tumaet-ui-state-info);
+    --tumaet-ui-button-info-contrast: var(--tumaet-ui-state-info-contrast);
+    --tumaet-ui-button-info-foreground: var(--tumaet-ui-state-info-foreground);
+    --tumaet-ui-button-warn-background: var(--tumaet-ui-state-warning);
+    --tumaet-ui-button-warn-contrast: var(--tumaet-ui-state-warning-contrast);
+    --tumaet-ui-button-warn-foreground: var(--tumaet-ui-state-warning-foreground);
+    --tumaet-ui-button-danger-background: var(--tumaet-ui-state-danger);
+    --tumaet-ui-button-danger-contrast: var(--tumaet-ui-state-danger-contrast);
+    --tumaet-ui-button-danger-foreground: var(--tumaet-ui-state-danger-foreground);
+    --tumaet-ui-button-contrast-background: var(--tumaet-ui-contrast-background);
+    --tumaet-ui-button-contrast-contrast: var(--tumaet-ui-contrast-color);
+    --tumaet-ui-button-contrast-foreground: var(--tumaet-ui-contrast-background);
+    --tumaet-ui-button-secondary-border: var(--tumaet-ui-border-color);
+    --tumaet-ui-button-focus-color: var(--tumaet-ui-focus-color);
+    --tumaet-ui-button-hover-overlay: rgb(51 65 85 / 0.05);
+    --tumaet-ui-button-active-overlay: rgb(51 65 85 / 0.08);
 }
 
 [data-theme='dark'] {
@@ -101,4 +129,32 @@
     --tumaet-ui-table-striped-background: #1d2024;
     --tumaet-ui-tooltip-background: #343a42;
     --tumaet-ui-tooltip-color: #fff;
+
+    /* Button palette: change these roles per theme without recoloring status indicators.
+       Primary uses a contrast-checked pair independently of the host brand fill. */
+    --tumaet-ui-button-primary-background: #2e6da4;
+    --tumaet-ui-button-primary-contrast: #fff;
+    --tumaet-ui-button-primary-foreground: var(--tumaet-ui-accent-color);
+    --tumaet-ui-button-secondary-background: var(--tumaet-ui-hover-background);
+    --tumaet-ui-button-secondary-contrast: var(--tumaet-ui-text-color);
+    --tumaet-ui-button-secondary-foreground: var(--tumaet-ui-text-color);
+    --tumaet-ui-button-success-background: var(--tumaet-ui-state-success);
+    --tumaet-ui-button-success-contrast: var(--tumaet-ui-state-success-contrast);
+    --tumaet-ui-button-success-foreground: var(--tumaet-ui-state-success-foreground);
+    --tumaet-ui-button-info-background: var(--tumaet-ui-state-info);
+    --tumaet-ui-button-info-contrast: var(--tumaet-ui-state-info-contrast);
+    --tumaet-ui-button-info-foreground: var(--tumaet-ui-state-info-foreground);
+    --tumaet-ui-button-warn-background: var(--tumaet-ui-state-warning);
+    --tumaet-ui-button-warn-contrast: var(--tumaet-ui-state-warning-contrast);
+    --tumaet-ui-button-warn-foreground: var(--tumaet-ui-state-warning-foreground);
+    --tumaet-ui-button-danger-background: var(--tumaet-ui-state-danger);
+    --tumaet-ui-button-danger-contrast: var(--tumaet-ui-state-danger-contrast);
+    --tumaet-ui-button-danger-foreground: var(--tumaet-ui-state-danger-foreground);
+    --tumaet-ui-button-contrast-background: var(--tumaet-ui-contrast-background);
+    --tumaet-ui-button-contrast-contrast: var(--tumaet-ui-contrast-color);
+    --tumaet-ui-button-contrast-foreground: var(--tumaet-ui-contrast-background);
+    --tumaet-ui-button-secondary-border: var(--tumaet-ui-border-color);
+    --tumaet-ui-button-focus-color: var(--tumaet-ui-focus-color);
+    --tumaet-ui-button-hover-overlay: rgb(255 255 255 / 0.05);
+    --tumaet-ui-button-active-overlay: rgb(255 255 255 / 0.08);
 }

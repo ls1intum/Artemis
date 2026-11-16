@@ -608,6 +608,27 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.isImport()).toBeTruthy();
         });
 
+        it('should import a quiz read from a file on the route of a new quiz', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
+            const fromFile = new QuizExercise(undefined, undefined);
+            fromFile.id = 9;
+            fromFile.title = 'From file';
+            fromFile.quizQuestions = [];
+            history.replaceState({ exerciseForImportFromFile: fromFile }, '');
+
+            comp.ngOnInit();
+            history.replaceState(null, '');
+
+            expect(quizExerciseServiceStub).not.toHaveBeenCalled();
+            expect(comp.isImport()).toBe(true);
+            expect(comp.quizExercise().title).toBe('From file');
+            expect(comp.quizExercise().id).toBeUndefined();
+            expect(comp.quizExercise().course).toEqual(course);
+        });
+
         it('should assign exerciseGroup to existing quizExercise in exam mode', async () => {
             const snapshot = new ActivatedRouteSnapshot();
             snapshot.params = { courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 };
@@ -1510,32 +1531,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizExercise().releaseDate).toEqual(dayjs(now));
             });
 
-            it('getEnhancedDescriptionForSuggestions should combine title and question texts, with fallback', () => {
-                // title only
-                comp.quizExercise().title = 'Quiz Title';
-                comp.quizExercise().quizQuestions = [];
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Quiz Title');
-
-                // title + questions
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = 'Q1';
-                q1.text = 'First question';
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = 'Q2';
-                q2.text = 'Second question';
-                comp.quizExercise().quizQuestions = [q1, q2];
-                const combined = comp.getEnhancedDescriptionForSuggestions();
-                expect(combined).toContain('Quiz Title');
-                expect(combined).toContain('Q1 First question');
-                expect(combined).toContain('Q2 Second question');
-
-                // fallback to problemStatement
-                comp.quizExercise().title = '';
-                comp.quizExercise().quizQuestions = [];
-                comp.quizExercise().problemStatement = 'Problem statement fallback';
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Problem statement fallback');
-            });
-
             it('should handle undefined quizQuestions gracefully (cover ?? [])', () => {
                 comp.quizExercise().quizQuestions = undefined;
 
@@ -1847,35 +1842,6 @@ describe('QuizExerciseUpdateComponent', () => {
                     comp.init();
                     expect(dndQuestion.dragItems[0].id).toBeUndefined();
                 });
-            });
-
-            it('should return empty string if quizExercise is not set', () => {
-                comp.quizExercise.set(undefined as any);
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-
-                expect(result).toBe('');
-            });
-
-            it('should handle undefined title or text in questions gracefully (cover || "")', () => {
-                comp.quizExercise().title = 'Main Title';
-
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = undefined;
-                q1.text = undefined;
-
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = undefined;
-                q2.text = 'Only Text';
-
-                const q3 = new MultipleChoiceQuestion();
-                q3.title = 'Only Title';
-                q3.text = null as any;
-
-                comp.quizExercise().quizQuestions = [q1, q2, q3];
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-                expect(result).toBe('Main Title Only Text Only Title');
             });
         });
 

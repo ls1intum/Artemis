@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('Exercise Group Service', () => {
     let httpClient: any;
@@ -45,5 +47,19 @@ describe('Exercise Group Service', () => {
         service.moveExerciseToGroup(1, 2, 3, 4);
 
         expect(httpClientPutSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercises/3/exercise-group', { exerciseGroupId: 4 }, { observe: 'response' });
+    });
+
+    it('should group the deletion summary of an exercise group into categories', () => {
+        const httpClientGetSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of({ numberOfTextExercises: 2, numberOfStudentParticipations: 600, numberOfStudentExams: 30 }));
+        let categories: EntitySummaryCategory[] | undefined;
+
+        service.getDeletionSummary(1, 2, 3).subscribe((value) => (categories = value));
+
+        expect(httpClientGetSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercise-groups/3/deletion-summary');
+        expect(categories!.map((category) => category.titleKey)).toEqual([
+            'artemisApp.examManagement.delete.summary.category.structure',
+            'artemisApp.examManagement.delete.summary.category.studentWork',
+        ]);
+        expect(categories![1].items.find((item) => item.value === 600)?.highlight).toBe(true);
     });
 });

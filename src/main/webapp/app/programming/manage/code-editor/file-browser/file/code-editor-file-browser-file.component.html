@@ -41,11 +41,27 @@
     }
     <!-- File level actions -->
     @if (!disableActions()) {
-        <span class="file-icons" [ngClass]="item().checked ? 'text-white' : 'primary'">
-            <button type="button" (click)="setRenamingNode($event)" class="btn btn-small">
+        <span class="file-icons">
+            <button
+                type="button"
+                (click)="setRenamingNode($event)"
+                tumAetUiButton
+                size="small"
+                severity="warn"
+                [variant]="item().checked || hasChanges() ? 'solid' : 'text'"
+                [attr.aria-label]="'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate"
+            >
                 <fa-icon id="file-browser-file-edit" [icon]="faEdit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}" />
             </button>
-            <button type="button" (click)="deleteNode($event)" class="btn btn-small">
+            <button
+                type="button"
+                (click)="deleteNode($event)"
+                tumAetUiButton
+                size="small"
+                severity="danger"
+                [variant]="item().checked || hasChanges() ? 'solid' : 'text'"
+                [attr.aria-label]="'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate"
+            >
                 <fa-icon data-testid="file-browser-file-delete" [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate }}" />
             </button>
         </span>

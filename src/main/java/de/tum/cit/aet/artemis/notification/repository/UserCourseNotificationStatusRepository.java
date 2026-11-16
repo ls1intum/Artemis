@@ -27,10 +27,6 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
     /**
      * Updates the status of multiple user course notifications for a specific user.
      *
-     * <p>
-     * Important: Does not invalidate cache by itself. Use {@link CourseNotificationCacheService} for that.
-     * </p>
-     *
      * @param courseNotificationIds the list of course notification IDs to update
      * @param userId                the ID of the user
      * @param status                the new status to set
@@ -69,10 +65,6 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
 
     /**
      * Updates the status of multiple user course notifications for a specific user.
-     *
-     * <p>
-     * Important: Does not invalidate cache by itself. Use {@link CourseNotificationCacheService} for that.
-     * </p>
      *
      * @param userId   the ID of the user
      * @param courseId the ID of the course

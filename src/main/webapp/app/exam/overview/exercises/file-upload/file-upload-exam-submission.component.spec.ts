@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef } from '@angular/core';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -16,7 +17,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -135,41 +136,96 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
         });
 
-        it('should place Upload right after the file input in one wrapping row', () => {
-            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
-            const button: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="file-upload-submit"]')).nativeElement;
-            const inputContainer = input.parentElement!;
-            const row = inputContainer.parentElement!;
-
-            // Upload is the next sibling of the input's container, so it is attached to the input instead of floating at the end of the panel
-            expect(inputContainer.nextElementSibling).toBe(button);
-            expect(button.parentElement).toBe(row);
-            expect(row.classList).toContain('flex');
-            expect(row.classList).toContain('flex-wrap');
-
-            // keyboard order is Choose File, then Upload
-            expect(input.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        it('should provide a prominent selection area that uploads automatically', () => {
+            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-field"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-submit"]')).toBeNull();
         });
 
-        it('should draw the file input as one bordered field, so that Upload is attached to the field and not to a bare filename', () => {
-            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
-            const field = fixture.debugElement.query(By.css('[data-testid="file-upload-field"]')).nativeElement as HTMLElement;
-
-            expect(field).toBe(input.parentElement);
-            // the field draws the border and clips the corners of the selector button; the button itself has no border of its own except the one that separates it from the name
-            expect([...field.classList]).toEqual(expect.arrayContaining(['border', 'rounded-md', 'overflow-hidden']));
-            expect([...input.classList]).toEqual(expect.arrayContaining(['file:border-0', 'file:border-r']));
-            // the font of the selector is set with the important modifier, which keeps the field as high as the small Upload button (34px)
-            expect(input.classList).toContain('file:text-sm!');
+        it('should automatically upload a valid selected file exactly once', () => {
+            const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+            const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(pending);
+            const file = new File(['image'], 'solution.PNG');
+            comp.setFileSubmissionForExercise({ target: { files: [file] } } as unknown as Event);
+            expect(update).toHaveBeenCalledOnce();
+            comp.saveUploadedFile();
+            expect(update).toHaveBeenCalledExactlyOnceWith(comp.studentSubmission(), mockExercise.id, file);
+            expect(comp.studentSubmission().isSynced).toBe(false);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-file-upload-input"]').disabled).toBe(true);
+            pending.next(new HttpResponse({ body: { filePath: 'new/solution.PNG' } }));
+            pending.complete();
+            fixture.detectChanges();
+            expect(comp.studentSubmission().isSynced).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src')).toContain(addPublicFilePrefix('new/solution.PNG'));
         });
 
-        it('should let the file input take the available width without a fixed fraction of the panel', () => {
-            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
-            expect(input.classList).toContain('w-full');
+        it('should refresh the preview when a file with the same name replaces the previous one', () => {
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            const previewSrc = () => fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src');
+            comp.setFileSubmissionForExercise({ target: { files: [new File(['one'], 'solution.png')] } } as unknown as Event);
+            fixture.detectChanges();
+            const first = previewSrc();
+            comp.setFileSubmissionForExercise({ target: { files: [new File(['two'], 'solution.png')] } } as unknown as Event);
+            fixture.detectChanges();
+            expect(previewSrc()).not.toBe(first);
+            expect(comp.submittedFileUrl()).toBe(addPublicFilePrefix('new/solution.png'));
+            expect(comp.studentSubmission().filePathUrl).toBe(addPublicFilePrefix('new/solution.png'));
+        });
 
-            for (let element = input.parentElement; element && element !== fixture.nativeElement; element = element.parentElement) {
-                expect([...element.classList].filter((className) => /(^|:)w-\d+\/\d+$/.test(className))).toEqual([]);
+        it('automatically uploads a valid dropped file', () => {
+            const file = new File(['image'], 'solution.png');
+            const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            const preventDefault = vi.fn();
+            comp.onDrop({ preventDefault, dataTransfer: { files: [file] } } as unknown as DragEvent);
+            expect(preventDefault).toHaveBeenCalledOnce();
+            expect(update).toHaveBeenCalledExactlyOnceWith(comp.studentSubmission(), mockExercise.id, file);
+            expect(comp.studentSubmission().isSynced).toBe(true);
+        });
+
+        it.each(['readonly', 'examTimeline', 'expired', 'result'])('rejects selection, drop, and retry in %s state', (state) => {
+            if (state === 'readonly' || state === 'examTimeline') {
+                fixture.componentRef.setInput(state, true);
+            } else if (state === 'expired') {
+                mockExercise.dueDate = dayjs().subtract(1, 'hour');
+            } else {
+                comp.result = { id: 1 };
             }
+            const update = vi.spyOn(fileUploadSubmissionService, 'update');
+            const file = new File(['image'], 'solution.png');
+            comp.setFileSubmissionForExercise({ target: { files: [file] } } as unknown as Event);
+            comp.onDrop({ preventDefault: vi.fn(), dataTransfer: { files: [file] } } as unknown as DragEvent);
+            comp.submissionFile = file;
+            comp.saveUploadedFile();
+            expect(update).not.toHaveBeenCalled();
+        });
+
+        it('should keep an in-flight upload associated with its original submission', () => {
+            const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(pending);
+            comp.setFileSubmissionForExercise({ target: { files: [new File(['image'], 'solution.png')] } } as unknown as Event);
+            const originalSubmission = comp.studentSubmission();
+            const otherSubmission = { isSynced: true } as FileUploadSubmission;
+            fixture.componentRef.setInput('studentSubmission', otherSubmission);
+            fixture.detectChanges();
+            pending.next(new HttpResponse({ body: { filePath: 'original/solution.png' } }));
+            pending.complete();
+            expect(originalSubmission.filePath).toBe('original/solution.png');
+            expect(otherSubmission.filePath).toBeUndefined();
+            expect(TestBed.inject(ExamParticipationService).isSubmissionSaving(originalSubmission)).toBe(false);
+        });
+
+        it('should retain the selected file for retry after an upload error', () => {
+            const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(throwError(() => new Error('offline')));
+            const file = new File(['image'], 'solution.png');
+            comp.setFileSubmissionForExercise({ target: { files: [file] } } as unknown as Event);
+            fixture.detectChanges();
+            expect(comp.submissionFile).toBe(file);
+            expect(comp.studentSubmission().isSynced).toBe(false);
+            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-error"]')).not.toBeNull();
+            update.mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            (fixture.nativeElement.querySelector('[data-testid="file-upload-retry"]') as HTMLButtonElement).click();
+            expect(update).toHaveBeenCalledTimes(2);
+            expect(comp.studentSubmission().isSynced).toBe(true);
         });
     });
 
@@ -283,7 +339,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(comp.submittedFileUrl()).toBe(expectedUrl);
             // the input submission is not modified, the url is derived state of the component
             expect(comp.studentSubmission().filePathUrl).toBeUndefined();
-            const downloadLink = fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
+            const downloadLink = fixture.nativeElement.querySelector('button[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
             expect(downloadLink).not.toBeNull();
             downloadLink.click();
             expect(downloadSpy).toHaveBeenCalledWith(expectedUrl);
@@ -294,7 +350,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('button[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
             expect(fixture.nativeElement.querySelector('h6[jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"]')).not.toBeNull();
         });
     });
@@ -321,7 +377,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         expect(comp.studentSubmission().filePath).toBeUndefined();
 
         // check if fileUploadInput is available
-        const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
+        const fileUploadInput = fixture.debugElement.query(By.css('[data-testid="exam-file-upload-input"]'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBe(false);
         expect(fileUploadInput.nativeElement.value).toBe('');
@@ -350,7 +406,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         expect(comp.studentSubmission().filePath).toBeUndefined();
 
         // check if fileUploadInput is available
-        const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
+        const fileUploadInput = fixture.debugElement.query(By.css('[data-testid="exam-file-upload-input"]'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBe(false);
         expect(fileUploadInput.nativeElement.value).toBe('');
@@ -394,6 +450,9 @@ describe('FileUploadExamSubmissionComponent', () => {
         const examParticipationService = TestBed.inject(ExamParticipationService);
         const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
 
+        const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+        vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(pending);
+
         // Selecting a valid file marks the submission unsaved.
         const submissionFile = new File([''], 'exampleSubmission.png');
         comp.setFileSubmissionForExercise({ target: { files: [submissionFile] } } as unknown as Event);
@@ -401,8 +460,8 @@ describe('FileUploadExamSubmissionComponent', () => {
         expect(notify).toHaveBeenCalledOnce();
 
         // A successful upload marks it saved again.
-        vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of({ body: { filePath: 'path/to/file.png' } } as HttpResponse<FileUploadSubmission>));
-        comp.saveUploadedFile();
+        pending.next(new HttpResponse({ body: { filePath: 'path/to/file.png' } }));
+        pending.complete();
         expect(comp.studentSubmission().isSynced).toBe(true);
         expect(notify).toHaveBeenCalledTimes(2);
     });

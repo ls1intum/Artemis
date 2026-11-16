@@ -11,6 +11,7 @@ import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/ent
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** Stands in for the real actions component, whose service tree is irrelevant to what the table template renders. */
 @Component({ selector: 'jhi-exercise-actions', template: '' })
@@ -383,6 +384,39 @@ describe('ExerciseTableComponent', () => {
             return fixture.nativeElement as HTMLElement;
         }
 
+        it.each([
+            [20, 100, 'templateFulfillsTest', undefined, undefined],
+            [0, 99, 'solutionFailsTest', undefined, undefined],
+            [0, 100, 'solutionFailsTest', 9, 10],
+            [0, 110, 'solutionFailsTest', 9, 10],
+        ])('shows an unexpected-build warning beside the exercise title for scores %s/%s', (templateScore, solutionScore, reason, passedTestCaseCount, testCaseCount) => {
+            const programming = Object.assign(new ProgrammingExercise(undefined, undefined), {
+                id: 8,
+                type: ExerciseType.PROGRAMMING,
+                title: 'Programming exercise',
+                templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: templateScore, successful: true }] }] },
+                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score: solutionScore, successful: true, passedTestCaseCount, testCaseCount }] }] },
+            });
+            const element = renderRows([programming]);
+            const warning = element.querySelector('[data-testid="programming-build-warning"]');
+
+            expect(warning).not.toBeNull();
+            expect(warning?.closest('[data-testid="exercise-row-title"]')).not.toBeNull();
+            expect(warning?.getAttribute('aria-label')).toContain(reason);
+        });
+
+        it.each([100, 110])('does not warn for passing solution score %s or unavailable results', (score) => {
+            const expected = Object.assign(new ProgrammingExercise(undefined, undefined), {
+                id: 8,
+                type: ExerciseType.PROGRAMMING,
+                templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: 0, successful: false }] }] },
+                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score, successful: true, passedTestCaseCount: 10, testCaseCount: 10 }] }] },
+            });
+            const unavailable = Object.assign(new ProgrammingExercise(undefined, undefined), { id: 9 });
+
+            expect(renderRows([expected, unavailable]).querySelector('[data-testid="programming-build-warning"]')).toBeNull();
+        });
+
         it('drives the select-all header checkbox: dash on partial selection, tick on all', async () => {
             const a = { id: 1, title: 'a', type: ExerciseType.TEXT } as Exercise;
             const b = { id: 2, title: 'b', type: ExerciseType.TEXT } as Exercise;
@@ -409,10 +443,10 @@ describe('ExerciseTableComponent', () => {
             const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
             const element = renderRows([text]);
 
-            const link = element.querySelector('.col-title a') as HTMLAnchorElement;
+            const link = element.querySelector('td.col-title a') as HTMLAnchorElement;
             expect(link.textContent).toContain('Text exercise');
             expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
-            expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
+            expect(element.querySelector('td.col-points')?.textContent).toContain('5pts');
 
             const difficultyTag = element.querySelector('tumaet-ui-tag');
             expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);

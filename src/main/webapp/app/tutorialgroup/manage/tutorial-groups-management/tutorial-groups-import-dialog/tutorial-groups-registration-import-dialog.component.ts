@@ -19,6 +19,7 @@ import {
     TumAetUiMessageComponent,
     TumAetUiSelectButtonComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
 } from '@tumaet/ui-angular';
 import { TutorialGroupImportData } from 'app/openapi/model/tutorial-group-import-data';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
@@ -43,7 +44,7 @@ const POSSIBLE_CAMPUS_HEADERS = ['campus'];
 const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
 const POSSIBLE_LANGUAGE_HEADERS = ['language', 'sprache'];
 const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
-const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'ist Online'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'istonline'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
@@ -64,6 +65,7 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
         TumAetUiMessageComponent,
         TumAetUiSelectButtonComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {

@@ -28,7 +28,7 @@
     }
 </ng-template>
 
-<div class="flex flex-col gap-3">
+<div class="flex flex-col gap-4!">
     @for (exerciseGroup of exerciseGroups(); track exerciseGroup.id; let i = $index) {
         <div id="{{ 'group-' + exerciseGroup.id }}">
             <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
@@ -78,11 +78,12 @@
                             [connectedDropLists]="dropListIds()"
                             (groupChange)="onTableGroupChange($event)"
                             (exerciseDeleted)="removeExercise($event.id!, exerciseGroup.id!)"
+                            (exerciseDeletionOutcomeUnknown)="reloadExerciseGroups()"
                         />
                     }
                 }
 
-                <div class="flex items-center justify-between flex-wrap gap-2 mt-3">
+                <div class="flex items-center justify-between flex-wrap gap-2 mt-4!">
                     <div class="flex items-center flex-wrap gap-2">
                         @if (course()?.isAtLeastEditor) {
                             <tumaet-ui-button size="small" [attr.data-testid]="'add-exercise-button'" (clicked)="openTypePicker(exerciseGroup.id!, 'create')">
@@ -109,8 +110,8 @@
             </tumaet-ui-panel>
         </div>
     } @empty {
-        <div class="text-center py-5 text-muted-color">
-            <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
+        <div class="text-center py-12! text-muted-color">
+            <fa-icon [icon]="faLayerGroup" size="2x" class="mb-4!" aria-hidden="true" />
             <p class="mb-2!" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
             @if (course()?.isAtLeastEditor) {
                 <tumaet-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
@@ -145,13 +146,15 @@
 }
 
 @if (exerciseImportType(); as importType) {
-    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" (imported)="onExerciseImported($event)" />
+    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" [courseId]="courseId()" (imported)="onExerciseImported($event)" />
 }
 
 <jhi-exam-delete-dialog
     [(visible)]="deleteGroupVisible"
     [entityTitle]="groupToDelete()?.title || ''"
     [deleteQuestion]="deleteGroupQuestion()"
+    entitySummaryTitle="artemisApp.examManagement.exerciseGroup.delete.summary.title"
+    [fetchCategorizedEntitySummary]="deleteGroupSummary()"
     deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
     [additionalChecks]="deleteGroupChecks()"
     [dialogError]="dialogError"

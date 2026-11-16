@@ -52,6 +52,7 @@ public class RestTemplateConfiguration {
 
     private static final int HERMES_HEALTH_READ_TIMEOUT = 3 * 1000;
 
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove this bean and its JenkinsAuthorizationInterceptor with Jenkins support
     @Bean
     @Profile(PROFILE_JENKINS)
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
@@ -108,6 +109,7 @@ public class RestTemplateConfiguration {
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
     // it is recommended to keep the timeout settings constant per rest template
 
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove this bean and its JenkinsAuthorizationInterceptor with Jenkins support
     @Bean
     @Profile(PROFILE_JENKINS)
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {

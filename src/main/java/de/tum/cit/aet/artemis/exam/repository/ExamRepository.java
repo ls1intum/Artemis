@@ -45,6 +45,23 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     /**
+     * Counts the real exams of the given courses for the public usage dashboard. Test exams (the practice format for students) and exams whose title starts
+     * with "test" or "mock", in any letter case, are demos or trials of instructors and not real exams.
+     *
+     * @param courseIds the courses
+     * @return the number of real exams of these courses
+     */
+    @Query("""
+            SELECT COUNT(e.id)
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+                AND e.testExam = FALSE
+                AND LOWER(e.title) NOT LIKE 'test%'
+                AND LOWER(e.title) NOT LIKE 'mock%'
+            """)
+    long countRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
+
+    /**
      * @param entityIds the ids to check
      * @return the subset that exists
      */

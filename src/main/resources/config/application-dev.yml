@@ -31,6 +31,7 @@ spring:
     # profile emit pretty-printed responses that no longer match production byte for byte. Re-enable deliberately.
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the dev datasource to PostgreSQL before MySQL support is removed
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
@@ -141,6 +142,9 @@ artemis:
     continuous-integration:
         build-job:
           retention-period: 365 # Number of days before build job entries are deleted
+        # Docker Desktop forwards connections to the host to its loopback interface, so the check reports the services of a local installation as reachable
+        network-isolation-check:
+            enabled: false
     security:
         internal:
             allowed-cidrs:

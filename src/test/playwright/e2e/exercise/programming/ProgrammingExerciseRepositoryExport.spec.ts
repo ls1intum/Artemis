@@ -169,7 +169,7 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
 
         await programmingExerciseExportDialog.export();
 
-        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"] .message'), 'the dialog has to say what is missing').toContainText(
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]').getByTestId('alert-message'), 'the dialog has to say what is missing').toContainText(
             /select at least one participant/i,
         );
         expect(exportRequests, 'nothing may be requested from the server').toEqual([]);
@@ -270,8 +270,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      */
     test('Exports the exercise material for re-import', async ({ page, login }) => {
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+        await page.getByTestId('exercise-more-actions').click();
         const { filePath } = await downloadArchive(page, async () => {
-            await page.locator('jhi-programming-exercise-instructor-exercise-download button').first().click();
+            await page.getByTestId('download-exercise').click();
         });
 
         const entries = await readArchiveEntries(filePath);
@@ -316,8 +317,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      */
     test('Stores nested archives but still deflates plain files', async ({ page, login }) => {
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+        await page.getByTestId('exercise-more-actions').click();
         const { filePath } = await downloadArchive(page, async () => {
-            await page.locator('jhi-programming-exercise-instructor-exercise-download button').first().click();
+            await page.getByTestId('download-exercise').click();
         });
 
         const entries = await readArchiveEntries(filePath);

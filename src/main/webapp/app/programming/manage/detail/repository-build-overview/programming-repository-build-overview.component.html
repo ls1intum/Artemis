@@ -1,0 +1,188 @@
+@let data = detail().data;
+@let exercise = data.exercise;
+<section class="my-6! min-w-0" aria-labelledby="repository-build-heading">
+    <div class="mb-4! flex flex-wrap items-center justify-between gap-3!">
+        <h4 id="repository-build-heading" class="mb-0!">{{ 'artemisApp.programmingExercise.repositoryBuildOverview.title' | artemisTranslate }}</h4>
+        <div class="flex flex-wrap gap-2">
+            @if (data.editBuildPlanLink) {
+                <a tumAetUiButton severity="warn" size="small" [routerLink]="data.editBuildPlanLink" [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises">
+                    <fa-icon [icon]="faPencilAlt" />
+                    <span jhiTranslate="entity.action.editBuildPlan"></span>
+                </a>
+            }
+            @if (data.checkConsistency) {
+                <button type="button" tumAetUiButton variant="outlined" size="small" [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises" (click)="data.checkConsistency()">
+                    <fa-icon [icon]="faCheckDouble" />
+                    <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                </button>
+            }
+        </div>
+    </div>
+    <div class="grid min-w-0 grid-cols-1 gap-4! lg:grid-cols-2">
+        @for (panel of panels(); track panel.repositoryType) {
+            @let status = panel.status;
+            <tumaet-ui-card
+                class="min-w-0 border border-(--tumaet-ui-border-color)"
+                [attr.data-testid]="panel.repositoryType === RepositoryType.TEMPLATE ? 'template-build-panel' : 'solution-build-panel'"
+            >
+                <h5>{{ panel.title | artemisTranslate }}</h5>
+                <p class="text-(--tumaet-ui-muted-color)">{{ panel.description | artemisTranslate }}</p>
+                @if (status.participation?.repositoryUri && exercise.id) {
+                    <p class="text-sm break-all">{{ status.participation!.repositoryUri }}</p>
+                    <div class="mb-5! flex flex-wrap items-center gap-2">
+                        <jhi-code-button
+                            size="small"
+                            [allowOnlineIde]="false"
+                            [repositoryUri]="status.participation!.repositoryUri!"
+                            [repositoryViewLink]="['.', 'repository', panel.repositoryType]"
+                            [exerciseId]="exercise.id"
+                            [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'repository-token', repositoryType: panel.repositoryType }"
+                        />
+                        <jhi-programming-exercise-instructor-repo-download [exerciseId]="exercise.id" [repositoryType]="panel.repositoryType" />
+                    </div>
+                } @else {
+                    <jhi-no-data />
+                }
+                <h6>{{ 'artemisApp.programmingExercise.repositoryBuildOverview.result' | artemisTranslate }}</h6>
+                @if (status.participation; as participation) {
+                    <div class="flex min-w-0 flex-wrap items-center gap-2" aria-live="polite">
+                        @if (status.loading()) {
+                            <span>{{ 'artemisApp.programmingExercise.repositoryBuildOverview.resultsLoading' | artemisTranslate }}</span>
+                        } @else {
+                            <jhi-updating-result
+                                class="min-w-0"
+                                [exercise]="exercise"
+                                [participation]="participation"
+                                [showUngradedResults]="true"
+                                [personalParticipation]="false"
+                                [short]="false"
+                                [showProgressBar]="true"
+                                [showProgressBarBorder]="true"
+                                (onParticipationChange)="status.onParticipationChange()"
+                            />
+                        }
+                        <jhi-programming-exercise-instructor-status [participationType]="status.type" [participation]="participation" [exercise]="exercise" />
+                    </div>
+                    <p class="mt-2 text-sm text-(--tumaet-ui-muted-color)">{{ panel.expectedScore | artemisTranslate }}</p>
+                    @if (exercise.isAtLeastEditor && participation.id) {
+                        <div class="mt-3! flex flex-wrap items-center gap-3!">
+                            @if (!status.loading()) {
+                                <jhi-programming-exercise-instructor-trigger-build-button [exercise]="exercise" [participation]="participation" />
+                            }
+                            <a [routerLink]="status.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }">
+                                {{
+                                    (panel.repositoryType === RepositoryType.TEMPLATE
+                                        ? 'artemisApp.programmingExercise.detail.showTemplateSubmissions'
+                                        : 'artemisApp.programmingExercise.detail.showSolutionSubmissions'
+                                    ) | artemisTranslate
+                                }}
+                            </a>
+                        </div>
+                    }
+                } @else {
+                    <jhi-no-data />
+                    <p class="mt-2 text-sm text-(--tumaet-ui-muted-color)">{{ panel.expectedScore | artemisTranslate }}</p>
+                }
+                @if (data.localCIEnabled && exercise.isAtLeastEditor) {
+                    <div class="mt-5! border-t border-(--tumaet-ui-border-color) pt-4!">
+                        <h6>{{ 'artemisApp.programmingExercise.checkoutDirectories' | artemisTranslate }}</h6>
+                        @if (checkoutLoading()) {
+                            <p>{{ 'artemisApp.programmingExercise.repositoryBuildOverview.checkoutLoading' | artemisTranslate }}</p>
+                        }
+                        @if (checkoutError()) {
+                            <p class="text-(--tumaet-ui-muted-color)">{{ 'artemisApp.programmingExercise.repositoryBuildOverview.checkoutUnavailable' | artemisTranslate }}</p>
+                        }
+                        @if (!checkoutLoading() && !checkoutError() && !panel.checkouts.length) {
+                            <jhi-no-data />
+                        }
+                        <dl class="mb-0! grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-3! gap-y-2 text-sm">
+                            @for (checkout of panel.checkouts; track $index) {
+                                <dt class="font-normal">{{ checkout.auxiliaryName ?? (checkout.label | artemisTranslate) }}</dt>
+                                <dd class="mb-0! break-all">
+                                    <code>{{ checkout.path }}</code>
+                                </dd>
+                            }
+                        </dl>
+                    </div>
+                } @else if (!data.localCIEnabled) {
+                    <div class="mt-4!">
+                        <span
+                            >{{
+                                (panel.repositoryType === RepositoryType.TEMPLATE
+                                    ? 'artemisApp.programmingExercise.templateBuildPlanId'
+                                    : 'artemisApp.programmingExercise.solutionBuildPlanId'
+                                ) | artemisTranslate
+                            }}:
+                        </span>
+                        @if (status.participation?.buildPlanUrl; as buildPlanUrl) {
+                            <a [href]="buildPlanUrl" target="_blank" rel="noopener noreferrer" class="break-all">{{ status.participation?.buildPlanId }}</a>
+                        } @else {
+                            <jhi-no-data />
+                        }
+                    </div>
+                }
+            </tumaet-ui-card>
+        }
+    </div>
+    <div class="mt-4! flex min-w-0 flex-wrap items-center justify-between gap-3! border-b border-(--tumaet-ui-border-color) py-4!" data-testid="shared-tests-repository">
+        <div class="min-w-0">
+            <h5>{{ 'artemisApp.programmingExercise.repositoryBuildOverview.tests' | artemisTranslate }}</h5>
+            <p class="mb-0! text-sm break-all">{{ exercise.testRepositoryUri }}</p>
+        </div>
+        @if (exercise.id && exercise.testRepositoryUri) {
+            <div class="flex flex-wrap items-center gap-2">
+                <jhi-code-button
+                    size="small"
+                    [allowOnlineIde]="false"
+                    [repositoryUri]="exercise.testRepositoryUri"
+                    [repositoryViewLink]="['.', 'repository', RepositoryType.TESTS]"
+                    [exerciseId]="exercise.id"
+                    [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'repository-token', repositoryType: RepositoryType.TESTS }"
+                />
+                <jhi-programming-exercise-instructor-repo-download [exerciseId]="exercise.id" [repositoryType]="RepositoryType.TESTS" />
+            </div>
+        } @else {
+            <jhi-no-data />
+        }
+    </div>
+    @for (repository of auxiliaryRepositories(); track repository.id) {
+        <div class="flex min-w-0 flex-wrap items-center justify-between gap-3! border-b border-(--tumaet-ui-border-color) py-4!" data-testid="auxiliary-repository">
+            <div class="min-w-0">
+                <h5 class="break-all">{{ repository.name }}</h5>
+                <p class="mb-0! text-sm break-all">{{ repository.repositoryUri }}</p>
+                @if (!repository.checkoutDirectory) {
+                    <p class="mb-0! mt-2 text-sm">
+                        <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" />
+                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
+                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                    </p>
+                }
+            </div>
+            @if (exercise.id && repository.id && repository.repositoryUri) {
+                <div class="flex flex-wrap items-center gap-2">
+                    <jhi-code-button
+                        size="small"
+                        [allowOnlineIde]="false"
+                        [repositoryUri]="repository.repositoryUri"
+                        [repositoryViewLink]="['.', 'repository', RepositoryType.AUXILIARY, repository.id]"
+                        [exerciseId]="exercise.id"
+                        [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'repository-token', repositoryType: RepositoryType.AUXILIARY, auxiliaryRepositoryId: repository.id }"
+                    />
+                    <jhi-programming-exercise-instructor-repo-download
+                        [exerciseId]="exercise.id"
+                        [repositoryType]="RepositoryType.AUXILIARY"
+                        [auxiliaryRepositoryId]="repository.id"
+                    />
+                </div>
+            } @else {
+                <jhi-no-data />
+            }
+        </div>
+    }
+    @if (data.comparison; as comparison) {
+        <div class="pt-5!" data-testid="repository-comparison">
+            <h5>{{ 'artemisApp.programmingExercise.diffReport.title' | artemisTranslate }}</h5>
+            <jhi-programming-diff-report-detail [detail]="comparison" />
+        </div>
+    }
+</section>

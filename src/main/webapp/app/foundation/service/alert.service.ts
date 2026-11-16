@@ -1,4 +1,5 @@
 import { SecurityContext, Service, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -89,7 +90,13 @@ export class AlertService {
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
-                    this.addErrorAlert('Server not reachable', 'error.server.not.reachable');
+                    // The translations come from the same server, so they may be missing as well. The key is in the part that the landing page loads, so only a client that
+                    // could not load any translation falls back to English. That is no mistake of the key, so a missing translation is not reported.
+                    this.addAlert({
+                        type: AlertType.DANGER,
+                        message: this.translateIfKnown('global.generic.serverNotReachable') ?? 'Server not reachable',
+                        disableTranslation: true,
+                    });
                     break;
 
                 case 400:
@@ -162,6 +169,45 @@ export class AlertService {
                     }
             }
         });
+    }
+
+    /**
+     * Whether the handling of `artemisApp.httpError` shows an alert for the given rejected request. A caller that reports a rejection itself uses this
+     * to avoid showing the same failure twice. It decides like the listener in the constructor, branch by branch, so change both together.
+     */
+    showsHttpErrorAlert(httpErrorResponse: HttpErrorResponse): boolean {
+        if (httpErrorResponse.error?.skipAlert) {
+            return false;
+        }
+        switch (httpErrorResponse.status) {
+            case 0:
+                return true;
+            case 400: {
+                let errorHeader: string | null = null;
+                for (const entry of httpErrorResponse.headers?.keys() ?? []) {
+                    if (entry.toLowerCase().endsWith('app-error')) {
+                        errorHeader = httpErrorResponse.headers.get(entry);
+                    }
+                }
+                if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
+                    return true;
+                }
+                if (httpErrorResponse.error?.fieldErrors) {
+                    // One alert per field error, so none for an empty list.
+                    return Array.isArray(httpErrorResponse.error.fieldErrors) && httpErrorResponse.error.fieldErrors.length > 0;
+                }
+                if (httpErrorResponse.error?.title) {
+                    return !this.badRequestErrorKeysToSkip.includes(httpErrorResponse.error.errorKey);
+                }
+                return false;
+            }
+            case 403:
+                return !this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey);
+            case 404:
+                return false;
+            default:
+                return !!httpErrorResponse.error?.title;
+        }
     }
 
     closeAll(): void {
@@ -293,6 +339,12 @@ export class AlertService {
             message,
             translationParams,
         });
+    }
+
+    /** The translation of the key, or undefined if the translations do not contain it, for example because they have not been loaded. */
+    private translateIfKnown(translationKey: string): string | undefined {
+        const translated = this.translateService.instant(translationKey);
+        return translated.startsWith(translationNotFoundMessage) ? undefined : translated;
     }
 
     addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {

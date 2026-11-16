@@ -11,7 +11,7 @@
 </div>
 @if (student() && studentExam()) {
     <div>
-        <div class="mb-4">
+        <div class="mb-6!">
             <h5><span jhiTranslate="artemisApp.studentExamDetail.student"></span></h5>
             <ol class="my-0! ms-6! list-none p-0">
                 <li>
@@ -33,7 +33,7 @@
             </ol>
         </div>
         @if (!isTestExam()) {
-            <div class="mb-4">
+            <div class="mb-6!">
                 <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
                 <form #form="ngForm" (ngSubmit)="saveWorkingTime()" class="ms-6">
                     <jhi-working-time-control
@@ -60,13 +60,13 @@
             </div>
         }
         @if (isTestExam()) {
-            <div class="mb-4">
+            <div class="mb-6!">
                 <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
                 <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>:
                 <jhi-test-exam-working-time [studentExam]="studentExam()!" />
             </div>
         }
-        <div class="mb-4">
+        <div class="mb-6!">
             <h5><span jhiTranslate="artemisApp.studentExams.participationStatus"></span></h5>
             <div class="me-2 ms-6">
                 <ol class="my-0! list-none p-0">
@@ -151,7 +151,7 @@
                 </button>
             </ng-template>
         </tumaet-ui-dialog>
-        <div class="mb-4">
+        <div class="mb-6!">
             <h5><span jhiTranslate="artemisApp.studentExams.summary"></span></h5>
             <div class="flex flex-row">
                 @if (course()?.isAtLeastInstructor) {
@@ -166,7 +166,7 @@
                 }
             </div>
         </div>
-        <div class="my-4">
+        <div class="my-6!">
             <h5><span jhiTranslate="artemisApp.studentExams.examSessions"></span></h5>
             @if (studentExam()!.examSessions && studentExam()!.examSessions!.length > 0) {
                 <div class="max-w-full overflow-x-auto">
@@ -215,7 +215,7 @@
                 <div jhiTranslate="artemisApp.studentExamDetail.noSessions" class="ms-6"></div>
             }
         </div>
-        <div class="my-4">
+        <div class="my-6!">
             <h5 jhiTranslate="artemisApp.studentExamDetail.exercises"></h5>
             <div class="overflow-x-auto">
                 <table tumAetUiTable striped>

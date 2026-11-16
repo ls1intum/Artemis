@@ -92,6 +92,8 @@ class IrisChatSessionServiceStatusUpdateTest {
 
     private ExerciseTestRepository exerciseRepository;
 
+    private AuthorizationCheckService authorizationCheckService;
+
     private IrisChatSessionService irisChatSessionService;
 
     @BeforeEach
@@ -104,9 +106,10 @@ class IrisChatSessionServiceStatusUpdateTest {
         pyrisJobService = mock(PyrisJobService.class);
         userRepository = mock(UserTestRepository.class);
         exerciseRepository = mock(ExerciseTestRepository.class);
+        authorizationCheckService = mock(AuthorizationCheckService.class);
 
         irisChatSessionService = new IrisChatSessionService(irisMessageService, irisMessageRepository, llmTokenUsageService, mock(IrisSettingsService.class),
-                irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, mock(IrisChatSessionRepository.class),
+                irisChatWebsocketService, authorizationCheckService, irisSessionRepository, mock(IrisChatSessionRepository.class),
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), exerciseRepository, mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
                 mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, mock(UserAiPreferenceService.class),
@@ -262,6 +265,100 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), isNull(), isNull(),
                 eq(false));
+    }
+
+    @Test
+    void intermediateResultStoresTheStepsThatRanBeforeIt() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
+
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> invocation.getArgument(0, IrisMessage.class));
+
+        var step = new PyrisActivityDTO("act-1", PyrisActivityKind.TOOL, "list_exercises", PyrisActivityState.FINISHED, null, null, 80L);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("Let me switch over", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, false, null, null,
+                List.of(step));
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
+        var savedMessage = messageCaptor.getValue();
+        assertThat(savedMessage.getIntermediate()).isTrue();
+        assertThat(savedMessage.getToolActivity()).containsExactly(step);
+        assertThat(IrisMessageResponseDTO.of(savedMessage).activities()).containsExactly(step);
+    }
+
+    @Test
+    void finalResultWithAnEmptyStepListStoresNoSteps() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
+
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        when(pyrisJobService.getJob("run-1")).thenReturn(job);
+        when(pyrisJobService.runWithJobLock(eq("run-1"), any())).thenAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Supplier<?> supplier = invocation.getArgument(1, Supplier.class);
+            return supplier.get();
+        });
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
+            var message = invocation.getArgument(0, IrisMessage.class);
+            message.setId(104L);
+            return message;
+        });
+
+        // Every step already shows on an interim message: an empty list is not "missing", so the whole run must not be stored again.
+        var step = new PyrisActivityDTO("act-1", PyrisActivityKind.TOOL, "list_exercises", PyrisActivityState.FINISHED, null, null, 80L);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, List.of(step), 2, true, null, null, List.of());
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
+        assertThat(messageCaptor.getValue().getToolActivity()).isNull();
+    }
+
+    @Test
+    void finalResultStoresOnlyTheStepsNoInterimMessageShows() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
+
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        when(pyrisJobService.getJob("run-1")).thenReturn(job);
+        when(pyrisJobService.runWithJobLock(eq("run-1"), any())).thenAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Supplier<?> supplier = invocation.getArgument(1, Supplier.class);
+            return supplier.get();
+        });
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
+            var message = invocation.getArgument(0, IrisMessage.class);
+            message.setId(103L);
+            return message;
+        });
+
+        var earlierStep = new PyrisActivityDTO("act-1", PyrisActivityKind.TOOL, "list_exercises", PyrisActivityState.FINISHED, null, null, 80L);
+        var laterStep = new PyrisActivityDTO("act-2", PyrisActivityKind.TOOL, "get_problem_statement", PyrisActivityState.FINISHED, null, null, 90L);
+        var wholeRun = List.of(earlierStep, laterStep);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, wholeRun, 4, true, null, null, List.of(laterStep));
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
+        var savedMessage = messageCaptor.getValue();
+        assertThat(savedMessage.getToolActivity()).containsExactly(laterStep);
+        // The live view still gets the whole run.
+        verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), eq(wholeRun), eq(4),
+                isNull());
     }
 
     @Test
@@ -437,6 +534,8 @@ class IrisChatSessionServiceStatusUpdateTest {
         exercise.setTitle("Sorting");
         exercise.setCourse(course);
         when(exerciseRepository.findByIdElseThrow(11L)).thenReturn(exercise);
+        // A student may switch the chat to an exercise that is released
+        when(authorizationCheckService.isAllowedToSeeCourseExercise(exercise, user)).thenReturn(true);
     }
 
     private IrisMessage stubMarker() {

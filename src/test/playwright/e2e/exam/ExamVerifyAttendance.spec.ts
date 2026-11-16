@@ -14,7 +14,7 @@ const signature = path.resolve(__dirname, '../../../../test/resources/test-data/
 
 /**
  * While an exam is running, the supervisors verify the attendance: they check the student, have them sign and record that in the exam. The
- * verification page lists the students who started the exam and did not sign yet, and says that everybody passed when nobody is missing.
+ * verification page retains registered students, distinguishes incomplete checks from signatures, and allows post-exam attendance corrections.
  */
 test.describe('Exam attendance verification', { tag: '@slow' }, () => {
     let exam: Exam;
@@ -25,15 +25,13 @@ test.describe('Exam attendance verification', { tag: '@slow' }, () => {
     });
 
     /** A supervisor records that the student was checked and signed. */
-    async function recordSignature(page: Page, student: UserCredentials) {
+    async function recordSignature(page: Page, student: UserCredentials, didCheckName = true) {
         const response = await page.request.post(`api/exam/courses/${course.id}/exams/${exam.id}/exam-users`, {
             multipart: {
                 examUserDTO: {
                     name: 'examUserDTO',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(
-                        JSON.stringify({ login: student.username, didCheckImage: true, didCheckName: true, didCheckLogin: true, didCheckRegistrationNumber: true }),
-                    ),
+                    buffer: Buffer.from(JSON.stringify({ login: student.username, didCheckImage: true, didCheckName, didCheckLogin: true, didCheckRegistrationNumber: true })),
                 },
                 file: { name: 'signature.png', mimeType: 'image/png', buffer: fs.readFileSync(signature) },
             },
@@ -41,7 +39,7 @@ test.describe('Exam attendance verification', { tag: '@slow' }, () => {
         expect(response.status(), `${student.username} signs`).toBe(200);
     }
 
-    test('The page says that the exam has not started, lists the students who did not sign and confirms when everybody did', async ({
+    test('The page retains attendance records, identifies incomplete signed checks and supports corrections after the exam', async ({
         page,
         login,
         examAPIRequests,
@@ -56,7 +54,7 @@ test.describe('Exam attendance verification', { tag: '@slow' }, () => {
         await examAPIRequests.deleteExam(upcoming);
 
         // The exam is running and both students started it.
-        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, students: [studentOne, studentTwo] })).exam;
+        exam = (await prepareRunningTextExam(examAPIRequests, exerciseAPIRequests, { course, students: [studentOne, studentTwo], examOptions: { gracePeriod: 0 } })).exam;
         for (const student of [studentOne, studentTwo]) {
             await login(student);
             await new ExamAPIRequests(page).getOwnStudentExamForConduction(exam);
@@ -73,19 +71,68 @@ test.describe('Exam attendance verification', { tag: '@slow' }, () => {
             await expect(row).toContainText('No');
         }
 
-        // A supervisor records the signature of one student: only the other one is left on the page.
+        const first = rows.and(page.locator(`[data-login="${studentOne.username}"]`));
+        const second = rows.and(page.locator(`[data-login="${studentTwo.username}"]`));
+        await expect(first.getByTestId('manual-attendance')).toBeDisabled();
+        await expect(second.getByTestId('manual-attendance')).toBeDisabled();
+
+        // Signed students remain available for review, alongside those with incomplete checks.
         await login(tutor);
         await recordSignature(page, studentOne);
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students/verify-attendance`);
         await expect(page.getByTestId('not-checked-count')).toHaveText('1');
-        await expect(rows).toHaveCount(1);
-        await expect(rows.first()).toHaveAttribute('data-login', studentTwo.username);
+        await expect(rows).toHaveCount(2);
+        await expect(first.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
+        await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'false');
 
-        // The other one signs too: everybody passed, and the list is gone.
+        // A signature alone does not complete the identity checks.
         await login(tutor);
-        await recordSignature(page, studentTwo);
+        await recordSignature(page, studentTwo, false);
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students/verify-attendance`);
+        await expect(page.getByTestId('not-checked-count')).toHaveText('1');
+        await expect(rows).toHaveCount(2);
+        const firstSignature = first.getByRole('img', { name: `Signature of student ${studentOne.username}`, exact: true });
+        const secondSignature = second.getByRole('img', { name: `Signature of student ${studentTwo.username}`, exact: true });
+        await expect(secondSignature).toBeVisible();
+        await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'false');
+        const firstSignatureSource = await firstSignature.getAttribute('src');
+        const secondSignatureSource = await secondSignature.getAttribute('src');
+
+        await examAPIRequests.concludeExam(exam, { publishResults: false });
+        await page.reload();
+        await expect(second.getByTestId('manual-attendance')).toBeEnabled();
+
+        const setAttendance = async (student: UserCredentials, value: string) => {
+            const row = rows.and(page.locator(`[data-login="${student.username}"]`));
+            const saved = page.waitForResponse((response) => response.request().method() === 'PUT' && response.url().endsWith('/attendance'));
+            await row.getByTestId('manual-attendance').selectOption(value);
+            expect((await saved).status()).toBe(204);
+            await expect(row.getByTestId('manual-attendance')).toBeEnabled();
+            await expect(row.getByTestId('manual-attendance')).toHaveValue(value);
+        };
+
+        await setAttendance(studentTwo, 'true');
         await expect(page.getByTestId('all-students-checked')).toContainText('All the students have been checked successfully');
-        await expect(rows).toHaveCount(0);
+        await expect(rows).toHaveCount(2);
+        await expect(secondSignature).toHaveAttribute('src', secondSignatureSource!);
+
+        // Marking a student absent clears the four identity checks: the signature stays, but the student is shown as unverified again.
+        await setAttendance(studentOne, 'false');
+        await expect(firstSignature).toHaveAttribute('src', firstSignatureSource!);
+        await expect(first.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'false');
+        await expect(page.getByTestId('not-checked-count')).toHaveText('1');
+        await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
+
+        await setAttendance(studentTwo, 'false');
+        await expect(page.getByTestId('not-checked-count')).toHaveText('2');
+        await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'false');
+        await expect(secondSignature).toHaveAttribute('src', secondSignatureSource!);
+        await expect(rows).toHaveCount(2);
+
+        // A later correction confirms the checks again, without a new signature.
+        await setAttendance(studentOne, 'true');
+        await expect(page.getByTestId('not-checked-count')).toHaveText('1');
+        await expect(first.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
+        await expect(firstSignature).toHaveAttribute('src', firstSignatureSource!);
     });
 });

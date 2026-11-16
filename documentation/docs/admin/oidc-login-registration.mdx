@@ -2,6 +2,7 @@
 id: oidc-login-registration
 title: 'OpenID Connect (OIDC) Login & Registration'
 sidebar_label: OpenID Connect Login
+last_reviewed: 2026-11-03
 ---
 
 Artemis supports decentralized user login and identity synchronization using OpenID Connect (OIDC). 
@@ -16,7 +17,7 @@ When a user authenticates via the OIDC provider for the first time, Artemis invo
 
 The OIDC ecosystem leverages Spring Security's OAuth2 Client libraries to inject an isolated, decoupled filter chain. This chain intercepts requests, ensuring OIDC callbacks are parsed and verified before hitting default platform filters.
 
-Unlike standard stateless operations, the initialization flow briefly establishes a highly secured, short-lived HTTP session in RAM. This session acts as an anti-tampering buffer, storing state and cryptographic nonce parameters to shield the system against Cross-Site Request Forgery (CSRF) or token-replay mutations.
+The login does not use an HTTP session. When it starts, Artemis stores the pending authorization request, with its `state` and `nonce`, in the distributed data store for 10 minutes, so the callback of the identity provider can reach any node. A load balancer does not need sticky sessions for OIDC. The browser receives the `state` in the HTTP-only `oidc-state` cookie, and Artemis accepts a callback only if its `state` matches that cookie. Each authorization request can be used once. The cookie is `Secure` like the session cookie, so `jhipster.security.authentication.jwt.cookie-secure: false` also allows OIDC logins on a deployment reached over plain HTTP.
 
 ## Configuration Specification
 

@@ -1,13 +1,15 @@
 # Build from the repository root. The base and the canonical harnesses pin the JDK, wrapper, Maven and dependencies.
 # One image serves both Java build tools: Gradle (PLAIN_GRADLE, GRADLE_GRADLE) and Maven (PLAIN_MAVEN, MAVEN_MAVEN).
-ARG JAVA_IMAGE=eclipse-temurin:25.0.4.1_1-jdk@sha256:3ab7fc8d0b4ade8fef96903fb36767c1dbb4fd1535dcfad85b59c17afbbb5857
+ARG JAVA_IMAGE=eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d
 FROM ${JAVA_IMAGE}
 
 ARG MAVEN_SHA512=831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6
 
-# Pinned Apache Maven 3.9.16 distribution: ADD verifies the SHA-256, the RUN verifies Apache's published SHA-512.
+# Pinned Apache Maven 3.9.16 distribution from Maven Central, whose CDN is faster and more reliable on CI runners than
+# archive.apache.org (EOF and TLS handshake timeouts). The base image has neither curl nor wget, so ADD fetches it.
+# ADD verifies the SHA-256, the RUN verifies Apache's published SHA-512.
 ADD --checksum=sha256:80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb \
-    https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.tar.gz /tmp/maven.tar.gz
+    https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz /tmp/maven.tar.gz
 RUN echo "${MAVEN_SHA512}  /tmp/maven.tar.gz" | sha512sum -c - \
     && mkdir -p /opt/maven \
     && tar -xzf /tmp/maven.tar.gz -C /opt/maven --strip-components=1 \

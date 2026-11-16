@@ -3,9 +3,9 @@ nav {
     top: -16px;
     z-index: 2;
     padding: 1rem 0;
-    background: var(--module-bg);
-    border-bottom: 1px solid var(--bs-border-color);
-    border-top: 1px solid var(--bs-border-color);
+    background: var(--tumaet-ui-content-background);
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
+    border-top: 1px solid var(--tumaet-ui-border-color);
 
     .nav-link-container {
         display: flex;
@@ -16,6 +16,7 @@ nav {
         a {
             display: inline-block;
             white-space: nowrap;
+            color: var(--tumaet-ui-accent-color);
         }
     }
 }

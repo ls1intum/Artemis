@@ -3,7 +3,13 @@
         <fa-icon [icon]="conversation().isFavorite ? faHeartSolid : faHeartRegular" size="sm" />
     </button>
     <div ngbDropdown container="body" class="flex items-center">
-        <button class="btn btn-outline-secondary dropdown-toggle sidebar-button py-0 pe-1 ps-0" type="button" ngbDropdownToggle (click)="$event.stopPropagation()">
+        <button
+            class="btn btn-outline-secondary dropdown-toggle sidebar-button flex! items-center justify-center px-1! py-0!"
+            type="button"
+            ngbDropdownToggle
+            data-testid="conversation-options-toggle"
+            (click)="$event.stopPropagation()"
+        >
             <fa-icon [icon]="faEllipsisVertical" size="sm" />
         </button>
         <div ngbDropdownMenu>

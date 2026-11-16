@@ -137,7 +137,9 @@ public class AtlasAgentDelegationService {
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature);
-        ChatResponse chatResponse = invoke(chatClient, systemPromptWithContext, message, options, saveToMemory, sessionId, null, false, toolCallbackProvider);
+        // The model cannot supply or override this course scope when using shared content read tools.
+        Map<String, Object> toolContext = Map.of(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
+        ChatResponse chatResponse = invoke(chatClient, systemPromptWithContext, message, options, saveToMemory, sessionId, toolContext, false, toolCallbackProvider);
         return extractContent(chatResponse);
     }
 
