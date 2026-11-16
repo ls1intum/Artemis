@@ -53,6 +53,17 @@ final class SecurityTestAssignments {
             Set<String> switchedOff, Set<String> overloaded, List<String> testCases) {
 
         /**
+         * @return the test cases that several test methods share and that use the policy of the class annotation, because no annotation of their own
+         *         overrides it
+         */
+        Set<String> inheritingOverloads() {
+            Set<String> inheriting = new LinkedHashSet<>(overloaded);
+            inheriting.removeAll(methodPolicyPaths.keySet());
+            inheriting.removeAll(keptMethods());
+            return inheriting;
+        }
+
+        /**
          * @return the test methods whose annotation stays as it is when the assignments of the class are rewritten, unless the method is assigned
          */
         Set<String> keptMethods() {

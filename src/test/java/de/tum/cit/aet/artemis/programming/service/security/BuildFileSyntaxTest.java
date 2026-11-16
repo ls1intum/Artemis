@@ -32,7 +32,12 @@ class BuildFileSyntaxTest {
         String commented = "dependencies {\n    // aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\ntest {\n    // jvmArgs '-javaagent:ares.jar'\n}\n";
         String mavenComment = "<project><!-- <artifactId>ares</artifactId><classifier>agent</classifier> --><argLine>-javaagent:jacoco.jar</argLine></project>";
 
+        String declaredButNotAttached = "dependencies {\n    testRuntimeOnly \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\ntest {\n    jvmArgs '-javaagent:jacocoagent.jar'\n}\n";
+        String mavenJacocoOnly = "<project><artifactId>ares</artifactId><classifier>agent</classifier><argLine>-javaagent:${project.build.directory}/jacoco.jar</argLine></project>";
+
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(jacoco))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(declaredButNotAttached))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenJacocoOnly))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(commented))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenComment))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, null))).isFalse();

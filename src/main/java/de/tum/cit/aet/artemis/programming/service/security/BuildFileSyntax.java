@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -17,8 +19,11 @@ final class BuildFileSyntax {
      */
     private static final Set<String> GROOVY_KEYWORDS_BEFORE_EXPRESSIONS = Set.of("return", "throw", "assert", "case", "in", "yield", "else", "do");
 
-    /** The Ares agent as a Gradle dependency, e.g. {@code "de.tum.cit.ase:ares:${aresVersion}:agent"}. */
-    private static final Pattern GRADLE_ARES_AGENT = Pattern.compile("de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent");
+    /** The Ares agent as a Gradle dependency of a configuration, e.g. {@code aresAgent "de.tum.cit.ase:ares:${aresVersion}:agent"}; group 1 is the configuration. */
+    private static final Pattern GRADLE_ARES_AGENT = Pattern.compile("([A-Za-z_$][\\w$]*+)\\s*+\\(?\\s*+['\"]de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent['\"]");
+
+    /** The argument of a {@code -javaagent} option; group 1 is the agent, up to the end of the string or argument. */
+    private static final Pattern JAVA_AGENT = Pattern.compile("-javaagent:([^'\"\\s,)<]*)");
 
     /** The Ares agent as a Maven artifact: the {@code agent} classifier of the {@code ares} artifact. */
     private static final Pattern MAVEN_ARES_AGENT = Pattern
@@ -30,17 +35,37 @@ final class BuildFileSyntax {
 
     /**
      * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
-     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it. Another agent, such as JaCoCo, and text in comments do not count.
+     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it. A {@code -javaagent} option counts if it names the Ares agent, e.g.
+     * {@code ares-agent.jar}, or, in Gradle, takes its file from the configuration that declares the Ares agent, like the templates do with
+     * {@code configurations.aresAgent}. Another agent, such as JaCoCo, and text in comments do not count.
      *
      * @param buildFiles the build files at the root of a repository
      * @return whether a build file attaches the Ares agent
      */
     static boolean attachesAresAgent(SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
         boolean gradle = Stream.ofNullable(buildFiles.gradleBuild()).map(content -> withoutMarked(content, gradleComments(content)))
-                .anyMatch(code -> code.contains("-javaagent") && GRADLE_ARES_AGENT.matcher(code).find());
+                .anyMatch(BuildFileSyntax::gradleAttachesAresAgent);
         boolean maven = Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
-                .anyMatch(code -> code.contains("-javaagent") && MAVEN_ARES_AGENT.matcher(code).find());
+                .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
         return gradle || maven;
+    }
+
+    private static boolean gradleAttachesAresAgent(String code) {
+        Matcher dependency = GRADLE_ARES_AGENT.matcher(code);
+        if (!dependency.find()) {
+            return false;
+        }
+        boolean configurationUsed = Pattern.compile("configurations\\s*\\.\\s*" + Pattern.quote(dependency.group(1)) + "\\b").matcher(code).find();
+        // An interpolated agent, as in "-javaagent:${agentJar.singleFile.absolutePath}", comes from the configuration the build uses for it.
+        return javaAgents(code).anyMatch(agent -> namesAres(agent) || (configurationUsed && agent.contains("${")));
+    }
+
+    private static Stream<String> javaAgents(String code) {
+        return JAVA_AGENT.matcher(code).results().map(match -> match.group(1));
+    }
+
+    private static boolean namesAres(String agent) {
+        return agent.toLowerCase(Locale.ROOT).contains("ares");
     }
 
     /** @return the content without the marked characters */

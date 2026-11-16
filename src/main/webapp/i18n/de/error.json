@@ -400,6 +400,7 @@
         "securityPolicyTestSwitchedOff": "Die Sandbox ist für die Testklasse {{ testClass }} ausgeschaltet, daher können ihre Tests keine Richtlinie verwenden.",
         "securityPolicyTestCaseSwitchedOff": "Der Test {{ test }} läuft wegen seiner eigenen @Policy-Annotation ohne Sandbox, daher kann er keine Richtlinie verwenden.",
         "securityPolicyTestCaseOverloaded": "Mehrere Testmethoden heißen {{ test }}, daher können sie eine Richtlinie nur zusammen mit ihrer ganzen Testklasse verwenden.",
+        "securityPolicyOverloadsLosePolicy": "Die Testmethoden namens {{ test }} in {{ testClass }} nutzen die Richtlinie {{ path }} über ihre Testklasse. Ordne die ganze Testklasse einer Richtlinie zu oder annotiere diese Methoden zuerst im Repository.",
         "securityPolicyUnknownTest": "Das Test-Repository hat keinen Test {{ test }}. Lade die Testfälle neu.",
         "securityPolicyAgentMissing": "Der Build des Test-Repositorys bindet den Ares-Agenten nicht ein, den die Prüfung der Abhängigkeiten braucht, daher kann {{ path }} sie nicht verwenden.",
         "securityPolicyNotFound": "Kein Test im Test-Repository verwendet die Richtlinie {{ path }}. Lade die Richtlinien neu.",

@@ -400,6 +400,7 @@
         "securityPolicyTestSwitchedOff": "The sandbox is switched off for the test class {{ testClass }}, so its tests cannot use a policy.",
         "securityPolicyTestCaseSwitchedOff": "The test {{ test }} runs without the sandbox because of its own @Policy annotation, so it cannot use a policy.",
         "securityPolicyTestCaseOverloaded": "More than one test method is called {{ test }}, so they can only use a policy together with their whole test class.",
+        "securityPolicyOverloadsLosePolicy": "The test methods called {{ test }} in {{ testClass }} use the policy {{ path }} through their test class. Assign the whole test class to a policy, or annotate those methods in the repository first.",
         "securityPolicyUnknownTest": "The tests repository has no test {{ test }}. Reload the test cases.",
         "securityPolicyAgentMissing": "The build of the tests repository does not attach the Ares agent, which scanning dependencies needs, so {{ path }} cannot use it.",
         "securityPolicyNotFound": "No test uses the policy {{ path }} in the tests repository. Reload the policies.",

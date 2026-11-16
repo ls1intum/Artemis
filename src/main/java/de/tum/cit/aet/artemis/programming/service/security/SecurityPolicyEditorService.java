@@ -526,6 +526,7 @@ public class SecurityPolicyEditorService {
             // A class annotation that points to a renamed or deleted file changes too, even if none of the test cases used it.
             boolean pointsToVacated = testClass.classPolicyPath() != null && vacated.contains(testClass.classPolicyPath());
             if (testClass.active() && (pointsToVacated || !assigned.entries().equals(testClass.entries()))) {
+                requireKeptOverloadPolicy(testClass, assigned);
                 reassigned.add(assigned);
             }
         }
@@ -542,6 +543,24 @@ public class SecurityPolicyEditorService {
             throw refused("The change would leave the Security Framework " + after.status() + ", so it was not committed.", "securityPolicyBreaksConfiguration",
                     Map.of("status", after.status().name()));
         }
+    }
+
+    /**
+     * Test methods that share a name cannot be assigned one by one; they follow the class annotation, which therefore must not lose its policy file under
+     * them unnoticed, e.g. when the file is renamed while the class is assigned case by case.
+     */
+    private static void requireKeptOverloadPolicy(SecurityTestAssignments.TestClass testClass, SecurityTestAssignments.TestClass assigned) {
+        String classPolicyPath = testClass.classPolicyPath();
+        // A class assigned as a whole shows the overloads as part of it, so releasing or deleting that assignment is what the instructor asked for.
+        boolean assignedAsAWhole = testClass.entries().containsKey(testClass.qualifiedName());
+        if (classPolicyPath == null || assigned.classPolicyPath() != null || assignedAsAWhole || testClass.inheritingOverloads().isEmpty()) {
+            return;
+        }
+        String overload = testClass.inheritingOverloads().iterator().next();
+        throw refused(
+                "The test class " + testClass.qualifiedName() + " has several test methods called " + overload + ", which use the policy " + classPolicyPath
+                        + " of the class. Assign the whole class to a policy, or give these methods an annotation of their own.",
+                "securityPolicyOverloadsLosePolicy", Map.of("testClass", testClass.qualifiedName(), "test", overload, "path", classPolicyPath));
     }
 
     /**
