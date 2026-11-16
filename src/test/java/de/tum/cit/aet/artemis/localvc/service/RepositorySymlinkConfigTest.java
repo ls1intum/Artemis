@@ -50,4 +50,18 @@ class RepositorySymlinkConfigTest {
             assertThat(repository.getConfig().getBoolean(ConfigConstants.CONFIG_CORE_SECTION, ConfigConstants.CONFIG_KEY_SYMLINKS, true)).isFalse();
         }
     }
+
+    @Test
+    void theFileHoldsTheSettingAfterAnEarlierValueWasOverridden() throws Exception {
+        // the first opening writes all settings, so that a later opening has nothing else to change
+        openedByArtemis().close();
+        Path configFile = workingTree.resolve(".git").resolve("config");
+        FileUtils.write(configFile.toFile(), FileUtils.readFileToString(configFile.toFile(), StandardCharsets.UTF_8).replace("symlinks = false", "symlinks = true"),
+                StandardCharsets.UTF_8);
+        assertThat(configFile).content().contains("symlinks = true");
+
+        openedByArtemis().close();
+
+        assertThat(configFile).content().contains("symlinks = false").doesNotContain("symlinks = true");
+    }
 }

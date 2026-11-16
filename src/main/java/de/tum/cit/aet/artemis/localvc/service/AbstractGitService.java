@@ -183,8 +183,10 @@ public abstract class AbstractGitService {
             refUpdate.link("refs/heads/" + defaultBranch);
         }
 
-        if (changed) {
+        // The settings that Repository.getConfig() applies are already in memory, so setting them again above changes nothing, while the file may still hold other values
+        if (changed || repository.hasUnsavedConfigOverride()) {
             gitRepoConfig.save();
+            repository.markConfigOverrideSaved();
         }
     }
 
