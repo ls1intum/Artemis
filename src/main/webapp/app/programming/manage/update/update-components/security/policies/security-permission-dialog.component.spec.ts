@@ -4,12 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityFilePermission } from 'app/programming/shared/entities/security-policy.model';
-import { ResourceKind, ResourceRow } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
-import {
-    SecurityPermissionDialogComponent,
-    splitArguments,
-    splitList,
-} from 'app/programming/manage/update/update-components/security/policies/security-permission-dialog.component';
+import { ResourceKind, ResourceRow, joinArguments, splitArguments } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import { SecurityPermissionDialogComponent, splitList } from 'app/programming/manage/update/update-components/security/policies/security-permission-dialog.component';
 
 const PROBLEM = 'artemisApp.programmingExercise.security.advanced.row.problem.';
 
@@ -136,6 +132,10 @@ describe('SecurityPermissionDialogComponent', () => {
     it('splits lists and arguments', () => {
         expect(splitList(' a , ,b ')).toEqual(['a', 'b']);
         expect(splitArguments('')).toEqual([]);
-        expect(splitArguments(' -c  "x" ')).toEqual(['-c', '"x"']);
+        expect(splitArguments(' -c  "x y" "" a\\ b ')).toEqual(['-c', 'x y', '', 'a b']);
+        expect(splitArguments('"open')).toBeUndefined();
+        for (const argumentList of [['data/input file.txt'], ['', 'a"b', 'c\\d'], ['--fast']]) {
+            expect(splitArguments(joinArguments(argumentList))).toEqual(argumentList);
+        }
     });
 });

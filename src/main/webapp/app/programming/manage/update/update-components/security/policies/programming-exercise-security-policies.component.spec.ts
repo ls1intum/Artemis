@@ -435,6 +435,71 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         });
     });
 
+    it('retries a failed dependency scanning commit with the same request and keeps the unsaved changes', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        handlers.onScanRequested(true);
+        handlers.onDialogConfirmed(undefined);
+        const failed = lastChange();
+
+        service.commitPolicies.mockReturnValueOnce(of({ editor: editor('f'.repeat(40)), config: configured() }));
+        handlers.retryCommit();
+
+        expect(lastChange()).toEqual(failed);
+        expect(lastChange().policies[0].assignedTests).toEqual(['de.example.SortingTest']);
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', titleKey: 'artemisApp.programmingExercise.security.advanced.scanOn.committedTitle' }));
+        expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
+    });
+
+    it('starts a new policy with the template of the server when no policy is left', () => {
+        service.getPolicies.mockReturnValue(
+            of({
+                ...editor(),
+                policies: [],
+                newPolicyTemplate: { policyPath: '', languageConfiguration: 'JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ', supervisedPackage: 'de.example' },
+            }),
+        );
+        create(configured(), false);
+
+        handlers.addPolicy();
+
+        expect(comp.policies()[0].working).toEqual(
+            expect.objectContaining({ languageConfiguration: 'JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ', supervisedPackage: 'de.example', testClasses: [] }),
+        );
+    });
+
+    it('keeps the changes to a policy someone deleted meanwhile as a new policy and says so', () => {
+        create(configured(), false);
+        const changed = withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        handlers.onPolicyChange({ ...comp.policies()[0], working: changed });
+        service.getPolicies.mockReturnValue(of({ ...editor('d'.repeat(40)), policies: [] }));
+
+        handlers.reload(true);
+
+        expect(comp.policies()).toHaveLength(1);
+        expect(comp.policies()[0].file).toBeUndefined();
+        expect(comp.policies()[0].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
+        expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest']);
+        expect(comp.banner()).toEqual({ kind: 'orphaned', files: 'SecurityPolicy.yaml' });
+    });
+
+    it('does not switch dependency scanning while a policy is read-only', () => {
+        service.getPolicies.mockReturnValue(
+            of({
+                ...editor(),
+                policies: [
+                    ...editor().policies!,
+                    { policyPath: 'Broken.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 2, assignedTests: ['de.example.StressTest'] },
+                ],
+            }),
+        );
+        create(configured(), false);
+
+        expect(comp.scanBlockedByReadOnly()).toBe(true);
+        expect(comp.scanAvailable()).toBe(false);
+    });
+
     it('discards every unsaved change', () => {
         create(configured(), false);
         handlers.addPolicy();

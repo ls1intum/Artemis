@@ -80,7 +80,7 @@
                                     <td>
                                         <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">
                                             @if (asCommand(entry.row).arguments?.length) {
-                                                {{ (asCommand(entry.row).arguments ?? []).join(' ') }}
+                                                {{ joinArguments(asCommand(entry.row).arguments ?? []) }}
                                             } @else {
                                                 <span class="sp-mut" [jhiTranslate]="prefix + 'noArguments'"></span>
                                             }

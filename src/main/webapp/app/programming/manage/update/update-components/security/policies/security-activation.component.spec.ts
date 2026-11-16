@@ -44,6 +44,18 @@ describe('Security activation', () => {
             expect(versions).toHaveBeenCalledExactlyOnceWith('2.2.1');
         });
 
+        it('disables dependency scanning while a policy is read-only', () => {
+            const fixture = TestBed.createComponent(SecurityActivationCardComponent);
+            fixture.componentRef.setInput('state', 'configured');
+            fixture.componentRef.setInput('toggleOn', true);
+            fixture.componentRef.setInput('scanAvailable', true);
+            fixture.componentRef.setInput('scanBlocked', true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="security-advanced-scan"]')).not.toBeNull();
+            expect(fixture.componentInstance.scanBlocked()).toBe(true);
+        });
+
         it('shows only the toggle while the sandbox is off', () => {
             const fixture = TestBed.createComponent(SecurityActivationCardComponent);
             fixture.componentRef.setInput('state', 'inactive');

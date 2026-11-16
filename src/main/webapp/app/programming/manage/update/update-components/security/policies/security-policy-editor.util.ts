@@ -107,11 +107,22 @@ export interface PolicyChangeSummary {
     testCases: number;
     /** Extra test classes declared or removed. */
     testClasses: number;
-    /** A changed name or preset. */
+    /** A changed name, preset or other setting of the file, e.g. one an import changed, see {@link FILE_SETTINGS}. */
     settings: number;
     /** Whether the policy is not committed yet; it counts once for itself. */
     isNew: boolean;
     total: number;
+}
+
+/**
+ * The settings of a policy file that no part of the editor shows but an import can change: they count as changed settings and survive a reload like the
+ * other unsaved changes.
+ */
+export const FILE_SETTINGS = ['languageConfiguration', 'supervisedPackage', 'mainClass', 'timeouts'] as const;
+
+/** @returns the settings of {@link FILE_SETTINGS} that differ between the two documents */
+export function changedFileSettings(base: SecurityPolicyDocument | undefined, working: SecurityPolicyDocument): (typeof FILE_SETTINGS)[number][] {
+    return FILE_SETTINGS.filter((setting) => !isSameValue(base?.[setting], working[setting]));
 }
 
 /** The time units the timeout fields offer: every value of Java's {@code TimeUnit}, smallest first. */
@@ -119,6 +130,56 @@ export const TIME_UNITS: readonly string[] = ['NANOSECONDS', 'MICROSECONDS', 'MI
 
 /** The file extension of new policies, like the one Artemis generates. */
 const POLICY_EXTENSION = '.yaml';
+
+/** An argument that is written without quotes. */
+const PLAIN_ARGUMENT = /^[^\s"\\]+$/;
+
+/**
+ * Writes the arguments of a command for the field: separated by spaces, and in double quotes if an argument is empty or contains a space, a quote or a
+ * backslash, which a backslash escapes. {@link splitArguments} reads it back to the same arguments.
+ */
+export function joinArguments(argumentList: readonly string[]): string {
+    return argumentList.map((argument) => (PLAIN_ARGUMENT.test(argument) ? argument : `"${argument.replace(/(["\\])/g, '\\$1')}"`)).join(' ');
+}
+
+/**
+ * Splits the field into the arguments, which Ares compares exactly and in this order: spaces separate them unless they are in double quotes, and a
+ * backslash takes the next character literally.
+ *
+ * @returns the arguments; undefined if a quote is not closed
+ */
+export function splitArguments(text: string): string[] | undefined {
+    const argumentList: string[] = [];
+    let current = '';
+    let started = false;
+    let quoted = false;
+    for (let index = 0; index < text.length; index++) {
+        const character = text[index];
+        if (character === '\\' && index + 1 < text.length) {
+            current += text[++index];
+            started = true;
+        } else if (character === '"') {
+            quoted = !quoted;
+            started = true;
+        } else if (!quoted && /\s/.test(character)) {
+            if (started) {
+                argumentList.push(current);
+            }
+            current = '';
+            started = false;
+        } else {
+            current += character;
+            started = true;
+        }
+    }
+    if (quoted) {
+        return undefined;
+    }
+    if (started) {
+        argumentList.push(current);
+    }
+    return argumentList;
+}
 
 /** Separates the test class from the test case in an entry of an assignment. */
 export const TEST_CASE_SEPARATOR = '#';
@@ -134,7 +195,7 @@ export function rowKey<K extends ResourceKind>(kind: K, row: ResourceRowByKind[K
         }
         case 'commands': {
             const command = row as SecurityCommandPermission;
-            return [command.command, ...(command.arguments ?? [])].join(' ');
+            return joinArguments([command.command, ...(command.arguments ?? [])]);
         }
         case 'threads':
             return (row as SecurityThreadPermission).threadClass;
@@ -260,6 +321,20 @@ export function testClassOf(entry: string): string {
     return separator < 0 ? entry : entry.substring(0, separator);
 }
 
+/**
+ * Assigns an entry again that was removed, without letting a whole test class and one of its test cases be assigned together.
+ *
+ * @returns the entries with the restored one
+ */
+export function withRestoredEntry(tests: readonly string[], entry: string): string[] {
+    const testClass = testClassOf(entry);
+    if (entry === testClass) {
+        // A whole class stands for all of its test cases, so it replaces the entries of single ones; the server refuses both at once.
+        return [...tests.filter((existing) => testClassOf(existing) !== testClass), entry];
+    }
+    return tests.includes(entry) || tests.includes(testClass) ? [...tests] : [...tests, entry];
+}
+
 /** @returns the test classes of the entries, each once, in their order */
 export function classesOfTests(entries: readonly string[]): string[] {
     return [...new Set(entries.map(testClassOf))];
@@ -302,7 +377,9 @@ export function summarizeChanges(policy: EditorPolicy): PolicyChangeSummary {
     const behaviours = changedBehaviours(policy.base, working).length;
     const tests = listChanges(policy.baseTests, policy.tests);
     const testClasses = listChanges(policy.baseExtraClasses, policy.extraClasses);
-    const settings = isNew ? 0 : (policy.name !== committedName(policy) ? 1 : 0) + (isSameValue(policy.base?.preset, working.preset) ? 0 : 1);
+    const settings = isNew
+        ? 0
+        : (policy.name !== committedName(policy) ? 1 : 0) + (isSameValue(policy.base?.preset, working.preset) ? 0 : 1) + changedFileSettings(policy.base, working).length;
     const testCases = tests.added.length + tests.removed.length;
     const classChanges = testClasses.added.length + testClasses.removed.length;
     return {
@@ -347,8 +424,8 @@ export function editorPolicyOf(file: SecurityPolicyFile): EditorPolicy {
 
 /**
  * Applies the unsaved changes made on top of one commit to the policy of a newer commit, so a reload keeps them: rows added, changed or removed by key,
- * changed behaviour categories, a changed preset, and the tests and extra classes that were assigned or released. Where the newer commit changed the same
- * thing, the unsaved change wins. The language configuration always comes from the newer commit, because the editor does not change it.
+ * changed behaviour categories, a changed preset or file setting, and the tests and extra classes that were assigned or released. Where the newer commit
+ * changed the same thing, the unsaved change wins.
  */
 export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): EditorPolicy {
     const fresh = editorPolicyOf(file);
@@ -384,6 +461,9 @@ export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): Ed
     }
     if (!isSameValue(oldBase.preset, working.preset)) {
         result = cloneWith(result, { preset: working.preset });
+    }
+    for (const setting of changedFileSettings(oldBase, working)) {
+        result = cloneWith(result, { [setting]: working[setting] });
     }
     const tests = applyListChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests));
     const extraClasses = applyListChanges(fresh.baseExtraClasses, listChanges(policy.baseExtraClasses, policy.extraClasses));

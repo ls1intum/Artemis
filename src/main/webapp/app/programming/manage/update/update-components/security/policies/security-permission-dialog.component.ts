@@ -14,7 +14,7 @@ import {
     SecurityThreadPermission,
 } from 'app/programming/shared/entities/security-policy.model';
 import { SecurityBrowseDialogComponent, SecurityBrowseMode } from 'app/programming/manage/update/update-components/security/policies/security-browse-dialog.component';
-import { ResourceKind, ResourceRow, rowKey } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import { ResourceKind, ResourceRow, joinArguments, rowKey, splitArguments } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 /** The actions a file permission grants, in the order Ares lists them. */
 export const FILE_ACTIONS = ['read', 'overwrite', 'create', 'execute', 'delete'] as const;
@@ -126,7 +126,7 @@ export class SecurityPermissionDialogComponent {
                 ];
             }
             case 'commands': {
-                const argumentList = splitArguments(this.argumentsText());
+                const argumentList = splitArguments(this.argumentsText()) ?? [];
                 const commands = this.isEditing() ? [this.command().trim()] : splitList(this.command());
                 return commands.map((command) => ({ command, arguments: argumentList }) satisfies SecurityCommandPermission);
             }
@@ -170,6 +170,9 @@ export class SecurityPermissionDialogComponent {
             case 'commands':
                 if (!this.rows().length || this.rows().some((row) => !(row as SecurityCommandPermission).command)) {
                     return prefix + 'commandRequired';
+                }
+                if (!splitArguments(this.argumentsText())) {
+                    return prefix + 'argumentsQuote';
                 }
                 break;
             case 'threads':
@@ -263,7 +266,7 @@ export class SecurityPermissionDialogComponent {
         this.port.set(endpoint?.port);
         this.networkActions.set({ open: !!endpoint?.open, send: !!endpoint?.send, receive: !!endpoint?.receive });
         this.command.set(command?.command ?? '');
-        this.argumentsText.set((command?.arguments ?? []).join(' '));
+        this.argumentsText.set(joinArguments(command?.arguments ?? []));
         this.threadClass.set(thread?.threadClass ?? '');
         this.maxThreads.set(thread?.maxThreads);
         this.packageName.set(permission?.packageName ?? '');
@@ -331,12 +334,4 @@ function isWholeNumberWithin(value: number | undefined, min: number, max: number
 /** Joins words like "read, create or delete". */
 function joinWithOr(words: string[], or: string): string {
     return words.length <= 1 ? words.join('') : `${words.slice(0, -1).join(', ')} ${or} ${words[words.length - 1]}`;
-}
-
-/** Splits the arguments at spaces; Ares compares them exactly and in this order. */
-export function splitArguments(text: string): string[] {
-    return text
-        .trim()
-        .split(/\s+/)
-        .filter((argument) => argument.length > 0);
 }

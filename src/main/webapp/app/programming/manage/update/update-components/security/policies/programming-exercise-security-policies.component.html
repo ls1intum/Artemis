@@ -6,6 +6,7 @@
         [locked]="locked() || !canCommit()"
         [scanDependencies]="scanDependencies()"
         [scanAvailable]="scanAvailable()"
+        [scanBlocked]="scanBlockedByReadOnly()"
         [lastCommit]="editor()?.lastCommit"
         [versionOptions]="versionOptions()"
         [version]="shownVersion()"
@@ -175,6 +176,12 @@
                                 {{ prefix + 'banner.retry' | artemisTranslate }}
                             </button>
                         </span>
+                    </tumaet-ui-message>
+                }
+                @case ('orphaned') {
+                    <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" role="alert" dismissible (dismissed)="dismissBanner()" data-testid="security-banner-orphaned">
+                        <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.orphaned'"></span>
+                        <span class="text-sm">{{ prefix + 'banner.orphanedText' | artemisTranslate: { files: current.files } }}</span>
                     </tumaet-ui-message>
                 }
                 @case ('info') {

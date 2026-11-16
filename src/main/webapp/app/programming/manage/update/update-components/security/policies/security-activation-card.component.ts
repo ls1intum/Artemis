@@ -48,6 +48,8 @@ export class SecurityActivationCardComponent {
     readonly scanDependencies = input(false);
     /** Whether the build attaches the Ares agent, which dependency scanning needs. */
     readonly scanAvailable = input(false);
+    /** Whether a policy is read-only, so dependency scanning, which changes every policy, cannot be switched either way. */
+    readonly scanBlocked = input(false);
     readonly lastCommit = input<SecurityCommit | undefined>(undefined);
     readonly versionOptions = input<SecurityFrameworkVersionOption[]>([]);
     /** The version the select shows: the staged one, or the pinned one. */

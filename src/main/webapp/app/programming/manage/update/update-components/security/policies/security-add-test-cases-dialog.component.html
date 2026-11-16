@@ -53,7 +53,7 @@
                     @for (node of group.classes; track node.qualifiedName) {
                         @let classOpen = isOpen(node.qualifiedName, false);
                         @let locked = !node.available.length;
-                        @let lockedBy = node.cases[0]?.coveredBy;
+                        @let lockedBy = node.lockedBy;
                         <div class="sp-tree-row sp-level-1" [class.sp-selected]="isAllSelected(node.available)" data-testid="security-add-test-cases-class">
                             <tumaet-ui-checkbox
                                 [checked]="locked ? !node.switchedOff : isAllSelected(node.available)"
@@ -100,15 +100,23 @@
                                 <div class="sp-tree-row sp-level-2" [class.sp-selected]="selection().has(testCase.key)" data-testid="security-add-test-cases-case">
                                     <tumaet-ui-checkbox
                                         [checked]="!!testCase.coveredBy || selection().has(testCase.key)"
-                                        [disabled]="!!testCase.coveredBy || node.switchedOff"
+                                        [disabled]="!!testCase.coveredBy || testCase.switchedOff"
                                         [ariaLabel]="(prefix + 'selectCase' | artemisTranslate) + ' ' + node.simpleName + '.' + testCase.name"
-                                        [tumAetUiTooltip]="testCase.coveredBy ? (prefix + 'lockedBy' | artemisTranslate: { policy: testCase.coveredBy }) : undefined"
+                                        [tumAetUiTooltip]="
+                                            testCase.switchedOff
+                                                ? (prefix + 'switchedOffCase' | artemisTranslate)
+                                                : testCase.coveredBy
+                                                  ? (prefix + 'lockedBy' | artemisTranslate: { policy: testCase.coveredBy })
+                                                  : undefined
+                                        "
                                         (changed)="toggleKeys([testCase.key])"
                                     />
                                     <span class="sp-twisty-spacer"></span>
-                                    <span class="sp-mono" [class.sp-mut]="!!testCase.coveredBy">{{ testCase.name }}</span>
+                                    <span class="sp-mono" [class.sp-mut]="!!testCase.coveredBy || testCase.switchedOff">{{ testCase.name }}</span>
                                     <span class="sp-push">
-                                        @if (testCase.coveredBy) {
+                                        @if (testCase.switchedOff && !node.switchedOff) {
+                                            <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'switchedOffTag' | artemisTranslate" />
+                                        } @else if (testCase.coveredBy) {
                                             <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'coveredBy' | artemisTranslate: { policy: testCase.coveredBy }" />
                                         } @else if (changeOf(testCase.key) === 'added') {
                                             <tumaet-ui-tag severity="success" size="sm" [value]="prefix + 'willBeAdded' | artemisTranslate" />

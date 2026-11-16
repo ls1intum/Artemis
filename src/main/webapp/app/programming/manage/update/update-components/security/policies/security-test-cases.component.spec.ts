@@ -84,6 +84,17 @@ describe('SecurityTestCasesComponent', () => {
         expect(changes.at(-1)?.extraClasses).toEqual(['de.a.Helper', 'de.a.Other']);
     });
 
+    it('restores a whole class in place of its test cases and does not list test cases it covers as removed', () => {
+        fixture.componentRef.setInput('policy', { ...policy(['de.a.SortingTest#bubble', 'de.a.MathTest']), baseTests: ['de.a.SortingTest', 'de.a.MathTest#add'] });
+
+        expect(comp.assignedPackages()[0].classes.map((node) => [node.simpleName, node.whole, node.testCases.map((testCase) => testCase.state)])).toEqual([
+            ['MathTest', 'new', []],
+            ['SortingTest', 'removed', ['new']],
+        ]);
+        handlers.undoTest('de.a.SortingTest');
+        expect(changes.at(-1)?.tests).toEqual(['de.a.MathTest', 'de.a.SortingTest']);
+    });
+
     it('shows that no test uses a policy without assigned tests', () => {
         fixture.componentRef.setInput('policy', { ...policy([]), baseTests: [] });
         fixture.detectChanges();

@@ -406,6 +406,22 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             expect(comp.showAdvancedView()).toBe(false);
         });
 
+        it('keeps the Advanced view mounted but hidden in simple mode, so its unsaved changes survive switching back', () => {
+            fixture.componentRef.setInput('advancedMode', false);
+            initEdit(configuredConfig());
+            expect(comp.advancedViewMounted()).toBe(false);
+
+            fixture.componentRef.setInput('advancedMode', true);
+            fixture.detectChanges();
+            expect(comp.advancedViewMounted()).toBe(true);
+
+            fixture.componentRef.setInput('advancedMode', false);
+            fixture.detectChanges();
+
+            expect(comp.advancedViewMounted()).toBe(true);
+            expect(comp.showAdvancedView()).toBe(false);
+        });
+
         it('keeps this card for the states that need a repair, and when creating an exercise', () => {
             initAdvanced(misconfiguredConfig());
             expect(comp.showAdvancedView()).toBe(false);

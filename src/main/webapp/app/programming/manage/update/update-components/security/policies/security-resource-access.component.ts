@@ -42,6 +42,7 @@ import {
     RowSource,
     SourcedRow,
     countRowChanges,
+    joinArguments,
     rowKey,
     rowsOf,
     sourcedRows,
@@ -123,6 +124,8 @@ export class SecurityResourceAccessComponent {
     );
 
     /** The number of rows each tab shows, without the deleted ones, and whether the category has unsaved changes. */
+    protected readonly joinArguments = joinArguments;
+
     readonly tabCounts = computed(
         () =>
             Object.fromEntries(
@@ -311,7 +314,7 @@ export class SecurityResourceAccessComponent {
                     { labelKey: `${column}.command`, value: this.asCommand(row.row).command },
                     {
                         labelKey: `${column}.arguments`,
-                        value: (this.asCommand(row.row).arguments ?? []).join(' ') || this.translateService.instant(`${PREFIX}.noArguments`),
+                        value: joinArguments(this.asCommand(row.row).arguments ?? []) || this.translateService.instant(`${PREFIX}.noArguments`),
                     },
                 ];
             case 'threads':

@@ -19,6 +19,7 @@ import {
     summarizeChanges,
     testClassOf,
     withAssignment,
+    withRestoredEntry,
     withRows,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
@@ -113,6 +114,25 @@ describe('security-policy-editor.util', () => {
         expect(rebased.working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
         expect(rebased.tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
         expect(rebased.baseTests).toEqual(['de.example.SortingTest']);
+    });
+
+    it('counts and keeps the settings of a file that an import changes', () => {
+        const policy = editorPolicyOf(FILE);
+        const imported = { ...policy, working: { ...policy.working!, supervisedPackage: 'de.other', timeouts: [1000] } };
+
+        expect(summarizeChanges(imported).settings).toBe(2);
+        expect(summarizeChanges(imported).total).toBe(2);
+
+        const rebased = rebasePolicy(imported, { ...FILE, document: { ...DOCUMENT, mainClass: 'de.example.Main' } });
+        expect(rebased.working?.supervisedPackage).toBe('de.other');
+        expect(rebased.working?.timeouts).toEqual([1000]);
+        expect(rebased.working?.mainClass).toBe('de.example.Main');
+    });
+
+    it('restores an entry without assigning a whole class together with one of its test cases', () => {
+        expect(withRestoredEntry(['de.a.A#one', 'de.a.A#two', 'de.b.B'], 'de.a.A')).toEqual(['de.b.B', 'de.a.A']);
+        expect(withRestoredEntry(['de.a.A'], 'de.a.A#one')).toEqual(['de.a.A']);
+        expect(withRestoredEntry(['de.a.A#two'], 'de.a.A#one')).toEqual(['de.a.A#two', 'de.a.A#one']);
     });
 
     it('derives file names and paths from names', () => {

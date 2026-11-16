@@ -67,7 +67,7 @@
             ariaLabelledBy="securityAdvancedScanLabel"
             [ngModel]="active() && scanDependencies()"
             [ngModelOptions]="{ standalone: true }"
-            [disabled]="!active() || locked() || state() !== 'configured' || (!scanAvailable() && !scanDependencies())"
+            [disabled]="!active() || locked() || state() !== 'configured' || scanBlocked() || (!scanAvailable() && !scanDependencies())"
             (changed)="onScan($event)"
             data-testid="security-advanced-scan"
         />
@@ -77,7 +77,11 @@
                 [text]="
                     (!active() ? (prefix + 'scanInactive' | artemisTranslate) + ' ' : '') +
                     (prefix + 'scanHelp' | artemisTranslate) +
-                    (active() && !scanAvailable() ? ' ' + (prefix + 'scanUnavailable' | artemisTranslate) : '')
+                    (active() && scanBlocked()
+                        ? ' ' + (prefix + 'scanReadOnly' | artemisTranslate)
+                        : active() && !scanAvailable()
+                          ? ' ' + (prefix + 'scanUnavailable' | artemisTranslate)
+                          : '')
                 "
             />
         </span>

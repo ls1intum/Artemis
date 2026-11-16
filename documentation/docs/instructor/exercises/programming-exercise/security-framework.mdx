@@ -2,7 +2,7 @@
 id: security-framework
 title: Security Framework (Ares 2 Sandbox)
 sidebar_label: Security Framework
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-16
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -249,7 +249,7 @@ the build file.
 through a library is caught too. Artemis switches the programming language configuration of every policy, for example
 from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, in one commit. Every
 test runs considerably slower, so check your strict timeouts afterwards. The option is available only when the build
-file of the tests repository attaches the Ares agent, as the Java templates do.
+file of the tests repository attaches the Ares agent, as the Java templates do, and no policy is shown read-only.
 
 ### Edit a Policy
 
@@ -257,8 +257,9 @@ Each policy is one YAML file in the tests repository. **Add security policy** cr
 the file name, and renaming a committed policy renames its file with the next commit. Each policy has three parts:
 
 - **Allow resource access** lists, in one tab per category, the paths, network endpoints, commands, thread classes and
-  packages the student code may use. **Browse…** picks paths or scripts from the template repository. Each row shows
-  whether it is committed, new, changed or removed.
+  packages the student code may use. **Browse…** picks paths or scripts from the template repository. Command
+  arguments are separated by spaces; put an argument that contains spaces in double quotes. Each row shows whether it
+  is committed, new, changed or removed.
 - **Configure test behaviour** replaces the exception of a failed test with your own message, hides the feedback of
   tests between two dates, enforces a strict timeout per test and mirrors the output of the student code into the
   results. The security feedback tab shows what students see for a violation; its level cannot be chosen yet, so
@@ -266,10 +267,13 @@ the file name, and renaming a committed policy renames its file with the next co
 - **Assign test cases** chooses the tests that run under the policy: a whole test class, which also covers test cases
   added later, or single test cases. Artemis writes the assignment as the `@Policy` annotation of the class or of the
   test method. A test can use only one policy, so tests that another policy covers are locked, and so are the tests of
-  a class whose sandbox you switched off. **Declared test classes** lists the classes Ares treats as test code; the
+  a class or a test method whose own `@Policy(activated = false)` switches the sandbox off. A test method annotated with
+  `@Policy` without a policy file keeps that annotation, and with it the strict default policy, until you assign it. **Declared test classes** lists the classes Ares treats as test code; the
   classes of the assigned tests are always included, and you can add helper classes without tests.
 
-Every policy needs at least one test case: Artemis finds a policy through the tests that use it. A test that no policy
+Every policy needs at least one test case: Artemis finds a policy through the tests that use it. When you add a
+policy after deleting the last one, it starts with the language configuration of the build file and the package of
+the exercise. A test that no policy
 covers runs under the most restrictive default policy of Ares. **View YAML** shows the committed file and the file with
 your unsaved changes, and lets you copy, export or import a policy file. An import replaces the policy with the file as
 unsaved changes. A policy that Artemis cannot read without changing it, for example because of a YAML error, is shown
@@ -285,7 +289,9 @@ version.
 
 Committing creates one commit in the tests repository and runs the template and solution builds again. If someone
 committed to the tests repository after you opened the view, the commit is refused and you can reload: your unsaved
-changes stay and are applied to the newer commit.
+changes stay and are applied to the newer commit. If that commit deleted or renamed a policy you changed, your changes
+to it are kept as a new policy, which you can commit or delete. Your unsaved changes also stay when you switch the form
+to simple mode and back.
 
 <Callout variant={CalloutVariant.warning}>
 

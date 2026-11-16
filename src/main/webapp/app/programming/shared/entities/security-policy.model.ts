@@ -144,6 +144,8 @@ export interface SecurityPolicyEditor {
     presets?: SecurityPreset[];
     /** Whether the build attaches the Ares agent, which dependency scanning needs. */
     scanDependenciesAvailable?: boolean;
+    /** The supervised code a new policy starts with when no policy is left to copy it from. */
+    newPolicyTemplate?: SecurityPolicyDocument;
 }
 
 /** Changed policies to preview or commit. */
@@ -199,6 +201,8 @@ export interface SecurityTestClass {
     testClass?: boolean;
     /** Whether its {@code @Policy} annotation is switched off, so its test cases run without the sandbox. */
     switchedOff?: boolean;
+    /** The test cases whose own {@code @Policy} annotation switches the sandbox off, so they cannot be assigned either. */
+    fixedCases?: string[];
 }
 
 /** The test classes of the tests repository. */

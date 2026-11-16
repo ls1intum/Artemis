@@ -9,7 +9,7 @@ import { SecurityAddTestCasesDialogComponent } from 'app/programming/manage/upda
 const STRUCTURE: SecurityTestStructure = {
     testClasses: [
         { qualifiedName: 'de.a.SortingTest', testCases: ['bubble', 'merge'], testClass: true },
-        { qualifiedName: 'de.a.MathTest', testCases: ['add', 'divide'], testClass: true },
+        { qualifiedName: 'de.a.MathTest', testCases: ['add', 'divide', 'unsafe'], testClass: true, fixedCases: ['unsafe'] },
         { qualifiedName: 'de.b.StressTest', testCases: ['run'], testClass: true, switchedOff: true },
         { qualifiedName: 'de.b.Helper', testCases: [], testClass: false },
     ],
@@ -63,6 +63,38 @@ describe('SecurityAddTestCasesDialogComponent', () => {
 
         expect(applied).toEqual([['de.gone.OldTest', 'de.a.SortingTest#bubble', 'de.a.MathTest#add']]);
         expect(comp.visible()).toBe(false);
+    });
+
+    it('sets up the selection once the structure of the first opening arrives', () => {
+        const delayed = TestBed.createComponent(SecurityAddTestCasesDialogComponent);
+        const dialog = delayed.componentInstance;
+        delayed.componentRef.setInput('ownTests', ['de.a.SortingTest']);
+        dialog.visible.set(true);
+        delayed.detectChanges();
+        expect([...dialog.selection()]).toEqual([]);
+
+        delayed.componentRef.setInput('structure', STRUCTURE);
+        delayed.detectChanges();
+
+        expect([...dialog.selection()]).toEqual(['de.a.SortingTest#bubble', 'de.a.SortingTest#merge']);
+        expect(dialog.addedCount()).toBe(0);
+        expect(dialog.removedCount()).toBe(0);
+    });
+
+    it('locks a test case whose own annotation switches the sandbox off and assigns the others one by one', () => {
+        const math = comp.packages()[0].classes[1];
+        expect(math.cases.map((testCase) => [testCase.name, testCase.switchedOff])).toEqual([
+            ['add', false],
+            ['divide', false],
+            ['unsafe', true],
+        ]);
+        expect(math.available).toEqual(['de.a.MathTest#add']);
+
+        handlers.toggleKeys(math.available);
+        handlers.apply();
+
+        expect(applied[0]).toContain('de.a.MathTest#add');
+        expect(applied[0]).not.toContain('de.a.MathTest');
     });
 
     it('checks a whole group and unchecks it when every case is selected', () => {

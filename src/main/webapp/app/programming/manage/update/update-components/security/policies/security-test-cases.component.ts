@@ -11,7 +11,13 @@ import { SecurityAddTestCasesDialogComponent } from 'app/programming/manage/upda
 import { SecurityConfirmDialogComponent, SecurityTranslatable } from 'app/programming/manage/update/update-components/security/policies/security-confirm-dialog.component';
 import { SecurityDeclareClassesDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-declare-classes-dialog.component';
 import { SecurityHelpComponent } from 'app/programming/manage/update/update-components/security/policies/security-help.component';
-import { EditorPolicy, TEST_CASE_SEPARATOR, classesOfTests, testClassOf } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import {
+    EditorPolicy,
+    TEST_CASE_SEPARATOR,
+    classesOfTests,
+    testClassOf,
+    withRestoredEntry,
+} from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 /** Whether an entry is assigned, newly assigned or released since the commit. */
 export type EntryState = 'committed' | 'new' | 'removed';
@@ -91,7 +97,8 @@ export class SecurityTestCasesComponent {
     readonly assignedPackages = computed<PackageEntries[]>(() => {
         const policy = this.policy();
         const state = (entry: string): EntryState => (!policy.tests.includes(entry) ? 'removed' : policy.baseTests.includes(entry) ? 'committed' : 'new');
-        const entries = [...policy.tests, ...policy.baseTests.filter((entry) => !policy.tests.includes(entry))];
+        // A removed test case whose whole class is assigned now still uses the policy, so it is not listed as removed.
+        const entries = [...policy.tests, ...policy.baseTests.filter((entry) => !policy.tests.includes(entry) && !policy.tests.includes(testClassOf(entry)))];
         const byClass = new Map<string, ClassEntries>();
         for (const entry of entries) {
             const qualifiedName = testClassOf(entry);
@@ -164,7 +171,7 @@ export class SecurityTestCasesComponent {
     }
 
     protected undoTest(entry: string): void {
-        this.assignmentChange.emit({ tests: [...this.policy().tests, entry], extraClasses: this.policy().extraClasses });
+        this.assignmentChange.emit({ tests: withRestoredEntry(this.policy().tests, entry), extraClasses: this.policy().extraClasses });
     }
 
     protected undoClass(qualifiedName: string): void {

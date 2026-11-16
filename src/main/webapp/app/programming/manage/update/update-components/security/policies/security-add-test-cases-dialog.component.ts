@@ -23,16 +23,21 @@ interface CaseNode {
     name: string;
     /** The label of the policy that captures it; absent if none or this one. */
     coveredBy?: string;
+    /** Whether it runs without the sandbox, because of its own annotation or the one of its class, so it cannot be assigned. */
+    switchedOff: boolean;
 }
 
 /** A test class of the tree. */
 interface ClassNode {
     qualifiedName: string;
     simpleName: string;
+    /** Whether none of its test cases can use a policy, because the sandbox is switched off for them. */
     switchedOff: boolean;
     cases: CaseNode[];
     /** The keys of the cases no other policy captures. */
     available: string[];
+    /** The label of a policy that captures one of its cases, which a locked class names. */
+    lockedBy?: string;
 }
 
 /** A package of the tree. */
@@ -86,6 +91,8 @@ export class SecurityAddTestCasesDialogComponent {
     readonly toggled = signal<ReadonlySet<string>>(new Set());
     readonly selection = signal<ReadonlySet<string>>(new Set());
     private readonly initial = signal<ReadonlySet<string>>(new Set());
+    /** Whether the selection of this opening is set up; it waits for the test structure, which the first opening loads. */
+    private initialized = false;
 
     readonly packages = computed<PackageNode[]>(() => {
         const byPackage = new Map<string, ClassNode[]>();
@@ -93,16 +100,30 @@ export class SecurityAddTestCasesDialogComponent {
             const dot = testClass.qualifiedName.lastIndexOf('.');
             const packageName = dot >= 0 ? testClass.qualifiedName.substring(0, dot) : '';
             const testCases = testClass.testCases ?? [];
+            const fixedCases = new Set(testClass.fixedCases ?? []);
+            const classSwitchedOff = !!testClass.switchedOff;
             const cases: CaseNode[] = testCases.length
-                ? testCases.map((name) => ({ key: testClass.qualifiedName + TEST_CASE_SEPARATOR + name, name, coveredBy: this.coveringPolicy(testClass.qualifiedName, name) }))
-                : [{ key: testClass.qualifiedName, name: testClass.qualifiedName.substring(dot + 1), coveredBy: this.coveringPolicy(testClass.qualifiedName, undefined) }];
-            const switchedOff = !!testClass.switchedOff;
+                ? testCases.map((name) => ({
+                      key: testClass.qualifiedName + TEST_CASE_SEPARATOR + name,
+                      name,
+                      coveredBy: this.coveringPolicy(testClass.qualifiedName, name),
+                      switchedOff: classSwitchedOff || fixedCases.has(name),
+                  }))
+                : [
+                      {
+                          key: testClass.qualifiedName,
+                          name: testClass.qualifiedName.substring(dot + 1),
+                          coveredBy: this.coveringPolicy(testClass.qualifiedName, undefined),
+                          switchedOff: classSwitchedOff,
+                      },
+                  ];
             const node: ClassNode = {
                 qualifiedName: testClass.qualifiedName,
                 simpleName: testClass.qualifiedName.substring(dot + 1),
-                switchedOff,
+                switchedOff: cases.every((testCase) => testCase.switchedOff),
                 cases,
-                available: switchedOff ? [] : cases.filter((testCase) => !testCase.coveredBy).map((testCase) => testCase.key),
+                available: cases.filter((testCase) => !testCase.coveredBy && !testCase.switchedOff).map((testCase) => testCase.key),
+                lockedBy: cases.find((testCase) => testCase.coveredBy)?.coveredBy,
             };
             byPackage.set(packageName, [...(byPackage.get(packageName) ?? []), node]);
         }
@@ -143,16 +164,23 @@ export class SecurityAddTestCasesDialogComponent {
 
     constructor() {
         effect(() => {
-            if (this.visible()) {
-                const own = this.ownTests();
-                untracked(() => {
-                    const initial = this.expand(own);
-                    this.initial.set(initial);
-                    this.selection.set(new Set(initial));
-                    this.toggled.set(new Set());
-                    this.search.set('');
-                });
+            if (!this.visible()) {
+                this.initialized = false;
+                return;
             }
+            // A whole class only expands to its test cases once the structure is there, so the selection is set up when it arrives.
+            if (this.initialized || !this.structure()) {
+                return;
+            }
+            const own = this.ownTests();
+            untracked(() => {
+                const initial = this.expand(own);
+                this.initial.set(initial);
+                this.selection.set(new Set(initial));
+                this.toggled.set(new Set());
+                this.search.set('');
+                this.initialized = true;
+            });
         });
     }
 

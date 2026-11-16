@@ -398,6 +398,7 @@
         "securityPolicyInvalidPath": "The policy path {{ path }} is not valid. A policy is a .yaml or .yml file inside the tests repository.",
         "securityPolicyTestClassNotDeclared": "The policy {{ path }} does not declare the test class {{ testClass }} of its assigned tests.",
         "securityPolicyTestSwitchedOff": "The sandbox is switched off for the test class {{ testClass }}, so its tests cannot use a policy.",
+        "securityPolicyTestCaseSwitchedOff": "The test {{ test }} runs without the sandbox because of its own @Policy annotation, so it cannot use a policy.",
         "securityPolicyUnknownTest": "The tests repository has no test {{ test }}. Reload the test cases.",
         "securityPolicyAgentMissing": "The build of the tests repository does not attach the Ares agent, which scanning dependencies needs, so {{ path }} cannot use it.",
         "securityPolicyNotFound": "No test uses the policy {{ path }} in the tests repository. Reload the policies.",

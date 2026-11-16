@@ -29,7 +29,7 @@ import { Subscription } from 'rxjs';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import {
     SecurityActivationStatus,
     SecurityAresApiUse,
@@ -85,7 +85,15 @@ type Banner =
     | { kind: 'committed'; titleKey: string; textKey: string; hash: string }
     | { kind: 'conflict'; authorName?: string; hash?: string }
     | { kind: 'failed'; message: string; commitMessage: string }
+    | { kind: 'orphaned'; files: string }
     | { kind: 'info'; text: string };
+
+/** A commit request with the options it ran with, so that Retry repeats exactly it. */
+interface CommitRequest {
+    change: SecurityPolicyChange;
+    keepUnsaved: boolean;
+    scan: 'scanOn' | 'scanOff' | undefined;
+}
 
 /** The unsaved changes of all policies, by kind, as the commit bar lists them. */
 interface ChangeParts {
@@ -199,6 +207,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly importNotice = signal<SecurityImportNotice | undefined>(undefined);
 
     private newPolicyCounter = 0;
+    /** The last commit request that failed, for Retry. */
+    private failedRequest: CommitRequest | undefined;
     private structureRequested = false;
     private templateFilesRequested = false;
     private versionCheckTimer?: ReturnType<typeof setTimeout>;
@@ -236,7 +246,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             .filter((document) => document !== undefined);
         return documents.length > 0 && documents.every((document) => (document.languageConfiguration ?? '').endsWith(SCANNING));
     });
-    readonly scanAvailable = computed(() => !!this.editor()?.scanDependenciesAvailable && this.policies().some((policy) => !!policy.base));
+    /** Whether a committed policy is read-only: dependency scanning changes every policy, so it cannot be switched until the policy is fixed. */
+    readonly scanBlockedByReadOnly = computed(() => this.policies().some((policy) => !!policy.file && !policy.base));
+    readonly scanAvailable = computed(() => !!this.editor()?.scanDependenciesAvailable && this.policies().some((policy) => !!policy.base) && !this.scanBlockedByReadOnly());
     readonly strictTimeouts = computed(() => this.policies().some((policy) => !!policy.working?.testBehavior?.strictTimeout));
 
     /** The path each policy is saved to, by its id. */
@@ -485,12 +497,24 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 const added = previous
                     .filter((policy) => isNewPolicy(policy))
                     .map((policy) => (policy.working ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) }) : policy));
-                this.policies.set([...reloaded, ...added]);
+                // A changed policy whose file someone deleted or renamed meanwhile is kept as a new policy, so the changes are not lost without a word.
+                const vanished = previous.filter(
+                    (policy) =>
+                        !!policy.file &&
+                        !!policy.working &&
+                        (this.summaries().get(policy.id)?.total ?? 0) > 0 &&
+                        !files.some((file) => file.policyPath === policy.file?.policyPath) &&
+                        !deleted.some((candidate) => candidate.id === policy.id),
+                );
+                const orphaned = vanished.map((policy) => this.asNewPolicy(policy));
+                this.policies.set([...reloaded, ...added, ...orphaned]);
                 this.deletedPolicies.set(deleted.filter((policy) => files.some((file) => file.policyPath === policy.file?.policyPath)));
                 if (this.stagedVersion() === editor.frameworkVersion) {
                     this.stagedVersion.set(undefined);
                 }
-                if (announce) {
+                if (vanished.length) {
+                    this.banner.set({ kind: 'orphaned', files: vanished.map((policy) => fileNameOf(policy.file?.policyPath ?? '')).join(', ') });
+                } else if (announce) {
                     this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.reloaded`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
                 }
                 this.loading.set(false);
@@ -565,8 +589,23 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.clearSettledBanner();
     }
 
+    /** @returns the policy as a new one with all of its current settings, assignments and rows as unsaved changes */
+    private asNewPolicy(policy: EditorPolicy): EditorPolicy {
+        this.newPolicyCounter++;
+        return {
+            id: `new-${this.newPolicyCounter}`,
+            name: policy.name,
+            working: policy.working ? deepClone(policy.working) : undefined,
+            baseTests: [],
+            tests: [...policy.tests],
+            baseExtraClasses: [],
+            extraClasses: [...policy.extraClasses],
+        };
+    }
+
     protected addPolicy(): void {
-        const template = this.policies().find((policy) => policy.base)?.base;
+        // Without a committed policy to copy the supervised code from, the one the server derives from the repository is used.
+        const template = this.policies().find((policy) => policy.base)?.base ?? this.editor()?.newPolicyTemplate;
         let number = this.policies().length + 1;
         while (this.policies().some((policy) => policy.name === this.policyName(number))) {
             number++;
@@ -702,6 +741,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return;
         }
         this.banner.set({ kind: 'committing' });
+        this.failedRequest = undefined;
         this.securityService.commitPolicies(this.exerciseId(), change).subscribe({
             next: (result) => {
                 this.reviewOpen.set(false);
@@ -730,15 +770,23 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                         error: () => undefined,
                     });
                 } else {
+                    this.failedRequest = { change, keepUnsaved, scan };
                     this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: change.commitMessage ?? this.defaultCommitMessage() });
                 }
             },
         });
     }
 
+    /**
+     * Repeats a failed commit. Dependency scanning repeats its own request, which leaves the unsaved changes as they are; a commit of the unsaved changes
+     * is built again, so it includes what was edited since, and is the same request if nothing was.
+     */
     protected retryCommit(): void {
         const banner = this.banner();
-        if (banner?.kind === 'failed') {
+        const request = this.failedRequest;
+        if (request?.scan) {
+            this.runCommit(request.change, request.keepUnsaved, request.scan);
+        } else if (banner?.kind === 'failed') {
             this.commit(banner.commitMessage);
         }
     }

@@ -241,15 +241,23 @@ export class ProgrammingExerciseSecurityComponent {
         SecurityActivationStatus.DELETING,
     ]);
 
-    readonly showAdvancedView = computed(
+    /** Whether the exercise is in a state the Advanced view manages, whatever the mode of the form. */
+    private readonly advancedViewEligible = computed(
         () =>
-            this.advancedMode() &&
             this.isEditMode() &&
             this.programmingExercise().id !== undefined &&
             !this.loading() &&
             !this.loadFailed() &&
             ProgrammingExerciseSecurityComponent.ADVANCED_VIEW_STATUSES.has(this.status()),
     );
+
+    readonly showAdvancedView = computed(() => this.advancedMode() && this.advancedViewEligible());
+
+    /** True once the Advanced view was shown; it then stays mounted while the form is in simple mode, so its unsaved changes survive switching modes. */
+    private readonly advancedViewOpened = signal(false);
+
+    /** Whether the Advanced view is in the page, shown or hidden. */
+    readonly advancedViewMounted = computed(() => this.advancedViewOpened() && this.advancedViewEligible());
 
     /** The route to the tests repository of a course exercise; exam exercises have none here. */
     readonly testsRepositoryLink = computed<(string | number)[] | undefined>(() => {
@@ -386,6 +394,11 @@ export class ProgrammingExerciseSecurityComponent {
     private loadCount = 0;
 
     constructor() {
+        effect(() => {
+            if (this.showAdvancedView()) {
+                untracked(() => this.advancedViewOpened.set(true));
+            }
+        });
         this.securityService.getVersions().subscribe({
             next: (versions) => this.versions.set(versions),
             // Without versions the selector stays disabled; activation still works with the version the exercise pins.

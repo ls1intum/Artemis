@@ -3,22 +3,26 @@
         <h4 class="mb-1 text-lg font-semibold">{{ 'artemisApp.programmingExercise.security.title' | artemisTranslate }}</h4>
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
-        @if (showAdvancedView()) {
-            <jhi-programming-exercise-security-policies
-                [exerciseId]="programmingExercise().id!"
-                [config]="config()"
-                [versionOptions]="frameworkVersions()"
-                [latestVersion]="latestVersion()"
-                [activationVersion]="activationVersion()"
-                [aresApiUses]="config().aresApiUses ?? []"
-                [canCommit]="true"
-                [locked]="isSaving()"
-                [repositoryLink]="testsRepositoryLink()"
-                (activateRequested)="onAdvancedActivate($event)"
-                (deactivateRequested)="onAdvancedDeactivate()"
-                (configChange)="onAdvancedCommitted($event)"
-            />
-        } @else if (loadFailed()) {
+        @if (advancedViewMounted()) {
+            <!-- In simple mode, the Advanced view is only hidden, so that its unsaved changes survive switching back. -->
+            <div [class.hidden]="!showAdvancedView()" data-testid="security-advanced-view">
+                <jhi-programming-exercise-security-policies
+                    [exerciseId]="programmingExercise().id!"
+                    [config]="config()"
+                    [versionOptions]="frameworkVersions()"
+                    [latestVersion]="latestVersion()"
+                    [activationVersion]="activationVersion()"
+                    [aresApiUses]="config().aresApiUses ?? []"
+                    [canCommit]="true"
+                    [locked]="isSaving()"
+                    [repositoryLink]="testsRepositoryLink()"
+                    (activateRequested)="onAdvancedActivate($event)"
+                    (deactivateRequested)="onAdvancedDeactivate()"
+                    (configChange)="onAdvancedCommitted($event)"
+                />
+            </div>
+        }
+        @if (loadFailed()) {
             <tumaet-ui-message severity="error" class="sf-warning block" data-testid="security-load-error">
                 <span jhiTranslate="artemisApp.programmingExercise.security.loadError"></span>
                 <button type="button" class="sf-retry" (click)="retryLoadConfig()" data-testid="security-load-retry">
@@ -26,7 +30,7 @@
                     <span jhiTranslate="artemisApp.programmingExercise.security.retry"></span>
                 </button>
             </tumaet-ui-message>
-        } @else {
+        } @else if (!showAdvancedView()) {
             <div class="sf-card" [class]="'sf-card--' + statusVariant()" data-testid="security-card">
                 <div class="sf-card__main">
                     <div class="sf-card__left">
