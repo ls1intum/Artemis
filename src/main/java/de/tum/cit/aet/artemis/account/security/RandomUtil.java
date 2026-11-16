@@ -7,8 +7,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 /**
  * Inlined replacement for {@code tech.jhipster.security.RandomUtil}.
  * <p>
- * Utility class for generating random alphanumeric strings used as
- * passwords, activation keys, and reset keys.
+ * Utility class for generating cryptographically secure random strings and bounded integers.
+ * Strings are used as passwords, activation keys, and reset keys.
  */
 public final class RandomUtil {
 
@@ -21,6 +21,16 @@ public final class RandomUtil {
     }
 
     private RandomUtil() {
+    }
+
+    /**
+     * Draws a bounded integer using the shared, thread-safe secure generator.
+     *
+     * @param bound the exclusive upper bound, greater than zero
+     * @return a value from zero (inclusive) to bound (exclusive)
+     */
+    public static int nextInt(int bound) {
+        return SECURE_RANDOM.nextInt(bound);
     }
 
     public static String generateRandomAlphanumericString() {

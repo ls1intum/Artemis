@@ -204,6 +204,18 @@ describe('required E2E gate', () => {
         );
     }
 
+    it.each([
+        ['RELEVANT', {}],
+        ['REMAINING', { RUN_FULL_SUITE: 'true' }],
+        ['ALL_PR', { RUN_ALL_TESTS: 'true', RELEVANT_JOB: 'skipped', RELEVANT_RESULT: '', RELEVANT_CLASS: '' }],
+        ['ALL_NON_PR', { IS_PR: 'false', RELEVANT_JOB: 'skipped', RELEVANT_RESULT: '', RELEVANT_CLASS: '' }],
+    ])('keeps a %s setup failure blocking when tests and reporting never start', (phase, mode) => {
+        expect(verdict({ ...mode, [`${phase}_JOB`]: 'failure', [`${phase}_RESULT`]: 'skipped', [`${phase}_CLASS`]: '', [`${phase}_INFRA`]: '' })).toMatchObject({
+            conclusion: 'failure',
+            description: 'E2E infrastructure failure',
+        });
+    });
+
     it('passes clean tests without requiring history', () => {
         expect(verdict()).toMatchObject({ conclusion: 'success', status: 'success' });
     });
