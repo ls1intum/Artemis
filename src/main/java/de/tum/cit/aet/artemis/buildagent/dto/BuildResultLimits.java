@@ -72,15 +72,19 @@ public final class BuildResultLimits {
         if (total <= MAX_TESTS) {
             return jobs;
         }
-        // failed tests are kept first, as they matter most for the feedback
+        // failed tests are kept first over all jobs, as they matter most for the feedback, and successful tests only use what is left
         int remaining = MAX_TESTS;
-        List<LocalCIJobDTO> limited = new ArrayList<>();
+        List<List<LocalCITestJobDTO>> keptFailed = new ArrayList<>();
         for (LocalCIJobDTO job : jobs) {
             List<LocalCITestJobDTO> failed = job.failedTests().subList(0, Math.min(remaining, job.failedTests().size()));
             remaining -= failed.size();
-            List<LocalCITestJobDTO> successful = job.successfulTests().subList(0, Math.min(remaining, job.successfulTests().size()));
+            keptFailed.add(failed);
+        }
+        List<LocalCIJobDTO> limited = new ArrayList<>();
+        for (int i = 0; i < jobs.size(); i++) {
+            List<LocalCITestJobDTO> successful = jobs.get(i).successfulTests().subList(0, Math.min(remaining, jobs.get(i).successfulTests().size()));
             remaining -= successful.size();
-            limited.add(new LocalCIJobDTO(new ArrayList<>(failed), new ArrayList<>(successful)));
+            limited.add(new LocalCIJobDTO(new ArrayList<>(keptFailed.get(i)), new ArrayList<>(successful)));
         }
         return limited;
     }

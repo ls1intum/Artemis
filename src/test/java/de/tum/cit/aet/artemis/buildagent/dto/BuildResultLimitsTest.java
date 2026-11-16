@@ -46,6 +46,18 @@ class BuildResultLimitsTest {
     }
 
     @Test
+    void failedTestsOfALaterJobAreKeptBeforeSuccessfulTestsOfAnEarlierJob() {
+        LocalCIJobDTO first = new LocalCIJobDTO(List.of(), Collections.nCopies(BuildResultLimits.MAX_TESTS, TEST));
+        LocalCIJobDTO second = new LocalCIJobDTO(Collections.nCopies(5, TEST), Collections.nCopies(10, TEST));
+
+        BuildResult limited = BuildResultLimits.limit(result(List.of(first, second), List.of(), List.of()));
+
+        assertThat(limited.jobs().get(1).failedTests()).as("no failed test is dropped").hasSize(5);
+        assertThat(limited.jobs().stream().mapToInt(job -> job.failedTests().size() + job.successfulTests().size()).sum()).isEqualTo(BuildResultLimits.MAX_TESTS);
+        assertThat(limited.jobs().get(0).successfulTests()).hasSize(BuildResultLimits.MAX_TESTS - 5);
+    }
+
+    @Test
     void tooManyReportsAreShortened() {
         List<StaticCodeAnalysisReportDTO> reports = Collections.nCopies(BuildResultLimits.MAX_STATIC_CODE_ANALYSIS_REPORTS + 1,
                 new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, List.of()));
