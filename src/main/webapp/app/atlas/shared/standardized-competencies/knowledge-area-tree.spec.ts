@@ -139,6 +139,28 @@ describe('KnowledgeAreaTreeComponent', () => {
         expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
     });
 
+    it.each([
+        ['chevron', 'button'],
+        ['title', 'h5'],
+    ])('should move the focus to the row when the %s is clicked, so the arrow keys keep working', (_control, selector) => {
+        host.dataSource = { data: [ka({ id: 1, children: [ka({ id: 11, level: 1 })] }), ka({ id: 2 })] };
+        hostFixture.detectChanges();
+        const rows = () => Array.from((hostFixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="treeitem"]'));
+        const control = rows()[0].querySelector<HTMLElement>(`[data-testid="knowledge-area-node"] ${selector}`)!;
+
+        control.focus();
+        control.click();
+        hostFixture.detectChanges();
+
+        expect(rows()[0].getAttribute('aria-expanded')).toBe('true');
+        expect(document.activeElement).toBe(rows()[0]);
+        expect(rows()[0].tabIndex).toBe(0);
+
+        rows()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        hostFixture.detectChanges();
+        expect(document.activeElement).toBe(rows()[1]);
+    });
+
     it('should render an empty-state node for a knowledge area without children or competencies', () => {
         host.dataSource = { data: [ka({ id: 1 })] };
         hostFixture.detectChanges();

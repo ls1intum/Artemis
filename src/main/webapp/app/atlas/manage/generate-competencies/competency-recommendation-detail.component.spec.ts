@@ -115,3 +115,46 @@ describe('CompetencyRecommendationDetailComponent', () => {
         expect(toggleSpy).toHaveBeenCalledOnce();
     });
 });
+
+describe('CompetencyRecommendationDetailComponent title label', () => {
+    let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CompetencyRecommendationDetailComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(MonacoEditorService),
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(CompetencyRecommendationDetailComponent);
+        fixture.componentRef.setInput(
+            'form',
+            new FormGroup({
+                competency: new FormGroup({
+                    title: new FormControl('Title' as string | undefined, { nonNullable: true }),
+                    description: new FormControl('Description' as string | undefined, { nonNullable: true }),
+                    taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+                }),
+                viewed: new FormControl(false, { nonNullable: true }),
+            }),
+        );
+    });
+
+    it('should keep the title label attached to its input for every index', () => {
+        const titleLabel = (): HTMLLabelElement => fixture.nativeElement.querySelector('label[for^="title-"]');
+
+        fixture.componentRef.setInput('index', 3);
+        fixture.detectChanges();
+        expect(titleLabel().htmlFor).toBe('title-3');
+        expect(titleLabel().control).toBe(fixture.nativeElement.querySelector('input[formControlName="title"]'));
+
+        fixture.componentRef.setInput('index', 4);
+        fixture.detectChanges();
+        expect(titleLabel().htmlFor).toBe('title-4');
+        expect(titleLabel().control).toBe(fixture.nativeElement.querySelector('input[formControlName="title"]'));
+    });
+});

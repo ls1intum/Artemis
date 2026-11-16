@@ -24,13 +24,13 @@
                             tabindex="-1"
                             aria-hidden="true"
                             class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-inherit"
-                            (click)="toggle(node.data)"
+                            (click)="toggleFromRowControl(node.data, $event)"
                         >
                             <fa-icon size="sm" [icon]="node.expanded ? faChevronDown : faChevronRight" />
                         </button>
                         <h5
                             class="me-2 mb-0! cursor-pointer"
-                            (click)="toggle(node.data)"
+                            (click)="toggleFromRowControl(node.data, $event)"
                             #keyboardAction12
                             role="button"
                             tabindex="-1"

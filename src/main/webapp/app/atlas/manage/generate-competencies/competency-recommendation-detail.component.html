@@ -64,7 +64,7 @@
                     type="text"
                     tumAetUiInput
                     class="block w-full"
-                    id="title-{{ index() }}"
+                    [tumAetUiInputId]="'title-' + index()"
                     formControlName="title"
                     [tumAetUiInputInvalid]="!!titleControl()?.invalid && (!!titleControl()?.dirty || !!titleControl()?.touched)"
                 />
