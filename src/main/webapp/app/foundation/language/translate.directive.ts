@@ -2,6 +2,7 @@ import { DestroyRef, Directive, ElementRef, OnInit, effect, inject, input } from
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import DOMPurify from 'dompurify';
 
 /**
@@ -13,6 +14,7 @@ const TRANSLATION_SANITIZE_CONFIG = {
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
     ALLOW_DATA_ATTR: false,
     ALLOW_ARIA_ATTR: false,
+    RETURN_DOM_FRAGMENT: true as const,
 };
 
 /**
@@ -29,7 +31,25 @@ function escapeTranslateValues(values?: { [key: string]: unknown }): { [key: str
     if (!values) {
         return values;
     }
-    return Object.fromEntries(Object.entries(values).map(([name, value]) => [name, typeof value === 'string' ? escapeHtml(value) : value]));
+    const escapedValues = deepClone(values);
+    const visited = new WeakSet<object>();
+    const escapeValue = (value: unknown): unknown => {
+        if (typeof value === 'string') {
+            return escapeHtml(value);
+        }
+        // ngx-translate resolves nested properties and joins arrays. Preserve custom value objects such as dates.
+        if (value && typeof value === 'object' && (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
+            if (!visited.has(value)) {
+                visited.add(value);
+                const record = value as Record<string, unknown>;
+                for (const key of Object.keys(record)) {
+                    record[key] = escapeValue(record[key]);
+                }
+            }
+        }
+        return value;
+    };
+    return escapeValue(escapedValues) as { [key: string]: unknown };
 }
 
 /**
@@ -39,7 +59,7 @@ function escapeTranslateValues(values?: { [key: string]: unknown }): { [key: str
     selector: '[jhiTranslate]',
 })
 export class TranslateDirective implements OnInit {
-    private el = inject(ElementRef);
+    private el = inject<ElementRef<HTMLElement>>(ElementRef);
     private translateService = inject(TranslateService);
     private destroyRef = inject(DestroyRef);
 
@@ -76,11 +96,11 @@ export class TranslateDirective implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (value) => {
-                    // Sanitize before assigning to innerHTML. Translations may legitimately contain benign markup
+                    // Insert only the sanitized DOM fragment. Translations may legitimately contain benign markup
                     // (e.g. <a>, <strong>), but ngx-translate does NOT HTML-escape interpolated `translateValues`,
                     // so a user-controlled value (course/exercise/exam title, user name, ...) could otherwise inject
                     // markup here. DOMPurify keeps the simple inline markup of TRANSLATION_SANITIZE_CONFIG and strips everything else.
-                    this.el.nativeElement.innerHTML = DOMPurify.sanitize(value, TRANSLATION_SANITIZE_CONFIG);
+                    this.el.nativeElement.replaceChildren(DOMPurify.sanitize(value, TRANSLATION_SANITIZE_CONFIG));
                 },
                 // Render the not-found fallback on a genuine stream error (the common missing-key case already
                 // flows through `next` via ngx-translate's MissingTranslationHandler). textContent avoids markup injection.

@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
-import { escapeString } from 'app/foundation/util/text.utils';
 import { RouterLink } from '@angular/router';
 
 // Each preview translation interpolates one specific field; thread answers use the reply, not the parent post.
@@ -101,8 +100,8 @@ export class CourseNotificationComponent {
         let hasNotificationText = false;
         for (const [key, value] of Object.entries(notification.payload ?? {})) {
             if (key === CourseNotificationService.NOTIFICATION_TEXT_PARAMETER && typeof value === 'string') {
-                // The translation is assigned as HTML, so the editor's plain text is escaped to show up exactly as written.
-                notificationParameters[key] = escapeString(value);
+                // The translation directive escapes interpolation values when rendering HTML.
+                notificationParameters[key] = value;
                 hasNotificationText = value.trim() !== '';
             } else if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;

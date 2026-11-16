@@ -1,6 +1,6 @@
 import { inputBinding, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -54,7 +54,7 @@ describe('TranslateDirective', () => {
         expect(spy).toHaveBeenCalledWith('test', undefined);
     });
 
-    it('sanitizes the translated value before assigning to innerHTML (XSS via translateValues)', () => {
+    it('sanitizes the translated value before rendering (XSS via translateValues)', () => {
         // Simulate a translation whose interpolated translateValues carry user-controlled markup (e.g. a course
         // title). ngx-translate does not HTML-escape interpolation params, so the directive must sanitize.
         spy.mockReturnValue(of('Course <img src="x" onerror="alert(1)"><script>alert(2)</script> title') as ReturnType<typeof translateService.get>);
@@ -109,12 +109,12 @@ describe('TranslateDirective', () => {
 
     it('keeps the markup that the translations use', () => {
         const element = render(
-            '<strong class="text-danger">a</strong><b>b</b><i>c</i><em>d</em><code>e</code><br>' +
+            '<strong class="text-state-danger">a</strong><b>b</b><i>c</i><em>d</em><code>e</code><br>' +
                 '<span class="font-italic text-info">f</span><p class="text-primary small">g</p>' +
                 '<a href="https://example.com/page" target="_blank" rel="noopener">h</a>',
         );
 
-        expect(element.querySelector('strong.text-danger')?.textContent).toBe('a');
+        expect(element.querySelector('strong.text-state-danger')?.textContent).toBe('a');
         expect(element.querySelector('b')?.textContent).toBe('b');
         expect(element.querySelector('i')?.textContent).toBe('c');
         expect(element.querySelector('em')?.textContent).toBe('d');
@@ -146,8 +146,76 @@ describe('TranslateDirective', () => {
     });
 
     it('does not change the markup of the translation itself', () => {
-        const element = render('Hello <strong class="text-danger">world</strong>');
+        const element = render('Hello <strong class="text-state-danger">world</strong>');
 
-        expect(element.querySelector('strong.text-danger')?.textContent).toBe('world');
+        expect(element.querySelector('strong.text-state-danger')?.textContent).toBe('world');
+    });
+});
+
+describe('TranslateDirective with translation interpolation', () => {
+    beforeEach(() => {
+        TestBed.configureTestingModule({ providers: [provideTranslateService()] });
+        TestBed.inject(TranslateService).use('en');
+    });
+
+    function render(translation: string, values: Record<string, unknown>): HTMLElement {
+        TestBed.inject(TranslateService).setTranslation('en', { test: translation });
+        const fixture = TestBed.createDirective(TranslateDirective, {
+            tagName: 'div',
+            bindings: [inputBinding('jhiTranslate', () => 'test'), inputBinding('translateValues', () => values)],
+        });
+        fixture.detectChanges();
+        return fixture.nativeElement as HTMLElement;
+    }
+
+    it.each([
+        ['a direct value', '{{ title }}', { title: '<a href="https://example.com">Title</a> & more' }],
+        ['a nested property', '{{ course.title }}', { course: { title: '<a href="https://example.com">Title</a> & more' } }],
+        ['an array item', '{{ titles.0 }}', { titles: ['<a href="https://example.com">Title</a> & more'] }],
+        ['an interpolated array', '{{ titles }}', { titles: ['<a href="https://example.com">Title</a> & more'] }],
+    ])('renders user markup in %s as literal text', (_name, translation, values) => {
+        const element = render(translation, values);
+
+        expect(element.textContent).toBe('<a href="https://example.com">Title</a> & more');
+        expect(element.querySelector('a')).toBeNull();
+    });
+
+    it('preserves trusted translation formatting around escaped nested values', () => {
+        const element = render('Read <a href="/help"><strong>{{ course.title }}</strong></a>', { course: { title: '<b>Title</b> & details' } });
+
+        expect(element.querySelector('a')?.getAttribute('href')).toBe('/help');
+        expect(element.querySelector('strong')?.textContent).toBe('<b>Title</b> & details');
+        expect(element.querySelector('b')).toBeNull();
+    });
+
+    it('preserves scalar interpolation values and leaves the original parameters unchanged', () => {
+        const values = { course: { title: 'A & B' }, counts: [3, 0], enabled: false, empty: null };
+        const element = render('{{ course.title }}: {{ counts }}; {{ enabled }}; {{ empty }}', values);
+
+        expect(element.textContent).toBe('A & B: 3, 0; false; null');
+        expect(values).toEqual({ course: { title: 'A & B' }, counts: [3, 0], enabled: false, empty: null });
+    });
+
+    it('preserves the interpolation behavior of dates and custom value objects', () => {
+        class Label {
+            toString(): string {
+                return 'A & B';
+            }
+        }
+        const date = new Date('2024-01-15T10:30:00Z');
+        const element = render('{{ date }} / {{ label }}', { date, label: new Label() });
+
+        expect(element.textContent).toBe(`${date.toString()} / A & B`);
+    });
+
+    it('escapes nested properties without recursing indefinitely through cyclic parameters', () => {
+        const course: Record<string, unknown> = { title: '<b>Title</b>' };
+        course.self = course;
+        const element = render('{{ course.self.title }}', { course });
+
+        expect(element.textContent).toBe('<b>Title</b>');
+        expect(element.querySelector('b')).toBeNull();
+        expect(course.title).toBe('<b>Title</b>');
+        expect(course.self).toBe(course);
     });
 });

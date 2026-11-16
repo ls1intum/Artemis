@@ -252,7 +252,7 @@ describe('CourseNotificationComponent', () => {
         expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.exerciseUpdatedNotification.content');
     });
 
-    it('should show the content with the message of its editor, escaped, when the notification carries one', () => {
+    it('should pass the original editor message to the translation directive', () => {
         fixture.componentRef.setInput(
             'courseNotification',
             createMockNotification(3, 101, 'attachmentChangedNotification', { unitName: 'Lecture 1', notificationText: 'Use <b>v2</b> & re-download' }),
@@ -260,7 +260,7 @@ describe('CourseNotificationComponent', () => {
         fixture.detectChanges();
 
         expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.attachmentChangedNotification.contentWithNotificationText');
-        expect(componentAsAny.notificationParameters().notificationText).toBe('Use &lt;b&gt;v2&lt;/b&gt; &amp; re-download');
+        expect(componentAsAny.notificationParameters().notificationText).toBe('Use <b>v2</b> & re-download');
         expect(componentAsAny.notificationParameters().unitName).toBe('Lecture 1');
     });
 
