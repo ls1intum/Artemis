@@ -295,17 +295,24 @@ export class Lti13DeepLinkingComponent implements OnInit {
         this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
     }
 
-    /** Restricts the server's deep-link response to the local content-selection route. */
+    /**
+     * Restricts the server's deep-link response to the local content-selection route.
+     * <p>
+     * The server appends {@code /lti/select-content} to {@code server.url}, which can carry a path prefix such as {@code /artemis}. The
+     * client is served under the same prefix, so the expected path is the route resolved against the document's base URL. The router
+     * takes routes relative to that base, so the prefix is not part of the returned target.
+     */
     private localDeepLinkTarget(target: string | undefined): string | undefined {
         if (!target) {
             return undefined;
         }
         try {
             const url = new URL(target, window.location.origin);
-            if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.pathname !== '/lti/select-content') {
+            const expectedPathname = new URL('lti/select-content', document.baseURI).pathname;
+            if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.pathname !== expectedPathname) {
                 return undefined;
             }
-            return url.pathname + url.search + url.hash;
+            return '/lti/select-content' + url.search + url.hash;
         } catch {
             return undefined;
         }
