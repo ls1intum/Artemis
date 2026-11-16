@@ -30,6 +30,7 @@ export class AiExperienceSettingsComponent implements OnInit {
     protected readonly ActionType = ActionType;
     protected readonly faGhost = faGhost;
 
+    readonly isSavingConsent = this.irisChatService.isSavingLLMUsageConsent;
     readonly currentSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
     readonly isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
     sessionCount = signal(0);

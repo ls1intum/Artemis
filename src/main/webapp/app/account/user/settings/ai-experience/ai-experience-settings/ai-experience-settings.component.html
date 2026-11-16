@@ -5,7 +5,7 @@
             <p class="m-0!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.description"></p>
         </div>
         <div class="flex flex-col gap-3.5">
-            <jhi-ai-mode-selector [currentSelection]="currentSelection()" [isOnPremiseEnabled]="isOnPremiseEnabled" (choice)="selectMode($event)" />
+            <jhi-ai-mode-selector [currentSelection]="currentSelection()" [disabled]="isSavingConsent()" [isOnPremiseEnabled]="isOnPremiseEnabled" (choice)="selectMode($event)" />
             <a class="self-center" routerLink="/ai-experience-info" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
         </div>
     </section>

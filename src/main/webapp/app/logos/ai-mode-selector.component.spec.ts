@@ -22,7 +22,45 @@ describe('AiModeSelectorComponent', () => {
         expect(radios[1].checked).toBe(false);
         const choice = vi.spyOn(fixture.componentInstance.choice, 'emit');
         radios[1].click();
-        expect(choice).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+        expect(choice).toHaveBeenCalledExactlyOnceWith(LLMSelectionDecision.NO_AI);
+    });
+
+    it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, LLMSelectionDecision.NO_AI])(
+        'emits exactly one choice when the already-selected %s option is activated',
+        (decision) => {
+            const fixture = TestBed.createComponent(AiModeSelectorComponent);
+            fixture.componentRef.setInput('isOnPremiseEnabled', true);
+            fixture.componentRef.setInput('currentSelection', decision);
+            fixture.detectChanges();
+            const radio: HTMLInputElement = fixture.nativeElement.querySelector('input:checked');
+            const choice = vi.spyOn(fixture.componentInstance.choice, 'emit');
+
+            radio.click();
+
+            expect(choice).toHaveBeenCalledExactlyOnceWith(decision);
+        },
+    );
+
+    it('prevents changing the selection while disabled and allows it again afterward', () => {
+        const fixture = TestBed.createComponent(AiModeSelectorComponent);
+        fixture.componentRef.setInput('isOnPremiseEnabled', true);
+        fixture.componentRef.setInput('currentSelection', LLMSelectionDecision.CLOUD_AI);
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        const radios: NodeListOf<HTMLInputElement> = fixture.nativeElement.querySelectorAll('input[type="radio"]');
+        const choice = vi.spyOn(fixture.componentInstance.choice, 'emit');
+
+        for (const radio of radios) {
+            expect(radio.disabled).toBe(true);
+            radio.click();
+        }
+        expect(choice).not.toHaveBeenCalled();
+        expect(radios[0].checked).toBe(true);
+
+        fixture.componentRef.setInput('disabled', false);
+        fixture.detectChanges();
+        radios[1].click();
+        expect(choice).toHaveBeenCalledExactlyOnceWith(LLMSelectionDecision.LOCAL_AI);
     });
 
     it('includes local AI only when enabled and uses a separate radio group per instance', () => {

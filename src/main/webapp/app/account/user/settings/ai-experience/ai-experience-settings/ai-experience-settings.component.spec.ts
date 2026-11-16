@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { AiModeSelectorComponent } from 'app/logos/ai-mode-selector.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -38,7 +39,7 @@ describe('AiExperienceSettingsComponent', () => {
             imports: [AiExperienceSettingsComponent],
             providers: [
                 MockProvider(IrisChatHttpService),
-                MockProvider(IrisChatService),
+                MockProvider(IrisChatService, { isSavingLLMUsageConsent: signal(false) }),
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
                 MockProvider(ProfileService, { isLLMDeploymentEnabled: () => false }),
@@ -72,6 +73,24 @@ describe('AiExperienceSettingsComponent', () => {
         createComponent();
         fixture.detectChanges();
         expect(component).toBeTruthy();
+    });
+
+    it('disables the mode selector while consent is saving', () => {
+        const saving = signal(false);
+        vi.spyOn(irisChatService, 'isSavingLLMUsageConsent').mockImplementation(saving);
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+        createComponent();
+        fixture.detectChanges();
+        const selector = fixture.debugElement.query(By.directive(AiModeSelectorComponent)).componentInstance as AiModeSelectorComponent;
+        expect(selector.disabled()).toBe(false);
+
+        saving.set(true);
+        fixture.detectChanges();
+        expect(selector.disabled()).toBe(true);
+
+        saving.set(false);
+        fixture.detectChanges();
+        expect(selector.disabled()).toBe(false);
     });
 
     it('should load session and message counts on init', () => {

@@ -1670,6 +1670,23 @@ describe('IrisChatService', () => {
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
         });
 
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.NO_AI])('reports saving state until %s succeeds or fails', (decision) => {
+            for (const fails of [false, true]) {
+                const request = new Subject<HttpResponse<void>>();
+                userMock.updateLLMSelectionDecision.mockReturnValueOnce(request.asObservable());
+                expect(service.isSavingLLMUsageConsent()).toBe(false);
+                service.updateLLMUsageConsent(decision);
+                expect(service.isSavingLLMUsageConsent()).toBe(true);
+                if (fails) {
+                    request.error(new HttpErrorResponse({ status: 500 }));
+                } else {
+                    request.next(new HttpResponse<void>());
+                    request.complete();
+                }
+                expect(service.isSavingLLMUsageConsent()).toBe(false);
+            }
+        });
+
         it('should emit llmOptedOut$ once after NO_AI is persisted successfully', () => {
             let emissions = 0;
             service.llmOptedOut$.subscribe(() => emissions++);

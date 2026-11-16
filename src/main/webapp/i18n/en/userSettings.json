@@ -339,7 +339,7 @@
                 "updateSuccess": "Notification setting updated successfully."
             },
             "aiExperienceSettingsPage": {
-                "description": "Control how Artemis uses AI to support your learning, including Iris tutoring, automated feedback, and other AI-powered features. Use cloud models hosted on Azure, choose models hosted on university infrastructure where available, or continue without AI assistance. Artemis will never send your registration number or email address to a large language model.",
+                "description": "Control how Artemis uses AI to support your learning, including Iris tutoring, automated feedback, and other AI-powered features. Use cloud models hosted on Azure, choose models hosted on university infrastructure where available, or continue without AI assistance.",
                 "yourAiMode": "AI Mode",
                 "dataManagement": "Iris Chats",
                 "irisConversations": "Iris conversations",

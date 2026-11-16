@@ -77,9 +77,10 @@
                 <input
                     type="radio"
                     [name]="groupName"
+                    [disabled]="disabled()"
                     [checked]="currentSelection() === LLMSelectionDecision.CLOUD_AI"
                     [attr.aria-labelledby]="groupName + '-CLOUD_AI'"
-                    (change)="choice.emit(LLMSelectionDecision.CLOUD_AI)"
+                    (click)="choice.emit(LLMSelectionDecision.CLOUD_AI)"
                 />
                 <span [id]="groupName + '-CLOUD_AI'" jhiTranslate="artemisApp.llmSelectionPopup.cloud"></span>
             </span>
@@ -187,9 +188,10 @@
                     <input
                         type="radio"
                         [name]="groupName"
+                        [disabled]="disabled()"
                         [checked]="currentSelection() === LLMSelectionDecision.LOCAL_AI"
                         [attr.aria-labelledby]="groupName + '-LOCAL_AI'"
-                        (change)="choice.emit(LLMSelectionDecision.LOCAL_AI)"
+                        (click)="choice.emit(LLMSelectionDecision.LOCAL_AI)"
                     />
                     <span [id]="groupName + '-LOCAL_AI'" jhiTranslate="artemisApp.llmSelectionPopup.onPremise"></span>
                 </span>
@@ -253,9 +255,10 @@
                 <input
                     type="radio"
                     [name]="groupName"
+                    [disabled]="disabled()"
                     [checked]="currentSelection() === LLMSelectionDecision.NO_AI"
                     [attr.aria-labelledby]="groupName + '-NO_AI'"
-                    (change)="choice.emit(LLMSelectionDecision.NO_AI)"
+                    (click)="choice.emit(LLMSelectionDecision.NO_AI)"
                 />
                 <span [id]="groupName + '-NO_AI'" jhiTranslate="artemisApp.llmSelectionPopup.noAI"></span>
             </span>

@@ -339,7 +339,7 @@
                 "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
             },
             "aiExperienceSettingsPage": {
-                "description": "Lege fest, wie Artemis KI einsetzt, um dein Lernen zu unterstützen – einschließlich Iris-Tutorium, automatischem Feedback und weiteren KI-gestützten Funktionen. Nutze Cloud-Modelle auf Azure, wähle Modelle auf universitärer Infrastruktur, sofern verfügbar, oder verwende Artemis ohne KI-Unterstützung. Artemis wird niemals deine Matrikelnummer oder E-Mail-Adresse an ein großes Sprachmodell senden.",
+                "description": "Lege fest, wie Artemis KI einsetzt, um dein Lernen zu unterstützen – einschließlich Iris-Tutorium, automatischem Feedback und weiteren KI-gestützten Funktionen. Nutze Cloud-Modelle auf Azure, wähle Modelle auf universitärer Infrastruktur, sofern verfügbar, oder verwende Artemis ohne KI-Unterstützung.",
                 "yourAiMode": "KI-Modus",
                 "dataManagement": "Iris-Chats",
                 "irisConversations": "Iris-Unterhaltungen",

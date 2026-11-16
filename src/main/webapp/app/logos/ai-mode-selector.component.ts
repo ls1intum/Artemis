@@ -14,6 +14,7 @@ let nextGroupId = 0;
 export class AiModeSelectorComponent {
     readonly currentSelection = input<LLMSelectionDecision>();
     readonly isOnPremiseEnabled = input(false);
+    readonly disabled = input(false);
     readonly choice = output<LLMSelectionDecision>();
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
     protected readonly groupName = `ai-mode-${nextGroupId++}`;
