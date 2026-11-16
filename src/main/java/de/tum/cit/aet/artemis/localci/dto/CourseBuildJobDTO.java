@@ -70,7 +70,7 @@ public record CourseBuildJobDTO(String id, String name, @Nullable CourseBuildAge
      * @return the DTO without build configuration, repository addresses and agent address
      */
     public static CourseBuildJobDTO of(BuildJobQueueItem job) {
-        var agent = job.buildAgent() == null ? null : new CourseBuildAgentDTO(job.buildAgent().name(), job.buildAgent().displayName());
+        var agent = new CourseBuildAgentDTO(job.buildAgent().name(), job.buildAgent().displayName());
         var repository = new CourseBuildRepositoryDTO(job.repositoryInfo().repositoryName(), job.repositoryInfo().repositoryType(), job.repositoryInfo().triggeredByPushTo());
         return new CourseBuildJobDTO(job.id(), job.name(), agent, job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(), job.priority(), job.status(),
                 repository, job.jobTimingInfo(), new CourseBuildConfigDTO(job.buildConfig().commitHashToBuild()));
