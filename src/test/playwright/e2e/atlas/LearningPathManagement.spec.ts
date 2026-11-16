@@ -22,7 +22,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Wait for the loading spinner to disappear before checking for the activation card
-        const spinner = page.locator('.spinner-border');
+        const spinner = page.getByTestId('loading-spinner');
         await expect(spinner).not.toBeVisible({ timeout: 30000 });
 
         // Feature activation card is visible and can be enabled
@@ -31,7 +31,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await activationCard.locator('.jhi-btn').first().click();
 
         // Assert: management UI becomes visible after enabling
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
+        await expect(page.getByTestId('learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 
     test('Instructor enables learning paths via course settings', async ({ page }) => {
@@ -62,13 +62,13 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         // renders two independent containers (jhi-learning-paths-state and
         // jhi-learning-paths-analytics), each with its own loading spinner — under heavy
         // parallel load they can finish loading at different times, so we wait for both
-        // explicitly instead of asserting on a bare `.spinner-border` (which strict-mode
+        // explicitly instead of asserting on a bare `loading-spinner` test id (which strict-mode
         // rejects when multiple match).
-        await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
-        await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-state').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
 
         // Assert: management UI becomes visible after enabling
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
+        await expect(page.getByTestId('learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 
     test('Instructor disables learning paths via course settings', async ({ page }) => {
@@ -103,10 +103,10 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         // renders two independent containers (jhi-learning-paths-state and
         // jhi-learning-paths-analytics), each with its own loading spinner — under heavy
         // parallel load they can finish loading at different times, so we wait for both
-        // explicitly instead of asserting on a bare `.spinner-border` (which strict-mode
+        // explicitly instead of asserting on a bare `loading-spinner` test id (which strict-mode
         // rejects when multiple match).
-        await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
-        await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-state').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
 
         // Under heavy load the management view briefly renders an empty state before the
         // disabled-LP flag propagates to the activation card. Re-issue the navigation if the
@@ -132,15 +132,15 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         // renders two independent containers (jhi-learning-paths-state and
         // jhi-learning-paths-analytics), each with its own loading spinner — under heavy
         // parallel load they can finish loading at different times, so we wait for both
-        // explicitly instead of asserting on a bare `.spinner-border` (which strict-mode
+        // explicitly instead of asserting on a bare `loading-spinner` test id (which strict-mode
         // rejects when multiple match).
-        await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
-        await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-state').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
 
         const activationCard = page.locator('jhi-feature-activation');
         await expect(activationCard).toBeVisible({ timeout: 15000 });
         await activationCard.locator('.jhi-btn').first().click();
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
+        await expect(page.getByTestId('learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
 
         // Create all competencies and prerequisites via API and store their IDs
         const comp1 = await courseManagementAPIRequests.createCompetency(course, 'Competency 1', 'Seed competency for learning path graph test 1');
@@ -166,8 +166,8 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
 
         await page.reload();
         await page.waitForLoadState('domcontentloaded');
-        const reloadSpinner = page.locator('.spinner-border');
-        await expect(reloadSpinner).not.toBeVisible({ timeout: 30000 });
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-state').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics').getByTestId('loading-spinner')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.getByTestId('learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 });

@@ -9,7 +9,7 @@ import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atl
 
 /**
  * Host component that provides the consumer content templates (knowledgeArea + competency) the same way the real
- * consumers do, so the projected p-tree node templates can be asserted.
+ * consumers do, so the projected tree node templates can be asserted.
  */
 @Component({
     template: `
@@ -51,7 +51,7 @@ describe('KnowledgeAreaTreeComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should render the p-tree', () => {
+    it('should render the tree', () => {
         hostFixture.detectChanges();
         const tree = hostFixture.debugElement.query(By.css('[data-testid="knowledge-area-tree"]'));
         expect(tree).not.toBeNull();
@@ -75,13 +75,13 @@ describe('KnowledgeAreaTreeComponent', () => {
         expect(knowledgeAreaNodes).toHaveLength(1);
     });
 
-    it('should expose expansion on the focusable title for keyboard and programmatic changes', () => {
+    it('should expose expansion on the focusable row for keyboard and programmatic changes', () => {
         host.dataSource = { data: [ka({ id: 1 })] };
         hostFixture.detectChanges();
-        const title = () => hostFixture.nativeElement.querySelector('[data-testid="knowledge-area-node"] h5') as HTMLElement;
+        const title = () => hostFixture.nativeElement.querySelector('[role="treeitem"]') as HTMLElement;
         expect(title().getAttribute('aria-expanded')).toBe('false');
 
-        title().dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        title().dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
         hostFixture.detectChanges();
         expect(title().getAttribute('aria-expanded')).toBe('true');
 
@@ -98,6 +98,47 @@ describe('KnowledgeAreaTreeComponent', () => {
         expect(title().getAttribute('aria-expanded')).toBe('false');
     });
 
+    it('should support the arrow, home and end keys on the visible tree rows', () => {
+        host.dataSource = { data: [ka({ id: 1, children: [ka({ id: 11, level: 1 })] }), ka({ id: 2 })] };
+        hostFixture.detectChanges();
+        const titles = () => Array.from((hostFixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="treeitem"]'));
+        const press = (element: HTMLElement, key: string) => {
+            const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+            element.dispatchEvent(event);
+            hostFixture.detectChanges();
+            return event;
+        };
+        expect(titles()).toHaveLength(2);
+
+        // ArrowRight expands, ArrowLeft collapses, and ArrowLeft on a collapsed root does nothing
+        expect(press(titles()[0], 'ArrowRight').defaultPrevented).toBe(true);
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('true');
+        expect(titles()).toHaveLength(3);
+        press(titles()[0], 'ArrowLeft');
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
+        press(titles()[0], 'ArrowLeft');
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
+
+        // Down, Up, End and Home move the focus between the visible rows
+        press(titles()[0], 'ArrowDown');
+        expect(document.activeElement).toBe(titles()[1]);
+        press(titles()[1], 'ArrowUp');
+        expect(document.activeElement).toBe(titles()[0]);
+        press(titles()[0], 'End');
+        expect(document.activeElement).toBe(titles()[1]);
+        press(titles()[1], 'Home');
+        expect(document.activeElement).toBe(titles()[0]);
+
+        // Other keys keep their default behaviour
+        expect(press(titles()[0], 'a').defaultPrevented).toBe(false);
+
+        // Keys pressed in an element inside of the row belong to that element
+        const inner = document.createElement('span');
+        titles()[0].appendChild(inner);
+        expect(press(inner, 'ArrowRight').defaultPrevented).toBe(false);
+        expect(titles()[0].getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('should render an empty-state node for a knowledge area without children or competencies', () => {
         host.dataSource = { data: [ka({ id: 1 })] };
         hostFixture.detectChanges();
@@ -106,6 +147,83 @@ describe('KnowledgeAreaTreeComponent', () => {
 
         const emptyNode = hostFixture.debugElement.query(By.css('[data-testid="empty-node"]'));
         expect(emptyNode).not.toBeNull();
+    });
+
+    it('navigates into child areas and competency leaves and back to their parents', () => {
+        host.dataSource = {
+            data: [
+                ka({
+                    id: 1,
+                    children: [ka({ id: 11, competencies: [{ id: 110, title: 'Searching', isVisible: true }] })],
+                    competencies: [{ id: 10, title: 'Sorting', isVisible: true }],
+                }),
+                ka({ id: 2 }),
+            ],
+        };
+        hostFixture.detectChanges();
+        const rows = () => Array.from((hostFixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="treeitem"]'));
+        const press = (key: string) => {
+            document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+            hostFixture.detectChanges();
+        };
+        rows()[0].focus();
+        press('ArrowRight'); // Expand the root, keeping focus there.
+        expect(rows()[0].getAttribute('aria-expanded')).toBe('true');
+        expect(document.activeElement).toBe(rows()[0]);
+        press('ArrowRight'); // Enter its first child area.
+        expect(document.activeElement).toBe(rows()[1]);
+        press('ArrowRight'); // Expand the child.
+        press('ArrowRight'); // Enter its competency leaf.
+        expect(document.activeElement).toBe(rows()[2]);
+        expect(rows()[2].textContent).toContain('Searching');
+        press('ArrowLeft'); // A leaf returns to its parent.
+        expect(document.activeElement).toBe(rows()[1]);
+        press('ArrowLeft'); // Collapse the child, keeping focus there.
+        expect(rows()[1].getAttribute('aria-expanded')).toBe('false');
+        expect(document.activeElement).toBe(rows()[1]);
+        press('ArrowLeft'); // A collapsed child returns to its parent.
+        expect(document.activeElement).toBe(rows()[0]);
+        press('ArrowDown');
+        expect(document.activeElement).toBe(rows()[1]);
+        press('ArrowDown');
+        expect(document.activeElement).toBe(rows()[2]);
+        expect(rows()[2].textContent).toContain('Sorting');
+        press('ArrowDown');
+        expect(document.activeElement).toBe(rows()[3]);
+        press('ArrowUp');
+        expect(document.activeElement).toBe(rows()[2]);
+    });
+
+    it('keeps one tree row in the tab order as focus moves and the tree is filtered', () => {
+        host.dataSource = { data: [ka({ id: 1 }), ka({ id: 2 })] };
+        hostFixture.detectChanges();
+        const rows = () => Array.from((hostFixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="treeitem"]'));
+        expect(rows().map((row) => row.tabIndex)).toEqual([0, -1]);
+        rows()[0].focus();
+        rows()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(document.activeElement).toBe(rows()[1]);
+        expect(rows().map((row) => row.tabIndex)).toEqual([-1, 0]);
+        rows()[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(document.activeElement).toBe(rows()[0]);
+        host.dataSource.data[0].isVisible = false;
+        host.tree().rebuild();
+        hostFixture.detectChanges();
+        expect(rows()).toHaveLength(1);
+        expect(rows()[0].tabIndex).toBe(0);
+    });
+
+    it('does not enter a sibling when filtering leaves an expanded area without visible children', () => {
+        host.dataSource = { data: [ka({ id: 1, children: [ka({ id: 11, isVisible: false })] }), ka({ id: 2 })] };
+        hostFixture.detectChanges();
+        host.tree().expandAll();
+        hostFixture.detectChanges();
+        const first = hostFixture.nativeElement.querySelector('[role="treeitem"]') as HTMLElement;
+        first.focus();
+        first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(document.activeElement).toBe(first);
     });
 
     it('should not render an empty-state node for a knowledge area whose only competency is hidden', () => {

@@ -217,6 +217,22 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourseKeepsTheStoredIconWhenTheRequestNamesAnotherFile() throws Exception {
+        course.setCourseIcon("stored-icon.png");
+        courseRepository.save(course);
+        String storedIcon = courseRepository.findByIdElseThrow(course.getId()).getCourseIcon();
+        var loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("courseIcon", "icon-of-another-course.png");
+        var part = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, request.getObjectMapper().writeValueAsBytes(update));
+
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(part)).andExpect(status().isOk());
+
+        assertThat(courseRepository.findByIdElseThrow(course.getId()).getCourseIcon()).isEqualTo(storedIcon).doesNotContain("icon-of-another-course");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void allowedComplaintsReportsRemainingAllowanceAndRejectsTeamWithoutMembership() throws Exception {
         course.setMaxComplaints(3);
         course.setMaxComplaintTimeDays(7);

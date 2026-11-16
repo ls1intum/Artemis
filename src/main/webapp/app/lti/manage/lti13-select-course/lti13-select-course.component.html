@@ -1,8 +1,8 @@
-<div class="row">
+<div class="grid grid-cols-1 gap-x-4! lg:grid-cols-2 xl:grid-cols-3">
     @for (course of courses(); track course) {
-        <jhi-overview-lti-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" />
+        <jhi-overview-lti-course-card class="mb-4!" [course]="course" />
     } @empty {
-        <div class="mb-3">
+        <div class="mb-4! col-span-full">
             <span jhiTranslate="artemisApp.lti13.deepLinking.noCoursesError"></span>
             <br />
             <a

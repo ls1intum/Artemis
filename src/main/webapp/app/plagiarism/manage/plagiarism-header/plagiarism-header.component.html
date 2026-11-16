@@ -1,17 +1,18 @@
-<div class="plagiarism-header">
-    <div class="plagiarism-header-left">
-        <h5 class="fw-medium">
+<div class="plagiarism-header flex items-center justify-between p-4!">
+    <div class="flex items-center">
+        <h5 class="mb-0! font-medium">
             {{ comparison()?.submissionA?.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }},
             {{ comparison()?.submissionB?.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}
         </h5>
     </div>
 
-    <div class="plagiarism-header-right">
+    <div class="flex items-center gap-4!">
         @if (!exercise()?.teamMode) {
             @if (comparison()?.status === plagiarismStatus.CONFIRMED) {
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm"
+                    tumAetUiButton
+                    size="small"
                     data-qa="view-plagiarism-cases-button"
                     jhiTranslate="artemisApp.plagiarism.viewCases"
                     [routerLink]="['/course-management', exercise()?.course?.id, 'plagiarism-cases']"
@@ -21,7 +22,9 @@
             } @else {
                 <button
                     type="button"
-                    class="btn btn-success btn-sm"
+                    tumAetUiButton
+                    severity="success"
+                    size="small"
                     (click)="confirmPlagiarism()"
                     data-qa="confirm-plagiarism-button"
                     jhiTranslate="artemisApp.plagiarism.confirm"
@@ -31,71 +34,59 @@
 
             <button
                 type="button"
-                class="btn btn-danger btn-sm"
+                tumAetUiButton
+                severity="danger"
+                size="small"
                 (click)="denyPlagiarism()"
                 data-qa="deny-plagiarism-button"
                 jhiTranslate="artemisApp.plagiarism.deny"
                 [disabled]="comparison()?.status === plagiarismStatus.DENIED || isLoading()"
             ></button>
         } @else {
-            <fa-icon [icon]="faCircleInfo" class="fa-light text-secondary" />
-            <p class="m-0"><small jhiTranslate="artemisApp.plagiarism.teamModeDisabled"></small></p>
+            <fa-icon [icon]="faCircleInfo" class="text-muted-color" />
+            <p class="m-0!"><small jhiTranslate="artemisApp.plagiarism.teamModeDisabled"></small></p>
         }
 
-        <div class="vertical-divider"></div>
+        <div class="plagiarism-header-divider h-6 w-px"></div>
 
-        <div class="split-controls">
-            <div
-                class="split-control"
+        <div class="flex gap-1">
+            <button
+                type="button"
+                class="split-control inline-flex cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
                 (click)="expandSplitPane('left')"
                 data-qa="split-view-left"
                 [attr.aria-label]="'artemisApp.plagiarism.expandLeftPane' | artemisTranslate"
-                #keyboardAction45
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
             >
-                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H15V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="#E4E5E6" />
-                    <path d="M17 4H18.5C19.3284 4 20 4.67157 20 5.5V18.5C20 19.3284 19.3284 20 18.5 20H17V4Z" fill="#E4E5E6" />
+                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H15V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="currentColor" />
+                    <path d="M17 4H18.5C19.3284 4 20 4.67157 20 5.5V18.5C20 19.3284 19.3284 20 18.5 20H17V4Z" fill="currentColor" />
                 </svg>
-            </div>
-            <div
-                class="split-control"
+            </button>
+            <button
+                type="button"
+                class="split-control inline-flex cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
                 (click)="resetSplitPanes()"
                 data-qa="split-view-even"
                 [attr.aria-label]="'artemisApp.plagiarism.resetSplitPanes' | artemisTranslate"
-                #keyboardAction51
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
             >
-                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H11V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="#E4E5E6" />
-                    <path d="M13 4H18.5C19.3284 4 20 4.67157 20 5.5V18.5C20 19.3284 19.3284 20 18.5 20H13V4Z" fill="#E4E5E6" />
+                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H11V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="currentColor" />
+                    <path d="M13 4H18.5C19.3284 4 20 4.67157 20 5.5V18.5C20 19.3284 19.3284 20 18.5 20H13V4Z" fill="currentColor" />
                 </svg>
-            </div>
-            <div
-                class="split-control"
+            </button>
+            <button
+                type="button"
+                class="split-control inline-flex cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
                 (click)="expandSplitPane('right')"
                 data-qa="split-view-right"
                 [attr.aria-label]="'artemisApp.plagiarism.expandRightPane' | artemisTranslate"
-                #keyboardAction57
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
             >
-                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 18.5C20 19.3284 19.3284 20 18.5 20L9 20L9 4L18.5 4C19.3284 4 20 4.67157 20 5.5L20 18.5Z" fill="#E4E5E6" />
-                    <path d="M7 20L5.5 20C4.67157 20 4 19.3284 4 18.5L4 5.5C4 4.67157 4.67157 4 5.5 4L7 4L7 20Z" fill="#E4E5E6" />
+                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M20 18.5C20 19.3284 19.3284 20 18.5 20L9 20L9 4L18.5 4C19.3284 4 20 4.67157 20 5.5L20 18.5Z" fill="currentColor" />
+                    <path d="M7 20L5.5 20C4.67157 20 4 19.3284 4 18.5L4 5.5C4 4.67157 4.67157 4 5.5 4L7 4L7 20Z" fill="currentColor" />
                 </svg>
-            </div>
+            </button>
         </div>
     </div>
 </div>
+<tumaet-ui-confirm-dialog />

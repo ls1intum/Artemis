@@ -3,28 +3,26 @@
         <!--region Left Panel-->
         <div
             left-body
-            class="w-100"
+            class="w-full"
             [class.px-2]="!showsAssessedSubmission()"
             [class.pb-2]="!showsAssessedSubmission()"
             [class.file-upload-submission__fill]="showsAssessedSubmission()"
         >
-            <div class="row">
+            <div>
                 @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
-                    <div class="col-12 col-md-6">
-                        <div class="form-group">
-                            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
-                            <div class="input-group background-file">
-                                <div class="custom-file overflow-ellipsis">
-                                    <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
+                    <div class="w-full md:w-1/2">
+                        <div class="mb-4!">
+                            <label for="fileUploadInput" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
+                            <div class="flex w-full flex-wrap items-stretch">
+                                <div class="truncate">
+                                    <input #fileInput id="fileUploadInput" type="file" (change)="setFileSubmissionForExercise($event)" />
                                 </div>
                             </div>
-                            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
+                            <p class="inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
                             @if (fileUploadExercise()?.filePattern; as filePattern) {
                                 @for (extension of filePattern.split(','); track extension) {
-                                    <div class="d-inline-block">
-                                        <span class="ms-1 badge bg-info">
-                                            {{ extension | uppercase }}
-                                        </span>
+                                    <div class="inline-block">
+                                        <tumaet-ui-tag class="ms-1" severity="info" size="sm" [value]="extension | uppercase" />
                                     </div>
                                 }
                             }
@@ -50,7 +48,7 @@
                     <jhi-general-feedback [feedbacks]="unreferencedFeedback()" [course]="course()" [separated]="true" />
                     <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
                     @if (isOwnerOfParticipation() && result() && participation() && displayedInExamSummary()) {
-                        <jhi-rating class="d-block mt-2" [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
+                        <jhi-rating class="block mt-2" [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
                     }
                 </jhi-assessment-submission-panel>
             } @else {
@@ -58,7 +56,7 @@
             }
             <ng-template #submittedFile let-inPanel="inPanel">
                 @if (submittedFileName() && submission()?.filePathUrl) {
-                    <div class="card-text">
+                    <div data-testid="submitted-file">
                         @if (!displayedInExamSummary()) {
                             <h6>
                                 {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() } }}
@@ -88,9 +86,7 @@
                             }
                             <!-- In the panel the file type sits in its header -->
                             @if (submittedFileExtension() && !inPanel) {
-                                <span class="ms-2 badge bg-info">
-                                    {{ submittedFileExtension() | uppercase }}
-                                </span>
+                                <tumaet-ui-tag class="ms-2" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
                             }
                         </div>
                     </div>
