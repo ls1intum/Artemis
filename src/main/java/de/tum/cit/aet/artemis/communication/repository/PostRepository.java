@@ -29,6 +29,23 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
     /**
+     * Finds the messages of a conversation of the course whose text contains the given reference, for example the path of an uploaded file.
+     *
+     * @param conversationId the id of the conversation
+     * @param courseId       the id of the course the conversation belongs to
+     * @param needle         the text to look for
+     * @return the ids of the messages
+     */
+    @Query("""
+            SELECT post.id
+            FROM Post post
+            WHERE post.conversation.id = :conversationId
+                AND post.conversation.course.id = :courseId
+                AND LOCATE(:needle, post.content) > 0
+            """)
+    Set<Long> findIdsOfPostsReferencing(@Param("conversationId") long conversationId, @Param("courseId") long courseId, @Param("needle") String needle);
+
+    /**
      * Finds all posts authored by the given user ID.
      *
      * @param authorId ID of the author

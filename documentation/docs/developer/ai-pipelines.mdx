@@ -2,7 +2,7 @@
 id: ai-pipelines
 title: AI Pipelines and Service Boundaries
 sidebar_label: AI Pipelines
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-12
 ---
 
 This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, or Logos.
@@ -35,6 +35,10 @@ For the implementation hierarchy, executor behavior, and Iris-owned agents, see 
 | Tutor suggestions     | `IrisTutorSuggestionSessionService` calls `PyrisPipelineService.executeTutorSuggestionPipeline` with post, session, course, and applicable exercise/lecture context. | The tutor-suggestion callback updates the corresponding session and is delivered through the Iris WebSocket path.                                                                                                                                   |
 | Autonomous tutor      | `AutonomousTutorForwardingService` calls `PyrisPipelineService.executeAutonomousTutorPipeline` for the communication context.                                        | The authenticated callback is handled by `AutonomousTutorService`, which applies the Artemis-side post/decision behavior.                                                                                                                           |
 | Competency extraction | `IrisCompetencyGenerationService` starts the typed Pyris pipeline through `PyrisPipelineService`.                                                                    | The competency-extraction callback is routed back to `IrisCompetencyGenerationService`, which owns the Artemis-side result handling.                                                                                                                |
+
+Chat sessions follow the visibility of what they are about. A student can open or continue an exercise chat only for an exercise that is released, and the data sent to Pyris for a student leaves out unreleased exercises, exams and lecture units. Teaching assistants and above are not restricted. The chat DTOs for exercises carry the problem statement and dates but not the template, solution or test repositories or the example solution of a text exercise, because the chat pipelines read the submission of the student instead. Pyris errors reach the user as a status only; the detail Pyris reports is written to the server log.
+
+The callbacks of Athena, Pyris and the sharing platform that authenticate with a shared secret compare it in constant time, and a failed check counts against the calling address (`SERVICE_CREDENTIAL_FAILURE`, see the [security guide](/admin/production-setup/security)).
 
 These paths are conditional on Iris being enabled. Artemis creates the request and owns its stored application data; it does not own the underlying Iris pipeline implementation or provider policy.
 

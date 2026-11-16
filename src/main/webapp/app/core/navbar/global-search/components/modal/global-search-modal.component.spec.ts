@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Dialog } from 'primeng/dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
@@ -38,39 +38,12 @@ describe('GlobalSearchModalComponent', () => {
     // JSDOM does not implement scrollIntoView; mock it to prevent TypeError in the navigation-view effect
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
 
-    // JSDOM's CSSStyleDeclaration proxy rejects CSS custom property assignments via index notation
-    // (e.g. el.style['--p-dialog-border-radius'] = '…') — Angular's NoneEncapsulationDomRenderer uses
-    // that path, and PrimeNG's Dialog applies its design tokens this way when visible=true.
-    // Wrapping the style getter redirects custom-property assignments through setProperty() instead.
-    const originalStyleDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')!;
     beforeAll(() => {
         HTMLElement.prototype.scrollIntoView = vi.fn();
-        Object.defineProperty(HTMLElement.prototype, 'style', {
-            get() {
-                const style = originalStyleDescriptor.get!.call(this) as CSSStyleDeclaration;
-                return new Proxy(style, {
-                    set(target, prop, value) {
-                        if (typeof prop === 'string' && prop.startsWith('--')) {
-                            // CSS custom properties must go through setProperty in JSDOM
-                            target.setProperty(prop, String(value));
-                        } else if (typeof prop === 'string' && /^\d+$/.test(prop)) {
-                            // Numeric indices (el.style[0], el.style[1], …) are read-only
-                            // in the CSS spec; silently swallow assignments (e.g. from NgStyle
-                            // receiving a plain string instead of a style object).
-                        } else {
-                            (target as unknown as Record<string, unknown>)[prop as string] = value;
-                        }
-                        return true;
-                    },
-                });
-            },
-            configurable: true,
-        });
     });
 
     afterAll(() => {
         HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
-        Object.defineProperty(HTMLElement.prototype, 'style', originalStyleDescriptor);
     });
 
     const mockSearchOverlayService = {
@@ -485,7 +458,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const dialog = fixture.nativeElement.querySelector('.p-dialog');
+            const dialog = document.querySelector('[data-testid="global-search-dialog"]');
             expect(dialog).toBeTruthy();
         });
 
@@ -493,7 +466,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(false);
             fixture.detectChanges();
 
-            const dialog = fixture.nativeElement.querySelector('.p-dialog');
+            const dialog = document.querySelector('[data-testid="global-search-dialog"]');
             expect(dialog).toBeFalsy();
         });
 
@@ -502,7 +475,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchInput = fixture.nativeElement.querySelector('.search-input');
+            const searchInput = document.querySelector('.search-input');
             expect(searchInput).toBeTruthy();
         });
 
@@ -511,8 +484,8 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const footer = fixture.nativeElement.querySelector('.search-footer');
-            const hints = fixture.nativeElement.querySelectorAll('.key-hint-small');
+            const footer = document.querySelector('.search-footer');
+            const hints = document.querySelectorAll('.key-hint-small');
 
             expect(footer).toBeTruthy();
             expect(hints.length).toBeGreaterThan(0);
@@ -525,7 +498,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchInput = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const searchInput = document.querySelector('.search-input') as HTMLInputElement;
             expect(searchInput).toBeTruthy();
 
             await new Promise((resolve) => setTimeout(resolve, 10));
@@ -539,8 +512,8 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-            dialog.onHide.emit();
+            const dialog = fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
+            dialog.hidden.emit();
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });
@@ -549,8 +522,8 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-            dialog.visibleChange.emit(false);
+            const dialog = fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
+            dialog.visible.set(false);
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });
@@ -571,7 +544,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchIcon = fixture.nativeElement.querySelector('.search-icon');
+            const searchIcon = document.querySelector('.search-icon');
             expect(searchIcon).toBeTruthy();
         });
 
@@ -580,7 +553,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const icons = fixture.nativeElement.querySelectorAll('.key-hint-small fa-icon');
+            const icons = document.querySelectorAll('.key-hint-small fa-icon');
             expect(icons.length).toBeGreaterThanOrEqual(2);
         });
     });
@@ -1179,7 +1152,7 @@ describe('GlobalSearchModalComponent', () => {
             trigger.focus();
             mockSearchOverlayService.isOpen.set(true);
             TestBed.tick();
-            (fixture.nativeElement.querySelector('.search-input') as HTMLInputElement | null)?.focus();
+            (document.querySelector('.search-input') as HTMLInputElement | null)?.focus();
 
             (component as any).onDialogHide();
 
@@ -1198,9 +1171,9 @@ describe('GlobalSearchModalComponent', () => {
             component['selectedIndex'].set(1);
             fixture.detectChanges();
 
-            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const input = document.querySelector('.search-input') as HTMLInputElement;
             const activeId = input.getAttribute('aria-activedescendant')!;
-            const option = fixture.nativeElement.querySelector(`#${activeId}`) as HTMLElement;
+            const option = document.querySelector(`#${activeId}`) as HTMLElement;
             expect(input.getAttribute('aria-expanded')).toBe('true');
             expect(option.getAttribute('role')).toBe('option');
             expect(option.textContent).toContain('B');
@@ -1214,9 +1187,9 @@ describe('GlobalSearchModalComponent', () => {
             (component as any).selectedIndex.set(0);
             fixture.detectChanges();
 
-            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const input = document.querySelector('.search-input') as HTMLInputElement;
             expect(input.getAttribute('aria-activedescendant')).toBeNull();
-            expect(fixture.nativeElement.querySelector('[role="listbox"]#global-search-results')).toBeNull();
+            expect(document.querySelector('[role="listbox"]#global-search-results')).toBeNull();
         });
 
         it('puts letters typed before the input has focus into the search box', () => {
@@ -1232,7 +1205,7 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('leaves letters alone once the input has focus', () => {
-            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const input = document.querySelector('.search-input') as HTMLInputElement;
             input.focus();
             const event = new KeyboardEvent('keydown', { key: 'g', cancelable: true });
 
@@ -1290,7 +1263,7 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         describe('Backspace at the start of the input', () => {
-            const searchInput = () => fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const searchInput = () => document.querySelector('.search-input') as HTMLInputElement;
             const pressBackspace = (repeat = false) => {
                 const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true, repeat });
                 searchInput().dispatchEvent(event);
@@ -1370,7 +1343,7 @@ describe('GlobalSearchModalComponent', () => {
                 pressBackspace();
                 expect((component as any).selectedChip()).toBe(1);
                 const elsewhere = document.createElement('button');
-                fixture.nativeElement.appendChild(elsewhere);
+                document.querySelector('[data-testid="global-search-dialog"]')!.appendChild(elsewhere);
                 elsewhere.focus();
 
                 const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
@@ -1421,7 +1394,7 @@ describe('GlobalSearchModalComponent', () => {
             it('lets Enter activate the Filter button after Tab moved focus away from the highlighted chip', () => {
                 pressBackspace();
                 expect((component as any).selectedChip()).toBe(1);
-                const filterButton = fixture.nativeElement.querySelector('.filter-trigger') as HTMLButtonElement;
+                const filterButton = document.querySelector('.filter-trigger') as HTMLButtonElement;
                 // Tab moves focus; jsdom does not move it for a dispatched Tab key, so focus the next control directly.
                 filterButton.focus();
 

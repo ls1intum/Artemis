@@ -1619,6 +1619,28 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void staffEditorDoesNotNameTheStudentForTutors() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        var latest = request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(latest.participation().student()).isNull();
+        var all = request.getList(url + "/submissions-with-results/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(all).isNotEmpty().allSatisfy(dto -> assertThat(dto.participation().student()).isNull());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void staffEditorNamesTheStudentForInstructors() throws Exception {
+        var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        var url = "/api/modeling/participations/" + submission.getParticipation().getId();
+        var latest = request.get(url + "/latest-modeling-submission/for-staff", HttpStatus.OK, ModelingSubmissionResponseDTO.class);
+        assertThat(latest.participation().student()).isNotNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void ownerEditorsNeverElevateInstructorProjection() throws Exception {
         var submission = modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "instructor1",

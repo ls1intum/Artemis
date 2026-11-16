@@ -1,4 +1,4 @@
-<nav class="flex flex-col gap-4 text-sm" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.navigationLabel' | artemisTranslate">
+<nav class="flex flex-col gap-6! text-sm" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.navigationLabel' | artemisTranslate">
     <!-- Metadata scoreboard -->
     <div>
         <span
@@ -95,7 +95,7 @@
                         </div>
 
                         @if (isExpanded(lecture.key)) {
-                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                            <ul class="list-none p-0 m-0 ms-12! flex flex-col">
                                 @for (unit of lecture.units; track unit.unitId) {
                                     <li>
                                         <div class="flex items-center gap-1">
@@ -154,7 +154,7 @@
                                         </div>
 
                                         @if (isExpanded(unit.key)) {
-                                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                                            <ul class="list-none p-0 m-0 ms-12! flex flex-col">
                                                 @for (content of unit.content; track content.key) {
                                                     <li>
                                                         <button
@@ -227,7 +227,7 @@
                         </div>
 
                         @if (isExpanded(unit.key)) {
-                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                            <ul class="list-none p-0 m-0 ms-12! flex flex-col">
                                 @for (content of unit.content; track content.key) {
                                     <li>
                                         <button

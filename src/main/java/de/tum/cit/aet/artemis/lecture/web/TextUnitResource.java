@@ -126,7 +126,7 @@ public class TextUnitResource {
         existingTextUnit.setReleaseDate(textUnitDto.releaseDate());
 
         // This method computes the relevant changes for competency links and applies them to the existingTextUnit
-        lectureUnitService.updateCompetencyLinks(textUnitDto, existingTextUnit);
+        lectureUnitService.updateCompetencyLinks(textUnitDto, existingTextUnit, existingTextUnit.getLecture().getCourse().getId());
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingTextUnit = textUnitRepository.save(existingTextUnit);
@@ -179,7 +179,7 @@ public class TextUnitResource {
         textUnit.setName(textUnitDto.name());
         textUnit.setReleaseDate(textUnitDto.releaseDate());
         textUnit.setContent(textUnitDto.content());
-        lectureUnitService.updateCompetencyLinks(textUnitDto, textUnit);
+        lectureUnitService.updateCompetencyLinks(textUnitDto, textUnit, lecture.getCourse().getId());
 
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);

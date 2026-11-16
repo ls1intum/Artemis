@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -348,6 +350,39 @@ public class ExamAccessService {
         }
         else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
             throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+    }
+
+    /**
+     * Checks that the current user may read the content of an exam exercise that is shown during the exam, for example the pictures of a quiz question.
+     * Teaching assistants and above always may. Students need the exercise in their own student exam and the exam content must already be available to them,
+     * which is the case from {@code EXAM_START_WAIT_TIME_MINUTES} minutes before the exam start. After handing in, the summary must be published.
+     *
+     * @param exercise the exam exercise
+     * @param user     the current user, loaded with its course roles so that the role checks need no query
+     */
+    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise, User user) {
+        if (!exercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = exercise.getExerciseGroup().getExam();
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse(), user)) {
+            return;
+        }
+        if (!authorizationCheckService.isAtLeastStudentInCourse(exam.getCourse(), user)) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+        // only the exercises of the own student exam are readable, other variants of the same exercise group are not
+        List<Boolean> submittedFlags = studentExamRepository.findSubmittedFlagsOfAttemptsContainingExercise(exam.getId(), user.getId(), exercise.getId());
+        if (submittedFlags.isEmpty()) {
+            throw new AccessForbiddenException("You are not allowed to access this exercise of the exam!");
+        }
+        // like the conduction, the content of a handed in attempt is only available once the summary is published
+        if (!exam.isExamSummaryPublished() && submittedFlags.stream().allMatch(Boolean.TRUE::equals)) {
+            throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+        }
+        if (exam.getStartDate() == null || ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(exam.getStartDate())) {
+            throw new AccessForbiddenException("The exam content is not available yet");
         }
     }
 

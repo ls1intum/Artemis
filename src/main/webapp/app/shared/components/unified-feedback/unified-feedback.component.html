@@ -36,6 +36,8 @@
                             fluid
                             showButtons
                             snapToStep
+                            [min]="CREDITS_MIN"
+                            [max]="CREDITS_MAX"
                             [step]="CREDITS_STEP"
                             [ngModel]="feedbackCredits()"
                             (ngModelChange)="onCreditsChange($event)"

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguratio
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -670,7 +671,7 @@ public class GitService extends AbstractGitService {
      * Get branch that origin/HEAD points to, useful to handle default branches that are not main
      *
      * @param repo Local Repository Object.
-     * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD
+     * @return name of the origin/HEAD branch, e.g. 'main' or 'course/main' or null if there is no HEAD
      */
     private String getOriginHead(Repository repo) throws GitAPIException {
         Ref originHeadRef;
@@ -684,7 +685,7 @@ public class GitService extends AbstractGitService {
         }
 
         String fullName = originHeadRef.getTarget().getName();
-        return StringUtils.substringAfterLast(fullName, "/");
+        return fullName.startsWith(Constants.R_HEADS) ? fullName.substring(Constants.R_HEADS.length()) : fullName;
     }
 
     /**
@@ -694,18 +695,68 @@ public class GitService extends AbstractGitService {
      */
     public void resetToOriginHead(Repository repo) {
         try {
-            fetchAll(repo);
-            var originHead = getOriginHead(repo);
-
-            if (originHead == null) {
-                log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
-                return;
-            }
-
-            reset(repo, "origin/" + originHead);
+            resetToOriginHeadOrThrow(repo);
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUri(), ex);
+        }
+    }
+
+    private void resetToOriginHeadOrThrow(Repository repo) throws GitAPIException {
+        fetchAll(repo);
+        var originHead = getOriginHead(repo);
+
+        if (originHead == null) {
+            log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
+            return;
+        }
+
+        reset(repo, "origin/" + originHead);
+    }
+
+    /**
+     * Get the local repository like {@link #getOrCheckoutRepository(LocalVCRepositoryUri, boolean, boolean)} with a pull, but for a caller that is about to replace the
+     * content of the repository: the working copy is hard reset to the remote instead of merging it. A merge fails with a checkout conflict if the working copy holds an
+     * uncommitted edit of a file that the remote changed meanwhile, and every later pull would fail the same way.
+     *
+     * @param repoUri     The remote repository.
+     * @param writeAccess Whether we want to write to the repository
+     * @return the repository, equal to the head of the remote repository.
+     * @throws GitAPIException if the repository could not be checked out or reset.
+     */
+    public Repository getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri repoUri, boolean writeAccess) throws GitAPIException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        return workingCopyLocks.withLock(localPath, () -> {
+            Repository repository = checkoutRepositoryLocked(repoUri, repoUri, localPath, false, defaultBranch, writeAccess, false);
+            resetToOriginHeadOrThrow(repository);
+            return repository;
+        });
+    }
+
+    /**
+     * Replaces the content of the working copy like {@link #getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri, boolean)}, but keeps the lock of the
+     * working copy until the replacement is done, so two replacements cannot interleave.
+     *
+     * @param repoUri     the remote repository
+     * @param replacement the change of the working copy, which is run with the repository equal to the head of the remote repository
+     * @throws GitAPIException if the repository could not be checked out or reset, or if the replacement fails with it
+     * @throws IOException     if the replacement fails with it
+     */
+    public void replaceWorkingCopyContent(LocalVCRepositoryUri repoUri, WorkingCopyReplacement replacement) throws GitAPIException, IOException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        try {
+            workingCopyLocks.withLock(localPath, () -> {
+                try {
+                    replacement.replace(getOrCheckoutRepositoryDiscardingLocalChanges(repoUri, true));
+                }
+                catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+                return null;
+            });
+        }
+        catch (UncheckedIOException exception) {
+            throw exception.getCause();
         }
     }
 
