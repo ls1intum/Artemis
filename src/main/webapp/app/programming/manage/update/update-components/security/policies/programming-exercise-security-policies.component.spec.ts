@@ -294,6 +294,39 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.loading()).toBe(false);
     });
 
+    it('commits the unsaved changes only once a pending import has answered', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        const imported = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(imported);
+        handlers.openYaml(comp.policies()[0]);
+        handlers.importYaml({ content: 'content', policyPath: 'SecurityPolicy.yaml' });
+        service.commitPolicies.mockReturnValue(of({ editor: editor('e'.repeat(40)), config: configured() }));
+
+        handlers.commit('Update');
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+
+        imported.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.imported' } });
+        expect(comp.pendingImports()).toBe(0);
+        handlers.commit('Update');
+        expect(lastChange().policies[0].document.supervisedPackage).toBe('de.imported');
+    });
+
+    it('renders the unsaved YAML again when a reload rebases the open policy', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        handlers.openYaml(comp.policies()[0]);
+        service.previewPolicies.mockReturnValueOnce(of({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, files: [{ path: 'SecurityPolicy.yaml', after: 'before' }] }));
+        handlers.renderYamlUnsaved();
+        expect(comp.yamlUnsaved()).toBe('before');
+        service.previewPolicies.mockReturnValueOnce(of({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, files: [{ path: 'SecurityPolicy.yaml', after: 'rebased' }] }));
+        service.getPolicies.mockReturnValue(of(editor('d'.repeat(40))));
+
+        handlers.reload();
+
+        expect(comp.yamlUnsaved()).toBe('rebased');
+    });
+
     it('does not commit while the policies reload', () => {
         create(configured(), false);
         handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));

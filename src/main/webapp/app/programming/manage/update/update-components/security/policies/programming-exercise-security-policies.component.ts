@@ -225,6 +225,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private conflictLookups = 0;
     /** The number of loads of the policies started, so only the latest one applies. */
     private loadRequests = 0;
+    /** The number of YAML imports that have not answered yet; the unsaved changes cannot be committed until they have. */
+    readonly pendingImports = signal(0);
     /** The change the review shows, serialized, and the number of review previews requested. */
     private reviewedChange: string | undefined;
     private reviewRequests = 0;
@@ -594,6 +596,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return kept;
         });
         this.policies.set([...reloaded, ...added, ...orphaned]);
+        this.refreshYamlUnsaved();
         // A deletion stays staged for the file it names, which is read again, so its committed state, e.g. after a scanning commit, is current.
         this.deletedPolicies.set(files.filter((file) => deleted.some((policy) => policy.file?.policyPath === file.policyPath)).map(editorPolicyOf));
         if (this.stagedVersion() === editor.frameworkVersion) {
@@ -777,6 +780,18 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
      * Ignores the answers of YAML imports and renderings that are still pending, because the unsaved changes they belong to were replaced, e.g. discarded or
      * committed; an import answering later would bring them back.
      */
+    /**
+     * The rendering of the unsaved YAML belongs to the working copies it was made from; once they are rebased, it is dropped and, while the dialog is open,
+     * rendered again.
+     */
+    private refreshYamlUnsaved(): void {
+        this.yamlPreviewCount++;
+        this.yamlUnsaved.set(undefined);
+        if (this.yamlOpen()) {
+            this.renderYamlUnsaved();
+        }
+    }
+
     private dropPendingYamlRequests(): void {
         this.importGenerations.clear();
         this.yamlPreviewCount++;
@@ -893,6 +908,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected commit(commitMessage: string): void {
+        if (this.pendingImports() > 0) {
+            return;
+        }
         // The review commits what its diff shows; a change made since, e.g. by an import that answered late, is shown first.
         if (this.reviewOpen() && JSON.stringify(this.buildChange()) !== this.reviewedChange) {
             this.previewReview();
@@ -1048,8 +1066,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         const generation = ++this.importSequence;
         this.importGenerations.set(policy.id, generation);
         const isLatest = () => this.importGenerations.get(policy.id) === generation;
+        // A commit waits for the import, so the change it submits includes the imported file and the commit does not drop it afterwards.
+        this.pendingImports.update((count) => count + 1);
+        const settle = () => this.pendingImports.update((count) => count - 1);
         this.securityService.importPolicy(this.exerciseId(), path, selected.content).subscribe({
             next: (imported) => {
+                settle();
                 // The policy may have changed while the file was read, so the import goes into its current state.
                 const current = this.policies().find((candidate) => candidate.id === policy.id);
                 if (!isLatest() || !current?.working) {
@@ -1075,6 +1097,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 }
             },
             error: (error: HttpErrorResponse) => {
+                settle();
                 if (isLatest()) {
                     this.importNotice.set({ severity: 'error', text: this.errorMessage(error) });
                 }
