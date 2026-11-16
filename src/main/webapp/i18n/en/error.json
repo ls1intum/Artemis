@@ -6,6 +6,12 @@
         "registrationClosed": "Registration is closed because the exam has ended.",
         "attendanceCorrectionNotAllowed": "Attendance can only be corrected after a real exam has ended.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
+        "stagedContentUnreadable": "The staged content of the repository could not be examined. Please try again.",
+        "stagedContentPathNotAllowed": "The path {{ path }} is too long, too deeply nested or not allowed. Rename or remove the file and commit again.",
+        "stagedContentLinkNotAllowed": "Symbolic links and submodules are not allowed: {{ path }}. Replace it with the actual file or directory and commit again.",
+        "stagedContentFileTooLarge": "The file {{ path }} is larger than the limit of {{ limitMb }} MB. Remove or reduce it and commit again.",
+        "stagedContentTooManyEntries": "The repository contains too many files and directories. Remove files and commit again.",
+        "stagedContentTooLarge": "The repository would be {{ sizeMb }} MB large, but the limit is {{ limitMb }} MB. Remove large files and commit again.",
         "title": "Error page!",
         "http": {
             "400": "Bad request.",

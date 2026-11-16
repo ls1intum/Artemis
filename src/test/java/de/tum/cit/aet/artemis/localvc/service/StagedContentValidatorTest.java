@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -269,5 +270,24 @@ class StagedContentValidatorTest {
 
         stage("dir5/file.txt", FileMode.REGULAR_FILE, new byte[] { 1 });
         assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA, 9)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void rejectionsCarryTheTranslatableKeyOfTheirReason() throws Exception {
+        stage("link", FileMode.SYMLINK, "target".getBytes(StandardCharsets.UTF_8));
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOfSatisfying(BadRequestAlertException.class,
+                e -> assertThat(e.getErrorKey()).isEqualTo(StagedContentValidator.KEY_LINK_NOT_ALLOWED));
+        unstage("link");
+
+        stageMegabytes("big.bin", 11);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOfSatisfying(BadRequestAlertException.class,
+                e -> assertThat(e.getErrorKey()).isEqualTo(StagedContentValidator.KEY_FILE_TOO_LARGE));
+        unstage("big.bin");
+
+        stageMegabytes("a.bin", 9);
+        stageMegabytes("b.bin", 9);
+        stageMegabytes("c.bin", 9);
+        assertThatThrownBy(() -> StagedContentValidator.validate(repository, QUOTA)).isInstanceOfSatisfying(BadRequestAlertException.class,
+                e -> assertThat(e.getErrorKey()).isEqualTo(StagedContentValidator.KEY_TOO_LARGE));
     }
 }

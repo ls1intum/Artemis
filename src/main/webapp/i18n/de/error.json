@@ -6,6 +6,12 @@
         "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
         "attendanceCorrectionNotAllowed": "Die Anwesenheit kann erst nach dem Ende einer echten Prüfung korrigiert werden.",
         "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
+        "stagedContentUnreadable": "Der Inhalt des Repositorys konnte nicht geprüft werden. Bitte versuche es erneut.",
+        "stagedContentPathNotAllowed": "Der Pfad {{ path }} ist zu lang, zu tief verschachtelt oder nicht erlaubt. Benenne die Datei um oder entferne sie und committe erneut.",
+        "stagedContentLinkNotAllowed": "Symbolische Links und Submodule sind nicht erlaubt: {{ path }}. Ersetze sie durch die tatsächliche Datei oder das Verzeichnis und committe erneut.",
+        "stagedContentFileTooLarge": "Die Datei {{ path }} ist größer als das Limit von {{ limitMb }} MB. Entferne oder verkleinere sie und committe erneut.",
+        "stagedContentTooManyEntries": "Das Repository enthält zu viele Dateien und Verzeichnisse. Entferne Dateien und committe erneut.",
+        "stagedContentTooLarge": "Das Repository wäre {{ sizeMb }} MB groß, das Limit beträgt aber {{ limitMb }} MB. Entferne große Dateien und committe erneut.",
         "title": "Fehlerseite!",
         "http": {
             "400": "Ungültige Anfrage.",
