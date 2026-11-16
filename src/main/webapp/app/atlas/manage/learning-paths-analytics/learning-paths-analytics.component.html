@@ -1,16 +1,14 @@
-<div class="learning-paths-analytics-container">
-    <h5 class="m-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsAnalytics.title"></h5>
-    <hr class="my-2" />
-    <div class="row h-100 m-0 gap-3">
-        <div class="col-2 p-0 learning-paths-analytics-graph-selection-container">
+<div class="h-[500px]" data-testid="learning-paths-analytics-container">
+    <h5 class="m-0!" jhiTranslate="artemisApp.learningPathManagement.learningPathsAnalytics.title"></h5>
+    <hr class="my-2!" />
+    <div class="flex h-full gap-4!">
+        <div class="w-1/6 shrink-0 border-e border-border">
             <ng-container [ngTemplateOutlet]="radioTemplate" [ngTemplateOutletContext]="{ $implicit: CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS }" />
         </div>
-        <div class="col p-0">
+        <div class="min-w-0 grow basis-0">
             @if (isLoading()) {
-                <div class="row justify-content-center p-2">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden" jhiTranslate="loading"></span>
-                    </div>
+                <div class="flex justify-center p-2">
+                    <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
                 </div>
             } @else if (instructorCompetencyGraph()) {
                 <jhi-competency-graph [competencyGraph]="instructorCompetencyGraph()!" />
@@ -20,17 +18,17 @@
 </div>
 
 <ng-template #radioTemplate let-competencyNodeValueType>
-    <div class="row m-0 align-items-center">
-        <input
-            [id]="'graph-value-' + competencyNodeValueType"
-            [attr.aria-label]="'artemisApp.learningPathManagement.learningPathsAnalytics.graphSelection.' + competencyNodeValueType | artemisTranslate"
-            type="radio"
-            class="col-md-auto"
-            [checked]="valueSelection() === competencyNodeValueType"
+    <div class="flex items-center gap-2">
+        <tumaet-ui-radio-button
+            [inputId]="'graph-value-' + competencyNodeValueType"
+            [ariaLabel]="'artemisApp.learningPathManagement.learningPathsAnalytics.graphSelection.' + competencyNodeValueType | artemisTranslate"
+            [value]="competencyNodeValueType"
+            [ngModel]="valueSelection()"
+            (ngModelChange)="valueSelection.set($event)"
         />
         <label
             [for]="'graph-value-' + competencyNodeValueType"
-            class="col-md-auto pe-0 text-break"
+            class="break-words"
             [jhiTranslate]="'artemisApp.learningPathManagement.learningPathsAnalytics.graphSelection.' + competencyNodeValueType"
         ></label>
     </div>

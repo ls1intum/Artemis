@@ -908,11 +908,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /** Validates the dates of this exercise. Subclasses extend it with type-specific checks. */
     public void validateDates() {
-        validateBaseDates();
-    }
-
-    /** Validates the date ordering shared by every exercise type. {@code final} so it stays callable on a QuizExercise whose lazy {@code quizBatches} are uninitialized. */
-    public final void validateBaseDates() {
         ExerciseDateValidator.validate(this);
     }
 

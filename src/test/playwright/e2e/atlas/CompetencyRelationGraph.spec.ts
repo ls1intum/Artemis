@@ -15,6 +15,11 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
  * stable end-to-end: that the graph renders the right nodes/edges/labels against real seeded data, that
  * it reacts to data changes, and that clicking an edge selects the relation.
  */
+async function selectRelationOption(page: Page, selectId: string, label: string) {
+    await page.locator(selectId).click();
+    await page.getByRole('option', { name: label, exact: true }).click();
+}
+
 test.describe('Competency relation graph (in-house DAG graph)', { tag: '@fast' }, () => {
     let course: Course;
     let variables: Competency;
@@ -109,9 +114,10 @@ test.describe('Competency relation graph (in-house DAG graph)', { tag: '@fast' }
         // Create "Loops MATCHES Functions": two sibling competencies with no path between them, so the
         // client's circular-dependency guard never blocks the button (a deterministic, non-cyclic relation).
         // The form reads "tail <type> head", so the tail is picked first; picking a tail resets the head.
-        await page.selectOption('#tail', { label: 'Loops' });
-        await page.selectOption('#head', { label: 'Functions' });
-        await page.selectOption('#type', 'MATCHES');
+        // The relation form uses TUM AET UI selects: the trigger carries the id and the options open in a listbox.
+        await selectRelationOption(page, '#tail', 'Loops');
+        await selectRelationOption(page, '#head', 'Functions');
+        await selectRelationOption(page, '#type', 'Matches');
         const createButton = page.getByRole('button', { name: 'Create Relation' });
         // The button stays disabled until all three signals are set; waiting for it removes the select→click race.
         await expect(createButton).toBeEnabled();
@@ -123,8 +129,8 @@ test.describe('Competency relation graph (in-house DAG graph)', { tag: '@fast' }
         await expect(edges).toHaveCount(4);
 
         // Selecting the same tail/head surfaces the existing relation; deleting it removes the edge again.
-        await page.selectOption('#tail', { label: 'Loops' });
-        await page.selectOption('#head', { label: 'Functions' });
+        await selectRelationOption(page, '#tail', 'Loops');
+        await selectRelationOption(page, '#head', 'Functions');
         const deleteButton = page.getByRole('button', { name: 'Delete relation' });
         await expect(deleteButton).toBeVisible();
         const deleteResponse = page.waitForResponse(isRelationsRequest('DELETE'));

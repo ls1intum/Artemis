@@ -10,8 +10,7 @@ import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { Observable, Subscription, finalize, firstValueFrom, map, switchMap, takeWhile } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,6 +50,7 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
+    providers: [TumAetUiConfirmationService],
     imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -59,6 +59,9 @@ type CompetencyGenerationStatusUpdate = {
         CourseDescriptionFormComponent,
         TranslateDirective,
         CompetencyRecommendationDetailComponent,
+        ArtemisTranslatePipe,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiProgressSpinnerComponent,
     ],
 })
 export class GenerateCompetenciesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -69,7 +72,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private formBuilder = inject(FormBuilder);
-    private dialogService = inject(DialogService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
     private websocketService = inject(WebsocketService);
@@ -224,18 +227,13 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     onDelete(index: number) {
         const competencyTitle = this.competencies.at(index).controls.competency.controls.title.getRawValue() ?? '';
-        const dialogRef = openConfirmAutofocusDialog(
-            this.dialogService,
-            {
-                title: 'artemisApp.competency.generate.deleteModalTitle',
-                text: this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle }),
-            },
-            { width: '30rem' },
-        );
-        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
-            if (result?.confirmed) {
-                this.competencies.removeAt(index);
-            }
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.competency.generate.deleteModalTitle'),
+            message: this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle }),
+            acceptLabel: this.translateService.instant('global.form.confirm'),
+            acceptSeverity: 'danger',
+            rejectLabel: this.translateService.instant('global.form.cancel'),
+            accept: () => this.competencies.removeAt(index),
         });
     }
 
@@ -251,18 +249,13 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     onSubmit() {
         if (!this.isSubmitPossibleWithoutConfirmation()) {
-            const dialogRef = openConfirmAutofocusDialog(
-                this.dialogService,
-                {
-                    title: 'artemisApp.competency.generate.saveModalTitle',
-                    text: this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText'),
-                },
-                { width: '30rem' },
-            );
-            dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
-                if (result?.confirmed) {
-                    this.save();
-                }
+            this.confirmationService.confirm({
+                header: this.translateService.instant('artemisApp.competency.generate.saveModalTitle'),
+                message: this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText'),
+                acceptLabel: this.translateService.instant('global.form.confirm'),
+                acceptSeverity: 'danger',
+                rejectLabel: this.translateService.instant('global.form.cancel'),
+                accept: () => this.save(),
             });
         } else {
             this.save();

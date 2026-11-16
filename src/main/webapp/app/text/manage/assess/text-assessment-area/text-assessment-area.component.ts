@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
@@ -20,7 +21,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             }
         `,
     ],
-    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective],
+    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective, TumAetUiTagComponent],
 })
 export class TextAssessmentAreaComponent {
     private readonly document = inject(DOCUMENT);
