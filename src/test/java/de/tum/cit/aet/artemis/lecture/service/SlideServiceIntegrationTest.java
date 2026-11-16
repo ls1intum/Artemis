@@ -112,7 +112,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         List<Slide> updatedSlides = slideRepository.findByExerciseId(originalExercise.getId());
         assertThat(updatedSlides).hasSize(1);
-        assertThat(updatedSlides.getFirst().getHidden().toInstant()).isCloseTo(newDueDate.toInstant(), within(1, ChronoUnit.MILLIS));
+        assertThat(updatedSlides.getFirst().getHidden().toInstant()).isCloseTo(newDueDate.toInstant(), within(1_000_000, ChronoUnit.NANOS));
         assertThat(attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion()).isEqualTo(originalStudentVersion);
         assertThat(originalStudentVersionPath).exists();
         awaitVisibilityWebhook(visibilityWebhookSeen);
@@ -146,7 +146,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(newDueDate.toInstant(), within(1, ChronoUnit.MILLIS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(newDueDate.toInstant(), within(1_000_000, ChronoUnit.NANOS));
         String studentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
         assertThat(studentVersion).isNotBlank().contains("/student/");
         Path studentVersionPath = new FileSystemLocation.StudentVersionSlides(testAttachmentVideoUnit.getId(), studentVersion).path();
@@ -211,7 +211,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(dueDate.toInstant(), within(1, ChronoUnit.MILLIS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(dueDate.toInstant(), within(1_000_000, ChronoUnit.NANOS));
     }
 
     private AtomicBoolean expectVisibilityWebhook(ZonedDateTime expectedHiddenUntil) {
@@ -224,7 +224,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
                     assertThat(slide.hiddenUntil()).isNull();
                 }
                 else {
-                    assertThat(slide.hiddenUntil().toInstant()).isCloseTo(expectedHiddenUntil.toInstant(), within(1, ChronoUnit.MILLIS));
+                    assertThat(slide.hiddenUntil().toInstant()).isCloseTo(expectedHiddenUntil.toInstant(), within(1_000_000, ChronoUnit.NANOS));
                 }
             });
             visibilityWebhookSeen.set(true);

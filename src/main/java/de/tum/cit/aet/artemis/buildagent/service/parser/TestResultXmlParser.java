@@ -6,9 +6,13 @@ import java.util.List;
 import de.tum.cit.aet.artemis.aiworker.api.JUnitXmlParser;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 
-public class TestResultXmlParser {
+public final class TestResultXmlParser {
 
     private static int maxFeedbackLength = 20_000;
+
+    private TestResultXmlParser() {
+        // Utility class.
+    }
 
     /**
      * Sets the maximum length for feedback messages before processing test result files.
