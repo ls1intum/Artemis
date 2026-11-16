@@ -881,36 +881,4 @@ export default tseslint.config(
             ],
         },
     },
-    {
-        // The Iris context picker keeps only primeng/select as a contained fallback: tumaet-ui-select has no option
-        // groups, option templates or custom trigger yet. Keep every other migrated-client import ban in force.
-        // Remove this override together with the fallback. Rule options replace the entire rule, so repeat the shared bans.
-        files: ['src/main/webapp/app/iris/overview/context-selection/context-selection.component.ts'],
-        rules: {
-            'no-restricted-imports': [
-                'error',
-                {
-                    paths: [
-                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
-                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
-                        noNgZoneImport,
-                        ...noDirectCloneDeepImports,
-                    ],
-                    patterns: [
-                        ...tumAetUiConsumerImportPatterns,
-                        {
-                            // A negated glob cannot re-include select when its primeng parent is ignored.
-                            // Match every PrimeNG entry point except exactly primeng/select instead.
-                            regex: '^primeng(?:$|/(?!select$))',
-                            message: 'Only primeng/select is permitted for the contained Iris context-picker fallback. Use TUM AET UI for other controls.',
-                        },
-                        {
-                            group: ['@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
-                            message: 'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import ng-bootstrap or Bootstrap here.',
-                        },
-                    ],
-                },
-            ],
-        },
-    },
 );
