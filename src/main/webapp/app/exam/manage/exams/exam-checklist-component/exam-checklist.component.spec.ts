@@ -9,6 +9,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
+import { GENERATED_STUDENT_EXAMS_REFRESH_INTERVAL_MS } from 'app/exam/manage/exams/exam-checklist-component/generated-student-exams-refresh';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
@@ -250,33 +251,86 @@ describe('ExamChecklistComponent', () => {
             expect(component.numberOfGeneratedStudentExams()).toBe(generatedAfterStart);
         });
 
-        it('should cancel superseded test-exam statistics and pending requests on destroy', () => {
-            setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
-            examChecklistComponentFixture.detectChanges();
-            const earlierRefresh = new Subject<ExamChecklist>();
-            const latestRefresh = new Subject<ExamChecklist>();
-            const destroyedRefresh = new Subject<ExamChecklist>();
-            vi.mocked(examChecklistService.getExamStatistics).mockReturnValueOnce(earlierRefresh).mockReturnValueOnce(latestRefresh).mockReturnValue(destroyedRefresh);
-            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+        describe('test exam starts', () => {
+            const statistics = (values: Partial<ExamChecklist>) => Object.assign(new ExamChecklist(), { numberOfExamsStarted: 0, numberOfExamsSubmitted: 0, ...values });
 
-            websocketService.emit('/topic/exam/1/started', undefined);
-            expect(earlierRefresh.observed).toBe(true);
-            websocketService.emit('/topic/exam/1/started', undefined);
-            expect(earlierRefresh.observed).toBe(false);
-            websocketService.emit('/topic/exam/1/submitted', undefined);
-            // The event is published before the started state is persisted, so the server can still report zero starts.
-            latestRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 3, numberOfExamsStarted: 0, numberOfExamsSubmitted: 2 }));
-            earlierRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 }));
-            expect(component.numberOfGeneratedStudentExams()).toBe(3);
-            expect(component.numberOfStarted()).toBe(2);
-            expect(component.numberOfSubmitted()).toBe(3);
+            afterEach(() => {
+                vi.useRealTimers();
+            });
 
-            websocketService.emit('/topic/exam/1/started', undefined);
-            expect(destroyedRefresh.observed).toBe(true);
-            examChecklistComponentFixture.destroy();
-            expect(destroyedRefresh.observed).toBe(false);
-            destroyedRefresh.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1 }));
-            expect(component.numberOfGeneratedStudentExams()).toBe(3);
+            it('should reload the generated total once for a burst of starts and finish a running reload before the next one', () => {
+                vi.useFakeTimers();
+                setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+                examChecklistComponentFixture.detectChanges();
+                const runningReload = new Subject<ExamChecklist>();
+                const laterReload = new Subject<ExamChecklist>();
+                const getExamStatistics = vi.mocked(examChecklistService.getExamStatistics);
+                getExamStatistics.mockClear();
+                getExamStatistics.mockReturnValueOnce(runningReload).mockReturnValue(laterReload);
+                const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+                for (let start = 0; start < 3; start++) {
+                    websocketService.emit('/topic/exam/1/started', undefined);
+                }
+
+                // one reload for the whole burst, the live counter counts every start
+                expect(getExamStatistics).toHaveBeenCalledTimes(1);
+                expect(component.numberOfStarted()).toBe(3);
+
+                vi.advanceTimersByTime(GENERATED_STUDENT_EXAMS_REFRESH_INTERVAL_MS);
+                // the reload for the last start of the burst waits for the one that is running
+                expect(getExamStatistics).toHaveBeenCalledTimes(1);
+
+                runningReload.next(statistics({ numberOfGeneratedStudentExams: 2 }));
+                runningReload.complete();
+                expect(component.numberOfGeneratedStudentExams()).toBe(2);
+                expect(getExamStatistics).toHaveBeenCalledTimes(2);
+
+                laterReload.next(statistics({ numberOfGeneratedStudentExams: 4 }));
+                laterReload.complete();
+                expect(component.numberOfGeneratedStudentExams()).toBe(4);
+                // a reload for a start never touches the live counters
+                expect(component.numberOfStarted()).toBe(3);
+            });
+
+            it('should keep the initial statistics when a start arrives before they are loaded', () => {
+                setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+                const initialStatistics = new Subject<ExamChecklist>();
+                vi.mocked(examChecklistService.getExamStatistics)
+                    .mockReturnValueOnce(initialStatistics)
+                    .mockReturnValue(of(statistics({ numberOfGeneratedStudentExams: 3 })));
+                examChecklistComponentFixture.detectChanges();
+                const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+                websocketService.emit('/topic/exam/1/started', undefined);
+                expect(initialStatistics.observed).toBe(true);
+                initialStatistics.next(statistics({ numberOfGeneratedStudentExams: 3, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 }));
+
+                expect(component.numberOfStarted()).toBe(5);
+                expect(component.numberOfSubmitted()).toBe(2);
+                expect(component.numberOfGeneratedStudentExams()).toBe(3);
+            });
+
+            it('should keep the total when a reload fails and ignore a reload that finishes after the component is destroyed', () => {
+                vi.useFakeTimers();
+                setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+                examChecklistComponentFixture.detectChanges();
+                const failingReload = new Subject<ExamChecklist>();
+                const destroyedReload = new Subject<ExamChecklist>();
+                vi.mocked(examChecklistService.getExamStatistics).mockReturnValueOnce(failingReload).mockReturnValue(destroyedReload);
+                const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+                websocketService.emit('/topic/exam/1/started', undefined);
+                failingReload.error(new Error('offline'));
+                expect(component.numberOfGeneratedStudentExams()).toBe(1);
+
+                // the failure does not end the refreshes
+                vi.advanceTimersByTime(GENERATED_STUDENT_EXAMS_REFRESH_INTERVAL_MS);
+                websocketService.emit('/topic/exam/1/started', undefined);
+                expect(destroyedReload.observed).toBe(true);
+                examChecklistComponentFixture.destroy();
+                expect(destroyedReload.observed).toBe(false);
+            });
         });
 
         it('should keep the number of generated student exams of a regular exam when a student starts', () => {

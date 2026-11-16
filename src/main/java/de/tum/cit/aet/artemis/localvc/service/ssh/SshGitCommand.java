@@ -164,7 +164,9 @@ public class SshGitCommand extends GitPackCommand {
                         }
 
                         // Register pre-upload hook for Artemis-specific logic
-                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession()));
+                        // The entry of this command is taken from the session now, because a later command on the connection replaces it.
+                        uploadPack.setPreUploadHook(
+                                new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession(), getServerSession().getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)));
 
                         // Begin upload-pack operation
                         uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());

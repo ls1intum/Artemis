@@ -10,6 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { generatedStudentExamsAfterStarts } from 'app/exam/manage/exams/exam-checklist-component/generated-student-exams-refresh';
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -105,16 +106,21 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
     private statisticsSubscription?: Subscription;
+    private generatedStudentExamsSubscription?: Subscription;
+    private readonly testExamStarts = new Subject<Exam>();
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((value) => value + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
+        this.generatedStudentExamsSubscription = generatedStudentExamsAfterStarts(this.testExamStarts, (exam) => this.examChecklistService.getExamStatistics(exam)).subscribe(
+            (numberOfGenerated) => this.numberOfGeneratedStudentExams.set(numberOfGenerated),
+        );
         this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => {
             this.numberOfStarted.update((value) => value + 1);
             if (this.exam().testExam) {
                 // Opening the coverpage already creates an attempt, so a start does not necessarily increase the total.
-                this.updateChecklistState(false);
+                this.testExamStarts.next(this.exam());
             }
         });
         const exam = this.exam();
@@ -134,7 +140,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         );
     }
 
-    private updateChecklistState(updateConductionCounts = true) {
+    private updateChecklistState() {
         this.isTestExam.set(this.exam().testExam!);
         this.pointsExercisesEqual.set(this.examChecklistService.checkPointsExercisesEqual(this.exam()));
         this.totalPoints.set(this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual(), this.exam()));
@@ -147,11 +153,8 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
             const exam = this.exam();
             this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
             this.numberOfGeneratedStudentExams.set(examStats.numberOfGeneratedStudentExams ?? 0);
-            // The start event is sent before the started state is persisted. Keep the live counters during its refresh.
-            if (updateConductionCounts) {
-                this.numberOfStarted.set(examStats.numberOfExamsStarted);
-                this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
-            }
+            this.numberOfStarted.set(examStats.numberOfExamsStarted);
+            this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
             if (this.isExamOver()) {
                 if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
                     const lastAssessmentFinished = examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
@@ -167,6 +170,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         this.submittedSubscription?.unsubscribe();
         this.startedSubscription?.unsubscribe();
         this.statisticsSubscription?.unsubscribe();
+        this.generatedStudentExamsSubscription?.unsubscribe();
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }

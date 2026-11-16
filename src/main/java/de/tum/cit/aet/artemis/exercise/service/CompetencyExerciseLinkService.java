@@ -64,6 +64,25 @@ public class CompetencyExerciseLinkService {
     }
 
     /**
+     * Fails if one of the links references a competency that does not exist.
+     * <p>
+     * A creation or import resolves the references only after it has saved the exercise, so a competency that was deleted in the meantime would fail it halfway and leave an
+     * incomplete exercise behind. Calling this first lets the request be refused before anything is written. Competencies of another course are not rejected here, they are
+     * skipped when the links are resolved.
+     *
+     * @param links references to the submitted competencies, as built by {@link #toTransientLinks}
+     */
+    public void checkReferencedCompetenciesExistElseThrow(Collection<CompetencyExerciseLink> links) {
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
+        }
+        // One lookup per competency, like the resolution afterwards: a findAllById on the abstract CourseCompetency can return nothing under Hibernate 6.6+.
+        for (CompetencyExerciseLink link : links) {
+            competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(link.getCompetency().getId());
+        }
+    }
+
+    /**
      * Saves the given competency exercise links directly via the API layer,
      * without re-saving the parent exercise entity.
      *

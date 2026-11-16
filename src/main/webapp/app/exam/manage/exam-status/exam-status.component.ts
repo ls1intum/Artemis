@@ -7,7 +7,8 @@ import dayjs from 'dayjs/esm';
 import { round } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { Subscription } from 'rxjs';
+import { generatedStudentExamsAfterStarts } from 'app/exam/manage/exams/exam-checklist-component/generated-student-exams-refresh';
+import { Subject, Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -79,6 +80,8 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
     private statisticsSubscription?: Subscription;
+    private generatedStudentExamsSubscription?: Subscription;
+    private readonly testExamStarts = new Subject<Exam>();
 
     // Icons
     faTimes = faTimes;
@@ -92,16 +95,19 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((count) => count + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
+        this.generatedStudentExamsSubscription = generatedStudentExamsAfterStarts(this.testExamStarts, (exam) => this.examChecklistService.getExamStatistics(exam)).subscribe(
+            (numberOfGenerated) => this.numberOfGeneratedStudentExams.set(numberOfGenerated),
+        );
         this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => {
             this.numberOfStarted.update((count) => count + 1);
             if (this.exam().testExam) {
                 // Opening the coverpage already creates an attempt, so a start does not necessarily increase the total.
-                this.updateChecklistState(this.exam(), this.course(), false);
+                this.testExamStarts.next(this.exam());
             }
         });
     }
 
-    private updateChecklistState(exam: Exam, course: Course, updateConductionCounts = true) {
+    private updateChecklistState(exam: Exam, course: Course) {
         this.statisticsSubscription?.unsubscribe();
         this.statisticsSubscription = this.examChecklistService.getExamStatistics(exam).subscribe((examStats) => {
             this.examChecklist.set(examStats);
@@ -122,11 +128,8 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
                 this.setCorrectionState();
             }
 
-            // The start event is sent before the started state is persisted. Keep the live counters during its refresh.
-            if (updateConductionCounts) {
-                this.numberOfStarted.set(this.examChecklist().numberOfExamsStarted);
-                this.numberOfSubmitted.set(this.examChecklist().numberOfExamsSubmitted);
-            }
+            this.numberOfStarted.set(this.examChecklist().numberOfExamsStarted);
+            this.numberOfSubmitted.set(this.examChecklist().numberOfExamsSubmitted);
         });
     }
 
@@ -134,6 +137,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         this.submittedSubscription?.unsubscribe();
         this.startedSubscription?.unsubscribe();
         this.statisticsSubscription?.unsubscribe();
+        this.generatedStudentExamsSubscription?.unsubscribe();
     }
 
     /**

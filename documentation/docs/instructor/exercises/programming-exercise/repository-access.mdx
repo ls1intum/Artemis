@@ -137,7 +137,9 @@ Open the repository from **Course Management** and click **Open Access Log**. Ea
 | Commit Hash | For a push, the commit that was pushed. For a clone or pull, the newest commit of the repository when the access started |
 | Timestamp | When the access happened |
 
-Every clone, pull, and push writes one entry, whether it runs over HTTPS or over SSH, and the entry of an operation is never changed into another kind of operation. A pull or push that transfers nothing, such as a fetch of a repository that is already up to date, is still recorded. A push that the server rejects is recorded too: its commit hash is the one the repository had before the push, because no new commit arrived.
+Every clone, pull, and push writes one entry, whether it runs over HTTPS or over SSH, and the entry of an operation is never changed into another kind of operation. A pull or push that transfers nothing, such as a fetch of a repository that is already up to date, is still recorded. A push that the server rejects, for example because it breaks a rule of the exercise, is recorded too: its commit hash is the one the repository had before the push, because no new commit arrived. A push that the server accepts keeps the pushed commit as its hash, even if Artemis then creates no submission from it, as for a push that creates a new branch.
+
+Git over HTTPS sends one request to start an operation and another to transfer the data, and gives the server nothing to tell which requests belong together. When the same user starts several operations on the same repository at the same moment, the entries of these operations keep the right users, repositories, and number of operations of each kind, but the kind or the commit hash of two of them can end up on the other one.
 
 The log shows the newest accesses first. Click a column heading to sort by user, author, action, access type, or timestamp. Use the search field above the table to find entries by user, author, action, access type, commit hash, or date. Search dates in `YYYY-MM-DD` format using your local calendar date.
 

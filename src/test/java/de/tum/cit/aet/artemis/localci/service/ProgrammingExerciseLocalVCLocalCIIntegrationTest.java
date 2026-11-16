@@ -1020,6 +1020,33 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
     }
 
+    /**
+     * A competency that was deleted while the import form was open must refuse the import before anything is written. Resolving it after the first save would leave an
+     * exercise without participations, repositories and test cases behind.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withDeletedCompetency_isRefusedAndWritesNothing() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        // the id of a competency that exists no more
+        Competency deletedCompetency = new Competency();
+        deletedCompetency.setId(Long.MAX_VALUE);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("MissingCompetencyTitle", "missingcompetencyimport",
+                programmingExercise, targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-missingcomp");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(deletedCompetency, exerciseToBeImported, 1)));
+        long exercisesBefore = programmingExerciseRepository.count();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.NOT_FOUND);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
     private void mockDockerForAnImportThatDoesNotRecreateBuildPlans() throws Exception {
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));

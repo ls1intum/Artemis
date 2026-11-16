@@ -40,6 +40,7 @@
             @if (field_title?.control?.errors?.disallowedValue) {
                 <div [id]="titleErrorId" role="alert" class="mt-1 text-state-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
             }
+            <ng-content select="[titleMessage]" />
         </div>
     }
     @if (isChannelFieldDisplayed()) {
@@ -75,6 +76,7 @@
                 (ngModelChange)="formatChannelName($event)"
                 maxlength="30"
             />
+            <ng-content select="[channelNameMessage]" />
         </div>
     }
 </div>

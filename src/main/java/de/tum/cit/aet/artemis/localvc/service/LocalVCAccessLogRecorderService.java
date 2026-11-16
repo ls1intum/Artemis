@@ -275,23 +275,25 @@ public class LocalVCAccessLogRecorderService {
 
     /**
      * Turns the access log entry of a fetch over SSH into a clone, if the client offered no objects.
+     * <p>
+     * The entry is the one that was stored when this fetch command started. It is passed in rather than read from the session when the callback runs, because a connection can
+     * carry several commands and the session attribute then belongs to whichever command resolved last.
      *
-     * @param session       the {@link ServerSession} representing the SSH session.
+     * @param session       the {@link ServerSession} representing the SSH session, which tells a user from a build agent.
+     * @param accessLog     the entry that was written when the fetch command started, null if none could be written
      * @param clientOffered the number of objects offered by the client in the operation, used to determine
      *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
-    public void markFetchAsCloneSSH(ServerSession session, int clientOffered) {
+    public void markFetchAsCloneSSH(ServerSession session, @Nullable VcsAccessLog accessLog, int clientOffered) {
         if (clientOffered != 0) {
             return;
         }
         try {
-            // Both attributes are absent on a session that never got that far, which is a normal case rather than a failure.
-            var user = session.getAttribute(SshConstants.USER_KEY);
             // A build agent session carries no user and gets an audit entry of its own, so a missing user is all there is to exclude.
+            var user = session.getAttribute(SshConstants.USER_KEY);
             if (user == null) {
                 return;
             }
-            var accessLog = session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
             // Only the entry of a fetch can become a clone. Were a push entry ever to reach this point, it must stay what it is.
             if (accessLog == null || accessLog.getRepositoryActionType() != RepositoryActionType.PULL) {
                 return;

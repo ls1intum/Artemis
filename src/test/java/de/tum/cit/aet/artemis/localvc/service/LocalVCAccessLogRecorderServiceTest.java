@@ -362,23 +362,22 @@ class LocalVCAccessLogRecorderServiceTest {
         return new VcsAccessLog(testUser, testParticipation, testUser.getName(), testUser.getEmail(), actionType, AuthenticationMechanism.SSH, "", "10.0.0.1");
     }
 
-    private ServerSession sessionOf(User user, VcsAccessLog accessLog) {
+    private ServerSession sessionOf(User user) {
         ServerSession session = mock(ServerSession.class);
         lenient().when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
-        lenient().when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenReturn(accessLog);
         return session;
     }
 
     @Test
     void aSessionWithoutUser_isNotMarkedAsAClone() {
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(null, entryOf(RepositoryActionType.PULL)), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(null), entryOf(RepositoryActionType.PULL), 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
     void aSessionWithoutPreliminaryLog_isNotMarkedAsAClone() {
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, null), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser), null, 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
@@ -387,8 +386,21 @@ class LocalVCAccessLogRecorderServiceTest {
     void aFetchOverSshWithoutOfferedObjects_isStoredAsAClone() {
         var accessLog = entryOf(RepositoryActionType.PULL);
 
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, accessLog), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser), accessLog, 0);
 
+        assertThat(accessLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+        verify(vcsAccessLogService).updateAccessLog(accessLog);
+    }
+
+    @Test
+    void aFetchOverSsh_marksTheEntryOfItsOwnCommandAndDoesNotReadTheSession() {
+        var accessLog = entryOf(RepositoryActionType.PULL);
+        var session = sessionOf(testUser);
+
+        accessLogRecorder.markFetchAsCloneSSH(session, accessLog, 0);
+
+        // A later command on the connection replaces the attribute, so the callback must not look at it.
+        verify(session, never()).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         assertThat(accessLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
         verify(vcsAccessLogService).updateAccessLog(accessLog);
     }
@@ -397,7 +409,7 @@ class LocalVCAccessLogRecorderServiceTest {
     void aFetchOverSshWithOfferedObjects_staysAPullAndIsNotStoredAgain() {
         var accessLog = entryOf(RepositoryActionType.PULL);
 
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, accessLog), 3);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser), accessLog, 3);
 
         assertThat(accessLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
         verifyNoInteractions(vcsAccessLogService);
@@ -408,7 +420,7 @@ class LocalVCAccessLogRecorderServiceTest {
         var pushEntry = entryOf(RepositoryActionType.PUSH);
 
         // The session of a connection that carries several commands holds the entry of whichever command resolved last.
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, pushEntry), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser), pushEntry, 0);
 
         assertThat(pushEntry.getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
         verifyNoInteractions(vcsAccessLogService);
@@ -418,7 +430,7 @@ class LocalVCAccessLogRecorderServiceTest {
     void anEntryThatIsAlreadyACloneIsNotStoredAgain() {
         var cloneEntry = entryOf(RepositoryActionType.CLONE);
 
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, cloneEntry), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser), cloneEntry, 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
@@ -428,7 +440,7 @@ class LocalVCAccessLogRecorderServiceTest {
         ServerSession session = mock(ServerSession.class);
         when(session.getAttribute(SshConstants.USER_KEY)).thenThrow(new IllegalStateException("session closed"));
 
-        assertThatCode(() -> accessLogRecorder.markFetchAsCloneSSH(session, 0)).doesNotThrowAnyException();
+        assertThatCode(() -> accessLogRecorder.markFetchAsCloneSSH(session, entryOf(RepositoryActionType.PULL), 0)).doesNotThrowAnyException();
 
         verifyNoInteractions(vcsAccessLogService);
     }
@@ -531,7 +543,7 @@ class LocalVCAccessLogRecorderServiceTest {
         var accessLog = entryOf(RepositoryActionType.PULL);
 
         // build agent sessions carry no user and get an audit entry of their own, so the name alone must not exclude anyone
-        accessLogRecorder.markFetchAsCloneSSH(sessionOf(user, accessLog), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(user), accessLog, 0);
 
         verify(vcsAccessLogService).updateAccessLog(accessLog);
     }
