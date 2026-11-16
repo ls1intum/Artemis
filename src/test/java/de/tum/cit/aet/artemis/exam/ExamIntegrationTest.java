@@ -2055,9 +2055,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         unsetTestRun.setSubmitted(true);
         studentExamRepository.save(unsetTestRun);
 
+        StudentExam unopenedWithUnsetTestRun = new StudentExam();
+        unopenedWithUnsetTestRun.setExam(exam1);
+        unopenedWithUnsetTestRun.setUser(student1);
+        studentExamRepository.save(unopenedWithUnsetTestRun);
+        StudentExam startedWithUnsetTestRun = new StudentExam();
+        startedWithUnsetTestRun.setExam(exam1);
+        startedWithUnsetTestRun.setUser(student1);
+        startedWithUnsetTestRun.setStartedAndStartDate(now());
+        startedWithUnsetTestRun.setSubmitted(false);
+        studentExamRepository.save(startedWithUnsetTestRun);
+
         queryInterceptor.startQueryCount();
         var counts = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics/conduction", HttpStatus.OK, ExamConductionCountsDTO.class);
-        assertThat(counts).isEqualTo(new ExamConductionCountsDTO(2, 1, 1));
+        assertThat(counts).isEqualTo(new ExamConductionCountsDTO(5, 3, 2));
         assertThat(queryInterceptor.getStatements()).filteredOn(sql -> sql.contains("count(")).singleElement().satisfies(sql -> assertThat(sql).contains(" from student_exam "));
         assertThat(queryInterceptor.getStatements()).noneMatch(sql -> sql.contains(" from complaint ") || sql.contains(" from result ") || sql.contains(" from participation ")
                 || sql.contains(" from exercise ") || sql.contains("initialization_state"));

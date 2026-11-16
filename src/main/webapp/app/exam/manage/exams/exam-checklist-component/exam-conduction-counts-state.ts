@@ -16,6 +16,7 @@ export class ExamConductionCountsState {
     private pending = false;
     private refreshing = false;
     private nextRefreshAt = 0;
+    private retriesRemaining = 2;
     private subscription?: Subscription;
     private timeout?: ReturnType<typeof setTimeout>;
 
@@ -27,6 +28,7 @@ export class ExamConductionCountsState {
         this.initialized = false;
         this.revision = 0;
         this.nextRefreshAt = 0;
+        this.retriesRemaining = 2;
         this.numberOfStarted.set(0);
         this.numberOfSubmitted.set(0);
         this.numberOfGeneratedStudentExams.set(0);
@@ -55,11 +57,10 @@ export class ExamConductionCountsState {
 
     private changed(): void {
         this.revision++;
-        if (this.exam?.testExam) {
-            // The coverpage can create an attempt before it starts, so only the server can determine the generated total.
-            this.pending = true;
-            this.scheduleRefresh();
-        }
+        // Reconcile regular exams too: their initial snapshot can already include a start before its notification arrives.
+        this.retriesRemaining = 2;
+        this.pending = true;
+        this.scheduleRefresh();
     }
 
     private scheduleRefresh(): void {
@@ -91,13 +92,24 @@ export class ExamConductionCountsState {
                     if (this.exam !== exam) {
                         return;
                     }
+                    this.retriesRemaining = 2;
                     // Events published after this request began may not be in its snapshot. A retained trailing refresh reconciles them.
                     const reconcile = (current: number, authoritative: number) => (revision === this.revision ? authoritative : Math.max(current, authoritative));
                     this.numberOfGeneratedStudentExams.update((count) => reconcile(count, counts.numberOfGeneratedStudentExams));
                     this.numberOfStarted.update((count) => reconcile(count, counts.numberOfExamsStarted));
                     this.numberOfSubmitted.update((count) => reconcile(count, counts.numberOfExamsSubmitted));
                 },
-                error: () => this.finished(),
+                error: () => {
+                    if (this.exam !== exam) {
+                        return;
+                    }
+                    if (this.retriesRemaining > 0) {
+                        this.retriesRemaining--;
+                        this.pending = true;
+                        this.nextRefreshAt = Math.max(this.nextRefreshAt, Date.now() + 1000);
+                    }
+                    this.finished();
+                },
                 complete: () => this.finished(),
             }),
         );

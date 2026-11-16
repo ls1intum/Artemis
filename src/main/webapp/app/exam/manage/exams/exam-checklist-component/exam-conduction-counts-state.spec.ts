@@ -87,21 +87,48 @@ describe('ExamConductionCountsState', () => {
         expect(state.numberOfGeneratedStudentExams()).toBe(107);
     });
 
-    it('retains pending work after an error and recovers on later events', () => {
+    it('retries a failed final refresh without another event', () => {
         state.initialize(checklist(6, 5));
         state.started();
+        fetchCounts.mock.results[0].value.error(new Error('offline'));
+        vi.advanceTimersByTime(999);
+        expect(fetchCounts).toHaveBeenCalledTimes(1);
+        vi.advanceTimersByTime(1);
+        expect(fetchCounts).toHaveBeenCalledTimes(2);
+        fetchCounts.mock.results[1].value.next(counts(7, 6));
+        fetchCounts.mock.results[1].value.complete();
+        expect(state.numberOfStarted()).toBe(6);
+        expect(state.numberOfGeneratedStudentExams()).toBe(7);
+    });
+
+    it('stops after two retries and restores the budget for a new event', () => {
+        state.initialize(checklist(6, 5));
+        state.started();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            expect(fetchCounts).toHaveBeenCalledTimes(attempt + 1);
+            fetchCounts.mock.results[attempt].value.error(new Error('offline'));
+            vi.advanceTimersByTime(1000);
+        }
+        vi.advanceTimersByTime(10000);
+        expect(fetchCounts).toHaveBeenCalledTimes(3);
+        state.submitted();
+        expect(fetchCounts).toHaveBeenCalledTimes(4);
+        fetchCounts.mock.results[3].value.next(counts(7, 6, 3));
+        expect(state.numberOfSubmitted()).toBe(3);
+    });
+
+    it.each(['reset', 'destroy'])('cancels a pending retry on %s', (action) => {
+        state.initialize(checklist(6, 5));
         state.started();
         fetchCounts.mock.results[0].value.error(new Error('offline'));
-        vi.advanceTimersByTime(1000);
-        expect(fetchCounts).toHaveBeenCalledTimes(2);
-        fetchCounts.mock.results[1].value.error(new Error('offline'));
-        vi.advanceTimersByTime(1000);
-        expect(fetchCounts).toHaveBeenCalledTimes(2);
-        state.submitted();
-        fetchCounts.mock.results[2].value.next(counts(8, 7, 3));
-        fetchCounts.mock.results[2].value.complete();
-        expect(state.numberOfStarted()).toBe(7);
-        expect(state.numberOfSubmitted()).toBe(3);
+        if (action === 'reset') {
+            state.reset({ id: 2, testExam: false });
+            state.initialize(checklist(1, 0, 0));
+        } else {
+            state.destroy();
+        }
+        vi.advanceTimersByTime(5000);
+        expect(fetchCounts).toHaveBeenCalledTimes(1);
     });
 
     it('can recover counts when the initial checklist fails', () => {
@@ -140,14 +167,29 @@ describe('ExamConductionCountsState', () => {
         expect(state.numberOfGeneratedStudentExams()).toBe(6);
     });
 
-    it('leaves regular exam totals unchanged and never refreshes on events', () => {
-        state.reset({ id: 1, testExam: false });
-        state.initialize(checklist(12, 3));
-        state.started();
-        state.submitted();
+    it.each(['snapshot-before-event', 'event-before-response'])('reconciles regular exam counters for %s', (ordering) => {
+        const regularExam = { id: 1, testExam: false };
+        state.reset(regularExam);
+        if (ordering === 'snapshot-before-event') {
+            // The snapshot already includes the persisted start whose notification arrives later.
+            state.initialize(checklist(12, 4, 3));
+            state.started();
+            state.submitted();
+        } else {
+            state.started();
+            state.submitted();
+            state.initialize(checklist(12, 3, 2));
+        }
+        expect(fetchCounts).toHaveBeenCalledExactlyOnceWith(regularExam);
+        fetchCounts.mock.results[0].value.next(counts(12, 4, 3));
+        fetchCounts.mock.results[0].value.complete();
+        vi.advanceTimersByTime(1000);
+        if (fetchCounts.mock.results.length > 1) {
+            fetchCounts.mock.results[1].value.next(counts(12, 4, 3));
+            fetchCounts.mock.results[1].value.complete();
+        }
         expect(state.numberOfGeneratedStudentExams()).toBe(12);
         expect(state.numberOfStarted()).toBe(4);
         expect(state.numberOfSubmitted()).toBe(3);
-        expect(fetchCounts).not.toHaveBeenCalled();
     });
 });

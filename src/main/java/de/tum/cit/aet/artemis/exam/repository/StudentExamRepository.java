@@ -284,10 +284,10 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
-     * Counts conduction progress in one database snapshot, using the same test-run filter as the checklist.
+     * Counts conduction progress in one database snapshot, treating an unset test-run flag as a regular attempt.
      *
      * @param examId the exam whose attempts are counted
-     * @return generated, started and submitted counts, excluding test runs and unset test-run flags
+     * @return generated, started and submitted counts, excluding only explicit test runs
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO(
@@ -296,7 +296,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 COUNT(CASE WHEN se.submitted = TRUE THEN 1 ELSE NULL END))
             FROM StudentExam se
             WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
+                AND (se.testRun = FALSE OR se.testRun IS NULL)
             """)
     ExamConductionCountsDTO countConductionByExamId(@Param("examId") long examId);
 
