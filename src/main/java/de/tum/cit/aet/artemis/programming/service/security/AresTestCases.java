@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +32,9 @@ final class AresTestCases {
     /** The name of any annotation, also a qualified one. */
     private static final Pattern ANNOTATION_NAME = Pattern.compile("@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*");
 
-    private static final Pattern IDENTIFIER_BEFORE_PARENTHESIS = Pattern.compile("([A-Za-z_$][\\w$]*)\\s*\\(");
+    /** A complete Java identifier, also with letters outside ASCII, that is followed by an opening parenthesis. */
+    private static final Pattern IDENTIFIER_BEFORE_PARENTHESIS = Pattern
+            .compile("(?<!\\p{javaJavaIdentifierPart})(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*\\(");
 
     private static final Set<String> NOT_METHOD_NAMES = Set.of("if", "for", "while", "switch", "catch", "synchronized", "return", "new");
 
@@ -51,7 +56,7 @@ final class AresTestCases {
                 SecurityTestAssignments.TestClass testClass = testClasses.get(name);
                 if (testClass != null) {
                     classes.put(name, new SecurityTestStructureDTO.TestClassDTO(name, testClass.testCases(), true, !testClass.active(),
-                            testClass.testCases().stream().filter(testClass.switchedOff()::contains).toList()));
+                            testClass.testCases().stream().filter(testCase -> testClass.switchedOff().contains(testCase) || testClass.overloaded().contains(testCase)).toList()));
                 }
                 else if (!testClassNames.contains(name)) {
                     classes.putIfAbsent(name, new SecurityTestStructureDTO.TestClassDTO(name, List.of(), false, false, List.of()));
@@ -74,22 +79,60 @@ final class AresTestCases {
      * @return for each test method, in the order of the source, the offset of its first test annotation; a new annotation of the method goes before it
      */
     static Map<String, Integer> testAnnotationOffsets(String source) {
+        return testMethods(source).offsets();
+    }
+
+    /**
+     * @param source the content of a Java file
+     * @return the names of the test cases that more than one test method has, e.g. {@code @Test void check()} and {@code @ParameterizedTest void check(int)}:
+     *         an entry {@code Class#check} cannot name one of them, so they cannot be assigned one by one
+     */
+    static Set<String> overloadedTestCases(String source) {
+        return testMethods(source).overloaded();
+    }
+
+    /**
+     * The test methods of a source.
+     *
+     * @param offsets    for each name, the offset of the first test annotation of the first method with it
+     * @param overloaded the names that more than one test method has
+     */
+    private record TestMethods(Map<String, Integer> offsets, Set<String> overloaded) {
+    }
+
+    private static TestMethods testMethods(String source) {
         String masked = AresPolicyAnnotations.mask(source);
         Map<String, Integer> offsets = new LinkedHashMap<>();
+        Map<String, Integer> declarations = new HashMap<>();
+        Set<String> overloaded = new LinkedHashSet<>();
         Matcher annotation = TEST_ANNOTATION.matcher(masked);
         while (annotation.find()) {
-            String name = methodNameAfter(masked, annotation.end());
-            if (name != null) {
+            MatchResult method = methodAfter(masked, annotation.end());
+            if (method != null) {
+                String name = method.group(1);
                 offsets.putIfAbsent(name, annotation.start());
+                // Two test annotations of one method find the same declaration; another declaration with the name is an overload.
+                Integer declaration = declarations.putIfAbsent(name, method.start(1));
+                if (declaration != null && declaration != method.start(1)) {
+                    overloaded.add(name);
+                }
             }
         }
-        return offsets;
+        return new TestMethods(offsets, overloaded);
     }
 
     /**
      * @return the name of the method that the annotation ending at the offset annotates; null if none follows before the next body or statement
      */
     static @Nullable String methodNameAfter(String masked, int offset) {
+        MatchResult method = methodAfter(masked, offset);
+        return method == null ? null : method.group(1);
+    }
+
+    /**
+     * @return the match of the name of the method that the annotation ending at the offset annotates, its group 1 being the name; null if none follows
+     */
+    private static @Nullable MatchResult methodAfter(String masked, int offset) {
         int position = skipArguments(masked, skipWhitespace(masked, offset));
         while (position < masked.length()) {
             char character = masked.charAt(position);
@@ -104,10 +147,10 @@ final class AresTestCases {
                 position = skipArguments(masked, skipWhitespace(masked, name.end()));
                 continue;
             }
-            Matcher method = IDENTIFIER_BEFORE_PARENTHESIS.matcher(masked).region(position, masked.length());
+            // Transparent bounds let the look-behind see the character before the region, so no match starts inside an identifier.
+            Matcher method = IDENTIFIER_BEFORE_PARENTHESIS.matcher(masked).region(position, masked.length()).useTransparentBounds(true);
             if (method.lookingAt()) {
-                String name = method.group(1);
-                return NOT_METHOD_NAMES.contains(name) ? null : name;
+                return NOT_METHOD_NAMES.contains(method.group(1)) ? null : method.toMatchResult();
             }
             position++;
         }

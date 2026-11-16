@@ -45,10 +45,12 @@ final class SecurityTestAssignments {
      * @param methodPolicyPaths the policy files the annotations of its test methods point to, by the name of the method
      * @param defaultMethods    the test methods whose annotation gives them the strict default policy, without a policy file
      * @param switchedOff       the test methods whose annotation switches the sandbox off or cannot be evaluated; they cannot be assigned
+     * @param overloaded        the test cases that more than one test method has, see {@link AresTestCases#overloadedTestCases(String)}; they cannot be
+     *                              assigned one by one
      * @param testCases         the names of its test methods, in their order in the source
      */
     record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods,
-            Set<String> switchedOff, List<String> testCases) {
+            Set<String> switchedOff, Set<String> overloaded, List<String> testCases) {
 
         /**
          * @return the test methods whose annotation stays as it is when the assignments of the class are rewritten, unless the method is assigned
@@ -73,7 +75,7 @@ final class SecurityTestAssignments {
                 return entries;
             }
             for (String testCase : testCases) {
-                if (keptMethods().contains(testCase)) {
+                if (keptMethods().contains(testCase) || overloaded.contains(testCase)) {
                     continue;
                 }
                 String path = methodPolicyPaths.getOrDefault(testCase, classPolicyPath);
@@ -101,7 +103,7 @@ final class SecurityTestAssignments {
             });
             Set<String> defaults = new LinkedHashSet<>(defaultMethods);
             defaults.removeAll(methods.keySet());
-            return new TestClass(qualifiedName, sourcePath, active, requested.get(qualifiedName), methods, defaults, switchedOff, testCases);
+            return new TestClass(qualifiedName, sourcePath, active, requested.get(qualifiedName), methods, defaults, switchedOff, overloaded, testCases);
         }
     }
 
@@ -131,8 +133,9 @@ final class SecurityTestAssignments {
                                         () -> defaultMethods.add(method));
                             }
                         });
-                        testClasses.put(qualifiedName, new TestClass(qualifiedName, sourcePath, annotation.isActivated(), annotation.policyPath().orElse(null),
-                                Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods), Set.copyOf(switchedOff), AresTestCases.testCases(source)));
+                        testClasses.put(qualifiedName,
+                                new TestClass(qualifiedName, sourcePath, annotation.isActivated(), annotation.policyPath().orElse(null), Map.copyOf(methodPolicyPaths),
+                                        Set.copyOf(defaultMethods), Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source)));
                     });
         });
         return testClasses;
@@ -164,8 +167,21 @@ final class SecurityTestAssignments {
      * @return whether the entry names one of its test cases whose annotation switches the sandbox off
      */
     static boolean isSwitchedOffEntry(TestClass testClass, String entry) {
+        return isMethodEntryIn(testClass.switchedOff(), entry);
+    }
+
+    /**
+     * @param testClass a test class
+     * @param entry     an entry of the class
+     * @return whether the entry names a test case that more than one test method of the class has
+     */
+    static boolean isOverloadedEntry(TestClass testClass, String entry) {
+        return isMethodEntryIn(testClass.overloaded(), entry);
+    }
+
+    private static boolean isMethodEntryIn(Set<String> testCases, String entry) {
         int separator = entry.indexOf(METHOD_SEPARATOR);
-        return separator >= 0 && testClass.switchedOff().contains(entry.substring(separator + 1));
+        return separator >= 0 && testCases.contains(entry.substring(separator + 1));
     }
 
     /**

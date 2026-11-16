@@ -1043,6 +1043,32 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void aSwitchedOffTestMethodStaysSwitchedOffAcrossADeactivateActivateCycle() throws Exception {
+        String withSwitchedOffMethod = TEST_CLASS.replace("    @Test\n    void sorts()",
+                "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = false)\n    @Test\n    void sorts()");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(), withSwitchedOffMethod, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        securityFrameworkService.deactivate(exercise, user);
+        securityFrameworkService.activate(exercise, "2.2.1", user);
+
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(withSwitchedOffMethod);
+    }
+
+    @Test
+    void deactivationDeletesNoFileThatIsNoPolicy() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                SECOND_TEST_CLASS.replace("value = \"SecurityPolicy.yaml\"", "value = \"build.gradle\""), StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        String buildFile = readPushed("build.gradle").orElseThrow();
+
+        securityFrameworkService.deactivate(exercise, user);
+
+        assertThat(readPushed("build.gradle")).contains(buildFile);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+    }
+
+    @Test
     void addingTheDiscoveredTestClassesListsTheMissingOnesOnceAndKeepsEveryEntry() throws Exception {
         pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(), NEW_TEST_CLASS, StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);

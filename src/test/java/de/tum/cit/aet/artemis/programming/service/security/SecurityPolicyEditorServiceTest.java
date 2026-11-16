@@ -652,6 +652,36 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void aRetryResumesTheProcessingAlsoAfterAnUnrelatedCommitBeforeTheChange() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        pushToTests("README.md", "An unrelated change\n");
+        SecurityPolicyChangeDTO change = change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest")),
+                added(withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest")), List.of("de.example.StressTest")));
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
+        String pushed = pushedHead();
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+        editorService.commit(exercise(), change, user);
+
+        assertThat(pushedHead()).isEqualTo(pushed);
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushed), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void refusesToAssignOneOfSeveralTestMethodsWithTheSameName() {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }",
+                "    @Test\n    void testMergeSort() {\n    }\n\n    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+
+        assertThat(editorService.getTestStructure(exercise()).testClasses().getFirst().fixedCases()).containsExactly("testMergeSort");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(),
+                        change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestCaseOverloaded"));
+    }
+
+    @Test
     void renamesAPolicyAndPointsItsTestsToTheNewFile() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);

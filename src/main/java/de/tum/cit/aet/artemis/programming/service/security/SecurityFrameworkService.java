@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 import org.apache.commons.io.FileUtils;
@@ -648,10 +647,12 @@ public class SecurityFrameworkService {
             // Nothing to do; a commit here would also become a misleading restore point for the next activation.
             return;
         }
-        // Every policy file an active annotation points to is deleted, not only SecurityPolicy.yaml, because the policy editor can add more of them.
+        // Every policy file an active annotation points to is deleted, not only SecurityPolicy.yaml, because the policy editor can add more of them. A file
+        // that is no valid policy, e.g. an annotation that points to build.gradle, is not deleted.
         SecurityPolicyRepositoryFiles.deletePolicy(root);
-        state.policyFiles().forEach(policyFile -> SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath())
-                .ifPresent(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path)));
+        state.policyFiles().stream().filter(policyFile -> policyFile.problem() == null || !policyFile.problem().breaksTheSandbox())
+                .forEach(policyFile -> SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath())
+                        .ifPresent(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path)));
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
     }
 
@@ -659,9 +660,10 @@ public class SecurityFrameworkService {
      * Finds how the annotations were set before the most recent deactivation that actually switched something off, i.e. whose parent commit had at least
      * one active annotation. A file that did not exist then is switched on.
      *
-     * @return whether the annotations of a file, by its path, should be switched on; all of them if the exercise was never deactivated by this service
+     * @return whether each annotation should be switched on, see {@link SecurityPolicyRepositoryFiles#annotationStates(Map)}: the annotation of a test method
+     *         that did not exist then follows its class; all of them if the exercise was never deactivated by this service
      */
-    private static Predicate<String> annotationStatesBeforeLastDeactivation(Repository repository) {
+    private static SecurityPolicyRepositoryFiles.AnnotationDecision annotationStatesBeforeLastDeactivation(Repository repository) {
         try (Git git = new Git(repository)) {
             for (RevCommit commit : git.log().call()) {
                 if (commit.getParentCount() == 0 || !commit.getFullMessage().contains(ACTION_TRAILER + DEACTIVATE_ACTION)) {
@@ -677,10 +679,13 @@ public class SecurityFrameworkService {
                 }
                 Map<String, Boolean> states = SecurityPolicyRepositoryFiles.annotationStates(SecurityFrameworkCommitFiles.javaSources(repository, parent.getTree()));
                 if (states.containsValue(true)) {
-                    return path -> states.getOrDefault(path, true);
+                    return (path, method) -> {
+                        boolean classActive = states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(path, null), true);
+                        return method == null ? classActive : states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(path, method), classActive);
+                    };
                 }
             }
-            return _ -> true;
+            return (_, _) -> true;
         }
         catch (GitAPIException | IOException e) {
             // Switching every annotation on could override test classes an instructor switched off on purpose, so nothing is changed.

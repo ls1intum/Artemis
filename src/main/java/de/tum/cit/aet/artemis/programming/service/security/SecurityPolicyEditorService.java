@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -270,7 +269,7 @@ public class SecurityPolicyEditorService {
         String fingerprint = fingerprint(change);
         SecurityFrameworkConfigDTO config = securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION,
                 CHANGE_TRAILER + fingerprint + "\n", true, repository -> {
-                    if (!isAlreadyApplied(repository, baseCommitHash, fingerprint)) {
+                    if (!isAlreadyApplied(repository, fingerprint)) {
                         applyChange(repository, change, baseCommitHash);
                     }
                 });
@@ -383,22 +382,11 @@ public class SecurityPolicyEditorService {
                         packageName == null || packageName.isBlank() ? null : packageName, null, List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null))
                 .orElse(null);
         return new SecurityPolicyEditorDTO(commit.name(), lastCommit, SecurityPolicyRepositoryFiles.parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).orElse(null),
-                policies, presets, attachesJavaAgent(buildFiles), newPolicyTemplate);
+                policies, presets, BuildFileSyntax.attachesAresAgent(buildFiles), newPolicyTemplate);
     }
 
     /**
-     * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
-     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it.
-     *
-     * @param buildFiles the build files at the root of a repository
-     * @return whether a build file attaches a Java agent
-     */
-    private static boolean attachesJavaAgent(SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
-        return Stream.of(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(Objects::nonNull).anyMatch(content -> content.contains("-javaagent"));
-    }
-
-    /**
-     * Identifies a change, so that a retry of the same request is recognized, see {@link #isAlreadyApplied(Repository, String, String)}.
+     * Identifies a change, so that a retry of the same request is recognized, see {@link #isAlreadyApplied(Repository, String)}.
      *
      * @return the SHA-256 hash of the change in JSON, as hexadecimal digits
      */
@@ -412,19 +400,18 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Whether the head of the checkout is the commit of this very change on top of the commit the editor loaded. That is the case when a retry follows a
-     * request whose push succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself, and the
-     * pending processing is resumed instead. A different change, even of the same base commit, has another fingerprint and still fails as a conflict.
+     * Whether the head of the checkout is the commit of this very change. That is the case when a retry follows a request whose push succeeded but whose
+     * processing failed: the change must not be applied again, which would fail as a conflict with itself, and the pending processing is resumed instead.
+     * The fingerprint covers the whole request, including the commit the editor loaded, so the head may follow an unrelated commit that was allowed in
+     * between, while a different change, even of the same base commit, has another fingerprint and still fails as a conflict.
      */
-    private static boolean isAlreadyApplied(Repository repository, String baseCommitHash, String fingerprint) {
+    private static boolean isAlreadyApplied(Repository repository, String fingerprint) {
         try (RevWalk revWalk = new RevWalk(repository)) {
             ObjectId head = repository.resolve(Constants.HEAD);
             if (head == null) {
                 return false;
             }
-            RevCommit commit = revWalk.parseCommit(head);
-            return commit.getParentCount() == 1 && commit.getParent(0).name().equals(baseCommitHash)
-                    && commit.getFullMessage().lines().anyMatch(line -> line.equals(CHANGE_TRAILER + fingerprint));
+            return revWalk.parseCommit(head).getFullMessage().lines().anyMatch(line -> line.equals(CHANGE_TRAILER + fingerprint));
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -457,7 +444,7 @@ public class SecurityPolicyEditorService {
             SecurityPolicyRepositoryFiles.writeAresVersion(root, change.frameworkVersion());
             frameworkVersion = change.frameworkVersion();
         }
-        boolean javaAgent = attachesJavaAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
+        boolean javaAgent = BuildFileSyntax.attachesAresAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
 
         // The paths the change frees: deleted policies and the old paths of renamed ones.
         Set<String> removed = new LinkedHashSet<>();
@@ -585,6 +572,10 @@ public class SecurityPolicyEditorService {
                 }
                 if (SecurityTestAssignments.isSwitchedOffEntry(testClass, entry)) {
                     throw refused("The test " + entry + " runs without the sandbox, so it cannot use a policy.", "securityPolicyTestCaseSwitchedOff", Map.of("test", entry));
+                }
+                if (SecurityTestAssignments.isOverloadedEntry(testClass, entry)) {
+                    throw refused("More than one test method is called " + entry + ", so they can only use a policy with their whole class.", "securityPolicyTestCaseOverloaded",
+                            Map.of("test", entry));
                 }
                 if (!declared.contains(testClass.qualifiedName())) {
                     throw refused("The policy " + path + " does not declare the test class " + testClass.qualifiedName() + " of its test " + entry + ".",

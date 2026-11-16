@@ -1,0 +1,203 @@
+package de.tum.cit.aet.artemis.programming.service.security;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+/**
+ * Reads the syntax of the build files of a tests repository as far as the Security Framework needs it: which parts are comments or strings, so that a
+ * pinned Ares version or the Ares agent in a comment is not mistaken for code, see {@link SecurityPolicyRepositoryFiles}.
+ */
+final class BuildFileSyntax {
+
+    /**
+     * The Groovy keywords after which an expression, and therefore a slashy string, may follow; any other word is an operand, such as a variable,
+     * {@code this} or {@code null}.
+     */
+    private static final Set<String> GROOVY_KEYWORDS_BEFORE_EXPRESSIONS = Set.of("return", "throw", "assert", "case", "in", "yield", "else", "do");
+
+    /** The Ares agent as a Gradle dependency, e.g. {@code "de.tum.cit.ase:ares:${aresVersion}:agent"}. */
+    private static final Pattern GRADLE_ARES_AGENT = Pattern.compile("de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent");
+
+    /** The Ares agent as a Maven artifact: the {@code agent} classifier of the {@code ares} artifact. */
+    private static final Pattern MAVEN_ARES_AGENT = Pattern
+            .compile("<artifactId>\\s*ares\\s*</artifactId>\\s*(<version>[^<]*</version>\\s*)?(<type>[^<]*</type>\\s*)?<classifier>\\s*agent\\s*</classifier>");
+
+    private BuildFileSyntax() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
+    /**
+     * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
+     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it. Another agent, such as JaCoCo, and text in comments do not count.
+     *
+     * @param buildFiles the build files at the root of a repository
+     * @return whether a build file attaches the Ares agent
+     */
+    static boolean attachesAresAgent(SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
+        boolean gradle = Stream.ofNullable(buildFiles.gradleBuild()).map(content -> withoutMarked(content, gradleComments(content)))
+                .anyMatch(code -> code.contains("-javaagent") && GRADLE_ARES_AGENT.matcher(code).find());
+        boolean maven = Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
+                .anyMatch(code -> code.contains("-javaagent") && MAVEN_ARES_AGENT.matcher(code).find());
+        return gradle || maven;
+    }
+
+    /** @return the content without the marked characters */
+    private static String withoutMarked(String content, boolean[] marked) {
+        StringBuilder code = new StringBuilder(content.length());
+        for (int index = 0; index < content.length(); index++) {
+            if (!marked[index]) {
+                code.append(content.charAt(index));
+            }
+        }
+        return code.toString();
+    }
+
+    /**
+     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment, to a quoted string or to a
+     *         slashy string ({@code /.../} or {@code $/.../$}); a URL such as {@code 'https://example.org'} therefore starts no comment
+     */
+    static boolean[] gradleCommentsAndStrings(String content) {
+        return gradleNonCode(content, true);
+    }
+
+    /**
+     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment; strings are code here
+     */
+    static boolean[] gradleComments(String content) {
+        return gradleNonCode(content, false);
+    }
+
+    private static boolean[] gradleNonCode(String content, boolean strings) {
+        boolean[] comment = new boolean[content.length()];
+        int index = 0;
+        // The last token of code before the current one, without whitespace and comments: a word, ++, -- or a single character; a string counts as an operand.
+        String previous = ";";
+        while (index < content.length()) {
+            char character = content.charAt(index);
+            int end;
+            if (content.startsWith("//", index)) {
+                end = endOfLine(content, index);
+                Arrays.fill(comment, index, end, true);
+            }
+            else if (content.startsWith("/*", index)) {
+                int close = content.indexOf("*/", index + 2);
+                end = close < 0 ? content.length() : close + 2;
+                Arrays.fill(comment, index, end, true);
+            }
+            else if (character == '\'' || character == '"') {
+                String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
+                end = endOfString(content, index + delimiter.length(), delimiter);
+                Arrays.fill(comment, index, end, strings);
+                previous = "\"";
+            }
+            else if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous) && endOfSlashyString(content, index) > 0) {
+                end = endOfSlashyString(content, index);
+                Arrays.fill(comment, index, end, strings);
+                previous = "\"";
+            }
+            else if (Character.isJavaIdentifierStart(character)) {
+                end = index + 1;
+                while (end < content.length() && Character.isJavaIdentifierPart(content.charAt(end))) {
+                    end++;
+                }
+                previous = content.substring(index, end);
+            }
+            else {
+                end = index + 1;
+                if ((character == '+' || character == '-') && previous.equals(String.valueOf(character))) {
+                    previous = previous + character;
+                }
+                else if (!Character.isWhitespace(character)) {
+                    previous = String.valueOf(character);
+                }
+            }
+            index = end;
+        }
+        return comment;
+    }
+
+    /**
+     * A {@code /} after an operand divides, as in {@code a / b}, {@code (a) / b} or {@code a++ / b}; elsewhere, as after {@code =}, {@code (}, {@code ,} or
+     * a keyword such as {@code return}, it opens a slashy string.
+     */
+    private static boolean slashyStringMayStartAfter(String previous) {
+        if (Character.isJavaIdentifierStart(previous.charAt(0))) {
+            return GROOVY_KEYWORDS_BEFORE_EXPRESSIONS.contains(previous);
+        }
+        char last = previous.charAt(previous.length() - 1);
+        return previous.length() == 1 && !Character.isJavaIdentifierPart(last) && last != ')' && last != ']' && last != '}' && last != '"';
+    }
+
+    /**
+     * @param from the offset of the opening {@code /} or {@code $/}
+     * @return the offset after the closing delimiter, or {@code -1} if the string is not closed, in which case the {@code /} is read as code
+     */
+    private static int endOfSlashyString(String content, int from) {
+        boolean dollar = content.charAt(from) == '$';
+        int index = from + (dollar ? 2 : 1);
+        while (index < content.length()) {
+            if (dollar && (content.startsWith("$$", index) || content.startsWith("$/", index))) {
+                index += 2;
+            }
+            else if (dollar && content.startsWith("/$", index)) {
+                return index + 2;
+            }
+            else if (!dollar && content.startsWith("\\/", index)) {
+                index += 2;
+            }
+            else if (!dollar && content.charAt(index) == '/') {
+                return index + 1;
+            }
+            else {
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @param from      the offset after the opening delimiter
+     * @param delimiter the quote that closes the string
+     * @return the offset after the closing delimiter; a string with a single quote also ends at the end of its line
+     */
+    private static int endOfString(String content, int from, String delimiter) {
+        int index = from;
+        while (index < content.length()) {
+            if (content.charAt(index) == '\\') {
+                index += 2;
+            }
+            else if (content.startsWith(delimiter, index)) {
+                return index + delimiter.length();
+            }
+            else if (delimiter.length() == 1 && content.charAt(index) == '\n') {
+                return index + 1;
+            }
+            else {
+                index++;
+            }
+        }
+        return content.length();
+    }
+
+    private static int endOfLine(String content, int from) {
+        int lineEnd = content.indexOf('\n', from);
+        return lineEnd < 0 ? content.length() : lineEnd;
+    }
+
+    /**
+     * @return for each character of a Maven POM whether it belongs to an XML comment
+     */
+    static boolean[] mavenComments(String content) {
+        boolean[] comment = new boolean[content.length()];
+        int start = content.indexOf("<!--");
+        while (start >= 0) {
+            int close = content.indexOf("-->", start + 4);
+            int end = close < 0 ? content.length() : close + 3;
+            Arrays.fill(comment, start, end, true);
+            start = content.indexOf("<!--", end);
+        }
+        return comment;
+    }
+}

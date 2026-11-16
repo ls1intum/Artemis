@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -164,21 +165,33 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
-     * argument are kept, so switching an annotation off and on again restores it exactly. An annotation that already has the requested state is not touched.
+     * Switches every Ares {@code @Policy} annotation of the source on or off, see {@link #setActive(String, Predicate)}.
      *
      * @param source the content of a Java file
      * @param active whether the annotations should enforce their policy
      * @return the rewritten source
      */
     static String setActive(String source, boolean active) {
+        return setActive(source, _ -> active);
+    }
+
+    /**
+     * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
+     * argument are kept, so switching an annotation off and on again restores it exactly. An annotation that already has the requested state is not touched.
+     *
+     * @param source the content of a Java file
+     * @param active whether each annotation should enforce its policy
+     * @return the rewritten source
+     */
+    static String setActive(String source, Predicate<Annotation> active) {
         StringBuilder result = new StringBuilder(source);
         List<Annotation> annotations = find(source);
         // Replace from the end, so the offsets of the annotations before stay valid.
         for (int i = annotations.size() - 1; i >= 0; i--) {
             Annotation annotation = annotations.get(i);
-            if (annotation.isActivated() != active) {
-                result.replace(annotation.start(), annotation.end(), render(annotation, active));
+            boolean activate = active.test(annotation);
+            if (annotation.isActivated() != activate) {
+                result.replace(annotation.start(), annotation.end(), render(annotation, activate));
             }
         }
         return result.toString();

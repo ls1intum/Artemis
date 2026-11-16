@@ -74,4 +74,32 @@ class AresTestCasesTest {
         assertThat(AresTestCases.testAnnotationOffsets(TEST_CLASS)).containsEntry("testBubbleSort", TEST_CLASS.indexOf("@Test\n    void testBubbleSort"))
                 .containsEntry("testMergeSort", TEST_CLASS.indexOf("@org.junit.jupiter.api.Test"));
     }
+
+    @Test
+    void readsCompleteMethodNamesAndFindsOverloadedTestCases() {
+        String source = """
+                class PrüfungTest {
+
+                    @Test
+                    void prüfe() {
+                    }
+
+                    @Test
+                    void sortiereÜ() {
+                    }
+
+                    @Test
+                    @Tag("slow")
+                    void check() {
+                    }
+
+                    @ParameterizedTest
+                    void check(int value) {
+                    }
+                }
+                """;
+
+        assertThat(AresTestCases.testCases(source)).containsExactly("prüfe", "sortiereÜ", "check");
+        assertThat(AresTestCases.overloadedTestCases(source)).containsExactly("check");
+    }
 }
