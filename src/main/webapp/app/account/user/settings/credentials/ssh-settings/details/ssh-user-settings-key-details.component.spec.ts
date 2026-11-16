@@ -19,7 +19,7 @@ describe('SshUserSettingsComponent', () => {
     let comp: SshUserSettingsKeyDetailsComponent;
     const mockKey = 'mock-key';
     const invalidKeyFormat = 'invalidKeyFormat';
-    const keyAlreadyExists = 'keyAlreadyExists';
+    const keyNotAccepted = 'keyNotAccepted';
     const mockedUserSshKeys = {
         id: 3,
         publicKey: mockKey,
@@ -96,7 +96,7 @@ describe('SshUserSettingsComponent', () => {
             status: 400,
         });
         const httpError2 = new HttpErrorResponse({
-            error: { errorKey: keyAlreadyExists },
+            error: { errorKey: keyNotAccepted },
             status: 400,
         });
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
@@ -111,7 +111,7 @@ describe('SshUserSettingsComponent', () => {
         comp.saveSshKey();
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
         comp.saveSshKey();
-        expect(alertServiceMock.error).toHaveBeenCalled();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.userSettings.sshSettingsPage.keyNotAccepted');
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
