@@ -225,8 +225,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private conflictLookups = 0;
     /** The number of loads of the policies started, so only the latest one applies. */
     private loadRequests = 0;
-    /** The number of YAML imports that have not answered yet; the unsaved changes cannot be committed until they have. */
-    readonly pendingImports = signal(0);
+    /** The numbers of the YAML imports that have not answered yet and can still apply; the unsaved changes cannot be committed until they have. */
+    private readonly pendingImportGenerations = signal<ReadonlySet<number>>(new Set());
+    readonly pendingImports = computed(() => this.pendingImportGenerations().size);
     /** The change the review shows, serialized, and the number of review previews requested. */
     private reviewedChange: string | undefined;
     private reviewRequests = 0;
@@ -794,6 +795,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     private dropPendingYamlRequests(): void {
         this.importGenerations.clear();
+        this.pendingImportGenerations.set(new Set());
         this.yamlPreviewCount++;
         this.yamlImportEpoch.update((epoch) => epoch + 1);
     }
@@ -1064,11 +1066,13 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         // Only the latest import of a policy applies, so an earlier one that answers later does not replace it.
         // The numbers keep increasing across discards, so an import from before one never matches the latest import of the policy.
         const generation = ++this.importSequence;
+        // A commit waits for the import, so the change it submits includes the imported file and the commit does not drop it afterwards. Only imports
+        // that can still apply count: a newer import of the policy supersedes this one, and a discard or commit drops it.
+        const superseded = this.importGenerations.get(policy.id);
         this.importGenerations.set(policy.id, generation);
+        this.pendingImportGenerations.update((pending) => new Set([...pending].filter((candidate) => candidate !== superseded)).add(generation));
         const isLatest = () => this.importGenerations.get(policy.id) === generation;
-        // A commit waits for the import, so the change it submits includes the imported file and the commit does not drop it afterwards.
-        this.pendingImports.update((count) => count + 1);
-        const settle = () => this.pendingImports.update((count) => count - 1);
+        const settle = () => this.pendingImportGenerations.update((pending) => new Set([...pending].filter((candidate) => candidate !== generation)));
         this.securityService.importPolicy(this.exerciseId(), path, selected.content).subscribe({
             next: (imported) => {
                 settle();

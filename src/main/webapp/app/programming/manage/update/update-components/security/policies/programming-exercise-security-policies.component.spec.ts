@@ -312,6 +312,30 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(lastChange().policies[0].document.supervisedPackage).toBe('de.imported');
     });
 
+    it('counts only the imports that can still apply', () => {
+        create(configured(), false);
+        const first = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        const second = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        const third = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(third);
+        handlers.openYaml(comp.policies()[0]);
+
+        handlers.importYaml({ content: 'first', policyPath: 'SecurityPolicy.yaml' });
+        handlers.importYaml({ content: 'second', policyPath: 'SecurityPolicy.yaml' });
+        expect(comp.pendingImports()).toBe(1);
+        second.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.second' } });
+        expect(comp.pendingImports()).toBe(0);
+
+        handlers.importYaml({ content: 'third', policyPath: 'SecurityPolicy.yaml' });
+        handlers.discard();
+        expect(comp.pendingImports()).toBe(0);
+        // The late answers of dropped imports change neither the count nor the policy.
+        first.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.first' } });
+        third.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.third' } });
+        expect(comp.pendingImports()).toBe(0);
+        expect(comp.policies()[0].working?.supervisedPackage).toBe(DOCUMENT.supervisedPackage);
+    });
+
     it('renders the unsaved YAML again when a reload rebases the open policy', () => {
         create(configured(), false);
         handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
