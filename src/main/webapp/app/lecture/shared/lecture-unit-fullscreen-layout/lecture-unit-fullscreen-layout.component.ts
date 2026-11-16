@@ -242,7 +242,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private getNavbarHeight(): number {
-        const navbar = document.querySelector('nav.navbar.jh-navbar');
+        const navbar = document.querySelector('nav.jh-navbar');
         return navbar instanceof HTMLElement ? navbar.getBoundingClientRect().height : 0;
     }
 

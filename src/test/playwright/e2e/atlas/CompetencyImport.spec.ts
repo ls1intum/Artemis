@@ -67,14 +67,17 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await expect(page.locator('jhi-course-competencies-relation-graph')).toBeVisible();
 
         // Select the imported competencies to verify the relation exists
-        await page.selectOption('#tail', { label: competency1.title! });
-        await page.selectOption('#head', { label: competency2.title! });
+        // The relation form uses TUM AET UI selects: the trigger carries the id and the options open in a listbox.
+        await page.locator('#tail').click();
+        await page.getByRole('option', { name: competency1.title!, exact: true }).click();
+        await page.locator('#head').click();
+        await page.getByRole('option', { name: competency2.title!, exact: true }).click();
 
         // If relation exists, we should see "Delete relation" button
         await expect(page.getByRole('button', { name: 'Delete relation' })).toBeVisible();
 
         // Check the type is EXTENDS
-        await expect(page.locator('#type')).toHaveValue('EXTENDS');
+        await expect(page.locator('#type')).toHaveText('Extends');
     });
 
     test('Imports specific competencies from other course', async ({ page, competencyManagement }) => {
@@ -82,7 +85,8 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
 
         // Open Import from other course modal
         await page.getByRole('button', { name: 'Import competencies' }).click();
-        const importLink = page.getByRole('link', { name: 'Import from other course' });
+        // The import menu is a TUM AET UI menu, so its entries are menu items, links included.
+        const importLink = page.getByRole('menuitem', { name: 'Import from other course' });
         await importLink.waitFor({ state: 'visible', timeout: 5000 });
         await importLink.click();
 

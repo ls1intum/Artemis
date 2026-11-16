@@ -1046,7 +1046,7 @@ describe('ExamResultSummaryComponent', () => {
             fixture.detectChanges();
 
             const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
-            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            // the important modifiers are needed because the unlayered global heading rules would win otherwise
             expect(heading.classList).toContain('text-base!');
             expect(heading.classList).toContain('font-semibold!');
             expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');

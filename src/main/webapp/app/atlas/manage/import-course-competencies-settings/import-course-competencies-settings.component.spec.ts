@@ -74,18 +74,22 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
     });
 
     it('should set reference date type', () => {
+        component.setReferenceDate(dayjs('2022-01-01'));
         fixture.detectChanges();
+        expect(component.importSettings().isReleaseDate).toBe(true);
 
-        const referenceDateTypeSelect = fixture.debugElement.nativeElement.querySelector('#reference-date-type-select');
-        referenceDateTypeSelect.value = 'true';
-        referenceDateTypeSelect.dispatchEvent(new Event('change'));
+        const selectOption = (index: number) => {
+            fixture.nativeElement.querySelector('#reference-date-type-select').click();
+            fixture.detectChanges();
+            (document.querySelectorAll('[role="option"]')[index] as HTMLElement).click();
+            fixture.detectChanges();
+        };
 
-        expect(component.importSettings().isReleaseDate).toBeTruthy();
+        selectOption(1);
+        expect(component.importSettings().isReleaseDate).toBe(false);
 
-        referenceDateTypeSelect.value = 'false';
-        referenceDateTypeSelect.dispatchEvent(new Event('change'));
-
-        expect(component.importSettings().isReleaseDate).toBeFalsy();
+        selectOption(0);
+        expect(component.importSettings().isReleaseDate).toBe(true);
     });
 
     it('should set reference date when a date is provided', () => {

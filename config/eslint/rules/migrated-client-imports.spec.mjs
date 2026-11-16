@@ -32,8 +32,8 @@ async function importErrors(filePath, source) {
 }
 
 describe('migrated client import restrictions', () => {
-    it('allows the contained PrimeNG select fallback in the context picker', async () => {
-        expect(await importErrors(picker, 'import { SelectModule } from "primeng/select";')).toEqual([]);
+    it('bans the former PrimeNG select fallback in the migrated context picker', async () => {
+        expect(await importErrors(picker, 'import { SelectModule } from "primeng/select";')).toHaveLength(1);
     });
 
     it.each([picker, ...otherMigratedFiles])('retains every other import ban for %s', async (filePath) => {
