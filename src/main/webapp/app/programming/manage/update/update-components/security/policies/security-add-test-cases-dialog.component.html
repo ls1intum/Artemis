@@ -15,16 +15,16 @@
                     <tumaet-ui-progress-spinner />
                     <span jhiTranslate="artemisApp.programmingExercise.security.advanced.loading"></span>
                 </div>
-            } @else if (!filteredPackages().length) {
+            } @else if (!view().length) {
                 <p class="sp-mut m-0 p-2 text-sm">{{ prefix + 'empty' | artemisTranslate: { query: search() } }}</p>
             }
-            @for (group of filteredPackages(); track group.packageName) {
-                @let packageOpen = isOpen(group.packageName, true);
+            @for (group of view(); track group.packageName) {
+                @let packageOpen = group.open;
                 <div class="sp-tree-row sp-level-0" data-testid="security-add-test-cases-package">
                     @if (group.available.length) {
                         <tumaet-ui-checkbox
-                            [checked]="isAllSelected(group.available)"
-                            [indeterminate]="selectedCount(group.available) > 0 && !isAllSelected(group.available)"
+                            [checked]="group.allSelected"
+                            [indeterminate]="group.partlySelected"
                             [ariaLabel]="(prefix + 'selectPackage' | artemisTranslate) + ' ' + group.packageName"
                             (changed)="toggleKeys(group.available)"
                         />
@@ -43,7 +43,7 @@
                     <span class="sp-mono sp-strong">{{ group.packageName }}</span>
                     <span class="sp-push sp-mut text-xs">
                         @if (group.available.length) {
-                            {{ prefix + 'selectedOf' | artemisTranslate: { selected: selectedCount(group.available), total: group.available.length } }}
+                            {{ prefix + 'selectedOf' | artemisTranslate: { selected: group.selected, total: group.available.length } }}
                         } @else {
                             {{ prefix + 'allCaptured' | artemisTranslate }}
                         }
@@ -51,13 +51,13 @@
                 </div>
                 @if (packageOpen) {
                     @for (node of group.classes; track node.qualifiedName) {
-                        @let classOpen = isOpen(node.qualifiedName, false);
-                        @let locked = !node.available.length;
+                        @let classOpen = node.open;
+                        @let locked = node.locked;
                         @let lockedBy = node.lockedBy;
-                        <div class="sp-tree-row sp-level-1" [class.sp-selected]="isAllSelected(node.available)" data-testid="security-add-test-cases-class">
+                        <div class="sp-tree-row sp-level-1" [class.sp-selected]="node.allSelected" data-testid="security-add-test-cases-class">
                             <tumaet-ui-checkbox
-                                [checked]="locked ? !node.switchedOff : isAllSelected(node.available)"
-                                [indeterminate]="!locked && selectedCount(node.available) > 0 && !isAllSelected(node.available)"
+                                [checked]="locked ? !node.switchedOff : node.allSelected"
+                                [indeterminate]="!locked && node.partlySelected"
                                 [disabled]="locked"
                                 [ariaLabel]="(prefix + 'selectClass' | artemisTranslate) + ' ' + node.simpleName"
                                 [tumAetUiTooltip]="
@@ -69,7 +69,7 @@
                                 "
                                 (changed)="toggleKeys(node.available)"
                             />
-                            @if (node.cases.length > 1 || node.cases[0].key !== node.qualifiedName) {
+                            @if (node.expandable) {
                                 <button
                                     type="button"
                                     class="sp-twisty"
@@ -89,17 +89,15 @@
                                 } @else if (locked) {
                                     <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'coveredBy' | artemisTranslate: { policy: lockedBy ?? '' }" />
                                 } @else {
-                                    <span class="sp-mut text-xs">{{
-                                        prefix + 'selectedOf' | artemisTranslate: { selected: selectedCount(node.available), total: node.available.length }
-                                    }}</span>
+                                    <span class="sp-mut text-xs">{{ prefix + 'selectedOf' | artemisTranslate: { selected: node.selected, total: node.available.length } }}</span>
                                 }
                             </span>
                         </div>
-                        @if (classOpen && (node.cases.length > 1 || node.cases[0].key !== node.qualifiedName)) {
+                        @if (classOpen && node.expandable) {
                             @for (testCase of node.cases; track testCase.key) {
-                                <div class="sp-tree-row sp-level-2" [class.sp-selected]="selection().has(testCase.key)" data-testid="security-add-test-cases-case">
+                                <div class="sp-tree-row sp-level-2" [class.sp-selected]="testCase.checked && !testCase.coveredBy" data-testid="security-add-test-cases-case">
                                     <tumaet-ui-checkbox
-                                        [checked]="!!testCase.coveredBy || selection().has(testCase.key)"
+                                        [checked]="testCase.checked"
                                         [disabled]="!!testCase.coveredBy || testCase.switchedOff"
                                         [ariaLabel]="(prefix + 'selectCase' | artemisTranslate) + ' ' + node.simpleName + '.' + testCase.name"
                                         [tumAetUiTooltip]="
@@ -118,9 +116,9 @@
                                             <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'switchedOffTag' | artemisTranslate" />
                                         } @else if (testCase.coveredBy) {
                                             <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'coveredBy' | artemisTranslate: { policy: testCase.coveredBy }" />
-                                        } @else if (changeOf(testCase.key) === 'added') {
+                                        } @else if (testCase.change === 'added') {
                                             <tumaet-ui-tag severity="success" size="sm" [value]="prefix + 'willBeAdded' | artemisTranslate" />
-                                        } @else if (changeOf(testCase.key) === 'removed') {
+                                        } @else if (testCase.change === 'removed') {
                                             <tumaet-ui-tag severity="danger" size="sm" [value]="prefix + 'willBeRemoved' | artemisTranslate" />
                                         }
                                     </span>

@@ -6,7 +6,7 @@
             <tumaet-ui-tab [value]="tab" [attr.data-testid]="'security-behaviour-tab-' + tab">
                 <span class="inline-flex items-center gap-2">
                     <span [jhiTranslate]="prefix + 'tab.' + tab"></span>
-                    @if (isUncommitted(tab)) {
+                    @if (uncommittedTabs().has(tab)) {
                         <span class="sp-dot" [attr.aria-label]="prefix + 'uncommittedMark' | artemisTranslate" role="img"></span>
                     }
                 </span>
@@ -16,7 +16,7 @@
 </tumaet-ui-tabs>
 
 <div class="sp-stack-4 pt-4">
-    @if (isUncommitted(activeTab())) {
+    @if (uncommittedTabs().has(activeTab())) {
         <div class="flex justify-end">
             <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'uncommittedHelp' | artemisTranslate" tabindex="0" data-testid="security-behaviour-uncommitted">
                 <span jhiTranslate="artemisApp.programmingExercise.security.advanced.uncommitted"></span>

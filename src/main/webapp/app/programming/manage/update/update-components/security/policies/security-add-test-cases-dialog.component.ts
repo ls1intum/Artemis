@@ -47,6 +47,37 @@ interface PackageNode {
     available: string[];
 }
 
+/** The state of a selectable group of the tree, as the template shows it. */
+interface SelectionView {
+    /** The selectable keys of the group that are selected. */
+    selected: number;
+    allSelected: boolean;
+    partlySelected: boolean;
+}
+
+/** A test case as the template shows it. */
+interface CaseView extends CaseNode {
+    checked: boolean;
+    change: 'added' | 'removed' | undefined;
+}
+
+/** A test class as the template shows it. */
+interface ClassView extends Omit<ClassNode, 'cases'>, SelectionView {
+    cases: CaseView[];
+    open: boolean;
+    locked: boolean;
+    /** Whether the class lists its test cases one by one; a class without test cases is a case of its own. */
+    expandable: boolean;
+}
+
+/** A package as the template shows it. */
+interface PackageView extends SelectionView {
+    packageName: string;
+    available: string[];
+    classes: ClassView[];
+    open: boolean;
+}
+
 /**
  * Assigns the test cases of the tests repository to a security policy (screen "Assign Test Cases"). Checked test cases are captured by the policy; unchecking
  * one releases it. Test cases another policy captures are locked and name that policy. A fully checked class is assigned as a whole, so test cases added to
@@ -144,13 +175,47 @@ export class SecurityAddTestCasesDialogComponent {
                 const classes = group.classes
                     .map((node) => {
                         const classMatches = packageMatches || node.simpleName.toLowerCase().includes(query);
-                        return cloneWith(node, { cases: classMatches ? node.cases : node.cases.filter((testCase) => testCase.name.toLowerCase().includes(query)) });
+                        const cases = classMatches ? node.cases : node.cases.filter((testCase) => testCase.name.toLowerCase().includes(query));
+                        // Selecting a filtered class or package selects only the test cases it shows.
+                        return cloneWith(node, { cases, available: node.available.filter((key) => cases.some((testCase) => testCase.key === key)) });
                     })
                     .filter((node) => node.cases.length > 0);
-                return { packageName: group.packageName, classes, available: group.available };
+                return { packageName: group.packageName, classes, available: classes.flatMap((node) => node.available) };
             })
             .filter((group) => group.classes.length > 0);
     });
+
+    /** The tree as the template shows it, with the state of every row. */
+    readonly view = computed<PackageView[]>(() =>
+        this.filteredPackages().map((group) =>
+            cloneWith(this.selectionOf(group.available), {
+                packageName: group.packageName,
+                available: group.available,
+                open: this.isOpen(group.packageName, true),
+                classes: group.classes.map((node) =>
+                    cloneWith(this.selectionOf(node.available), {
+                        qualifiedName: node.qualifiedName,
+                        simpleName: node.simpleName,
+                        switchedOff: node.switchedOff,
+                        available: node.available,
+                        lockedBy: node.lockedBy,
+                        open: this.isOpen(node.qualifiedName, false),
+                        locked: !node.available.length,
+                        expandable: node.cases.length > 1 || node.cases[0].key !== node.qualifiedName,
+                        cases: node.cases.map((testCase) =>
+                            cloneWith(testCase, { checked: !!testCase.coveredBy || this.selection().has(testCase.key), change: this.changeOf(testCase.key) }),
+                        ),
+                    }),
+                ),
+            }),
+        ),
+    );
+
+    private selectionOf(keys: readonly string[]): SelectionView {
+        const selected = this.selectedCount(keys);
+        const allSelected = this.isAllSelected(keys);
+        return { selected, allSelected, partlySelected: selected > 0 && !allSelected };
+    }
 
     /** The test cases no policy captures. */
     readonly unconnected = computed(() => {
@@ -194,7 +259,8 @@ export class SecurityAddTestCasesDialogComponent {
             if (!node) {
                 keys.add(entry);
             } else if (entry === node.qualifiedName) {
-                node.cases.forEach((testCase) => keys.add(testCase.key));
+                // A switched-off test case cannot use the policy, so a whole class does not select it.
+                node.cases.filter((testCase) => !testCase.switchedOff).forEach((testCase) => keys.add(testCase.key));
             } else {
                 keys.add(entry);
             }
@@ -254,13 +320,15 @@ export class SecurityAddTestCasesDialogComponent {
         return was && !is ? 'removed' : !was && is ? 'added' : undefined;
     }
 
-    /** A fully selected class is assigned as a whole; otherwise its selected cases are. Entries of classes the repository no longer has stay. */
+    /** A fully selected class is assigned as a whole; otherwise its selected cases are. Entries the tree does not show stay. */
     protected apply(): void {
         const classes = this.packages().flatMap((group) => group.classes);
         const known = new Set(classes.map((node) => node.qualifiedName));
-        const tests = this.ownTests().filter((entry) => !known.has(testClassOf(entry)));
+        const caseKeys = new Set(classes.flatMap((node) => node.cases.map((testCase) => testCase.key)));
+        // Entries the tree does not show stay: those of classes and of test cases the repository no longer has.
+        const tests = this.ownTests().filter((entry) => !known.has(testClassOf(entry)) || (!caseKeys.has(entry) && entry !== testClassOf(entry) && this.selection().has(entry)));
         for (const node of classes) {
-            const selected = node.cases.filter((testCase) => this.selection().has(testCase.key));
+            const selected = node.cases.filter((testCase) => !testCase.switchedOff && this.selection().has(testCase.key));
             if (!selected.length) {
                 continue;
             }

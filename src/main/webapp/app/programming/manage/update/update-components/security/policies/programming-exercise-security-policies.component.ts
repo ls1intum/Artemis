@@ -51,7 +51,11 @@ import { SecurityActivationDialogComponent, SecurityActivationMode } from 'app/p
 import { SecurityConfirmDialogComponent, SecurityTranslatable } from 'app/programming/manage/update/update-components/security/policies/security-confirm-dialog.component';
 import { SecurityPolicyPanelComponent } from 'app/programming/manage/update/update-components/security/policies/security-policy-panel.component';
 import { AssignmentChange, SecurityReviewDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-review-dialog.component';
-import { SecurityImportNotice, SecurityYamlDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-yaml-dialog.component';
+import {
+    SecurityImportNotice,
+    SecurityYamlDialogComponent,
+    SecurityYamlImport,
+} from 'app/programming/manage/update/update-components/security/policies/security-yaml-dialog.component';
 import {
     EditorPolicy,
     PolicyChangeSummary,
@@ -84,7 +88,7 @@ type Banner =
     | { kind: 'committing' }
     | { kind: 'committed'; titleKey: string; textKey: string; hash: string }
     | { kind: 'conflict'; authorName?: string; hash?: string }
-    | { kind: 'failed'; message: string; commitMessage: string }
+    | { kind: 'failed'; message: string; commitMessage: string; retry?: 'review' }
     | { kind: 'orphaned'; files: string }
     | { kind: 'info'; text: string };
 
@@ -196,6 +200,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly dialogOpen = signal(false);
     /** The toggle position a confirmation shows until the instructor decides. */
     readonly pendingToggle = signal<boolean | undefined>(undefined);
+    /** The requested state of dependency scanning while its dialog is open or its commit runs, so the switch shows it until then. */
+    readonly pendingScan = signal<boolean | undefined>(undefined);
     readonly reviewOpen = signal(false);
     readonly reviewPreview = signal<SecurityPolicyPreview | undefined>(undefined);
     readonly discardOpen = signal(false);
@@ -246,6 +252,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             .filter((document) => document !== undefined);
         return documents.length > 0 && documents.every((document) => (document.languageConfiguration ?? '').endsWith(SCANNING));
     });
+    /** The state the scanning switch shows: the requested one while it is confirmed or committed. */
+    readonly shownScanDependencies = computed(() => this.pendingScan() ?? this.scanDependencies());
     /** Whether a committed policy is read-only: dependency scanning changes every policy, so it cannot be switched until the policy is fixed. */
     readonly scanBlockedByReadOnly = computed(() => this.policies().some((policy) => !!policy.file && !policy.base));
     readonly scanAvailable = computed(() => !!this.editor()?.scanDependenciesAvailable && this.policies().some((policy) => !!policy.base) && !this.scanBlockedByReadOnly());
@@ -261,10 +269,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     readonly summaries = computed(() => new Map(this.policies().map((policy) => [policy.id, summarizeChanges(policy)])));
 
-    protected summaryOf(policyId: string): PolicyChangeSummary {
-        const policy = this.policies().find((candidate) => candidate.id === policyId);
-        return this.summaries().get(policyId) ?? summarizeChanges(policy ?? editorPolicyOf({ policyPath: policyId }));
-    }
+    /** The summary of a policy without changes, for a panel whose summary is not computed yet. */
+    protected readonly noChanges = summarizeChanges(editorPolicyOf({ policyPath: '' }));
 
     readonly changeParts = computed<ChangeParts>(() => {
         const parts: ChangeParts = { restrictions: 0, behaviours: 0, testCases: 0, testClasses: 0, settings: 0, build: 0, total: 0 };
@@ -487,26 +493,39 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             next: (editor) => {
                 this.editor.set(editor);
                 const files = editor.policies ?? [];
+                const changed = (policy: EditorPolicy) => !!policy.working && (this.summaries().get(policy.id)?.total ?? 0) > 0;
+                // A changed policy whose file can no longer be edited here, e.g. because someone broke its YAML, keeps its changes as a new policy.
+                const unreadable: EditorPolicy[] = [];
                 const reloaded = files
                     .filter((file) => !deleted.some((policy) => policy.file?.policyPath === file.policyPath))
                     .map((file) => {
                         const old = previous.find((candidate) => candidate.file?.policyPath === file.policyPath);
-                        return old && (this.summaries().get(old.id)?.total ?? 0) > 0 ? rebasePolicy(old, file) : editorPolicyOf(file);
+                        if (old && changed(old) && !file.document) {
+                            unreadable.push(old);
+                        }
+                        return old && changed(old) ? rebasePolicy(old, file) : editorPolicyOf(file);
                     });
                 const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
                 const added = previous
                     .filter((policy) => isNewPolicy(policy))
                     .map((policy) => (policy.working ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) }) : policy));
                 // A changed policy whose file someone deleted or renamed meanwhile is kept as a new policy, so the changes are not lost without a word.
-                const vanished = previous.filter(
-                    (policy) =>
-                        !!policy.file &&
-                        !!policy.working &&
-                        (this.summaries().get(policy.id)?.total ?? 0) > 0 &&
-                        !files.some((file) => file.policyPath === policy.file?.policyPath) &&
-                        !deleted.some((candidate) => candidate.id === policy.id),
-                );
-                const orphaned = vanished.map((policy) => this.asNewPolicy(policy));
+                const vanished = [
+                    ...previous.filter(
+                        (policy) =>
+                            !!policy.file &&
+                            changed(policy) &&
+                            !files.some((file) => file.policyPath === policy.file?.policyPath) &&
+                            !deleted.some((candidate) => candidate.id === policy.id),
+                    ),
+                    ...unreadable,
+                ];
+                const takenNames = [...reloaded, ...added].map((policy) => policy.name);
+                const orphaned = vanished.map((policy) => {
+                    const kept = this.asNewPolicy(policy, takenNames);
+                    takenNames.push(kept.name);
+                    return kept;
+                });
                 this.policies.set([...reloaded, ...added, ...orphaned]);
                 this.deletedPolicies.set(deleted.filter((policy) => files.some((file) => file.policyPath === policy.file?.policyPath)));
                 if (this.stagedVersion() === editor.frameworkVersion) {
@@ -518,8 +537,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.reloaded`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
                 }
                 this.loading.set(false);
+                this.pendingScan.set(undefined);
             },
-            error: () => this.loading.set(false),
+            error: () => {
+                this.loading.set(false);
+                this.pendingScan.set(undefined);
+            },
         });
     }
 
@@ -530,6 +553,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected onScanRequested(on: boolean): void {
+        this.pendingScan.set(on);
         this.dialogMode.set(on ? 'scanOn' : 'scanOff');
         this.dialogOpen.set(true);
     }
@@ -559,6 +583,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     protected onDialogCancelled(): void {
         this.pendingToggle.set(undefined);
+        this.pendingScan.set(undefined);
     }
 
     protected onVersionChange(version: string): void {
@@ -589,12 +614,19 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.clearSettledBanner();
     }
 
-    /** @returns the policy as a new one with all of its current settings, assignments and rows as unsaved changes */
-    private asNewPolicy(policy: EditorPolicy): EditorPolicy {
+    /**
+     * @param takenNames the names of the other policies; the new one gets a number if its name is taken, so it is saved to a file of its own
+     * @returns the policy as a new one with all of its current settings, assignments and rows as unsaved changes
+     */
+    private asNewPolicy(policy: EditorPolicy, takenNames: readonly string[]): EditorPolicy {
         this.newPolicyCounter++;
+        let name = policy.name;
+        for (let number = 2; takenNames.includes(name); number++) {
+            name = `${policy.name} ${number}`;
+        }
         return {
             id: `new-${this.newPolicyCounter}`,
-            name: policy.name,
+            name,
             working: policy.working ? deepClone(policy.working) : undefined,
             baseTests: [],
             tests: [...policy.tests],
@@ -655,14 +687,22 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         return { key: `${PREFIX}.deletePolicy.committed`, params: { file: fileNameOf(policy.file?.policyPath ?? ''), count: policy.baseTests.length } };
     });
 
-    /** The label of the policy capturing each test of the other policies. */
-    protected otherTests(policyId: string): Map<string, string> {
-        const tests = new Map<string, string>();
-        this.testsByPolicy()
-            .filter((policy) => policy.id !== policyId)
-            .forEach((policy) => policy.tests.forEach((entry) => tests.set(entry, policy.label)));
-        return tests;
-    }
+    /** For each policy, by its id, the label of the policy capturing each test of the other policies. */
+    readonly otherTestsByPolicy = computed(
+        () =>
+            new Map(
+                this.testsByPolicy().map(({ id }) => {
+                    const tests = new Map<string, string>();
+                    this.testsByPolicy()
+                        .filter((policy) => policy.id !== id)
+                        .forEach((policy) => policy.tests.forEach((entry) => tests.set(entry, policy.label)));
+                    return [id, tests];
+                }),
+            ),
+    );
+
+    /** The map for a panel whose policy is not computed yet. */
+    protected readonly noOtherTests = new Map<string, string>();
 
     protected requestStructure(): void {
         if (this.structureRequested) {
@@ -726,7 +766,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             next: (preview) => this.reviewPreview.set(preview),
             error: (error: HttpErrorResponse) => {
                 this.reviewOpen.set(false);
-                this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: this.defaultCommitMessage() });
+                // Retry opens the review again, so nothing is committed without the diff; a failed commit from before is no longer retried.
+                this.failedRequest = undefined;
+                this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: this.defaultCommitMessage(), retry: 'review' });
             },
         });
     }
@@ -749,9 +791,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 this.configChange.emit(result.config);
                 this.versionCheck.set(undefined);
                 if (keepUnsaved) {
+                    // The scanning switch keeps the requested state until the reload shows the new commit.
                     this.reload();
                 } else {
                     this.applyEditor(result.editor);
+                    this.pendingScan.set(undefined);
                 }
                 this.banner.set({
                     kind: 'committed',
@@ -762,6 +806,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             },
             error: (error: HttpErrorResponse) => {
                 this.reviewOpen.set(false);
+                this.pendingScan.set(undefined);
                 if (error.status === 409) {
                     this.banner.set({ kind: 'conflict' });
                     // Name who changed the policies; the unsaved changes stay until the instructor reloads.
@@ -784,7 +829,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     protected retryCommit(): void {
         const banner = this.banner();
         const request = this.failedRequest;
-        if (request?.scan) {
+        if (banner?.kind === 'failed' && banner.retry === 'review') {
+            this.openReview();
+        } else if (request?.scan) {
             this.runCommit(request.change, request.keepUnsaved, request.scan);
         } else if (banner?.kind === 'failed') {
             this.commit(banner.commitMessage);
@@ -836,15 +883,18 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         });
     }
 
-    /** Replaces the policy shown in the YAML dialog with an imported file, as unsaved changes; the test cases stay assigned. */
-    protected importYaml(content: string): void {
+    /**
+     * Replaces the policy shown in the YAML dialog with an imported file, as unsaved changes; the test cases stay assigned. A file that was selected for
+     * another policy, e.g. because its read took long, is dropped.
+     */
+    protected importYaml(selected: SecurityYamlImport): void {
         const policy = this.yamlPolicy();
         const path = policy ? this.paths().get(policy.id) : undefined;
         const working = policy?.working;
-        if (!policy || !working || !path) {
+        if (!policy || !working || !path || path !== selected.policyPath) {
             return;
         }
-        this.securityService.importPolicy(this.exerciseId(), path, content).subscribe({
+        this.securityService.importPolicy(this.exerciseId(), path, selected.content).subscribe({
             next: (imported) => {
                 if (imported.document) {
                     const document = cloneWith(imported.document, { policyPath: working.policyPath });

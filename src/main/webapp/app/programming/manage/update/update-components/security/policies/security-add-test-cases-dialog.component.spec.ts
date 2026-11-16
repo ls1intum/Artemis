@@ -97,6 +97,22 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(applied[0]).not.toContain('de.a.MathTest');
     });
 
+    it('selects only the test cases a search shows and keeps assigned entries the tree does not show', () => {
+        fixture.componentRef.setInput('ownTests', ['de.a.SortingTest#bubble', 'de.a.SortingTest#gone']);
+        comp.visible.set(false);
+        fixture.detectChanges();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        comp.search.set('add');
+
+        const math = comp.view()[0].classes.find((node) => node.simpleName === 'MathTest')!;
+        expect(math.available).toEqual(['de.a.MathTest#add']);
+        handlers.toggleKeys(math.available);
+        handlers.apply();
+
+        expect(applied[0]).toEqual(['de.a.SortingTest#gone', 'de.a.SortingTest#bubble', 'de.a.MathTest#add']);
+    });
+
     it('checks a whole group and unchecks it when every case is selected', () => {
         const keys = comp.packages()[0].available;
         handlers.toggleKeys(keys);

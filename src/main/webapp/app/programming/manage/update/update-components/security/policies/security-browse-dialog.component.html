@@ -23,10 +23,10 @@
                 <p class="sp-mut m-0 p-2 text-sm">{{ prefix + 'empty' | artemisTranslate: { query: search() } }}</p>
             }
             @for (entry of visibleNodes(); track entry.node.path) {
-                <div class="sp-tree-row" [class]="'sp-level-' + (entry.depth > 2 ? 2 : entry.depth)" [class.sp-selected]="isSelected(entry.node)" data-testid="security-browse-row">
+                <div class="sp-tree-row" [class]="'sp-level-' + (entry.depth > 2 ? 2 : entry.depth)" [class.sp-selected]="entry.selected" data-testid="security-browse-row">
                     <tumaet-ui-checkbox
-                        [checked]="isSelected(entry.node)"
-                        [indeterminate]="isPartlySelected(entry.node)"
+                        [checked]="entry.selected"
+                        [indeterminate]="entry.partlySelected"
                         [ariaLabel]="(prefix + 'selectPath' | artemisTranslate) + ' ' + entry.node.path"
                         (changed)="toggleSelected(entry.node, $event.checked)"
                     />

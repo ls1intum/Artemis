@@ -25,6 +25,9 @@ import { EditorPolicy, PolicyChangeSummary, fileNameOf, withAssignment } from 'a
 /** The boxes of a policy, which open and close on their own. */
 export type PolicyBox = 'resources' | 'behaviour' | 'tests';
 
+/** Numbers the panels of the page, see {@link SecurityPolicyPanelComponent.idPrefix}. */
+let panelCounter = 0;
+
 /**
  * One security policy of the Manage Security Policies section (screen "Security Policy"): its file and unsaved changes in the header, its name and presets,
  * the supervised code it applies to, and the boxes Allow Resource Access, Configure Test Behaviour and Assign Test Cases. A policy the editor cannot keep
@@ -87,7 +90,8 @@ export class SecurityPolicyPanelComponent {
     });
     readonly preset = computed(() => this.presets().find((candidate) => candidate.name === this.working()?.preset));
     /** The id prefix of the fields of this policy, unique on the page. */
-    readonly idPrefix = computed(() => 'securityPolicy' + this.policy().id.replace(/[^A-Za-z0-9]/g, ''));
+    /** Unique per panel, so the labels of two panels never point to each other's controls, whatever the paths of their policies. */
+    readonly idPrefix = signal(`securityPolicy${++panelCounter}`);
 
     protected setBoxCollapsed(box: PolicyBox, collapsed: boolean): void {
         this.boxCollapsed.update((boxes) => cloneWith(boxes, { [box]: collapsed }));

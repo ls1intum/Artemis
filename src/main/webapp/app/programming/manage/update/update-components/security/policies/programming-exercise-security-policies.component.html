@@ -4,7 +4,7 @@
         [state]="cardState()"
         [toggleOn]="toggleOn()"
         [locked]="locked() || !canCommit()"
-        [scanDependencies]="scanDependencies()"
+        [scanDependencies]="shownScanDependencies()"
         [scanAvailable]="scanAvailable()"
         [scanBlocked]="scanBlockedByReadOnly()"
         [lastCommit]="editor()?.lastCommit"
@@ -44,11 +44,11 @@
                     @for (policy of policies(); track policy.id) {
                         <jhi-security-policy-panel
                             [policy]="policy"
-                            [summary]="summaryOf(policy.id)"
+                            [summary]="summaries().get(policy.id) ?? noChanges"
                             [policyPath]="paths().get(policy.id) ?? ''"
                             [presets]="presets()"
                             [structure]="structure()"
-                            [otherTests]="otherTests(policy.id)"
+                            [otherTests]="otherTestsByPolicy().get(policy.id) ?? noOtherTests"
                             [templateFiles]="templateFiles()"
                             [templateFilesTruncated]="templateFilesTruncated()"
                             [disabled]="editingDisabled()"

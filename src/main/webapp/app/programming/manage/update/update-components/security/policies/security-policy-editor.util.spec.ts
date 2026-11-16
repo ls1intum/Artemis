@@ -4,6 +4,7 @@ import dayjs from 'dayjs/esm';
 import { SecurityPolicyDocument, SecurityPolicyFile } from 'app/programming/shared/entities/security-policy.model';
 import {
     RowSource,
+    changedLineNumbers,
     classesOfTests,
     declaredTestClasses,
     diffLines,
@@ -74,6 +75,9 @@ describe('security-policy-editor.util', () => {
     it('declares the classes of the assigned tests and the extra classes, keeping the committed order', () => {
         expect(declaredTestClasses(['de.b.B', 'de.a.A'], ['de.a.A#test', 'de.c.C'], ['de.b.B'])).toEqual(['de.b.B', 'de.a.A', 'de.c.C']);
         expect(classesOfTests(['de.a.A#one', 'de.a.A#two', 'de.b.B'])).toEqual(['de.a.A', 'de.b.B']);
+        // A declaration of single test cases stays while its class is declared.
+        expect(declaredTestClasses(['de.a.A#one'], ['de.a.A#one', 'de.b.B'], [])).toEqual(['de.a.A#one', 'de.a.A', 'de.b.B']);
+        expect(declaredTestClasses(['de.a.A#one'], ['de.b.B'], [])).toEqual(['de.b.B']);
         expect(testClassOf('de.a.A#one')).toBe('de.a.A');
         expect(testClassOf('de.a.A')).toBe('de.a.A');
     });
@@ -129,6 +133,14 @@ describe('security-policy-editor.util', () => {
         expect(rebased.working?.mainClass).toBe('de.example.Main');
     });
 
+    it('lets a whole class assigned by the newer commit replace the test cases assigned in the unsaved changes', () => {
+        const policy = withAssignment(editorPolicyOf(FILE), ['de.example.SortingTest', 'de.example.StressTest#second'], []);
+        const newer: SecurityPolicyFile = { ...FILE, assignedTests: ['de.example.SortingTest', 'de.example.StressTest'] };
+
+        expect(rebasePolicy(policy, newer).tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
+        expect(changedLineNumbers('a\nb\n', 'a\nb\n')).toEqual(new Set());
+    });
+
     it('restores an entry without assigning a whole class together with one of its test cases', () => {
         expect(withRestoredEntry(['de.a.A#one', 'de.a.A#two', 'de.b.B'], 'de.a.A')).toEqual(['de.b.B', 'de.a.A']);
         expect(withRestoredEntry(['de.a.A'], 'de.a.A#one')).toEqual(['de.a.A']);
@@ -150,6 +162,9 @@ describe('security-policy-editor.util', () => {
         expect(formatAresDate(date)).toMatch(/^2026-12-24 23:59 \S+$/);
         expect(parseAresDate(formatAresDate(date))?.isSame(date)).toBe(true);
         expect(parseAresDate('soon')).toBeUndefined();
+        // A date written in another time zone keeps its instant.
+        expect(parseAresDate('2026-12-24 10:00 America/New_York')?.toISOString()).toBe('2026-12-24T15:00:00.000Z');
+        expect(parseAresDate('2026-12-24 10:00 Not/AZone')).toBeUndefined();
     });
 
     it('diffs two files side by side and collapses unchanged lines', () => {

@@ -346,7 +346,8 @@ export function classesOfTests(entries: readonly string[]): string[] {
  */
 export function declaredTestClasses(previous: readonly string[], tests: readonly string[], extraClasses: readonly string[]): string[] {
     const declared = new Set([...classesOfTests(tests), ...extraClasses]);
-    const kept = previous.filter((testClass) => declared.has(testClass));
+    // A declaration of single test cases, e.g. pkg.Test#first, stays as it is while its class is still declared in no other way.
+    const kept = previous.filter((testClass) => declared.has(testClass) || (testClass.includes(TEST_CASE_SEPARATOR) && declared.has(testClassOf(testClass))));
     const added = [...declared].filter((testClass) => !kept.includes(testClass)).sort((first, second) => first.localeCompare(second));
     return [...kept, ...added];
 }
@@ -425,7 +426,8 @@ export function editorPolicyOf(file: SecurityPolicyFile): EditorPolicy {
 /**
  * Applies the unsaved changes made on top of one commit to the policy of a newer commit, so a reload keeps them: rows added, changed or removed by key,
  * changed behaviour categories, a changed preset or file setting, and the tests and extra classes that were assigned or released. Where the newer commit
- * changed the same thing, the unsaved change wins.
+ * changed the same thing, the unsaved change wins, and a whole test class replaces the entries of its test cases. If the newer file cannot be edited here,
+ * the result is that read-only policy; the caller keeps the unsaved changes as a new policy.
  */
 export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): EditorPolicy {
     const fresh = editorPolicyOf(file);
@@ -465,9 +467,14 @@ export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): Ed
     for (const setting of changedFileSettings(oldBase, working)) {
         result = cloneWith(result, { [setting]: working[setting] });
     }
-    const tests = applyListChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests));
+    const tests = withoutCoveredTestCases(applyListChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests)));
     const extraClasses = applyListChanges(fresh.baseExtraClasses, listChanges(policy.baseExtraClasses, policy.extraClasses));
     return withAssignment(cloneWith(fresh, { working: cloneWith(result, { policyPath: working.policyPath }), name: policy.name }), tests, extraClasses);
+}
+
+/** @returns the entries without the test cases of a class that is assigned as a whole, which the server refuses together with it */
+export function withoutCoveredTestCases(tests: readonly string[]): string[] {
+    return tests.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR) || !tests.includes(testClassOf(entry)));
 }
 
 function applyListChanges(list: readonly string[], changes: { added: string[]; removed: string[] }): string[] {
@@ -547,12 +554,22 @@ export function formatAresDate(date: dayjs.Dayjs): string {
 
 /** @returns the date of a value in the format of the hidden tests of Ares, read in the time zone of the browser; undefined if it is no such date */
 export function parseAresDate(value: string | undefined): dayjs.Dayjs | undefined {
-    const match = value?.match(/^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2})/);
+    const match = value?.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(?: +(\S+))?/);
     if (!match) {
         return undefined;
     }
-    const date = dayjs(match[1].replace('T', ' '), ARES_DATE_FORMAT);
-    return date.isValid() ? date : undefined;
+    const wallTime = `${match[1]} ${match[2]}`;
+    const date = match[3] ? inZone(wallTime, match[3]) : dayjs(wallTime, ARES_DATE_FORMAT);
+    return date?.isValid() ? date : undefined;
+}
+
+/** @returns the wall time in the time zone as the same instant in the browser's time zone; undefined for an unknown zone */
+function inZone(wallTime: string, zone: string): dayjs.Dayjs | undefined {
+    try {
+        return dayjs.tz(wallTime, ARES_DATE_FORMAT, zone).local();
+    } catch {
+        return undefined;
+    }
 }
 
 /** One line of a side of the diff. */
@@ -690,6 +707,9 @@ export function diffStats(rows: DiffRow[]): { added: number; removed: number } {
 export function changedLineNumbers(before: string | undefined, after: string): Set<number> {
     if (before === undefined) {
         return new Set(splitLines(after).map((_, index) => index + 1));
+    }
+    if (before === after) {
+        return new Set<number>();
     }
     const numbers = new Set<number>();
     for (const row of diffLines(before, after)) {

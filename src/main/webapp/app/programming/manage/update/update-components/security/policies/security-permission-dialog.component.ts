@@ -87,12 +87,16 @@ export class SecurityPermissionDialogComponent {
     readonly path = signal('');
     readonly fileActions = signal<Record<FileAction, boolean>>({ read: false, overwrite: false, create: false, execute: false, delete: false });
     readonly host = signal('');
-    readonly port = signal<number | undefined>(undefined);
+    /** The text of the port field as typed; {@link port} is its value. */
+    readonly portText = signal('');
+    readonly port = computed(() => parseWholeNumber(this.portText()));
     readonly networkActions = signal<Record<NetworkAction, boolean>>({ open: false, send: false, receive: false });
     readonly command = signal('');
     readonly argumentsText = signal('');
     readonly threadClass = signal('');
-    readonly maxThreads = signal<number | undefined>(undefined);
+    /** The text of the thread count field as typed; {@link maxThreads} is its value. */
+    readonly maxThreadsText = signal('');
+    readonly maxThreads = computed(() => parseWholeNumber(this.maxThreadsText()));
     readonly packageName = signal('');
     readonly browseOpen = signal(false);
     /** Whether the instructor tried to save, so the problems of the fields show. */
@@ -196,6 +200,10 @@ export class SecurityPermissionDialogComponent {
             default:
                 break;
         }
+        const batchKeys = this.rows().map((row) => rowKey(this.kind(), row));
+        if (new Set(batchKeys).size < batchKeys.length) {
+            return prefix + 'duplicate';
+        }
         const edited = this.editing();
         const editedKey = edited ? rowKey(this.kind(), edited) : undefined;
         if (this.rows().some((row) => rowKey(this.kind(), row) !== editedKey && this.existingKeys().has(rowKey(this.kind(), row)))) {
@@ -268,12 +276,12 @@ export class SecurityPermissionDialogComponent {
         this.path.set(file?.path ?? '');
         this.fileActions.set({ read: !!file?.read, overwrite: !!file?.overwrite, create: !!file?.create, execute: !!file?.execute, delete: !!file?.delete });
         this.host.set(endpoint?.host ?? '');
-        this.port.set(endpoint?.port);
+        this.portText.set(endpoint?.port === undefined ? '' : String(endpoint.port));
         this.networkActions.set({ open: !!endpoint?.open, send: !!endpoint?.send, receive: !!endpoint?.receive });
         this.command.set(command?.command ?? '');
         this.argumentsText.set(joinArguments(command?.arguments ?? []));
         this.threadClass.set(thread?.threadClass ?? '');
-        this.maxThreads.set(thread?.maxThreads);
+        this.maxThreadsText.set(thread?.maxThreads === undefined ? '' : String(thread.maxThreads));
         this.packageName.set(permission?.packageName ?? '');
     }
 
@@ -287,14 +295,6 @@ export class SecurityPermissionDialogComponent {
 
     private withAction<A extends string>(actions: Record<A, boolean>, action: A, granted: boolean): Record<A, boolean> {
         return Object.fromEntries(Object.entries(actions).map(([key, value]) => [key, key === action ? granted : value])) as Record<A, boolean>;
-    }
-
-    protected onPortInput(value: string): void {
-        this.port.set(value.trim() === '' ? undefined : Number(value));
-    }
-
-    protected onMaxThreadsInput(value: string): void {
-        this.maxThreads.set(value.trim() === '' ? undefined : Number(value));
     }
 
     protected openBrowse(): void {
@@ -329,6 +329,12 @@ export function splitList(text: string): string[] {
         .split(',')
         .map((entry) => entry.trim())
         .filter((entry) => entry.length > 0);
+}
+
+/** @returns the number of a field that holds digits only; undefined for any other text, which the field's problem then names */
+function parseWholeNumber(text: string): number | undefined {
+    const trimmed = text.trim();
+    return /^\d+$/.test(trimmed) ? Number(trimmed) : undefined;
 }
 
 /** Whether the value is a whole number between the bounds, both included. */

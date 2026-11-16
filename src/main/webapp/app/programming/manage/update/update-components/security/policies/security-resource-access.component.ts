@@ -16,6 +16,7 @@ import {
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
     SecurityCommandPermission,
     SecurityFilePermission,
@@ -124,8 +125,6 @@ export class SecurityResourceAccessComponent {
     );
 
     /** The number of rows each tab shows, without the deleted ones, and whether the category has unsaved changes. */
-    protected readonly joinArguments = joinArguments;
-
     readonly tabCounts = computed(
         () =>
             Object.fromEntries(
@@ -137,6 +136,30 @@ export class SecurityResourceAccessComponent {
     );
 
     readonly activeRows = computed(() => this.rowsByKind()[this.activeTab()]);
+
+    /** The rows of the active category as the table shows them: the text of each column and the granted actions. */
+    readonly activeRowViews = computed(() => {
+        const kind = this.activeTab();
+        return this.activeRows().map((row) => cloneWith(row, { cells: this.cellsOf(kind, row.row), tags: this.grantedTags(kind, row.row) }));
+    });
+
+    /** @returns the text of each column of a row before the granted actions; empty for a command without arguments */
+    private cellsOf(kind: ResourceKind, row: ResourceRow): string[] {
+        switch (kind) {
+            case 'files':
+                return [this.asFile(row).path];
+            case 'network':
+                return [this.asEndpoint(row).host, String(this.asEndpoint(row).port)];
+            case 'commands':
+                return [this.asCommand(row).command, joinArguments(this.asCommand(row).arguments ?? [])];
+            case 'threads':
+                return [String(this.asThread(row).maxThreads), this.asThread(row).threadClass];
+            case 'packages':
+                return [this.asPackage(row).packageName];
+            default:
+                return [];
+        }
+    }
 
     readonly existingKeys = computed(
         () =>
@@ -167,28 +190,28 @@ export class SecurityResourceAccessComponent {
     });
 
     // The rows of a category as their own types, so the template can read their fields.
-    protected asFile(row: ResourceRow): SecurityFilePermission {
+    private asFile(row: ResourceRow): SecurityFilePermission {
         return row as SecurityFilePermission;
     }
 
-    protected asEndpoint(row: ResourceRow): SecurityNetworkPermission {
+    private asEndpoint(row: ResourceRow): SecurityNetworkPermission {
         return row as SecurityNetworkPermission;
     }
 
-    protected asCommand(row: ResourceRow): SecurityCommandPermission {
+    private asCommand(row: ResourceRow): SecurityCommandPermission {
         return row as SecurityCommandPermission;
     }
 
-    protected asThread(row: ResourceRow): SecurityThreadPermission {
+    private asThread(row: ResourceRow): SecurityThreadPermission {
         return row as SecurityThreadPermission;
     }
 
-    protected asPackage(row: ResourceRow): SecurityPackagePermission {
+    private asPackage(row: ResourceRow): SecurityPackagePermission {
         return row as SecurityPackagePermission;
     }
 
     /** @returns the tags of the Granted column: the actions of a file or network row, and the one thing the other rows allow */
-    protected grantedTags(kind: ResourceKind, row: ResourceRow): GrantedTag[] {
+    private grantedTags(kind: ResourceKind, row: ResourceRow): GrantedTag[] {
         switch (kind) {
             case 'files': {
                 const file = row as SecurityFilePermission;

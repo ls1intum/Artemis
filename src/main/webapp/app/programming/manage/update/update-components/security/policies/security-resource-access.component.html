@@ -53,58 +53,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (entry of activeRows(); track entry.key + entry.source) {
+                    @for (entry of activeRowViews(); track entry.key + entry.source) {
                         <tr
                             [class.sp-row-preset]="entry.source === RowSource.PRESET"
                             [class.sp-row-removed]="entry.source === RowSource.REMOVED"
                             data-testid="security-resource-row"
                         >
-                            @switch (activeTab()) {
-                                @case ('files') {
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asFile(entry.row).path }}</span>
-                                    </td>
-                                }
-                                @case ('network') {
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asEndpoint(entry.row).host }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asEndpoint(entry.row).port }}</span>
-                                    </td>
-                                }
-                                @case ('commands') {
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asCommand(entry.row).command }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">
-                                            @if (asCommand(entry.row).arguments?.length) {
-                                                {{ joinArguments(asCommand(entry.row).arguments ?? []) }}
-                                            } @else {
-                                                <span class="sp-mut" [jhiTranslate]="prefix + 'noArguments'"></span>
-                                            }
-                                        </span>
-                                    </td>
-                                }
-                                @case ('threads') {
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asThread(entry.row).maxThreads }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asThread(entry.row).threadClass }}</span>
-                                    </td>
-                                }
-                                @case ('packages') {
-                                    <td>
-                                        <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">{{ asPackage(entry.row).packageName }}</span>
-                                    </td>
-                                }
-                                @default {}
+                            @for (cell of entry.cells; track $index) {
+                                <td>
+                                    <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">
+                                        @if (cell !== '') {
+                                            {{ cell }}
+                                        } @else {
+                                            <span class="sp-mut" [jhiTranslate]="prefix + 'noArguments'"></span>
+                                        }
+                                    </span>
+                                </td>
                             }
                             <td>
                                 <span class="sp-cell sp-tags">
-                                    @for (tag of grantedTags(activeTab(), entry.row); track tag.labelKey) {
+                                    @for (tag of entry.tags; track tag.labelKey) {
                                         <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="tag.tooltipKey | artemisTranslate: tag.params" tabindex="0">
                                             <span [jhiTranslate]="tag.labelKey"></span>
                                         </tumaet-ui-tag>

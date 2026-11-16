@@ -47,14 +47,13 @@ type Handlers = {
     discard(announce?: boolean): void;
     reload(announce?: boolean): void;
     openYaml(policy: EditorPolicy): void;
-    importYaml(content: string): void;
+    importYaml(selected: { content: string; policyPath: string }): void;
     renderYamlUnsaved(): void;
     retryLoad(): void;
     retryCommit(): void;
     dismissBanner(): void;
     requestStructure(): void;
     requestTemplateFiles(): void;
-    otherTests(policyId: string): Map<string, string>;
 };
 
 describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
@@ -287,7 +286,9 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         );
 
         handlers.openYaml(policy);
-        handlers.importYaml('content');
+        handlers.importYaml({ content: 'other', policyPath: 'Other.yaml' });
+        expect(service.importPolicy).not.toHaveBeenCalled();
+        handlers.importYaml({ content: 'content', policyPath: 'SecurityPolicy.yaml' });
 
         const imported = comp.policies()[0];
         expect(imported.working?.files).toEqual([]);
@@ -312,7 +313,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         ]);
         expect(comp.reviewSummary()).toContain('review.basedOn');
         expect(comp.defaultCommitMessage()).toBe('artemisApp.programmingExercise.security.advanced.review.defaultMessage');
-        expect(handlers.otherTests(committed.id)).toEqual(new Map([['de.example.SortingTest#merge', expect.any(String)]]));
+        expect(comp.otherTestsByPolicy().get(committed.id)).toEqual(new Map([['de.example.SortingTest#merge', expect.any(String)]]));
     });
 
     it('names the problems of a policy without a name, with an invalid hidden period and of two policies in one file', () => {
@@ -414,7 +415,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.yamlUnsaved()).toBe('rendered');
 
         service.importPolicy.mockReturnValue(of({ policyPath: 'SecurityPolicy.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3 }));
-        handlers.importYaml('broken: [');
+        handlers.importYaml({ content: 'broken: [', policyPath: 'SecurityPolicy.yaml' });
         expect(comp.importNotice()).toEqual({ severity: 'error', text: 'artemisApp.programmingExercise.security.advanced.policy.readOnlyReason.YAML_ERROR' });
     });
 
@@ -498,6 +499,53 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         expect(comp.scanBlockedByReadOnly()).toBe(true);
         expect(comp.scanAvailable()).toBe(false);
+    });
+
+    it('opens the review again when Retry follows a failed preview, instead of committing', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        service.previewPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        handlers.openReview();
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'failed', retry: 'review' }));
+
+        handlers.retryCommit();
+
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+        expect(comp.reviewOpen()).toBe(true);
+    });
+
+    it('shows the requested scanning state until the dialog is cancelled or the commit is done', () => {
+        create(configured(), false);
+
+        handlers.onScanRequested(true);
+        expect(comp.shownScanDependencies()).toBe(true);
+        handlers.onDialogCancelled();
+        expect(comp.shownScanDependencies()).toBe(false);
+
+        service.commitPolicies.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        handlers.onScanRequested(true);
+        handlers.onDialogConfirmed(undefined);
+        expect(comp.shownScanDependencies()).toBe(false);
+    });
+
+    it('keeps the changes to a policy that can no longer be read as a new policy with a name of its own', () => {
+        create(configured(), false);
+        handlers.onPolicyChange({ ...comp.policies()[0], working: withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.apache.commons' }]) });
+        service.getPolicies.mockReturnValue(
+            of({
+                ...editor('d'.repeat(40)),
+                policies: [{ policyPath: 'SecurityPolicy.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3, assignedTests: ['de.example.SortingTest'] }],
+            }),
+        );
+
+        handlers.reload(true);
+
+        expect(comp.policies().map((policy) => [policy.name, !!policy.file, !!policy.working])).toEqual([
+            ['Security Policy', true, false],
+            ['Security Policy 2', false, true],
+        ]);
+        expect(comp.policies()[1].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
+        expect(comp.banner()).toEqual({ kind: 'orphaned', files: 'SecurityPolicy.yaml' });
     });
 
     it('discards every unsaved change', () => {

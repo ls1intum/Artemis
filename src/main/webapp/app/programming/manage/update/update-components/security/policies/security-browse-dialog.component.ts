@@ -29,6 +29,10 @@ interface VisibleNode {
     node: BrowseNode;
     depth: number;
     expanded: boolean;
+    /** Whether the row is checked: the path itself, or every script of a folder of scripts. */
+    selected: boolean;
+    /** Whether some but not all scripts of a folder are checked. */
+    partlySelected: boolean;
 }
 
 /** File names and extensions that are run as programs. */
@@ -115,7 +119,7 @@ export class SecurityBrowseDialogComponent {
                     continue;
                 }
                 const isExpanded = node.folder && (query.length > 0 || expanded.has(node.path));
-                rows.push({ node, depth, expanded: isExpanded });
+                rows.push({ node, depth, expanded: isExpanded, selected: this.isSelected(node), partlySelected: this.isPartlySelected(node) });
                 if (isExpanded) {
                     visit(node.children, depth + 1);
                 }

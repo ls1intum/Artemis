@@ -19,6 +19,12 @@ export interface SecurityImportNotice {
     text: string;
 }
 
+/** An imported policy file and the policy it was selected for. */
+export interface SecurityYamlImport {
+    content: string;
+    policyPath: string;
+}
+
 /**
  * Shows the YAML file of a security policy read-only, as committed or with the unsaved changes, whose lines are highlighted (screen "View YAML"). The keys are the field names Ares reads, so an instructor can relate the editor to the documentation of Ares. Export downloads the shown file;
  * Import replaces the policy with a YAML file as unsaved changes.
@@ -61,7 +67,11 @@ export class SecurityYamlDialogComponent {
     readonly notice = input<SecurityImportNotice | undefined>(undefined);
 
     readonly unsavedRequested = output<void>();
-    readonly imported = output<string>();
+    /** Emits an imported file with the path of the policy it was selected for, so it never replaces another policy. */
+    readonly imported = output<SecurityYamlImport>();
+
+    /** Counts the selected files, so that a slow read is dropped once a newer file was selected. */
+    private importCount = 0;
 
     readonly view = signal<YamlView>('unsaved');
     readonly copied = signal(false);
@@ -143,6 +153,11 @@ export class SecurityYamlDialogComponent {
             return;
         }
         this.importError.set(undefined);
-        this.imported.emit(await file.text());
+        const target = this.policyPath();
+        const selection = ++this.importCount;
+        const content = await file.text();
+        if (selection === this.importCount) {
+            this.imported.emit({ content, policyPath: target });
+        }
     }
 }

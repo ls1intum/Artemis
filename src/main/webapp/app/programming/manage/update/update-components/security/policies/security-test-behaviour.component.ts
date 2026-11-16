@@ -115,6 +115,9 @@ export class SecurityTestBehaviourComponent {
         return !!from && !!until && !until.isAfter(from);
     });
 
+    /** The tabs whose category differs from the committed policy. */
+    readonly uncommittedTabs = computed(() => new Set(BEHAVIOUR_TABS.filter((tab) => this.isUncommitted(tab))));
+
     /** Whether the category of a tab differs from the committed policy. */
     isUncommitted(tab: BehaviourTab): boolean {
         const category = BEHAVIOUR_CATEGORY_OF_TAB[tab];
@@ -221,7 +224,8 @@ export class SecurityTestBehaviourComponent {
 
     protected setMaximumCharacters(value: string | number): void {
         const current = this.outputMirroring();
-        const parsed = Number(String(value).replace(/[\s_.,]/g, ''));
+        // A number from the number input is checked as it is, so 1.5 is refused; only text may group its digits, e.g. 1_000_000.
+        const parsed = typeof value === 'number' ? value : Number(value.replace(/[\s_.,]/g, ''));
         if (current && Number.isInteger(parsed) && parsed > 0) {
             this.update('outputMirroring', cloneWith(current, { maximumCharacters: parsed }));
         }

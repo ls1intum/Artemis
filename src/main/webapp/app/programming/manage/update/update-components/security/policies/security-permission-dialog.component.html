@@ -50,8 +50,8 @@
                                 tumAetUiInput
                                 class="sp-mono"
                                 inputmode="numeric"
-                                [ngModel]="port() ?? ''"
-                                (ngModelChange)="onPortInput($event)"
+                                [ngModel]="portText()"
+                                (ngModelChange)="portText.set($event)"
                                 [attr.aria-invalid]="invalid === 'port' ? true : null"
                                 data-testid="security-permission-port"
                             />
@@ -119,8 +119,8 @@
                                 tumAetUiInput
                                 class="sp-mono"
                                 inputmode="numeric"
-                                [ngModel]="maxThreads() ?? ''"
-                                (ngModelChange)="onMaxThreadsInput($event)"
+                                [ngModel]="maxThreadsText()"
+                                (ngModelChange)="maxThreadsText.set($event)"
                                 [attr.aria-invalid]="invalid === 'maxThreads' ? true : null"
                                 data-testid="security-permission-max-threads"
                             />

@@ -67,7 +67,9 @@ describe('SecurityTestBehaviourComponent', () => {
         handlers.setMaximumCharacters('1_000');
         expect(emitted.at(-1)?.outputMirroring?.maximumCharacters).toBe(1000);
         handlers.setMaximumCharacters('-5');
+        handlers.setMaximumCharacters(1.5);
         expect(emitted.at(-1)?.outputMirroring?.maximumCharacters).toBe(1000);
+        expect(comp.uncommittedTabs().has('output')).toBe(true);
 
         handlers.setMirrorOutput(false);
         expect(emitted.at(-1)).toEqual(base);

@@ -85,7 +85,7 @@ describe('SecurityYamlDialogComponent', () => {
     });
 
     it('imports a selected file and refuses a file that is too large', async () => {
-        const imported: string[] = [];
+        const imported: { content: string; policyPath: string }[] = [];
         comp.imported.subscribe((content) => imported.push(content));
         const select = (file: Partial<File>) => handlers.onFileSelected({ target: { files: [file], value: 'x' } } as unknown as Event);
 
@@ -93,7 +93,7 @@ describe('SecurityYamlDialogComponent', () => {
         expect(comp.importError()).toBe('artemisApp.programmingExercise.security.advanced.yaml.importTooLarge');
 
         await select({ size: 10, text: () => Promise.resolve('a: 1\n') });
-        expect(imported).toEqual(['a: 1\n']);
+        expect(imported).toEqual([{ content: 'a: 1\n', policyPath: 'test/SecurityPolicy.yaml' }]);
         expect(comp.importError()).toBeUndefined();
     });
 });

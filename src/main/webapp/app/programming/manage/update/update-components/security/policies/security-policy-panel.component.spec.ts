@@ -57,7 +57,8 @@ describe('SecurityPolicyPanelComponent', () => {
         for (const id of ['security-policy-resources', 'security-policy-behaviour', 'security-policy-tests', 'security-policy-supervised']) {
             expect(element.querySelector(`[data-testid="${id}"]`)).not.toBeNull();
         }
-        expect(comp.idPrefix()).toBe('securityPolicytestSecurityPolicyyaml');
+        expect(comp.idPrefix()).toMatch(/^securityPolicy\d+$/);
+        expect(TestBed.createComponent(SecurityPolicyPanelComponent).componentInstance.idPrefix()).not.toBe(comp.idPrefix());
 
         handlers.onNameChange('Stress');
         handlers.onPresetsChange(['A', 'B']);

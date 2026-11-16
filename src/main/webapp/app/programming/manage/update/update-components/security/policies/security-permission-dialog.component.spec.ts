@@ -75,14 +75,25 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(saved[0]).toEqual([{ ...edited, overwrite: true }]);
     });
 
+    it('refuses the same entry twice in one save', () => {
+        open('files');
+        comp.path.set('a.txt, a.txt');
+        handlers.setFileAction('read', true);
+
+        expect(comp.problem()).toBe(PROBLEM + 'duplicate');
+    });
+
     it('checks the host and the port of an endpoint', () => {
         open('network');
         comp.host.set('local host');
         expect(comp.problem()).toBe(PROBLEM + 'hostRequired');
         comp.host.set('localhost');
-        comp.port.set(70000);
+        comp.portText.set('80.');
+        expect(comp.portText()).toBe('80.');
         expect(comp.problem()).toBe(PROBLEM + 'portRange');
-        comp.port.set(8080);
+        comp.portText.set('70000');
+        expect(comp.problem()).toBe(PROBLEM + 'portRange');
+        comp.portText.set('8080');
         handlers.setNetworkAction('open', true);
 
         handlers.save();
@@ -102,9 +113,9 @@ describe('SecurityPermissionDialogComponent', () => {
 
         open('threads');
         comp.threadClass.set('java.lang.Thread');
-        comp.maxThreads.set(0);
+        comp.maxThreadsText.set('0');
         expect(comp.problem()).toBe(PROBLEM + 'threadCount');
-        comp.maxThreads.set(4);
+        comp.maxThreadsText.set('4');
         handlers.save();
         expect(saved[0]).toEqual([{ threadClass: 'java.lang.Thread', maxThreads: 4 }]);
 

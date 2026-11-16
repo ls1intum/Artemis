@@ -52,8 +52,16 @@ describe('Security activation', () => {
             fixture.componentRef.setInput('scanBlocked', true);
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('[data-testid="security-advanced-scan"]')).not.toBeNull();
-            expect(fixture.componentInstance.scanBlocked()).toBe(true);
+            const scanned = vi.fn();
+            fixture.componentInstance.scanRequested.subscribe(scanned);
+            const toggle = (): HTMLInputElement | null => fixture.nativeElement.querySelector('[data-testid="security-advanced-scan"] input');
+            expect(toggle()?.disabled).toBe(true);
+            toggle()?.click();
+            expect(scanned).not.toHaveBeenCalled();
+
+            fixture.componentRef.setInput('scanBlocked', false);
+            fixture.detectChanges();
+            expect(toggle()?.disabled).toBe(false);
         });
 
         it('shows only the toggle while the sandbox is off', () => {
