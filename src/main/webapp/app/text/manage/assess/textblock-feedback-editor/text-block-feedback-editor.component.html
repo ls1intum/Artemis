@@ -20,31 +20,54 @@
     <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
         @if (criteria(); as criteriaList) {
             @if (criteriaList.length > 0) {
-                <div class="dropdown" ngbDropdown>
-                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
-                    @if (criteriaList.length === 1) {
-                        <div ngbDropdownMenu>
-                            <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
-                        </div>
-                    } @else {
-                        <ul class="dropdown-menu" ngbDropdownMenu>
-                            @for (criterion of criteriaList; track criterion) {
-                                <li>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    data-testid="feedback-instruction-menu"
+                    [tumAetUiMenuTrigger]="instructionMenu"
+                    [attr.aria-label]="connectToInstructionAriaLabel()"
+                >
+                    <fa-icon [icon]="faCaretDown" />
+                </button>
+                <!-- The kit menu has no submenus, so the instructions of all criteria are listed in one menu, below the title of their criterion. -->
+                <ng-template #instructionMenu>
+                    <tumaet-ui-menu class="max-h-[60vh]!">
+                        @for (criterion of criteriaList; track criterion) {
+                            @if (criteriaList.length > 1) {
+                                <div class="px-3! pt-2 pb-1 text-sm font-semibold text-muted-color" role="presentation">
                                     @if (criterion.title) {
-                                        <button type="button" class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></button>
+                                        {{ criterion.title }}
                                     } @else {
-                                        <button type="button" class="dropdown-item">
-                                            <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" />
-                                        </button>
+                                        <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>
                                     }
-                                    <div class="dropdown-menu dropdown-submenu">
-                                        <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
-                                    </div>
-                                </li>
+                                </div>
                             }
-                        </ul>
-                    }
-                </div>
+                            @for (instruction of criterion.structuredGradingInstructions; track instruction) {
+                                <button
+                                    type="button"
+                                    tumAetUiMenuItem
+                                    class="w-full py-1!"
+                                    [style.background-color]="getInstrColour(instruction)"
+                                    (triggered)="updateAssessmentWithDropdown(instruction)"
+                                >
+                                    <span class="min-w-11 font-bold">{{ instruction.credits }}P</span>
+                                    <span class="line-clamp-2 w-max max-w-[30vw] overflow-hidden text-ellipsis whitespace-break-spaces">{{
+                                        instruction.instructionDescription
+                                    }}</span>
+                                    <span class="ms-auto flex items-center gap-1">
+                                        @if (instruction.usageCount) {
+                                            <span>{{ instruction.usageCount }}</span>
+                                        } @else {
+                                            &#8734;
+                                        }
+                                        <!-- if the usage count has no limit, the infinity symbol is displayed (= &#8734) -->
+                                        <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
+                                    </span>
+                                </button>
+                            }
+                        }
+                    </tumaet-ui-menu>
+                </ng-template>
             }
         }
     </ng-container>

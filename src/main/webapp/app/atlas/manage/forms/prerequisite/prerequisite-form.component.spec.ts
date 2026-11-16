@@ -3,7 +3,6 @@ import type { Mocked } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -42,7 +41,7 @@ describe('PrerequisiteFormComponent', () => {
         courseCompetencyServiceMock.getCourseCompetencyTitles.mockReturnValue(of(new HttpResponse({ body: [] })));
 
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule],
+            imports: [CompetencyFormComponent, ReactiveFormsModule],
             providers: [
                 { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -257,7 +257,8 @@
                 "addContextTooltip": "Vorlesung oder Aufgabe wählen",
                 "tutorSuggestionContext": "Tutor-Vorschlag",
                 "searchLabel": "Vorlesungen und Aufgaben suchen",
-                "removeContext": "Chat-Kontext entfernen"
+                "removeContext": "Chat-Kontext entfernen",
+                "noResults": "Keine Ergebnisse gefunden"
             },
             "citation": {
                 "unitLabel": "Einheit:",

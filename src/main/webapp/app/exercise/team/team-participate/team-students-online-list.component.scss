@@ -1,11 +1,3 @@
-@mixin status-change-transition() {
-    transition: 0.1s color ease-out;
-
-    .online & {
-        transition: 0.05s color ease-in;
-    }
-}
-
 :host {
     display: block;
 }
@@ -35,8 +27,6 @@
     .student-status {
         display: inline-flex;
         color: var(--tumaet-ui-muted-color);
-
-        @include status-change-transition;
     }
 
     .student-name {
@@ -45,11 +35,19 @@
         overflow: hidden;
         white-space: nowrap;
         color: var(--tumaet-ui-muted-color);
+    }
 
-        @include status-change-transition;
+    .student-status,
+    .student-name {
+        transition: 0.1s color ease-out;
     }
 
     .online {
+        .student-status,
+        .student-name {
+            transition: 0.05s color ease-in;
+        }
+
         .student-status {
             color: var(--tumaet-ui-state-success);
         }
