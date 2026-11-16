@@ -1553,7 +1553,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testJoiningWithWrongPasswordsTooOftenIsRejected() throws Exception {
+    void testJoiningTooOftenIsRejected() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(2),
                 QuizMode.BATCHED);
         QuizBatch batch = new QuizBatch();
@@ -1565,7 +1565,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         RateLimitTestUtil.withRateLimits(requestLimitAspect, properties -> properties.setQuizBatchJoinRequestsPerMinute(2), () -> {
             request.postWithResponseBody(joinUrl, new QuizBatchJoinDTO("00000001"), QuizBatch.class, HttpStatus.BAD_REQUEST);
             request.postWithResponseBody(joinUrl, new QuizBatchJoinDTO("00000002"), QuizBatch.class, HttpStatus.BAD_REQUEST);
-            // the attempts are refused before the password is compared, so not even the right password gets in once the budget is used up
+            // once the budget is used up, further attempts are refused before the batch password is compared
             request.postWithResponseBody(joinUrl, new QuizBatchJoinDTO("12345678"), QuizBatch.class, HttpStatus.TOO_MANY_REQUESTS);
         });
     }

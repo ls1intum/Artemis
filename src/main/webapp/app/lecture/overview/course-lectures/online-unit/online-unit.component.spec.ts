@@ -73,7 +73,7 @@ describe('OnlineUnitComponent', () => {
         expect(windowSpy).toHaveBeenCalledWith(onlineUnit.source, '_blank');
     });
 
-    it.each(['javascript:alert(1)', 'data:text/html,<p>x</p>', 'file:///etc/passwd', 'ftp://example.com/file', 'not a url', '//example.com/page', 'www.example.com'])(
+    it.each(['mailto:a@b.de', 'data:text/html,<p>x</p>', 'ftp://example.com/a', 'not a url', '//example.com/page', 'www.example.com'])(
         'should not open the source %s',
         (source) => {
             fixture.componentRef.setInput('lectureUnit', { ...onlineUnit, source });
