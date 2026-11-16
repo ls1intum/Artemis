@@ -38,8 +38,9 @@
 }
 
 .list-group-item.active {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
+    background-color: var(--tumaet-ui-highlight-background);
+    border-color: var(--tumaet-ui-highlight-background);
+    color: var(--tumaet-ui-highlight-color);
 }
 
 .list-group-item {

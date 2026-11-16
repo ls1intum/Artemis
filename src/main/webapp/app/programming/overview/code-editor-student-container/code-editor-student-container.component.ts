@@ -28,6 +28,7 @@ import { ProgrammingExerciseInstructionComponent } from '../../shared/instructio
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -42,6 +43,7 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         CodeEditorRepositoryIsLockedComponent,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
         AdditionalFeedbackComponent,
     ],
@@ -56,6 +58,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     readonly participationId = input<number>();
+    /**
+     * Whether the editor is a page of its own and not the editor next to the problem statement on the exercise page. That is the code of a student
+     * that an instructor opens from the participations page.
+     */
+    readonly fullPage = signal(false);
     readonly lightweight = signal(false);
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
@@ -88,6 +95,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
+        this.fullPage.set(!!this.route.snapshot.data['fullPageEditor']);
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
@@ -99,7 +107,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                         this.participation.set(participationWithResults);
                         const exercise = participationWithResults.exercise as ProgrammingExercise;
                         this.exercise.set(exercise);
-                        this.lightweight.set(!exercise?.exerciseGroup);
+                        // The exercise page shows the instructions next to this editor, so there it leaves out its own. As a page of its own it brings them.
+                        this.lightweight.set(!exercise?.exerciseGroup && !this.fullPage());
                         const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
                         this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));

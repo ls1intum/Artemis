@@ -293,6 +293,16 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testSaveExampleAssessmentAsTutor_forbidden() throws Exception {
+        ExampleSubmission storedExampleSubmission = participationUtilService
+                .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
+        List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", toFeedbackDTOs(feedbackList), ResultDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
@@ -301,6 +311,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 toFeedbackDTOs(feedbackList), ResultDTO.class, HttpStatus.OK);
         assertThat(storedResult.exampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
+        // the tutor reads the example assessment
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         var result = request.get(
                 "/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, ResultDTO.class);
@@ -318,7 +330,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @ParameterizedTest
     @ValueSource(strings = { "own", "foreign", "missing" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exampleAssessmentValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
         boolean ownInstruction = instructionSource.equals("own");
         var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
@@ -373,7 +385,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, false));
@@ -382,6 +394,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
                 toFeedbackDTOs(feedbackList), ResultDTO.class, HttpStatus.OK);
         assertThat(storedResult.exampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.get("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, ResultDTO.class);
     }
@@ -409,6 +422,18 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.FORBIDDEN);
         Optional<Result> storedResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(storedResult).as("result is not saved").isNotPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAssessmentSave_ownSubmission_forbidden() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "tutor1");
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.FORBIDDEN);
+
+        assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("result is not saved").isNotPresent();
     }
 
     @Test

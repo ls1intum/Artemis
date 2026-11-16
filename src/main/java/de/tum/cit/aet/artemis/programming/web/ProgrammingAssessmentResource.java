@@ -186,6 +186,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         newManualResult.setCorrectionRound(existingManualResult.getCorrectionRound());
 
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
+        checkNotAssessingOwnParticipation(participation, user, isAtLeastInstructor);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
             throw new AccessForbiddenException("The user is not allowed to override the assessment");

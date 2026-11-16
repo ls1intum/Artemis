@@ -322,6 +322,25 @@ describe('FaqComponent', () => {
         categoriesResponse.complete();
     });
 
+    it('keeps the edit and delete actions of an FAQ row inline in one group', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+
+        const row = faqComponentFixture.nativeElement.querySelector('#faq-2') as HTMLElement;
+        const actions = row.querySelector('[data-testid="faq-row-actions"]') as HTMLElement;
+        const edit = actions.querySelector('a[tumAetUiButton]') as HTMLElement;
+        const deleteButton = actions.querySelector('#delete-faq-2') as HTMLElement;
+
+        expect(edit).not.toBeNull();
+        expect(deleteButton).not.toBeNull();
+        // Both buttons are direct children of the same wrapping row, so they share a line when there is room.
+        expect(edit.parentElement).toBe(actions);
+        expect(deleteButton.parentElement).toBe(actions);
+        expect(actions.classList).toContain('flex-wrap');
+        expect(actions.querySelector('.flex-col')).toBeNull();
+    });
+
     it('offers FAQ import to instructors and hides it from tutors', () => {
         faqComponentFixture.detectChanges();
         faqComponent.isAtLeastInstructor.set(true);

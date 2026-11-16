@@ -98,7 +98,7 @@ jobs:
       - name: Setup Node.js for dependency selection
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26'
       - name: Determine relevant tests
         id: determine
         run: supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh base_branch
@@ -138,7 +138,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -173,7 +173,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -185,11 +185,11 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 1
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) && 'error' || 'warn' }}
 
       - name: E2E Test Report
         id: e2e-report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         uses: ./.github/actions/e2e-test-report
         with:
           artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -199,13 +199,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh phase1-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase1-test-results/results.xml
@@ -357,7 +357,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -389,7 +389,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -401,11 +401,11 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 2
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) && 'error' || 'warn' }}
 
       - name: E2E Test Report
         id: e2e-report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         uses: ./.github/actions/e2e-test-report
         with:
           artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -415,13 +415,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh phase2-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase2-test-results/results.xml
@@ -565,7 +565,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -596,7 +596,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -607,10 +607,10 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) && 'error' || 'warn' }}
 
       - name: Download all tests results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -618,8 +618,8 @@ jobs:
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
-        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         with:
           commit: ${{ inputs.commit_sha }}
           check_name: 'All E2E Tests Report (PR)'
@@ -632,13 +632,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh all-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
@@ -756,7 +756,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -787,18 +787,18 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) && 'error' || 'warn' }}
 
       - name: Download all tests results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
-        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         with:
           commit: ${{ inputs.commit_sha }}
           check_name: 'All E2E Tests Report (Multi-Node)'
@@ -811,7 +811,7 @@ jobs:
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml

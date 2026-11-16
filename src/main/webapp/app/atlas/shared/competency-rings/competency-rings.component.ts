@@ -1,5 +1,5 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, input } from '@angular/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './competency-rings.component.html',
     styleUrls: ['./competency-rings.component.scss'],
     standalone: true,
-    imports: [NgbTooltip, ArtemisTranslatePipe],
+    imports: [TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class CompetencyRingsComponent {
     progress = input(0);

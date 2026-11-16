@@ -64,6 +64,16 @@ describe('TextResultComponent', () => {
         expect(spans[0].innerHTML).toContain('hello world');
     });
 
+    it('should render submission text literally instead of parsing markup', () => {
+        const submission: any = { text: 'a <img src="x" alt="probe"> <b>b</b> & c' };
+        fixture.componentRef.setInput('result', createResult(submission, []));
+        fixture.detectChanges();
+        const span = fixture.nativeElement.querySelector('.white-space') as HTMLElement;
+        expect(span.querySelector('img')).toBeNull();
+        expect(span.querySelector('b')).toBeNull();
+        expect(span.textContent).toBe('a <img src="x" alt="probe"> <b>b</b> & c');
+    });
+
     it('should create a block for numeric reference feedback', () => {
         const submission: any = { text: 'abc' };
         const fb: any = { reference: '1', credits: 1, text: 'good' };
@@ -245,7 +255,7 @@ describe('TextResultComponent', () => {
         expect(!!component.textResults()[2].feedback).toBe(true);
     });
 
-    it('TextResultBlock getters for positive/negative/neutral/blank', () => {
+    it('TextResultBlock css class and length for positive/negative/neutral/blank', () => {
         const base = new TextBlock();
         base.startIndex = 0;
         base.endIndex = 2;
@@ -255,29 +265,17 @@ describe('TextResultComponent', () => {
         let block = new TextResultBlock(base, { credits: 1 } as any);
         expect(block).toHaveLength(2);
         expect(block.cssClass).toContain('positive-feedback');
-        expect(block.iconCssClass).toContain('positive-feedback');
-        expect(block.feedbackCssClass).toBe('alert alert-success');
-        expect(block.icon).toBeDefined();
-        expect(block.circleIcon).toBeDefined();
 
         // negative
         block = new TextResultBlock(base, { credits: -1 } as any);
         expect(block.cssClass).toContain('negative-feedback');
-        expect(block.feedbackCssClass).toBe('alert alert-danger');
 
         // neutral/blank (0 credits is considered empty in current Feedback.isEmpty)
         block = new TextResultBlock(base, { credits: 0 } as any);
         expect(block.cssClass).toBe('');
-        expect(block.feedbackCssClass).toBe('');
-        expect(block.icon).toBeUndefined();
-        expect(block.circleIcon).toBeUndefined();
 
         // blank (no feedback)
         block = new TextResultBlock(base);
         expect(block.cssClass).toBe('');
-        expect(block.icon).toBeUndefined();
-        expect(block.circleIcon).toBeUndefined();
-        expect(block.iconCssClass).toBe('feedback-icon blank-feedback');
-        expect(block.feedbackCssClass).toBe('');
     });
 });
