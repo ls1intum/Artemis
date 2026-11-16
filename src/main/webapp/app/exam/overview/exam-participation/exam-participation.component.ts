@@ -305,6 +305,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
+        this.loadingExam.set(true);
         this.resetForNewLoad();
         this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {

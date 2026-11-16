@@ -8,7 +8,7 @@
     studentLogin="{{ plagiarismSubmission()?.studentLogin }}"
 />
 @if (cannotLoadFiles()) {
-    <div class="text-submission-viewer text-warning">
+    <div class="text-submission-viewer text-state-warning">
         <div class="text-submission-viewer-warning">
             <fa-icon [icon]="faExclamationTriangle" class="icon" />
             <span jhiTranslate="artemisApp.plagiarism.cannotLoadFiles"></span>
@@ -22,9 +22,7 @@
 }
 @if (loading() && !cannotLoadFiles()) {
     <div class="plagiarism-submission-loader">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
     </div>
 }
 @if (binaryFile() && !cannotLoadFiles()) {
@@ -36,7 +34,7 @@
             severity="secondary"
             variant="text"
             size="small"
-            class="p-0"
+            class="p-0!"
             (click)="downloadCurrentFile()"
             jhiTranslate="entity.action.download"
         ></button>

@@ -248,6 +248,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
+        // example assessments are training material that is written by editors
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
         if (!exercise.getId().equals(exerciseId)) {
             throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
                     "exerciseId", "exerciseIdMismatch");

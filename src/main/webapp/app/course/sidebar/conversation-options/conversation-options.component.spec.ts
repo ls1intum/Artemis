@@ -79,6 +79,17 @@ examples.forEach((conversation) => {
             vi.useRealTimers();
         });
 
+        it('should center the three-dots icon in its button with symmetric horizontal padding', () => {
+            const toggle = fixture.nativeElement.querySelector('[data-testid="conversation-options-toggle"]') as HTMLElement;
+
+            expect(toggle).not.toBeNull();
+            // An asymmetric padding (ps-0 with pe-1) pushed the icon toward the left edge of the grey hover container.
+            expect(toggle.classList).toContain('px-1!');
+            expect(toggle.classList).not.toContain('ps-0');
+            expect(toggle.classList).not.toContain('pe-1');
+            expect(toggle.classList).toContain('justify-center');
+        });
+
         it('should create', () => {
             expect(component).toBeTruthy();
         });

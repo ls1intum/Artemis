@@ -36,7 +36,7 @@ function recordRequests(page: Page, pattern: RegExp): string[] {
  * @param waitFor how long to give the modal to appear; 0 to only dismiss one that is already up.
  */
 async function dismissLlmSelectionIfAsked(page: Page, waitFor: number): Promise<void> {
-    const cloudOption = page.locator('jhi-llm-selection-modal .option-card.cloud-card');
+    const cloudOption = page.getByTestId('llm-selection-cloud-option');
     if (waitFor > 0) {
         await cloudOption.waitFor({ state: 'visible', timeout: waitFor }).catch(() => undefined);
     }
@@ -215,7 +215,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
 
         await expect(page.getByText(competencyTitle).first()).toBeVisible();
         // Prerequisites live behind their own collapsed section, so the count in its header is what proves they arrived
-        const prerequisiteSection = page.locator('.control-label').filter({ hasText: '1' }).first();
+        const prerequisiteSection = page.getByTestId('prerequisites-toggle').filter({ hasText: '1' });
         await expect(prerequisiteSection).toBeVisible();
         await prerequisiteSection.click();
         await expect(page.getByText(prerequisiteTitle).first()).toBeVisible();

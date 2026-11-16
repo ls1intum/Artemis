@@ -4,7 +4,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    background-color: var(--bs-body-bg);
+    background-color: var(--body-bg);
     border-bottom: 1px solid var(--body-bg);
 
     &-top {
@@ -28,6 +28,7 @@
     &-file {
         cursor: pointer;
         padding: 0.25rem 0.5rem;
+        white-space: nowrap;
 
         &:hover {
             background-color: lightskyblue;
@@ -51,6 +52,6 @@
     }
 }
 
-.dropdown-item.hover {
+.split-pane-header-file.hover {
     background-color: var(--data-table-dropdown-item-selected-background-color);
 }

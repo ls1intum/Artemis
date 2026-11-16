@@ -65,7 +65,7 @@
 
                                 <tumaet-ui-table-layout
                                     fill
-                                    class="mx-4 mb-4"
+                                    class="mx-6! mb-6!"
                                     [empty]="studentRows().length === 0 && !isLoadingStudentRows()"
                                     [emptyTitle]="studentSearchTerm() ? 'artemisApp.presentationAssessment.noMatchingStudents' : 'tumAetUi.table.empty'"
                                 >
@@ -136,7 +136,7 @@
 
                             <tumaet-ui-table-layout
                                 fill
-                                class="mx-4 mb-4"
+                                class="mx-6! mb-6!"
                                 [empty]="studentRows().length === 0 && !isLoadingStudentRows()"
                                 [emptyTitle]="
                                     studentSearchTerm() || assessmentStatusFilter() !== 'all' ? 'artemisApp.presentationAssessment.noMatchingStudents' : 'tumAetUi.table.empty'

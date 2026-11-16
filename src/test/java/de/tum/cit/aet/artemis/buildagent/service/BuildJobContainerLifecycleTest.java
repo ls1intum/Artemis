@@ -50,6 +50,7 @@ import com.github.dockerjava.api.model.StreamType;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 class BuildJobContainerLifecycleTest {
@@ -60,7 +61,7 @@ class BuildJobContainerLifecycleTest {
 
     private final BuildLogsMap logs = mock(BuildLogsMap.class);
 
-    private final BuildJobContainerService service = new BuildJobContainerService(configuration, logs);
+    private final BuildJobContainerService service = new BuildJobContainerService(configuration, logs, new TempFileUtilService());
 
     private final ListContainersCmd list = mock(ListContainersCmd.class, RETURNS_SELF);
 
@@ -125,6 +126,17 @@ class BuildJobContainerLifecycleTest {
         assertThat(service.getIDOfRunningContainer("build")).isNull();
         doThrow(new RuntimeException("Connection refused")).when(list).exec();
         assertThat(service.getIDOfRunningContainer("build")).isNull();
+    }
+
+    @Test
+    void stoppingAContainerThatDisappearsAfterLookupDoesNotFailCleanup() {
+        Container running = container("id", new String[] { "/build" }, "running");
+        when(list.exec()).thenReturn(List.of(running));
+        when(docker.execCreateCmd("id")).thenThrow(new NotFoundException("removed after lookup"));
+
+        assertThatCode(() -> service.stopContainer("build")).doesNotThrowAnyException();
+
+        verify(docker).execCreateCmd("id");
     }
 
     @ParameterizedTest
@@ -211,6 +223,28 @@ class BuildJobContainerLifecycleTest {
         else {
             verify(remove).exec();
             verify(kill, never()).exec();
+        }
+    }
+
+    @Test
+    void failedRemovalClosesCommandsAndPreservesCancellation() {
+        StopContainerCmd stop = mock(StopContainerCmd.class, RETURNS_SELF);
+        RemoveContainerCmd remove = mock(RemoveContainerCmd.class);
+        when(docker.stopContainerCmd("id")).thenReturn(stop);
+        when(stop.exec()).thenThrow(new NotModifiedException("already stopped"));
+        when(docker.removeContainerCmd("id")).thenReturn(remove);
+        when(remove.exec()).thenThrow(new IllegalStateException("daemon disconnected"));
+
+        Thread.currentThread().interrupt();
+        try {
+            assertThatCode(() -> service.stopUnresponsiveContainer("id")).doesNotThrowAnyException();
+            assertThat(Thread.currentThread().isInterrupted()).as("cancellation remains observable after failed cleanup").isTrue();
+            verify(remove).exec();
+            verify(remove).close();
+            verify(stop).close();
+        }
+        finally {
+            Thread.interrupted();
         }
     }
 

@@ -5,10 +5,16 @@
         [icon]="faRedo"
         [title]="title()"
         [shouldToggle]="!!title()"
-        [disabled]="isRetrievingBuildStatus()"
+        [disabled]="isRetrievingBuildStatus() || isBlockedByBuildWindow()"
         [isLoading]="isBuilding()"
         (onClick)="triggerBuild($event)"
-        [tooltip]="participationHasLatestSubmissionWithoutResult() ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
+        [tooltip]="
+            isBlockedByBuildWindow()
+                ? 'artemisApp.programmingExercise.buildTimeWindow.triggerDisabled'
+                : participationHasLatestSubmissionWithoutResult()
+                  ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission'
+                  : 'artemisApp.programmingExercise.resubmit'
+        "
         [featureToggle]="FeatureToggle.ProgrammingExercises"
     />
 }

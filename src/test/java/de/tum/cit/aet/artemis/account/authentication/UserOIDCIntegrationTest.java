@@ -48,6 +48,7 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -528,6 +529,42 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         failureHandler.onAuthenticationFailure(request, response, exception);
 
         assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=oidcFailure");
+    }
+
+    @Test
+    void testOidcFailureHandler_withAuthorizationRequestNotFound_logsWarningWithoutStackTrace() throws Exception {
+        // The callback of a browser that lost its state cookie is no defect of the server, so it must not show up as an error with a stack trace
+        ILoggingEvent event = logFailureOf(new OAuth2AuthenticationException(new OAuth2Error("authorization_request_not_found"), "[authorization_request_not_found]"));
+
+        assertThat(event.getLevel()).isEqualTo(Level.WARN);
+        assertThat(event.getThrowableProxy()).isNull();
+    }
+
+    @Test
+    void testOidcFailureHandler_withOtherFailure_logsError() throws Exception {
+        ILoggingEvent event = logFailureOf(new OAuth2AuthenticationException(new OAuth2Error("invalid_issuer"), "Wrong Issuer"));
+
+        assertThat(event.getLevel()).isEqualTo(Level.ERROR);
+        assertThat(event.getThrowableProxy()).isNotNull();
+    }
+
+    private ILoggingEvent logFailureOf(OAuth2AuthenticationException exception) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        withAuthorizationRequest(request, Map.of());
+        Logger handlerLogger = (Logger) LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        handlerLogger.addAppender(appender);
+        try {
+            failureHandler.onAuthenticationFailure(request, response, exception);
+        }
+        finally {
+            handlerLogger.detachAppender(appender);
+        }
+        assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=oidcFailure");
+        assertThat(appender.list).hasSize(1);
+        return appender.list.getFirst();
     }
 
     @Test

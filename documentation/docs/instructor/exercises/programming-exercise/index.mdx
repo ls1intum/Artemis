@@ -2,7 +2,7 @@
 id: index
 title: Programming Exercise
 sidebar_label: Programming Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -61,30 +61,36 @@ Artemis ships a template for each supported language, so a new exercise starts f
 
 ### Supported Programming Languages
 
-| No. | Programming Language | Local CI | Jenkins | Build System/Notes     | Docker Image                                                                                 |
-|-----|----------------------|----------|---------|------------------------|----------------------------------------------------------------------------------------------|
-| 1   | Java                 | ✅        | ✅       | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
-| 2   | Python               | ✅        | ✅       | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   |
-| 3   | C                    | ✅        | ✅       | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             |
-| 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     |
-| 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker)                   |
-| 6   | VHDL                 | ✅        | ❌       | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       |
-| 7   | Assembler            | ✅        | ❌       | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             |
-| 8   | Swift                | ✅        | ✅       | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
-| 9   | OCaml                | ✅        | ❌       | Dune                   | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker)                     |
-| 10  | Rust                 | ✅        | ✅       | cargo                  | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker)                       |
-| 11  | JavaScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
-| 12  | R                    | ✅        | ✅       | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             |
-| 13  | C++                  | ✅        | ✅       | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         |
-| 14  | TypeScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
-| 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   |
-| 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           |
-| 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       |
-| 18  | MATLAB               | ✅ \*     | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
-| 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
-| 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
+| No. | Programming Language | Local CI | Jenkins | Build System/Notes     | Docker Image                                                                                 | Image Drift Check |
+|-----|----------------------|----------|---------|------------------------|----------------------------------------------------------------------------------------------|-------------------|
+| 1   | Java                 | ✅        | ✅       | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     | ✅                 |
+| 2   | Python               | ✅        | ✅       | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   | ✅ †               |
+| 3   | C                    | ✅        | ✅       | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             | ✅ †               |
+| 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     | ❌ ‡               |
+| 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker)                   | ✅                 |
+| 6   | VHDL                 | ✅        | ❌       | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       | ✅ †               |
+| 7   | Assembler            | ✅        | ❌       | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             | ✅ †               |
+| 8   | Swift                | ✅        | ✅       | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) | ❌ ‡               |
+| 9   | OCaml                | ✅        | ❌       | Dune                   | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker)                     | ✅ †               |
+| 10  | Rust                 | ✅        | ✅       | cargo                  | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker)                       | ❌ ‡               |
+| 11  | JavaScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           | ❌ ‡               |
+| 12  | R                    | ✅        | ✅       | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             | ✅ †               |
+| 13  | C++                  | ✅        | ✅       | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         | ✅ †               |
+| 14  | TypeScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           | ❌ ‡               |
+| 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   | ❌ ‡               |
+| 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           | ✅ †               |
+| 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       | ✅ †               |
+| 18  | MATLAB               | ✅ \*     | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          | ✅ †               |
+| 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       | ❌ ‡               |
+| 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       | ❌ ‡               |
 
 \* MATLAB only appears in the language list if your administrators have configured a license server for it.
+
+**Image Drift Check**: the Docker image of a language caches the dependencies of the template, so that builds do not download them again. When the template and the image pin different versions, every build downloads the difference. The column shows whether Artemis checks this automatically, see [Keeping the images in sync with the templates](/developer/builds-and-dependencies#keeping-the-images-in-sync-with-the-templates).
+
+- ✅ Checked automatically on every pull request that changes the template, and nightly by building the template in the image without network access.
+- ✅ † Not needed: the template pins no dependency that the image has to cache. It uses the standard library or tools the image installs, so there is nothing that can drift.
+- ❌ ‡ Not checked yet: JavaScript, TypeScript, Ruby, Rust, Dart and C# cache the lock files of the template in the image, so a version change in the template can make every build download it. Swift resolves its packages from GitHub on every build, because its image caches none. Haskell uses an external image that has not been assessed.
 
 ### Using a Language Without a Template
 

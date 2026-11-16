@@ -1,65 +1,68 @@
-<div class="iris-context-selection flex items-center gap-2">
+<div class="flex items-center gap-2">
     <!-- Load the options before the panel opens: an empty panel is positioned for its tiny height and then grows out of the viewport. -->
     <span
-        class="iris-context-trigger-wrapper"
+        class="inline-flex shrink-0 items-center"
         (pointerenter)="loadContextOptions()"
         (focusin)="loadContextOptions()"
-        [pTooltip]="'artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate"
-        tooltipPosition="bottom"
-        tooltipStyleClass="iris-context-tooltip iris-context-tooltip-tight"
+        [tumAetUiTooltip]="isPickerOpen() ? undefined : ('artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate)"
+        tumAetUiTooltipPlacement="bottom"
     >
-        <p-select
-            [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
+        <button
+            type="button"
+            data-testid="iris-context-trigger"
+            class="inline-flex cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent px-2 py-1.5 leading-normal text-(--body-color) transition-colors hover:enabled:bg-primary hover:enabled:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="disabled()"
-            [pt]="{
-                header: { style: 'padding-left: 12px; padding-right: 12px;' },
-                listContainer: { 'data-testid': 'iris-context-overlay' },
-                option: { 'data-testid': 'iris-context-option' },
-            }"
-            [options]="allGroups()"
-            [group]="true"
-            optionGroupLabel="label"
-            optionGroupChildren="items"
-            optionLabel="label"
-            optionValue="value"
-            [ngModel]="selectedValue()"
-            (onChange)="onSelectionChange($event.value)"
-            (onShow)="loadContextOptions()"
-            [filter]="true"
-            filterBy="label"
-            [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
-            [resetFilterOnHide]="true"
-            scrollHeight="40vh"
-            appendTo="body"
-            [panelStyle]="{ 'min-width': '250px' }"
-            variant="outlined"
-            size="small"
-            class="iris-context-trigger"
+            [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
+            [tumAetUiPopoverTrigger]="picker"
         >
-            <ng-template #dropdownicon>
-                <fa-icon [icon]="faPlus" />
-            </ng-template>
-            <ng-template #item let-option>
-                <div class="flex items-center gap-2">
-                    <fa-icon [icon]="option.faIcon" />
-                    <span>{{ option.label }}</span>
+            <fa-icon [icon]="faPlus" aria-hidden="true" />
+        </button>
+        <tumaet-ui-popover #picker padding="none" [ariaLabel]="'artemisApp.iris.contextSelection.label' | artemisTranslate" (openChange)="onPickerOpenChange($event)">
+            <div class="w-72 max-w-[85vw]" data-testid="iris-context-overlay">
+                <div class="px-3! py-2">
+                    <tumaet-ui-search-field
+                        size="small"
+                        placeholder="artemisApp.iris.contextSelection.search"
+                        ariaLabel="artemisApp.iris.contextSelection.searchLabel"
+                        [(value)]="filterTerm"
+                    />
                 </div>
-            </ng-template>
-            <ng-template #group let-group>
-                <span [jhiTranslate]="group.label"></span>
-            </ng-template>
-        </p-select>
+                <div class="max-h-[40vh] overflow-y-auto pb-2">
+                    @for (group of filteredGroups(); track group.label) {
+                        <div role="group" [attr.aria-label]="group.label | artemisTranslate">
+                            <div class="px-3! pt-2 pb-1 text-[0.8rem] font-semibold text-(--text-body-secondary)" [jhiTranslate]="group.label"></div>
+                            @for (option of group.items; track option.value) {
+                                <button
+                                    type="button"
+                                    data-testid="iris-context-option"
+                                    class="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3! py-1.5 text-start hover:bg-(--tumaet-ui-hover-background) focus-visible:bg-(--tumaet-ui-hover-background)"
+                                    [class.font-semibold]="option.value === selectedValue()"
+                                    [attr.aria-current]="option.value === selectedValue() ? 'true' : null"
+                                    (click)="selectOption(option, picker)"
+                                >
+                                    <fa-icon [icon]="option.faIcon" aria-hidden="true" />
+                                    <span class="min-w-0 truncate">{{ option.label }}</span>
+                                </button>
+                            }
+                        </div>
+                    } @empty {
+                        <p class="m-0 px-3! py-2 text-(--text-body-secondary)" jhiTranslate="artemisApp.iris.contextSelection.noResults"></p>
+                    }
+                </div>
+            </div>
+        </tumaet-ui-popover>
     </span>
 
     @if (activeChip(); as chip) {
-        <p-chip [removable]="!disabled()" (onRemove)="onChipRemove()" styleClass="iris-context-chip">
-            <fa-icon [icon]="chip.faIcon" />
-            <span class="ms-1 iris-context-chip-label" [pTooltip]="chip.label" tooltipPosition="bottom" tooltipStyleClass="iris-context-tooltip iris-context-tooltip-spaced">{{
-                chip.label
-            }}</span>
-            <ng-template #removeicon>
-                <fa-icon [icon]="faXmark" />
-            </ng-template>
-        </p-chip>
+        <tumaet-ui-chip
+            class="max-w-56 min-w-0 flex-[0_1_auto]"
+            size="small"
+            data-testid="iris-context-chip"
+            [removable]="!disabled()"
+            [removeAriaLabel]="'artemisApp.iris.contextSelection.removeContext' | artemisTranslate"
+            (removed)="onChipRemove()"
+        >
+            <span [tumAetUiTooltip]="chip.label" tumAetUiTooltipPlacement="bottom"><fa-icon [icon]="chip.faIcon" class="me-1" aria-hidden="true" />{{ chip.label }}</span>
+        </tumaet-ui-chip>
     }
 </div>
