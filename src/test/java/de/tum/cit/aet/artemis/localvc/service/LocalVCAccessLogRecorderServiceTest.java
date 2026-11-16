@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -25,12 +27,12 @@ import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -39,7 +41,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
@@ -242,101 +243,184 @@ class LocalVCAccessLogRecorderServiceTest {
         assertThat(result).isEqualTo(AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN);
     }
 
-    private HttpServletRequest postRequest(String method) {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn(method);
+    private MockHttpServletRequest postRequest(String method) {
+        return new MockHttpServletRequest(method, "/git/TEST/test-testuser.git/git-upload-pack");
+    }
+
+    private MockHttpServletRequest authorizedFetchRequest() {
+        MockHttpServletRequest request = postRequest("POST");
+        accessLogRecorder.rememberAccessLogSubject(request, testUser, Optional.of(testParticipation));
         return request;
     }
 
     @Test
-    void aRequestThatIsNoPost_isNotLogged() {
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(postRequest("GET"), 0);
+    void aRequestThatIsNoPost_isNotMarkedAsAClone() {
+        MockHttpServletRequest request = postRequest("GET");
+        accessLogRecorder.rememberAccessLogSubject(request, testUser, Optional.of(testParticipation));
+
+        accessLogRecorder.markFetchAsCloneHTTPS(request, 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
     void aBuildAgentClone_isNotRelabeledAsTheCloneOfAStudent() {
-        HttpServletRequest request = postRequest("POST");
-        when(request.getAttribute("artemis.buildAgentClone")).thenReturn("build-agent-1");
+        MockHttpServletRequest request = authorizedFetchRequest();
+        request.setAttribute("artemis.buildAgentClone", "build-agent-1");
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 0);
-
-        verifyNoInteractions(vcsAccessLogService);
-    }
-
-    @Test
-    void aRequestForNoRepository_isIgnored() {
-        HttpServletRequest request = postRequest("POST");
-        when(request.getRequestURI()).thenReturn("/git/not-a-repository-path");
-
-        assertThatCode(() -> accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 0)).doesNotThrowAnyException();
+        accessLogRecorder.markFetchAsCloneHTTPS(request, 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
-    void aStudentFetchWithoutOfferedObjects_isCompletedAsAClone() {
-        HttpServletRequest request = studentFetchRequest();
+    void aRequestThatWasAuthorizedForNoParticipation_amendsNothing() {
+        MockHttpServletRequest request = postRequest("POST");
+        accessLogRecorder.rememberAccessLogSubject(request, testUser, Optional.empty());
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 0);
+        accessLogRecorder.markFetchAsCloneHTTPS(request, 0);
+        accessLogRecorder.completePushAccessLogHTTPS(request, "abc");
 
-        ArgumentCaptor<LocalVCRepositoryUri> repositoryUri = ArgumentCaptor.forClass(LocalVCRepositoryUri.class);
-        verify(vcsAccessLogService).updateRepositoryActionType(repositoryUri.capture(), eq(RepositoryActionType.CLONE));
-        assertThat(repositoryUri.getValue().getProjectKey()).isEqualTo("TEST");
+        verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
-    void aStudentFetchWithOfferedObjects_isCompletedAsAPull() {
-        HttpServletRequest request = studentFetchRequest();
+    void aFetchWithoutOfferedObjects_isMarkedAsAClone() {
+        accessLogRecorder.markFetchAsCloneHTTPS(authorizedFetchRequest(), 0);
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 3);
-
-        ArgumentCaptor<LocalVCRepositoryUri> repositoryUri = ArgumentCaptor.forClass(LocalVCRepositoryUri.class);
-        verify(vcsAccessLogService).updateRepositoryActionType(repositoryUri.capture(), eq(RepositoryActionType.PULL));
-        assertThat(repositoryUri.getValue().getProjectKey()).isEqualTo("TEST");
+        verify(vcsAccessLogService).markNewestPullAsClone(testUser.getId(), testParticipation.getId());
     }
 
-    private HttpServletRequest studentFetchRequest() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
-        return request;
+    @Test
+    void aFetchWithOfferedObjects_staysAPull() {
+        accessLogRecorder.markFetchAsCloneHTTPS(authorizedFetchRequest(), 3);
+
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void aFailureWhileMarkingAFetchAsAClone_doesNotFailTheFetch() {
+        doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).markNewestPullAsClone(anyLong(), anyLong());
+
+        assertThatCode(() -> accessLogRecorder.markFetchAsCloneHTTPS(authorizedFetchRequest(), 0)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void theCommitOfAPushOverHttps_isSetOnTheEntryOfTheAuthorizedUserAndParticipation() {
+        accessLogRecorder.completePushAccessLogHTTPS(authorizedFetchRequest(), "0123456789abcdef");
+
+        verify(vcsAccessLogService).setCommitHashOfNewestPush(testUser.getId(), testParticipation.getId(), "0123456789abcdef");
+    }
+
+    @Test
+    void aFailureWhileCompletingAPush_doesNotFailThePush() {
+        doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).setCommitHashOfNewestPush(anyLong(), anyLong(), anyString());
+
+        assertThatCode(() -> accessLogRecorder.completePushAccessLogHTTPS(authorizedFetchRequest(), "abc")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void theHandshakeOfAFetchOverHttps_writesAPullBeforeItReturns() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/TEST/test-testuser.git/info/refs");
+        request.setRemoteAddr("10.0.0.1");
+
+        accessLogRecorder.savePreliminaryVcsAccessLogForHTTPs(request, testRepositoryUri, testUser, RepositoryActionType.READ, Optional.of(testParticipation),
+                AuthenticationMechanism.PASSWORD);
+
+        verify(vcsAccessLogService).createAccessLog(eq(testUser), eq(testParticipation), eq(RepositoryActionType.PULL), eq(AuthenticationMechanism.PASSWORD), anyString(),
+                eq("10.0.0.1"));
+    }
+
+    @Test
+    void theHandshakeOfAPushOverHttps_writesAPush() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/TEST/test-testuser.git/info/refs");
+
+        accessLogRecorder.savePreliminaryVcsAccessLogForHTTPs(request, testRepositoryUri, testUser, RepositoryActionType.WRITE, Optional.of(testParticipation),
+                AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
+
+        verify(vcsAccessLogService).createAccessLog(eq(testUser), eq(testParticipation), eq(RepositoryActionType.PUSH), eq(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN),
+                anyString(), any());
+    }
+
+    @Test
+    void aHandshakeForARepositoryWithoutParticipation_writesNothing() {
+        accessLogRecorder.savePreliminaryVcsAccessLogForHTTPs(new MockHttpServletRequest("GET", "/git/TEST/tests.git/info/refs"), testRepositoryUri, testUser,
+                RepositoryActionType.READ, Optional.empty(), AuthenticationMechanism.PASSWORD);
+
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void aHandshakeThatCannotBeWritten_doesNotFailTheGitOperation() {
+        when(vcsAccessLogService.createAccessLog(any(), any(), any(), any(), any(), any())).thenThrow(new IllegalStateException("the database is away"));
+
+        assertThatCode(() -> accessLogRecorder.savePreliminaryVcsAccessLogForHTTPs(new MockHttpServletRequest("GET", "/git/TEST/test-testuser.git/info/refs"), testRepositoryUri,
+                testUser, RepositoryActionType.WRITE, Optional.of(testParticipation), AuthenticationMechanism.PASSWORD)).doesNotThrowAnyException();
+    }
+
+    private VcsAccessLog entryOf(RepositoryActionType actionType) {
+        return new VcsAccessLog(testUser, testParticipation, testUser.getName(), testUser.getEmail(), actionType, AuthenticationMechanism.SSH, "", "10.0.0.1");
     }
 
     private ServerSession sessionOf(User user, VcsAccessLog accessLog) {
         ServerSession session = mock(ServerSession.class);
-        when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
+        lenient().when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
         lenient().when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenReturn(accessLog);
         return session;
     }
 
     @Test
-    void aSessionWithoutUser_isNotLogged() {
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(sessionOf(null, null), 0);
+    void aSessionWithoutUser_isNotMarkedAsAClone() {
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(null, entryOf(RepositoryActionType.PULL)), 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
-    void aSessionWithoutPreliminaryLog_isNotLogged() {
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(sessionOf(testUser, null), 0);
+    void aSessionWithoutPreliminaryLog_isNotMarkedAsAClone() {
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, null), 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
-    void aCloneAndAPull_areLoggedWithTheirRepositoryActionType() {
-        var cloneLog = new VcsAccessLog();
-        var pullLog = new VcsAccessLog();
+    void aFetchOverSshWithoutOfferedObjects_isStoredAsAClone() {
+        var accessLog = entryOf(RepositoryActionType.PULL);
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(sessionOf(testUser, cloneLog), 0);
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(sessionOf(testUser, pullLog), 3);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, accessLog), 0);
 
-        assertThat(cloneLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
-        assertThat(pullLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
-        verify(vcsAccessLogService).saveVcsAccesslog(cloneLog);
-        verify(vcsAccessLogService).saveVcsAccesslog(pullLog);
+        assertThat(accessLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+        verify(vcsAccessLogService).updateAccessLog(accessLog);
+    }
+
+    @Test
+    void aFetchOverSshWithOfferedObjects_staysAPullAndIsNotStoredAgain() {
+        var accessLog = entryOf(RepositoryActionType.PULL);
+
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, accessLog), 3);
+
+        assertThat(accessLog.getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void theEntryOfAPush_isNeverTurnedIntoAClone() {
+        var pushEntry = entryOf(RepositoryActionType.PUSH);
+
+        // The session of a connection that carries several commands holds the entry of whichever command resolved last.
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, pushEntry), 0);
+
+        assertThat(pushEntry.getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void anEntryThatIsAlreadyACloneIsNotStoredAgain() {
+        var cloneEntry = entryOf(RepositoryActionType.CLONE);
+
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(testUser, cloneEntry), 0);
+
+        verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
@@ -344,20 +428,75 @@ class LocalVCAccessLogRecorderServiceTest {
         ServerSession session = mock(ServerSession.class);
         when(session.getAttribute(SshConstants.USER_KEY)).thenThrow(new IllegalStateException("session closed"));
 
-        assertThatCode(() -> accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(session, 0)).doesNotThrowAnyException();
+        assertThatCode(() -> accessLogRecorder.markFetchAsCloneSSH(session, 0)).doesNotThrowAnyException();
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
-    void cacheAttributesInSshSession_withoutReadableRepository_cachesNothing() {
+    void theCommitOfAPushOverSsh_isStoredOnTheEntryOfTheCommand() {
+        var pushEntry = entryOf(RepositoryActionType.PUSH);
+
+        accessLogRecorder.completePushAccessLogSSH(pushEntry, "0123456789abcdef");
+
+        assertThat(pushEntry.getCommitHash()).isEqualTo("0123456789abcdef");
+        verify(vcsAccessLogService).updateAccessLog(pushEntry);
+    }
+
+    @Test
+    void theCommitOfAPush_isNeverStoredOnTheEntryOfAFetch() {
+        var pullEntry = entryOf(RepositoryActionType.PULL);
+
+        accessLogRecorder.completePushAccessLogSSH(pullEntry, "0123456789abcdef");
+
+        assertThat(pullEntry.getCommitHash()).isEmpty();
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void aPushOverSshWithoutEntry_isIgnored() {
+        assertThatCode(() -> accessLogRecorder.completePushAccessLogSSH(null, "abc")).doesNotThrowAnyException();
+
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void cacheAttributesInSshSession_withAnUnreadableRepository_stillWritesTheEntry() {
         ServerSession session = mock(ServerSession.class);
+        var stored = entryOf(RepositoryActionType.PULL);
+        when(vcsAccessLogService.createAccessLog(eq(testUser), eq(testParticipation), eq(RepositoryActionType.PULL), eq(AuthenticationMechanism.SSH), eq(""), eq("10.0.0.1")))
+                .thenReturn(stored);
 
-        Optional<ProgrammingExerciseParticipation> participation = Optional.of(testParticipation);
+        // The repository does not exist, so there is no commit hash to read. That must not cost the operation its entry.
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.of(testParticipation), RepositoryActionType.READ, AuthenticationMechanism.SSH, "10.0.0.1",
+                testRepositoryUri, session);
 
-        accessLogRecorder.cacheAttributesInSshSession(testUser, participation, RepositoryActionType.READ, AuthenticationMechanism.SSH, "10.0.0.1", testRepositoryUri, session);
+        verify(session).setAttribute(SshConstants.VCS_ACCESS_LOG_KEY, stored);
+        verify(session).setAttribute(SshConstants.PARTICIPATION_KEY, testParticipation);
+    }
 
-        verify(session, never()).setAttribute(any(), any());
+    @Test
+    void cacheAttributesInSshSession_writesAPushEntryForAWriteCommand() {
+        ServerSession session = mock(ServerSession.class);
+        var stored = entryOf(RepositoryActionType.PUSH);
+        when(vcsAccessLogService.createAccessLog(eq(testUser), eq(testParticipation), eq(RepositoryActionType.PUSH), any(), any(), any())).thenReturn(stored);
+
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.of(testParticipation), RepositoryActionType.WRITE, AuthenticationMechanism.SSH, "10.0.0.1",
+                testRepositoryUri, session);
+
+        verify(session).setAttribute(SshConstants.VCS_ACCESS_LOG_KEY, stored);
+    }
+
+    @Test
+    void cacheAttributesInSshSession_whenTheEntryCannotBeWritten_stillCachesTheParticipation() {
+        ServerSession session = mock(ServerSession.class);
+        when(vcsAccessLogService.createAccessLog(any(), any(), any(), any(), any(), any())).thenThrow(new IllegalStateException("the database is away"));
+
+        assertThatCode(() -> accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.of(testParticipation), RepositoryActionType.WRITE, AuthenticationMechanism.SSH,
+                "10.0.0.1", testRepositoryUri, session)).doesNotThrowAnyException();
+
+        verify(session).setAttribute(SshConstants.PARTICIPATION_KEY, testParticipation);
+        verify(session, never()).setAttribute(eq(SshConstants.VCS_ACCESS_LOG_KEY), any());
     }
 
     @Test
@@ -381,6 +520,7 @@ class LocalVCAccessLogRecorderServiceTest {
         verify(session).removeAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         verify(session).removeAttribute(SshConstants.PARTICIPATION_KEY);
         verify(session, never()).setAttribute(any(), any());
+        verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
@@ -388,12 +528,12 @@ class LocalVCAccessLogRecorderServiceTest {
         var user = new User();
         user.setLogin("buildjob_user");
         assertThat(user.getName()).isEqualTo("buildjob_user");
-        var accessLog = new VcsAccessLog();
+        var accessLog = entryOf(RepositoryActionType.PULL);
 
         // build agent sessions carry no user and get an audit entry of their own, so the name alone must not exclude anyone
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(sessionOf(user, accessLog), 0);
+        accessLogRecorder.markFetchAsCloneSSH(sessionOf(user, accessLog), 0);
 
-        verify(vcsAccessLogService).saveVcsAccesslog(accessLog);
+        verify(vcsAccessLogService).updateAccessLog(accessLog);
     }
 
     private static String basicAuth(String username, String password) {

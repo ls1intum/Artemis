@@ -3,19 +3,25 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
@@ -30,6 +36,9 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     private static final String TEST_PREFIX = "participationlocalvclocalci";
 
     private ProgrammingExercise programmingExercise;
+
+    @Autowired
+    private Optional<VcsAccessLogService> vcsAccessLogService;
 
     @BeforeEach
     void initTestCase() {
@@ -200,30 +209,171 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(accessLogs.getFirst().authenticationMechanism()).isEqualTo(AuthenticationMechanism.BUILD_JOB_TOKEN.name());
     }
 
+    private static final List<RepositoryActionType> FETCH_TYPES = List.of(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+
+    private static final List<RepositoryActionType> PUSH_TYPES = List.of(RepositoryActionType.PUSH);
+
+    private VcsAccessLog entry(User user, Participation participation, RepositoryActionType actionType) {
+        return vcsAccessLogRepository.save(new VcsAccessLog(user, participation, "name", "mail@mail.de", actionType, AuthenticationMechanism.PASSWORD, "before", "10.0.0.1"));
+    }
+
+    private VcsAccessLog reload(VcsAccessLog accessLog) {
+        return vcsAccessLogRepository.findById(accessLog.getId()).orElseThrow();
+    }
+
     /**
-     * The amend-the-newest-entry lookups have to skip build agent rows.
+     * The amend-an-entry lookup has to skip build agent rows.
      * <p>
-     * A push writes its entry, queues the build, and only then fills in the commit hash on the newest entry of the
-     * participation; a clone does the same for its clone-or-pull label. The agent's own clone of that repository lands
-     * between the two, so without the exclusion the person's amendment would be written onto the agent's row - the
-     * agent would appear to have pushed the commit, and the person's row would keep no hash at all.
+     * A push writes its entry, queues the build, and only then fills in the commit hash; a clone does the same for its clone-or-pull label. The agent's own clone of that
+     * repository lands between the two, so without the exclusion the person's amendment would be written onto the agent's row - the agent would appear to have pushed the
+     * commit, and the person's row would keep no hash at all. The agent has no user, so a lookup by user never finds it.
      * <p>
-     * Executing both queries here is also what validates them: an invalid {@code @Query} is only rejected when it is
-     * first used, so one that no test calls would reach production intact.
+     * Executing the query here is also what validates it: an invalid {@code @Query} is only rejected when it is first used, so one that no test calls would reach production
+     * intact.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testNewestAccessLogLookupsSkipBuildAgentEntries() {
+    void testNewestAccessLogLookupSkipsBuildAgentEntries() {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var user = userTestRepository.getUser();
-        var userEntry = vcsAccessLogRepository
-                .save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.PUSH, AuthenticationMechanism.PASSWORD, "", "10.0.0.1"));
+        var userEntry = entry(user, participation, RepositoryActionType.PULL);
         // Saved after the person's entry, so it is the newest one and would win a lookup that did not exclude it
         vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
                 AuthenticationMechanism.BUILD_JOB_TOKEN, "", "10.0.0.5"));
 
-        assertThat(vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
-        assertThat(vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(participation.getRepositoryUri())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
+        var found = vcsAccessLogRepository.findNewestEntryOfUserForParticipation(user.getId(), participation.getId(), FETCH_TYPES, ZonedDateTime.now().minusHours(1));
+
+        assertThat(found).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
+    }
+
+    /**
+     * The failure this guards against: a clone arrives while the entry of its own handshake is not stored yet, so "the newest entry" is the push that came before. A lookup that
+     * is not tied to the kind of operation then turns that push into a clone, and the log shows a clone where there was a push.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAFetchNeverTurnsAPushIntoAClone() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var push = entry(user, participation, RepositoryActionType.PUSH);
+
+        vcsAccessLogService.orElseThrow().markNewestPullAsClone(user.getId(), participation.getId());
+
+        assertThat(reload(push).getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAFetchTurnsOnlyItsOwnPullIntoAClone() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var earlierPull = entry(user, participation, RepositoryActionType.PULL);
+        var clone = entry(user, participation, RepositoryActionType.PULL);
+        var laterPush = entry(user, participation, RepositoryActionType.PUSH);
+
+        vcsAccessLogService.orElseThrow().markNewestPullAsClone(user.getId(), participation.getId());
+
+        // The newest entry of the fetch kind is the one of the running fetch, whatever was written after it
+        assertThat(reload(clone).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+        assertThat(reload(earlierPull).getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        assertThat(reload(laterPush).getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
+    }
+
+    /**
+     * Two clones of one repository by one user that run at the same moment write two entries and then send two data transfer requests. Each request has to claim an entry of its
+     * own, or one of the clones stays a pull.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testClonesAtTheSameMomentAreEachMarkedAsAClone() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var firstHandshake = entry(user, participation, RepositoryActionType.PULL);
+        var secondHandshake = entry(user, participation, RepositoryActionType.PULL);
+
+        vcsAccessLogService.orElseThrow().markNewestPullAsClone(user.getId(), participation.getId());
+        vcsAccessLogService.orElseThrow().markNewestPullAsClone(user.getId(), participation.getId());
+
+        assertThat(reload(firstHandshake).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+        assertThat(reload(secondHandshake).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAnEntryCanBeClaimedOnlyOnce() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var pull = entry(userTestRepository.getUser(), participation, RepositoryActionType.PULL);
+
+        int first = vcsAccessLogRepository.changeActionTypeIfStill(pull.getId(), RepositoryActionType.PULL, RepositoryActionType.CLONE);
+        int second = vcsAccessLogRepository.changeActionTypeIfStill(pull.getId(), RepositoryActionType.PULL, RepositoryActionType.CLONE);
+
+        assertThat(first).isEqualTo(1);
+        assertThat(second).as("the claim was lost, because the entry is no pull any more").isZero();
+        assertThat(reload(pull).getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAPushNeverGivesItsCommitToAFetch() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var push = entry(user, participation, RepositoryActionType.PUSH);
+        var laterFetch = entry(user, participation, RepositoryActionType.PULL);
+
+        vcsAccessLogService.orElseThrow().setCommitHashOfNewestPush(user.getId(), participation.getId(), "pushed");
+
+        assertThat(reload(push).getCommitHash()).isEqualTo("pushed");
+        assertThat(reload(laterFetch).getCommitHash()).isEqualTo("before");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAmendmentsLeaveTheEntriesOfOtherUsersAndParticipationsAlone() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var user = userTestRepository.getUser();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var pullOfAStudent = entry(student, participation, RepositoryActionType.PULL);
+        var pushOfAStudent = entry(student, participation, RepositoryActionType.PUSH);
+        var pullInAnotherRepository = entry(user, otherParticipation, RepositoryActionType.PULL);
+        var pushInAnotherRepository = entry(user, otherParticipation, RepositoryActionType.PUSH);
+
+        // the instructor fetches and pushes in the repository of the first student, and has no entry there yet
+        vcsAccessLogService.orElseThrow().markNewestPullAsClone(user.getId(), participation.getId());
+        vcsAccessLogService.orElseThrow().setCommitHashOfNewestPush(user.getId(), participation.getId(), "pushed");
+
+        assertThat(reload(pullOfAStudent).getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        assertThat(reload(pushOfAStudent).getCommitHash()).isEqualTo("before");
+        assertThat(reload(pullInAnotherRepository).getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        assertThat(reload(pushInAnotherRepository).getCommitHash()).isEqualTo("before");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAnEntryOfAnEarlierOperationIsNotAmended() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var oldPull = entry(user, participation, RepositoryActionType.PULL);
+        ReflectionTestUtils.setField(oldPull, "timestamp", ZonedDateTime.now().minusHours(3));
+        vcsAccessLogRepository.save(oldPull);
+
+        // the entry of this fetch was never written, so the newest entry of the fetch kind belongs to an operation of hours ago
+        vcsAccessLogService.orElseThrow().markNewestPullAsClone(user.getId(), participation.getId());
+
+        assertThat(reload(oldPull).getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
+        assertThat(vcsAccessLogRepository.findNewestEntryOfUserForParticipation(user.getId(), participation.getId(), PUSH_TYPES, ZonedDateTime.now().minusHours(1))).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreatingAnEntryStoresItBeforeReturning() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+
+        var created = vcsAccessLogService.orElseThrow().createAccessLog(user, participation, RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "hash", "10.0.0.1");
+
+        assertThat(created.getId()).isNotNull();
+        assertThat(reload(created).getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
     }
 
     @Test

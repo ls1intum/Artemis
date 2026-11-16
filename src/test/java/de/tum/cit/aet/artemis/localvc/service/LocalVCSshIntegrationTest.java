@@ -6,8 +6,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.channels.UnresolvedAddressException;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -16,6 +18,7 @@ import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -29,8 +32,16 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +53,8 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
@@ -316,6 +329,63 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
             assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
         }
+    }
+
+    /**
+     * An instructor who pushes commits into the repository of a student over ssh, as in the report that a push was recorded as a clone. Every operation writes one entry of its
+     * own kind, and the push carries the commit it delivered.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEachSshOperationIsLoggedOnceWithItsOwnKind(@TempDir Path tempDir) throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User instructor = userTestRepository.getUser();
+        SshdSessionFactory sessionFactory = sshSessionFactory(keyPair, tempDir);
+        String repositoryUri = "ssh://git@" + URI.create(artemisServerUrl).getHost() + ":" + sshPort + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+
+        try (Git clone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("clone").toFile())
+                .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
+            assertThat(vcsAccessLogRepository.findAllByParticipationId(participation.getId())).singleElement().satisfies(entry -> {
+                assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+                assertThat(entry.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
+                assertThat(entry.getUser().getId()).isEqualTo(instructor.getId());
+            });
+
+            String commit = localVCLocalCITestService.commitFile(tempDir.resolve("clone"), clone, "pushed-by-the-instructor.txt");
+            clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            var entries = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            assertThat(entries).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE, RepositoryActionType.PUSH);
+            assertThat(entries.getLast().getCommitHash()).as("the push carries the commit it delivered").isEqualTo(commit);
+            assertThat(entries.getLast().getUser().getId()).isEqualTo(instructor.getId());
+
+            // the clone is up to date, so this fetch has nothing to transfer. JGit may open a second connection of its own to follow tags, and the server sees each connection
+            // as a fetch of its own, so there are one or two entries.
+            clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            var kindsAfterTheFetch = vcsAccessLogRepository.findAllByParticipationId(participation.getId()).stream().map(VcsAccessLog::getRepositoryActionType).toList();
+            assertThat(kindsAfterTheFetch).startsWith(RepositoryActionType.CLONE, RepositoryActionType.PUSH).hasSizeBetween(3, 4);
+            assertThat(kindsAfterTheFetch.subList(2, kindsAfterTheFetch.size())).containsOnly(RepositoryActionType.PULL);
+        }
+    }
+
+    private static SshdSessionFactory sshSessionFactory(KeyPair keyPair, Path sshHome) {
+        ServerKeyDatabase acceptsAnyServerKey = new ServerKeyDatabase() {
+
+            @Override
+            public List<PublicKey> lookup(String connectAddress, InetSocketAddress remoteAddress, Configuration config) {
+                return List.of();
+            }
+
+            @Override
+            public boolean accept(String connectAddress, InetSocketAddress remoteAddress, PublicKey serverKey, Configuration config, CredentialsProvider provider) {
+                return true;
+            }
+        };
+        return new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(sshHome.toFile()).setSshDirectory(sshHome.toFile())
+                .setDefaultKeysProvider(_ -> List.of(keyPair)).setServerKeyDatabase((_, _) -> acceptsAnyServerKey).build(null);
     }
 
     private SshGitCommand setupCommand(String commandString, ServerSession serverSession) {

@@ -11,7 +11,7 @@ public record LocalVCFetchPreUploadHookSSH(LocalVCAccessLogRecorderService acces
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(serverSession, clientOffered);
+        accessLogRecorder.markFetchAsCloneSSH(serverSession, clientOffered);
     }
 
     @Override

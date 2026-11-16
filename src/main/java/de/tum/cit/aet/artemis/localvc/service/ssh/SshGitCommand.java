@@ -177,8 +177,8 @@ public class SshGitCommand extends GitPackCommand {
                             ReceivePack receivePack = LocalVCReceivePackLimits.apply(QuarantinedReceivePack.create(repository, prePushHook::examineBeforeObjects));
 
                             receivePack.setPreReceiveHook(prePushHook);
-                            receivePack.setPostReceiveHook(
-                                    new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user));
+                            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService,
+                                    getServerSession(), user, accessLogRecorder));
 
                             receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                         }

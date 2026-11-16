@@ -12,7 +12,7 @@ public record LocalVCFetchPreUploadHook(LocalVCAccessLogRecorderService accessLo
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, clientOffered);
+        accessLogRecorder.markFetchAsCloneHTTPS(request, clientOffered);
     }
 
     @Override

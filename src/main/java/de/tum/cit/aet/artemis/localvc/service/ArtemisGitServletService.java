@@ -141,7 +141,7 @@ public class ArtemisGitServletService extends GitServlet {
             receivePack.setPreReceiveHook(prePushHook);
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, user,
-                    () -> localVCServletService.getAuthenticationMechanism(request)));
+                    () -> localVCServletService.getAuthenticationMechanism(request), commitHash -> accessLogRecorder.completePushAccessLogHTTPS(request, commitHash)));
             return receivePack;
         });
 

@@ -230,9 +230,9 @@ public class LocalVCServletService {
 
         try {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
-            // Only create the preliminary access log on /info/refs requests.
-            // The data transfer requests (git-upload-pack, git-receive-pack) will update this log entry
-            // via PreUploadHook / processNewPush rather than creating a duplicate.
+            // Every request of an operation says whose access log entry it belongs to. Only the /info/refs request, which starts the operation, writes the preliminary entry.
+            // The data transfer requests (git-upload-pack, git-receive-pack) amend that entry via the pre-upload hook and the post-receive hook rather than creating a duplicate.
+            accessLogRecorder.rememberAccessLogSubject(request, user, optionalParticipation);
             if (request.getRequestURI().endsWith("/info/refs")) {
                 accessLogRecorder.savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation, authenticated.mechanism());
             }

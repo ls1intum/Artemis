@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
@@ -33,6 +36,19 @@ public class VcsAccessLogService {
     /** Matches the width of the {@code vcs_access_log.name} column. */
     private static final int ACCESSOR_NAME_MAX_LENGTH = 100;
 
+    /**
+     * How long after its entry was written an HTTPS git operation may still amend it. The data transfer request follows the handshake request immediately, and the longest wait
+     * is for a push to arrive over a slow connection, so an hour is generous. An entry older than that belongs to an earlier operation.
+     */
+    private static final Duration AMENDMENT_WINDOW = Duration.ofHours(1);
+
+    /** How many entries one clone tries to claim before it gives up, which is more than the clones of one user that can overlap on one repository. */
+    private static final int MAX_CLAIM_ATTEMPTS = 10;
+
+    private static final List<RepositoryActionType> PULL_ACTION_TYPES = List.of(RepositoryActionType.PULL);
+
+    private static final List<RepositoryActionType> PUSH_ACTION_TYPES = List.of(RepositoryActionType.PUSH);
+
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
     private final ParticipationRepository participationRepository;
@@ -43,11 +59,14 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Creates a vcs access log entry and stores it to the database
+     * Creates a vcs access log entry in the background and stores it to the database.
+     * <p>
+     * For an entry that nothing amends afterwards, such as the record of a rejected request. An entry that a later step of the operation has to find is written with
+     * {@link #createAccessLog}.
      *
      * @param user                    The user accessing the repository
      * @param participation           The participation which owns the repository
-     * @param actionType              The action type: READ or WRITE
+     * @param actionType              The action type, for example a failed clone or push
      * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
@@ -55,11 +74,7 @@ public class VcsAccessLogService {
     @Async("vcsAccessLogExecutor")
     public void saveAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
-        log.debug("Storing access operation for user {}", user);
-
-        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
-                ipAddress);
-        vcsAccessLogRepository.save(accessLogEntry);
+        createAccessLog(user, participation, actionType, authenticationMechanism, commitHash, ipAddress);
     }
 
     /**
@@ -97,34 +112,74 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Updates the commit hash of the newest log entry
+     * Creates a vcs access log entry and stores it before returning, so the entry exists when the next step of the git operation looks for it.
+     * <p>
+     * An HTTPS git operation is several requests that may be answered by different nodes, so an entry that is written in the background gives no guarantee that it exists when the
+     * next request wants to amend it. The caller must not let a failure here fail the git operation.
      *
-     * @param participation The participation to which the repository belongs to
-     * @param commitHash    The newest commit hash which should get set for the access log entry
+     * @param user                    The user accessing the repository
+     * @param participation           The participation which owns the repository
+     * @param actionType              The kind of operation, which is never changed afterwards: {@code PULL} for a fetch, {@code PUSH} for a push
+     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
+     * @param commitHash              The latest commit hash
+     * @param ipAddress               The ip address of the user accessing the repository
+     * @return the stored entry, with its id
      */
-    @Async("vcsAccessLogExecutor")
-    public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId());
-        if (vcsAccessLog.isPresent()) {
-            vcsAccessLog.get().setCommitHash(commitHash);
-            vcsAccessLogRepository.save(vcsAccessLog.get());
+    public VcsAccessLog createAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
+            String commitHash, String ipAddress) {
+        log.debug("Storing access operation for user {}", user);
+
+        return vcsAccessLogRepository
+                .save(new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress));
+    }
+
+    /**
+     * Stores the changes to an entry that {@link #createAccessLog} returned, before returning.
+     *
+     * @param vcsAccessLog the entry to store
+     */
+    public void updateAccessLog(VcsAccessLog vcsAccessLog) {
+        vcsAccessLogRepository.save(vcsAccessLog);
+    }
+
+    /**
+     * Turns the entry of the fetch that is running into a clone.
+     * <p>
+     * The handshake request of a fetch writes its entry as a pull, because it cannot tell yet whether the client already has the repository. The data transfer request that
+     * follows can: a client that offers no objects is cloning. That request finds the entry by user and participation, and only among the entries that are still a pull, so it
+     * cannot reach the entry of a push. Looking only at entries that are still a pull is also what lets clones that run at the same moment each find an entry of their own: the
+     * entry that one clone has turned into a clone is not offered to the next.
+     *
+     * @param userId          the id of the user that is fetching
+     * @param participationId the id of the participation that owns the repository
+     */
+    public void markNewestPullAsClone(long userId, long participationId) {
+        // Clones that run at the same moment can find the same entry. The entry is claimed with a conditional update, and a clone that loses the claim looks for the next one.
+        for (int attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
+            Optional<VcsAccessLog> pull = vcsAccessLogRepository.findNewestEntryOfUserForParticipation(userId, participationId, PULL_ACTION_TYPES,
+                    ZonedDateTime.now().minus(AMENDMENT_WINDOW));
+            if (pull.isEmpty() || vcsAccessLogRepository.changeActionTypeIfStill(pull.get().getId(), RepositoryActionType.PULL, RepositoryActionType.CLONE) == 1) {
+                return;
+            }
         }
     }
 
     /**
-     * Updates the commit hash of the newest log entry
+     * Sets the commit hash of the push that has just been received.
+     * <p>
+     * The handshake request of a push writes its entry with the hash the repository had before the push, because the pushed commit is not known yet. Once it is, the entry is
+     * found by user and participation, and only among the entries of a push, so a fetch that was written in between cannot take the hash.
      *
-     * @param localVCRepositoryUri The localVCRepositoryUri of the participation to which vcsAccessLog belongs to
-     * @param repositoryActionType The repository action type to which the vcsAccessLog should get updated to
+     * @param userId          the id of the user that pushed
+     * @param participationId the id of the participation that owns the repository
+     * @param commitHash      the hash of the pushed commit
      */
-    @Async("vcsAccessLogExecutor")
-    public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
-        var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(repositoryURL);
-        if (vcsAccessLog.isPresent()) {
-            vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
-            vcsAccessLogRepository.save(vcsAccessLog.get());
-        }
+    public void setCommitHashOfNewestPush(long userId, long participationId, String commitHash) {
+        vcsAccessLogRepository.findNewestEntryOfUserForParticipation(userId, participationId, PUSH_ACTION_TYPES, ZonedDateTime.now().minus(AMENDMENT_WINDOW))
+                .ifPresent(accessLog -> {
+                    accessLog.setCommitHash(commitHash);
+                    vcsAccessLogRepository.save(accessLog);
+                });
     }
 
     /**

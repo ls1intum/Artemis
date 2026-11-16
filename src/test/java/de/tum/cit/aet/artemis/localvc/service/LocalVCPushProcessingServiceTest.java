@@ -121,7 +121,7 @@ class LocalVCPushProcessingServiceTest {
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TESTS)).thenReturn(true);
         when(programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash")).thenReturn(submission);
 
-        pushProcessingService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
+        pushProcessingService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation));
 
         InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
         if (coordinated && !examExercise) {
