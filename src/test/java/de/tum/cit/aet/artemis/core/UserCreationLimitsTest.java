@@ -8,6 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
@@ -140,17 +142,21 @@ class UserCreationLimitsTest extends AbstractSpringIntegrationIndependentTest {
      * With serialization, both wait before counting and only one can consume the remaining slot.
      */
     private List<String> createConcurrently(Creation first, Creation second) throws Exception {
-        var transaction = new TransactionTemplate(transactionManager);
-        List<CompletableFuture<String>> futures = transaction.execute(status -> {
-            jdbcTemplate.queryForList("SELECT id FROM jhi_user WHERE id = ? FOR UPDATE", user.getId());
-            int holder = jdbcTemplate.queryForObject("SELECT pg_backend_pid()", Integer.class);
-            var a = createAsync(first);
-            var b = createAsync(second);
-            // Query from another thread/connection so PostgreSQL's per-transaction statistics snapshot stays fresh.
-            CompletableFuture.runAsync(() -> Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(blockedBy(holder)).isEqualTo(2))).join();
-            return List.of(a, b);
-        });
-        return List.of(futures.getFirst().get(10, TimeUnit.SECONDS), futures.getLast().get(10, TimeUnit.SECONDS));
+        // Reserve a worker for the observer while both creation transactions are blocked on the user row.
+        try (var executor = Executors.newFixedThreadPool(3)) {
+            var transaction = new TransactionTemplate(transactionManager);
+            List<CompletableFuture<String>> futures = transaction.execute(status -> {
+                jdbcTemplate.queryForList("SELECT id FROM jhi_user WHERE id = ? FOR UPDATE", user.getId());
+                int holder = jdbcTemplate.queryForObject("SELECT pg_backend_pid()", Integer.class);
+                var a = createAsync(first, executor);
+                var b = createAsync(second, executor);
+                // Query from another thread/connection so PostgreSQL's per-transaction statistics snapshot stays fresh.
+                CompletableFuture.runAsync(() -> Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(blockedBy(holder)).isEqualTo(2)), executor)
+                        .orTimeout(15, TimeUnit.SECONDS).join();
+                return List.of(a, b);
+            });
+            return List.of(futures.getFirst().get(10, TimeUnit.SECONDS), futures.getLast().get(10, TimeUnit.SECONDS));
+        }
     }
 
     private long blockedBy(int holder) {
@@ -165,7 +171,7 @@ class UserCreationLimitsTest extends AbstractSpringIntegrationIndependentTest {
                 """, Long.class, holder);
     }
 
-    private CompletableFuture<String> createAsync(Creation creation) {
+    private CompletableFuture<String> createAsync(Creation creation, Executor executor) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 creation.run();
@@ -177,6 +183,6 @@ class UserCreationLimitsTest extends AbstractSpringIntegrationIndependentTest {
             catch (Exception exception) {
                 throw new IllegalStateException(exception);
             }
-        });
+        }, executor);
     }
 }
