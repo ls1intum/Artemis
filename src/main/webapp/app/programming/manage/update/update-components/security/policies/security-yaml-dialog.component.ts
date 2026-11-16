@@ -148,13 +148,14 @@ export class SecurityYamlDialogComponent {
         if (!file) {
             return;
         }
+        // Every selection supersedes a file that is still being read, even one that is refused.
+        const selection = ++this.importCount;
         if (file.size > MAX_IMPORT_SIZE) {
             this.importError.set('artemisApp.programmingExercise.security.advanced.yaml.importTooLarge');
             return;
         }
         this.importError.set(undefined);
         const target = this.policyPath();
-        const selection = ++this.importCount;
         const content = await file.text();
         if (selection === this.importCount) {
             this.imported.emit({ content, policyPath: target });

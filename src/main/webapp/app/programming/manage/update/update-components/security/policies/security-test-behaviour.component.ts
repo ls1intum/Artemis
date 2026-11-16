@@ -222,8 +222,12 @@ export class SecurityTestBehaviourComponent {
         }
     }
 
-    protected setMaximumCharacters(value: string | number): void {
+    protected setMaximumCharacters(value: string | number | null): void {
         const current = this.outputMirroring();
+        // A cleared number input emits null; the stored maximum stays until a valid one is entered.
+        if (value === null) {
+            return;
+        }
         // A number from the number input is checked as it is, so 1.5 is refused; only text may group its digits, e.g. 1_000_000.
         const parsed = typeof value === 'number' ? value : Number(value.replace(/[\s_.,]/g, ''));
         if (current && Number.isInteger(parsed) && parsed > 0) {

@@ -261,7 +261,8 @@ export class SecurityAddTestCasesDialogComponent {
             } else if (entry === node.qualifiedName) {
                 // A switched-off test case cannot use the policy, so a whole class does not select it.
                 node.cases.filter((testCase) => !testCase.switchedOff).forEach((testCase) => keys.add(testCase.key));
-            } else {
+            } else if (!node.cases.some((testCase) => testCase.key === entry && testCase.switchedOff)) {
+                // An entry of a case the structure does not show stays selected, so applying keeps it.
                 keys.add(entry);
             }
         }
@@ -326,7 +327,9 @@ export class SecurityAddTestCasesDialogComponent {
         const known = new Set(classes.map((node) => node.qualifiedName));
         const caseKeys = new Set(classes.flatMap((node) => node.cases.map((testCase) => testCase.key)));
         // Entries the tree does not show stay: those of classes and of test cases the repository no longer has.
-        const tests = this.ownTests().filter((entry) => !known.has(testClassOf(entry)) || (!caseKeys.has(entry) && entry !== testClassOf(entry) && this.selection().has(entry)));
+        const retained = this.ownTests().filter((entry) => !known.has(testClassOf(entry)) || (!caseKeys.has(entry) && entry !== testClassOf(entry) && this.selection().has(entry)));
+        const tests: string[] = [];
+        const wholeClasses = new Set<string>();
         for (const node of classes) {
             const selected = node.cases.filter((testCase) => !testCase.switchedOff && this.selection().has(testCase.key));
             if (!selected.length) {
@@ -334,11 +337,13 @@ export class SecurityAddTestCasesDialogComponent {
             }
             if (selected.length === node.cases.length) {
                 tests.push(node.qualifiedName);
+                wholeClasses.add(node.qualifiedName);
             } else {
                 selected.forEach((testCase) => tests.push(testCase.key));
             }
         }
-        this.applied.emit(tests);
+        // A class assigned as a whole covers its cases, including those the tree does not show, so the server would refuse them next to it.
+        this.applied.emit([...retained.filter((entry) => !wholeClasses.has(testClassOf(entry))), ...tests]);
         this.visible.set(false);
     }
 }

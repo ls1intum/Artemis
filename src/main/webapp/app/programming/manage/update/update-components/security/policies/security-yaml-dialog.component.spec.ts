@@ -96,4 +96,19 @@ describe('SecurityYamlDialogComponent', () => {
         expect(imported).toEqual([{ content: 'a: 1\n', policyPath: 'test/SecurityPolicy.yaml' }]);
         expect(comp.importError()).toBeUndefined();
     });
+
+    it('drops a file that is still being read when a later selection is refused', async () => {
+        const imported: { content: string; policyPath: string }[] = [];
+        comp.imported.subscribe((content) => imported.push(content));
+        const select = (file: Partial<File>) => handlers.onFileSelected({ target: { files: [file], value: 'x' } } as unknown as Event);
+        let finishReading: (content: string) => void = () => {};
+
+        const reading = select({ size: 10, text: () => new Promise<string>((resolve) => (finishReading = resolve)) });
+        await select({ size: 300 * 1024, text: () => Promise.resolve('big') });
+        finishReading('a: 1\n');
+        await reading;
+
+        expect(imported).toEqual([]);
+        expect(comp.importError()).toBe('artemisApp.programmingExercise.security.advanced.yaml.importTooLarge');
+    });
 });

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
@@ -209,7 +209,8 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
     it('turns dependency scanning on with a commit of only the language configuration', () => {
         create(configured(), false);
         handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
-        service.commitPolicies.mockReturnValue(of({ editor: editor('d'.repeat(40)), config: configured() }));
+        const scanning = { ...DOCUMENT, languageConfiguration: 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION' };
+        service.commitPolicies.mockReturnValue(of({ editor: editor('d'.repeat(40), scanning), config: configured() }));
 
         handlers.onScanRequested(true);
         expect(comp.dialogMode()).toBe('scanOn');
@@ -220,7 +221,23 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(change.policies[0].document.languageConfiguration).toBe('JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION');
         expect(change.policies[0].assignedTests).toEqual(['de.example.SortingTest']);
         expect(change.frameworkVersion).toBeUndefined();
-        // The unsaved changes stay on top of the new commit.
+        // The unsaved changes stay on top of the new commit, which the switch shows without loading the policies again.
+        expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
+        expect(comp.policies()[0].base?.languageConfiguration).toBe('JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION');
+        expect(comp.shownScanDependencies()).toBe(true);
+        expect(service.getPolicies).toHaveBeenCalledOnce();
+    });
+
+    it('rebases the changes made while the policies reload', () => {
+        create(configured(), false);
+        const reloaded = new Subject<SecurityPolicyEditor>();
+        service.getPolicies.mockReturnValue(reloaded);
+
+        handlers.reload();
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        reloaded.next(editor('d'.repeat(40)));
+
+        expect(comp.editor()?.baseCommitHash).toBe('d'.repeat(40));
         expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
     });
 
@@ -295,6 +312,21 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(imported.tests).toEqual(['de.example.SortingTest']);
         expect(imported.extraClasses).toEqual(['de.example.Util']);
         expect(comp.importNotice()?.severity).toBe('success');
+    });
+
+    it('applies only the latest import of a policy when an earlier one answers later', () => {
+        create(configured(), false);
+        const first = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        const second = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        handlers.openYaml(comp.policies()[0]);
+
+        handlers.importYaml({ content: 'first', policyPath: 'SecurityPolicy.yaml' });
+        handlers.importYaml({ content: 'second', policyPath: 'SecurityPolicy.yaml' });
+        second.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.second' } });
+        first.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.first' } });
+
+        expect(comp.policies()[0].working?.supervisedPackage).toBe('de.second');
     });
 
     it('describes the files and the assignments the review shows', () => {

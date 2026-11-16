@@ -215,6 +215,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private newPolicyCounter = 0;
     /** The last commit request that failed, for Retry. */
     private failedRequest: CommitRequest | undefined;
+    /** The number of YAML imports started per policy. */
+    private readonly importGenerations = new Map<string, number>();
     private structureRequested = false;
     private templateFilesRequested = false;
     private versionCheckTimer?: ReturnType<typeof setTimeout>;
@@ -486,56 +488,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Loads the policies again and keeps the unsaved changes: each changed policy is rebased onto its new committed version; new policies stay. */
     protected reload(announce = false): void {
-        const previous = this.policies();
-        const deleted = this.deletedPolicies();
         this.loading.set(true);
         this.securityService.getPolicies(this.exerciseId()).subscribe({
             next: (editor) => {
-                this.editor.set(editor);
-                const files = editor.policies ?? [];
-                const changed = (policy: EditorPolicy) => !!policy.working && (this.summaries().get(policy.id)?.total ?? 0) > 0;
-                // A changed policy whose file can no longer be edited here, e.g. because someone broke its YAML, keeps its changes as a new policy.
-                const unreadable: EditorPolicy[] = [];
-                const reloaded = files
-                    .filter((file) => !deleted.some((policy) => policy.file?.policyPath === file.policyPath))
-                    .map((file) => {
-                        const old = previous.find((candidate) => candidate.file?.policyPath === file.policyPath);
-                        if (old && changed(old) && !file.document) {
-                            unreadable.push(old);
-                        }
-                        return old && changed(old) ? rebasePolicy(old, file) : editorPolicyOf(file);
-                    });
-                const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
-                const added = previous
-                    .filter((policy) => isNewPolicy(policy))
-                    .map((policy) => (policy.working ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) }) : policy));
-                // A changed policy whose file someone deleted or renamed meanwhile is kept as a new policy, so the changes are not lost without a word.
-                const vanished = [
-                    ...previous.filter(
-                        (policy) =>
-                            !!policy.file &&
-                            changed(policy) &&
-                            !files.some((file) => file.policyPath === policy.file?.policyPath) &&
-                            !deleted.some((candidate) => candidate.id === policy.id),
-                    ),
-                    ...unreadable,
-                ];
-                const takenNames = [...reloaded, ...added].map((policy) => policy.name);
-                const orphaned = vanished.map((policy) => {
-                    const kept = this.asNewPolicy(policy, takenNames);
-                    takenNames.push(kept.name);
-                    return kept;
-                });
-                this.policies.set([...reloaded, ...added, ...orphaned]);
-                this.deletedPolicies.set(deleted.filter((policy) => files.some((file) => file.policyPath === policy.file?.policyPath)));
-                if (this.stagedVersion() === editor.frameworkVersion) {
-                    this.stagedVersion.set(undefined);
-                }
-                if (vanished.length) {
-                    this.banner.set({ kind: 'orphaned', files: vanished.map((policy) => fileNameOf(policy.file?.policyPath ?? '')).join(', ') });
-                } else if (announce) {
-                    this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.reloaded`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
-                }
+                this.rebaseOnto(editor, announce);
                 this.loading.set(false);
                 this.pendingScan.set(undefined);
             },
@@ -544,6 +500,57 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 this.pendingScan.set(undefined);
             },
         });
+    }
+
+    /** Shows the policies of the editor and rebases the unsaved changes made until now onto them, including those made while it was loading. */
+    private rebaseOnto(editor: SecurityPolicyEditor, announce: boolean): void {
+        const previous = this.policies();
+        const deleted = this.deletedPolicies();
+        this.editor.set(editor);
+        const files = editor.policies ?? [];
+        const changed = (policy: EditorPolicy) => !!policy.working && (this.summaries().get(policy.id)?.total ?? 0) > 0;
+        // A changed policy whose file can no longer be edited here, e.g. because someone broke its YAML, keeps its changes as a new policy.
+        const unreadable: EditorPolicy[] = [];
+        const reloaded = files
+            .filter((file) => !deleted.some((policy) => policy.file?.policyPath === file.policyPath))
+            .map((file) => {
+                const old = previous.find((candidate) => candidate.file?.policyPath === file.policyPath);
+                if (old && changed(old) && !file.document) {
+                    unreadable.push(old);
+                }
+                return old && changed(old) ? rebasePolicy(old, file) : editorPolicyOf(file);
+            });
+        const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
+        const added = previous
+            .filter((policy) => isNewPolicy(policy))
+            .map((policy) => (policy.working ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) }) : policy));
+        // A changed policy whose file someone deleted or renamed meanwhile is kept as a new policy, so the changes are not lost without a word.
+        const vanished = [
+            ...previous.filter(
+                (policy) =>
+                    !!policy.file &&
+                    changed(policy) &&
+                    !files.some((file) => file.policyPath === policy.file?.policyPath) &&
+                    !deleted.some((candidate) => candidate.id === policy.id),
+            ),
+            ...unreadable,
+        ];
+        const takenNames = [...reloaded, ...added].map((policy) => policy.name);
+        const orphaned = vanished.map((policy) => {
+            const kept = this.asNewPolicy(policy, takenNames);
+            takenNames.push(kept.name);
+            return kept;
+        });
+        this.policies.set([...reloaded, ...added, ...orphaned]);
+        this.deletedPolicies.set(deleted.filter((policy) => files.some((file) => file.policyPath === policy.file?.policyPath)));
+        if (this.stagedVersion() === editor.frameworkVersion) {
+            this.stagedVersion.set(undefined);
+        }
+        if (vanished.length) {
+            this.banner.set({ kind: 'orphaned', files: vanished.map((policy) => fileNameOf(policy.file?.policyPath ?? '')).join(', ') });
+        } else if (announce) {
+            this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.reloaded`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
+        }
     }
 
     protected onToggleRequested(on: boolean): void {
@@ -791,12 +798,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 this.configChange.emit(result.config);
                 this.versionCheck.set(undefined);
                 if (keepUnsaved) {
-                    // The scanning switch keeps the requested state until the reload shows the new commit.
-                    this.reload();
+                    // The unsaved changes are rebased onto the new commit, so the scanning switch shows the committed state at once.
+                    this.rebaseOnto(result.editor, false);
                 } else {
                     this.applyEditor(result.editor);
-                    this.pendingScan.set(undefined);
                 }
+                this.pendingScan.set(undefined);
                 this.banner.set({
                     kind: 'committed',
                     titleKey: scan ? `${PREFIX}.${scan}.committedTitle` : `${PREFIX}.banner.committed`,
@@ -894,17 +901,26 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         if (!policy || !working || !path || path !== selected.policyPath) {
             return;
         }
+        // Only the latest import of a policy applies, so an earlier one that answers later does not replace it.
+        const generation = (this.importGenerations.get(policy.id) ?? 0) + 1;
+        this.importGenerations.set(policy.id, generation);
+        const isLatest = () => this.importGenerations.get(policy.id) === generation;
         this.securityService.importPolicy(this.exerciseId(), path, selected.content).subscribe({
             next: (imported) => {
+                // The policy may have changed while the file was read, so the import goes into its current state.
+                const current = this.policies().find((candidate) => candidate.id === policy.id);
+                if (!isLatest() || !current?.working) {
+                    return;
+                }
                 if (imported.document) {
-                    const document = cloneWith(imported.document, { policyPath: working.policyPath });
-                    const classes = classesOfTests(policy.tests);
+                    const document = cloneWith(imported.document, { policyPath: current.working.policyPath });
+                    const classes = classesOfTests(current.tests);
                     const extraClasses = (document.testClasses ?? []).filter((testClass) => !testClass.includes('#') && !classes.includes(testClass));
-                    this.onPolicyChange(withAssignment(cloneWith(policy, { working: document }), policy.tests, extraClasses));
+                    this.onPolicyChange(withAssignment(cloneWith(current, { working: document }), current.tests, extraClasses));
                     this.yamlUnsaved.set(undefined);
                     this.renderYamlUnsaved();
                     const changes = this.summaries().get(policy.id)?.total ?? 0;
-                    this.importNotice.set({ severity: 'success', text: this.translateService.instant(`${PREFIX}.yaml.imported`, { count: changes, policy: policy.name }) });
+                    this.importNotice.set({ severity: 'success', text: this.translateService.instant(`${PREFIX}.yaml.imported`, { count: changes, policy: current.name }) });
                 } else {
                     this.importNotice.set({
                         severity: 'error',
@@ -915,7 +931,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     });
                 }
             },
-            error: (error: HttpErrorResponse) => this.importNotice.set({ severity: 'error', text: this.errorMessage(error) }),
+            error: (error: HttpErrorResponse) => {
+                if (isLatest()) {
+                    this.importNotice.set({ severity: 'error', text: this.errorMessage(error) });
+                }
+            },
         });
     }
 

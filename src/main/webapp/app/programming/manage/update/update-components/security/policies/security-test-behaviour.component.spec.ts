@@ -16,7 +16,7 @@ type Handlers = {
     setTimeoutField(field: 'timeout' | 'terminationGrace', value: string | number): void;
     setTimeoutUnit(field: 'timeUnit' | 'terminationGraceUnit', unit: unknown): void;
     setMirrorOutput(mirrored: boolean): void;
-    setMaximumCharacters(value: string | number): void;
+    setMaximumCharacters(value: string | number | null): void;
 };
 
 describe('SecurityTestBehaviourComponent', () => {
@@ -68,6 +68,7 @@ describe('SecurityTestBehaviourComponent', () => {
         expect(emitted.at(-1)?.outputMirroring?.maximumCharacters).toBe(1000);
         handlers.setMaximumCharacters('-5');
         handlers.setMaximumCharacters(1.5);
+        handlers.setMaximumCharacters(null);
         expect(emitted.at(-1)?.outputMirroring?.maximumCharacters).toBe(1000);
         expect(comp.uncommittedTabs().has('output')).toBe(true);
 

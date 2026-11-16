@@ -113,6 +113,20 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(applied[0]).toEqual(['de.a.SortingTest#gone', 'de.a.SortingTest#bubble', 'de.a.MathTest#add']);
     });
 
+    it('drops the hidden entries of a class it assigns as a whole and does not select a switched off test case', () => {
+        fixture.componentRef.setInput('ownTests', ['de.a.SortingTest#bubble', 'de.a.SortingTest#gone', 'de.a.MathTest#unsafe']);
+        comp.visible.set(false);
+        fixture.detectChanges();
+        comp.visible.set(true);
+        fixture.detectChanges();
+
+        expect([...comp.selection()]).toEqual(['de.a.SortingTest#bubble', 'de.a.SortingTest#gone']);
+        handlers.toggleKeys(['de.a.SortingTest#merge']);
+        handlers.apply();
+
+        expect(applied[0]).toEqual(['de.a.SortingTest']);
+    });
+
     it('checks a whole group and unchecks it when every case is selected', () => {
         const keys = comp.packages()[0].available;
         handlers.toggleKeys(keys);
