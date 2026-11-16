@@ -31,8 +31,13 @@ class BuildFileSyntaxTest {
         String direct = "dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\ntest {\n    jvmArgs \"-javaagent:${configurations.agent.singleFile}\"\n}\n";
         String variable = "dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\ndef agentJar = configurations.agent\ntest {\n    jvmArgs \"-javaagent:${agentJar.singleFile}\"\n}\n";
 
+        String continued = variable.replace("def agentJar = configurations.agent", "def agentJar =\n        configurations.agent");
+        String chained = variable.replace("def agentJar = configurations.agent", "def agentJar = files()\nagentJar\n    .from(configurations.agent)");
+
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(variable))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(continued))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(chained))).isTrue();
     }
 
     @Test

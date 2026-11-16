@@ -26,6 +26,9 @@ final class BuildFileSyntax {
     /** The variable, property or object an interpolation in a Gradle string starts with, e.g. {@code agentJar} in {@code ${agentJar.singleFile}}. */
     private static final Pattern INTERPOLATED_NAME = Pattern.compile("\\$\\{?\\s*+([A-Za-z_]\\w*+)");
 
+    /** The last characters of a line after which a Gradle statement continues on the next line. */
+    private static final String CONTINUING_ENDS = "=(,.+:";
+
     private static final Pattern JAVA_AGENT = Pattern.compile("-javaagent:([^'\"\\s,)<]*)");
 
     /** The Ares agent as a Maven artifact: the {@code agent} classifier of the {@code ares} artifact. */
@@ -75,11 +78,36 @@ final class BuildFileSyntax {
         if (configuration.matcher(agent).find()) {
             return true;
         }
-        Pattern name = Pattern.compile("\\b" + Pattern.quote(interpolation.group(1)) + "\\b");
-        return code.lines().anyMatch(line -> {
-            Matcher source = name.matcher(line);
-            return source.find() && configuration.matcher(line).find(source.end());
-        });
+        Matcher source = Pattern.compile("\\b" + Pattern.quote(interpolation.group(1)) + "\\b").matcher(code);
+        while (source.find()) {
+            if (configuration.matcher(statementAfter(code, source.end())).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return the rest of the statement after the offset: the rest of its line and every following line while the statement continues, because a line
+     *         ends with an operator such as {@code =} or the next one starts with a method call, as in {@code def agentJar =} followed by
+     *         {@code configurations.aresAgent} on the next line
+     */
+    private static String statementAfter(String code, int offset) {
+        int end = code.indexOf('\n', offset);
+        while (end >= 0) {
+            String statement = code.substring(offset, end).stripTrailing();
+            int next = end + 1;
+            while (next < code.length() && Character.isWhitespace(code.charAt(next))) {
+                next++;
+            }
+            boolean continues = (!statement.isEmpty() && CONTINUING_ENDS.indexOf(statement.charAt(statement.length() - 1)) >= 0)
+                    || (next < code.length() && code.charAt(next) == '.');
+            if (!continues) {
+                return code.substring(offset, end);
+            }
+            end = code.indexOf('\n', next);
+        }
+        return code.substring(offset);
     }
 
     private static Stream<String> javaAgents(String code) {

@@ -15,6 +15,8 @@ import {
     SecurityPolicyReadOnlyReason,
 } from 'app/programming/shared/entities/security-policy.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { By } from '@angular/platform-browser';
+import { SecurityActivationDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-activation-dialog.component';
 import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 import { EditorPolicy, withAssignment, withRows } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
@@ -261,6 +263,23 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         service.commitPolicies.mockReturnValue(of({ editor: editor('e'.repeat(40)), config: configured() }));
         handlers.commit('Update');
         expect(lastChange().baseCommitHash).toBe('d'.repeat(40));
+    });
+
+    it('keeps the requested scanning state and holds its confirmation while the policies reload', () => {
+        create();
+        const reloaded = new Subject<SecurityPolicyEditor>();
+        service.getPolicies.mockReturnValue(reloaded);
+        const dialog = fixture.debugElement.query(By.directive(SecurityActivationDialogComponent)).componentInstance as SecurityActivationDialogComponent;
+
+        handlers.reload();
+        handlers.onScanRequested(true);
+        fixture.detectChanges();
+        expect(dialog.busy()).toBe(true);
+
+        reloaded.next(editor('d'.repeat(40)));
+        fixture.detectChanges();
+        expect(dialog.busy()).toBe(false);
+        expect(comp.shownScanDependencies()).toBe(true);
     });
 
     it('keeps the language configuration of a new policy when the reloaded policies have none', () => {

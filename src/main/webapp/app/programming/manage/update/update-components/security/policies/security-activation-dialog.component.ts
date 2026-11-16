@@ -61,6 +61,8 @@ export class SecurityActivationDialogComponent {
     readonly unsavedChanges = input(0);
     /** Whether a policy enforces a strict timeout, which slower test cases may exceed. */
     readonly strictTimeouts = input(false);
+    /** Whether the confirmation has to wait, e.g. while the policies reload, so the change it commits is based on the reloaded state. */
+    readonly busy = input(false);
 
     /** Emits the version to pin when turning the sandbox on, and undefined otherwise. */
     readonly confirmed = output<string | undefined>();

@@ -111,7 +111,7 @@
             type="button"
             tumAetUiButton
             [severity]="mode() === 'deactivate' || mode() === 'scanOff' ? 'danger' : 'primary'"
-            [disabled]="mode() === 'activate' && !version()"
+            [disabled]="busy() || (mode() === 'activate' && !version())"
             (click)="confirm()"
             data-testid="security-activation-confirm"
             [jhiTranslate]="prefix + 'confirm'"

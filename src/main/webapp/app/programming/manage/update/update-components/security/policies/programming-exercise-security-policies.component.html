@@ -247,6 +247,7 @@
     [repositoryLink]="repositoryLink()"
     [unsavedChanges]="totalChanges()"
     [strictTimeouts]="strictTimeouts()"
+    [busy]="loading() && (dialogMode() === 'scanOn' || dialogMode() === 'scanOff')"
     (confirmed)="onDialogConfirmed($event)"
     (cancelled)="onDialogCancelled()"
 />

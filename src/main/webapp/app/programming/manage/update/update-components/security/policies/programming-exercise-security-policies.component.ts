@@ -492,15 +492,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     protected reload(announce = false): void {
         this.loading.set(true);
         this.securityService.getPolicies(this.exerciseId()).subscribe({
+            // The requested scanning state stays: its dialog may still be open, and its commit sets the state when it is done.
             next: (editor) => {
                 this.rebaseOnto(editor, announce);
                 this.loading.set(false);
-                this.pendingScan.set(undefined);
             },
-            error: () => {
-                this.loading.set(false);
-                this.pendingScan.set(undefined);
-            },
+            error: () => this.loading.set(false),
         });
     }
 
