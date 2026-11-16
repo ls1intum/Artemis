@@ -39,9 +39,12 @@ final class AresTestSources {
 
     private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
 
+    private static final String JUNIT_API_TEST = "@(?:org\\.junit\\.jupiter\\.api\\.)?(?:Test|RepeatedTest|TestFactory|TestTemplate)";
+
+    private static final String JUNIT_PARAMETERIZED_TEST = "@(?:org\\.junit\\.jupiter\\.params\\.)?ParameterizedTest";
+
     /** A JUnit annotation that makes a method a test, with or without its package. */
-    private static final Pattern JUNIT_TEST_MARKER = Pattern
-            .compile("@(?:org\\.junit\\.jupiter\\.api\\.)?(?:Test|RepeatedTest|TestFactory|TestTemplate)\\b|@(?:org\\.junit\\.jupiter\\.params\\.)?ParameterizedTest\\b");
+    private static final Pattern JUNIT_TEST_MARKER = Pattern.compile("(?:" + JUNIT_API_TEST + "|" + JUNIT_PARAMETERIZED_TEST + ")" + AresPolicyAnnotations.END_OF_IDENTIFIER);
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 

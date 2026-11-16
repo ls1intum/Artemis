@@ -121,6 +121,15 @@ class AresPolicyAnnotationsTest {
         assertThat(isDeactivated(original)).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "@Policy$Tag(\"metadata\")", "@PolicyÜ(\"metadata\")", "@de.tum.cit.ase.ares.api.Policy$Tag(\"metadata\")" })
+    void leavesAnAnnotationAloneWhoseNameOnlyStartsWithPolicy(String annotation) {
+        String original = source("import de.tum.cit.ase.ares.api.*;", annotation);
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
+    }
+
     @Test
     void leavesAPolicyAnnotationAloneThatTheFileDeclaresItself() {
         // The declared annotation shadows the Ares one that the wildcard import provides, so adding the flag would break the file.

@@ -28,7 +28,13 @@ final class AresPolicyAnnotations {
 
     private static final String ARES_POLICY = "de.tum.cit.ase.ares.api.Policy";
 
-    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile("@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
+    /**
+     * The end of a Java identifier: unlike {@code \b}, it also rejects {@code $} and non-ASCII letters, so {@code @Policy$Tag} or {@code @PolicyÜ} is no
+     * {@code @Policy}.
+     */
+    static final String END_OF_IDENTIFIER = "(?!\\p{javaJavaIdentifierPart})";
+
+    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile("@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy" + END_OF_IDENTIFIER);
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
