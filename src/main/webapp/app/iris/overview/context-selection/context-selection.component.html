@@ -47,7 +47,7 @@
                         </div>
                     } @empty {
                         @if (optionsLoading()) {
-                            <p class="m-0 px-3! py-2 text-(--text-body-secondary)" role="status" data-testid="iris-context-loading" jhiTranslate="loading"></p>
+                            <output class="m-0 block px-3! py-2 text-(--text-body-secondary)" data-testid="iris-context-loading" jhiTranslate="loading"></output>
                         } @else {
                             <p class="m-0 px-3! py-2 text-(--text-body-secondary)" jhiTranslate="artemisApp.iris.contextSelection.noResults"></p>
                         }
