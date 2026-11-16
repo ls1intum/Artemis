@@ -40,9 +40,21 @@ public class RootNode extends PackageNode {
      * @throws IllegalArgumentException if the class name of the given {@link ClassInfo} does not start with this root nodes name
      */
     public boolean add(ClassInfo classInfo) {
-        Class<?> clazz = classInfo.loadClass();
+        Class<?> clazz = loadClass(classInfo);
         var remainingSegments = extractRemainingClassPathSegments(clazz);
         return add(classInfo, clazz, remainingSegments);
+    }
+
+    /**
+     * ClassGraph 6 only describes classes, so the class is loaded without initializing it.
+     */
+    private static Class<?> loadClass(ClassInfo classInfo) {
+        try {
+            return Class.forName(classInfo.getName(), false, RootNode.class.getClassLoader());
+        }
+        catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Could not load class " + classInfo.getName(), e);
+        }
     }
 
     /**

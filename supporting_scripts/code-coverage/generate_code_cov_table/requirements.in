@@ -7,8 +7,10 @@ urllib3>=2.8.0
 # (arbitrary file reads through --contents/-S in Repo.blame).
 gitpython==3.2.1
 beautifulsoup4==4.15.0
-# soupsieve 3.0 is a new major release, so keep the 2.x line.
-soupsieve>=2.8.4,<3
+# Must stay >= 4.0, which fixes CVE-2026-126190 (polynomial-time matching of the descendant
+# combinator on deeply nested documents). Soup Sieve 4 needs Python 3.11.5 or newer; the script
+# itself already requires Python 3.14.
+soupsieve>=4.0,<5
 pyperclip==1.11.0
 python-dotenv==1.2.4
 tqdm==4.70.1

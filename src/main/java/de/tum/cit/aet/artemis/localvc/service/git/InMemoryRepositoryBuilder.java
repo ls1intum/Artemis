@@ -240,6 +240,11 @@ public class InMemoryRepositoryBuilder {
             throw new IOException(
                     "Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because it contains the path " + path + ", which leaves the repository root");
         }
+        // A tree entry that names the metadata directory would become configuration and hooks of the extracted repository
+        if (GitPathNames.containsGitMetadataName(normalized)) {
+            throw new IOException("Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because it contains the path " + path
+                    + ", which names the metadata directory of a repository");
+        }
     }
 
     /**

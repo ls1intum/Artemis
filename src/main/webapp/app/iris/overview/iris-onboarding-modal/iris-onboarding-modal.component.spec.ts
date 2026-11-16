@@ -1,14 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { IrisOnboardingRef } from './iris-onboarding-ref';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { StepperComponent } from './stepper/stepper.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisOnboardingService, OnboardingEvent } from './iris-onboarding.service';
@@ -39,7 +37,7 @@ function createMockElement(rect: Partial<DOMRect>): HTMLElement {
 describe('IrisOnboardingModalComponent', () => {
     let component: IrisOnboardingModalComponent;
     let fixture: ComponentFixture<IrisOnboardingModalComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: IrisOnboardingRef;
     let onboardingEventSubject: Subject<OnboardingEvent>;
 
     async function detectChanges(): Promise<void> {
@@ -54,15 +52,12 @@ describe('IrisOnboardingModalComponent', () => {
             imports: [
                 IrisOnboardingModalComponent,
                 MockComponent(IrisLogoComponent),
-                MockComponent(ButtonComponent),
                 MockComponent(StepperComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(CdkTrapFocus),
-                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisTranslatePipe, (key) => key ?? ''),
             ],
             providers: [
-                MockProvider(DynamicDialogRef),
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: IrisOnboardingRef, useValue: new IrisOnboardingRef() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: IrisOnboardingService,
@@ -76,7 +71,7 @@ describe('IrisOnboardingModalComponent', () => {
 
         fixture = TestBed.createComponent(IrisOnboardingModalComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(IrisOnboardingRef);
         fixture.detectChanges();
     });
 
@@ -96,6 +91,53 @@ describe('IrisOnboardingModalComponent', () => {
 
     it('should expose three numbered tour steps for the stepper indicator', () => {
         expect(component.totalTourSteps).toBe(3);
+    });
+
+    it('uses a modal welcome dialog and releases its scroll lock before the interactive tour', async () => {
+        await detectChanges();
+        const welcome = document.querySelector('[role="dialog"]');
+        expect(welcome?.getAttribute('aria-modal')).toBe('true');
+        expect(welcome?.getAttribute('aria-label')).toBe('artemisApp.iris.onboarding.title');
+        expect(document.documentElement.style.overflow).toBe('hidden');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+
+        document.querySelector<HTMLButtonElement>('[data-testid="start-iris-tour"]')!.click();
+        await detectChanges();
+
+        expect(component.step()).toBe(1);
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(document.documentElement.style.overflow).toBe('');
+        expect(document.body.getAttribute('data-onboarding-active-step')).toBe('1');
+        expect(closeSpy).not.toHaveBeenCalled();
+    });
+
+    it('dismisses the welcome with Escape through the dialog', async () => {
+        await detectChanges();
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await detectChanges();
+        expect(closeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the welcome open when the backdrop is clicked', async () => {
+        await detectChanges();
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+        document.querySelector('.cdk-overlay-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await detectChanges();
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+        expect(closeSpy).not.toHaveBeenCalled();
+    });
+
+    it('dismisses the welcome using its named icon button and shows its hint on focus', async () => {
+        await detectChanges();
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const close = document.querySelector<HTMLButtonElement>('.iris-onboarding__welcome button[aria-label]')!;
+        close.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        await vi.waitFor(() => {
+            expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('artemisApp.iris.onboarding.close');
+        });
+        close.click();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 
     describe('next', () => {
@@ -147,7 +189,8 @@ describe('IrisOnboardingModalComponent', () => {
             expect(closeSpy).toHaveBeenCalledOnce();
         });
 
-        it('should close the dialog on Escape key', () => {
+        it('should close the numbered tour on Escape key', () => {
+            component.step.set(1);
             const closeSpy = vi.spyOn(dialogRef, 'close');
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
             expect(closeSpy).toHaveBeenCalledOnce();
@@ -159,7 +202,7 @@ describe('IrisOnboardingModalComponent', () => {
             component.step.set(0);
             await detectChanges();
 
-            const welcomeModal = fixture.nativeElement.querySelector('.iris-onboarding-modal-welcome');
+            const welcomeModal = document.querySelector('.iris-onboarding__welcome');
             expect(welcomeModal).toBeTruthy();
         });
 
@@ -177,9 +220,9 @@ describe('IrisOnboardingModalComponent', () => {
             component.isStepPositionReady.set(true);
             await detectChanges();
 
-            expect(fixture.nativeElement.querySelector('.onboarding-tooltip')).toBeTruthy();
-            expect(fixture.nativeElement.querySelector('.coach-mark')).toBeTruthy();
-            expect(fixture.nativeElement.querySelector('.spotlight-blocker')).toBeTruthy();
+            expect(fixture.nativeElement.querySelector('.iris-onboarding__tooltip')).toBeTruthy();
+            expect(fixture.nativeElement.querySelector('.iris-onboarding__coach-mark')).toBeTruthy();
+            expect(fixture.nativeElement.querySelector('.iris-onboarding__spotlight')).toBeTruthy();
         });
 
         it('should not render tooltip when position is not ready', async () => {
@@ -187,7 +230,28 @@ describe('IrisOnboardingModalComponent', () => {
             component.isStepPositionReady.set(false);
             await detectChanges();
 
-            expect(fixture.nativeElement.querySelector('.onboarding-tooltip')).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('.iris-onboarding__tooltip')).toBeFalsy();
+        });
+
+        it('keeps a taller translated tour card inside the viewport using its rendered height', async () => {
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(260);
+            vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(280);
+            Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true });
+            Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+            component.step.set(2);
+            component.tooltipConfig.set({
+                spotlight: { top: 650, left: 1100, width: 90, height: 40 },
+                coachMarkPosition: { top: 664, left: 1139 },
+                tooltipPosition: { top: 608, left: 908 },
+                titleTranslationKey: 'artemisApp.iris.onboarding.step2.title',
+                descriptionTranslationKey: 'artemisApp.iris.onboarding.step2.description',
+                arrowDirection: 'up',
+                currentStep: 2,
+            });
+            component.isStepPositionReady.set(true);
+            await detectChanges();
+
+            expect(component.tooltipConfig()?.tooltipPosition).toEqual({ top: 528, left: 908 });
         });
 
         it('should render tooltip with correct arrow direction class', async () => {
@@ -204,8 +268,8 @@ describe('IrisOnboardingModalComponent', () => {
             component.isStepPositionReady.set(true);
             await detectChanges();
 
-            const tooltip = fixture.nativeElement.querySelector('.onboarding-tooltip');
-            expect(tooltip.classList.contains('tooltip-arrow-down')).toBe(true);
+            const tooltip = fixture.nativeElement.querySelector('.iris-onboarding__tooltip');
+            expect(tooltip.classList.contains('iris-onboarding__tooltip--down')).toBe(true);
         });
 
         it('should have correct ARIA attributes on tooltip', async () => {
@@ -222,7 +286,7 @@ describe('IrisOnboardingModalComponent', () => {
             component.isStepPositionReady.set(true);
             await detectChanges();
 
-            const tooltip = fixture.nativeElement.querySelector('.onboarding-tooltip');
+            const tooltip = fixture.nativeElement.querySelector('.iris-onboarding__tooltip');
             expect(tooltip.getAttribute('role')).toBe('region');
             expect(tooltip.hasAttribute('aria-modal')).toBe(false);
             expect(tooltip.getAttribute('aria-labelledby')).toBe('onboarding-tooltip-title-2');
@@ -233,8 +297,8 @@ describe('IrisOnboardingModalComponent', () => {
             component.step.set(99);
             await detectChanges();
 
-            const welcomeModal = fixture.nativeElement.querySelector('.iris-onboarding-modal-welcome');
-            const tooltip = fixture.nativeElement.querySelector('.onboarding-tooltip');
+            const welcomeModal = document.querySelector('.iris-onboarding__welcome');
+            const tooltip = fixture.nativeElement.querySelector('.iris-onboarding__tooltip');
             expect(welcomeModal).toBeFalsy();
             expect(tooltip).toBeFalsy();
         });
@@ -263,6 +327,30 @@ describe('IrisOnboardingModalComponent', () => {
             expect(config!.titleTranslationKey).toBe('artemisApp.iris.onboarding.step1.title');
 
             vi.useRealTimers();
+        });
+
+        it('keeps the second step card inside the viewport below the suggestion chips', () => {
+            vi.useFakeTimers();
+            vi.spyOn(document, 'querySelectorAll').mockImplementation((selector: string) => {
+                if (selector === '[data-onboarding-target="suggestion-chips"]') {
+                    return [createMockElement({ top: 650, left: 1100, right: 1190, bottom: 690, width: 90, height: 40 })] as unknown as NodeListOf<Element>;
+                }
+                return [] as unknown as NodeListOf<Element>;
+            });
+            Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true });
+            Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+
+            component.step.set(1);
+            component.next();
+            vi.advanceTimersByTime(200);
+
+            expect(component.isStepPositionReady()).toBe(true);
+            expect(component.tooltipConfig()).toMatchObject({
+                currentStep: 2,
+                arrowDirection: 'up',
+                titleTranslationKey: 'artemisApp.iris.onboarding.step2.title',
+                tooltipPosition: { top: 608, left: 908 },
+            });
         });
 
         it('should calculate tooltip position for step 3 (info icon)', () => {

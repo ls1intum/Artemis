@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
@@ -67,6 +68,8 @@ public class PlagiarismResource {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
     // correspond to the translation files (suffix) used in the client
     private static final String YOUR_SUBMISSION = "Your submission";
 
@@ -74,7 +77,7 @@ public class PlagiarismResource {
 
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismSubmissionRepository plagiarismSubmissionRepository,
             CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, PlagiarismService plagiarismService,
-            PlagiarismResultRepository plagiarismResultRepository) {
+            PlagiarismResultRepository plagiarismResultRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismSubmissionRepository = plagiarismSubmissionRepository;
         this.courseRepository = courseRepository;
@@ -82,6 +85,7 @@ public class PlagiarismResource {
         this.userRepository = userRepository;
         this.plagiarismService = plagiarismService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
     /**
@@ -143,6 +147,10 @@ public class PlagiarismResource {
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             // Note: this calls also checks that the student is allowed to see the complaint, and throws otherwise
             checkStudentAccess(submissionA, submissionB, user.getLogin());
+            // the comparison is only shown once the instructors have communicated the case to the student
+            if (!plagiarismCaseRepository.existsCommunicatedCaseForComparisonAndUser(comparisonId, user.getLogin())) {
+                throw new AccessForbiddenException("This plagiarism comparison has not been communicated to the requesting user.");
+            }
         }
 
         return ResponseEntity.ok(PlagiarismComparisonDTO.fromComparison(comparison, submissionA, submissionB));

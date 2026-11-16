@@ -16,6 +16,8 @@ import { CommunicationService } from 'app/communication/service/communication.se
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('RedirectToIrisButtonComponent', () => {
     let component: RedirectToIrisButtonComponent;
@@ -33,6 +35,7 @@ describe('RedirectToIrisButtonComponent', () => {
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 MockProvider(ProfileService),
                 MockProvider(IrisSettingsService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
 

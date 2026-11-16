@@ -257,6 +257,37 @@ describe('ParticipationComponent', () => {
             expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
         });
 
+        // The student exercise page always shows the participation of the viewer, so it cannot show the code of a student: it redirects
+        // to the own participation of the instructor, or shows no editor at all when the instructor never started the exercise.
+        const renderOnlineEditorLink = async (programmingExercise: Exercise) => {
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
+                of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
+            );
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+            return componentFixture.nativeElement.querySelector('a[href*="code-editor"]') as HTMLAnchorElement | null;
+        };
+
+        it('opens the code of a student in the code editor of the course management instead of on the student exercise page', async () => {
+            const link = await renderOnlineEditorLink({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastEditor: true, dueDate: dayjs().add(1, 'day') });
+
+            expect(link?.getAttribute('href')).toBe('/course-management/10/programming-exercises/1/code-editor/participations/3');
+        });
+
+        it('opens the code of a student of an exam exercise in the code editor below its exam', async () => {
+            const link = await renderOnlineEditorLink({
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastInstructor: true,
+                course: undefined,
+                exerciseGroup: { id: 8, exam: { id: 9, course } },
+            });
+
+            expect(link?.getAttribute('href')).toBe('/course-management/10/exams/9/exercise-groups/8/programming-exercises/1/code-editor/participations/3');
+        });
+
         it('preserves editor and instructor access while identities are masked', () => {
             component.exercise.set({
                 ...exercise,

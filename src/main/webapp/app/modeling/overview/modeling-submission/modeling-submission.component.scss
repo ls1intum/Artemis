@@ -111,13 +111,13 @@ jhi-modeling-assessment {
     display: flex;
     min-height: 0;
     flex-direction: column;
-    color: var(--apollon-foreground, var(--bs-body-color));
+    color: var(--apollon-foreground, var(--body-color));
     font-size: 0.875rem;
 }
 
 .modeling-submission-feedback__empty {
     margin: 0;
-    color: var(--apollon-secondary, var(--bs-secondary-color));
+    color: var(--apollon-secondary, var(--text-body-secondary));
 }
 
 .feedback-group__title {
@@ -125,7 +125,7 @@ jhi-modeling-assessment {
     align-items: baseline;
     gap: 0.375rem;
     margin: 0 0 0.375rem;
-    color: var(--apollon-secondary, var(--bs-secondary-color));
+    color: var(--apollon-secondary, var(--text-body-secondary));
     font-size: 0.8125rem;
     font-weight: 600;
 
@@ -155,16 +155,16 @@ jhi-modeling-assessment {
     column-gap: 0.5rem;
     row-gap: 0.125rem;
     padding: 0.4375rem 0.5rem;
-    border: 1px solid var(--apollon-border, var(--bs-border-color));
+    border: 1px solid var(--apollon-border, var(--border-color));
     border-radius: var(--apollon-radius-md, 6px);
-    background-color: var(--apollon-surface, var(--bs-body-bg));
+    background-color: var(--apollon-surface, var(--body-bg));
     transition: border-color 120ms ease;
 
     &[role='button'] {
         cursor: pointer;
 
         &:hover {
-            border-color: var(--apollon-interactive-selection, #f39c12);
+            border-color: var(--apollon-interactive-selection, var(--warning));
         }
     }
 
@@ -175,8 +175,8 @@ jhi-modeling-assessment {
 }
 
 .feedback-row--selected {
-    border-color: var(--apollon-interactive-selection, #f39c12);
-    box-shadow: 0 0 0 1px var(--apollon-interactive-selection, #f39c12);
+    border-color: var(--apollon-interactive-selection, var(--warning));
+    box-shadow: 0 0 0 1px var(--apollon-interactive-selection, var(--warning));
 }
 
 .feedback-row__score {
@@ -210,7 +210,7 @@ jhi-modeling-assessment {
 .feedback-row__name {
     min-width: 0;
     overflow: hidden;
-    color: var(--apollon-secondary, var(--bs-secondary-color));
+    color: var(--apollon-secondary, var(--text-body-secondary));
     font-size: 0.8125rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -224,7 +224,7 @@ jhi-modeling-assessment {
 .modeling-submission-feedback__complaint {
     margin-top: 0.75rem;
     padding-top: 0.625rem;
-    border-top: 1px solid var(--apollon-border, var(--bs-border-color));
+    border-top: 1px solid var(--apollon-border, var(--border-color));
 
     ::ng-deep button {
         width: 100%;
@@ -265,6 +265,6 @@ jhi-modeling-assessment {
     display: block;
     margin-top: 0.75rem;
     padding-top: 0.625rem;
-    border-top: 1px solid var(--apollon-border, var(--bs-border-color));
-    color: var(--apollon-secondary, var(--bs-secondary-color));
+    border-top: 1px solid var(--apollon-border, var(--border-color));
+    color: var(--apollon-secondary, var(--text-body-secondary));
 }

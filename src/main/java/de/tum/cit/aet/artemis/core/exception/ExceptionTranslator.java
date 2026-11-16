@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.exception;
 
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -283,6 +286,55 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         detail.setProperty(MESSAGE_KEY, StringUtils.firstNonBlank(ex.getMessage(), "Method not allowed"));
         postProcess(detail, request);
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(detail);
+    }
+
+    /**
+     * Answers a request whose multipart body or multipart content type cannot be parsed, for example one that names {@code multipart/form-data} without a boundary, with
+     * {@code 400 Bad Request}. Requests that exceed the upload limit keep the {@code 413} of the parent class, which handles that subclass.
+     *
+     * @param ex      the multipart exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details
+     */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ProblemDetail> handleMultipartException(MultipartException ex, NativeWebRequest request) {
+        log.warn("Malformed multipart request: {}", ex.getMessage());
+        return clientErrorResponse(HttpStatus.BAD_REQUEST, "The multipart request could not be parsed", request);
+    }
+
+    /**
+     * Answers a request with a media type that cannot be parsed with {@code 415 Unsupported Media Type}.
+     *
+     * @param ex      the exception of the unparsable media type
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details
+     */
+    @ExceptionHandler(InvalidMediaTypeException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidMediaTypeException(InvalidMediaTypeException ex, NativeWebRequest request) {
+        log.warn("Invalid media type in request: {}", ex.getMessage());
+        return clientErrorResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "The media type of the request is not valid", request);
+    }
+
+    /**
+     * Answers a request that carries a name which cannot be a file system path, for example one with a NUL character, with {@code 400 Bad Request}.
+     *
+     * @param ex      the exception of the invalid path
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details
+     */
+    @ExceptionHandler(InvalidPathException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidPathException(InvalidPathException ex, NativeWebRequest request) {
+        log.warn("Invalid path in request: {}", ex.getMessage());
+        return clientErrorResponse(HttpStatus.BAD_REQUEST, "The request contains an invalid path", request);
+    }
+
+    private ResponseEntity<ProblemDetail> clientErrorResponse(HttpStatus status, String detailText, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(status);
+        detail.setTitle(status.getReasonPhrase());
+        detail.setDetail(detailText);
+        detail.setProperty(MESSAGE_KEY, "error.http." + status.value());
+        postProcess(detail, request);
+        return ResponseEntity.status(status).body(detail);
     }
 
     /**

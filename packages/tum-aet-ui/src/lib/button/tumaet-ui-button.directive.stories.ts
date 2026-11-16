@@ -12,6 +12,7 @@ const meta = {
         severity: 'primary',
         size: 'default',
         variant: 'solid',
+        rounded: false,
     },
     argTypes: {
         severity: {
@@ -25,6 +26,9 @@ const meta = {
         variant: {
             control: 'inline-radio',
             options: ['solid', 'outlined', 'text'],
+        },
+        rounded: {
+            control: 'boolean',
         },
     },
     render: (args) => ({
@@ -62,5 +66,33 @@ export const NativeVariantHelper: Story = {
         const style = getComputedStyle(button);
         await expect(style.outlineStyle).not.toBe('none');
         await expect(parseFloat(style.outlineWidth)).toBeGreaterThanOrEqual(2);
+    },
+};
+
+/** Icon-only native buttons and links can use the same fully rounded presentation as `tumaet-ui-button [rounded]`. */
+export const RoundedIconOnly: Story = {
+    args: {
+        severity: 'secondary',
+        size: 'small',
+        variant: 'text',
+        rounded: true,
+    },
+    render: (args) => ({
+        props: args,
+        template: `
+            <button type="button" tumAetUiButton ${argsToTemplate(args)} aria-label="Open session actions">⋮</button>
+            <a href="#rounded-link" tumAetUiButton ${argsToTemplate(args)} aria-label="Open exercise">→</a>
+        `,
+    }),
+    play: async ({ canvas, userEvent }) => {
+        const button = canvas.getByRole('button', { name: 'Open session actions' });
+        const link = canvas.getByRole('link', { name: 'Open exercise' });
+        await expect(getComputedStyle(button).borderRadius).toBe('9999px');
+        await expect(getComputedStyle(link).borderRadius).toBe('9999px');
+        await userEvent.tab();
+        await expect(button).toHaveFocus();
+        await expect(getComputedStyle(button).outlineStyle).not.toBe('none');
+        await userEvent.tab();
+        await expect(link).toHaveFocus();
     },
 };

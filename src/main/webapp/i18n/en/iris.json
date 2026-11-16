@@ -237,7 +237,12 @@
                 "questionOf": "Question {{ current }} of {{ total }}",
                 "viewScore": "View Score",
                 "reviewQuestions": "Review Questions",
-                "score": "Score"
+                "score": "Score",
+                "previousQuestion": "Previous question",
+                "nextQuestion": "Next question",
+                "questionCorrect": "Question {{ number }}: answered correctly",
+                "questionIncorrect": "Question {{ number }}: answered incorrectly",
+                "questionUnanswered": "Question {{ number }}: not submitted"
             },
             "citation": {
                 "unitLabel": "Unit:",
@@ -246,7 +251,9 @@
                     "stale": "The cited material has changed since this answer was written, so the exact page or timestamp is not opened.",
                     "gone": "The cited material no longer exists, so the exact page or timestamp cannot be opened.",
                     "unverified": "The cited material cannot be checked right now, so the exact page or timestamp is not opened as a precaution."
-                }
+                },
+                "previous": "Previous citation",
+                "next": "Next citation"
             },
             "contextSelection": {
                 "label": "Select chat context",
@@ -259,7 +266,9 @@
                 "chatTopicCleared": "Chat topic cleared",
                 "chatTopicSwitched": "Chat topic switched:",
                 "addContextTooltip": "Select lecture or exercise",
-                "tutorSuggestionContext": "Tutor suggestion"
+                "tutorSuggestionContext": "Tutor suggestion",
+                "searchLabel": "Search lectures and exercises",
+                "removeContext": "Remove chat context"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
@@ -356,7 +365,8 @@
                 "deleteSessionSuccess": "Chat session deleted.",
                 "deleteSessionError": "Failed to delete chat session.",
                 "sessionMenuAriaLabel": "Chat session actions",
-                "switchSession": "Switch chat session"
+                "switchSession": "Switch chat session",
+                "closeChat": "Close chat"
             },
             "aboutIrisModal": {
                 "learnMore": "Learn more",
@@ -383,7 +393,9 @@
                 "privacyDisclaimer": "Review your institution's privacy policy for details.",
                 "tryIris": "Try Iris",
                 "close": "Close"
-            }
+            },
+            "logoAlt": "Iris logo",
+            "logoButtonLabel": "Iris"
         },
         "pyrisSearchAskRequest": {
             "limit": "limit"

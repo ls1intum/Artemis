@@ -254,7 +254,7 @@ public class AnswerMessageService extends PostingService {
         // checked like an ordinary edit.
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
-            mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
+            mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course, conversation);
             if (!Objects.equals(existingAnswerMessage.getContent(), answerMessage.content())) {
                 // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
                 mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
@@ -467,15 +467,22 @@ public class AnswerMessageService extends PostingService {
     }
 
     /**
-     * Checks if the requesting user is authorized in the course context,
-     * i.e. user has to be the author of original message associated with the answer message or at least teaching assistant
+     * Checks if the requesting user is authorized to mark the answer message as resolving, i.e. the user has to be the author of the original message associated with the
+     * answer message, or at least a teaching assistant who takes part in the conversation. Instructors and members of course-wide channels count as taking part.
      *
      * @param answerMessage answer message that should be marked as resolving
      * @param user          requesting user
+     * @param course        the course of the conversation
+     * @param conversation  the conversation the answer message belongs to
      */
-    void mayMarkAnswerMessageAsResolvingElseThrow(AnswerPost answerMessage, User user, Course course) {
-        if (!answerMessage.getPost().getAuthor().equals(user)) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+    void mayMarkAnswerMessageAsResolvingElseThrow(AnswerPost answerMessage, User user, Course course, Conversation conversation) {
+        if (answerMessage.getPost().getAuthor().equals(user)) {
+            return;
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        boolean courseWideChannel = conversation instanceof Channel channel && channel.getIsCourseWide();
+        if (!courseWideChannel && !authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !conversationService.isMember(conversation.getId(), user.getId())) {
+            throw new AccessForbiddenException("Only members of the conversation can mark an answer as resolving");
         }
     }
 
