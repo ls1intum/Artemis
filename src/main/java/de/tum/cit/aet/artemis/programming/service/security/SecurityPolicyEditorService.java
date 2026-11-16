@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -159,7 +160,7 @@ public class SecurityPolicyEditorService {
      */
     public SecurityPolicyEditorDTO getEditor(ProgrammingExercise exercise) {
         securityFrameworkService.validateJavaExercise(exercise);
-        return readTestRepository(exercise, (repository, commit) -> editorAt(repository, commit));
+        return readTestRepository(exercise, (repository, commit) -> editorAt(repository, commit, exercise.getPackageName()));
     }
 
     /**
@@ -356,7 +357,7 @@ public class SecurityPolicyEditorService {
         }
     }
 
-    private SecurityPolicyEditorDTO editorAt(Repository repository, RevCommit commit) throws IOException {
+    private SecurityPolicyEditorDTO editorAt(Repository repository, RevCommit commit, @Nullable String packageName) throws IOException {
         RevTree tree = commit.getTree();
         SecurityFrameworkState state = SecurityFrameworkCommitFiles.evaluate(repository, tree);
         Map<String, List<String>> assignedTests = SecurityTestAssignments
@@ -376,8 +377,23 @@ public class SecurityPolicyEditorService {
         SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(
                 SecurityFrameworkCommitFiles.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null),
                 SecurityFrameworkCommitFiles.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null));
+        SecurityPolicyDocumentDTO newPolicyTemplate = SecurityPolicyRepositoryFiles
+                .detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom()).map(buildTool -> new SecurityPolicyDocumentDTO("", null, buildTool.aresLanguageConfiguration(),
+                        packageName == null || packageName.isBlank() ? null : packageName, null, List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null))
+                .orElse(null);
         return new SecurityPolicyEditorDTO(commit.name(), lastCommit, SecurityPolicyRepositoryFiles.parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).orElse(null),
-                policies, presets, SecurityPolicyRepositoryFiles.attachesJavaAgent(buildFiles));
+                policies, presets, attachesJavaAgent(buildFiles), newPolicyTemplate);
+    }
+
+    /**
+     * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
+     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it.
+     *
+     * @param buildFiles the build files at the root of a repository
+     * @return whether a build file attaches a Java agent
+     */
+    private static boolean attachesJavaAgent(SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
+        return Stream.of(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(Objects::nonNull).anyMatch(content -> content.contains("-javaagent"));
     }
 
     /**
@@ -440,7 +456,7 @@ public class SecurityPolicyEditorService {
             SecurityPolicyRepositoryFiles.writeAresVersion(root, change.frameworkVersion());
             frameworkVersion = change.frameworkVersion();
         }
-        boolean javaAgent = SecurityPolicyRepositoryFiles.attachesJavaAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
+        boolean javaAgent = attachesJavaAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
 
         // The paths the change frees: deleted policies and the old paths of renamed ones.
         Set<String> removed = new LinkedHashSet<>();

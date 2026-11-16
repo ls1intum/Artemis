@@ -17,10 +17,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param presets                   the presets an instructor can base a policy on
  * @param scanDependenciesAvailable whether the build of the tests repository attaches the Ares agent, which dependency scanning needs: with it, Ares also checks the
  *                                      libraries of the student code while the tests run
+ * @param newPolicyTemplate         the supervised code a new policy starts with when no policy is left to copy it from: the language configuration of the build
+ *                                      tool and the package of the exercise, like a policy Artemis generates; absent if the build file pins no Ares version
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SecurityPolicyEditorDTO(@Nullable String baseCommitHash, @Nullable CommitDTO lastCommit, @Nullable String frameworkVersion, List<PolicyDTO> policies,
-        List<PresetDTO> presets, boolean scanDependenciesAvailable) {
+        List<PresetDTO> presets, boolean scanDependenciesAvailable, @Nullable SecurityPolicyDocumentDTO newPolicyTemplate) {
 
     /**
      * A commit of the tests repository.

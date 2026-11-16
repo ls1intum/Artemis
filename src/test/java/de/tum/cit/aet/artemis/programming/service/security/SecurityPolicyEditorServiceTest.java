@@ -700,6 +700,11 @@ class SecurityPolicyEditorServiceTest {
         assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy\nclass StressTest"));
         assertThat(result.config().status()).isEqualTo("CONFIGURED");
         assertThat(result.editor().policies()).isEmpty();
+        // Without a policy to copy them from, a new policy starts with the supervised code of a generated one.
+        assertThat(result.editor().newPolicyTemplate()).isNotNull().satisfies(template -> {
+            assertThat(template.languageConfiguration()).isEqualTo("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ");
+            assertThat(template.supervisedPackage()).isEqualTo("de.example");
+        });
     }
 
     @Test

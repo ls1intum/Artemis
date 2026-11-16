@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -25,7 +24,6 @@ import java.util.function.Predicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -106,6 +104,13 @@ public final class SecurityPolicyRepositoryFiles {
 
         BuildTool(String aresLanguageConfiguration) {
             this.aresLanguageConfiguration = aresLanguageConfiguration;
+        }
+
+        /**
+         * @return the language configuration of a policy Artemis generates for this build tool
+         */
+        public String aresLanguageConfiguration() {
+            return aresLanguageConfiguration;
         }
     }
 
@@ -464,7 +469,7 @@ public final class SecurityPolicyRepositoryFiles {
      * @param mavenPom    content of {@code pom.xml}, if the repository has one
      * @return the build tool whose build file pins an Ares version
      */
-    private static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
+    static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
         if (gradleBuild != null && !aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
             return Optional.of(BuildTool.GRADLE);
         }
@@ -697,17 +702,6 @@ public final class SecurityPolicyRepositoryFiles {
             String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
             return new BuildFileChange(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, content, withAresVersion(content, buildTool, aresVersion));
         });
-    }
-
-    /**
-     * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
-     * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it.
-     *
-     * @param buildFiles the build files at the root of a repository
-     * @return whether a build file attaches a Java agent
-     */
-    static boolean attachesJavaAgent(BuildFiles buildFiles) {
-        return Stream.of(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(Objects::nonNull).anyMatch(content -> content.contains("-javaagent"));
     }
 
     /**
