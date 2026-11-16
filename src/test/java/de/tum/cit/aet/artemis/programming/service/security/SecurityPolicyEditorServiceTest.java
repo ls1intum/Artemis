@@ -851,6 +851,42 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesToReleaseTheLastShownTestCaseOfAClassThatInheritsTestsAndIsAssignedCaseByCase() {
+        pushToTests("test/de/example/ChildTest.java", """
+                package de.example;
+
+                import org.junit.jupiter.api.Test;
+
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                class ChildTest extends SortingTest {
+
+                    @de.tum.cit.ase.ares.api.Policy
+                    @Test
+                    void testOwnB() {
+                    }
+
+                    @Test
+                    void testOwnC() {
+                    }
+                }
+                """);
+        List<String> withChild = List.of("de.example.ChildTest#testOwnC", "de.example.SortingTest", "de.example.StressTest");
+        SecurityPolicyEditorDTO initial = editorService.getEditor(exercise());
+        editorService.commit(exercise(),
+                change(initial,
+                        edited(withTestClasses(loadedPolicy(initial), "SecurityPolicy.yaml", List.of("de.example.ChildTest", "de.example.SortingTest", "de.example.StressTest")),
+                                withChild)),
+                user);
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactlyElementsOf(withChild);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(loadedPolicy(editor), BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInheritedTestsLosePolicy"));
+    }
+
+    @Test
     void renamingAPolicyKeepsTheOverridesOfTestCasesWithoutAPolicyFile() throws Exception {
         pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()")
                 .replace("    @Test\n    void testMergeSort()", "    @de.tum.cit.ase.ares.api.Policy(activated = false)\n    @Test\n    void testMergeSort()"));

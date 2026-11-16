@@ -548,11 +548,13 @@ public class SecurityPolicyEditorService {
 
     /**
      * The test methods a class inherits from another test class are not among its test cases, so they cannot be assigned one by one; they follow its class
-     * annotation, which therefore must not lose its policy file while some of its own test cases keep theirs, e.g. when one test case is released.
+     * annotation, which therefore must not lose its policy file unnoticed. Only a class the editor shows as assigned as a whole may be released completely;
+     * releasing some of its test cases, or the last one the editor shows of a class assigned case by case, would release the inherited ones as well.
      */
     private static void requireKeptInheritedPolicy(SecurityTestAssignments.TestClass testClass, SecurityTestAssignments.TestClass assigned) {
         String classPolicyPath = testClass.classPolicyPath();
-        if (!testClass.inheritsTests() || classPolicyPath == null || assigned.classPolicyPath() != null || assigned.methodPolicyPaths().isEmpty()) {
+        boolean releasedAsAWhole = testClass.entries().containsKey(testClass.qualifiedName()) && assigned.methodPolicyPaths().isEmpty();
+        if (!testClass.inheritsTests() || classPolicyPath == null || assigned.classPolicyPath() != null || releasedAsAWhole) {
             return;
         }
         throw refused(
