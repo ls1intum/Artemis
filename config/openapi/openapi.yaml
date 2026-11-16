@@ -4726,6 +4726,7 @@ components:
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
     ComplaintBySubmissionQuery:
       type: object
+      additionalProperties: false
       properties:
         submissionId: {type: integer, format: int64}
       required: [submissionId]
@@ -4996,6 +4997,7 @@ components:
         numberOfPages: {type: integer, format: int32}
     ExamComplaintsQuery:
       type: object
+      additionalProperties: false
       properties:
         courseId: {type: integer, format: int64}
         examId: {type: integer, format: int64}
@@ -5771,6 +5773,7 @@ components:
       required: [startDate, title, type]
     ExerciseComplaintsQuery:
       type: object
+      additionalProperties: false
       properties:
         allComplaintsForTutor: {type: boolean}
         complaintType:
@@ -6864,6 +6867,7 @@ components:
       required: [correct, text]
     TestRunComplaintsQuery:
       type: object
+      additionalProperties: false
       properties:
         exerciseId: {type: integer, format: int64}
       required: [exerciseId]
@@ -7450,6 +7454,7 @@ components:
         courseId: {type: integer, format: int64}
     CourseComplaintsQuery:
       type: object
+      additionalProperties: false
       properties:
         allComplaintsForTutor: {type: boolean}
         complaintType:
@@ -7460,6 +7465,7 @@ components:
       required: [complaintType, courseId]
     CourseComplaintsForTutorQuery:
       type: object
+      additionalProperties: false
       properties:
         allComplaintsForTutor: {type: boolean}
         complaintType:
@@ -7856,6 +7862,7 @@ components:
         detail: {type: string}
     ExerciseComplaintsForTutorQuery:
       type: object
+      additionalProperties: false
       properties:
         allComplaintsForTutor: {type: boolean}
         complaintType:

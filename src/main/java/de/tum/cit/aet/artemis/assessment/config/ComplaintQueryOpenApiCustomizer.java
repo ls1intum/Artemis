@@ -36,8 +36,9 @@ import io.swagger.v3.oas.models.parameters.Parameter;
  * <p>
  * This customizer replaces the merged parameters with one parameter {@value #QUERY_PARAMETER} ({@code in: query}, {@code style: form},
  * {@code explode: true}), whose schema is a {@code oneOf} with one object per handler. Form style with explode sends each property as its
- * own query parameter, which is exactly the request the handlers match today. It also pins the operation ids. The handlers, their
- * mappings and their access checks are unchanged.
+ * own query parameter, which is exactly the request the handlers match today. Each object allows only its own properties: without that,
+ * {@code {exerciseId, complaintType}} would match both the test run and the exercise shape, and {@code oneOf} allows exactly one match.
+ * It also pins the operation ids. The handlers, their mappings and their access checks are unchanged.
  * <p>
  * {@code OpenAPIConfiguration#schemaCustomizer} keeps only component schemas whose names end in {@value #DTO_SUFFIX} and strips that
  * suffix, but leaves parameter references untouched. The schemas are therefore registered with the suffix and referenced without it,
@@ -93,6 +94,7 @@ public class ComplaintQueryOpenApiCustomizer implements OpenApiCustomizer {
             ObjectSchema schema = new ObjectSchema();
             new TreeMap<>(shape.properties()).forEach(schema::addProperty);
             schema.setRequired(shape.required());
+            schema.setAdditionalProperties(false);
             openApi.getComponents().addSchemas(shape.name() + DTO_SUFFIX, schema);
             query.addOneOfItem(reference(shape.name()));
         }

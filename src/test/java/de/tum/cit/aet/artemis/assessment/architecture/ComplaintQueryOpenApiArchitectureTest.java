@@ -90,6 +90,8 @@ class ComplaintQueryOpenApiArchitectureTest extends AbstractArchitectureTest {
             for (Schema<?> shapeReference : query.getOneOf()) {
                 Schema<?> shape = resolve(shapeReference);
                 assertThat(shape.getType()).as("type of " + shapeReference.get$ref()).isEqualTo("object");
+                // Closed shapes keep the oneOf alternatives apart: a request matches only the shape whose properties it sends.
+                assertThat(shape.getAdditionalProperties()).as("additional properties of " + shapeReference.get$ref()).isEqualTo(false);
                 List<String> parameters = new ArrayList<>();
                 shape.getProperties().forEach((name, property) -> parameters.add(describe(name, shape.getRequired().contains(name), property)));
                 documented.add(String.join(", ", new TreeSet<>(parameters)));
