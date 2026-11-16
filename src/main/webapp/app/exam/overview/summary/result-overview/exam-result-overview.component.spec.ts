@@ -579,7 +579,7 @@ describe('ExamResultOverviewComponent', () => {
             render();
 
             const heading: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-summary-heading"]');
-            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            // the important modifiers are needed because the unlayered global heading rules would win otherwise
             expect(heading.classList).toContain('text-base!');
             expect(heading.classList).toContain('font-semibold!');
         });

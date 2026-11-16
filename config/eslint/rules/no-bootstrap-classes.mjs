@@ -1,6 +1,6 @@
 /**
- * Forbid Bootstrap CSS classes in templates of modules that have been migrated to Tailwind + PrimeNG.
- * This is the regression lock for the incremental Bootstrap → PrimeNG/Tailwind migration: once a module's
+ * Forbid Bootstrap CSS classes in templates of modules that have been migrated to Tailwind + TUM AET UI.
+ * This is the regression lock for the incremental Bootstrap → TUM AET UI/Tailwind migration: once a module's
  * templates are clean, this rule (scoped to that module in eslint.config.mjs) prevents Bootstrap classes
  * from creeping back in.
  *
@@ -175,11 +175,11 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Forbid Bootstrap CSS classes in migrated module templates; use Tailwind utilities + PrimeNG components instead.',
+            description: 'Forbid Bootstrap CSS classes in migrated module templates; use Tailwind utilities + TUM AET UI components instead.',
         },
         messages: {
             bootstrapClass:
-                "Bootstrap class '{{cls}}' is not allowed in a migrated module — use a Tailwind utility or a PrimeNG component (btn->p-button, badge->p-tag, alert->p-message, card->p-card, form-control->PrimeNG input, row/col->grid|flex, d-flex->flex). See client-development.mdx (### Styling).",
+                "Bootstrap class '{{cls}}' is not allowed in a migrated module — use a Tailwind utility or a TUM AET UI component (btn->tumaet-ui-button, badge->tumaet-ui-tag, alert->tumaet-ui-message, card->tumaet-ui-card, form-control->tumAetUiInput, row/col->grid|flex, d-flex->flex). See client-development.mdx (### Styling).",
         },
         schema: [],
     },
