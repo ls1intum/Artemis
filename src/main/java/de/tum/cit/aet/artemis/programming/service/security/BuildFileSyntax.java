@@ -64,8 +64,13 @@ final class BuildFileSyntax {
         if (!dependency.find()) {
             return false;
         }
-        Pattern configuration = Pattern.compile("configurations\\s*+\\.\\s*+" + Pattern.quote(dependency.group(1)) + "\\b");
-        return javaAgents(code).anyMatch(agent -> namesAres(agent) || takesFileFrom(code, agent, configuration));
+        String name = dependency.group(1);
+        Pattern configuration = Pattern.compile("configurations\\s*+\\.\\s*+" + Pattern.quote(name) + "\\b");
+        // A configuration with more dependencies than the Ares agent leaves open which file an agent takes from it, e.g. JaCoCo, so the agent then has to
+        // name Ares itself.
+        boolean onlyTheAresAgent = Pattern.compile("(?m)^[ \\t]*+" + Pattern.quote(name) + "\\b[ \\t]*+\\(?[ \\t]*+(?:['\"]|\\w++[ \\t]*+[(:])").matcher(code).results()
+                .count() == 1;
+        return javaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
     }
 
     /**

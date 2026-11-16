@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -648,11 +649,10 @@ public class SecurityFrameworkService {
             return;
         }
         // Every policy file an active annotation points to is deleted, not only SecurityPolicy.yaml, because the policy editor can add more of them. A file
-        // that is no valid policy, e.g. an annotation that points to build.gradle or a SecurityPolicy.yaml with broken YAML, is not deleted.
-        SecurityPolicyRepositoryFiles.deletePolicy(root);
-        state.policyFiles().stream().filter(policyFile -> policyFile.problem() == null || !policyFile.problem().breaksTheSandbox())
-                .forEach(policyFile -> SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath())
-                        .ifPresent(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path)));
+        // that is no policy, e.g. an annotation that points to build.gradle or a YAML configuration, is not deleted.
+        Stream.concat(Stream.of(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME), state.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath))
+                .map(SecurityPolicyRepositoryFiles::validatePolicyPath).flatMap(Optional::stream).distinct()
+                .forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
     }
 

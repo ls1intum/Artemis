@@ -192,18 +192,26 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.evaluate(notNormalized).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
         assertThat(SecurityPolicyRepositoryFiles.evaluate(relative).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
 
-        SecurityPolicyRepositoryFiles.deletePolicy(root);
+        SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
         assertThat(SecurityPolicyRepositoryFiles.evaluate(notNormalized).status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED);
     }
 
     @Test
-    void keepsAPolicyFileWhoseYamlIsBroken() throws IOException {
+    void deletesOnlyFilesThatHaveTheShapeOfAPolicy() throws IOException {
         writeBuildFile();
-        FileUtils.writeStringToFile(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), "regardingTheSupervisedCode: [\n", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), "database: production\n", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(root.resolve("config/broken.yaml").toFile(), "regardingTheSupervisedCode: [\n", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(root.resolve("config/other.yaml").toFile(), "regardingTheSupervisedCode: everything\n", StandardCharsets.UTF_8);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "config/Refused.yaml", "regardingTheSupervisedCode:\n  unknownKey: 1\n");
 
-        SecurityPolicyRepositoryFiles.deletePolicy(root);
+        for (String path : List.of(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, "config/broken.yaml", "config/other.yaml", "config/Refused.yaml", "config/missing.yaml")) {
+            SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path);
+        }
 
         assertThat(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).exists();
+        assertThat(root.resolve("config/broken.yaml")).exists();
+        assertThat(root.resolve("config/other.yaml")).exists();
+        assertThat(root.resolve("config/Refused.yaml")).doesNotExist();
     }
 
     @Test
