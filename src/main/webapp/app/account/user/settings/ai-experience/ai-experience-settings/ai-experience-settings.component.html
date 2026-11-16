@@ -1,17 +1,17 @@
 <div class="flex flex-col gap-10">
-    <section class="flex flex-col gap-8">
-        <div class="flex flex-col gap-2">
-            <h2 class="m-0! text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h2>
+    <section class="flex flex-col gap-6!">
+        <div class="flex flex-col gap-3.5">
+            <h2 class="m-0! text-xl! leading-none! font-bold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h2>
             <p class="m-0!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.description"></p>
         </div>
-        <div class="flex flex-col gap-4!">
+        <div class="flex flex-col gap-3.5">
             <jhi-ai-mode-selector [currentSelection]="currentSelection()" [isOnPremiseEnabled]="isOnPremiseEnabled" (choice)="selectMode($event)" />
             <a class="self-center" routerLink="/ai-experience-info" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
         </div>
     </section>
-    <section class="flex flex-col gap-8">
-        <div class="flex flex-col gap-2">
-            <h2 class="m-0! text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h2>
+    <section class="flex flex-col gap-6!">
+        <div class="flex flex-col gap-3.5">
+            <h2 class="m-0! text-xl! leading-none! font-bold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h2>
             <p class="m-0!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagementInfo"></p>
         </div>
 
