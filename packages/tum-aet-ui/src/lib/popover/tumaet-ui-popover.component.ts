@@ -37,11 +37,19 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     /** Accessible name announced for the role="dialog" panel. Required: a dialog must have a name. */
     readonly ariaLabel = input.required<string>();
     readonly openChange = output<boolean>();
+    /**
+     * Emits once a closed popover is fully gone: its panel has faded out, been disposed and handed focus back to the
+     * element that opened it. `openChange(false)` fires earlier, when closing starts. Wait for this event to move
+     * focus elsewhere, for example into an editor that a selected item acts on, because the focus restore of the
+     * panel would otherwise override it.
+     */
+    readonly closed = output<void>();
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
     private positionSub?: Subscription;
     private readonly openState = signal(false);
+    private destroyed = false;
     /**
      * Where the panel ended up, which is not always where it was asked to go: CDK flips it when the preferred side
      * has no room. The opening animation grows the panel from the edge nearest its origin, so it has to follow.
@@ -98,15 +106,23 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         const view = this.document.defaultView;
         const reducedMotion = typeof view?.matchMedia === 'function' && view.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (!panel || reducedMotion || typeof panel.animate !== 'function') {
-            closing.dispose();
+            this.disposeAndNotify(closing);
             return;
         }
         const animation = panel.animate([{ opacity: 1 }, { opacity: 0 }], { duration: CLOSE_DURATION_MS, easing: 'ease-in', fill: 'forwards' });
         // Both arms: a cancelled fade must not leak the overlay.
         animation.finished.then(
-            () => closing.dispose(),
-            () => closing.dispose(),
+            () => this.disposeAndNotify(closing),
+            () => this.disposeAndNotify(closing),
         );
+    }
+
+    private disposeAndNotify(closing: OverlayRef): void {
+        closing.dispose();
+        // The component may be gone when a fade finishes late; an output cannot emit after that.
+        if (!this.destroyed) {
+            this.closed.emit();
+        }
     }
 
     /** Open the popover if closed, or close it if open. */
@@ -119,6 +135,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.destroyed = true;
         // Straight out, with no fade: there is no view left to play it in.
         this.positionSub?.unsubscribe();
         this.overlayRef?.dispose();
