@@ -2,7 +2,7 @@ export type FeedbackColor = 'primary' | 'secondary' | 'success' | 'danger' | 'wa
 
 export interface FeedbackNode {
     /**
-     * One of the possible colors for bootstrap alerts
+     * Severity of the feedback; the feedback message shows it as its TUM AET UI severity (`success`, `info`, `warning`, `danger`)
      */
     color?: FeedbackColor;
     name: string;

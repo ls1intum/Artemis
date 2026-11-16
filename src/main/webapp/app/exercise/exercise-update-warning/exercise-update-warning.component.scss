@@ -27,19 +27,4 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    .form-control,
-    .input-group-btn {
-        width: auto;
-    }
-
-    .form-group {
-        display: flex;
-        align-items: center;
-        margin: 0;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
 }

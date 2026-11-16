@@ -169,7 +169,7 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
 
         await programmingExerciseExportDialog.export();
 
-        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"] .message'), 'the dialog has to say what is missing').toContainText(
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]').getByTestId('alert-message'), 'the dialog has to say what is missing').toContainText(
             /select at least one participant/i,
         );
         expect(exportRequests, 'nothing may be requested from the server').toEqual([]);

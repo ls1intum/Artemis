@@ -1,9 +1,10 @@
 import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
+import { emailAllowedValidator } from 'app/account/shared/email-allowed';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/account/user/user.model';
-import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/foundation/constants/error.constants';
+import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, EMAIL_NOT_ALLOWED_ERROR_KEY, LOGIN_ALREADY_USED_TYPE } from 'app/foundation/constants/error.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -70,6 +71,8 @@ export class RegisterComponent implements AfterViewInit {
     readonly error = signal(false);
     /** Indicates the email address is already registered */
     readonly errorEmailExists = signal(false);
+    /** Indicates that the server refused the email address because it does not match the allowed addresses of this instance */
+    readonly errorEmailNotAllowed = signal(false);
     /** Indicates the username is already taken */
     readonly errorUserExists = signal(false);
     /** Indicates registration is blocked (e.g., by admin restriction) */
@@ -86,15 +89,14 @@ export class RegisterComponent implements AfterViewInit {
     readonly registerForm: FormGroup<RegisterForm>;
     /** Whether self-registration is enabled on this Artemis instance */
     readonly isRegistrationEnabled = signal(false);
-    /** Optional regex pattern restricting allowed email domains (e.g., university emails only) */
-    readonly allowedEmailPattern?: string;
     /** Human-readable description of allowed email pattern for display in UI */
     readonly allowedEmailPatternReadable = signal<string | undefined>(undefined);
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
         this.isRegistrationEnabled.set(profileInfo.registrationEnabled || false);
-        this.allowedEmailPattern = profileInfo.allowedEmailPattern;
+        // Whether the administrators restrict the allowed email addresses (e.g., university emails only). The server decides which addresses are allowed.
+        const emailRestricted = !!profileInfo.allowedEmailPattern;
         this.allowedEmailPatternReadable.set(profileInfo.allowedEmailPatternReadable);
 
         this.registerForm = new FormGroup<RegisterForm>({
@@ -106,10 +108,11 @@ export class RegisterComponent implements AfterViewInit {
             }),
             email: new FormControl('', {
                 nonNullable: true,
-                // Use pattern validation if email domain is restricted, otherwise standard email validation
-                validators: this.allowedEmailPattern
-                    ? [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.pattern(this.allowedEmailPattern)]
+                // With a restriction, the server alone judges the address: it is asked shortly after typing stops. Without one, the format is checked in the browser.
+                validators: emailRestricted
+                    ? [Validators.required, Validators.minLength(5), Validators.maxLength(100)]
                     : [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email],
+                asyncValidators: emailRestricted ? [emailAllowedValidator((email) => this.registerService.isEmailAllowed(email))] : [],
             }),
             password: new FormControl('', {
                 nonNullable: true,
@@ -140,6 +143,7 @@ export class RegisterComponent implements AfterViewInit {
         this.doNotMatch.set(false);
         this.error.set(false);
         this.errorEmailExists.set(false);
+        this.errorEmailNotAllowed.set(false);
         this.errorUserExists.set(false);
         this.errorAccountRegistrationBlocked.set(false);
 
@@ -152,6 +156,11 @@ export class RegisterComponent implements AfterViewInit {
 
         if (this.registerForm.invalid) {
             this.registerForm.markAllAsTouched();
+            return;
+        }
+
+        if (this.registerForm.pending) {
+            // The answer of the server about the email address is still on its way, and the button is disabled until it has arrived
             return;
         }
 
@@ -184,6 +193,9 @@ export class RegisterComponent implements AfterViewInit {
             this.errorEmailExists.set(true);
         } else if (response.status === 400 && response.error?.type?.includes(ACCOUNT_REGISTRATION_BLOCKED)) {
             this.errorAccountRegistrationBlocked.set(true);
+        } else if (response.status === 400 && response.error?.errorKey === EMAIL_NOT_ALLOWED_ERROR_KEY) {
+            // The server checks every address itself, and is the only one to do so when the restriction cannot be evaluated in the browser.
+            this.errorEmailNotAllowed.set(true);
         } else {
             this.error.set(true);
         }

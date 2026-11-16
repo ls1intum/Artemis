@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
@@ -43,9 +44,12 @@ public class SshPublicKeysResource {
 
     private final UserRepository userRepository;
 
-    public SshPublicKeysResource(UserSshPublicKeyService userSshPublicKeyService, UserRepository userRepository) {
+    private final SessionFreshnessService sessionFreshnessService;
+
+    public SshPublicKeysResource(UserSshPublicKeyService userSshPublicKeyService, UserRepository userRepository, SessionFreshnessService sessionFreshnessService) {
         this.userSshPublicKeyService = userSshPublicKeyService;
         this.userRepository = userRepository;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -82,12 +86,13 @@ public class SshPublicKeysResource {
      *
      * @param sshPublicKey the ssh public key to create
      *
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) when the SSH key is malformed, the label is too long, or when a key with the same hash
-     *         already exists
+     * @return the ResponseEntity with status 200 (OK), with status 400 (Bad Request) when the SSH key is malformed, the label is too long, or when a key with the same hash
+     *         already exists, or with status 401 (Unauthorized) if the session was established before the credentials of the account last changed
      */
     @PostMapping({ "public-keys", "public-key" })
     @EnforceAtLeastStudent
     public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
+        sessionFreshnessService.requireCurrentSession();
         User user = userRepository.getUser();
         log.debug("REST request to add SSH key to user {}", user.getLogin());
         AuthorizedKeyEntry keyEntry;

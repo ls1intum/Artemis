@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, Signal, effect, inject, input, signal, untracked } from '@angular/core';
 import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -43,6 +43,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     readonly isBuilding = signal(false);
     // If true, the trigger button is also displayed for successful submissions.
     readonly showForSuccessfulSubmissions = signal(false);
+    /** True if the server would refuse a manual build, because it is outside of the build time window of the exercise. Only the student button can be blocked. */
+    readonly isBlockedByBuildWindow: Signal<boolean> = signal(false);
 
     private submissionSubscription?: Subscription;
     private resultSubscription?: Subscription;

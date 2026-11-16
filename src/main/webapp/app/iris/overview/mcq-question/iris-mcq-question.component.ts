@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { McqData, McqQuestionData } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Interactive multiple-choice question component rendered inside Iris chat messages.
@@ -12,12 +13,14 @@ import { generateUuid } from 'app/foundation/util/crypto.utils';
 @Component({
     selector: 'jhi-iris-mcq-question',
     standalone: true,
-    imports: [TranslateDirective, IrisCitationTextComponent],
+    imports: [TranslateDirective, IrisCitationTextComponent, TumAetUiButtonDirective, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-question.component.html',
     styleUrl: './iris-mcq-question.component.scss',
 })
 export class IrisMcqQuestionComponent {
+    private readonly injector = inject(Injector);
+    private readonly feedback = viewChild<ElementRef<HTMLElement>>('feedback');
     /** The MCQ payload to render, containing the question, options, and explanation. */
     mcqData = input.required<McqData | McqQuestionData>();
 
@@ -37,6 +40,18 @@ export class IrisMcqQuestionComponent {
 
     selectedIndex = signal<number | undefined>(undefined);
     submitted = signal(false);
+
+    readonly options = computed(() =>
+        this.mcqData().options.map((option, index) => ({
+            text: this.cleanOptionText(option.text),
+            correct: option.correct,
+            label: this.optionLabel(index),
+        })),
+    );
+    readonly correctAnswer = computed(() => {
+        const index = this.selectedIndex();
+        return index !== undefined && (this.mcqData().options[index]?.correct ?? false);
+    });
 
     constructor() {
         // Restore state from carousel parent inputs
@@ -78,6 +93,8 @@ export class IrisMcqQuestionComponent {
         }
         this.submitted.set(true);
         this.answerChanged.emit({ selectedIndex: this.selectedIndex(), submitted: true });
+        // The submit button leaves the DOM. Keep keyboard focus on the result of that action.
+        afterNextRender(() => this.feedback()?.nativeElement.focus(), { injector: this.injector });
     }
 
     /**
@@ -98,17 +115,5 @@ export class IrisMcqQuestionComponent {
      */
     cleanOptionText(text: string): string {
         return text.replace(/^[A-Da-d1-4][.):]\s*/u, '');
-    }
-
-    /**
-     * Checks whether the currently selected option is the correct answer.
-     * @returns true if the selected option is correct, false otherwise
-     */
-    isCorrectAnswer(): boolean {
-        const idx = this.selectedIndex();
-        if (idx === undefined) {
-            return false;
-        }
-        return this.mcqData().options[idx].correct;
     }
 }
