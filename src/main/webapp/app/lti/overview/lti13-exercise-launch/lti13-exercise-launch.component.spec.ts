@@ -13,6 +13,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -180,6 +181,24 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(httpStub).toHaveBeenCalledWith('/api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(replaceWindowSpy).toHaveBeenCalled();
         expect(comp.redirectUserToTargetLink).toHaveBeenCalled();
+    });
+
+    it('stops the launch when a signed-in user gets no target link with the sign-in answer', async () => {
+        const replaceWindowSpy = vi.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation(() => {});
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
+        vi.spyOn(comp, 'handleLtiLaunchError');
+        simulateLtiLaunchError(http, 401, {}, { targetLinkUri: undefined });
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ id: 3, login: 'lti_user' } as User));
+
+        comp.ngOnInit();
+        await vi.waitFor(() => {
+            expect(comp.handleLtiLaunchError).toHaveBeenCalled();
+        });
+
+        expect(captureSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a launch that requires sign-in');
+        expect(replaceWindowSpy).not.toHaveBeenCalled();
+        expect(comp.isLaunching()).toBe(false);
+        expect(sessionStorageService.retrieve('state')).toBeUndefined();
     });
 
     it('should redirect user to target link after user logged in', async () => {
