@@ -674,7 +674,9 @@ class SecurityPolicyEditorServiceTest {
                 "    @Test\n    void testMergeSort() {\n    }\n\n    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 
-        assertThat(editorService.getTestStructure(exercise()).testClasses().getFirst().fixedCases()).containsExactly("testMergeSort");
+        SecurityTestStructureDTO.TestClassDTO structure = editorService.getTestStructure(exercise()).testClasses().getFirst();
+        assertThat(structure.overloadedCases()).containsExactly("testMergeSort");
+        assertThat(structure.fixedCases()).isEmpty();
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> editorService.commit(exercise(),
                         change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user))
@@ -814,8 +816,8 @@ class SecurityPolicyEditorServiceTest {
         SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
 
         assertThat(structure.testClasses()).containsExactly(
-                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort"), true, false, List.of()),
-                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements"), true, false, List.of()));
+                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort"), true, false, List.of(), List.of()),
+                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements"), true, false, List.of(), List.of()));
     }
 
     @Test

@@ -141,6 +141,7 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(testClass.switchedOff()).isFalse();
             // An empty list is left out of the JSON, so it arrives as null.
             assertThat(testClass.fixedCases()).isNullOrEmpty();
+            assertThat(testClass.overloadedCases()).isNullOrEmpty();
         });
         assertThat(request.get(basePath + "/template-files", HttpStatus.OK, SecurityTemplateFilesDTO.class).paths()).contains("data/input.txt", "src/de/example/Client.java");
 

@@ -25,6 +25,8 @@ interface CaseNode {
     coveredBy?: string;
     /** Whether it runs without the sandbox, because of its own annotation or the one of its class, so it cannot be assigned. */
     switchedOff: boolean;
+    /** Whether more than one test method has its name, so it is assigned only with its whole class and follows the other cases of the class. */
+    overloaded: boolean;
 }
 
 /** A test class of the tree. */
@@ -132,6 +134,7 @@ export class SecurityAddTestCasesDialogComponent {
             const packageName = dot >= 0 ? testClass.qualifiedName.substring(0, dot) : '';
             const testCases = testClass.testCases ?? [];
             const fixedCases = new Set(testClass.fixedCases ?? []);
+            const overloadedCases = new Set(testClass.overloadedCases ?? []);
             const classSwitchedOff = !!testClass.switchedOff;
             const cases: CaseNode[] = testCases.length
                 ? testCases.map((name) => ({
@@ -139,6 +142,7 @@ export class SecurityAddTestCasesDialogComponent {
                       name,
                       coveredBy: this.coveringPolicy(testClass.qualifiedName, name),
                       switchedOff: classSwitchedOff || fixedCases.has(name),
+                      overloaded: overloadedCases.has(name),
                   }))
                 : [
                       {
@@ -146,6 +150,7 @@ export class SecurityAddTestCasesDialogComponent {
                           name: testClass.qualifiedName.substring(dot + 1),
                           coveredBy: this.coveringPolicy(testClass.qualifiedName, undefined),
                           switchedOff: classSwitchedOff,
+                          overloaded: false,
                       },
                   ];
             const node: ClassNode = {
@@ -307,11 +312,30 @@ export class SecurityAddTestCasesDialogComponent {
         } else {
             keys.forEach((key) => selection.add(key));
         }
-        this.selection.set(selection);
+        this.selection.set(this.withOverloadsFollowing(selection, keys));
     }
 
     protected selectAllUnconnected(): void {
-        this.selection.set(new Set([...this.selection(), ...this.unconnected()]));
+        const unconnected = this.unconnected();
+        this.selection.set(this.withOverloadsFollowing(new Set([...this.selection(), ...unconnected]), unconnected));
+    }
+
+    /**
+     * Overloaded test cases are assigned only with their whole class, so in each class the change touches they are selected exactly when all of its other
+     * test cases are. A class of overloaded test cases only is selected as a whole anyway.
+     */
+    private withOverloadsFollowing(selection: Set<string>, changed: readonly string[]): Set<string> {
+        const changedClasses = new Set(changed.map((key) => testClassOf(key)));
+        for (const node of this.packages().flatMap((group) => group.classes)) {
+            const overloads = node.cases.filter((testCase) => testCase.overloaded && !testCase.coveredBy && !testCase.switchedOff);
+            const others = node.cases.filter((testCase) => !testCase.overloaded);
+            if (!changedClasses.has(node.qualifiedName) || !overloads.length || !others.length) {
+                continue;
+            }
+            const complete = others.every((testCase) => selection.has(testCase.key));
+            overloads.forEach((testCase) => (complete ? selection.add(testCase.key) : selection.delete(testCase.key)));
+        }
+        return selection;
     }
 
     /** The tag of a case: whether applying assigns or releases it. */
@@ -339,7 +363,8 @@ export class SecurityAddTestCasesDialogComponent {
                 tests.push(node.qualifiedName);
                 wholeClasses.add(node.qualifiedName);
             } else {
-                selected.forEach((testCase) => tests.push(testCase.key));
+                // An overloaded test case cannot be named on its own; it uses the policy only through its whole class.
+                selected.filter((testCase) => !testCase.overloaded).forEach((testCase) => tests.push(testCase.key));
             }
         }
         // A class assigned as a whole covers its cases, including those the tree does not show, so the server would refuse them next to it.

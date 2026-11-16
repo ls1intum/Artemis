@@ -203,6 +203,8 @@ export interface SecurityTestClass {
     switchedOff?: boolean;
     /** The test cases whose own {@code @Policy} annotation switches the sandbox off, so they cannot be assigned either. */
     fixedCases?: string[];
+    /** The test cases that more than one test method has; they use a policy only together with their whole class. */
+    overloadedCases?: string[];
 }
 
 /** The test classes of the tests repository. */

@@ -29,6 +29,14 @@ final class BuildFileSyntax {
     /** How a statement gives a variable or property its value right after its name: an assignment or a call such as {@code .from(...)}. */
     private static final Pattern TAKES_VALUE = Pattern.compile("\\s*+(?:\\+?=(?!=)|\\.\\s*+(?:from|setFrom|set|convention)\\s*+\\()");
 
+    private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_]\\w*+");
+
+    /** A reference to a Gradle configuration, e.g. {@code configurations.aresAgent}. */
+    private static final Pattern CONFIGURATION_REFERENCE = Pattern.compile("configurations\\s*+\\.\\s*+([A-Za-z_$][\\w$]*+)");
+
+    /** A dependency declaration at the start of a line, e.g. {@code aresAgent "de.tum.cit.ase:ares:1.0:agent"}, with the name of its configuration. */
+    private static final Pattern DEPENDENCY_DECLARATION = Pattern.compile("(?m)^[ \\t]*+([A-Za-z_$][\\w$]*+)[ \\t]*+\\(?[ \\t]*+(?:['\"]|\\w++[ \\t]*+[(:])");
+
     /** An assignment of an empty file collection. */
     private static final Pattern EMPTY_COLLECTION = Pattern.compile("\\s*+=\\s*+(?:files|objects\\s*+\\.\\s*+fileCollection)\\s*+\\(\\s*+\\)\\s*+");
 
@@ -67,12 +75,10 @@ final class BuildFileSyntax {
         if (!dependency.find()) {
             return false;
         }
-        String name = dependency.group(1);
-        Pattern configuration = Pattern.compile("configurations\\s*+\\.\\s*+" + Pattern.quote(name) + "\\b");
+        String configuration = dependency.group(1);
         // A configuration with more dependencies than the Ares agent leaves open which file an agent takes from it, e.g. JaCoCo, so the agent then has to
         // name Ares itself.
-        boolean onlyTheAresAgent = Pattern.compile("(?m)^[ \\t]*+" + Pattern.quote(name) + "\\b[ \\t]*+\\(?[ \\t]*+(?:['\"]|\\w++[ \\t]*+[(:])").matcher(code).results()
-                .count() == 1;
+        boolean onlyTheAresAgent = DEPENDENCY_DECLARATION.matcher(code).results().filter(declaration -> declaration.group(1).equals(configuration)).count() == 1;
         return javaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
     }
 
@@ -81,28 +87,36 @@ final class BuildFileSyntax {
      * through the variable or property it starts with, as the templates do with {@code "-javaagent:${agentJar.singleFile.absolutePath}"} and
      * {@code aresJvmArguments.agentJar.from(configurations.aresAgent)}.
      */
-    private static boolean takesFileFrom(String code, String agent, Pattern configuration) {
+    private static boolean takesFileFrom(String code, String agent, String configuration) {
         Matcher interpolation = INTERPOLATED_NAME.matcher(agent);
         if (!interpolation.find()) {
             return false;
         }
-        if (configuration.matcher(agent).find()) {
+        if (referencesConfiguration(agent, configuration)) {
             return true;
         }
         // Every statement that gives the variable a value has to take it from the configuration, so a later reassignment to another file does not count.
-        Matcher source = Pattern.compile("\\b" + Pattern.quote(interpolation.group(1)) + "\\b").matcher(code);
+        String name = interpolation.group(1);
+        Matcher identifier = IDENTIFIER.matcher(code);
         boolean takesValue = false;
-        while (source.find()) {
-            String statement = statementAfter(code, source.end());
+        while (identifier.find()) {
+            if (!identifier.group().equals(name)) {
+                continue;
+            }
+            String statement = statementAfter(code, identifier.end());
             // An empty file collection, e.g. "def agentJar = files()", only gets its content from the next statements.
             if (TAKES_VALUE.matcher(statement).lookingAt() && !EMPTY_COLLECTION.matcher(statement).matches()) {
-                if (!configuration.matcher(statement).find()) {
+                if (!referencesConfiguration(statement, configuration)) {
                     return false;
                 }
                 takesValue = true;
             }
         }
         return takesValue;
+    }
+
+    private static boolean referencesConfiguration(String text, String configuration) {
+        return CONFIGURATION_REFERENCE.matcher(text).results().anyMatch(reference -> reference.group(1).equals(configuration));
     }
 
     /**

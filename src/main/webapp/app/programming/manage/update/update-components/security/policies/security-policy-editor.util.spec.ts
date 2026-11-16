@@ -177,4 +177,18 @@ describe('security-policy-editor.util', () => {
         expect(rows.find((row) => row.kind === 'changed')).toEqual({ kind: 'changed', left: { number: 5, text: 'e' }, right: { number: 5, text: 'E' } });
         expect(diffStats(rows)).toEqual({ added: 2, removed: 1 });
     });
+
+    it('diffs a large policy with a small edit and bounds a large changed part', () => {
+        const lines = Array.from({ length: 10_000 }, (_, index) => `  - "entry${index}"`);
+        const edited = lines.map((line, index) => (index === 5_000 ? '  - "changed"' : line));
+
+        const rows = diffLines(lines.join('\n'), edited.join('\n'));
+        expect(rows.filter((row) => row.kind === 'changed')).toEqual([
+            { kind: 'changed', left: { number: 5_001, text: '  - "entry5000"' }, right: { number: 5_001, text: '  - "changed"' } },
+        ]);
+        expect(diffStats(rows)).toEqual({ added: 1, removed: 1 });
+
+        const replaced = diffLines(lines.join('\n'), lines.map((line) => line + '!').join('\n'));
+        expect(diffStats(replaced)).toEqual({ added: 10_000, removed: 10_000 });
+    });
 });

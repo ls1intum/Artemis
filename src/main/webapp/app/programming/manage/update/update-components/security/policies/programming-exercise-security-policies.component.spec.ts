@@ -306,6 +306,21 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.shownScanDependencies()).toBe(true);
     });
 
+    it('loads the test structure again when the policies are based on another commit', () => {
+        create(configured(), false);
+        service.getTestStructure.mockReturnValueOnce(of({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testCases: ['old'], testClass: true }] }));
+        handlers.requestStructure();
+        handlers.requestStructure();
+        expect(service.getTestStructure).toHaveBeenCalledOnce();
+
+        service.getTestStructure.mockReturnValueOnce(of({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testCases: ['added'], testClass: true }] }));
+        service.getPolicies.mockReturnValue(of(editor('d'.repeat(40))));
+        handlers.reload();
+
+        expect(service.getTestStructure).toHaveBeenCalledTimes(2);
+        expect(comp.structure()?.testClasses?.[0].testCases).toEqual(['added']);
+    });
+
     it('keeps the language configuration of a new policy when the reloaded policies have none', () => {
         create(configured(), false);
         handlers.addPolicy();

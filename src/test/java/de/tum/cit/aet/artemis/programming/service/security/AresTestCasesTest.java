@@ -64,9 +64,11 @@ class AresTestCasesTest {
 
         SecurityTestStructureDTO structure = AresTestCases.structure(Map.of("test/de/example/SortingTest.java", TEST_CLASS, "test/de/example/SortingTestUtils.java", helper));
 
-        assertThat(structure.testClasses()).containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest",
-                List.of("testBubbleSort", "testMergeSort", "testWithParameter", "testHidden"), true, false, List.of()),
-                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTestUtils", List.of(), false, false, List.of()));
+        assertThat(structure.testClasses())
+                .containsExactly(
+                        new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort", "testWithParameter", "testHidden"), true,
+                                false, List.of(), List.of()),
+                        new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTestUtils", List.of(), false, false, List.of(), List.of()));
     }
 
     @Test

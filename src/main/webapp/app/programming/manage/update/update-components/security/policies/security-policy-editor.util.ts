@@ -589,36 +589,71 @@ export type DiffRow =
 /** The number of unchanged lines kept around each change; longer unchanged runs collapse. */
 const DIFF_CONTEXT = 1;
 
+/** The most cells of the table of the longest common subsequence; a larger changed part is shown as removed and added as a whole, which bounds the memory. */
+const MAX_DIFF_CELLS = 1_000_000;
+
 /**
- * Computes a side-by-side line diff with the longest common subsequence. A removed line directly followed by an added one is shown as changed, in one row.
- * Unchanged runs are collapsed except for {@link DIFF_CONTEXT} lines next to a change. Policies are short, so the quadratic table is fine.
+ * Computes a side-by-side line diff. The unchanged lines at the start and the end are matched first; the part between them is diffed with the longest
+ * common subsequence if its table stays within {@link MAX_DIFF_CELLS}, so even a large policy with a small edit needs little memory. A removed line directly
+ * followed by an added one is shown as changed, in one row. Unchanged runs are collapsed except for {@link DIFF_CONTEXT} lines next to a change.
  */
 export function diffLines(before: string, after: string): DiffRow[] {
     const left = splitLines(before);
     const right = splitLines(after);
-    const lengths: number[][] = Array.from({ length: left.length + 1 }, () => new Array<number>(right.length + 1).fill(0));
-    for (let i = left.length - 1; i >= 0; i--) {
-        for (let j = right.length - 1; j >= 0; j--) {
-            lengths[i][j] = left[i] === right[j] ? lengths[i + 1][j + 1] + 1 : Math.max(lengths[i + 1][j], lengths[i][j + 1]);
-        }
+    let start = 0;
+    while (start < left.length && start < right.length && left[start] === right[start]) {
+        start++;
+    }
+    let leftEnd = left.length;
+    let rightEnd = right.length;
+    while (leftEnd > start && rightEnd > start && left[leftEnd - 1] === right[rightEnd - 1]) {
+        leftEnd--;
+        rightEnd--;
     }
     const rows: DiffRow[] = [];
+    for (let index = 0; index < start; index++) {
+        rows.push({ kind: 'same', left: { number: index + 1, text: left[index] }, right: { number: index + 1, text: right[index] } });
+    }
+    diffMiddle(left.slice(start, leftEnd), right.slice(start, rightEnd), start, rows);
+    for (let offset = 0; offset < left.length - leftEnd; offset++) {
+        const i = leftEnd + offset;
+        const j = rightEnd + offset;
+        rows.push({ kind: 'same', left: { number: i + 1, text: left[i] }, right: { number: j + 1, text: right[j] } });
+    }
+    return collapseUnchanged(pairChanges(rows));
+}
+
+/** Appends the rows of the changed part between the unchanged start and end; both sides of it begin at the line index {@code start}. */
+function diffMiddle(left: string[], right: string[], start: number, rows: DiffRow[]): void {
+    const removed = (i: number): DiffRow => ({ kind: 'removed', left: { number: start + i + 1, text: left[i] } });
+    const added = (j: number): DiffRow => ({ kind: 'added', right: { number: start + j + 1, text: right[j] } });
+    const width = right.length + 1;
+    if ((left.length + 1) * width > MAX_DIFF_CELLS) {
+        left.forEach((_, i) => rows.push(removed(i)));
+        right.forEach((_, j) => rows.push(added(j)));
+        return;
+    }
+    const lengths = new Uint32Array((left.length + 1) * width);
+    for (let i = left.length - 1; i >= 0; i--) {
+        for (let j = right.length - 1; j >= 0; j--) {
+            lengths[i * width + j] = left[i] === right[j] ? lengths[(i + 1) * width + j + 1] + 1 : Math.max(lengths[(i + 1) * width + j], lengths[i * width + j + 1]);
+        }
+    }
     let i = 0;
     let j = 0;
     while (i < left.length || j < right.length) {
         if (i < left.length && j < right.length && left[i] === right[j]) {
-            rows.push({ kind: 'same', left: { number: i + 1, text: left[i] }, right: { number: j + 1, text: right[j] } });
+            rows.push({ kind: 'same', left: { number: start + i + 1, text: left[i] }, right: { number: start + j + 1, text: right[j] } });
             i++;
             j++;
-        } else if (j < right.length && (i === left.length || lengths[i][j + 1] >= lengths[i + 1][j])) {
-            rows.push({ kind: 'added', right: { number: j + 1, text: right[j] } });
+        } else if (j < right.length && (i === left.length || lengths[i * width + j + 1] >= lengths[(i + 1) * width + j])) {
+            rows.push(added(j));
             j++;
         } else {
-            rows.push({ kind: 'removed', left: { number: i + 1, text: left[i] } });
+            rows.push(removed(i));
             i++;
         }
     }
-    return collapseUnchanged(pairChanges(rows));
 }
 
 function splitLines(text: string): string[] {

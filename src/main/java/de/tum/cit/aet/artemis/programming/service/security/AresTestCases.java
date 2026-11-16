@@ -55,11 +55,13 @@ final class AresTestCases {
                 String name = type.qualifiedName();
                 SecurityTestAssignments.TestClass testClass = testClasses.get(name);
                 if (testClass != null) {
-                    classes.put(name, new SecurityTestStructureDTO.TestClassDTO(name, testClass.testCases(), true, !testClass.active(),
-                            testClass.testCases().stream().filter(testCase -> testClass.switchedOff().contains(testCase) || testClass.overloaded().contains(testCase)).toList()));
+                    classes.put(name,
+                            new SecurityTestStructureDTO.TestClassDTO(name, testClass.testCases(), true, !testClass.active(),
+                                    testClass.testCases().stream().filter(testClass.switchedOff()::contains).toList(),
+                                    testClass.testCases().stream().filter(testClass.overloaded()::contains).toList()));
                 }
                 else if (!testClassNames.contains(name)) {
-                    classes.putIfAbsent(name, new SecurityTestStructureDTO.TestClassDTO(name, List.of(), false, false, List.of()));
+                    classes.putIfAbsent(name, new SecurityTestStructureDTO.TestClassDTO(name, List.of(), false, false, List.of(), List.of()));
                 }
             }
         }

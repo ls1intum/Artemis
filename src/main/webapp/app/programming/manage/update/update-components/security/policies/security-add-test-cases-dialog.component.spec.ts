@@ -127,6 +127,32 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(applied[0]).toEqual(['de.a.SortingTest']);
     });
 
+    it('keeps overloaded test cases with their whole class and lets them follow the other cases of the class', () => {
+        fixture.componentRef.setInput('structure', {
+            testClasses: [...STRUCTURE.testClasses!, { qualifiedName: 'de.c.OverloadTest', testCases: ['check', 'ordinary'], testClass: true, overloadedCases: ['check'] }],
+        });
+        fixture.componentRef.setInput('ownTests', ['de.c.OverloadTest']);
+        comp.visible.set(false);
+        fixture.detectChanges();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        const overloads = comp.packages().find((group) => group.packageName === 'de.c')!.classes[0];
+        expect(overloads.cases.map((testCase) => [testCase.name, testCase.overloaded, testCase.switchedOff])).toEqual([
+            ['check', true, false],
+            ['ordinary', false, false],
+        ]);
+
+        // Editing another class keeps the class with the overloads assigned as a whole.
+        handlers.toggleKeys(['de.a.MathTest#add']);
+        handlers.apply();
+        expect(applied[0]).toEqual(['de.a.MathTest#add', 'de.c.OverloadTest']);
+
+        handlers.toggleKeys(['de.c.OverloadTest#ordinary']);
+        expect(comp.selection().has('de.c.OverloadTest#check')).toBe(false);
+        handlers.toggleKeys(['de.c.OverloadTest#ordinary']);
+        expect(comp.selection().has('de.c.OverloadTest#check')).toBe(true);
+    });
+
     it('checks a whole group and unchecks it when every case is selected', () => {
         const keys = comp.packages()[0].available;
         handlers.toggleKeys(keys);

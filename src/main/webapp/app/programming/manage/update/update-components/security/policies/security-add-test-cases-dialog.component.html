@@ -98,14 +98,16 @@
                                 <div class="sp-tree-row sp-level-2" [class.sp-selected]="testCase.checked && !testCase.coveredBy" data-testid="security-add-test-cases-case">
                                     <tumaet-ui-checkbox
                                         [checked]="testCase.checked"
-                                        [disabled]="!!testCase.coveredBy || testCase.switchedOff"
+                                        [disabled]="!!testCase.coveredBy || testCase.switchedOff || testCase.overloaded"
                                         [ariaLabel]="(prefix + 'selectCase' | artemisTranslate) + ' ' + node.simpleName + '.' + testCase.name"
                                         [tumAetUiTooltip]="
                                             testCase.switchedOff
                                                 ? (prefix + 'switchedOffCase' | artemisTranslate)
                                                 : testCase.coveredBy
                                                   ? (prefix + 'lockedBy' | artemisTranslate: { policy: testCase.coveredBy })
-                                                  : undefined
+                                                  : testCase.overloaded
+                                                    ? (prefix + 'overloadedCase' | artemisTranslate)
+                                                    : undefined
                                         "
                                         (changed)="toggleKeys([testCase.key])"
                                     />

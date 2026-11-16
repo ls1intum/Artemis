@@ -220,6 +220,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The number of previews of unsaved YAML started. */
     private yamlPreviewCount = 0;
     private structureRequested = false;
+    /** The commit the test structure was requested for, and the number of requests. */
+    private structureCommit: string | undefined;
+    private structureRequests = 0;
     private templateFilesRequested = false;
     private versionCheckTimer?: ReturnType<typeof setTimeout>;
     private versionCheckSubscription?: Subscription;
@@ -487,6 +490,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     private applyEditor(editor: SecurityPolicyEditor): void {
         this.editor.set(editor);
+        this.refreshStructure();
         this.policies.set((editor.policies ?? []).map(editorPolicyOf));
         this.deletedPolicies.set([]);
         this.stagedVersion.set(undefined);
@@ -510,6 +514,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         const previous = this.policies();
         const deleted = this.deletedPolicies();
         this.editor.set(editor);
+        this.refreshStructure();
         const files = editor.policies ?? [];
         const changed = (policy: EditorPolicy) => !!policy.working && (this.summaries().get(policy.id)?.total ?? 0) > 0;
         // A changed policy whose file can no longer be edited here, e.g. because someone broke its YAML, keeps its changes as a new policy.
@@ -719,18 +724,35 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The map for a panel whose policy is not computed yet. */
     protected readonly noOtherTests = new Map<string, string>();
 
+    /** Loads the test structure of the commit the policies are based on, once per commit; only the answer to the latest request applies. */
     protected requestStructure(): void {
-        if (this.structureRequested) {
+        const commit = this.editor()?.baseCommitHash;
+        if (this.structureRequested && this.structureCommit === commit) {
             return;
         }
         this.structureRequested = true;
+        this.structureCommit = commit;
+        const request = ++this.structureRequests;
         this.securityService.getTestStructure(this.exerciseId()).subscribe({
-            next: (structure) => this.structure.set(structure),
+            next: (structure) => {
+                if (request === this.structureRequests) {
+                    this.structure.set(structure);
+                }
+            },
             error: () => {
-                this.structureRequested = false;
-                this.structure.set({ testClasses: [] });
+                if (request === this.structureRequests) {
+                    this.structureRequested = false;
+                    this.structure.set({ testClasses: [] });
+                }
             },
         });
+    }
+
+    /** Loads the test structure again once the policies are based on another commit, whose tests may differ, if it was loaded before. */
+    private refreshStructure(): void {
+        if (this.structureRequested && this.structureCommit !== this.editor()?.baseCommitHash) {
+            this.requestStructure();
+        }
     }
 
     protected requestTemplateFiles(): void {
