@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -533,6 +535,15 @@ class LocalVCPrePushHookTest {
             assertThat(command.getResult()).as(refName).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
             assertThat(command.getMessage()).as(refName).isEqualTo("You can only push to a branch.");
         }
+    }
+
+    @Test
+    void examineBeforeObjects_doesNotEvaluateTheBranchExpressionForAPushToTheDefaultBranch() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+        verify(localVCServletService, never()).isBranchNameAllowedForRepository(any(), anyString());
     }
 
     @Test
