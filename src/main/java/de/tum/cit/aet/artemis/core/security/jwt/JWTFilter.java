@@ -284,16 +284,17 @@ public class JWTFilter extends GenericFilterBean {
         }
 
         if (jwtToken != null) {
-            ToolTokenType tool = this.tokenProvider.getTools(jwtToken);
+            Claims claims = this.tokenProvider.parseClaims(jwtToken);
+            ToolTokenType tool = this.tokenProvider.getTools(claims);
             if (tool != null && !isReachableWithToolToken(httpServletRequest.getRequestURI())) {
-                // A token issued for a tool is only meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks. Everything else, such as the
-                // websocket connection, is not handled by that interceptor and is therefore not available to a tool token.
-                httpServletResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied due to 'tools' claim.");
+                // A token issued for a tool is meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks, and for the websocket connection.
+                // On every other path the token does not authenticate the request, which then continues like a request without credentials.
+                filterChain.doFilter(servletRequest, servletResponse);
                 return;
             }
 
             // Resolve the Spring Security authentication from the JWT
-            Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
+            Authentication authentication = this.tokenProvider.getAuthentication(jwtToken, claims);
 
             // Only consider rotating secure, cookie-based tokens without tool-specific data
             boolean tokenIsConsideredSecure = "cookie".equals(source) && tool == null;
@@ -329,8 +330,7 @@ public class JWTFilter extends GenericFilterBean {
         var authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (isPersonalAccessToken(authHeader)) {
-            // Authenticated by the personal access token filter. It is not a JWT, so it is neither validated nor logged here:
-            // the debug log below prints the request headers, which would write the secret to the log.
+            // Authenticated by the personal access token filter. It is not a JWT, so it is neither validated nor logged here.
             return null;
         }
 
@@ -351,7 +351,7 @@ public class JWTFilter extends GenericFilterBean {
             if ("/websocket/websocket".equals(requestUri) && "cookie".equals(source)) {
                 return null;
             }
-            // Only a few request values are logged, never the headers of the request, as these carry the credentials of the client
+            // Only a few request values are logged, never the headers of the request, to keep the entry short
             log.debug("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, method: {}, request_uri: {}, host: {}, user_agent: {} }", source,
                     httpServletRequest.getRemoteAddr(), httpServletRequest.getMethod(), requestUri, httpServletRequest.getHeader(HttpHeaders.HOST),
                     httpServletRequest.getHeader(HttpHeaders.USER_AGENT));
@@ -410,6 +410,17 @@ public class JWTFilter extends GenericFilterBean {
     }
 
     /**
+     * Whether a tool token authenticates a request to the given path. These are the REST endpoints below {@code /api/}, which {@code ToolsInterceptor} restricts to the
+     * endpoints annotated with {@code @AllowedTools}, and the websocket connection that the tools use for live updates.
+     *
+     * @param uri the path of the request
+     * @return true if a tool token may be used for the path
+     */
+    private static boolean isReachableWithToolToken(final String uri) {
+        return uri.startsWith("/api/") || uri.startsWith("/websocket/");
+    }
+
+    /**
      * Not all URIs need JWT authentication.
      *
      * <p>
@@ -418,17 +429,6 @@ public class JWTFilter extends GenericFilterBean {
      * @param uri A URI relative to the Artemis base URL, i.e. without the {@code https://artemis.domain.com} part at the start.
      * @return True, if the URI does not use JWT authentication.
      */
-    /**
-     * Whether a request to the given path may carry a tool token. Only the REST endpoints below {@code /api/} qualify, as {@code ToolsInterceptor} restricts these to the
-     * endpoints annotated with {@code @AllowedTools}.
-     *
-     * @param uri the path of the request
-     * @return true if the path belongs to the REST endpoints
-     */
-    private static boolean isReachableWithToolToken(final String uri) {
-        return uri.startsWith("/api/");
-    }
-
     private static boolean isIgnoredUri(final String uri) {
         // /git/**: used by Git clients with a token mechanism
         // /api/iris/internal/** used by Pyris status callbacks with a token mechanism restricted to internal access

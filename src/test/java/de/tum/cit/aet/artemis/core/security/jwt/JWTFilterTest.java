@@ -434,7 +434,7 @@ class JWTFilterTest {
     }
 
     @Test
-    void aToolTokenIsRejectedOnTheWebsocketHandshake() throws Exception {
+    void aToolTokenAuthenticatesTheWebsocketHandshake() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/websocket/websocket");
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -442,21 +442,25 @@ class JWTFilterTest {
 
         jwtFilter.doFilter(request, response, filterChain);
 
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(filterChain.getRequest()).as("the request is not passed on").isNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(filterChain.getRequest()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
     }
 
     @Test
-    void aToolTokenIsRejectedOutsideTheRestEndpoints() throws Exception {
-        for (String path : List.of("/management/health", "/websocket/info", "/other")) {
+    void aToolTokenDoesNotAuthenticateOtherPathsButTheRequestContinues() throws Exception {
+        for (String path : List.of("/management/info", "/management/health", "/other")) {
+            SecurityContextHolder.getContext().setAuthentication(null);
             MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
-            request.setCookies(new Cookie(Constants.JWT_COOKIE_NAME, createToolToken()));
+            request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
             MockHttpServletResponse response = new MockHttpServletResponse();
+            MockFilterChain filterChain = new MockFilterChain();
 
-            jwtFilter.doFilter(request, response, new MockFilterChain());
+            jwtFilter.doFilter(request, response, filterChain);
 
-            assertThat(response.getStatus()).as(path).isEqualTo(HttpStatus.FORBIDDEN.value());
+            assertThat(response.getStatus()).as(path).isEqualTo(HttpStatus.OK.value());
+            assertThat(filterChain.getRequest()).as(path).isNotNull();
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).as(path).isNull();
         }
     }
 
