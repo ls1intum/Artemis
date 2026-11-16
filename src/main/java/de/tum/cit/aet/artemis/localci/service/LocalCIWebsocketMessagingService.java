@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
@@ -55,7 +56,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the queued build jobs
      */
 
-    public void sendQueuedBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobQueue) {
+    public void sendQueuedBuildJobsForCourse(long courseId, List<CourseBuildJobDTO> buildJobQueue) {
         var channel = COURSE_QUEUED_JOBS.at(courseId);
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
@@ -67,7 +68,7 @@ public class LocalCIWebsocketMessagingService {
      * @param courseId         the id of the course for which to send the running build jobs
      * @param buildJobsRunning the running build jobs
      */
-    public void sendRunningBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobsRunning) {
+    public void sendRunningBuildJobsForCourse(long courseId, List<CourseBuildJobDTO> buildJobsRunning) {
         var channel = COURSE_RUNNING_JOBS.at(courseId);
         log.debug("Sending message on topic {}: {}", channel, buildJobsRunning);
         websocketMessagingService.sendMessage(channel, buildJobsRunning);
@@ -119,7 +120,7 @@ public class LocalCIWebsocketMessagingService {
 
         var courseChannel = COURSE_BUILD_JOB.at(buildJob.courseId(), buildJob.id());
         log.debug("Sending build job update on topic {}", courseChannel);
-        websocketMessagingService.sendMessage(courseChannel, buildJob);
+        websocketMessagingService.sendMessage(courseChannel, CourseBuildJobDTO.of(buildJob));
     }
 
     /**

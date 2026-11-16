@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
@@ -141,7 +142,8 @@ public class LocalCIQueueWebsocketService {
             }
             for (Long courseId : courseIds) {
                 if (watched.contains(courseId)) {
-                    localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                    localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId,
+                            queuedJobs.stream().filter(job -> job.courseId() == courseId).map(CourseBuildJobDTO::of).toList());
                 }
             }
         }
@@ -168,7 +170,8 @@ public class LocalCIQueueWebsocketService {
             }
             for (Long courseId : courseIds) {
                 if (watched.contains(courseId)) {
-                    localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                    localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId,
+                            processingJobs.stream().filter(job -> job.courseId() == courseId).map(CourseBuildJobDTO::of).toList());
                 }
             }
         }

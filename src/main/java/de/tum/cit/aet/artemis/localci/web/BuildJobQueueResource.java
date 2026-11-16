@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
@@ -92,13 +93,13 @@ public class BuildJobQueueResource {
         // Check running jobs first
         BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
         if (processingJob != null && processingJob.courseId() == courseId) {
-            return ResponseEntity.ok(processingJob);
+            return ResponseEntity.ok(CourseBuildJobDTO.of(processingJob));
         }
 
         // Check queued jobs
         for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
             if (buildJobId.equals(queuedJob.id()) && queuedJob.courseId() == courseId) {
-                return ResponseEntity.ok(queuedJob);
+                return ResponseEntity.ok(CourseBuildJobDTO.of(queuedJob));
             }
         }
 
@@ -115,9 +116,9 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/queued-jobs")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<BuildJobQueueItem>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<CourseBuildJobDTO>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the queued build jobs for course {}", courseId);
-        List<BuildJobQueueItem> buildJobQueue = distributedDataAccessService.getQueuedJobsForCourse(courseId);
+        List<CourseBuildJobDTO> buildJobQueue = distributedDataAccessService.getQueuedJobsForCourse(courseId).stream().map(CourseBuildJobDTO::of).toList();
         return ResponseEntity.ok(buildJobQueue);
     }
 
@@ -129,9 +130,9 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/running-jobs")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<CourseBuildJobDTO>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the running build jobs for course {}", courseId);
-        List<BuildJobQueueItem> runningBuildJobs = distributedDataAccessService.getProcessingJobsForCourse(courseId);
+        List<CourseBuildJobDTO> runningBuildJobs = distributedDataAccessService.getProcessingJobsForCourse(courseId).stream().map(CourseBuildJobDTO::of).toList();
         return ResponseEntity.ok(runningBuildJobs);
     }
 

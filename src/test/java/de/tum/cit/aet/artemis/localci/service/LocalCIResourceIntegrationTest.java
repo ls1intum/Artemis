@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
@@ -751,8 +753,29 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildJobByIdForCourse_runningJob() throws Exception {
-        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, CourseBuildJobDTO.class);
         assertThat(result.id()).isEqualTo(job1.id());
+        assertThat(result.buildConfig().commitHashToBuild()).isEqualTo(job1.buildConfig().commitHashToBuild());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCourseBuildJobViewsOmitBuildConfigurationAndAddresses() throws Exception {
+        queuedJobs.add(job1);
+        var queued = request.get("/api/localci/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
+        var running = request.get("/api/localci/courses/" + course.getId() + "/running-jobs", HttpStatus.OK, List.class);
+        var single = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, Map.class);
+
+        var views = new ArrayList<Map<String, Object>>();
+        queued.forEach(view -> views.add((Map<String, Object>) view));
+        running.forEach(view -> views.add((Map<String, Object>) view));
+        views.add(single);
+        assertThat(views).isNotEmpty().allSatisfy(view -> {
+            assertThat((Map<String, Object>) view.get("buildConfig")).containsOnlyKeys("commitHashToBuild");
+            assertThat((Map<String, Object>) view.get("repositoryInfo")).doesNotContainKeys("assignmentRepositoryUri", "testRepositoryUri", "solutionRepositoryUri");
+            assertThat((Map<String, Object>) view.get("buildAgent")).doesNotContainKey("memberAddress");
+            assertThat(view).doesNotContainKey("submissionResult");
+        });
     }
 
     @Test
