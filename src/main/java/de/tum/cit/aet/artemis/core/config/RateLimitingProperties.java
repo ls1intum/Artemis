@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+
 /**
  * Configuration properties for rate limiting functionality.
  *
@@ -96,6 +98,12 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CONTENT_SEARCH}.
      */
     private Integer contentSearchRequestsPerMinute;
+
+    /**
+     * Requests per minute for the check whether an email address is allowed by the configured restriction.
+     * If not specified, uses the default from {@link RateLimitType#EMAIL_ADDRESS_CHECK}.
+     */
+    private Integer emailAddressCheckRequestsPerMinute;
 
     /**
      * Requests per minute for the build agent clone-token check on the git https path.
@@ -207,6 +215,14 @@ public class RateLimitingProperties {
 
     public void setContentSearchRequestsPerMinute(Integer contentSearchRequestsPerMinute) {
         this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
+    }
+
+    public Integer getEmailAddressCheckRequestsPerMinute() {
+        return emailAddressCheckRequestsPerMinute;
+    }
+
+    public void setEmailAddressCheckRequestsPerMinute(Integer emailAddressCheckRequestsPerMinute) {
+        this.emailAddressCheckRequestsPerMinute = emailAddressCheckRequestsPerMinute;
     }
 
     public Integer getOnlineResourceFetchRequestsPerMinute() {
