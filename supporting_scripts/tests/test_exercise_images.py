@@ -439,7 +439,7 @@ class CargoLockTest(unittest.TestCase):
 NPM_LOCK = """\
 {"lockfileVersion": 3, "packages": {
   "": {"name": "artemis-test"},
-  "assignment": {"name": "assignment", "devDependencies": {"@types/node": "^20"}},
+  "assignment": {"name": "assignment", "version": "1.0.0", "devDependencies": {"@types/node": "^20"}},
   "node_modules/assignment": {"resolved": "assignment", "link": true},
   "node_modules/@types/node": {"version": "20.19.43"},
   "node_modules/a/node_modules/minimatch": {"version": "3.1.5"},

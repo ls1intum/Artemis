@@ -177,7 +177,7 @@ def npm_lock_versions(text: str) -> Versions:
     """Versions of the packages an npm ``package-lock.json`` installs, by package name. Workspaces and links are not downloaded."""
     versions: Versions = {}
     for path, package in json.loads(text).get("packages", {}).items():
-        if path and "version" in package and not package.get("link"):
+        if "node_modules" in path.split("/") and "version" in package and not package.get("link"):
             versions.setdefault(path.rpartition("node_modules/")[2], set()).add(package["version"])
     return versions
 
