@@ -370,7 +370,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         cancelUrl += "?resultId=" + result.getId();
         userUtilService.changeUser(TEST_PREFIX + "tutor2");
         if (type == ExerciseType.TEXT) {
-            request.post(cancelUrl, null, HttpStatus.FORBIDDEN);
+            request.postWithoutResponseBody(cancelUrl, null, HttpStatus.FORBIDDEN);
         }
         else {
             request.put(cancelUrl, null, HttpStatus.FORBIDDEN);
@@ -378,7 +378,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(resultRepository.findById(result.getId())).isPresent();
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         if (type == ExerciseType.TEXT) {
-            request.post(cancelUrl, null, HttpStatus.OK);
+            request.postWithoutResponseBody(cancelUrl, null, HttpStatus.OK);
         }
         else {
             request.put(cancelUrl, null, HttpStatus.OK);
