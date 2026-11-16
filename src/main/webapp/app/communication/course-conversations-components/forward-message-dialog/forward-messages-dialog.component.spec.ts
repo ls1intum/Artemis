@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -156,6 +156,8 @@ describe('ForwardMessageDialogComponent', () => {
         const activeOption = searchInput.getAttribute('aria-activedescendant');
         expect(activeOption).toBeTruthy();
         const event = new KeyboardEvent('keydown', { key, isComposing: true, bubbles: true, cancelable: true });
+        const enclosingKeydown = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', enclosingKeydown);
 
         searchInput.dispatchEvent(event);
         fixture.detectChanges();
@@ -165,6 +167,27 @@ describe('ForwardMessageDialogComponent', () => {
         expect(searchInput.value).toBe('General');
         expect(component.showDropdown()).toBe(true);
         expect(searchInput.getAttribute('aria-activedescendant')).toBe(activeOption);
+        expect(enclosingKeydown).not.toHaveBeenCalled();
+    });
+
+    it('leaves Safari IME confirmation to the input method after compositionend', () => {
+        searchInput.value = 'General';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        const activeOption = searchInput.getAttribute('aria-activedescendant');
+        const enclosingKeydown = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', enclosingKeydown);
+        const confirmation = new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, isComposing: false, bubbles: true, cancelable: true });
+
+        searchInput.dispatchEvent(confirmation);
+        fixture.detectChanges();
+
+        expect(confirmation.defaultPrevented).toBe(false);
+        expect(component.hasSelections()).toBe(false);
+        expect(component.showDropdown()).toBe(true);
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(activeOption);
+        expect(enclosingKeydown).not.toHaveBeenCalled();
     });
 
     it('dismisses destinations with Escape without propagating dismissal to the dialog', () => {
@@ -224,6 +247,24 @@ describe('ForwardMessageDialogComponent', () => {
         expect(down.defaultPrevented).toBe(false);
     });
 
+    it('lets Escape reach the dialog when an open search has no matching destinations', () => {
+        searchInput.value = 'Nonexistent destination';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.click();
+        fixture.detectChanges();
+        expect(component.showDropdown()).toBe(true);
+        expect(searchInput.getAttribute('aria-expanded')).toBe('false');
+        expect(fixture.nativeElement.querySelector('[role="listbox"]')).toBeNull();
+        const dialogKeydown = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', dialogKeydown);
+        const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+        searchInput.dispatchEvent(escape);
+
+        expect(escape.defaultPrevented).toBe(false);
+        expect(dialogKeydown).toHaveBeenCalledExactlyOnceWith(escape);
+    });
+
     it('keeps the active recipient at each end of the list while navigating with arrows', () => {
         const navigate = (key: string) => {
             searchInput.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
@@ -279,6 +320,83 @@ describe('ForwardMessageDialogComponent', () => {
         const close = vi.spyOn(TestBed.inject(DynamicDialogRef), 'close');
         (fixture.nativeElement.querySelector('[data-testid="forward-send-button"]') as HTMLButtonElement).click();
         expect(close).toHaveBeenCalledWith({ channels: [], users: [component.users()[0], recipient], messageContent: undefined });
+    });
+
+    it('clears previous user matches while a different query is loading', () => {
+        component.courseId.set(123);
+        const alice = { id: 5, name: 'Alice' } as UserPublicInfoDTO;
+        const pending = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
+        vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers')
+            .mockReturnValueOnce(of(new HttpResponse({ body: [alice] })))
+            .mockReturnValue(pending);
+        searchInput.value = 'Alice';
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(component.filteredOptions().map((option) => option.name)).toEqual(['Alice']);
+
+        searchInput.value = 'Bob';
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.filteredUsers()).toEqual([]);
+        expect(fixture.nativeElement.querySelector('[data-testid="forward-destination-option"]')).toBeNull();
+    });
+
+    it('ignores an older search response that arrives after the latest query results', () => {
+        component.courseId.set(123);
+        const older = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
+        const latest = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
+        const bob = { id: 6, name: 'Bob' } as UserPublicInfoDTO;
+        vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers').mockReturnValueOnce(older).mockReturnValueOnce(latest);
+        searchInput.value = 'Alice';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.value = 'Bob';
+        searchInput.dispatchEvent(new Event('input'));
+        latest.next(new HttpResponse({ body: [bob] }));
+
+        older.next(new HttpResponse({ body: [{ id: 5, name: 'Alice' } as UserPublicInfoDTO] }));
+        fixture.detectChanges();
+
+        expect(component.filteredOptions().map((option) => option.name)).toEqual(['Bob']);
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(component.selectedUsers).toEqual([bob]);
+    });
+
+    it('preserves a keyboard-selected channel when matching users arrive', () => {
+        component.courseId.set(123);
+        const pending = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
+        vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers').mockReturnValue(pending);
+        searchInput.value = 'General';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        const activeOption = searchInput.getAttribute('aria-activedescendant');
+        expect(activeOption).toBeTruthy();
+
+        pending.next(new HttpResponse({ body: [{ id: 6, name: 'General User' } as UserPublicInfoDTO] }));
+        fixture.detectChanges();
+
+        expect(searchInput.getAttribute('aria-activedescendant')).toBe(activeOption);
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(component.selectedChannels.map((channel) => channel.name)).toEqual(['General']);
+    });
+
+    it('keeps the restored default users when an earlier search finishes after selection', () => {
+        component.courseId.set(123);
+        const pending = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
+        vi.spyOn(TestBed.inject(CourseManagementService), 'searchUsers').mockReturnValue(pending);
+        searchInput.value = 'General';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+        pending.next(new HttpResponse({ body: [{ id: 6, name: 'Late search result' } as UserPublicInfoDTO] }));
+        fixture.detectChanges();
+
+        expect(component.selectedChannels.map((channel) => channel.name)).toEqual(['General']);
+        expect(component.filteredUsers()).toEqual(component.users());
+        expect(component.filteredOptions().map((option) => option.name)).toEqual(['General', 'Announcements', 'Group 1', 'User1']);
     });
 
     it.each([of(new HttpResponse<UserPublicInfoDTO[]>({})), throwError(() => new Error('Search unavailable'))])(
