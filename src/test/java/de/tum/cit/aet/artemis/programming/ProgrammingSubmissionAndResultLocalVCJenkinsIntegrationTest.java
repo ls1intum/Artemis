@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
@@ -262,6 +268,30 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(existingSubmission.getId());
+    }
+
+    @Test
+    void rejectedAuthorizationTokenIsNotLogged() throws Exception {
+        String submittedToken = "wrong-authorization-token-value";
+        Logger logger = (Logger) LoggerFactory.getLogger("de.tum.cit.aet.artemis.programming.web.open.PublicProgrammingExerciseResultResource");
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        logger.setLevel(Level.DEBUG);
+        logger.addAppender(logAppender);
+        try {
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.add(HttpHeaders.AUTHORIZATION, submittedToken);
+
+            request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", new HashMap<String, Object>(), HttpStatus.FORBIDDEN, httpHeaders);
+
+            assertThat(logAppender.list).isNotEmpty().noneMatch(event -> event.getFormattedMessage().contains(submittedToken));
+        }
+        finally {
+            logger.detachAppender(logAppender);
+            logAppender.stop();
+            logger.setLevel(previousLevel);
+        }
     }
 
     private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {
