@@ -246,11 +246,9 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         // The client drops the competencies of the source exercise, which belong to the source course, and lets the author pick competencies of the target course instead.
-        // They are carried on the new exercise as references, as for a created exercise: the import takes them off it before the first save and, once the exercise has an id,
-        // resolves them to managed competencies, skipping those of another course. A competency that no longer exists is refused here, before the import writes anything.
-        var competencyLinks = CompetencyExerciseLinkService.toTransientLinks(newExerciseRequest, newExercise, ENTITY_NAME);
-        competencyExerciseLinkService.checkReferencedCompetenciesExistElseThrow(competencyLinks);
-        newExercise.getCompetencyLinks().addAll(competencyLinks);
+        // They are carried on the new exercise as references: the import resolves them before its first write, skipping those of another course,
+        // then binds them to the imported exercise once it has an id.
+        newExercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(newExerciseRequest, newExercise, ENTITY_NAME));
 
         final var originalProgrammingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(sourceExerciseId)
