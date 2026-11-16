@@ -26,6 +26,7 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { EditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
 const originalResizeObserver = globalThis.ResizeObserver;
@@ -184,6 +185,54 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         expect(adjustEditorDimensionsSpy).not.toHaveBeenCalled();
         expect(focusSpy).not.toHaveBeenCalled();
+    });
+
+    describe('toolbar popovers', () => {
+        const firstPopover = () => {
+            const popovers = fixture.debugElement.queryAll(By.directive(TumAetUiPopoverComponent));
+            expect(popovers.length).toBeGreaterThan(0);
+            return popovers[0].componentInstance as TumAetUiPopoverComponent;
+        };
+
+        it('should apply the chosen item and give the focus back to the editor once the popover is gone', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            const run = vi.fn();
+            popover.open(document.body);
+
+            comp['runFromPopover'](popover, run);
+
+            expect(run).toHaveBeenCalledOnce();
+            expect(popover.isOpen()).toBe(false);
+            // jsdom has no animation API, so the popover is gone at once and hands focus to its button first.
+            expect(focusSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not take the focus when the popover is dismissed without a choice', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            popover.open(document.body);
+
+            popover.close();
+
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
+
+        it('should only apply the item when its popover is not open', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            const run = vi.fn();
+
+            comp['runFromPopover'](popover, run);
+            popover.open(document.body);
+            popover.close();
+
+            expect(run).toHaveBeenCalledOnce();
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should emit when leaving the visual tab', () => {

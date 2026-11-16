@@ -50,7 +50,7 @@
                             <tumaet-ui-popover #headerPopover padding="none" [ariaLabel]="headerActions()?.translationKey ?? '' | artemisTranslate">
                                 <div class="md-action-popover">
                                     @for (action of displayedActions().header; track action.id) {
-                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.close()">
+                                        <button type="button" class="md-dropdown-item" (click)="runFromPopover(headerPopover, () => action.executeInCurrentEditor())">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>
                                     }
@@ -70,7 +70,7 @@
                                             type="button"
                                             class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
                                             [style.background-color]="tagColor"
-                                            (click)="onSelectColor(tagColor); colorPopover.close()"
+                                            (click)="runFromPopover(colorPopover, () => onSelectColor(tagColor))"
                                         ></button>
                                     }
                                 </div>
@@ -91,7 +91,11 @@
                                 <div class="md-action-popover">
                                     @if (action.values.length) {
                                         @for (value of action.values; track value.id) {
-                                            <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.close()">
+                                            <button
+                                                type="button"
+                                                class="md-dropdown-item"
+                                                (click)="runFromPopover(domainPopover, () => action.executeInCurrentEditor({ selectedItem: value }))"
+                                            >
                                                 <span>{{ value.value }}</span>
                                             </button>
                                         }
@@ -120,7 +124,7 @@
                                 <tumaet-ui-popover #aiPopover padding="none" [ariaLabel]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate">
                                     <div class="md-action-popover">
                                         @for (action of displayedActions().artemisIntelligence; track action.id) {
-                                            <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); aiPopover.close()">
+                                            <button type="button" class="md-dropdown-item" (click)="runFromPopover(aiPopover, () => action.executeInCurrentEditor())">
                                                 <span [jhiTranslate]="action.translationKey"></span>
                                             </button>
                                         }

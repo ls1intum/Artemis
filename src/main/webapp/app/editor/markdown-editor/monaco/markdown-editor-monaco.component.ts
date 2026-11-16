@@ -956,6 +956,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
+     * Runs the action that was chosen in a toolbar popover and closes the popover. Once it is gone, the popover hands
+     * focus back to the button that opened it, which would override the focus the action gave the editor, so the
+     * editor takes focus again after that. Dismissing the popover without a choice keeps the focus on the button.
+     * @param popover The popover that contains the chosen item.
+     * @param run Applies the chosen item to the editor.
+     */
+    protected runFromPopover(popover: TumAetUiPopoverComponent, run: () => void): void {
+        if (popover.isOpen()) {
+            const subscription = popover.closed.subscribe(() => {
+                subscription.unsubscribe();
+                this.monacoEditor()?.focus();
+            });
+        }
+        run();
+        popover.close();
+    }
+
+    /**
      * Check if the editor height is managed externally. This determines if the editor should grow to fill available space, rather than managing its own height.
      * @private
      */
