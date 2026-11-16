@@ -100,7 +100,7 @@ describe('LearningPathStudentNavComponent', () => {
 
         fixture.detectChanges();
 
-        const progressBar = fixture.nativeElement.querySelector('.progress-bar');
+        const progressBar = fixture.nativeElement.querySelector('[data-testid="learning-path-progress-bar"]');
 
         expect(progressBar.style.width).toBe('50%');
     });

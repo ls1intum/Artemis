@@ -34,6 +34,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
+
 /**
  * <p>
  * A {@link jakarta.servlet.Filter} that renders the {@link PublicKeyCredentialCreationOptions} for <a href=
@@ -62,17 +64,22 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
 
     private final WebAuthnRelyingPartyOperations rpOperations;
 
+    private final SessionFreshnessService sessionFreshnessService;
+
     // java.time support is built into jackson-databind 3, so the WebAuthn module is the only one to register
     private final HttpMessageConverter<Object> converter = new JacksonJsonHttpMessageConverter(JsonMapper.builder().addModule(new WebauthnJacksonModule()).build());
 
     /**
      * Creates a new instance.
      *
-     * @param rpOperations the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
+     * @param rpOperations            the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
+     * @param sessionFreshnessService refuses a session that was established before the account's credentials last changed, so that it fails here and not after the user has
+     *                                    already confirmed on their authenticator
      */
-    public ArtemisPublicKeyCredentialCreationOptionsFilter(WebAuthnRelyingPartyOperations rpOperations) {
+    public ArtemisPublicKeyCredentialCreationOptionsFilter(WebAuthnRelyingPartyOperations rpOperations, SessionFreshnessService sessionFreshnessService) {
         Assert.notNull(rpOperations, "rpOperations cannot be null");
         this.rpOperations = rpOperations;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -97,6 +104,10 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
         AuthorizationResult result = this.authorization.authorize(authentication, request);
         if (result == null || !result.isGranted()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        if (!sessionFreshnessService.isCurrentSession(authentication.get())) {
+            SessionOutdatedResponse.write(response);
             return;
         }
         PublicKeyCredentialCreationOptions options = this.rpOperations

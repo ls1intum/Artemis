@@ -35,7 +35,9 @@ export class TumAetUiChipComponent {
             : this.removable()
               ? 'tumaet:py-2 tumaet:ps-3 tumaet:pe-2'
               : 'tumaet:px-3 tumaet:py-2';
-        const base = 'tumaet:inline-flex tumaet:items-center tumaet:rounded-2xl tumaet:bg-hover-background tumaet:text-text';
+        // min-w-0 and max-w-full let the chip shrink to its host, which a flex or width-limited parent constrains, so a
+        // long label truncates instead of overflowing.
+        const base = 'tumaet:inline-flex tumaet:min-w-0 tumaet:max-w-full tumaet:items-center tumaet:rounded-2xl tumaet:bg-hover-background tumaet:text-text';
         return `${base} ${type} ${padding}`;
     });
 
