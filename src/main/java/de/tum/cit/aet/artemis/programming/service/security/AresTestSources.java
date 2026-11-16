@@ -95,8 +95,7 @@ final class AresTestSources {
 
     /** The uses of each Ares marker, with or without its package, compiled once; a name ends where a Java identifier ends, so {@code @Public$Tag} is no {@code @Public}. */
     private static final Map<String, Pattern> MARKER_USES = Stream.of(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream(), Stream.of(UNSUPPORTED_ARES_MARKER))
-            .flatMap(Function.identity())
-            .collect(Collectors.toUnmodifiableMap(Function.identity(), marker -> Pattern.compile(MARKER_PREFIX + marker + END_OF_IDENTIFIER)));
+            .flatMap(Function.identity()).collect(Collectors.toUnmodifiableMap(Function.identity(), marker -> Pattern.compile(MARKER_PREFIX + marker + END_OF_IDENTIFIER)));
 
     /**
      * A top-level type of a source file.
