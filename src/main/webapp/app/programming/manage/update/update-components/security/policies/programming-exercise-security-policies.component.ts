@@ -250,8 +250,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly shortBaseCommit = computed(() => this.editor()?.baseCommitHash?.substring(0, 7));
 
     /** Whether every committed policy scans dependencies: it uses WALA and the instrumentation of Ares. */
+    /** The policies with those staged for deletion: the tests repository keeps their files until the deletion is committed, so scanning covers them. */
+    private readonly policiesWithDeleted = computed(() => [...this.policies(), ...this.deletedPolicies()]);
     readonly scanDependencies = computed(() => {
-        const documents = this.policies()
+        const documents = this.policiesWithDeleted()
             .map((policy) => policy.base)
             .filter((document) => document !== undefined);
         return documents.length > 0 && documents.every((document) => (document.languageConfiguration ?? '').endsWith(SCANNING));
@@ -259,8 +261,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The state the scanning switch shows: the requested one while it is confirmed or committed. */
     readonly shownScanDependencies = computed(() => this.pendingScan() ?? this.scanDependencies());
     /** Whether a committed policy is read-only: dependency scanning changes every policy, so it cannot be switched until the policy is fixed. */
-    readonly scanBlockedByReadOnly = computed(() => this.policies().some((policy) => !!policy.file && !policy.base));
-    readonly scanAvailable = computed(() => !!this.editor()?.scanDependenciesAvailable && this.policies().some((policy) => !!policy.base) && !this.scanBlockedByReadOnly());
+    readonly scanBlockedByReadOnly = computed(() => this.policiesWithDeleted().some((policy) => !!policy.file && !policy.base));
+    readonly scanAvailable = computed(
+        () => !!this.editor()?.scanDependenciesAvailable && this.policiesWithDeleted().some((policy) => !!policy.base) && !this.scanBlockedByReadOnly(),
+    );
     readonly strictTimeouts = computed(() => this.policies().some((policy) => !!policy.working?.testBehavior?.strictTimeout));
 
     /** The path each policy is saved to, by its id. */
@@ -545,7 +549,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return kept;
         });
         this.policies.set([...reloaded, ...added, ...orphaned]);
-        this.deletedPolicies.set(deleted.filter((policy) => files.some((file) => file.policyPath === policy.file?.policyPath)));
+        // A deletion stays staged for the file it names, which is read again, so its committed state, e.g. after a scanning commit, is current.
+        this.deletedPolicies.set(files.filter((file) => deleted.some((policy) => policy.file?.policyPath === file.policyPath)).map(editorPolicyOf));
         if (this.stagedVersion() === editor.frameworkVersion) {
             this.stagedVersion.set(undefined);
         }
@@ -602,7 +607,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Commits only the language configuration of the committed policies, so the unsaved changes stay unsaved. */
     private commitScanning(on: boolean): void {
-        const policies: SecurityPolicyChangeEntry[] = this.policies().flatMap((policy) =>
+        const policies: SecurityPolicyChangeEntry[] = this.policiesWithDeleted().flatMap((policy) =>
             policy.base && policy.file
                 ? [
                       {

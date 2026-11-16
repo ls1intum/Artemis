@@ -236,6 +236,30 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(service.getPolicies).toHaveBeenCalledOnce();
     });
 
+    it('switches dependency scanning for a policy staged for deletion as well', () => {
+        const second = { ...DOCUMENT, policyPath: 'Second.yaml' };
+        const withSecond = (hash: string, languageConfiguration: string): SecurityPolicyEditor => ({
+            ...editor(hash, { ...DOCUMENT, languageConfiguration }),
+            policies: [
+                { policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, languageConfiguration }, assignedTests: ['de.example.SortingTest'] },
+                { policyPath: 'Second.yaml', document: { ...second, languageConfiguration }, assignedTests: ['de.example.StressTest'] },
+            ],
+        });
+        service.getPolicies.mockReturnValue(of(withSecond('a'.repeat(40), DOCUMENT.languageConfiguration!)));
+        create(configured(), false);
+        handlers.askDeletePolicy(comp.policies()[1]);
+        handlers.deletePolicy();
+        service.commitPolicies.mockReturnValue(of({ editor: withSecond('d'.repeat(40), 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION'), config: configured() }));
+
+        handlers.onScanRequested(true);
+        handlers.onDialogConfirmed(undefined);
+
+        expect(lastChange().policies.map((entry) => entry.previousPolicyPath)).toEqual(['SecurityPolicy.yaml', 'Second.yaml']);
+        expect(lastChange().removedPolicyPaths).toEqual([]);
+        expect(comp.deletedPolicies().map((policy) => policy.file?.policyPath)).toEqual(['Second.yaml']);
+        expect(comp.scanDependencies()).toBe(true);
+    });
+
     it('rebases the changes made while the policies reload', () => {
         create(configured(), false);
         const reloaded = new Subject<SecurityPolicyEditor>();

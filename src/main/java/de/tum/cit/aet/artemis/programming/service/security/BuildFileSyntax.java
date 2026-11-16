@@ -29,6 +29,9 @@ final class BuildFileSyntax {
     /** How a statement gives a variable or property its value right after its name: an assignment or a call such as {@code .from(...)}. */
     private static final Pattern TAKES_VALUE = Pattern.compile("\\s*+(?:\\+?=(?!=)|\\.\\s*+(?:from|setFrom|set|convention)\\s*+\\()");
 
+    /** An assignment of an empty file collection. */
+    private static final Pattern EMPTY_COLLECTION = Pattern.compile("\\s*+=\\s*+(?:files|objects\\s*+\\.\\s*+fileCollection)\\s*+\\(\\s*+\\)\\s*+");
+
     /** The last characters of a line after which a Gradle statement continues on the next line. */
     private static final String CONTINUING_ENDS = "=(,.+:";
 
@@ -86,14 +89,20 @@ final class BuildFileSyntax {
         if (configuration.matcher(agent).find()) {
             return true;
         }
+        // Every statement that gives the variable a value has to take it from the configuration, so a later reassignment to another file does not count.
         Matcher source = Pattern.compile("\\b" + Pattern.quote(interpolation.group(1)) + "\\b").matcher(code);
+        boolean takesValue = false;
         while (source.find()) {
             String statement = statementAfter(code, source.end());
-            if (TAKES_VALUE.matcher(statement).lookingAt() && configuration.matcher(statement).find()) {
-                return true;
+            // An empty file collection, e.g. "def agentJar = files()", only gets its content from the next statements.
+            if (TAKES_VALUE.matcher(statement).lookingAt() && !EMPTY_COLLECTION.matcher(statement).matches()) {
+                if (!configuration.matcher(statement).find()) {
+                    return false;
+                }
+                takesValue = true;
             }
         }
-        return false;
+        return takesValue;
     }
 
     /**
