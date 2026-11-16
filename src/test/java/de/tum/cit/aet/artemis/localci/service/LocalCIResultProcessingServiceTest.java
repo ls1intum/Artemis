@@ -387,6 +387,23 @@ class LocalCIResultProcessingServiceTest {
         verifyNoInteractions(programmingExerciseGradingService);
     }
 
+    @Test
+    void aResultIsKeptWhenTheParticipationLookupFailsAndAgainWhenTheRetryFindsTheDatabaseStillUnavailable() {
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+
+        resultProcessingService.processResultAsync();
+        verify(deferredResultQueue, times(1)).add(item);
+
+        // the retry polls the deferred queue and finds the database still unavailable
+        when(deferredResultQueue.poll()).thenReturn(item);
+        resultProcessingService.processDeferredResultAsync();
+
+        verify(deferredResultQueue, times(2)).add(item);
+        verifyNoInteractions(programmingExerciseGradingService);
+    }
+
     // --- lifecycle and health --------------------------------------------------------------------------------------
 
     @Test
