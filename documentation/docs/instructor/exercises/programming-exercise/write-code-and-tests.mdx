@@ -2,7 +2,7 @@
 id: write-code-and-tests
 title: Write the Exercise Code and Tests
 sidebar_label: Write the Exercise Code and Tests
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -706,6 +706,38 @@ Variables in SCREAMING_SNAKE_CASE (e.g., `MAIN_CLASS`) are replaced with actual 
 Best Expect documentation: [Exploring Expect](https://books.google.com.sg/books?id=t8C4pEDQ8s0C) book. The Artemis default template contains reusable helper functions in `config/default.exp` for common I/O use cases.
 
 This exercise type makes it quite easy to reuse existing exercises from the [Praktomat](https://github.com/KITPraktomatTeam/Praktomat) autograder system.
+
+## Keep Repositories Small
+
+Every student repository is a copy of the template repository. Each build agent, each student and the Artemis servers copy the repositories again and again, so their size multiplies: an exercise with a 400 MB template and 100 students needs about 40 GB for the working copies on the servers alone, and every student has to clone hundreds of megabytes. Very large repositories slow down cloning, pushing and building, and fill up the storage.
+
+Artemis therefore rejects a push that makes the files of a repository larger than the following limits:
+
+| Repository                                          | Limit |
+| --------------------------------------------------- | ----- |
+| Template, student and auxiliary repositories        | 20 MB |
+| Tests and solution repositories                     | 50 MB |
+
+The limit applies to the sum of the sizes of all files in the latest commit. A single file must additionally not be larger than 10 MB. A push that does not make a repository larger is always accepted, even if the repository is above the limit already. This way, repositories that were created before the limit existed stay usable and can be reduced step by step.
+
+Everything that is not code, tests or small resources should **not be stored in git**. This includes data sets, scenario collections, trained models, generated files, libraries and archives. Files that never change are best provided in another way and downloaded during the build:
+
+- **Download in the build script.** Download the files from a location that you control (for example a course web server or a release asset of a GitHub repository) in the build script of the exercise, and verify them with a checksum. Cache them in the Docker image or in a Gradle or Maven cache where possible.
+- **Put the files into the Docker image.** If the files are needed for every build, add them to the Docker image that the exercise uses (see [Configure the Build](./configure-the-build.mdx)). Then they are neither part of any repository nor downloaded again for each build.
+- **Let students download the files once.** If students need the files on their own computer, describe in the problem statement where to download them, and add the folder to `.gitignore`.
+
+Keep only the code that students edit, the tests and small resources in the repositories.
+
+### For Administrators: Configure the Limits
+
+The limits can be changed in the `artemis.version-control` section of the configuration. The values are in megabytes, and `0` disables the limit:
+
+```yaml
+artemis:
+    version-control:
+        max-repository-size-mb: 20
+        max-tests-and-solution-repository-size-mb: 50
+```
 
 ## Prevent Maven Central Rate Limits (Java and Kotlin)
 

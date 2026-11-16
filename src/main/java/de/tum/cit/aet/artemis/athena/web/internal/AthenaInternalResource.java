@@ -13,12 +13,14 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -38,23 +40,34 @@ public class AthenaInternalResource {
 
     private final AthenaRepositoryExportService athenaRepositoryExportService;
 
+    private final RateLimitService rateLimitService;
+
     private final byte[] athenaSecretHash;
 
-    public AthenaInternalResource(AthenaRepositoryExportService athenaRepositoryExportService, @Value("${artemis.athena.secret}") String athenaSecret) {
+    private final boolean athenaSecretConfigured;
+
+    public AthenaInternalResource(AthenaRepositoryExportService athenaRepositoryExportService, RateLimitService rateLimitService,
+            @Value("${artemis.athena.secret}") String athenaSecret) {
         this.athenaRepositoryExportService = athenaRepositoryExportService;
+        this.rateLimitService = rateLimitService;
+        this.athenaSecretConfigured = StringUtils.hasText(athenaSecret);
         this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
     /**
-     * Check if the given auth header is valid for Athena, otherwise throw an exception.
+     * Check if the given auth header is valid for Athena, otherwise throw an exception. Without a configured secret the
+     * service is not usable and every request is refused, so an empty header never matches an empty secret. Failed checks
+     * are limited per calling address.
      *
      * @param incomingSecret the auth header value to check
      */
     private void checkAthenaSecret(String incomingSecret) {
-        if (!MessageDigest.isEqual(athenaSecretHash, hashSha256(incomingSecret))) {
+        rateLimitService.requireServiceCredentialBudget();
+        if (!athenaSecretConfigured || !StringUtils.hasText(incomingSecret) || !MessageDigest.isEqual(athenaSecretHash, hashSha256(incomingSecret))) {
             log.error("Athena secret does not match");
             throw new AccessForbiddenException("Athena secret does not match");
         }
+        rateLimitService.refundServiceCredentialBudget();
     }
 
     /**

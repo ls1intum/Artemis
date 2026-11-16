@@ -630,6 +630,31 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(scoresOfLatestResults(participations)).isEqualTo(scoresBefore);
     }
 
+    /**
+     * The re-evaluation refuses an automatically assessed exercise whose test case weights are invalid, like the update does.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefuseReEvaluationWithAnInvalidTestCaseWeightSum() throws Exception {
+        programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
+                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
+        createTestCases(false);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        testCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(testCase -> {
+            testCase.setWeight(-1.0);
+            testCaseRepository.save(testCase);
+        });
+
+        final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+    }
+
     private Map<Long, Double> scoresOfLatestResults(Participation[] participations) {
         final Map<Long, Double> scores = new HashMap<>();
         for (Participation participation : participations) {

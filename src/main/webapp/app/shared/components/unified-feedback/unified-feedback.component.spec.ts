@@ -404,6 +404,47 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackCredits()).toBe(1);
     });
 
+    it.each([
+        ['200', 100],
+        ['-200', -100],
+        ['100.5', 100],
+    ])('should bring typed credits of %s into the bounds when the field is left', async (typed, expected) => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        await settle();
+
+        typeIntoInputNumber(creditsInputElement(), typed);
+        await settle();
+
+        expect(component.feedbackCredits()).toBe(expected);
+        expect(creditsInputElement().value).toBe(String(expected));
+    });
+
+    it('should bring typed credits into the bounds when Enter is pressed', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        await settle();
+
+        typeIntoInputNumber(creditsInputElement(), '200', { leave: false });
+        creditsInputElement().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+        expect(component.feedbackCredits()).toBe(100);
+    });
+
+    it('should stop stepping the credits at the bounds', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(100);
+        await settle();
+
+        pressArrow('ArrowUp');
+        expect(component.feedbackCredits()).toBe(100);
+
+        component.feedbackCredits.set(-100);
+        await settle();
+        pressArrow('ArrowDown');
+        expect(component.feedbackCredits()).toBe(-100);
+    });
+
     it('should step an off-grid typed value to the next half point in the direction of travel without leaving the field', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(0);

@@ -1,4 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -89,7 +90,7 @@ function truncateDescription(description: string, maxLength: number = DESCRIPTIO
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
-    imports: [FaIconComponent, ArtemisTranslatePipe, MarkdownDirective],
+    imports: [FaIconComponent, ArtemisTranslatePipe, MarkdownDirective, TumAetUiTagComponent],
     templateUrl: './search-result-item.component.html',
     styleUrls: ['./search-result-item.component.scss'],
 })

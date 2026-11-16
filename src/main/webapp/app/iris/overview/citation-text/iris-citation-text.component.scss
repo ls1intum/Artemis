@@ -185,32 +185,6 @@ jhi-iris-citation-text {
         transform: translateX(calc(0px - var(--iris-citation-shift, 0px)));
     }
 
-    .iris-citation__nav-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        border: none;
-        background: transparent;
-        padding: 0 6px;
-        cursor: pointer;
-        user-select: none;
-        color: var(--iris-label-color);
-        font: inherit;
-        pointer-events: auto;
-
-        &:focus-visible {
-            outline: 2px solid currentcolor;
-            outline-offset: 1px;
-        }
-
-        svg {
-            width: 12px;
-            height: 12px;
-            color: currentcolor;
-        }
-    }
-
     .iris-citation__icon {
         width: 14px;
         height: 14px;
@@ -228,5 +202,15 @@ jhi-iris-citation-text {
 
     .iris-citation--source .iris-citation__icon svg {
         color: var(--iris-citation-source-color);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    jhi-iris-citation-text {
+        .iris-citation--clickable,
+        .iris-citation__summary,
+        .iris-citation__summary-item--clickable {
+            transition: none;
+        }
     }
 }

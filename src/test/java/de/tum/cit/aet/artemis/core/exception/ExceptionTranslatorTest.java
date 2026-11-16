@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.InvalidPathException;
 import java.sql.SQLException;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -11,11 +12,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 /**
  * How the translator answers a violation of the unique index on {@code jhi_user(email)}.
@@ -81,6 +85,40 @@ class ExceptionTranslatorTest {
         ResponseEntity<ProblemDetail> response = translator.handleDataIntegrityViolationException(duplicateLogin, request);
 
         assertThat(response.getStatusCode()).as("a duplicate login is not a duplicate email").isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    void shouldAnswerAMalformedMultipartRequestWithBadRequest() {
+        ResponseEntity<ProblemDetail> response = translator.handleMultipartException(new MultipartException("no multipart boundary was found"), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getProperties()).containsEntry("message", "error.http.400");
+    }
+
+    @Test
+    void shouldAnswerAnInvalidMediaTypeWithUnsupportedMediaType() {
+        ResponseEntity<ProblemDetail> response = translator.handleInvalidMediaTypeException(new InvalidMediaTypeException("multipart/", "invalid"), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
+    @Test
+    void shouldAnswerAnInvalidPathWithBadRequest() {
+        ResponseEntity<ProblemDetail> response = translator.handleInvalidPathException(new InvalidPathException("a\0b", "Nul character not allowed"), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * The more specific handler of the parent class keeps answering requests over the upload limit.
+     */
+    @Test
+    void shouldKeepAnsweringATooLargeUploadWithPayloadTooLarge() throws Exception {
+        ResponseEntity<Object> response = translator.handleException(new MaxUploadSizeExceededException(1L), request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONTENT_TOO_LARGE);
     }
 
     /**

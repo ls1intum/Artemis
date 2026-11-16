@@ -86,6 +86,37 @@ describe('IrisCitationTextComponent', () => {
         expect(el.textContent).toContain('Hello world');
     });
 
+    it('does not let a citation marker inside an attribute add attributes to the element', () => {
+        const el = render('![x [cite:L:7::::Key:a onerror=alert(1) b]](https://example.org/a.png)');
+
+        const image = el.querySelector('img');
+        expect(image).toBeTruthy();
+        expect(Array.from(image!.attributes).map((attribute) => attribute.name)).not.toContain('onerror');
+        expect(el.querySelectorAll('[onerror]')).toHaveLength(0);
+    });
+
+    it('requests images without a referrer after the citations are inserted', () => {
+        const el = render('![chart](https://example.org/a.png) [cite:L:7::::Key:Summary]');
+
+        expect(el.querySelector('img')?.getAttribute('referrerpolicy')).toBe('no-referrer');
+    });
+
+    it('keeps the styles of formulas next to a citation and removes other inline styles', () => {
+        const el = render('The ratio is $\\frac{1}{2}$ [cite:L:7::::Key:Summary] <span style="color:red">x</span>');
+
+        expect(el.querySelector('.katex')).toBeTruthy();
+        expect(el.querySelectorAll('.katex [style]').length).toBeGreaterThan(0);
+        expect(el.querySelector('span[style*="color"]')).toBeNull();
+    });
+
+    it('keeps the citation bubble markup that the sanitizer must not remove', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+        const el = render('[cite:L:7:3:::Key:Summary]', citationInfo);
+
+        expect(el.querySelector('.iris-citation__icon svg path')).toBeTruthy();
+        expect(el.querySelector('.iris-citation[data-course-id="1"][data-lecture-id="1"]')).toBeTruthy();
+    });
+
     it('renders single citation with summary and lecture info', () => {
         const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'My Lecture', lectureUnitTitle: 'My Unit', lectureId: 1, courseId: 1 }];
         const el = render('Hello [cite:L:7::::Keyword:Summary] world', citationInfo);
@@ -145,7 +176,7 @@ describe('IrisCitationTextComponent', () => {
 
         const group = el.querySelector('.iris-citation-group--has-summary') as HTMLElement;
         const bubbleText = group.querySelector('.iris-citation__text') as HTMLElement;
-        const navButtons = group.querySelectorAll('.iris-citation__nav-button') as NodeListOf<HTMLElement>;
+        const navButtons = group.querySelectorAll('.iris-citation__nav button') as NodeListOf<HTMLElement>;
 
         const initialText = bubbleText.textContent?.trim();
 
@@ -154,6 +185,32 @@ describe('IrisCitationTextComponent', () => {
 
         navButtons[0].click();
         expect(bubbleText.textContent?.trim()).toBe(initialText);
+    });
+
+    it('ignores an HTML navigation slot that has no generated citation summaries', () => {
+        expect(() => render('<span data-iris-citation-navigation></span>')).not.toThrow();
+        expect(fixture.nativeElement.querySelector('jhi-iris-citation-navigation')).toBeNull();
+    });
+
+    it('mounts named TUM controls, preserves focus and changes the active summary without navigating', () => {
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        const citationInfo: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+        ];
+        const el = render('[cite:L:1::::First:S1] [cite:L:2::::Second:S2]', citationInfo);
+        const next = el.querySelector('button[aria-label="artemisApp.iris.citation.next"]') as HTMLButtonElement;
+        expect(next).not.toBeNull();
+        next.focus();
+        next.click();
+        fixture.detectChanges();
+        expect(document.activeElement).toBe(next);
+        expect(el.querySelector('.iris-citation__summary-item.is-active')?.textContent).toContain('S2');
+        expect(navigate).not.toHaveBeenCalled();
+
+        render('A replacement response without citations');
+        expect(el.querySelector('jhi-iris-citation-navigation')).toBeNull();
+        expect(next.isConnected).toBe(false);
     });
 
     describe('navigating to a citation', () => {

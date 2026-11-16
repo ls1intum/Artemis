@@ -11,7 +11,7 @@
     <!-- Inline icon buttons: all rendered once (stable DOM). Overflowing ones get `hidden` and appear in the menu instead;
          resizing only toggles that class, it never recreates buttons. -->
     @for (item of inlineActions(); track item.action.id) {
-        <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.hidden]="item.hidden">
+        <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.hidden]="item.hidden" [class.group-start]="item.groupStart">
             <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="item.context" />
         </span>
     }
@@ -40,10 +40,11 @@
     </tumaet-ui-popover>
 </div>
 
-<!-- Inline, an action is an outlined icon button whose label is its tooltip and accessible name; in the menu it is a
-     plain row with icon and label, coloured only when destructive. Tooltips never describe their host: the name already
-     is the aria-label, and a disabled reason is a permanent description (`reasonId`). -->
-<ng-template #actionTpl let-action let-inMenu="inMenu" let-tooltip="tooltip" let-reasonId="reasonId">
+<!-- Inline, an action is an outlined button with icon and label, or only its icon (`iconOnly`), whose label is then its
+     tooltip and accessible name; in the menu it is a plain row with icon and label, coloured only when destructive.
+     Tooltips never describe their host: the name already is the label, and a disabled reason is a permanent description
+     (`reasonId`). -->
+<ng-template #actionTpl let-action let-inMenu="inMenu" let-iconOnly="iconOnly" let-tooltip="tooltip" let-reasonId="reasonId">
     @if (reasonId) {
         <span class="sr-only" [id]="reasonId">{{ tooltip }}</span>
     }
@@ -63,21 +64,22 @@
                     [variant]="inMenu ? 'text' : 'outlined'"
                     size="small"
                     [disabled]="!!action.disabled"
+                    [actionType]="action.delete!.actionType ?? ActionType.Delete"
                     [entityTitle]="action.delete!.entityTitle"
                     [entitySummaryTitle]="action.delete!.entitySummaryTitle"
                     [fetchCategorizedEntitySummary]="action.delete!.fetchCategorizedEntitySummary"
                     [deleteQuestion]="action.delete!.deleteQuestion"
                     [deleteConfirmationText]="action.delete!.deleteConfirmationText"
-                    [translateValues]="action.delete!.translateValues"
+                    [translateValues]="action.delete!.translateValues ?? {}"
                     [additionalChecks]="action.delete!.additionalChecks"
                     (delete)="onDelete(action, $event)"
                     [dialogError]="action.delete!.dialogError"
                     [attr.aria-describedby]="reasonId"
-                    [class.action-icon]="!inMenu"
+                    [class.action-icon]="iconOnly"
                     [class.action-menu-item]="inMenu"
-                    [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                    [attr.aria-label]="iconOnly ? (action.labelKey | artemisTranslate) : undefined"
                 >
-                    <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
+                    <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, iconOnly }" />
                 </button>
             </span>
         }
@@ -92,13 +94,13 @@
                     [variant]="inMenu ? 'text' : 'outlined'"
                     [disabled]="!!action.disabled"
                     size="small"
-                    [class.action-icon]="!inMenu"
+                    [class.action-icon]="iconOnly"
                     [class.action-menu-item]="inMenu"
-                    [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                    [attr.aria-label]="iconOnly ? (action.labelKey | artemisTranslate) : undefined"
                     [attr.aria-describedby]="reasonId"
                     (click)="runAction(action)"
                 >
-                    <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
+                    <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, iconOnly }" />
                 </button>
             </span>
         }
@@ -111,9 +113,9 @@
                 [variant]="inMenu ? 'text' : 'outlined'"
                 size="small"
                 [class.opacity-60]="action.disabled"
-                [class.action-icon]="!inMenu"
+                [class.action-icon]="iconOnly"
                 [class.action-menu-item]="inMenu"
-                [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                [attr.aria-label]="iconOnly ? (action.labelKey | artemisTranslate) : undefined"
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
                 [style.pointer-events]="action.disabled ? 'auto' : undefined"
@@ -123,15 +125,15 @@
                 tumAetUiTooltipDescribesHost="false"
                 (click)="closeMenuIfOpen(inMenu)"
             >
-                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
+                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, iconOnly }" />
             </a>
         }
     }
 </ng-template>
 
-<ng-template #contentTpl let-action let-inMenu="inMenu">
+<ng-template #contentTpl let-action let-iconOnly="iconOnly">
     <fa-icon [icon]="action.icon" [fixedWidth]="true" />
-    @if (inMenu) {
+    @if (!iconOnly) {
         <span [jhiTranslate]="action.labelKey"></span>
     }
 </ng-template>
