@@ -9,8 +9,11 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,9 +45,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.FileSystemResource;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
@@ -65,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyImportDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyPreviewDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityTemplateFilesDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityTestStructureDTO;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -233,7 +240,7 @@ class SecurityPolicyEditorServiceTest {
         securityFrameworkService = new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
                 Optional.of(localVCPushProcessingService), solutionParticipationRepository, mock(ProgrammingSubmissionTestRepository.class), new LocalDataProviderService(), "main",
                 new String[] { "2.2.1" });
-        editorService = new SecurityPolicyEditorService(securityFrameworkService, bareGitRepositoryService, resourceLoaderService);
+        editorService = new SecurityPolicyEditorService(securityFrameworkService, bareGitRepositoryService, resourceLoaderService, JsonMapper.builder().build());
     }
 
     private static Repository bareRepository(Path remote) throws IOException {
@@ -624,6 +631,27 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void aRetryAfterAFailedProcessingResumesItInsteadOfConflictingWithItself() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO change = change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest")),
+                added(withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest")), List.of("de.example.StressTest")));
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
+        String pushed = pushedHead();
+
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+        editorService.commit(exercise(), change, user);
+
+        assertThat(pushedHead()).isEqualTo(pushed);
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushed), any(), any(), any(), any(), any());
+
+        // Another change from the same base commit is still a conflict.
+        SecurityPolicyChangeDTO other = change(editor, edited(loadedPolicy(editor), BOTH_CLASSES));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), other, user));
+    }
+
+    @Test
     void renamesAPolicyAndPointsItsTestsToTheNewFile() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
@@ -635,6 +663,30 @@ class SecurityPolicyEditorServiceTest {
         assertThat(readPushed("SortingPolicy.yaml")).hasValueSatisfying(content -> assertThat(content).startsWith("# Ares 2 security policy"));
         assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("Policy(value = \"SortingPolicy.yaml\")"));
         assertThat(result.editor().policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::policyPath).containsExactly("SortingPolicy.yaml");
+    }
+
+    @Test
+    void renamingAPolicyKeepsTheOverridesOfTestCasesWithoutAPolicyFile() throws Exception {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()")
+                .replace("    @Test\n    void testMergeSort()", "    @de.tum.cit.ase.ares.api.Policy(activated = false)\n    @Test\n    void testMergeSort()"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
+
+        // Neither test case uses the policy file, so the class is not assigned as a whole and only the switched-off test case cannot be assigned.
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactly("de.example.StressTest");
+        assertThat(structure.testClasses().getFirst().fixedCases()).containsExactly("testMergeSort");
+
+        SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
+        editorService.commit(exercise(), change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", renamed, List.of("de.example.StressTest"))), user);
+
+        assertThat(readPushed(SORTING_TEST_PATH))
+                .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()")
+                        .contains("@de.tum.cit.ase.ares.api.Policy(activated = false)\n    @Test\n    void testMergeSort()"));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> {
+            SecurityPolicyEditorDTO reloaded = editorService.getEditor(exercise());
+            editorService.commit(exercise(),
+                    change(reloaded, edited(reloaded.policies().getFirst().document(), List.of("de.example.StressTest", "de.example.SortingTest#testMergeSort"))), user);
+        }).satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestCaseSwitchedOff"));
     }
 
     @Test
@@ -696,8 +748,8 @@ class SecurityPolicyEditorServiceTest {
         SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
 
         assertThat(structure.testClasses()).containsExactly(
-                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort"), true, false),
-                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements"), true, false));
+                new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort"), true, false, List.of()),
+                new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements"), true, false, List.of()));
     }
 
     @Test

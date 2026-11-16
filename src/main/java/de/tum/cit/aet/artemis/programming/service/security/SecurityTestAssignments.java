@@ -1,12 +1,18 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
@@ -16,6 +22,9 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * The policy editor shows the assignment of a policy as entries: the fully qualified name of a test class if the class annotation points to the policy and no
  * method annotation overrides it, so that test cases added to the class later use the policy too, and otherwise {@code Class#method} for each test case.
+ * <p>
+ * A method annotation without a policy file, which gives the test case the strict default policy, and a switched-off method annotation are explicit
+ * overrides too: the test case uses no policy file, and rewriting the assignments of its class keeps the annotation unless the test case is assigned.
  */
 final class SecurityTestAssignments {
 
@@ -34,9 +43,21 @@ final class SecurityTestAssignments {
      * @param active            whether its annotation enforces a policy; the test cases of a switched-off class use none, so they are not assigned
      * @param classPolicyPath   the policy file the class annotation points to; null for the strict default policy
      * @param methodPolicyPaths the policy files the annotations of its test methods point to, by the name of the method
+     * @param defaultMethods    the test methods whose annotation gives them the strict default policy, without a policy file
+     * @param switchedOff       the test methods whose annotation switches the sandbox off or cannot be evaluated; they cannot be assigned
      * @param testCases         the names of its test methods, in their order in the source
      */
-    record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, List<String> testCases) {
+    record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods,
+            Set<String> switchedOff, List<String> testCases) {
+
+        /**
+         * @return the test methods whose annotation stays as it is when the assignments of the class are rewritten, unless the method is assigned
+         */
+        Set<String> keptMethods() {
+            Set<String> kept = new LinkedHashSet<>(defaultMethods);
+            kept.addAll(switchedOff);
+            return kept;
+        }
 
         /**
          * @return the policy file of each entry of the class, see {@link SecurityTestAssignments}
@@ -46,12 +67,15 @@ final class SecurityTestAssignments {
             if (!active) {
                 return entries;
             }
-            boolean overridden = methodPolicyPaths.values().stream().anyMatch(path -> !path.equals(classPolicyPath));
+            boolean overridden = !keptMethods().isEmpty() || methodPolicyPaths.values().stream().anyMatch(path -> !path.equals(classPolicyPath));
             if (classPolicyPath != null && !overridden) {
                 entries.put(qualifiedName, classPolicyPath);
                 return entries;
             }
             for (String testCase : testCases) {
+                if (keptMethods().contains(testCase)) {
+                    continue;
+                }
                 String path = methodPolicyPaths.getOrDefault(testCase, classPolicyPath);
                 if (path != null) {
                     entries.put(qualifiedName + METHOD_SEPARATOR + testCase, path);
@@ -62,19 +86,22 @@ final class SecurityTestAssignments {
 
         /**
          * The annotations that give the class the requested entries: an entry of the whole class points the class annotation to its policy; otherwise the class
-         * annotation points to no policy and each assigned test case gets an annotation of its own.
+         * annotation points to no policy and each assigned test case gets an annotation of its own. The explicit overrides of test cases that are not assigned
+         * stay, so that no test case gets more permissions than before.
          *
          * @param requested the policy file of each requested entry of this class
          * @return the class with the requested annotations
          */
         TestClass with(Map<String, String> requested) {
-            String wholeClass = requested.get(qualifiedName);
-            if (wholeClass != null) {
-                return new TestClass(qualifiedName, sourcePath, active, wholeClass, Map.of(), testCases);
-            }
             Map<String, String> methods = new LinkedHashMap<>();
-            requested.forEach((entry, path) -> methods.put(entry.substring(entry.indexOf(METHOD_SEPARATOR) + 1), path));
-            return new TestClass(qualifiedName, sourcePath, active, null, methods, testCases);
+            requested.forEach((entry, path) -> {
+                if (entry.indexOf(METHOD_SEPARATOR) >= 0) {
+                    methods.put(entry.substring(entry.indexOf(METHOD_SEPARATOR) + 1), path);
+                }
+            });
+            Set<String> defaults = new LinkedHashSet<>(defaultMethods);
+            defaults.removeAll(methods.keySet());
+            return new TestClass(qualifiedName, sourcePath, active, requested.get(qualifiedName), methods, defaults, switchedOff, testCases);
         }
     }
 
@@ -87,19 +114,25 @@ final class SecurityTestAssignments {
      */
     static Map<String, TestClass> read(Map<String, String> javaSources) {
         Map<String, TestClass> testClasses = new TreeMap<>();
-        SecurityPolicyRepositoryFiles.testClassPaths(javaSources).forEach((qualifiedName, sourcePath) -> {
+        testClassPaths(javaSources).forEach((qualifiedName, sourcePath) -> {
             String source = javaSources.get(sourcePath);
             AresTestSources.relevantType(AresTestSources.analyze(sourcePath, source))
                     .filter(type -> type.qualifiedName().equals(qualifiedName) && type.policies().size() == 1 && type.policies().getFirst().isEvaluable()).ifPresent(type -> {
                         AresPolicyAnnotations.Annotation annotation = type.policies().getFirst();
                         Map<String, String> methodPolicyPaths = new LinkedHashMap<>();
+                        Set<String> defaultMethods = new LinkedHashSet<>();
+                        Set<String> switchedOff = new LinkedHashSet<>();
                         type.methodPolicies().forEach((method, methodAnnotation) -> {
-                            if (methodAnnotation.isEvaluable() && methodAnnotation.isActivated()) {
-                                methodAnnotation.policyPath().ifPresent(path -> methodPolicyPaths.put(method, path));
+                            if (!methodAnnotation.isEvaluable() || !methodAnnotation.isActivated()) {
+                                switchedOff.add(method);
+                            }
+                            else {
+                                methodAnnotation.policyPath().filter(path -> !path.isBlank()).ifPresentOrElse(path -> methodPolicyPaths.put(method, path),
+                                        () -> defaultMethods.add(method));
                             }
                         });
                         testClasses.put(qualifiedName, new TestClass(qualifiedName, sourcePath, annotation.isActivated(), annotation.policyPath().orElse(null),
-                                Map.copyOf(methodPolicyPaths), AresTestCases.testCases(source)));
+                                Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods), Set.copyOf(switchedOff), AresTestCases.testCases(source)));
                     });
         });
         return testClasses;
@@ -128,10 +161,60 @@ final class SecurityTestAssignments {
     /**
      * @param testClass a test class
      * @param entry     an entry of the class
+     * @return whether the entry names one of its test cases whose annotation switches the sandbox off
+     */
+    static boolean isSwitchedOffEntry(TestClass testClass, String entry) {
+        int separator = entry.indexOf(METHOD_SEPARATOR);
+        return separator >= 0 && testClass.switchedOff().contains(entry.substring(separator + 1));
+    }
+
+    /**
+     * @param testClass a test class
+     * @param entry     an entry of the class
      * @return whether the entry names the class or one of its test cases
      */
     static boolean isValidEntry(TestClass testClass, String entry) {
         int separator = entry.indexOf(METHOD_SEPARATOR);
         return separator < 0 ? Objects.equals(entry, testClass.qualifiedName()) : testClass.testCases().contains(entry.substring(separator + 1));
+    }
+
+    /**
+     * @param javaSources the Java sources of the repository by their path relative to its root, see
+     *                        {@link SecurityPolicyRepositoryFiles#isJavaSourcePath(String, java.util.function.Predicate)}
+     * @return the path of the source file of each test class, by the fully qualified name of the class, sorted by name
+     */
+    static Map<String, String> testClassPaths(Map<String, String> javaSources) {
+        List<AresTestSources.Summary> summaries = javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+        Set<String> testClassNames = SecurityPolicyRepositoryFiles.testClasses(summaries).stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
+        Map<String, String> paths = new TreeMap<>();
+        for (AresTestSources.Summary summary : summaries) {
+            summary.topLevelTypes().stream().filter(type -> testClassNames.contains(type.qualifiedName())).forEach(type -> paths.put(type.qualifiedName(), summary.path()));
+        }
+        return paths;
+    }
+
+    /**
+     * Rewrites the {@code @Policy} annotations of test classes so that their test cases use the given policy files, see
+     * {@link AresPolicyAnnotations#assign(String, String, String, Map, Set)}.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param testClasses    the test classes with the annotations they should have
+     * @return the number of files that changed
+     */
+    static int assignTestCases(Path repositoryRoot, Collection<TestClass> testClasses) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        int changedFiles = 0;
+        for (TestClass testClass : testClasses) {
+            Path javaFile = root.resolve(testClass.sourcePath()).normalize();
+            if (!javaFile.startsWith(root) || !Files.isRegularFile(javaFile, LinkOption.NOFOLLOW_LINKS)) {
+                continue;
+            }
+            String content = SecurityPolicyRepositoryFiles.readFile(javaFile);
+            if (SecurityPolicyRepositoryFiles.writeIfChanged(javaFile, content,
+                    AresPolicyAnnotations.assign(testClass.sourcePath(), content, testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.keptMethods()))) {
+                changedFiles++;
+            }
+        }
+        return changedFiles;
     }
 }

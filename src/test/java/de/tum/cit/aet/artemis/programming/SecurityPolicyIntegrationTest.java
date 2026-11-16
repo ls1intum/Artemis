@@ -135,7 +135,7 @@ class SecurityPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalC
         assertThat(preview.verdict()).isEqualTo("COMPATIBLE");
         assertThat(preview.files().getFirst().after()).contains("onThisPathAndAllPathsBelow: \"logs/\"");
         assertThat(request.get(basePath + "/test-structure", HttpStatus.OK, SecurityTestStructureDTO.class).testClasses())
-                .containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort"), true, false));
+                .containsExactly(new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort"), true, false, List.of()));
         assertThat(request.get(basePath + "/template-files", HttpStatus.OK, SecurityTemplateFilesDTO.class).paths()).contains("data/input.txt", "src/de/example/Client.java");
 
         assertThat(request.postWithResponseBody(basePath + "/policies/import", new SecurityPolicyImportDTO("SecurityPolicy.yaml", POLICY), SecurityPolicyEditorDTO.PolicyDTO.class,

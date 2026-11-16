@@ -699,6 +699,16 @@ public class SecurityFrameworkService {
      * @param process whether to run the push processing, which triggers the builds; false while an exercise is imported, because the import triggers them
      */
     SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, boolean process, Consumer<Repository> change) {
+        return changeTestRepository(exercise, user, commitMessage, action, "", process, change);
+    }
+
+    /**
+     * Like {@link #changeTestRepository(ProgrammingExercise, User, String, String, boolean, Consumer)}, with further trailers for the commit.
+     *
+     * @param trailers further trailer lines of the commit, each ending with a line break; empty for none
+     */
+    SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, String trailers, boolean process,
+            Consumer<Repository> change) {
         LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
         String branch = repositoryBranch(exercise);
         Repository repository = null;
@@ -712,8 +722,8 @@ public class SecurityFrameworkService {
             boolean changed = gitService.stageAllChanges(repository);
             requireStagedPolicyFiles(repository);
             if (changed) {
-                String trailers = "\n\n" + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
-                String commitHash = gitService.commitStagedChanges(repository, commitMessage + trailers, user);
+                String allTrailers = "\n\n" + trailers + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
+                String commitHash = gitService.commitStagedChanges(repository, commitMessage + allTrailers, user);
                 if (process && localVCPushProcessingService.isPresent()) {
                     pendingProcessing().put(pendingProcessingKey(exercise, commitHash), commitHash);
                 }

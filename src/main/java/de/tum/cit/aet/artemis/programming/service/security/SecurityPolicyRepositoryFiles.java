@@ -13,7 +13,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -262,7 +261,7 @@ public final class SecurityPolicyRepositoryFiles {
      * The test classes are the relevant top-level types of the sources, see {@link AresTestSources.TypeDeclaration#isRelevant()}, and every class that
      * extends one of them, because it inherits its tests. Such a subclass must then carry its own annotation as well.
      */
-    private static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
+    static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
         List<AresTestSources.TypeDeclaration> allTypes = summaries.stream().flatMap(summary -> summary.topLevelTypes().stream()).toList();
         Set<String> allTypeNames = allTypes.stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
         Set<String> testClassNames = new HashSet<>();
@@ -797,44 +796,6 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @param javaSources the Java sources of the repository by their path relative to its root, see {@link #isJavaSourcePath(String, Predicate)}
-     * @return the path of the source file of each test class, by the fully qualified name of the class, sorted by name
-     */
-    public static Map<String, String> testClassPaths(Map<String, String> javaSources) {
-        List<AresTestSources.Summary> summaries = javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
-        Set<String> testClassNames = testClasses(summaries).stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
-        Map<String, String> paths = new TreeMap<>();
-        for (AresTestSources.Summary summary : summaries) {
-            summary.topLevelTypes().stream().filter(type -> testClassNames.contains(type.qualifiedName())).forEach(type -> paths.put(type.qualifiedName(), summary.path()));
-        }
-        return paths;
-    }
-
-    /**
-     * Rewrites the {@code @Policy} annotations of test classes so that their test cases use the given policy files, see
-     * {@link AresPolicyAnnotations#assign(String, String, String, Map)}.
-     *
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @param testClasses    the test classes with the annotations they should have
-     * @return the number of files that changed
-     */
-    static int assignTestCases(Path repositoryRoot, Collection<SecurityTestAssignments.TestClass> testClasses) {
-        Path root = repositoryRoot.toAbsolutePath().normalize();
-        int changedFiles = 0;
-        for (SecurityTestAssignments.TestClass testClass : testClasses) {
-            Path javaFile = root.resolve(testClass.sourcePath()).normalize();
-            if (!javaFile.startsWith(root) || !Files.isRegularFile(javaFile, LinkOption.NOFOLLOW_LINKS)) {
-                continue;
-            }
-            String content = readFile(javaFile);
-            if (writeIfChanged(javaFile, content, AresPolicyAnnotations.assign(testClass.sourcePath(), content, testClass.classPolicyPath(), testClass.methodPolicyPaths()))) {
-                changedFiles++;
-            }
-        }
-        return changedFiles;
-    }
-
-    /**
      * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List)}.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
@@ -1008,7 +969,7 @@ public final class SecurityPolicyRepositoryFiles {
         return Files.isRegularFile(file) ? Optional.of(readFile(file)) : Optional.empty();
     }
 
-    private static String readFile(Path file) {
+    static String readFile(Path file) {
         try {
             return Files.readString(file, StandardCharsets.UTF_8);
         }
@@ -1017,7 +978,7 @@ public final class SecurityPolicyRepositoryFiles {
         }
     }
 
-    private static boolean writeIfChanged(Path file, String previousContent, String newContent) {
+    static boolean writeIfChanged(Path file, String previousContent, String newContent) {
         if (newContent.equals(previousContent)) {
             return false;
         }

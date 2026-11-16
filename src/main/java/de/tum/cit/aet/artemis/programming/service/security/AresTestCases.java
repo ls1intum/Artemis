@@ -43,17 +43,18 @@ final class AresTestCases {
      */
     static SecurityTestStructureDTO structure(Map<String, String> javaSources) {
         Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(javaSources);
-        Set<String> testClassNames = SecurityPolicyRepositoryFiles.testClassPaths(javaSources).keySet();
+        Set<String> testClassNames = SecurityTestAssignments.testClassPaths(javaSources).keySet();
         Map<String, SecurityTestStructureDTO.TestClassDTO> classes = new TreeMap<>();
         for (Map.Entry<String, String> source : javaSources.entrySet()) {
             for (AresTestSources.TypeDeclaration type : AresTestSources.analyze(source.getKey(), source.getValue()).topLevelTypes()) {
                 String name = type.qualifiedName();
                 SecurityTestAssignments.TestClass testClass = testClasses.get(name);
                 if (testClass != null) {
-                    classes.put(name, new SecurityTestStructureDTO.TestClassDTO(name, testClass.testCases(), true, !testClass.active()));
+                    classes.put(name, new SecurityTestStructureDTO.TestClassDTO(name, testClass.testCases(), true, !testClass.active(),
+                            testClass.testCases().stream().filter(testClass.switchedOff()::contains).toList()));
                 }
                 else if (!testClassNames.contains(name)) {
-                    classes.putIfAbsent(name, new SecurityTestStructureDTO.TestClassDTO(name, List.of(), false, false));
+                    classes.putIfAbsent(name, new SecurityTestStructureDTO.TestClassDTO(name, List.of(), false, false, List.of()));
                 }
             }
         }

@@ -235,17 +235,18 @@ final class AresPolicyAnnotations {
 
     /**
      * Rewrites the {@code @Policy} annotations of a test class so that its test cases use the given policy files: the annotation of the class points to
-     * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, and the annotations of the other
-     * methods are removed. Annotations that already point to the right file are not touched, and new method annotations go on their own line above the
-     * method's first test annotation, indented like it.
+     * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, the annotations of the methods in
+     * {@code keptMethods} stay as they are, and the annotations of the other methods are removed. Annotations that already point to the right file are not
+     * touched, and new method annotations go on their own line above the method's first test annotation, indented like it.
      *
      * @param path              the path of the file relative to the repository root
      * @param source            the content of a Java file with exactly one test class, whose annotation is evaluable
      * @param classPolicyPath   the validated policy path for the class annotation; null for the strict default policy
      * @param methodPolicyPaths the validated policy path for each test method that uses another policy than the class
+     * @param keptMethods       the test methods whose annotation overrides the class without a policy file and stays, such as a switched-off one
      * @return the rewritten source
      */
-    static String assign(String path, String source, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths) {
+    static String assign(String path, String source, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> keptMethods) {
         AresTestSources.TypeDeclaration type = AresTestSources.relevantType(AresTestSources.analyze(path, source)).filter(declaration -> declaration.policies().size() == 1)
                 .orElseThrow(() -> new IllegalArgumentException("The file " + path + " has no test class with one @Policy annotation"));
         Annotation classAnnotation = type.policies().getFirst();
@@ -258,6 +259,9 @@ final class AresPolicyAnnotations {
         }
         type.methodPolicies().forEach((method, annotation) -> {
             String target = methodPolicyPaths.get(method);
+            if (target == null && keptMethods.contains(method)) {
+                return;
+            }
             if (target == null) {
                 ranges.add(lineRange(source, annotation.start(), annotation.end()));
                 replacements.add("");

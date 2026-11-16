@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -268,7 +269,7 @@ class AresPolicyAnnotationsTest {
     @Test
     void assignsSingleTestCasesWithMethodAnnotations() {
         String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, null,
-                Map.of("testBubbleSort", "Stress.yaml", "testMergeSort", "SecurityPolicy.yaml"));
+                Map.of("testBubbleSort", "Stress.yaml", "testMergeSort", "SecurityPolicy.yaml"), Set.of());
 
         assertThat(assigned).contains("@Public\n@Policy(withinPath = \"test\")\nclass SortingTest {")
                 .contains("    @Policy(value = \"Stress.yaml\", withinPath = \"test\")\n    @Test\n    void testBubbleSort()")
@@ -281,10 +282,20 @@ class AresPolicyAnnotationsTest {
 
     @Test
     void assigningTheWholeClassRemovesTheMethodAnnotations() {
-        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of());
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of(), Set.of());
 
         assertThat(assigned).contains("@Policy(value = \"Stress.yaml\", withinPath = \"test\")\nclass SortingTest {").doesNotContain("Old.yaml")
                 .contains("    }\n\n    @Test\n    void testMergeSort()");
-        assertThat(AresPolicyAnnotations.assign("test/de/example/SortingTest.java", assigned, "Stress.yaml", Map.of())).isEqualTo(assigned);
+        assertThat(AresPolicyAnnotations.assign("test/de/example/SortingTest.java", assigned, "Stress.yaml", Map.of(), Set.of())).isEqualTo(assigned);
+    }
+
+    @Test
+    void keepsTheOverridesOfTestCasesWithoutAPolicyFile() {
+        String source = TEST_CLASS.replace("@Policy(value = \"Old.yaml\", withinPath = \"test\")", "@Policy(activated = false)");
+
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, "Stress.yaml", Map.of(), Set.of("testMergeSort"));
+
+        assertThat(assigned).contains("@Policy(value = \"Stress.yaml\", withinPath = \"test\")\nclass SortingTest {")
+                .contains("    @Policy(activated = false)\n    @Test\n    void testMergeSort()");
     }
 }

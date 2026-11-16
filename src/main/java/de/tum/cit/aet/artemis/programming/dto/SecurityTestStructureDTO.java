@@ -20,8 +20,9 @@ public record SecurityTestStructureDTO(List<TestClassDTO> testClasses) {
      * @param testCases     the names of its test methods, in their order in the source
      * @param testClass     whether it is a test class whose test cases can be assigned to a policy; false for a helper class without tests
      * @param switchedOff   whether its {@code @Policy} annotation is switched off, so its test cases run without the sandbox and cannot be assigned
+     * @param fixedCases    the test cases whose own {@code @Policy} annotation switches the sandbox off, so they cannot be assigned either
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TestClassDTO(String qualifiedName, List<String> testCases, boolean testClass, boolean switchedOff) {
+    public record TestClassDTO(String qualifiedName, List<String> testCases, boolean testClass, boolean switchedOff, List<String> fixedCases) {
     }
 }

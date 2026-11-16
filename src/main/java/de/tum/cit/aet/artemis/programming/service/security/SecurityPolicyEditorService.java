@@ -9,10 +9,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +41,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -83,6 +88,9 @@ public class SecurityPolicyEditorService {
     /** The action recorded in the commits of the editor, see {@link SecurityFrameworkService}. */
     private static final String POLICY_ACTION = "policy";
 
+    /** The trailer of a policy commit that identifies its change, see {@link #fingerprint(SecurityPolicyChangeDTO)}. */
+    private static final String CHANGE_TRAILER = "Security-Policy-Change: ";
+
     private static final String DEFAULT_COMMIT_MESSAGE = "Update the Ares security policy";
 
     private static final int MAX_COMMIT_MESSAGE_LENGTH = 1000;
@@ -96,12 +104,15 @@ public class SecurityPolicyEditorService {
 
     private final BareGitRepositoryService bareGitRepositoryService;
 
+    private final JsonMapper jsonMapper;
+
     private final List<SecurityPolicyEditorDTO.PresetDTO> presets;
 
     public SecurityPolicyEditorService(SecurityFrameworkService securityFrameworkService, BareGitRepositoryService bareGitRepositoryService,
-            ResourceLoaderService resourceLoaderService) {
+            ResourceLoaderService resourceLoaderService, JsonMapper jsonMapper) {
         this.securityFrameworkService = securityFrameworkService;
         this.bareGitRepositoryService = bareGitRepositoryService;
+        this.jsonMapper = jsonMapper;
         this.presets = loadPresets(resourceLoaderService);
     }
 
@@ -254,8 +265,13 @@ public class SecurityPolicyEditorService {
         if (change.baseCommitHash() == null || !ObjectId.isId(change.baseCommitHash())) {
             throw new BadRequestAlertException("The change does not name the commit the policies were loaded from.", ENTITY_NAME, "securityPolicyNoBaseCommit");
         }
-        SecurityFrameworkConfigDTO config = securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION, true,
-                repository -> applyChange(repository, change));
+        String fingerprint = fingerprint(change);
+        SecurityFrameworkConfigDTO config = securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION,
+                CHANGE_TRAILER + fingerprint + "\n", true, repository -> {
+                    if (!isAlreadyApplied(repository, change.baseCommitHash(), fingerprint)) {
+                        applyChange(repository, change);
+                    }
+                });
         log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
                 change.policies().stream().map(policy -> policy.document().policyPath()).toList(), change.removedPolicyPaths(), exercise.getId());
         return new SecurityPolicyCommitResultDTO(getEditor(exercise), config);
@@ -365,6 +381,40 @@ public class SecurityPolicyEditorService {
     }
 
     /**
+     * Identifies a change, so that a retry of the same request is recognized, see {@link #isAlreadyApplied(Repository, String, String)}.
+     *
+     * @return the SHA-256 hash of the change in JSON, as hexadecimal digits
+     */
+    private String fingerprint(SecurityPolicyChangeDTO change) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(jsonMapper.writeValueAsBytes(change)));
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
+    }
+
+    /**
+     * Whether the head of the checkout is the commit of this very change on top of the commit the editor loaded. That is the case when a retry follows a
+     * request whose push succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself, and the
+     * pending processing is resumed instead. A different change, even of the same base commit, has another fingerprint and still fails as a conflict.
+     */
+    private static boolean isAlreadyApplied(Repository repository, @Nullable String baseCommitHash, String fingerprint) {
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            ObjectId head = repository.resolve(Constants.HEAD);
+            if (head == null || baseCommitHash == null) {
+                return false;
+            }
+            RevCommit commit = revWalk.parseCommit(head);
+            return commit.getParentCount() == 1 && commit.getParent(0).name().equals(baseCommitHash)
+                    && commit.getFullMessage().lines().anyMatch(line -> line.equals(CHANGE_TRAILER + fingerprint));
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
      * Applies a change to the checkout: checks that the policies did not change since the editor loaded them, pins the requested version, writes, renames and
      * deletes the policy files and rewrites the {@code @Policy} annotations of the test classes whose assignment changes.
      */
@@ -469,11 +519,13 @@ public class SecurityPolicyEditorService {
                 }
             });
             SecurityTestAssignments.TestClass assigned = testClass.with(entries);
-            if (testClass.active() && !assigned.entries().equals(testClass.entries())) {
+            // A class annotation that points to a renamed or deleted file changes too, even if none of the test cases used it.
+            boolean pointsToVacated = testClass.classPolicyPath() != null && vacated.contains(testClass.classPolicyPath());
+            if (testClass.active() && (pointsToVacated || !assigned.entries().equals(testClass.entries()))) {
                 reassigned.add(assigned);
             }
         }
-        SecurityPolicyRepositoryFiles.assignTestCases(root, reassigned);
+        SecurityTestAssignments.assignTestCases(root, reassigned);
 
         SecurityFrameworkState after = SecurityPolicyRepositoryFiles.evaluate(root);
         Set<String> referencedPolicies = after.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath).collect(Collectors.toSet());
@@ -513,6 +565,9 @@ public class SecurityPolicyEditorService {
                 if (!testClass.active()) {
                     throw refused("The test class " + testClass.qualifiedName() + " runs without the sandbox, so its tests cannot use a policy.", "securityPolicyTestSwitchedOff",
                             Map.of("testClass", testClass.qualifiedName()));
+                }
+                if (SecurityTestAssignments.isSwitchedOffEntry(testClass, entry)) {
+                    throw refused("The test " + entry + " runs without the sandbox, so it cannot use a policy.", "securityPolicyTestCaseSwitchedOff", Map.of("test", entry));
                 }
                 if (!declared.contains(testClass.qualifiedName())) {
                     throw refused("The policy " + path + " does not declare the test class " + testClass.qualifiedName() + " of its test " + entry + ".",
