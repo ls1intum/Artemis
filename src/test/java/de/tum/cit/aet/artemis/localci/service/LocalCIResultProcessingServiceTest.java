@@ -786,6 +786,24 @@ class LocalCIResultProcessingServiceTest {
     }
 
     @Test
+    void aResultForADeletedParticipationReplacesTheRecordOfTheSameParticipation() {
+        BuildJob recorded = new BuildJob();
+        recorded.setId(77L);
+        recorded.setParticipationId(PARTICIPATION_ID);
+        recorded.setExerciseId(EXERCISE_ID);
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        when(buildJobRepository.save(any(BuildJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getId()).isEqualTo(77L);
+    }
+
+    @Test
     void anAdmittedResultFinishesWhenDeletionStartsBeforeGrading() {
         withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
         withParticipation();
