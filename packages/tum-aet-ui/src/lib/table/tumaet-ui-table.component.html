@@ -1,27 +1,22 @@
-@if (showSearch()) {
-    <div class="tumaet:mb-3">
-        <div class="tumaet:relative">
-            <fa-icon [icon]="faMagnifyingGlass" class="tumaet:pointer-events-none tumaet:absolute tumaet:start-3 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-muted" />
-            <input
-                #searchInput
-                type="search"
-                [placeholder]="searchPlaceholder() | tumAetUiTranslate"
-                [attr.aria-label]="searchPlaceholder() | tumAetUiTranslate"
-                (input)="onSearchInput(searchInput.value)"
-                class="tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1.5 tumaet:ps-10 tumaet:pe-3 tumaet:text-sm tumaet:text-text"
-            />
-        </div>
+<tumaet-ui-table-layout [loading]="loading()" [fill]="fill()" [empty]="rows().length === 0 && !loading()" [emptyTitle]="emptyMessage()">
+    <!-- Two siblings in the toolbar slot, so the frame can hide the toolbar when the search is off and the consumer projects nothing. -->
+    <div tumAetUiTableToolbar class="tumaet:relative tumaet:min-w-16 tumaet:max-w-lg tumaet:flex-1" [hidden]="!showSearch()">
+        <fa-icon
+            [icon]="faMagnifyingGlass"
+            class="tumaet:pointer-events-none tumaet:absolute tumaet:start-2.5 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-xs tumaet:text-muted"
+        />
+        <input
+            #searchInput
+            type="search"
+            [placeholder]="searchPlaceholder() | tumAetUiTranslate"
+            [attr.aria-label]="searchPlaceholder() | tumAetUiTranslate"
+            (input)="onSearchInput(searchInput.value)"
+            class="tumaet:box-border tumaet:h-7 tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:ps-8 tumaet:pe-2 tumaet:text-sm tumaet:text-text"
+        />
     </div>
-}
+    <ng-content select="[tumAetUiTableToolbar]" ngProjectAs="[tumAetUiTableToolbar]" />
 
-<div
-    class="tumaet:relative tumaet:w-full tumaet:max-w-full tumaet:overflow-x-auto"
-    [style.overflow-y]="scrollable() ? 'auto' : null"
-    [style.flex]="scrollHeight() === 'flex' ? '1 1 0%' : null"
-    [style.min-height]="scrollHeight() === 'flex' ? 0 : null"
-    [style.max-height]="scrollHeight() && scrollHeight() !== 'flex' ? scrollHeight() : null"
->
-    <table cdk-table [dataSource]="rows()" [trackBy]="effectiveTrackBy()" [class]="tableClasses()" [attr.aria-busy]="loading() ? 'true' : null">
+    <table cdk-table [dataSource]="rows()" [trackBy]="effectiveTrackBy()" [class]="tableClasses()">
         @for (col of columns(); track columnName(col, $index)) {
             <ng-container [cdkColumnDef]="columnName(col, $index)">
                 <th
@@ -31,7 +26,7 @@
                     [style.min-width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
                     [class]="headerCellClasses(col)"
-                    class="tumaet:border-border tumaet:bg-content-background tumaet:px-4 tumaet:py-2 tumaet:text-start tumaet:font-semibold tumaet:text-text"
+                    class="tumaet:border-border tumaet:bg-content-background tumaet:h-[30px] tumaet:px-4 tumaet:py-0 tumaet:text-start tumaet:font-semibold tumaet:text-text"
                 >
                     <span class="tumaet:inline-flex tumaet:items-center tumaet:gap-1">
                         @if (col.sort && col.field) {
@@ -77,7 +72,7 @@
 
         @if (rowActions(); as actions) {
             <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
-                <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tumaet:border-border tumaet:bg-content-background tumaet:px-4 tumaet:py-2">
+                <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tumaet:h-[30px] tumaet:border-border tumaet:bg-content-background tumaet:px-4 tumaet:py-0">
                     <span class="tumaet:sr-only">{{ 'tumAetUi.table.actions' | tumAetUiTranslate }}</span>
                 </th>
                 <!-- Declares no width, so it is the one column auto layout can squeeze: nowrap keeps the controls on one line. -->
@@ -87,33 +82,20 @@
             </ng-container>
         }
 
-        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tumaet:bg-content-background"></tr>
+        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: true" class="tumaet:bg-content-background"></tr>
         <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()" [class.tumaet-ui-table-row-highlighted]="rowHighlighted()?.(row) ?? false"></tr>
-
-        <tr *cdkNoDataRow>
-            <td [attr.colspan]="displayedColumns().length" class="tumaet:bg-content-background tumaet:px-4 tumaet:py-6 tumaet:text-center tumaet:text-muted">
-                <span>{{ emptyMessage() | tumAetUiTranslate }}</span>
-            </td>
-        </tr>
     </table>
 
-    @if (loading()) {
-        <div class="tumaet:absolute tumaet:inset-0 tumaet:flex tumaet:items-center tumaet:justify-center tumaet:bg-content-background/60" aria-hidden="true">
-            <span
-                class="tumaet:h-6 tumaet:w-6 tumaet:animate-spin tumaet:rounded-full tumaet:border-2 tumaet:border-border tumaet:border-t-primary tumaet:motion-reduce:animate-none"
-            ></span>
-        </div>
-    }
-</div>
-
-<tumaet-ui-paginator
-    [totalRecords]="totalRecords()"
-    [page]="currentPage()"
-    [pageSize]="effectivePageSize()"
-    [pageSizeOptions]="pageSizeOptions()"
-    [showRowsPerPage]="showRowsPerPage()"
-    [showCurrentPageReport]="showCurrentPageReport()"
-    [disabled]="loading()"
-    (pageChange)="onPageChange($event)"
-    (pageSizeChange)="onPageSizeChange($event)"
-/>
+    <tumaet-ui-paginator
+        tumAetUiTableFooter
+        [totalRecords]="totalRecords()"
+        [page]="currentPage()"
+        [pageSize]="effectivePageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
+        [showRowsPerPage]="showRowsPerPage()"
+        [showCurrentPageReport]="showCurrentPageReport()"
+        [disabled]="loading()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+    />
+</tumaet-ui-table-layout>

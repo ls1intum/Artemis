@@ -7,11 +7,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Router, provideRouter } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClient } from '@angular/common/http';
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { Subject } from 'rxjs';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
@@ -49,7 +47,6 @@ describe('ExerciseImportButtonComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TumAetUiDialogService, useClass: MockDialogService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

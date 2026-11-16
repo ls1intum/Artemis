@@ -52,7 +52,6 @@
             "type": "Typ",
             "typeStandalone": "Eigenständig",
             "typeExercise": "Aufgabe",
-            "rows": "Zeilen",
             "statistics": {
                 "total": "Gesamt"
             },
@@ -94,7 +93,9 @@
             },
             "students": {
                 "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentationsinstanz entfernt werden?"
-            }
+            },
+            "noPresenters": "Noch keine Präsentierenden vorhanden",
+            "noPresentersDescription": "Suche oben nach Studierenden, um die ersten Präsentierenden hinzuzufügen."
         }
     }
 }

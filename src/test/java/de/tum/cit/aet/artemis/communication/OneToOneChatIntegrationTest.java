@@ -311,6 +311,26 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnNotFoundWhenTheUserIdBelongsToAUserWithoutCourseRole() throws Exception {
+        Long userWithoutCourseRoleId = userRepository.findOneByLogin(OTHER_PREFIX + "student42").orElseThrow().getId();
+
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + userWithoutCourseRoleId, null, OneToOneChatDTO.class,
+                HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", Map.of("userId", userWithoutCourseRoleId), OneToOneChatDTO.class,
+                HttpStatus.NOT_FOUND);
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestWhenTheLoginBelongsToAUserWithoutCourseRole() throws Exception {
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", new OneToOneChatCreationDTO(null, OTHER_PREFIX + "student42"),
+                OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateOneToOneChatWhenRequestedWithUserIdInBody() throws Exception {
         Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
 

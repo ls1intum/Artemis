@@ -20,6 +20,7 @@ import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,6 +29,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
@@ -36,6 +38,9 @@ import io.jsonwebtoken.Jwts;
 class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "ltideeplinkingintegrationtest";
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
 
     private Course course;
 
@@ -131,6 +136,53 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.OK, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deepLinkingRejectsExercisesOfAnotherCourse() throws Exception {
+        mockSigningKey();
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX + "other");
+        long foreignExerciseId = otherCourse.getExercises().stream().findFirst().orElseThrow().getId();
+        for (DeepLinkingType type : List.of(DeepLinkingType.EXERCISE, DeepLinkingType.GROUPED_EXERCISE)) {
+            var params = getDeepLinkingRequestParamsForExercise();
+            params.set("resourceType", type.toString());
+            params.set("contentIds", String.valueOf(foreignExerciseId));
+            request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deepLinkingRejectsLecturesOfAnotherCourse() throws Exception {
+        mockSigningKey();
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX + "other");
+        long foreignLectureId = lectureUtilService.createLecture(otherCourse).getId();
+        for (DeepLinkingType type : List.of(DeepLinkingType.LECTURE, DeepLinkingType.GROUPED_LECTURE)) {
+            var params = getDeepLinkingRequestParamsForExercise();
+            params.set("resourceType", type.toString());
+            params.set("contentIds", String.valueOf(foreignLectureId));
+            request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deepLinkingAcceptsLecturesOfTheCourse() throws Exception {
+        mockSigningKey();
+        long lectureId = lectureUtilService.createLecture(course).getId();
+        var params = getDeepLinkingRequestParamsForExercise();
+        params.set("resourceType", DeepLinkingType.LECTURE.toString());
+        params.set("contentIds", String.valueOf(lectureId));
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.OK, params);
+    }
+
+    private void mockSigningKey() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        RSAKey mockRsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).privateKey((RSAPrivateKey) keyPair.getPrivate()).build();
+        doReturn(mockRsaKey).when(oAuth2JWKSService).getJWK(any());
     }
 
     @Test

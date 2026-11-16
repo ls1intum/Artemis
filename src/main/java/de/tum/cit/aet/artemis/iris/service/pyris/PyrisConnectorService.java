@@ -307,9 +307,14 @@ public class PyrisConnectorService {
     private IrisException toIrisException(HttpStatusCodeException e) {
         return switch (e.getStatusCode().value()) {
             case 401, 403 -> new IrisForbiddenException();
-            case 400, 500 -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
-            // Not the exception message: it quotes the response body, which may echo the request, and this message is shown to the user.
-            default -> new IrisInternalPyrisErrorException(e.getStatusCode().value() + " " + e.getStatusText());
+            // The detail Pyris reports is only logged. What the user sees is the status, whatever the body says: the body is not under the
+            // control of Artemis, and the exception message quotes it, which may echo the request.
+            default -> {
+                if (e.getStatusCode().value() == 400 || e.getStatusCode().value() == 500) {
+                    log.warn("Pyris answered with status {}: {}", e.getStatusCode().value(), tryExtractErrorMessage(e));
+                }
+                yield new IrisInternalPyrisErrorException(e.getStatusCode().value() + " " + e.getStatusText());
+            }
         };
     }
 

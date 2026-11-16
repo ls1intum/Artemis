@@ -1,3 +1,5 @@
+import { BuildConfigAdvancedSettings } from 'app/programming/shared/entities/programming-exercise-build-advanced-settings';
+
 /**
  * Maximum allowed length (in characters) of the serialized build plan configuration.
  * Mirrors the server-side limit in Constants#MAX_BUILD_PLAN_CONFIGURATION_LENGTH (1 MB).
@@ -33,6 +35,7 @@ export class ProgrammingExerciseBuildConfig {
     public onlineIdeExperienceLevel?: OnlineIdeExperienceLevel;
     public allowBranching: boolean;
     public branchRegex: string;
+    public advancedSettings?: BuildConfigAdvancedSettings;
 
     constructor() {
         this.checkoutSolutionRepository = false; // default value

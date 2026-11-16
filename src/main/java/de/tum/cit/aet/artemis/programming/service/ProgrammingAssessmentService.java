@@ -82,6 +82,15 @@ public class ProgrammingAssessmentService extends AssessmentService {
         return testCasePointsService.calculateTestCasePoints(exercise, result);
     }
 
+    /**
+     * The client echoes the test-case and static code analysis feedback it received without ids. Such items are dropped before saving and their points are derived from the
+     * exercise configuration (see {@link #calculateTestCasePoints}). An item with an id is copied with the credits of the request, so it is checked like any other.
+     */
+    @Override
+    protected boolean isScoredByServer(Feedback feedback) {
+        return (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback());
+    }
+
     @Override
     protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
         // a complaint always concerns a student participation, never the solution participation
@@ -140,6 +149,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
                 || ((feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback())));
         // what is left carries the ids of the manual feedback the tutor loaded for this result, so the stored result decides which ids may be written
         checkFeedbackBelongsToResultElseThrow(newManualResult.getFeedbacks(), existingManualResult);
+        checkManualFeedbackCreditsWithinBoundsElseThrow(newManualResult.getFeedbacks());
         keepStoredAutomaticFeedback(newManualResult, existingManualResult);
         // The client-built result has empty typed collections; hydrate them from the database so that
         // saving the result does not orphan-remove the stored typed automatic feedback.

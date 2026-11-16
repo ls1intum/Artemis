@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AboutIrisModalComponent } from './about-iris-modal.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -18,22 +16,26 @@ import type { User } from 'app/account/user/user.model';
 describe('AboutIrisModalComponent', () => {
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
-    let dialogRef: { close: ReturnType<typeof vi.fn> };
     let chatService: { startFreshChat: ReturnType<typeof vi.fn> };
+    let chatServiceResolutions: number;
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        dialogRef = { close: vi.fn() };
         chatService = { startFreshChat: vi.fn() };
+        chatServiceResolutions = 0;
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
-                { provide: IrisChatService, useValue: chatService },
+                {
+                    provide: IrisChatService,
+                    useFactory: () => {
+                        chatServiceResolutions++;
+                        return chatService;
+                    },
+                },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
             ],
@@ -46,6 +48,7 @@ describe('AboutIrisModalComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
@@ -61,8 +64,7 @@ describe('AboutIrisModalComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should expose faXmark and faShield icons', () => {
-        expect(component['faXmark']).toBeDefined();
+    it('should expose the privacy icon', () => {
         expect(component['faShield']).toBeDefined();
     });
 
@@ -75,26 +77,74 @@ describe('AboutIrisModalComponent', () => {
         expectValidCards(cards);
     });
 
-    it('close() should call dialogRef.close() without starting a fresh chat', () => {
-        component.close();
-        expect(dialogRef.close).toHaveBeenCalledOnce();
+    const open = async () => {
+        component.visible.set(true);
+        await fixture.whenStable();
+    };
+
+    it('should default to hidden and render nothing', () => {
+        expect(component.visible()).toBe(false);
+        expect(document.querySelector('.about-iris__body')).toBeNull();
+    });
+
+    it.each(['close button', 'Escape', 'backdrop'])('should dismiss with %s without resolving the chat service', async (action) => {
+        await open();
+        if (action === 'close button') {
+            document.querySelector<HTMLButtonElement>('.tumaet-ui-dialog-close')!.click();
+        } else if (action === 'Escape') {
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        } else {
+            document.querySelector('.cdk-overlay-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+        await fixture.whenStable();
+        expect(component.visible()).toBe(false);
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(chatServiceResolutions).toBe(0);
         expect(chatService.startFreshChat).not.toHaveBeenCalled();
     });
 
-    it('tryIris() should start a fresh chat and close dialog', () => {
-        component.tryIris();
-        expect(chatService.startFreshChat).toHaveBeenCalledOnce();
-        expect(dialogRef.close).toHaveBeenCalledOnce();
+    it('should give the close button a translated accessible name', async () => {
+        await open();
+        const close = document.querySelector<HTMLButtonElement>('.tumaet-ui-dialog-close')!;
+        expect(close.getAttribute('aria-label')).toBe('artemisApp.iris.aboutIrisModal.close');
     });
 
-    it.each([
-        ['.close-btn', 'close'],
-        ['.try-iris-btn', 'tryIris'],
-    ] as const)('%s click should call %s()', async (selector, method) => {
+    it('close() should hide the dialog without starting a fresh chat', async () => {
+        await open();
+        component.close();
+        expect(component.visible()).toBe(false);
+        expect(chatService.startFreshChat).not.toHaveBeenCalled();
+    });
+
+    it('tryIris() should start a fresh chat and hide the dialog', async () => {
+        await open();
+        component.tryIris();
+        expect(chatService.startFreshChat).toHaveBeenCalledOnce();
+        expect(component.visible()).toBe(false);
+    });
+
+    it('should not create the chat service until the user tries Iris', async () => {
+        await open();
+        expect(chatServiceResolutions).toBe(0);
+
+        component.tryIris();
+
+        expect(chatServiceResolutions).toBe(1);
+    });
+
+    it.each([['[data-testid="try-iris-button"]', 'tryIris']] as const)('%s click should call %s()', async (selector, method) => {
+        await open();
         vi.spyOn(component, method);
-        fixture.debugElement.query(By.css(selector)).nativeElement.click();
+        document.querySelector<HTMLElement>(selector)!.click();
         await fixture.whenStable();
         expect(component[method]).toHaveBeenCalled();
+    });
+
+    it('should not offer the try button when hideTryButton is set', async () => {
+        fixture.componentRef.setInput('hideTryButton', true);
+        await open();
+        expect(document.querySelector('.about-iris__body')).not.toBeNull();
+        expect(document.querySelector('[data-testid="try-iris-button"]')).toBeNull();
     });
 
     describe('privacyDescKey', () => {

@@ -657,8 +657,9 @@ export class IrisChatService implements OnDestroy {
                 this.websocketCommandSubscription?.unsubscribe();
                 this.websocketCommandSubscription = this.irisWebsocketService.subscribeToSessionCommands(this.sessionId).subscribe((command) => this.handleCommand(command));
             },
-            error: (error: IrisErrorMessageKey) => {
-                this.error.next(error);
+            error: () => {
+                // Every observable that loads a session fails with an Error, not with the translation key that the template needs
+                this.error.next(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 // Even on failure, mark the load attempt as complete so consumers gating on
                 // "messages have settled" don't wait forever (e.g. the onboarding tour would
                 // never show up if a transient session-load error left the gate closed).

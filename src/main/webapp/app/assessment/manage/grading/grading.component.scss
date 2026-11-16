@@ -1,28 +1,32 @@
 .grading-scale-table-row td {
-    width: 17%;
-
     input {
-        min-width: 50%;
+        width: 100%;
+        min-width: 6rem;
         background: var(--tumaet-ui-control-background);
         color: var(--tumaet-ui-text-color);
     }
 }
 
+// The grade step settings: equal-width columns, each with its label above a full-width control, so the controls line up.
 .selection-container {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem 1.5rem;
     width: 100%;
     margin-top: 1rem;
-    margin-right: 0;
-    margin-left: 0;
+    align-items: start;
 
     .field-group {
-        flex: 1 1 12rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
         min-width: 0;
     }
-}
 
-.selection-container .field-group jhi-points-input {
-    margin-top: 0.25em;
+    .field-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 1.5rem;
+    }
 }

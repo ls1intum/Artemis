@@ -3,7 +3,7 @@
         <h5 *adminTitleBarTitle id="user-management-detail-heading" class="mb-0">
             <span jhiTranslate="artemisApp.userManagement.detail.title"></span> <b>{{ u.login }}</b>
         </h5>
-        <div class="mb-3 flex items-center">
+        <div class="mb-4! flex items-center">
             <jhi-profile-picture
                 imageSizeInRem="3"
                 fontSizeInRem="1.2"
@@ -57,10 +57,10 @@
             </dd>
         </dl>
         @if (u.login) {
-            <jhi-user-course-roles class="mt-4 block" [login]="u.login" />
+            <jhi-user-course-roles class="mt-6! block" [login]="u.login" />
         }
-        <div class="mt-4">
-            <a [routerLink]="['edit']" tumAetUiButton size="small" severity="warn" data-testid="edit-user-button">
+        <div class="mt-6!">
+            <a [attr.aria-label]="'entity.action.edit' | artemisTranslate" [routerLink]="['edit']" tumAetUiButton size="small" severity="warn" data-testid="edit-user-button">
                 <fa-icon [icon]="faPencil" />
                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
             </a>

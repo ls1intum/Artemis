@@ -119,7 +119,16 @@ public class ExamSubmissionService {
         return isSubmissionInTime(exercise, submissionGate, withGracePeriod);
     }
 
-    private Optional<StudentExamSubmissionGateDTO> findSubmissionGateForUser(User user, Exam exam, long exerciseId) {
+    /**
+     * Reads the values needed to decide whether the user may work on the exercise: membership of the exercise in the user's student exam, whether it was handed in
+     * and the working time data.
+     *
+     * @param user       the user
+     * @param exam       the exam
+     * @param exerciseId the id of the requested exercise
+     * @return the projection of the user's relevant student exam, if one exists
+     */
+    public Optional<StudentExamSubmissionGateDTO> findSubmissionGateForUser(User user, Exam exam, long exerciseId) {
         // The query returns the newest student exam first.
         List<StudentExamSubmissionGateDTO> submissionGates = studentExamRepository.findSubmissionGatesByUserIdAndExamId(user.getId(), exam.getId(), exerciseId, false);
         if (exam.isTestExam()) {

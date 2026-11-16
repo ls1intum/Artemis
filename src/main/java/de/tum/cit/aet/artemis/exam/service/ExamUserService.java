@@ -352,7 +352,6 @@ public class ExamUserService {
         User user = eu.getUser();
         Long userId = user != null ? user.getId() : null;
         String login = user != null ? user.getLogin() : null;
-        String email = user != null ? user.getEmail() : null;
         String registrationNumber = user != null ? user.getRegistrationNumber() : null;
         String firstName = user != null && user.getFirstName() != null ? user.getFirstName() : "";
         String lastName = user != null && user.getLastName() != null ? user.getLastName() : "";
@@ -383,8 +382,8 @@ public class ExamUserService {
             progress = ExamStudentDTO.PROGRESS_NOT_STARTED;
         }
 
-        return new ExamStudentDTO(eu.getId(), userId, login, name, email, registrationNumber, eu.getStudentImagePath(), eu.getPlannedRoom(), eu.getActualRoom(),
-                eu.getPlannedSeat(), eu.getActualSeat(), eu.getDidCheckImage(), eu.getDidCheckName(), eu.getDidCheckLogin(), eu.getDidCheckRegistrationNumber(),
-                eu.getSigningImagePath(), didAttend, studentExamId, workingTime, started, submitted, startedDate, submissionDate, examSessionCount, progress);
+        return new ExamStudentDTO(eu.getId(), userId, login, name, registrationNumber, eu.getStudentImagePath(), eu.getPlannedRoom(), eu.getActualRoom(), eu.getPlannedSeat(),
+                eu.getActualSeat(), eu.getDidCheckImage(), eu.getDidCheckName(), eu.getDidCheckLogin(), eu.getDidCheckRegistrationNumber(), eu.getSigningImagePath(), didAttend,
+                studentExamId, workingTime, started, submitted, startedDate, submissionDate, examSessionCount, progress);
     }
 }

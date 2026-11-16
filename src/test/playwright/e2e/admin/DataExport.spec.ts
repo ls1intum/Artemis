@@ -81,10 +81,23 @@ test.describe('Personal data export', { tag: '@slow' }, () => {
         await page.locator('#typeahead-search').fill(student.username);
         await page.getByRole('option').filter({ hasText: student.username }).first().click();
         await page.getByTestId('execute-now-radio').click();
+
+        // The request returns once the export has been created, and the list is reloaded right after it. The wait for the
+        // button below therefore only has to cover the reload, and the request itself is what the long wait belongs to.
+        const creationResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/api\/admin\/data-exports\/[^/?]+/.test(response.url()), {
+            timeout: 240_000,
+        });
         await page.getByTestId('submit-btn').click();
+        const creation = await creationResponse;
+        expect(creation.status(), 'the request to create the export has to succeed').toBe(200);
 
         const downloadButton = page.getByTestId('download-btn').first();
-        await downloadButton.waitFor({ state: 'visible', timeout: 240_000 });
+        // A failed export is answered with 200 as well and then shows up in the list in a state without a download. Naming
+        // that state is what tells a failed export apart from a slow one, instead of a bare timeout.
+        await downloadButton.waitFor({ state: 'visible', timeout: 30_000 }).catch(async (error) => {
+            const states = await page.getByTestId('state-tag').allInnerTexts();
+            throw new Error(`The export was created but offers no download. States listed, newest first: ${states.join(' | ') || 'none'}`, { cause: error });
+        });
         const { filePath, suggestedFilename } = await downloadArchive(page, () => downloadButton.click());
 
         expect(suggestedFilename).toMatch(/\.zip$/);

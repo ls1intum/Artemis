@@ -7,6 +7,7 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "noEntriesYet": "No entries yet",
             "serverNotReachable": "Server not reachable",
             "filterOptions": "Filter options",
             "noMatchingOptions": "No matching options",
@@ -322,6 +323,7 @@
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
                     "dependencies": "Dependencies",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard",
                     "courseIngestionDashboard": "Index Dashboard"
                 },
@@ -369,7 +371,7 @@
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
             "email.placeholder": "Your email",
-            "email.pattern": "Please use an email with the following pattern:",
+            "email.pattern": "Allowed email addresses:",
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
@@ -411,7 +413,7 @@
                     "invalid": "Your email is invalid.",
                     "minlength": "Your email is required to be at least 5 characters.",
                     "maxlength": "Your email cannot be longer than 100 characters.",
-                    "pattern": "Your email does not follow the required pattern."
+                    "notAllowed": "This email address is not allowed."
                 }
             }
         },
@@ -422,8 +424,8 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} of {{total}}",
             "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",

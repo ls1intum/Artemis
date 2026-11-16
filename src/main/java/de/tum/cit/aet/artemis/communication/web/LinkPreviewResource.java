@@ -88,6 +88,10 @@ public class LinkPreviewResource {
         }
 
         var linkPreview = linkPreviewService.getLinkPreview(decodedUrl);
+        if (linkPreview.url() != null && !decodedUrl.equals(linkPreview.url())) {
+            // Entries cached before the service returned the requested url still carry og:url; clients match the preview against the link in the message.
+            linkPreview = new LinkPreviewDTO(linkPreview.title(), linkPreview.description(), linkPreview.image(), decodedUrl);
+        }
 
         return ResponseEntity.ok(linkPreview);
     }

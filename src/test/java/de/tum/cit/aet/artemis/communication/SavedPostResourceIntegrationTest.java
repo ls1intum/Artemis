@@ -59,6 +59,26 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "noncourseuser1", roles = "USER")
+    void shouldRejectBookmarkingWhenUserIsNotMemberOfPostCourse() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+
+        request.performMvcRequest(
+                MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}?type={type}", testPost.getId(), PostingType.POST.toString().toLowerCase(Locale.ROOT)))
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "noncourseuser1", roles = "USER")
+    void shouldRejectGetSavedPostsWhenUserIsNotMemberOfCourse() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+
+        request.performMvcRequest(MockMvcRequestBuilders
+                .get("/api/communication/saved-posts?courseId=" + exampleCourseId + "&status=" + SavedPostStatus.IN_PROGRESS.toString().toLowerCase(Locale.ROOT)))
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnCreatedWhenPostIsBookmarkedAndIsNotBookmarkedYet() throws Exception {
         var newTestPost = ConversationFactory.createBasicPost(2, testUser);

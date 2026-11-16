@@ -17,11 +17,6 @@ export interface ColumnDef<T> {
      */
     width?: string;
     sort?: boolean;
-    /**
-     * Lets a long heading wrap onto a second line. Headings are nowrap by default, which makes each one a floor its
-     * column can never go below, so a heading much wider than the values under it is worth wrapping instead.
-     */
-    wrapHeader?: boolean;
     hideBelow?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     templateRef?: CellTemplateRef<T>;
 }

@@ -59,14 +59,13 @@
                                 {{ getLtiPlatform(platform) }}
                             </button>
                         }
-                        <div>
-                            <div class="row justify-content-center">
-                                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage() }" />
-                            </div>
-                            <div class="row justify-content-center">
-                                <p-paginator [first]="(page() - 1) * itemsPerPage()" [rows]="itemsPerPage()" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
-                            </div>
-                        </div>
+                        <tumaet-ui-paginator
+                            [page]="page() - 1"
+                            [pageSize]="itemsPerPage()"
+                            [totalRecords]="totalItems()"
+                            [showRowsPerPage]="false"
+                            (pageChange)="onPageChange($event)"
+                        />
                     </div>
                 </div>
             </div>

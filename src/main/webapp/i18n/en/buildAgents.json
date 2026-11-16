@@ -19,6 +19,7 @@
             "idle": "Idle",
             "paused": "Paused",
             "selfPaused": "Self paused",
+            "noBuildAgents": "No build agents online",
             "onlineAgents": "online agent(s)",
             "of": "of",
             "buildJobsRunning": "build jobs running",

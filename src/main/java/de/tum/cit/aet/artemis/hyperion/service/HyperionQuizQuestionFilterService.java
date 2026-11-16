@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionFailureMode;
@@ -38,8 +36,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterVerdictDTO;
  * <p>
  * Every mode is recorded, but only a gating mode's severity can reject: the aggregate score is one minus the worst gating severity,
  * and the question is accepted when the aggregate reaches {@link #ACCEPT_THRESHOLD}. A verdict that does not cover every mode is
- * discarded rather than defaulted. The call goes to the judge model configured under {@code artemis.hyperion.quiz-pool.judge-model},
- * or to the default chat model when none is configured.
+ * discarded rather than defaulted. The call goes to the pool's own endpoint with its judge model, both provided by
+ * {@link HyperionQuizQuestionPoolModelService}.
  */
 @Service
 @Lazy
@@ -64,30 +62,26 @@ public class HyperionQuizQuestionFilterService {
     static final Set<QuizQuestionFailureMode> GATING_MODES = Set.of(QuizQuestionFailureMode.FACTUAL_ERROR, QuizQuestionFailureMode.AMBIGUOUS_CORRECT_ANSWER,
             QuizQuestionFailureMode.OFF_TOPIC, QuizQuestionFailureMode.ILL_FORMED_DISTRACTORS);
 
-    @Nullable
-    private final ChatClient chatClient;
+    private final HyperionQuizQuestionPoolModelService modelService;
 
     private final HyperionPromptTemplateService templateService;
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final String judgeModel;
-
-    public HyperionQuizQuestionFilterService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
-            @Value("${artemis.hyperion.quiz-pool.judge-model:}") String judgeModel) {
-        this.chatClient = chatClient;
+    public HyperionQuizQuestionFilterService(HyperionQuizQuestionPoolModelService modelService, HyperionPromptTemplateService templateService,
+            LLMTokenUsageService llmTokenUsageService) {
+        this.modelService = modelService;
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
-        this.judgeModel = judgeModel == null ? "" : judgeModel.trim();
     }
 
     /**
-     * Returns the configured judge model, or an empty string when the default chat model is used.
+     * Returns the judge model of the pool's endpoint.
      *
-     * @return the model name sent with every filter call, or empty
+     * @return the model name sent with every filter call, empty when the pool is not configured
      */
     public String getJudgeModel() {
-        return judgeModel;
+        return modelService.judgeModel();
     }
 
     /**
@@ -100,10 +94,7 @@ public class HyperionQuizQuestionFilterService {
      * @return the decision, or empty when the filter call failed or returned no usable verdict
      */
     public Optional<QuizQuestionFilterDecisionDTO> evaluate(Course course, @Nullable Long userId, GeneratedQuizQuestionDTO question, String groundingBlock) {
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionFilter", "QuizQuestionFilter.chatClientNotConfigured");
-        }
-
+        ChatClient chatClient = modelService.chatClient();
         var outputConverter = HyperionStructuredOutputs.converterFor(FilterOutput.class);
         String systemPrompt = templateService.render(PROMPT_FILTER_QUIZ_QUESTION_SYSTEM, Map.of());
         String userPrompt = templateService.renderObject(PROMPT_FILTER_QUIZ_QUESTION_USER,
@@ -113,11 +104,7 @@ public class HyperionQuizQuestionFilterService {
 
         ChatResponse chatResponse;
         try {
-            var request = chatClient.prompt().system(systemPrompt).user(userPrompt);
-            if (!judgeModel.isEmpty()) {
-                request = request.options(ChatOptions.builder().model(judgeModel));
-            }
-            chatResponse = request.call().chatResponse();
+            chatResponse = chatClient.prompt().options(ChatOptions.builder().model(modelService.judgeModel())).system(systemPrompt).user(userPrompt).call().chatResponse();
         }
         catch (Exception e) {
             log.warn("Failed to filter quiz question '{}' for course [{}]", question.title(), course.getId(), e);

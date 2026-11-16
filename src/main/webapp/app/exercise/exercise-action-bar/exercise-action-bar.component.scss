@@ -11,6 +11,11 @@
     display: inline-flex;
 }
 
+// Padding rather than margin, so the measured width of the item (which the overflow calculation uses) includes it
+.inline-item.group-start {
+    padding-inline-start: 0.5rem;
+}
+
 // Tailwind's global `hidden` loses to the scoped `.inline-item` rule above and only ties with the kit button's
 // `inline-flex`, so restate the collapse scoped. Bootstrap's `.d-none` won on `!important` alone.
 .inline-item.hidden,
@@ -24,14 +29,17 @@ a {
     white-space: nowrap;
 }
 
-// Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
-// Qualified with the element so it outranks the kit button's padding utilities on the same host element.
-button.action-more {
+// Fixed square size so the overflow calculation can reserve an exact amount for the ellipsis trigger
+// (ELLIPSIS_WIDTH_PX); the inline icon buttons share it so the row reads as one set. Qualified with the element so it
+// outranks the kit button's padding utilities on the same host element.
+button.action-more,
+button.action-icon,
+a.action-icon {
     flex: none;
     justify-content: center;
-    width: 40px;
-    min-width: 40px;
-    max-width: 40px;
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
     padding-inline: 0;
 }
 
@@ -51,4 +59,11 @@ tumaet-ui-popover {
 
 .action-menu {
     min-width: 11rem;
+}
+
+// Menu entries read as a plain list rather than a stack of buttons
+button.action-menu-item,
+a.action-menu-item {
+    width: 100%;
+    justify-content: flex-start;
 }

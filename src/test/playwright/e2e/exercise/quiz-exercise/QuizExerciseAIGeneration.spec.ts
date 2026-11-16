@@ -64,11 +64,11 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         const modal = page.getByTestId('quiz-ai-generation-modal');
         await expect(modal).toBeVisible({ timeout: 10000 });
 
-        // The modal uses [showHeader]="false" — no PrimeNG default close in header
+        // The modal hides the dialog header, so its only close button is the one in the preview panel
         await expect(modal.getByTestId('quiz-ai-generation-modal-header')).toHaveCount(0);
 
         // Close button is inside the preview panel
-        const previewCloseBtn = modal.locator('.preview-header button[aria-label]');
+        const previewCloseBtn = modal.getByTestId('quiz-ai-close-button');
         await expect(previewCloseBtn).toBeVisible();
     });
 
@@ -77,11 +77,11 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
             .locator('.section-header-action')
             .filter({ hasText: /AI|Generate/i })
             .click();
-        await expect(page.locator('.quiz-ai-generation-modal')).toBeVisible({ timeout: 10000 });
+        await expect(page.getByTestId('quiz-ai-generation-modal')).toBeVisible({ timeout: 10000 });
 
-        await page.locator('.preview-header button[aria-label]').click();
+        await page.getByTestId('quiz-ai-close-button').click();
 
-        await expect(page.locator('.quiz-ai-generation-modal')).not.toBeVisible({ timeout: 5000 });
+        await expect(page.getByTestId('quiz-ai-generation-modal')).not.toBeVisible({ timeout: 5000 });
         // No questions were added to the editor
         await expect(page.locator('.question')).toHaveCount(0);
     });
@@ -101,7 +101,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         // Fill in topic
         await modal.locator('#quiz-ai-topic').fill('Data Structures');
 
-        await modal.locator('.generate-button').click();
+        await modal.getByTestId('quiz-ai-generate-button').click();
 
         // Wait for all 3 question cards to appear
         const cards = modal.locator('jhi-quiz-ai-generated-question-card');
@@ -110,8 +110,8 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         // Assert Markdown is rendered as HTML, not raw characters
         // The first question contains **time complexity** and `O(log n)`
         const firstCard = cards.nth(0);
-        await expect(firstCard.locator('.question-text strong')).toBeVisible();
-        await expect(firstCard.locator('.question-text code')).toBeVisible();
+        await expect(firstCard.getByTestId('question-text').locator('strong')).toBeVisible();
+        await expect(firstCard.getByTestId('question-text').locator('code')).toBeVisible();
     });
 
     test('Free-topic mode: adds generated questions to the quiz editor', async ({ page }) => {
@@ -127,11 +127,11 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Algorithms');
-        await modal.locator('.generate-button').click();
+        await modal.getByTestId('quiz-ai-generate-button').click();
 
         await expect(modal.locator('jhi-quiz-ai-generated-question-card')).toHaveCount(3, { timeout: 15000 });
 
-        await modal.locator('.add-to-quiz-fab').click();
+        await modal.getByTestId('quiz-ai-add-to-quiz').click();
 
         // Modal closes and 3 questions appear in the editor
         await expect(modal).not.toBeVisible({ timeout: 5000 });
@@ -152,16 +152,14 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // Wait for competency mode toggle to appear
-        await expect(modal.locator('.selection-button').nth(1)).toBeVisible({ timeout: 15000 });
+        await expect(modal.getByTestId('quiz-ai-mode-competency-graph')).toBeVisible({ timeout: 15000 });
 
         // Click the second mode button (competency-graph)
-        await modal.locator('.selection-button').nth(1).click();
+        await modal.getByTestId('quiz-ai-mode-competency-graph').click();
 
         // Topic input gone, competency multi-select shown.
-        // Note: #quiz-ai-competencies is PrimeNG's hidden accessibility input, so assert on the
-        // visible p-multiselect component itself rather than that hidden element.
         await expect(modal.locator('#quiz-ai-topic')).not.toBeVisible();
-        await expect(modal.locator('p-multiselect')).toBeVisible();
+        await expect(modal.getByTestId('quiz-ai-competencies')).toBeVisible();
     });
 
     test('Competency mode: sends competencyIds in generation request', async ({ page, courseManagementAPIRequests }) => {
@@ -184,20 +182,21 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         // Switch to competency mode
-        await expect(modal.locator('.selection-button').nth(1)).toBeVisible({ timeout: 15000 });
-        await modal.locator('.selection-button').nth(1).click();
+        await expect(modal.getByTestId('quiz-ai-mode-competency-graph')).toBeVisible({ timeout: 15000 });
+        await modal.getByTestId('quiz-ai-mode-competency-graph').click();
 
-        // Select the just-created competency via PrimeNG multi-select. The course already has other
+        // Select the just-created competency via the multi-select. The course already has other
         // competencies, so pick the option by its unique title rather than the first option.
-        const multiSelect = modal.locator('p-multiselect');
-        await multiSelect.click();
-        const overlay = page.getByTestId('quiz-ai-competency-overlay');
-        await expect(overlay.first()).toBeVisible({ timeout: 5000 });
-        await overlay.first().getByTestId('quiz-ai-competency-option').filter({ hasText: competencyTitle }).click();
-        // Close overlay
-        await modal.locator('.section-title').first().click();
+        // The options render in an overlay outside the modal, so they are looked up on the page.
+        const multiSelectTrigger = modal.locator('#quiz-ai-competencies');
+        await multiSelectTrigger.click();
+        const option = page.getByTestId('quiz-ai-competency-option').filter({ hasText: competencyTitle });
+        await expect(option).toBeVisible({ timeout: 5000 });
+        await option.click();
+        // Close the overlay: its backdrop covers the modal, so Escape on the trigger is the way out
+        await multiSelectTrigger.press('Escape');
 
-        await modal.locator('.generate-button').click();
+        await modal.getByTestId('quiz-ai-generate-button').click();
 
         await expect(modal.locator('jhi-quiz-ai-generated-question-card')).toHaveCount(3, { timeout: 15000 });
 
@@ -227,11 +226,11 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Algorithms');
-        await modal.locator('.generate-button').click();
+        await modal.getByTestId('quiz-ai-generate-button').click();
 
         // Loading phrase shown while generating
-        await expect(modal.locator('.generate-loading-label')).toBeVisible({ timeout: 5000 });
-        await expect(modal.locator('.generate-button')).toBeDisabled();
+        await expect(modal.getByTestId('quiz-ai-generate-loading')).toBeVisible({ timeout: 5000 });
+        await expect(modal.getByTestId('quiz-ai-generate-button')).toBeDisabled();
 
         resolveRoute!();
         await expect(modal.locator('jhi-quiz-ai-generated-question-card')).toHaveCount(3, { timeout: 15000 });
@@ -247,15 +246,15 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
 
         // Topic field is empty by default — generate button must be disabled
         await expect(modal.locator('#quiz-ai-topic')).toHaveValue('');
-        await expect(modal.locator('.generate-button')).toBeDisabled();
+        await expect(modal.getByTestId('quiz-ai-generate-button')).toBeDisabled();
 
         // Typing a topic enables it
         await modal.locator('#quiz-ai-topic').fill('Sorting');
-        await expect(modal.locator('.generate-button')).toBeEnabled();
+        await expect(modal.getByTestId('quiz-ai-generate-button')).toBeEnabled();
 
         // Clearing it disables it again
         await modal.locator('#quiz-ai-topic').fill('');
-        await expect(modal.locator('.generate-button')).toBeDisabled();
+        await expect(modal.getByTestId('quiz-ai-generate-button')).toBeDisabled();
     });
 
     test('API error on generation shows error alert', async ({ page }) => {
@@ -271,7 +270,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await expect(modal).toBeVisible({ timeout: 10000 });
 
         await modal.locator('#quiz-ai-topic').fill('Algorithms');
-        await modal.locator('.generate-button').click();
+        await modal.getByTestId('quiz-ai-generate-button').click();
 
         // Error alert shown; no question cards appear
         await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toBeVisible({ timeout: 10000 });
@@ -291,11 +290,11 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         await modal.getByText('Single Choice').click();
 
         // With no question types selected, generate is disabled
-        await expect(modal.locator('.generate-button')).toBeDisabled();
+        await expect(modal.getByTestId('quiz-ai-generate-button')).toBeDisabled();
 
         // Re-selecting a type re-enables it
         await modal.getByText('Multiple Choice').click();
-        await expect(modal.locator('.generate-button')).toBeEnabled();
+        await expect(modal.getByTestId('quiz-ai-generate-button')).toBeEnabled();
     });
 
     test('Question type toggles: selected types are sent in request body', async ({ page }) => {
@@ -316,7 +315,7 @@ test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
         // Add True/False to the default Single Choice selection
         await modal.getByText('True/False').click();
 
-        await modal.locator('.generate-button').click();
+        await modal.getByTestId('quiz-ai-generate-button').click();
         await expect(modal.locator('jhi-quiz-ai-generated-question-card')).toHaveCount(3, { timeout: 15000 });
 
         expect(capturedBody.questionTypes).toContain('single-choice');

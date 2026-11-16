@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs/operators';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SlicePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiInputDirective, TumAetUiTableVirtualScrollComponent } from '@tumaet/ui-angular';
 /**
@@ -23,10 +22,9 @@ import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiInputDir
     imports: [
         TranslateDirective,
         FormsModule,
-        SortDirective,
-        SortByDirective,
         FaIconComponent,
         SlicePipe,
+        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         TumAetUiButtonComponent,
         TumAetUiButtonGroupComponent,
@@ -84,7 +82,6 @@ export class LogsComponent implements OnInit {
     });
 
     /** Icons */
-    protected readonly faSort = faSort;
 
     /**
      * Loads all loggers on initialization.
@@ -110,6 +107,25 @@ export class LogsComponent implements OnInit {
      */
     updateFilter(value: string): void {
         this.filterInput.set(value);
+    }
+
+    /** Sorts by the property, flipping the direction when it already is the active sort. */
+    toggleSort(prop: keyof Log): void {
+        this.updateSort(prop, this.orderProp() === prop ? !this.ascending() : true);
+    }
+
+    protected sortIcon(prop: keyof Log) {
+        if (this.orderProp() !== prop) {
+            return faSort;
+        }
+        return this.ascending() ? faSortUp : faSortDown;
+    }
+
+    protected ariaSort(prop: keyof Log): 'ascending' | 'descending' | 'none' {
+        if (this.orderProp() !== prop) {
+            return 'none';
+        }
+        return this.ascending() ? 'ascending' : 'descending';
     }
 
     /**

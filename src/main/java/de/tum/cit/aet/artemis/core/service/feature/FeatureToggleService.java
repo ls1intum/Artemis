@@ -62,7 +62,7 @@ public class FeatureToggleService {
      * at startup, writes for it are ignored, and it is never reported as enabled, whatever an older node stored for it.
      * Remove the constant itself together with the next {@code DistributedDataSchema} version bump.
      */
-    private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.Memiris);
+    private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.AtlasML, Feature.Memiris);
 
     private DistributedMap<Feature, Boolean> features;
 

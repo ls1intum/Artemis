@@ -404,7 +404,7 @@ describe('CourseMaterialImportDialogComponent', () => {
         });
 
         it('should update pagination on page change', async () => {
-            component.onPageChange({ first: 10, rows: 10 });
+            component.onPageChange(1);
             await fixture.whenStable();
 
             expect(component.first()).toBe(10);

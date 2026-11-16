@@ -53,7 +53,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @BeforeEach
     void setup() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
@@ -326,6 +326,52 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         var testRepoCommits = testRepo.workingCopyCommits();
         assertThat(testRepoCommits).hasSize(1);
         assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testCreateFile_asEditor() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Path.of(testRepo.workingCopyPath().toFile() + "/newFile")).doesNotExist();
+        params.add("file", "newFile");
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, params);
+        var getParams = new LinkedMultiValueMap<String, String>();
+        getParams.add("file", "newFile");
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, byte[].class, getParams);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFile_asTutor() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        var file = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, byte[].class, params);
+        assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testSingleFileEndpointsRequireEditorRole() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        var base = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository";
+        LinkedMultiValueMap<String, String> fileParams = new LinkedMultiValueMap<>();
+        fileParams.add("file", "newFile");
+        LinkedMultiValueMap<String, String> folderParams = new LinkedMultiValueMap<>();
+        folderParams.add("folder", "newFolder");
+        LinkedMultiValueMap<String, String> existingFileParams = new LinkedMultiValueMap<>();
+        existingFileParams.add("file", currentLocalFileName);
+
+        request.postWithoutResponseBody(base + "/file", HttpStatus.FORBIDDEN, fileParams);
+        request.postWithoutResponseBody(base + "/folder", HttpStatus.FORBIDDEN, folderParams);
+        request.postWithoutLocation(base + "/rename-file", new FileMove(currentLocalFileName, "renamedFile"), HttpStatus.FORBIDDEN, null);
+        request.delete(base + "/file", HttpStatus.FORBIDDEN, existingFileParams);
+        request.postWithoutResponseBody(base + "/commit", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody(base + "/reset", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+
+        // read access for tutors remains available
+        request.getMap(base + "/files", HttpStatus.OK, String.class, FileType.class);
     }
 
     @Test

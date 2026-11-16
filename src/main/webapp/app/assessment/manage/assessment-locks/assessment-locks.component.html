@@ -7,79 +7,62 @@
         </div>
     </div>
 </div>
-@if (submissions().length > 0) {
-    <div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left exercise-table" tumAetUiTable [striped]="true">
-                <thead>
-                    <tr>
-                        <th class="th-link">Id</th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.type"></th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise"></th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount"></th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score"></th>
-                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (submission of submissions(); track submission; let i = $index) {
-                        <tr>
-                            <td>{{ submission.id }}</td>
-                            <td>
-                                <fa-icon
-                                    [icon]="getIcon(submission.participation!.exercise!.type)"
-                                    tumAetUiTooltipPlacement="right"
-                                    [tumAetUiTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
-                                />
-                            </td>
-                            <td>{{ submission.participation!.exercise!.title || '' }}</td>
-                            <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
-                            <td>{{ submission.participation!.submissionCount ?? (submission.participation!.submissions ? submission.participation!.submissions.length : 0) }}</td>
-                            <td>
-                                @if (submission.latestResult?.score !== undefined) {
-                                    <span>{{ submission.latestResult!.score }}%</span>
-                                }
-                            </td>
-                            <td>
-                                <span>
-                                    <a
-                                        [routerLink]="getAssessmentLink(submission)"
-                                        [queryParams]="{ 'correction-round': submission.latestResult?.correctionRound ?? 0 }"
-                                        class="mb-1"
-                                        tumAetUiButton
-                                        severity="secondary"
-                                        variant="outlined"
-                                        size="small"
-                                    >
-                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
-                                    </a>
-                                </span>
-                                <span>
-                                    @if (!submission.latestResult!.completionDate) {
-                                        <button
-                                            type="button"
-                                            (click)="cancelAssessment(submission)"
-                                            class="mb-1"
-                                            tumAetUiButton
-                                            severity="secondary"
-                                            variant="outlined"
-                                            size="small"
-                                        >
-                                            <fa-icon [icon]="faBan" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
-                                        </button>
-                                    }
-                                </span>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-}
-@if (submissions().length === 0) {
-    <div style="margin-top: 10px">
-        <p jhiTranslate="artemisApp.assessment.locks.empty"></p>
-    </div>
-}
+<tumaet-ui-table-layout [empty]="submissions().length === 0" emptyTitle="artemisApp.assessment.locks.empty">
+    <table class="exercise-table" tumAetUiTable size="small" [striped]="true">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th jhiTranslate="artemisApp.assessment.locks.type"></th>
+                <th jhiTranslate="artemisApp.assessment.locks.exercise"></th>
+                <th jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></th>
+                <th jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount"></th>
+                <th jhiTranslate="artemisApp.assessment.dashboard.columns.score"></th>
+                <th jhiTranslate="artemisApp.assessment.dashboard.columns.action"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (submission of submissions(); track submission; let i = $index) {
+                <tr>
+                    <td>{{ submission.id }}</td>
+                    <td>
+                        <fa-icon
+                            [icon]="getIcon(submission.participation!.exercise!.type)"
+                            tumAetUiTooltipPlacement="right"
+                            [tumAetUiTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
+                        />
+                    </td>
+                    <td>{{ submission.participation!.exercise!.title || '' }}</td>
+                    <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
+                    <td>{{ submission.participation!.submissionCount ?? (submission.participation!.submissions ? submission.participation!.submissions.length : 0) }}</td>
+                    <td>
+                        @if (submission.latestResult?.score !== undefined) {
+                            <span>{{ submission.latestResult!.score }}%</span>
+                        }
+                    </td>
+                    <td>
+                        <span>
+                            <a
+                                [routerLink]="getAssessmentLink(submission)"
+                                [queryParams]="{ 'correction-round': submission.latestResult?.correctionRound ?? 0 }"
+                                class="mb-1"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                            >
+                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
+                            </a>
+                        </span>
+                        <span>
+                            @if (!submission.latestResult!.completionDate) {
+                                <button type="button" (click)="cancelAssessment(submission)" class="mb-1" tumAetUiButton severity="secondary" variant="outlined" size="small">
+                                    <fa-icon [icon]="faBan" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
+                                </button>
+                            }
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</tumaet-ui-table-layout>
