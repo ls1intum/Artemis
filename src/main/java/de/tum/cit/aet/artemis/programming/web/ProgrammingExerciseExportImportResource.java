@@ -309,8 +309,8 @@ public class ProgrammingExerciseExportImportResource {
         catch (Exception exception) {
             log.error(exception.getMessage(), exception);
 
-            boolean isExceptionWithTranslationKeys = exception instanceof HttpStatusException;
-            if (isExceptionWithTranslationKeys) {
+            // Input references rejected by preflight retain their client-error status instead of becoming an import failure.
+            if (exception instanceof HttpStatusException || exception instanceof EntityNotFoundException) {
                 throw exception;
             }
             if (exception instanceof VersionControlException && exception.getCause() instanceof LargeObjectException) {
