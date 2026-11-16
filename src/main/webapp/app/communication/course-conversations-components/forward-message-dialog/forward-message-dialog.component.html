@@ -4,8 +4,7 @@
 </div>
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2 form-group">
-        <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- Pointer clicks focus the native input; keyboard events are delegated from that input. -->
-        <div class="tag-input-container form-control" (click)="focusInput()" (keydown)="onRecipientKeydown($event)">
+        <div class="tag-input-container form-control">
             @for (channel of selectedChannels; track channel) {
                 <ng-container>
                     <span class="badge bg-primary me-1">
@@ -37,6 +36,7 @@
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
                 (click)="onInputClick()"
+                (keydown)="onRecipientKeydown($event)"
                 (blur)="onInputBlur()"
             />
         </div>
