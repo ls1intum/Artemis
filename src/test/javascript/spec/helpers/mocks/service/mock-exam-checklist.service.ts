@@ -1,6 +1,6 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 
 export class MockExamChecklistService {
     checkAtLeastOneExerciseGroup(exam: Exam) {
@@ -35,6 +35,10 @@ export class MockExamChecklistService {
         const checklist = new ExamChecklist();
         checklist.allExamExercisesAllStudentsPrepared = true;
         return of(checklist);
+    }
+
+    getExamConductionCounts(exam: Exam) {
+        return EMPTY;
     }
 
     calculateExercisePoints(pointsExercisesEqual: boolean, exam: Exam) {

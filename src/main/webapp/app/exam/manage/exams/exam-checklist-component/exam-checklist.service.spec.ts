@@ -89,6 +89,22 @@ describe('ExamChecklistService', () => {
         expect(stats).toHaveBeenCalledWith(2, 1, 'instructor');
     });
 
+    it.each([true, false])('only requests conduction counts for an instructor membership (%s)', (allowed) => {
+        const access = vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(allowed);
+        const counts = { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 };
+        const fetch = vi.spyOn(examManagementService, 'getExamConductionCounts').mockReturnValue(of(counts));
+        const received = vi.fn();
+        service.getExamConductionCounts(exam).subscribe(received);
+        expect(access).toHaveBeenCalledWith(2);
+        if (allowed) {
+            expect(fetch).toHaveBeenCalledExactlyOnceWith(2, 1);
+            expect(received).toHaveBeenCalledExactlyOnceWith(counts);
+        } else {
+            expect(fetch).not.toHaveBeenCalled();
+            expect(received).not.toHaveBeenCalled();
+        }
+    });
+
     it('should return exam statistics correctly', () => {
         const getExamStatisticsStub = vi.spyOn(examManagementService, 'getExamStatistics').mockReturnValue(of({ body: examChecklist } as HttpResponse<ExamChecklist>));
 

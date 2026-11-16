@@ -973,7 +973,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
                 "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
                 "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest", "AdminHyperionLiveSaveRecoveryTest",
-                "ProgrammingGradingLiveSaveCoordinationTest" };
+                "ProgrammingGradingLiveSaveCoordinationTest", "StudentExamConductionResourceTest" };
         final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

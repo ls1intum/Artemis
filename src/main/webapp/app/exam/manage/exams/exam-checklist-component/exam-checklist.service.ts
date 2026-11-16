@@ -4,7 +4,8 @@ import { Service, inject } from '@angular/core';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
+import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
 import { filter, map } from 'rxjs/operators';
 
 @Service()
@@ -33,6 +34,14 @@ export class ExamChecklistService {
             filter((res) => !!res.body),
             map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
         );
+    }
+
+    getExamConductionCounts(exam: Exam): Observable<ExamConductionCounts> {
+        const courseId = Number(exam.course!.id!);
+        if (!this.accountService.isAtLeastInstructorInCourseWithId(courseId)) {
+            return EMPTY;
+        }
+        return this.examService.getExamConductionCounts(courseId, exam.id!);
     }
 
     /**
