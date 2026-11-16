@@ -61,7 +61,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         VcsAccessLog vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         this.user = user;
         this.authenticationMechanism = () -> AuthenticationMechanism.SSH;
-        this.pushedCommitRecorder = commitHash -> accessLogRecorder.completePushAccessLogSSH(vcsAccessLog, commitHash);
+        this.pushedCommitRecorder = commitHash -> accessLogRecorder.completePushAccessLog(vcsAccessLog, commitHash);
     }
 
     /**
@@ -80,7 +80,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         this.user = user;
         this.authenticationMechanism = authenticationMechanism;
         this.pushedCommitRecorder = pushedCommitRecorder;
-        // For HTTPs we are unable to store the attributes in the session or request unfortunately
+        // JGit constructs this hook before HTTPS authorization. Resolve the participation and exercise when processing the accepted push.
         this.participation = null;
         this.exercise = null;
     }

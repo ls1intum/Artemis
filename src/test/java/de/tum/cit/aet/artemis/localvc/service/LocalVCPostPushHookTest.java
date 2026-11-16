@@ -174,7 +174,7 @@ class LocalVCPostPushHookTest {
 
         new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, session, new User(), accessLogRecorder).onPostReceive(receivePack, List.of(update));
 
-        verify(accessLogRecorder).completePushAccessLogSSH(entry, NEW_ID.name());
+        verify(accessLogRecorder).completePushAccessLog(entry, NEW_ID.name());
     }
 
     @Test
@@ -190,8 +190,8 @@ class LocalVCPostPushHookTest {
         when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenReturn(entryOfAnotherCommand);
         hook.onPostReceive(receivePack, List.of(update));
 
-        verify(accessLogRecorder).completePushAccessLogSSH(entryOfThisCommand, NEW_ID.name());
-        verify(accessLogRecorder, never()).completePushAccessLogSSH(entryOfAnotherCommand, NEW_ID.name());
+        verify(accessLogRecorder).completePushAccessLog(entryOfThisCommand, NEW_ID.name());
+        verify(accessLogRecorder, never()).completePushAccessLog(entryOfAnotherCommand, NEW_ID.name());
     }
 
     private ServerSession sessionWith(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise, VcsAccessLog accessLog) {

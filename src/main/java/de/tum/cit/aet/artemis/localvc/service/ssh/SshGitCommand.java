@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
 import de.tum.cit.aet.artemis.localvc.service.QuarantinedReceivePack;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Custom Git command handler that integrates Artemis-specific
@@ -139,13 +140,28 @@ public class SshGitCommand extends GitPackCommand {
             }
 
             // Locate the Git repository root
-            Path rootDir = resolveRootDirectory(command, args);
+            Path rootDir;
+            User user;
+            ProgrammingExercise exercise;
+            LocalVCFetchPreUploadHookSSH fetchHook = null;
+            LocalVCPostPushHook pushHook = null;
+            // Authorization writes command state to the shared session. Capture it atomically with resolution, before opening the repository or waiting for a mutation lease.
+            synchronized (getServerSession()) {
+                rootDir = resolveRootDirectory(command, args);
+                user = getServerSession().getAttribute(SshConstants.USER_KEY);
+                exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
+                if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(args[0])) {
+                    fetchHook = new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession());
+                }
+                else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(args[0])) {
+                    pushHook = new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user,
+                            accessLogRecorder);
+                }
+            }
             RepositoryCache.FileKey key = RepositoryCache.FileKey.lenient(rootDir.toFile(), FS.DETECTED);
 
             // Open the Git repository
             try (Repository repository = key.open(true)) {
-                // Retrieve the authenticated user from the SSH session
-                User user = getServerSession().getAttribute(SshConstants.USER_KEY);
                 String subCommand = args[0];
 
                 // Dispatch based on subcommand: upload-pack or receive-pack
@@ -164,23 +180,19 @@ public class SshGitCommand extends GitPackCommand {
                         }
 
                         // Register pre-upload hook for Artemis-specific logic
-                        // The entry of this command is taken from the session now, because a later command on the connection replaces it.
-                        uploadPack.setPreUploadHook(
-                                new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession(), getServerSession().getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)));
+                        uploadPack.setPreUploadHook(fetchHook);
 
                         // Begin upload-pack operation
                         uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                     }
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
-                        var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
                         try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
                             LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user);
                             // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
                             ReceivePack receivePack = LocalVCReceivePackLimits.apply(QuarantinedReceivePack.create(repository, prePushHook::examineBeforeObjects));
 
                             receivePack.setPreReceiveHook(prePushHook);
-                            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService,
-                                    getServerSession(), user, accessLogRecorder));
+                            receivePack.setPostReceiveHook(pushHook);
 
                             receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                         }

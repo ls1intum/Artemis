@@ -132,14 +132,14 @@ Open the repository from **Course Management** and click **Open Access Log**. Ea
 |--------|---------|
 | User Id | The internal id of the account that accessed the repository |
 | Author | The name and email of the Artemis account, not the author on the Git commit. For an access by a build agent it names the agent and job instead |
-| Action Type | What the user did: clone, pull (a fetch of an existing clone), or push. A rejected access is shown as a failed clone or push |
+| Action Type | Clone, pull (a fetch of an existing clone), or push for a data transfer. Read and write entries record authorized HTTPS repository advertisements. Rejected authentication or authorization is shown as a failed clone or push |
 | Access Type | How the user authenticated, for example over HTTPS with a token, or over SSH with a key |
-| Commit Hash | For a push, the commit that was pushed. For a clone or pull, the newest commit of the repository when the access started |
+| Commit Hash | For an accepted push, the commit that was pushed. For other entries, the newest commit of the repository when the request or SSH command started |
 | Timestamp | When the access happened |
 
-Every clone, pull, and push writes one entry, whether it runs over HTTPS or over SSH, and the entry of an operation is never changed into another kind of operation. A pull or push that transfers nothing, such as a fetch of a repository that is already up to date, is still recorded. A push that the server rejects, for example because it breaks a rule of the exercise, is recorded too: its commit hash is the one the repository had before the push, because no new commit arrived. A push that the server accepts keeps the pushed commit as its hash, even if Artemis then creates no submission from it, as for a push that creates a new branch.
+Over HTTPS, the initial request advertises the repository references and writes a **read** or **write** entry. A subsequent data transfer writes its own **clone**, **pull**, or **push** entry. Git does not identify which advertisement belongs to which transfer, so these entries remain separate. An operation that needs no transfer, such as an up-to-date fetch or push, may have only an advertisement entry. Over SSH, each authorized command writes one entry, including commands that transfer nothing. Each transfer or command refines only its own entry, even when several operations overlap.
 
-Git over HTTPS sends one request to start an operation and another to transfer the data, and gives the server nothing to tell which requests belong together. When the same user starts several operations on the same repository at the same moment, the entries of these operations keep the right users, repositories, and number of operations of each kind, but the kind or the commit hash of two of them can end up on the other one.
+A push whose repository update is rejected retains the commit hash from before the push. An accepted update records the pushed hash, even if Artemis does not grade it or submission processing fails afterwards. For example, a push to another branch can save changes without creating a graded submission. The access log records repository access and accepted changes; it does not establish that a submission was graded.
 
 The log shows the newest accesses first. Click a column heading to sort by user, author, action, access type, or timestamp. Use the search field above the table to find entries by user, author, action, access type, commit hash, or date. Search dates in `YYYY-MM-DD` format using your local calendar date.
 

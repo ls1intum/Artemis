@@ -35,13 +35,9 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 /**
  * Writes the VCS access log entries of git requests that are served, over HTTPS and over SSH, and works out how a request authenticated.
  * <p>
- * An entry is written in up to three steps: a preliminary entry when the request is authorized, which the clone, pull or push then completes with what only it knows,
- * and a failed entry when authorization or authentication is rejected.
- * <p>
- * The preliminary entry fixes the kind of operation: a fetch is written as a pull and a push as a push. The later steps refine the entry they belong to, and only within its
- * kind: a pull may become a clone, a push gains the hash of the pushed commit, and no step turns one kind into the other. That is what keeps the log trustworthy when the steps of
- * an operation arrive out of order or overlap with other operations. The steps are stored before the request is answered, so the next request of the same operation finds the
- * entry, whichever node answers it.
+ * Each authorized HTTPS request owns its entry: a repository advertisement is recorded as READ or WRITE, and a data transfer as PULL or PUSH. Git supplies no operation
+ * identifier linking those requests, so an advertisement is never amended by a later transfer. The transfer's hooks refine only the entry stored on that request.
+ * SSH commands similarly retain their own entry before another command can replace the session attributes.
  */
 @Lazy
 @Service
@@ -50,17 +46,8 @@ public class LocalVCAccessLogRecorderService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCAccessLogRecorderService.class);
 
-    /** The request attribute that tells the data transfer request of an HTTPS git operation whose entry to amend. */
-    private static final String ACCESS_LOG_SUBJECT_ATTRIBUTE = LocalVCAccessLogRecorderService.class.getName() + ".accessLogSubject";
-
-    /**
-     * Whose entry a request amends: the user and the participation of the repository it addresses.
-     *
-     * @param userId          the id of the authenticated user
-     * @param participationId the id of the participation that owns the repository
-     */
-    private record AccessLogSubject(long userId, long participationId) {
-    }
+    /** The exact entry created for this HTTPS request, absent if its insert failed or its repository has no participation. */
+    private static final String ACCESS_LOG_ATTRIBUTE = LocalVCAccessLogRecorderService.class.getName() + ".accessLog";
 
     // Optional until LocalVC is the only supported version control, like the same field of LocalVCServletService
     private final Optional<VcsAccessLogService> vcsAccessLogService;
@@ -97,42 +84,32 @@ public class LocalVCAccessLogRecorderService {
     }
 
     /**
-     * Remembers on an authorized HTTPS request whose access log entry it belongs to, so that the data transfer request of a git operation can amend the entry that the
-     * handshake request wrote.
+     * Records an authorized HTTPS request and retains its exact entry for that request's transfer hooks.
+     * Repository advertisements are READ/WRITE evidence, including operations with no subsequent transfer. POST requests start their own PULL/PUSH entry.
+     * An insert failure does not fail the authorized Git request and leaves no entry for its hooks to amend.
      *
-     * @param request               the authorized request
-     * @param user                  the authenticated user
-     * @param optionalParticipation the participation the request was authorized for, empty for a repository that has none
+     * @param request                 the authorized request
+     * @param localVCRepositoryUri    the repository being accessed
+     * @param user                    the authenticated user
+     * @param repositoryAction        READ for fetch, WRITE for push
+     * @param optionalParticipation   the participation that owns the repository, if any
+     * @param authenticationMechanism the credential used by this request
      */
-    public void rememberAccessLogSubject(HttpServletRequest request, User user, Optional<ProgrammingExerciseParticipation> optionalParticipation) {
-        optionalParticipation.ifPresent(participation -> request.setAttribute(ACCESS_LOG_SUBJECT_ATTRIBUTE, new AccessLogSubject(user.getId(), participation.getId())));
-    }
-
-    /**
-     * Writes the preliminary access log entry of an HTTPS git operation, when the request that starts it is authorized.
-     * <p>
-     * The entry is stored before this method returns. The data transfer request that follows amends it, and it must find it there whichever node it reaches and however busy the
-     * node that wrote it is. A failure to write it is logged and does not fail the git operation.
-     *
-     * @param request                 The object containing all information about the incoming request.
-     * @param localVCRepositoryUri    The uri of the requested repository
-     * @param user                    The user
-     * @param repositoryAction        Indicates whether the operation is a fetch (READ), which is written as a pull, or a push (WRITE).
-     * @param optionalParticipation   The participation for which the access log should be stored. If an empty Optional is provided, the method does nothing
-     * @param authenticationMechanism The credential the request authenticated with, as reported by the authentication itself
-     */
-    public void savePreliminaryVcsAccessLogForHTTPs(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
+    public void saveVcsAccessLogForHTTPS(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
             Optional<ProgrammingExerciseParticipation> optionalParticipation, AuthenticationMechanism authenticationMechanism) {
+        request.removeAttribute(ACCESS_LOG_ATTRIBUTE);
         if (optionalParticipation.isEmpty() || vcsAccessLogService.isEmpty()) {
             return;
         }
         try {
-            RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
-            vcsAccessLogService.get().createAccessLog(user, optionalParticipation.get(), finalRepositoryAction, authenticationMechanism,
+            RepositoryActionType action = request.getMethod().equals("POST")
+                    ? (repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL)
+                    : repositoryAction;
+            var entry = vcsAccessLogService.get().createAccessLog(user, optionalParticipation.get(), action, authenticationMechanism,
                     repositoryResolver.getCommitHash(localVCRepositoryUri), request.getRemoteAddr());
+            request.setAttribute(ACCESS_LOG_ATTRIBUTE, entry);
         }
         catch (RuntimeException e) {
-            // The git operation is authorized and has to go ahead. The entry is lost, and the amendments that follow find no entry of this operation.
             log.warn("Could not write the VCS access log of a {} of {} by {}", repositoryAction == RepositoryActionType.WRITE ? "push" : "fetch", localVCRepositoryUri,
                     user.getLogin(), e);
         }
@@ -245,8 +222,7 @@ public class LocalVCAccessLogRecorderService {
     /**
      * Turns the access log entry of a fetch over HTTPS into a clone, if the client offered no objects.
      * <p>
-     * The handshake request of the fetch wrote the entry as a pull, and a client that offers nothing has nothing yet, so it is cloning. A client that offers objects is pulling,
-     * which is what the entry already says. The entry is the one of the user and participation that the request was authorized for, and only an entry of a fetch is changed.
+     * Only the entry created for this transfer request is eligible; repository advertisements and other requests retain their own entries.
      *
      * @param request       the request from the user
      * @param clientOffered the number of objects offered by the client in the operation, used to determine
@@ -262,42 +238,22 @@ public class LocalVCAccessLogRecorderService {
         if (request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null) {
             return;
         }
-        if (!(request.getAttribute(ACCESS_LOG_SUBJECT_ATTRIBUTE) instanceof AccessLogSubject subject)) {
-            return;
-        }
-        try {
-            vcsAccessLogService.ifPresent(service -> service.markNewestPullAsClone(subject.userId(), subject.participationId()));
-        }
-        catch (RuntimeException e) {
-            log.warn("Could not mark the VCS access log entry of a fetch as a clone", e);
+        if (request.getAttribute(ACCESS_LOG_ATTRIBUTE) instanceof VcsAccessLog accessLog) {
+            markFetchAsClone(accessLog, clientOffered);
         }
     }
 
     /**
-     * Turns the access log entry of a fetch over SSH into a clone, if the client offered no objects.
-     * <p>
-     * The entry is the one that was stored when this fetch command started. It is passed in rather than read from the session when the callback runs, because a connection can
-     * carry several commands and the session attribute then belongs to whichever command resolved last.
+     * Refines the exact entry of a fetch when the client offered no objects.
      *
-     * @param session       the {@link ServerSession} representing the SSH session, which tells a user from a build agent.
-     * @param accessLog     the entry that was written when the fetch command started, null if none could be written
-     * @param clientOffered the number of objects offered by the client in the operation, used to determine
-     *                          if the action is a clone (if 0) or a pull (if greater than 0).
+     * @param accessLog     the entry owned by the request or SSH command, absent when logging failed
+     * @param clientOffered the number of objects offered by the client
      */
-    public void markFetchAsCloneSSH(ServerSession session, @Nullable VcsAccessLog accessLog, int clientOffered) {
-        if (clientOffered != 0) {
+    public void markFetchAsClone(@Nullable VcsAccessLog accessLog, int clientOffered) {
+        if (clientOffered != 0 || accessLog == null || accessLog.getRepositoryActionType() != RepositoryActionType.PULL) {
             return;
         }
         try {
-            // A build agent session carries no user and gets an audit entry of its own, so a missing user is all there is to exclude.
-            var user = session.getAttribute(SshConstants.USER_KEY);
-            if (user == null) {
-                return;
-            }
-            // Only the entry of a fetch can become a clone. Were a push entry ever to reach this point, it must stay what it is.
-            if (accessLog == null || accessLog.getRepositoryActionType() != RepositoryActionType.PULL) {
-                return;
-            }
             accessLog.setRepositoryActionType(RepositoryActionType.CLONE);
             vcsAccessLogService.ifPresent(service -> service.updateAccessLog(accessLog));
         }
@@ -313,25 +269,19 @@ public class LocalVCAccessLogRecorderService {
      * @param commitHash the hash of the pushed commit
      */
     public void completePushAccessLogHTTPS(HttpServletRequest request, String commitHash) {
-        if (!(request.getAttribute(ACCESS_LOG_SUBJECT_ATTRIBUTE) instanceof AccessLogSubject subject)) {
-            return;
-        }
-        try {
-            vcsAccessLogService.ifPresent(service -> service.setCommitHashOfNewestPush(subject.userId(), subject.participationId(), commitHash));
-        }
-        catch (RuntimeException e) {
-            log.warn("Could not set the commit hash {} on the VCS access log entry of a push", commitHash, e);
+        if (request.getAttribute(ACCESS_LOG_ATTRIBUTE) instanceof VcsAccessLog accessLog) {
+            completePushAccessLog(accessLog, commitHash);
         }
     }
 
     /**
-     * Sets the commit hash on the access log entry of a push over SSH that has just been received.
+     * Sets the commit hash on the exact access log entry of an accepted push.
      *
      * @param accessLog  the entry that was written when the push command started, null if none could be written
      * @param commitHash the hash of the pushed commit
      */
-    public void completePushAccessLogSSH(@Nullable VcsAccessLog accessLog, String commitHash) {
-        // Only the entry of a push gets a pushed commit, whatever the session carried.
+    public void completePushAccessLog(@Nullable VcsAccessLog accessLog, String commitHash) {
+        // Only a transfer or command recorded as a push can receive a pushed commit.
         if (accessLog == null || accessLog.getRepositoryActionType() != RepositoryActionType.PUSH) {
             return;
         }

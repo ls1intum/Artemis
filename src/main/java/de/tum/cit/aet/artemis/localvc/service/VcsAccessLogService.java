@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
@@ -35,19 +32,6 @@ public class VcsAccessLogService {
 
     /** Matches the width of the {@code vcs_access_log.name} column. */
     private static final int ACCESSOR_NAME_MAX_LENGTH = 100;
-
-    /**
-     * How long after its entry was written an HTTPS git operation may still amend it. The data transfer request follows the handshake request immediately, and the longest wait
-     * is for a push to arrive over a slow connection, so an hour is generous. An entry older than that belongs to an earlier operation.
-     */
-    private static final Duration AMENDMENT_WINDOW = Duration.ofHours(1);
-
-    /** How many entries one clone tries to claim before it gives up, which is more than the clones of one user that can overlap on one repository. */
-    private static final int MAX_CLAIM_ATTEMPTS = 10;
-
-    private static final List<RepositoryActionType> PULL_ACTION_TYPES = List.of(RepositoryActionType.PULL);
-
-    private static final List<RepositoryActionType> PUSH_ACTION_TYPES = List.of(RepositoryActionType.PUSH);
 
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
@@ -112,14 +96,13 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Creates a vcs access log entry and stores it before returning, so the entry exists when the next step of the git operation looks for it.
+     * Creates a vcs access log entry and returns the stored entry for the caller to retain and refine.
      * <p>
-     * An HTTPS git operation is several requests that may be answered by different nodes, so an entry that is written in the background gives no guarantee that it exists when the
-     * next request wants to amend it. The caller must not let a failure here fail the git operation.
+     * The caller retains the returned entry for its own hooks, without looking up another request's entry. A failure must not fail the Git operation.
      *
      * @param user                    The user accessing the repository
      * @param participation           The participation which owns the repository
-     * @param actionType              The kind of operation, which is never changed afterwards: {@code PULL} for a fetch, {@code PUSH} for a push
+     * @param actionType              The request or command action; a transfer starts as {@code PULL} or {@code PUSH}
      * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
@@ -140,46 +123,6 @@ public class VcsAccessLogService {
      */
     public void updateAccessLog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);
-    }
-
-    /**
-     * Turns the entry of the fetch that is running into a clone.
-     * <p>
-     * The handshake request of a fetch writes its entry as a pull, because it cannot tell yet whether the client already has the repository. The data transfer request that
-     * follows can: a client that offers no objects is cloning. That request finds the entry by user and participation, and only among HTTPS entries that are still a pull, so it
-     * cannot reach the entry of a push or an overlapping SSH operation. Looking only at entries that are still a pull also lets overlapping clones each find an entry of their
-     * own: the entry that one clone has turned into a clone is not offered to the next.
-     *
-     * @param userId          the id of the user that is fetching
-     * @param participationId the id of the participation that owns the repository
-     */
-    public void markNewestPullAsClone(long userId, long participationId) {
-        // Clones that run at the same moment can find the same entry. The entry is claimed with a conditional update, and a clone that loses the claim looks for the next one.
-        for (int attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
-            Optional<VcsAccessLog> pull = vcsAccessLogRepository.findNewestEntryOfUserForParticipation(userId, participationId, PULL_ACTION_TYPES,
-                    ZonedDateTime.now().minus(AMENDMENT_WINDOW));
-            if (pull.isEmpty() || vcsAccessLogRepository.changeActionTypeIfStill(pull.get().getId(), RepositoryActionType.PULL, RepositoryActionType.CLONE) == 1) {
-                return;
-            }
-        }
-    }
-
-    /**
-     * Sets the commit hash of the push that has just been received.
-     * <p>
-     * The handshake request of a push writes its entry with the hash the repository had before the push, because the pushed commit is not known yet. Once it is, the entry is
-     * found by user and participation, and only among HTTPS entries of a push, so a fetch or an SSH push that was written in between cannot take the hash.
-     *
-     * @param userId          the id of the user that pushed
-     * @param participationId the id of the participation that owns the repository
-     * @param commitHash      the hash of the pushed commit
-     */
-    public void setCommitHashOfNewestPush(long userId, long participationId, String commitHash) {
-        vcsAccessLogRepository.findNewestEntryOfUserForParticipation(userId, participationId, PUSH_ACTION_TYPES, ZonedDateTime.now().minus(AMENDMENT_WINDOW))
-                .ifPresent(accessLog -> {
-                    accessLog.setCommitHash(commitHash);
-                    vcsAccessLogRepository.save(accessLog);
-                });
     }
 
     /**

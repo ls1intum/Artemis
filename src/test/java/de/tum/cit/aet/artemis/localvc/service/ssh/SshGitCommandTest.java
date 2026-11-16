@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.localvc.service.ssh;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +36,8 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 class SshGitCommandTest {
@@ -78,6 +82,47 @@ class SshGitCommandTest {
 
         assertThat(released).isTrue();
         verify(pushProcessingService).claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise));
+    }
+
+    @Test
+    void receivePackCapturesItsCommandContextBeforeWaitingForTheMutationLease() throws Exception {
+        Path repositoryPath = tempPath.resolve("context.git");
+        try (Repository repository = FileRepositoryBuilder.create(repositoryPath.toFile())) {
+            repository.create(true);
+        }
+        var pushProcessingService = mock(LocalVCPushProcessingService.class);
+        var exercise = new ProgrammingExercise();
+        var session = mock(ServerSession.class);
+        var entryCaptured = new AtomicBoolean();
+        var participationCaptured = new AtomicBoolean();
+        var capturedBeforeLease = new AtomicBoolean();
+        when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(new User());
+        when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
+        when(session.getAttribute(SshConstants.PARTICIPATION_KEY)).thenAnswer(_ -> {
+            participationCaptured.set(true);
+            return new ProgrammingExerciseStudentParticipation();
+        });
+        when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenAnswer(_ -> {
+            entryCaptured.set(true);
+            return new VcsAccessLog();
+        });
+        when(pushProcessingService.claimProgrammingExerciseMutation(any(Repository.class), same(exercise))).thenAnswer(_ -> {
+            // A later command may replace session state while this call waits for the exercise's mutation lease.
+            capturedBeforeLease.set(entryCaptured.get() && participationCaptured.get());
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
+            });
+        });
+        var command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'context.git'", null, mock(LocalVCServletService.class),
+                mock(LocalVCAccessLogRecorderService.class), pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
+        command.setSession(session);
+        command.setInputStream(InputStream.nullInputStream());
+        command.setOutputStream(new ByteArrayOutputStream());
+        command.setErrorStream(new ByteArrayOutputStream());
+        command.setExitCallback(mock(ExitCallback.class));
+
+        command.run();
+
+        assertThat(capturedBeforeLease).isTrue();
     }
 
     @Test
