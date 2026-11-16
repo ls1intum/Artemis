@@ -70,6 +70,7 @@
                     [(ngModel)]="answerOption.text"
                     (input)="this.questionChanged.emit()"
                     placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
+                    aria-label="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
                 />
                 <div
                     id="answer-option-{{ i }}-delete"
