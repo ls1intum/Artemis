@@ -270,6 +270,8 @@ export class SecurityAddTestCasesDialogComponent {
                     const available = new Set(this.packages().flatMap((group) => group.available));
                     kept.added.filter((key) => available.has(key)).forEach((key) => selection.add(key));
                     kept.removed.forEach((key) => selection.delete(key));
+                    // The new structure may add test cases to a class, so its overloaded ones follow its other test cases again.
+                    this.withOverloadsFollowing(selection, [...kept.added, ...kept.removed]);
                 } else {
                     this.toggled.set(new Set());
                     this.search.set('');

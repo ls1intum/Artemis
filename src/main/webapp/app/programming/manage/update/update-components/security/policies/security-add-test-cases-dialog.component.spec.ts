@@ -186,6 +186,29 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(applied[0]).toEqual(['de.gone.OldTest', 'de.a.SortingTest', 'de.a.MathTest#add']);
     });
 
+    it('lets the kept overloaded test cases follow a class that a newer structure extends', () => {
+        const withOverloads = (testCases: string[]) => ({
+            testClasses: [...STRUCTURE.testClasses!, { qualifiedName: 'de.c.OverloadTest', testCases, testClass: true, overloadedCases: ['check'] }],
+        });
+        fixture.componentRef.setInput('structure', withOverloads(['check', 'run']));
+        fixture.componentRef.setInput('ownTests', []);
+        comp.visible.set(false);
+        fixture.detectChanges();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        handlers.toggleKeys(['de.c.OverloadTest#check', 'de.c.OverloadTest#run']);
+
+        fixture.componentRef.setInput('structure', undefined);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('structure', withOverloads(['check', 'run', 'extra']));
+        fixture.detectChanges();
+
+        expect(comp.selection().has('de.c.OverloadTest#run')).toBe(true);
+        expect(comp.selection().has('de.c.OverloadTest#check')).toBe(false);
+        handlers.apply();
+        expect(applied[0]).toEqual(['de.c.OverloadTest#run']);
+    });
+
     it('selects a class of overloaded test cases only as a whole, also when the search shows part of it', () => {
         fixture.componentRef.setInput('structure', {
             testClasses: [
