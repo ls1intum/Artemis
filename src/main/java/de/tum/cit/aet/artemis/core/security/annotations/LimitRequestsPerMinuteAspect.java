@@ -75,6 +75,10 @@ public class LimitRequestsPerMinuteAspect {
         if (annotation.perUser()) {
             Optional<String> login = SecurityUtils.getCurrentUserLogin();
             if (login.isPresent()) {
+                // An exempt address is not limited per user either
+                if (configurationService.isExempt(rateLimitService.resolveClientId())) {
+                    return;
+                }
                 // The login is lower-cased, so that the budget of a user cannot be split over spellings of the login name
                 rateLimitService.enforceBudget("user:" + login.get().toLowerCase(Locale.ROOT), annotation.type());
                 return;

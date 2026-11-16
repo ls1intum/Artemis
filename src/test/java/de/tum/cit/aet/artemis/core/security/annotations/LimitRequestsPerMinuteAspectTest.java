@@ -98,7 +98,7 @@ class LimitRequestsPerMinuteAspectTest {
         Method method = TestService.class.getMethod("methodWithPerUserRateLimit");
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getMethod()).thenReturn(method);
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("Student1", "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("Student1", "pw", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
 
         try {
             aspect.checkRateLimit(joinPoint);
@@ -108,6 +108,27 @@ class LimitRequestsPerMinuteAspectTest {
         }
 
         verify(rateLimitService).enforceBudget("user:student1", RateLimitType.APOLLON_CONVERSION);
+        verify(rateLimitService, never()).enforcePerMinute(any(), any());
+    }
+
+    @Test
+    void testAspect_PerUserLimit_IsNotEnforcedForAnExemptAddress() throws Throwable {
+        Method method = TestService.class.getMethod("methodWithPerUserRateLimit");
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+        when(methodSignature.getMethod()).thenReturn(method);
+        var exemptAddress = new IPAddressString("192.168.1.1").toAddress();
+        when(rateLimitService.resolveClientId()).thenReturn(exemptAddress);
+        when(configurationService.isExempt(exemptAddress)).thenReturn(true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("student1", "pw", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        try {
+            aspect.checkRateLimit(joinPoint);
+        }
+        finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        verify(rateLimitService, never()).enforceBudget(any(), any());
         verify(rateLimitService, never()).enforcePerMinute(any(), any());
     }
 
