@@ -1,5 +1,6 @@
 {
     "error": {
+        "branchRegexNotSupported": "Der Branch-Regex verwendet nicht unterstützte Syntax. Erlaubt sind Zeichen, Klassen wie [a-z0-9-], Gruppen mit Alternativen, die Anker ^ und $ sowie die Quantifizierer * + ? und gezählte Wiederholungen mit Werten bis 1000. Eine wiederholte Gruppe darf keine Alternativen, Quantifizierer oder Anker enthalten. Jede Alternative innerhalb einer Gruppe muss mindestens ein Zeichen erfordern.",
         "quizQuestionPoolModelNotConfigured": "Smart Quizzes ist auf diesem Server nicht eingerichtet. Bitte wende dich an deine Administration, damit ein lokales Sprachmodell konfiguriert wird.",
         "tumLiveUploadInProgress": "Der offene Upload wird bereits an TUM.Live gesendet. Verwirf ihn, um einen neuen zu starten.",
         "tumLiveNotConnected": "Der Kurs ist nicht mit TUM.Live verbunden.",

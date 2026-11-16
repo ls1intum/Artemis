@@ -742,6 +742,34 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
         });
 
+        it('should translate unsupported branch-pattern save errors', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.programmingExercise.buildConfig.branchRegexNotSupported',
+                disableTranslation: false,
+            });
+        });
+
         it('should fail on error', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
