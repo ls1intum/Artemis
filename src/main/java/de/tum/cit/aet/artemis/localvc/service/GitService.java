@@ -88,7 +88,7 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    private final WorkingCopyLocks workingCopyLocks = new WorkingCopyLocks();
+    private final WorkingCopyLocks workingCopyLocks = WorkingCopyLocks.shared();
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS

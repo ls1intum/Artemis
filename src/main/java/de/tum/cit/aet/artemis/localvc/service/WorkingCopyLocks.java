@@ -12,7 +12,18 @@ import org.eclipse.jgit.api.errors.GitAPIException;
  */
 final class WorkingCopyLocks {
 
+    private static final WorkingCopyLocks SHARED = new WorkingCopyLocks();
+
     private final ReentrantLock[] locks = new ReentrantLock[128];
+
+    /**
+     * The locks that all operations on the working copies of this node use, so that an operation that is not part of the checkout code can exclude the others as well.
+     *
+     * @return the shared locks
+     */
+    static WorkingCopyLocks shared() {
+        return SHARED;
+    }
 
     WorkingCopyLocks() {
         for (int i = 0; i < locks.length; i++) {
