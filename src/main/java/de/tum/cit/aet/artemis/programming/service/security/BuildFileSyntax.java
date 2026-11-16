@@ -43,13 +43,13 @@ final class BuildFileSyntax {
     /** An assignment of an empty file collection. */
     private static final Pattern EMPTY_COLLECTION = Pattern.compile("\\s*+=\\s*+(?:files|objects\\s*+\\.\\s*+fileCollection)\\s*+\\(\\s*+\\)\\s*+");
 
-    /** An interpolation in a Gradle or Maven string, e.g. {@code ${agentJar.singleFile}} or {@code $agentJar}. */
-    private static final Pattern INTERPOLATION = Pattern.compile("\\$\\{[^}]*+}|\\$[A-Za-z_]\\w*+");
+    /** An interpolation in a Gradle or Maven string, e.g. {@code ${agentJar.singleFile}} or {@code $agentJar}, also one that is not closed. */
+    private static final Pattern INTERPOLATION = Pattern.compile("\\$\\{[^}'\"\\n]*+}?|\\$[A-Za-z_]\\w*+");
 
     /** The last characters of a line after which a Gradle statement continues on the next line. */
     private static final String CONTINUING_ENDS = "=(,.+:";
 
-    private static final Pattern JAVA_AGENT = Pattern.compile("-javaagent:([^'\"\\s,)<]*)");
+    private static final Pattern JAVA_AGENT = Pattern.compile("-javaagent:((?:\\$\\{[^}'\"\\n]*+}?|[^'\"\\s,)<$]|\\$(?!\\{))*+)");
 
     /** The Ares agent as a Maven artifact: the {@code agent} classifier of the {@code ares} artifact. */
     private static final Pattern MAVEN_ARES_AGENT = Pattern

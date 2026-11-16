@@ -971,6 +971,19 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesDependencyScanningWithoutTheAresAgentAlsoIfAPolicyCommentNamesIt() {
+        pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY + "# JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION\n");
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO document = loadedPolicy(editor);
+        SecurityPolicyDocumentDTO scanning = new SecurityPolicyDocumentDTO(document.policyPath(), document.preset(), "JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION",
+                document.supervisedPackage(), document.mainClass(), document.testClasses(), document.files(), document.network(), document.commands(), document.threads(),
+                document.packages(), document.timeouts(), document.testBehavior());
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(scanning, BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyAgentMissing"));
+    }
+
+    @Test
     void refusesATestWhoseClassThePolicyDoesNotDeclare() {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of());

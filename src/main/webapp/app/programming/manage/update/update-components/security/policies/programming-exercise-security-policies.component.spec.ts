@@ -338,6 +338,33 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration).toBe(DOCUMENT.languageConfiguration);
     });
 
+    it('does not switch the sandbox while a commit runs, and lets a late commit answer settle first', () => {
+        create(configured(), false);
+        const committed = new Subject<{ editor: SecurityPolicyEditor; config: SecurityFrameworkConfig }>();
+        service.commitPolicies.mockReturnValue(committed);
+        const deactivated: void[] = [];
+        comp.deactivateRequested.subscribe(() => deactivated.push(undefined));
+        handlers.onScanRequested(true);
+        handlers.onDialogConfirmed(undefined);
+        // The dialog closes itself once confirmed.
+        comp.dialogOpen.set(false);
+        expect(comp.isCommitting()).toBe(true);
+
+        handlers.onToggleRequested(false);
+        expect(comp.dialogOpen()).toBe(false);
+
+        // A deactivation confirmed in a dialog opened before the commit started waits as well.
+        comp.dialogMode.set('deactivate');
+        handlers.onDialogConfirmed(undefined);
+        expect(deactivated).toEqual([]);
+        expect(comp.isCommitting()).toBe(true);
+
+        committed.next({ editor: editor('d'.repeat(40)), config: configured() });
+        handlers.onToggleRequested(false);
+        expect(comp.dialogMode()).toBe('deactivate');
+        expect(comp.dialogOpen()).toBe(true);
+    });
+
     it('asks before turning the sandbox off and drops the unsaved changes', () => {
         create(configured(), false);
         const deactivated = vi.fn();

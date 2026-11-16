@@ -35,6 +35,7 @@ class BuildFileSyntaxTest {
         String chained = variable.replace("def agentJar = configurations.agent", "def agentJar = files()\nagentJar\n    .from(configurations.agent)");
 
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct.replace("${configurations.agent.singleFile}", "${ configurations.agent.singleFile }")))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(variable))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(continued))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(
@@ -72,6 +73,7 @@ class BuildFileSyntaxTest {
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(reassigned))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(sameLineDependencies))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(aresNamedVariable))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(aresNamedVariable.replace("${aresAgentJar.singleFile}", "${ aresAgentJar.singleFile }")))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(mentionedOnly))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenJacocoOnly))).isFalse();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(commented))).isFalse();

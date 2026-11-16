@@ -471,19 +471,24 @@ public class SecurityPolicyEditorService {
             String path = requireValidPolicyPath(document.policyPath());
             @Nullable
             String previous = null;
+            @Nullable
+            String previousLanguageConfiguration = null;
             if (policy.previousPolicyPath() != null) {
                 String previousPath = requireValidPolicyPath(policy.previousPolicyPath());
                 previous = SecurityPolicyRepositoryFiles.readPolicyFile(root, previousPath).content();
-                if (SecurityPolicyDocuments.parse(previousPath, previous, existing.get(previousPath).problem()).document() == null) {
+                SecurityPolicyDocumentDTO previousDocument = SecurityPolicyDocuments.parse(previousPath, previous, existing.get(previousPath).problem()).document();
+                if (previousDocument == null) {
                     throw refused("The policy " + previousPath + " can only be changed in the repository, because the editor cannot keep all of its content.",
                             "securityPolicyReadOnly", Map.of("path", previousPath));
                 }
+                previousLanguageConfiguration = previousDocument.languageConfiguration();
             }
             boolean samePath = path.equals(policy.previousPolicyPath());
             if (!samePath && !vacated.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
                 throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
             }
-            if (usesInstrumentation(document.languageConfiguration()) && !javaAgent && (previous == null || !previous.contains("_INSTRUMENTATION"))) {
+            // A policy that already scans dependencies may keep doing so, so that the editor can still change it; only switching scanning on needs the agent.
+            if (usesInstrumentation(document.languageConfiguration()) && !javaAgent && !usesInstrumentation(previousLanguageConfiguration)) {
                 throw refused("The build of the tests repository does not attach the Ares agent, which scanning dependencies needs.", "securityPolicyAgentMissing",
                         Map.of("path", path));
             }

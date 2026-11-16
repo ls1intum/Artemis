@@ -585,6 +585,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected onToggleRequested(on: boolean): void {
+        // A commit that is still running would answer after the sandbox was switched and bring back its own state.
+        if (this.isCommitting()) {
+            return;
+        }
         this.pendingToggle.set(on);
         this.dialogMode.set(on ? 'activate' : 'deactivate');
         this.dialogOpen.set(true);
@@ -598,6 +602,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     protected onDialogConfirmed(version: string | undefined): void {
         this.pendingToggle.set(undefined);
+        if (this.isCommitting()) {
+            // The confirmation waited for a commit that started meanwhile; the switch returns to its state, and the instructor confirms again once it is done.
+            this.pendingScan.set(undefined);
+            return;
+        }
         switch (this.dialogMode()) {
             case 'activate':
                 if (version) {

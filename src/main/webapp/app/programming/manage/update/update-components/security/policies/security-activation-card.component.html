@@ -7,7 +7,7 @@
                 ariaLabelledBy="securityAdvancedActivateTitle"
                 [ngModel]="toggleOn()"
                 [ngModelOptions]="{ standalone: true }"
-                [disabled]="locked() || state() === 'turningOn' || state() === 'turningOff'"
+                [disabled]="locked() || state() === 'turningOn' || state() === 'turningOff' || state() === 'committing'"
                 (changed)="onToggle($event)"
                 data-testid="security-advanced-toggle"
             />
