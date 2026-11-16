@@ -2,7 +2,7 @@
 id: create-an-exercise
 title: Create a Programming Exercise
 sidebar_label: Create a Programming Exercise
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-16
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -138,7 +138,25 @@ Shown in advanced mode only.
 <Image src={createFormVersionControl} alt="Version Control section of the programming exercise form" size={ImageSize.large} caption="Version Control" />
 
 - **Allow Custom Branches**: Lets students push to branches other than the default one.
-- **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression, and a push is only allowed if it matches.
+- **Regular Expression for branch name**: Custom branch names are matched against this regular expression, and a push is only allowed if the whole name matches. The expression is limited to a supported syntax, see [Supported syntax of the branch name expression](#supported-syntax-of-the-branch-name-expression).
+
+#### Supported syntax of the branch name expression
+
+To keep the check of branch names fast and predictable, the expression can be at most 128 characters long and may only use the following parts of the Java regular expression syntax. Artemis refuses to save an expression that uses anything else, and the message names the problem.
+
+| Part | Examples |
+| --- | --- |
+| Literal characters. The characters `\ ^ $ . \| ? * + ( ) [ ] { }` have a special meaning, and `]` and `}` are also literals outside of classes | `feature`, `bugfix-1` |
+| An escaped punctuation character, one of `\ . / - _ [ ] ( ) { } \| ? * + ^ $`, and the escapes `\d \w \s \D \W \S` | `release\.1`, `\d{2}` |
+| The wildcard `.` | `feature/.*` |
+| Classes with literals, ranges and the escapes above, without nested classes or intersections | `[a-z0-9-]`, `[^/]` |
+| Groups `(...)` and `(?:...)` with up to 5 levels of nesting, and alternatives `\|`. Every alternative inside a group must require at least one character | `(feature\|bugfix)/.+` |
+| The anchors `^` at the start and `$` at the end of an alternative | `^(feature\|bugfix)/[a-z0-9-]+$` |
+| The quantifiers `*`, `+`, `?`, `{n}`, `{n,}` and `{n,m}` after an element, with counts up to 1000 and one quantifier per element | `[a-z]{3,10}-\d{2}` |
+
+Every alternative inside a group must consume at least one character. For example, `(a?b|c)` is supported, but `(^|^)`, `(a?|b*)` and `(x{0}|y{0})` are not: they can match without consuming input. A group that is repeated by a quantifier may not contain alternatives, quantifiers or anchors. For example, `(?:ab){2,5}` is supported, while `(a+)+` and `(a\|b)*` are not. Lazy and possessive quantifiers (`a*?`, `a++`), look-ahead and look-behind groups, back references, inline flags such as `(?i)`, quoting with `\Q...\E`, and property classes such as `\p{Alpha}` are not supported.
+
+If an exercise was saved with an expression that is not supported, no custom branch name matches it, so creating a branch is refused until the expression is changed. Pushes to the default branch are not affected.
 
 <Callout variant={CalloutVariant.warning}>
 
