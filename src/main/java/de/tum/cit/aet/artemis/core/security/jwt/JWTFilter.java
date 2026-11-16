@@ -293,7 +293,8 @@ public class JWTFilter extends GenericFilterBean {
             // The container dispatches an error that ToolsInterceptor reports, such as 403, to /error and runs this filter again. That dispatch must keep the tool token, as the
             // answer would otherwise become 401 instead of the original error.
             boolean errorDispatch = httpServletRequest.getDispatcherType() == DispatcherType.ERROR;
-            if (tool != null && !errorDispatch && !isReachableWithToolToken(httpServletRequest.getRequestURI())) {
+            String requestPath = httpServletRequest.getRequestURI().substring(httpServletRequest.getContextPath().length());
+            if (tool != null && !errorDispatch && !isReachableWithToolToken(requestPath)) {
                 // A token issued for a tool is meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks, and for the native websocket endpoint.
                 // On every other path the token does not authenticate the request, which then continues like a request without credentials.
                 filterChain.doFilter(servletRequest, servletResponse);

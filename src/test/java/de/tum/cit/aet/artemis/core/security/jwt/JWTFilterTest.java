@@ -18,6 +18,9 @@ import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -45,6 +48,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
+@Isolated("Changes Logback loggers to verify token redaction without concurrent Spring logging reconfiguration")
 class JWTFilterTest {
 
     private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 60000; // 60 seconds
@@ -407,11 +411,15 @@ class JWTFilterTest {
     @Test
     void anInvalidTokenIsLoggedWithoutTheHeadersOfTheRequest() throws Exception {
         Logger logger = (Logger) LoggerFactory.getLogger(JWTFilter.class);
+        Logger tokenLogger = (Logger) LoggerFactory.getLogger(TokenProvider.class);
         Level previousLevel = logger.getLevel();
+        Level previousTokenLevel = tokenLogger.getLevel();
         ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
         logAppender.start();
         logger.setLevel(Level.DEBUG);
+        tokenLogger.setLevel(Level.DEBUG);
         logger.addAppender(logAppender);
+        tokenLogger.addAppender(logAppender);
         try {
             MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/core/test");
             request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + "not-a-valid-token-value");
@@ -422,21 +430,25 @@ class JWTFilterTest {
 
             jwtFilter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 
-            assertThat(logAppender.list).isNotEmpty();
+            assertThat(logAppender.list).anySatisfy(event -> assertThat(event.getLoggerName()).isEqualTo(TokenProvider.class.getName()));
             String logged = logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).reduce("", String::concat);
             assertThat(logged).contains("GET", "/api/core/test", "artemis.example.org", "test-agent/1.0");
             assertThat(logged).doesNotContain("not-a-valid-token-value", "cookie-value-1234", "custom-header-value-5678");
         }
         finally {
             logger.detachAppender(logAppender);
+            tokenLogger.detachAppender(logAppender);
             logAppender.stop();
             logger.setLevel(previousLevel);
+            tokenLogger.setLevel(previousTokenLevel);
         }
     }
 
-    @Test
-    void aToolTokenAuthenticatesTheNativeWebsocketEndpoint() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/websocket/websocket");
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenAuthenticatesTheNativeWebsocketEndpoint(String contextPath) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/websocket/websocket");
+        request.setContextPath(contextPath);
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -448,11 +460,13 @@ class JWTFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
     }
 
-    @Test
-    void aToolTokenDoesNotAuthenticateOtherPathsButTheRequestContinues() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenDoesNotAuthenticateOtherPathsButTheRequestContinues(String contextPath) throws Exception {
         for (String path : List.of("/management/info", "/management/health", "/other", "/websocket/info", "/websocket/123/abc/websocket")) {
             SecurityContextHolder.getContext().setAuthentication(null);
-            MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + path);
+            request.setContextPath(contextPath);
             request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
             MockHttpServletResponse response = new MockHttpServletResponse();
             MockFilterChain filterChain = new MockFilterChain();
@@ -465,10 +479,12 @@ class JWTFilterTest {
         }
     }
 
-    @Test
-    void aToolTokenKeepsAuthenticatingTheErrorDispatchOfARejectedRequest() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/error");
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenKeepsAuthenticatingTheErrorDispatchOfARejectedRequest(String contextPath) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/error");
         request.setDispatcherType(DispatcherType.ERROR);
+        request.setContextPath(contextPath);
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -479,9 +495,11 @@ class JWTFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
     }
 
-    @Test
-    void aToolTokenIsAuthenticatedOnTheRestEndpoints() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/core/test");
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenIsAuthenticatedOnTheRestEndpoints(String contextPath) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/api/core/test");
+        request.setContextPath(contextPath);
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -493,11 +511,13 @@ class JWTFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
     }
 
-    @Test
-    void aTokenWithoutToolIsStillAuthenticatedOnTheWebsocketHandshake() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aTokenWithoutToolIsStillAuthenticatedOnTheWebsocketHandshake(String contextPath) throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/websocket/websocket");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/websocket/websocket");
+        request.setContextPath(contextPath);
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + tokenProvider.createToken(authentication, false));
         MockHttpServletResponse response = new MockHttpServletResponse();
 

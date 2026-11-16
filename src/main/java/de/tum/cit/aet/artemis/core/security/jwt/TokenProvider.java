@@ -385,7 +385,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.debug("Invalid JWT token: {} from source {}", authToken, source);
+        log.debug("Invalid JWT token from source {}", source);
         return false;
     }
 
