@@ -206,6 +206,33 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testRestrictiveAgentListRefusesABuildWithoutNetworkExceptWhenItNamesTheDefaultNetwork() {
+        Object previous = ReflectionTestUtils.getField(buildJobContainerService, "allowedCustomNetworks");
+        try {
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of("mirror-only"));
+            for (String network : new String[] { null, "", "  " }) {
+                var withoutNetwork = new DockerRunConfig(List.of(), network, 1, 1, 1);
+                assertThatThrownBy(() -> buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, withoutNetwork))
+                        .isInstanceOf(ContainerNetworkNotAllowedException.class);
+            }
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 1, 1, 1));
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "mirror-only", 1, 1, 1));
+
+            // a list that names the default network of Docker allows a build without a network
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of("mirror-only", "bridge"));
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), null, 1, 1, 1));
+
+            // without a list on the agent nothing changes
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", List.of());
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), null, 1, 1, 1));
+            buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "", 1, 1, 1));
+        }
+        finally {
+            ReflectionTestUtils.setField(buildJobContainerService, "allowedCustomNetworks", previous);
+        }
+    }
+
+    @Test
     void testAnAllowedNetworkListWithoutAnyNetworkIsAConfigurationError() {
         MockEnvironment environment = new MockEnvironment().withProperty("artemis.continuous-integration.container-flags-limit.allowed-custom-networks[0]", "  ");
         Object previous = ReflectionTestUtils.getField(buildJobContainerService, "allowedCustomNetworks");

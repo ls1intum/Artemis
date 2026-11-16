@@ -170,6 +170,9 @@ public class BuildJobContainerService implements EnvironmentAware {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
+    /** The network that Docker uses for a container that requests none. */
+    private static final String DEFAULT_DOCKER_NETWORK = "bridge";
+
     private static final String ALLOWED_NETWORKS_PROPERTY = "artemis.continuous-integration.container-flags-limit.allowed-custom-networks";
 
     /**
@@ -284,15 +287,16 @@ public class BuildJobContainerService implements EnvironmentAware {
     }
 
     /**
-     * Whether a requested network is in the list of allowed networks of this agent. Nothing is refused if the agent does not configure the list, and a build without a network
-     * (none) is always allowed.
+     * Whether the network of a build is in the list of allowed networks of this agent. Nothing is refused if the agent does not configure the list. A build without a network
+     * (none) is always allowed. A build that requests no network runs on the default network of Docker, which is named bridge, so it is allowed only if the list names that
+     * network.
      */
     private boolean isNetworkAllowedOnThisAgent(String network) {
-        if (network == null || network.isBlank() || allowedCustomNetworks.isEmpty()) {
+        if (allowedCustomNetworks.isEmpty()) {
             return true;
         }
-        String requested = network.trim();
-        return "none".equals(requested) || allowedCustomNetworks.contains(requested);
+        String effectiveNetwork = network == null || network.isBlank() ? DEFAULT_DOCKER_NETWORK : network.trim();
+        return "none".equals(effectiveNetwork) || allowedCustomNetworks.contains(effectiveNetwork);
     }
 
     private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
