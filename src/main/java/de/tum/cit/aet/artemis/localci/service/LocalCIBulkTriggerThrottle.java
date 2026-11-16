@@ -112,9 +112,9 @@ final class LocalCIBulkTriggerThrottle implements BulkTriggerThrottle {
             waitForRoom();
         }
         catch (InterruptedException e) {
-            // The interrupt status is deliberately not restored: the caller sleeps between batches too, and a restored flag
-            // would make each of those sleeps fail at once. The run goes on without waiting, because stopping it would leave
-            // the remaining participations unbuilt for good.
+            // The bulk trigger defers this flag until every participation has been queued. Stopping the run here
+            // would leave the remaining participations unbuilt, because they have no durable retry.
+            Thread.currentThread().interrupt();
             givenUp = true;
             log.warn("Interrupted while waiting for room in the build queue, queueing the rest of this run without waiting");
         }

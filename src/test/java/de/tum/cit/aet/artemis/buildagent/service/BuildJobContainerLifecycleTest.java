@@ -128,6 +128,17 @@ class BuildJobContainerLifecycleTest {
         assertThat(service.getIDOfRunningContainer("build")).isNull();
     }
 
+    @Test
+    void stoppingAContainerThatDisappearsAfterLookupDoesNotFailCleanup() {
+        Container running = container("id", new String[] { "/build" }, "running");
+        when(list.exec()).thenReturn(List.of(running));
+        when(docker.execCreateCmd("id")).thenThrow(new NotFoundException("removed after lookup"));
+
+        assertThatCode(() -> service.stopContainer("build")).doesNotThrowAnyException();
+
+        verify(docker).execCreateCmd("id");
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "../results", "results/$(command)", "results with spaces" })
@@ -212,6 +223,28 @@ class BuildJobContainerLifecycleTest {
         else {
             verify(remove).exec();
             verify(kill, never()).exec();
+        }
+    }
+
+    @Test
+    void failedRemovalClosesCommandsAndPreservesCancellation() {
+        StopContainerCmd stop = mock(StopContainerCmd.class, RETURNS_SELF);
+        RemoveContainerCmd remove = mock(RemoveContainerCmd.class);
+        when(docker.stopContainerCmd("id")).thenReturn(stop);
+        when(stop.exec()).thenThrow(new NotModifiedException("already stopped"));
+        when(docker.removeContainerCmd("id")).thenReturn(remove);
+        when(remove.exec()).thenThrow(new IllegalStateException("daemon disconnected"));
+
+        Thread.currentThread().interrupt();
+        try {
+            assertThatCode(() -> service.stopUnresponsiveContainer("id")).doesNotThrowAnyException();
+            assertThat(Thread.currentThread().isInterrupted()).as("cancellation remains observable after failed cleanup").isTrue();
+            verify(remove).exec();
+            verify(remove).close();
+            verify(stop).close();
+        }
+        finally {
+            Thread.interrupted();
         }
     }
 

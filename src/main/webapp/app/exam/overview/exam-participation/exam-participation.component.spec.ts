@@ -2601,7 +2601,7 @@ describe('ExamParticipationComponent', () => {
             showSubmissionHint();
 
             const heading: HTMLElement = hint().querySelector('h2')!;
-            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            // the important modifiers are needed because the unlayered global heading rules would win otherwise
             expect(heading.classList).toContain('text-lg!');
             expect(heading.classList).toContain('font-semibold!');
 

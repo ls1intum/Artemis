@@ -471,6 +471,8 @@ describe('@tumaet/ui-angular integration contract', () => {
                 '--tumaet-ui-accent-color',
                 '--tumaet-ui-button-contrast-foreground',
                 '--tumaet-ui-button-focus-color',
+                '--tumaet-ui-button-success-background',
+                '--tumaet-ui-button-success-contrast',
                 '--tumaet-ui-content-background',
                 '--tumaet-ui-control-background',
                 '--tumaet-ui-control-border-color',

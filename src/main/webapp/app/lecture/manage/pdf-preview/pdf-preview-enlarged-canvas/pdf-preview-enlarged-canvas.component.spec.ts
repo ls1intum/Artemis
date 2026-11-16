@@ -7,6 +7,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { signal } from '@angular/core';
+import { InteractivityChecker } from '@angular/cdk/a11y';
 
 // Mock canvas 2d context for jsdom
 function createMockContext() {
@@ -73,6 +74,8 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             ],
         }).compileComponents();
 
+        // jsdom has no layout, so CDK's real visibility check would reject every focusable element.
+        vi.spyOn(TestBed.inject(InteractivityChecker), 'isVisible').mockReturnValue(true);
         fixture = TestBed.createComponent(PdfPreviewEnlargedCanvasComponent);
         component = fixture.componentInstance;
 
@@ -92,11 +95,122 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        fixture.destroy();
+        vi.clearAllTimers();
+        vi.restoreAllMocks();
         vi.useRealTimers();
     });
 
     describe('Keyboard Navigation', () => {
+        it('moves keyboard focus to the close button when the preview opens', async () => {
+            await fixture.whenStable();
+
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('button[aria-label="entity.action.close"]'));
+        });
+
+        it.each([
+            { label: 'Next page', boundary: 3, returnKey: 'ArrowLeft' },
+            { label: 'Previous page', boundary: 1, returnKey: 'ArrowRight' },
+        ])('keeps keyboard focus in the dialog when $label disappears', async ({ label, boundary, returnKey }) => {
+            fixture.componentRef.setInput('totalPages', 3);
+            component.currentPage.set(2);
+            for (let page = 0; page < 3; page++) {
+                const container = document.createElement('div');
+                container.className = 'pdf-canvas-container';
+                container.append(createMockCanvas());
+                mockContainer.append(container);
+            }
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const navigation = fixture.nativeElement.querySelector(`button[aria-label="${label}"]`) as HTMLButtonElement;
+            navigation.focus();
+            expect(document.activeElement).toBe(navigation);
+
+            navigation.click();
+            fixture.detectChanges();
+
+            expect(component.currentPage()).toBe(boundary);
+            expect(navigation.isConnected).toBe(false);
+            const close = fixture.nativeElement.querySelector('button[aria-label="entity.action.close"]') as HTMLButtonElement;
+            expect(document.activeElement).toBe(close);
+            close.dispatchEvent(new KeyboardEvent('keydown', { key: returnKey, bubbles: true }));
+            expect(component.currentPage()).toBe(2);
+            const closed = vi.fn();
+            component.isEnlargedViewOutput.subscribe(closed);
+            close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+        });
+
+        it('closes the enlarged preview with Escape and restores scrolling', () => {
+            const closed = vi.fn();
+            component.isEnlargedViewOutput.subscribe(closed);
+            const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+            fixture.nativeElement.querySelector('[role="dialog"]').dispatchEvent(event);
+
+            expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+            expect(mockContainer.style.overflow).toBe('auto');
+            expect(event.defaultPrevented).toBe(true);
+        });
+
+        describe('boundary navigation by keyboard', () => {
+            it.each([
+                { buttonLabel: 'Next page', initialPage: 4, targetPage: 5, key: 'ArrowRight' },
+                { buttonLabel: 'Previous page', initialPage: 2, targetPage: 1, key: 'ArrowLeft' },
+            ])('keeps focus in the dialog when $buttonLabel disappears', async ({ buttonLabel, initialPage, targetPage, key }) => {
+                fixture.componentRef.setInput('totalPages', 5);
+                component.currentPage.set(initialPage);
+                fixture.detectChanges();
+                await fixture.whenStable();
+                const host: HTMLElement = fixture.nativeElement;
+                const navigationButton = host.querySelector<HTMLButtonElement>(`button[aria-label="${buttonLabel}"]`)!;
+                const closeButton = host.querySelector<HTMLButtonElement>('button[aria-label="entity.action.close"]')!;
+                navigationButton.focus();
+                expect(document.activeElement).toBe(navigationButton);
+                const closed = vi.fn();
+                component.isEnlargedViewOutput.subscribe(closed);
+
+                navigationButton.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+                fixture.detectChanges();
+
+                expect(component.currentPage()).toBe(targetPage);
+                expect(host.contains(navigationButton)).toBe(false);
+                expect(document.activeElement).toBe(closeButton);
+                document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+                expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+                expect(mockContainer.style.overflow).toBe('auto');
+            });
+        });
+
+        it.each([
+            { buttonLabel: 'Previous page', initialPage: 4, targetPage: 5, key: 'ArrowRight' },
+            { buttonLabel: 'Next page', initialPage: 2, targetPage: 1, key: 'ArrowLeft' },
+        ])('preserves focus on $buttonLabel when it remains available at the boundary', async ({ buttonLabel, initialPage, targetPage, key }) => {
+            fixture.componentRef.setInput('totalPages', 5);
+            component.currentPage.set(initialPage);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const host: HTMLElement = fixture.nativeElement;
+            const navigationButton = host.querySelector<HTMLButtonElement>(`button[aria-label="${buttonLabel}"]`)!;
+            navigationButton.focus();
+
+            navigationButton.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+
+            expect(component.currentPage()).toBe(targetPage);
+            expect(host.contains(navigationButton)).toBe(true);
+            expect(document.activeElement).toBe(navigationButton);
+        });
+
+        it('keeps page navigation inside the preview instead of handling keys elsewhere on the page', () => {
+            fixture.componentRef.setInput('totalPages', 5);
+            component.currentPage.set(3);
+
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+            expect(component.currentPage()).toBe(3);
+        });
+
         it('should navigate through pages using keyboard in enlarged view', () => {
             component.isEnlargedViewOutput.emit(true);
             const mockCanvas = createMockCanvas();
@@ -142,6 +256,50 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
     });
 
     describe('Canvas Rendering', () => {
+        it.each([
+            { width: 500, height: 400, renderedWidth: 1000, containerHeight: '60vh' },
+            { width: 400, height: 500, renderedWidth: 640, containerHeight: '800px' },
+        ])('renders a $width by $height page after opening and clears the loading indicator', ({ width, height, renderedWidth, containerHeight }) => {
+            const original = component.originalCanvas()!;
+            original.width = width;
+            original.height = height;
+            Object.defineProperty(mockContainer, 'clientWidth', { value: 1000, configurable: true });
+            Object.defineProperty(mockContainer, 'clientHeight', { value: 800, configurable: true });
+            const context = mockEnlargedCanvas.getContext('2d')!;
+            expect(component.isEnlargedCanvasLoading()).toBe(true);
+            expect(mockContainer.style.overflow).toBe('hidden');
+
+            vi.advanceTimersByTime(516);
+            fixture.detectChanges();
+
+            expect(mockEnlargedCanvas.width).toBe(renderedWidth);
+            expect(mockEnlargedCanvas.height).toBe(800);
+            expect(context.drawImage).toHaveBeenLastCalledWith(original, 0, 0, renderedWidth, 800);
+            expect(mockContainer.style.height).toBe(containerHeight);
+            expect(component.isEnlargedCanvasLoading()).toBe(false);
+            expect(fixture.nativeElement.querySelector('tumaet-ui-progress-spinner')).toBeNull();
+        });
+
+        it('redraws the current page when the browser window is resized', () => {
+            vi.clearAllTimers();
+            Object.defineProperty(mockContainer, 'clientWidth', { value: 750, configurable: true });
+            Object.defineProperty(mockContainer, 'clientHeight', { value: 600, configurable: true });
+            const pages = [createMockCanvas(), createMockCanvas(), createMockCanvas()];
+            for (const page of pages) {
+                const pageContainer = document.createElement('div');
+                pageContainer.className = 'pdf-canvas-container';
+                pageContainer.append(page);
+                mockContainer.append(pageContainer);
+            }
+            component.currentPage.set(3);
+            const context = mockEnlargedCanvas.getContext('2d')!;
+
+            window.dispatchEvent(new Event('resize'));
+            vi.advanceTimersByTime(16);
+
+            expect(context.drawImage).toHaveBeenLastCalledWith(pages[2], 0, 0, 750, 600);
+        });
+
         it('should calculate the correct scale factor for horizontal slides', () => {
             // Mock container dimensions
             Object.defineProperty(mockContainer, 'clientWidth', { value: 1000, configurable: true });

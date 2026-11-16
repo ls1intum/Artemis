@@ -312,6 +312,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        checkCourseMembershipForStudentAttemptElseThrow(studentExam, currentUser);
         studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
@@ -338,13 +339,14 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        checkCourseMembershipForStudentAttemptElseThrow(studentExam, currentUser);
         return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUser.getId(), examId, studentExam.isTestRun()));
     }
 
     /**
      * Ensures that the owner of a test run still has instructor access to the course. Test run ownership survives a
      * role revocation, so ownership alone must not keep an endpoint open for a former instructor. Non test run student
-     * exams are unaffected: their parameters were already validated by the caller and the check is an extra query.
+     * exams are covered by the course membership check of the student attempt.
      *
      * @param studentExam the student exam the request targets
      * @param examId      the exam id from the path
@@ -354,6 +356,18 @@ public class StudentExamResource {
     private void checkCourseAccessForTestRunElseThrow(StudentExam studentExam, Long examId, Long courseId, User currentUser) {
         if (studentExam.isTestRun()) {
             studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
+    }
+
+    /**
+     * Ensures that the owner of a student attempt (a real exam or a test exam, not a test run) is still a student of the course.
+     *
+     * @param studentExam the student exam the request targets
+     * @param currentUser the current user
+     */
+    private void checkCourseMembershipForStudentAttemptElseThrow(StudentExam studentExam, User currentUser) {
+        if (!studentExam.isTestRun()) {
+            studentExamAccessService.checkCourseAccessForStudentElseThrow(studentExam.getExam().getCourse(), currentUser);
         }
     }
 

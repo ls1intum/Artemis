@@ -19,7 +19,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 
 describe('TextAssessmentAreaComponent', () => {
@@ -233,6 +233,65 @@ describe('TextAssessmentAreaComponent', () => {
         });
     });
 
+    /**
+     * The release of Alt can get lost (for example when the operating system consumes it for an Alt+Shift layout switch). In manual selection unassessed text
+     * has no drop targets, so a criterion that is dropped onto it links to nothing. The area must not stay there until the page is reloaded.
+     */
+    describe('Alt release that is never received', () => {
+        const pressAltWithoutRelease = () => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', altKey: true, bubbles: true }));
+            fixture.detectChanges();
+            expect(component.autoTextBlockAssessment()).toBe(false);
+            expect(fixture.nativeElement.querySelector('jhi-text-block-assessment-card')).toBeNull();
+        };
+
+        const dropTargets = () => fixture.nativeElement.querySelectorAll('jhi-text-block-assessment-card');
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(newBlock(0, submission.text!.length))]);
+            fixture.detectChanges();
+        });
+
+        it.each([
+            ['a pointer press', () => document.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))],
+            ['the start of a drag, such as dragging a criterion', () => document.dispatchEvent(new MouseEvent('dragstart', { bubbles: true }))],
+            ['a key press', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))],
+        ])('should return to the automatic selection with drop targets on %s without Alt', (_name, interact) => {
+            pressAltWithoutRelease();
+
+            interact();
+            fixture.detectChanges();
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+            expect(dropTargets().length).toBeGreaterThan(0);
+            expect(fixture.nativeElement.querySelector('jhi-manual-textblock-selection')).toBeNull();
+        });
+
+        it.each([
+            ['a pointer press', () => document.dispatchEvent(new MouseEvent('pointerdown', { altKey: true, bubbles: true }))],
+            ['a key press', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', altKey: true, bubbles: true }))],
+            ['another press of Alt', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', bubbles: true }))],
+        ])('should stay in the manual selection on %s while Alt is held', (_name, interact) => {
+            pressAltWithoutRelease();
+
+            interact();
+            fixture.detectChanges();
+
+            expect(component.autoTextBlockAssessment()).toBe(false);
+            expect(dropTargets()).toHaveLength(0);
+        });
+
+        it('should not change anything in the automatic selection', () => {
+            const before = dropTargets().length;
+
+            document.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+            fixture.detectChanges();
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+            expect(dropTargets()).toHaveLength(before);
+        });
+    });
+
     it('should add TextBlockRef if text block is added manually', () => {
         const initialRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
         fixture.componentRef.setInput('textBlockRefs', initialRefs);
@@ -347,8 +406,10 @@ describe('TextAssessmentAreaComponent', () => {
 
         const deleteFeedbackOfNewBlock = () => {
             // an empty feedback is dismissed without confirmation when Escape is pressed in its editor
-            const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
-            unifiedFeedback.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance as TextBlockFeedbackEditorComponent;
+            // Called on the editor directly: Alt is still held in the scenarios that use this, and a real Escape press with Alt held does not reach the handler.
+            // A key press without Alt would also show that Alt is up, which these scenarios must not.
+            feedbackEditor.escKeyup();
             fixture.detectChanges();
         };
 

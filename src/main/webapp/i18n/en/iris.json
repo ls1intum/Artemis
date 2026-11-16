@@ -268,7 +268,8 @@
                 "addContextTooltip": "Select lecture or exercise",
                 "tutorSuggestionContext": "Tutor suggestion",
                 "searchLabel": "Search lectures and exercises",
-                "removeContext": "Remove chat context"
+                "removeContext": "Remove chat context",
+                "noResults": "No results found"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
