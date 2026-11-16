@@ -183,7 +183,7 @@ public class EmailChangeService {
             throw new BadRequestAlertException("The e-mail address of an account cannot be removed", ENTITY_NAME, "emailInvalid");
         }
         requireMailConfigured();
-        checkAddressAllowed(newEmail);
+        requireAddressAllowed(newEmail);
         userCreationService.validateEmailIsAvailable(newEmail, user.getId());
 
         Optional<PendingEmailChange> existing = findValidPendingChange(user.getId());
@@ -292,8 +292,11 @@ public class EmailChangeService {
 
         String newEmail = change.getNewEmail();
         try {
+            if (newEmail == null) {
+                throw invalidKey();
+            }
             // Checked again: the address can have been taken, or the allowed addresses changed, since the request was made.
-            checkAddressAllowed(newEmail);
+            requireAddressAllowed(newEmail);
             userCreationService.validateEmailIsAvailable(newEmail, userId);
         }
         catch (RuntimeException e) {
@@ -433,15 +436,33 @@ public class EmailChangeService {
     }
 
     /**
-     * Applies the current configured address restriction, including when a previously requested change is confirmed.
+     * Applies the current configured address restriction, including when a previously requested change is confirmed and when an account that is not managed here
+     * saves its basic information. The forms only ask while the address is typed, through {@code PublicAccountResource#checkEmailAllowed}, which uses
+     * {@link #isAddressAllowed} as well, so this check stays the decision.
      *
-     * @param email the canonical address to validate
+     * @param email the address to validate, {@code null} for an account that removes its address, which a restriction does not allow
      * @throws BadRequestAlertException with {@code emailInvalid} if the address violates the configured pattern
      */
-    private void checkAddressAllowed(String email) {
-        if (allowedEmailPattern.isPresent() && !allowedEmailPattern.get().matcher(email).matches()) {
+    public void requireAddressAllowed(@Nullable String email) {
+        if (!isAddressAllowed(email)) {
             throw new BadRequestAlertException("The provided email is invalid and does not follow the specified pattern", ENTITY_NAME, "emailInvalid");
         }
+    }
+
+    /**
+     * Whether the configured address restriction allows the address. This is the one place that applies the restriction, so registration, the change of an address and
+     * the check that the forms ask for while an address is typed cannot give different answers. The address is matched in its lowercase form, so that the capitalization
+     * of what was typed does not decide.
+     *
+     * @param email the address as it was entered
+     * @return true if there is no restriction, or if the whole lowercase address matches it; false for a missing or blank address under a restriction
+     */
+    public boolean isAddressAllowed(@Nullable String email) {
+        if (allowedEmailPattern.isEmpty()) {
+            return true;
+        }
+        String canonicalEmail = User.canonicalEmail(email);
+        return canonicalEmail != null && allowedEmailPattern.get().matcher(canonicalEmail).matches();
     }
 
     /**

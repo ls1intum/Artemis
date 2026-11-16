@@ -494,6 +494,26 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
 
+    /**
+     * The submitted flags of the attempts of a user at a real exam (no test runs) that contain the given exercise.
+     * An empty result means the exercise is not part of any student exam of the user.
+     *
+     * @param examId     the id of the exam
+     * @param userId     the id of the user
+     * @param exerciseId the id of the exercise
+     * @return the submitted flag of each matching attempt
+     */
+    @Query("""
+            SELECT se.submitted
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE (se.testRun IS NULL OR se.testRun = FALSE)
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+                AND e.id = :exerciseId
+            """)
+    List<Boolean> findSubmittedFlagsOfAttemptsContainingExercise(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+
     @Query("""
             SELECT COUNT(studentExam) > 0
             FROM StudentExam studentExam

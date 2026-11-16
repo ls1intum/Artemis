@@ -164,14 +164,14 @@ public class SecurityPolicyEditorService {
         return readTestRepository(exercise, (repository, commit) -> {
             RevTree tree = commit.getTree();
             @Nullable
-            String gradleBuild = SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null);
+            String gradleBuild = SecurityFrameworkCommitFiles.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null);
             @Nullable
-            String mavenPom = SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null);
+            String mavenPom = SecurityFrameworkCommitFiles.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null);
             @Nullable
             String pinned = SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, mavenPom).orElse(null);
             @Nullable
             String frameworkVersion = change.frameworkVersion() != null ? change.frameworkVersion() : pinned;
-            Set<String> existingPaths = SecurityFrameworkService.evaluate(repository, tree).policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath)
+            Set<String> existingPaths = SecurityFrameworkCommitFiles.evaluate(repository, tree).policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath)
                     .collect(Collectors.toCollection(TreeSet::new));
             List<SecurityPolicyPreviewDTO.FileDTO> files = new ArrayList<>();
             Set<String> changedPaths = new HashSet<>();
@@ -180,7 +180,7 @@ public class SecurityPolicyEditorService {
                 @Nullable
                 String previousPath = policy.previousPolicyPath() == null ? null : requireValidPolicyPath(policy.previousPolicyPath());
                 @Nullable
-                String before = previousPath != null && existingPaths.contains(previousPath) ? SecurityFrameworkService.readPolicyFile(repository, tree, previousPath).content()
+                String before = previousPath != null && existingPaths.contains(previousPath) ? SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, previousPath).content()
                         : null;
                 files.add(new SecurityPolicyPreviewDTO.FileDTO(path, previousPath, before, SecurityPolicyDocuments.render(policy.document(), before)));
                 changedPaths.add(previousPath == null ? path : previousPath);
@@ -188,7 +188,7 @@ public class SecurityPolicyEditorService {
             for (String removedPath : change.removedPolicyPaths()) {
                 String path = requireValidPolicyPath(removedPath);
                 @Nullable
-                String before = existingPaths.contains(path) ? SecurityFrameworkService.readPolicyFile(repository, tree, path).content() : null;
+                String before = existingPaths.contains(path) ? SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content() : null;
                 files.add(new SecurityPolicyPreviewDTO.FileDTO(path, path, before, null));
                 changedPaths.add(path);
             }
@@ -205,7 +205,7 @@ public class SecurityPolicyEditorService {
                 // Another version also has to accept the policies the change keeps as they are.
                 for (String path : existingPaths) {
                     @Nullable
-                    String content = changedPaths.contains(path) ? null : SecurityFrameworkService.readPolicyFile(repository, tree, path).content();
+                    String content = changedPaths.contains(path) ? null : SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content();
                     if (content != null) {
                         VersionCheck check = checkAgainstVersion(path, content, frameworkVersion);
                         problems.addAll(check.problems());
@@ -270,7 +270,7 @@ public class SecurityPolicyEditorService {
     public SecurityTestStructureDTO getTestStructure(ProgrammingExercise exercise) {
         securityFrameworkService.validateJavaExercise(exercise);
         return readTestRepository(exercise, (repository, commit) -> {
-            return AresTestCases.structure(SecurityFrameworkService.javaSources(repository, commit.getTree()));
+            return AresTestCases.structure(SecurityFrameworkCommitFiles.javaSources(repository, commit.getTree()));
         });
     }
 
@@ -342,13 +342,13 @@ public class SecurityPolicyEditorService {
 
     private SecurityPolicyEditorDTO editorAt(Repository repository, RevCommit commit) throws IOException {
         RevTree tree = commit.getTree();
-        SecurityFrameworkState state = SecurityFrameworkService.evaluate(repository, tree);
+        SecurityFrameworkState state = SecurityFrameworkCommitFiles.evaluate(repository, tree);
         Map<String, List<String>> assignedTests = SecurityTestAssignments
-                .entriesByPolicy(SecurityTestAssignments.read(SecurityFrameworkService.javaSources(repository, tree)).values());
+                .entriesByPolicy(SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, tree)).values());
         List<SecurityPolicyEditorDTO.PolicyDTO> policies = new ArrayList<>();
         for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
             Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
-            SecurityPolicyRepositoryFiles.PolicyFileContent content = path.isPresent() ? SecurityFrameworkService.readPolicyFile(repository, tree, path.get())
+            SecurityPolicyRepositoryFiles.PolicyFileContent content = path.isPresent() ? SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path.get())
                     : SecurityPolicyRepositoryFiles.PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
             SecurityPolicyDocuments.Parsed parsed = SecurityPolicyDocuments.parse(policyFile.policyPath(), content.content(), content.problem());
             policies.add(new SecurityPolicyEditorDTO.PolicyDTO(policyFile.policyPath(), content.content(), parsed.document(),
@@ -358,8 +358,8 @@ public class SecurityPolicyEditorService {
         SecurityPolicyEditorDTO.CommitDTO lastCommit = new SecurityPolicyEditorDTO.CommitDTO(commit.name(), author.getName(),
                 ZonedDateTime.ofInstant(author.getWhenAsInstant(), author.getZoneId()));
         SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(
-                SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null),
-                SecurityFrameworkService.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null));
+                SecurityFrameworkCommitFiles.readFile(repository, tree, SecurityFrameworkService.GRADLE_BUILD_FILE).orElse(null),
+                SecurityFrameworkCommitFiles.readFile(repository, tree, SecurityFrameworkService.MAVEN_BUILD_FILE).orElse(null));
         return new SecurityPolicyEditorDTO(commit.name(), lastCommit, SecurityPolicyRepositoryFiles.parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).orElse(null),
                 policies, presets, SecurityPolicyRepositoryFiles.attachesJavaAgent(buildFiles));
     }
@@ -576,15 +576,15 @@ public class SecurityPolicyEditorService {
             }
             RevTree baseTree = revWalk.parseCommit(base).getTree();
             RevTree headTree = revWalk.parseCommit(head).getTree();
-            SecurityFrameworkState baseState = SecurityFrameworkService.evaluate(repository, baseTree);
-            SecurityFrameworkState headState = SecurityFrameworkService.evaluate(repository, headTree);
+            SecurityFrameworkState baseState = SecurityFrameworkCommitFiles.evaluate(repository, baseTree);
+            SecurityFrameworkState headState = SecurityFrameworkCommitFiles.evaluate(repository, headTree);
             if (!policyReferences(baseState).equals(policyReferences(headState))) {
                 throw policiesChanged();
             }
             for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {
                 Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
-                if (path.isPresent() && !Objects.equals(SecurityFrameworkService.readPolicyFile(repository, baseTree, path.get()).content(),
-                        SecurityFrameworkService.readPolicyFile(repository, headTree, path.get()).content())) {
+                if (path.isPresent() && !Objects.equals(SecurityFrameworkCommitFiles.readPolicyFile(repository, baseTree, path.get()).content(),
+                        SecurityFrameworkCommitFiles.readPolicyFile(repository, headTree, path.get()).content())) {
                     throw policiesChanged();
                 }
             }

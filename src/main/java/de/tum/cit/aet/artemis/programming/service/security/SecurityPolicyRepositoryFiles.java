@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -22,7 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
+import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,7 +71,7 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final String MAVEN_BUILD_FILE = "pom.xml";
 
-    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
+    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
 
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
 
@@ -88,6 +89,12 @@ public final class SecurityPolicyRepositoryFiles {
      * called {@code build} or {@code target} is still scanned.
      */
     private static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
+
+    /**
+     * The Groovy keywords after which an expression, and therefore a slashy string, may follow; any other word is an operand, such as a variable,
+     * {@code this} or {@code null}.
+     */
+    private static final Set<String> GROOVY_KEYWORDS_BEFORE_EXPRESSIONS = Set.of("return", "throw", "assert", "case", "in", "yield", "else", "do");
 
     private static final Set<String> BUILD_FILES = Set.of(GRADLE_BUILD_FILE, "build.gradle.kts", MAVEN_BUILD_FILE);
 
@@ -459,13 +466,162 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the build tool whose build file pins an Ares version
      */
     private static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
-        if (gradleBuild != null && GRADLE_ARES_VERSION.matcher(gradleBuild).find()) {
+        if (gradleBuild != null && !aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
             return Optional.of(BuildTool.GRADLE);
         }
-        if (mavenPom != null && MAVEN_ARES_VERSION.matcher(mavenPom).find()) {
+        if (mavenPom != null && !aresVersionPins(mavenPom, BuildTool.MAVEN).isEmpty()) {
             return Optional.of(BuildTool.MAVEN);
         }
         return Optional.empty();
+    }
+
+    /**
+     * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
+     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced.
+     *
+     * @param content   the content of the build file
+     * @param buildTool the build tool the file belongs to
+     * @return the pins outside comments and strings, in the order of the file
+     */
+    private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
+        boolean[] noCode = buildTool == BuildTool.GRADLE ? gradleCommentsAndStrings(content) : mavenComments(content);
+        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()]).toList();
+    }
+
+    /**
+     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment, to a quoted string or to a
+     *         slashy string ({@code /.../} or {@code $/.../$}); a URL such as {@code 'https://example.org'} therefore starts no comment
+     */
+    private static boolean[] gradleCommentsAndStrings(String content) {
+        boolean[] comment = new boolean[content.length()];
+        int index = 0;
+        // The last token of code before the current one, without whitespace and comments: a word, ++, -- or a single character; a string counts as an operand.
+        String previous = ";";
+        while (index < content.length()) {
+            char character = content.charAt(index);
+            int end;
+            if (content.startsWith("//", index)) {
+                end = endOfLine(content, index);
+                Arrays.fill(comment, index, end, true);
+            }
+            else if (content.startsWith("/*", index)) {
+                int close = content.indexOf("*/", index + 2);
+                end = close < 0 ? content.length() : close + 2;
+                Arrays.fill(comment, index, end, true);
+            }
+            else if (character == '\'' || character == '"') {
+                String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
+                end = endOfString(content, index + delimiter.length(), delimiter);
+                Arrays.fill(comment, index, end, true);
+                previous = "\"";
+            }
+            else if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous) && endOfSlashyString(content, index) > 0) {
+                end = endOfSlashyString(content, index);
+                Arrays.fill(comment, index, end, true);
+                previous = "\"";
+            }
+            else if (Character.isJavaIdentifierStart(character)) {
+                end = index + 1;
+                while (end < content.length() && Character.isJavaIdentifierPart(content.charAt(end))) {
+                    end++;
+                }
+                previous = content.substring(index, end);
+            }
+            else {
+                end = index + 1;
+                if ((character == '+' || character == '-') && previous.equals(String.valueOf(character))) {
+                    previous = previous + character;
+                }
+                else if (!Character.isWhitespace(character)) {
+                    previous = String.valueOf(character);
+                }
+            }
+            index = end;
+        }
+        return comment;
+    }
+
+    /**
+     * A {@code /} after an operand divides, as in {@code a / b}, {@code (a) / b} or {@code a++ / b}; elsewhere, as after {@code =}, {@code (}, {@code ,} or
+     * a keyword such as {@code return}, it opens a slashy string.
+     */
+    private static boolean slashyStringMayStartAfter(String previous) {
+        if (Character.isJavaIdentifierStart(previous.charAt(0))) {
+            return GROOVY_KEYWORDS_BEFORE_EXPRESSIONS.contains(previous);
+        }
+        char last = previous.charAt(previous.length() - 1);
+        return previous.length() == 1 && !Character.isJavaIdentifierPart(last) && last != ')' && last != ']' && last != '}' && last != '"';
+    }
+
+    /**
+     * @param from the offset of the opening {@code /} or {@code $/}
+     * @return the offset after the closing delimiter, or {@code -1} if the string is not closed, in which case the {@code /} is read as code
+     */
+    private static int endOfSlashyString(String content, int from) {
+        boolean dollar = content.charAt(from) == '$';
+        int index = from + (dollar ? 2 : 1);
+        while (index < content.length()) {
+            if (dollar && (content.startsWith("$$", index) || content.startsWith("$/", index))) {
+                index += 2;
+            }
+            else if (dollar && content.startsWith("/$", index)) {
+                return index + 2;
+            }
+            else if (!dollar && content.startsWith("\\/", index)) {
+                index += 2;
+            }
+            else if (!dollar && content.charAt(index) == '/') {
+                return index + 1;
+            }
+            else {
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @param from      the offset after the opening delimiter
+     * @param delimiter the quote that closes the string
+     * @return the offset after the closing delimiter; a string with a single quote also ends at the end of its line
+     */
+    private static int endOfString(String content, int from, String delimiter) {
+        int index = from;
+        while (index < content.length()) {
+            if (content.charAt(index) == '\\') {
+                index += 2;
+            }
+            else if (content.startsWith(delimiter, index)) {
+                return index + delimiter.length();
+            }
+            else if (delimiter.length() == 1 && content.charAt(index) == '\n') {
+                return index + 1;
+            }
+            else {
+                index++;
+            }
+        }
+        return content.length();
+    }
+
+    private static int endOfLine(String content, int from) {
+        int lineEnd = content.indexOf('\n', from);
+        return lineEnd < 0 ? content.length() : lineEnd;
+    }
+
+    /**
+     * @return for each character of a Maven POM whether it belongs to an XML comment
+     */
+    private static boolean[] mavenComments(String content) {
+        boolean[] comment = new boolean[content.length()];
+        int start = content.indexOf("<!--");
+        while (start >= 0) {
+            int close = content.indexOf("-->", start + 4);
+            int end = close < 0 ? content.length() : close + 3;
+            Arrays.fill(comment, start, end, true);
+            start = content.indexOf("<!--", end);
+        }
+        return comment;
     }
 
     /**
@@ -486,8 +642,8 @@ public final class SecurityPolicyRepositoryFiles {
      */
     public static Optional<String> parseAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom) {
         return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
-            Matcher matcher = versionPattern(buildTool).matcher(buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom);
-            return matcher.find() ? matcher.group(2).trim() : null;
+            String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
+            return aresVersionPins(content, buildTool).getFirst().group(2).trim();
         });
     }
 
@@ -505,8 +661,18 @@ public final class SecurityPolicyRepositoryFiles {
         }
         Path buildFile = buildFile(repositoryRoot, buildTool.get());
         String content = readFile(buildFile);
-        String updated = versionPattern(buildTool.get()).matcher(content).replaceAll(match -> Matcher.quoteReplacement(match.group(1) + aresVersion + match.group(3)));
-        return writeIfChanged(buildFile, content, updated);
+        return writeIfChanged(buildFile, content, withAresVersion(content, buildTool.get(), aresVersion));
+    }
+
+    /** Replaces every Ares version pinned in code, not in comments, of the build file content. */
+    private static String withAresVersion(String content, BuildTool buildTool, String aresVersion) {
+        StringBuilder updated = new StringBuilder();
+        int copiedUntil = 0;
+        for (MatchResult pin : aresVersionPins(content, buildTool)) {
+            updated.append(content, copiedUntil, pin.start()).append(pin.group(1)).append(aresVersion).append(pin.group(3));
+            copiedUntil = pin.end();
+        }
+        return updated.append(content, copiedUntil, content.length()).toString();
     }
 
     /**
@@ -530,8 +696,7 @@ public final class SecurityPolicyRepositoryFiles {
     public static Optional<BuildFileChange> pinAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom, String aresVersion) {
         return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
             String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
-            String updated = versionPattern(buildTool).matcher(content).replaceAll(match -> Matcher.quoteReplacement(match.group(1) + aresVersion + match.group(3)));
-            return new BuildFileChange(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, content, updated);
+            return new BuildFileChange(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, content, withAresVersion(content, buildTool, aresVersion));
         });
     }
 

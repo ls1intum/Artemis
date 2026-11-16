@@ -141,12 +141,70 @@ class AresPolicyAnnotationsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "", "import org.example.Policy;", "import de.tum.cit.ase.ares.api.*;\nimport org.example.Policy;" })
+    @ValueSource(strings = { "", "import org.example.Policy;", "import de.tum.cit.ase.ares.api.*;\nimport org.example.Policy;",
+            "import de.tum.cit.ase.ares.api.*;\nimport com.bücher.Policy;" })
     void keepsOtherPolicyAnnotationsUntouched(String imports) {
         String original = source(imports, "@Policy(activated = false)");
 
         assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
         assertThat(isDeactivated(original)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@Policy$Tag(\"metadata\")", "@PolicyÜ(\"metadata\")", "@de.tum.cit.ase.ares.api.Policy$Tag(\"metadata\")" })
+    void leavesAnAnnotationAloneWhoseNameOnlyStartsWithPolicy(String annotation) {
+        String original = source("import de.tum.cit.ase.ares.api.*;", annotation);
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
+    }
+
+    @Test
+    void leavesAPolicyAnnotationAloneThatTheFileDeclaresItself() {
+        // The declared annotation shadows the Ares one that the wildcard import provides, so adding the flag would break the file.
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                @interface Policy {
+                    String value();
+                }
+
+                @Policy("SecurityPolicy.yaml")
+                class SortingTest {
+                }
+                """;
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(isDeactivated(original)).isFalse();
+    }
+
+    @Test
+    void aNestedPolicyTypeShadowsTheAresAnnotationOnlyWithinItsBody() {
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                @Policy("SecurityPolicy.yaml")
+                class SortingTest {
+
+                    static class Helper {
+
+                        @interface Policy {
+                            String value();
+                        }
+
+                        @Policy("helper")
+                        static class Inner {
+                        }
+                    }
+                }
+                """;
+
+        // Only the annotation on SortingTest refers to Ares; the one inside Helper refers to Helper.Policy.
+        assertThat(AresPolicyAnnotations.find(original)).singleElement().satisfies(annotation -> assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml"));
     }
 
     @Test

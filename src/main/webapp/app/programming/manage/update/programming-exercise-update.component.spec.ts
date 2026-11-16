@@ -30,6 +30,7 @@ import {
     SecurityActivationStatus,
     SecurityFrameworkAction,
     SecurityFrameworkChoice,
+    SecurityFrameworkConfig,
     SecurityUnsupportedReasonType,
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -821,6 +822,19 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.isSaving()).toBe(false);
                 expect(navigationUtilService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalledOnce();
                 expectNoSecondRequest();
+            });
+
+            it('does not navigate when the instructor leaves the form before the verification answers', () => {
+                const verification = new Subject<SecurityFrameworkConfig>();
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(verification);
+                comp.stagedSecurityChoice.set(deactivate);
+
+                saveNewJavaExercise();
+                fixture.destroy();
+                verification.next({ status: SecurityActivationStatus.INACTIVE });
+
+                expect(verification.observed).toBe(false);
+                expect(navigationUtilService.navigateForwardFromExerciseUpdateOrCreation).not.toHaveBeenCalled();
             });
 
             it('sends the choice with an import from an exercise and verifies the new exercise, not the source', () => {

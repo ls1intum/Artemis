@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -389,15 +390,58 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.example.MoreSortingTest");
     }
 
+    @Test
+    void aSubclassOfATestClassWithAUnicodeNameIsATestClassToo() throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingÜTest");
+        writeSource("test/de/example/MoreSortingTest.java", "package de.example;\n\nclass MoreSortingTest extends SortingÜTest {\n}\n");
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.example.MoreSortingTest");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "", "@org.junit.jupiter.api.extension.ExtendWith(de.tum.cit.ase.ares.api.jupiter.JupiterSecurityExtension.class)",
-            "@de.tum.cit.ase.ares.api.jupiter.JupiterAresTest" })
+            "@de.tum.cit.ase.ares.api.jupiter.JupiterAresTest", "@Public$Tag", "@PublicÜ", "@de.tum.cit.ase.ares.api.jupiter.Public$Tag" })
     void aTestClassThatDoesNotRegisterAresThroughItsMarkersIsUnsupported(String registration) throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
         writeSource("test/de/example/OtherTest.java", TEST_CLASS.formatted("de.example", "OtherTest").replace("@Public", registration));
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES, "de.example.OtherTest");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@PublicTest$Tag", "@PublicTestÜ", "@de.tum.cit.ase.ares.api.jupiter.PublicTest$Tag" })
+    void aMethodAnnotationWhoseNameOnlyStartsWithAnAresMarkerDoesNotRegisterAres(String annotation) throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        writeSource("test/de/example/OtherTest.java", TEST_CLASS.formatted("de.example", "OtherTest").replace("jupiter.Public;", "jupiter.*;").replace("@Public\n", "")
+                .replace("@Test\n", "@Test\n    " + annotation + "\n"));
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES, "de.example.OtherTest");
+    }
+
+    @Test
+    void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        // The declared annotation shadows the Ares one that the wildcard import provides.
+        writeSource("test/de/example/OtherTest.java", TEST_CLASS.formatted("de.example", "OtherTest").replace("import de.tum.cit.ase.ares.api.jupiter.Public;",
+                "import de.tum.cit.ase.ares.api.jupiter.*;\n\n@interface Public {\n}"));
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES, "de.example.OtherTest");
+    }
+
+    @Test
+    void aNestedTypeShadowsAMarkerOnlyWithinItsBody() throws IOException {
+        writeBuildFile();
+        // Helper.Public is in scope only inside SortingTest's body, so the @Public on SortingTest itself is still the Ares marker.
+        writeSource("test/de/example/SortingTest.java",
+                TEST_CLASS.formatted("de.example", "SortingTest").replace("import de.tum.cit.ase.ares.api.jupiter.Public;", "import de.tum.cit.ase.ares.api.jupiter.*;")
+                        .replace("    @Test\n", "    static class Helper {\n\n        @interface Public {\n        }\n    }\n\n    @Test\n"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
     @Test
@@ -426,6 +470,16 @@ class SecurityPolicyRepositoryFilesTest {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
         writeSource("test/de/other/MoreSortingTest.java", "package de.other;\n\nimport de.example.*;\n\nclass MoreSortingTest extends SortingTest {\n}\n");
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.other.MoreSortingTest");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "import de.bücher.SortingÜTest;", "import de.bücher.*;" })
+    void aSubclassInAnotherPackageOfAnImportedTestClassWithAUnicodeNameIsATestClass(String importDeclaration) throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/buecher/SortingTest.java", "de.bücher", "SortingÜTest");
+        writeSource("test/de/other/MoreSortingTest.java", "package de.other;\n\n" + importDeclaration + "\n\nclass MoreSortingTest extends SortingÜTest {\n}\n");
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.other.MoreSortingTest");
     }
@@ -560,5 +614,72 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext {\n    aresVersion = '2.3.0'\n}\n", null)).contains("2.3.0");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<properties><ares.version>2.2.1</ares.version></properties>")).contains("2.2.1");
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<project/>")).isEmpty();
+    }
+
+    @Test
+    void ignoresAresVersionsInComments() {
+        String gradleBuild = "// aresVersion = '2.3.0'\n/* aresVersion = \"9.9.9\" */\nrepositories { maven { url 'https://example.org/maven' } }\ndef aresVersion = '2.2.1'\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("// aresVersion = '2.3.0'\n", null)).isEmpty();
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<!-- <ares.version>2.3.0</ares.version> -->\n<ares.version>2.2.1</ares.version>")).contains("2.2.1");
+    }
+
+    @Test
+    void ignoresAresVersionsInGradleStrings() {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("def example = \"aresVersion = '2.3.0'\"\next { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @Test
+    void readsAndWritesOnlyTheAresVersionItselfAndNotALongerName() throws IOException {
+        String gradleBuild = "def previous_aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.2.1'\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo("def previous_aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.4.0'\n");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def example = /aresVersion = '2.3.0'/\n", "def example = $/aresVersion = '2.3.0'/$\n", "def example() {\n    return /aresVersion = '2.3.0'/\n}\n" })
+    void ignoresAresVersionsInGradleSlashyStrings(String example) throws IOException {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(example + "ext { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), example + "ext { aresVersion = '2.2.1' }\n", StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(example + "ext { aresVersion = '2.4.0' }\n");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def half = total / 2\n", "def half = n++ / 2\n", "def half = n-- / 2\n", "def half = this / 2\n" })
+    void readsAndWritesAnAresVersionAfterADivision(String division) throws IOException {
+        String gradleBuild = division + "ext { aresVersion = '2.2.1' }\ndef third = total / 3\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild.replace("2.2.1", "2.4.0"));
+    }
+
+    @Test
+    void aGeneratedPolicyListsTestClassesWithUnicodeNamesCompletely() throws IOException {
+        writeBuildFile();
+        // The file name stays ASCII, so the test does not depend on how the file system encodes names; Java only requires it for public classes.
+        writeTestClass("test/de/buecher/SortingTest.java", "de.bücher", "SortingÜTest");
+
+        String policy = SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, SecurityPolicyRepositoryFiles.BuildTool.GRADLE, Optional.of("de.bücher"), "");
+
+        assertThat(policy).contains("    - \"de.bücher.SortingÜTest\"\n");
+    }
+
+    @Test
+    void pinsTheVersionOnlyWhereTheBuildReadsIt() throws IOException {
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), "// aresVersion = '2.3.0'\ndef aresVersion = '2.2.1'\n", StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo("// aresVersion = '2.3.0'\ndef aresVersion = '2.4.0'\n");
     }
 }

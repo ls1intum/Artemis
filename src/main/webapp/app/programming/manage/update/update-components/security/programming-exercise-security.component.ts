@@ -373,8 +373,17 @@ export class ProgrammingExerciseSecurityComponent {
     private pendingReseed?: SecurityFrameworkChoice;
     /** The source exercise whose config was last requested, so a late response for an earlier source is discarded. */
     private requestedSourceId?: number;
-    /** The last sync operation started, kept so {@link onRetry} can re-run exactly what failed. */
-    private pendingOperation?: { transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
+    /** The last sync operation started, kept so {@link onRetry} can re-run exactly what failed, and the exercise it changes. */
+    private pendingOperation?: { visit: number; transientPatch: Partial<SecurityFrameworkConfig>; run: () => Observable<SecurityFrameworkConfig> };
+    /** The exercise whose config the card shows in edit mode. */
+    private loadedExerciseId?: number;
+    /**
+     * Counts the exercises the card has shown, including a return to an earlier one (A, B, A), so a late response of an earlier visit is discarded even if
+     * it is for the same exercise.
+     */
+    private visit = 0;
+    /** Counts the loads of the config or of the source config of an import, so a late load never overwrites a newer one. */
+    private loadCount = 0;
 
     constructor() {
         this.securityService.getVersions().subscribe({
@@ -403,6 +412,16 @@ export class ProgrammingExerciseSecurityComponent {
                 return;
             }
             untracked(() => this.seed());
+        });
+
+        // Edit mode: the route can reuse this card for another exercise. Drop everything that belongs to the previous one, including a failed operation
+        // that Retry would re-run, and load the config of the new one.
+        effect(() => {
+            const exerciseId = this.editExerciseId();
+            if (!this.seeded() || exerciseId === undefined || exerciseId === this.loadedExerciseId) {
+                return;
+            }
+            untracked(() => this.switchToExercise(exerciseId));
         });
 
         // Import from an exercise: load the source's config, again whenever the source changes.
@@ -454,12 +473,30 @@ export class ProgrammingExerciseSecurityComponent {
         this.lastSettledActive.set(active);
     }
 
+    private switchToExercise(exerciseId: number): void {
+        // A confirmation that is still open belongs to the previous exercise.
+        if (this.deactivationPending()) {
+            this.confirmationService.close(DEACTIVATE_CONFIRMATION_KEY);
+            this.deactivationPending.set(false);
+        }
+        this.visit++;
+        this.pendingOperation = undefined;
+        this.config.set({ status: SecurityActivationStatus.CONFIGURED });
+        this.lastSettledActive.set(true);
+        this.loadConfig(exerciseId);
+    }
+
     /** Loads the persisted config (edit mode); a failure surfaces a distinct load-error state instead of a misleading INACTIVE. */
     private loadConfig(exerciseId: number): void {
+        this.loadedExerciseId = exerciseId;
+        const load = ++this.loadCount;
         this.loadFailed.set(false);
         this.loading.set(true);
         this.securityService.getConfig(exerciseId).subscribe({
             next: (config) => {
+                if (load !== this.loadCount) {
+                    return;
+                }
                 this.loading.set(false);
                 // An operation started while the config was still loading owns the state now; a late load must not overwrite its result.
                 if (this.pendingOperation) {
@@ -469,6 +506,9 @@ export class ProgrammingExerciseSecurityComponent {
                 this.lastSettledActive.set(isSecurityConfigured(config));
             },
             error: () => {
+                if (load !== this.loadCount) {
+                    return;
+                }
                 this.loading.set(false);
                 this.loadFailed.set(true);
             },
@@ -482,7 +522,9 @@ export class ProgrammingExerciseSecurityComponent {
         this.importAction.set('KEEP');
         this.loadFailed.set(false);
         this.loading.set(true);
-        const isCurrent = () => this.requestedSourceId === sourceId && this.sourceExerciseId() === sourceId;
+        // The load number also discards a late response for the same source after a return to it (A, B, A).
+        const load = ++this.loadCount;
+        const isCurrent = () => load === this.loadCount && this.requestedSourceId === sourceId && this.sourceExerciseId() === sourceId;
         this.securityService.getConfig(sourceId).subscribe({
             next: (config) => {
                 if (!isCurrent()) {
@@ -606,7 +648,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Retry after an ERROR: re-run whichever sync operation failed (activation, deactivation or a version change). */
     onRetry(): void {
-        if (this.pendingOperation && this.editExerciseId() !== undefined) {
+        if (this.pendingOperation?.visit === this.visit) {
             this.runOperation(this.pendingOperation.transientPatch, this.pendingOperation.run);
         }
     }
@@ -683,6 +725,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Deactivating commits to the tests repository and runs the builds again, so the instructor confirms it; cancelling leaves everything as it was. */
     private confirmDeactivation(exerciseId: number): void {
+        const visit = this.visit;
         this.deactivationPending.set(true);
         this.confirmationService.confirm({
             key: DEACTIVATE_CONFIRMATION_KEY,
@@ -693,6 +736,10 @@ export class ProgrammingExerciseSecurityComponent {
             acceptSeverity: 'danger',
             accept: () => {
                 this.deactivationPending.set(false);
+                // The card may have been reused for another exercise while the confirmation was open; never deactivate the previous one.
+                if (visit !== this.visit) {
+                    return;
+                }
                 this.runOperation({ status: SecurityActivationStatus.DELETING }, () => this.securityService.deactivate(exerciseId));
             },
             reject: () => this.deactivationPending.set(false),
@@ -707,20 +754,28 @@ export class ProgrammingExerciseSecurityComponent {
      * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available and Repair doubles as the retry.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
-        if (!this.isEditMode()) {
+        if (this.editExerciseId() === undefined) {
             return;
         }
+        const visit = this.visit;
         const statusOnFailure = this.isMisconfigured() ? SecurityActivationStatus.MISCONFIGURED : SecurityActivationStatus.ERROR;
         // A misconfigured exercise falls back to its settled state on failure, which includes the version the repository still pins.
         const versionBefore = this.config().frameworkVersion;
-        this.pendingOperation = { transientPatch, run };
+        this.pendingOperation = { visit, transientPatch, run };
         this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
             next: (next) => {
+                // The card was reused for another exercise while this ran; its state belongs to that visit now.
+                if (visit !== this.visit) {
+                    return;
+                }
                 this.pendingOperation = undefined;
                 this.settle(next);
             },
             error: (error: unknown) => {
+                if (visit !== this.visit) {
+                    return;
+                }
                 const errorDetail = this.errorDetailOf(error);
                 if (statusOnFailure === SecurityActivationStatus.MISCONFIGURED) {
                     this.patchConfig({ status: statusOnFailure, errorDetail, frameworkVersion: versionBefore });

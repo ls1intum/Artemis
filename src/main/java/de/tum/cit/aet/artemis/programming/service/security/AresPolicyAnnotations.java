@@ -30,9 +30,21 @@ final class AresPolicyAnnotations {
 
     private static final String ARES_POLICY = "de.tum.cit.ase.ares.api.Policy";
 
-    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile("@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy\\b");
+    /**
+     * The end of a Java identifier: unlike {@code \b}, it also rejects {@code $} and non-ASCII letters, so {@code @Policy$Tag} or {@code @PolicyÜ} is no
+     * {@code @Policy}.
+     */
+    static final String END_OF_IDENTIFIER = "(?!\\p{javaJavaIdentifierPart})";
 
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\s*;");
+    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile("@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy" + END_OF_IDENTIFIER);
+
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
+
+    /** A Java identifier; it may contain any Unicode letter, e.g. {@code SortingÜTest}, so it uses the identifier classes of {@link Character}. */
+    private static final String JAVA_IDENTIFIER = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+";
+
+    /** A declaration of a type, of any kind and at any depth; the second group is its simple name. */
+    static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\p{javaJavaIdentifierPart}.])(?:class|interface|enum|record))\\s+(" + JAVA_IDENTIFIER + ")");
 
     private static final Pattern ARES_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.\\*\\s*;");
 
@@ -120,17 +132,17 @@ final class AresPolicyAnnotations {
                     && literal.indexOf('\\') < 0 && literal.indexOf('"', 1) == literal.length() - 1;
             return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
         }
-    }
 
-    /**
-     * Removes the parentheses that enclose a whole expression, like {@code ((false))}, but not those of {@code (a) + (b)}.
-     */
-    private static String withoutOuterParentheses(String expression) {
-        String result = expression.strip();
-        while (result.startsWith("(") && matchingParenthesis(mask(result), 0) == result.length() - 1) {
-            result = result.substring(1, result.length() - 1).strip();
+        /**
+         * Removes the parentheses that enclose a whole expression, like {@code ((false))}, but not those of {@code (a) + (b)}.
+         */
+        private static String withoutOuterParentheses(String expression) {
+            String result = expression.strip();
+            while (result.startsWith("(") && matchingParenthesis(mask(result), 0) == result.length() - 1) {
+                result = result.substring(1, result.length() - 1).strip();
+            }
+            return result;
         }
-        return result;
     }
 
     /**
@@ -342,7 +354,7 @@ final class AresPolicyAnnotations {
         Matcher names = POLICY_ANNOTATION_NAME.matcher(masked);
         while (names.find()) {
             boolean qualified = names.group(1) != null;
-            if (qualified || (simpleNameIsAres && !isPartOfQualifiedName(masked, names.start()))) {
+            if (qualified || (simpleNameIsAres && !isPartOfQualifiedName(masked, names.start()) && !isShadowedAt(masked, "Policy", names.start()))) {
                 annotation(sources, names.start(), names.end()).ifPresent(annotations::add);
             }
         }
@@ -375,6 +387,79 @@ final class AresPolicyAnnotations {
      */
     private static boolean isPartOfQualifiedName(String masked, int at) {
         return at > 0 && (Character.isJavaIdentifierPart(masked.charAt(at - 1)) || masked.charAt(at - 1) == '.');
+    }
+
+    /**
+     * A type that the file declares itself, e.g. {@code @interface Policy}, shadows a type of the same name that an import provides (JLS 6.4.1): a
+     * top-level type in the whole file, a member or local type only within the body that declares it. Where it is shadowed, the simple name does not
+     * refer to Ares.
+     *
+     * @param masked     the source with comments and literals masked
+     * @param simpleName the simple name of a type
+     * @param offset     where the simple name is used
+     * @return whether a type that the file declares shadows the simple name at the offset
+     */
+    static boolean isShadowedAt(String masked, String simpleName, int offset) {
+        Matcher declarations = TYPE_DECLARATION.matcher(masked);
+        while (declarations.find()) {
+            if (declarations.group(2).equals(simpleName) && isInScopeOf(masked, declarations.start(), offset)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return whether the offset lies in the scope of the declaration that starts at {@code declarationStart}: the whole file for a top-level declaration,
+     *         otherwise the body that contains it
+     */
+    private static boolean isInScopeOf(String masked, int declarationStart, int offset) {
+        int scopeStart = enclosingOpeningBrace(masked, declarationStart);
+        if (scopeStart < 0) {
+            return true;
+        }
+        int scopeEnd = matchingBrace(masked, scopeStart);
+        return offset > scopeStart && (scopeEnd < 0 || offset < scopeEnd);
+    }
+
+    /**
+     * @return the offset of the innermost brace that is open at the offset; -1 at the top level of the file
+     */
+    private static int enclosingOpeningBrace(String masked, int offset) {
+        int depth = 0;
+        for (int index = offset - 1; index >= 0; index--) {
+            char character = masked.charAt(index);
+            if (character == '}') {
+                depth++;
+            }
+            else if (character == '{') {
+                if (depth == 0) {
+                    return index;
+                }
+                depth--;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @return the offset of the brace that closes the one at {@code open}, or -1 if there is none
+     */
+    private static int matchingBrace(String masked, int open) {
+        int depth = 0;
+        for (int index = open; index < masked.length(); index++) {
+            char character = masked.charAt(index);
+            if (character == '{') {
+                depth++;
+            }
+            else if (character == '}') {
+                depth--;
+                if (depth == 0) {
+                    return index;
+                }
+            }
+        }
+        return -1;
     }
 
     private static boolean simpleNameRefersToAres(String masked) {

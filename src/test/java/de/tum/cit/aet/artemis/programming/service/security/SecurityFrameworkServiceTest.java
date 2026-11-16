@@ -792,6 +792,18 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void aVersionIsNotVerifiedIfAPolicyFileCannotBeRead() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        pushPolicyAndVersion(CUSTOM_POLICY, "2.2.1");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(),
+                NEW_TEST_CLASS.replace("\"SecurityPolicy.yaml\"", "\"MissingPolicy.yaml\""), StandardCharsets.UTF_8));
+
+        // The readable file is accepted by 2.2.1, but the missing one cannot be checked.
+        assertThat(securityFrameworkService.getConfig(exercise).versionCompatibilities())
+                .contains(new SecurityFrameworkConfigDTO.VersionCompatibilityDTO("2.2.1", "UNVERIFIED", List.of()));
+    }
+
+    @Test
     void creatingFromATemplateIsRefusedIfTheChosenVersionDoesNotAcceptTheTemplatePolicy() throws Exception {
         // The real templates are accepted by every listed release.
         securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));

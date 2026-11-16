@@ -21,6 +21,7 @@ import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -51,6 +52,14 @@ public class PlagiarismSubmission extends DomainObject {
      */
     @Column(name = "submission_id")
     private long submissionId;
+
+    /**
+     * Hash of the commit that was compared, only set for programming submissions. It lets the comparison view show exactly the compared state.
+     * It is only used on the server and not part of the serialized form.
+     */
+    @JsonIgnore
+    @Column(name = "commit_hash", length = 64)
+    private String commitHash;
 
     /**
      * Login of the student who created the submission.
@@ -136,6 +145,10 @@ public class PlagiarismSubmission extends DomainObject {
         submission.setScore(null); // TODO
 
         return submission;
+    }
+
+    public void setCommitHash(String commitHash) {
+        this.commitHash = commitHash;
     }
 
     public String getStudentLogin() {

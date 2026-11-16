@@ -557,6 +557,94 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(service.activate).not.toHaveBeenCalled();
     });
 
+    it('drops the failed operation of the previous exercise and loads the new one when the card is reused for another exercise', () => {
+        initEdit(configuredConfig());
+        service.deactivate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        deactivateConfirmed();
+        expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+
+        service.getConfig.mockReturnValue(of(inactiveConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+
+        expect(service.getConfig).toHaveBeenLastCalledWith(43);
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        comp.onRetry();
+        expect(service.deactivate).toHaveBeenCalledOnce();
+        expect(service.deactivate).toHaveBeenCalledWith(42);
+    });
+
+    it('closes an open deactivation confirmation and never deactivates the previous exercise when the card is reused for another one', () => {
+        initEdit(configuredConfig());
+        const request = captureConfirmation();
+        const close = vi.spyOn(confirmationService(), 'close');
+        comp.onToggleChanged(false);
+
+        service.getConfig.mockReturnValue(of(configuredConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+
+        expect(close).toHaveBeenCalledOnce();
+        expect(comp.isToggleOn()).toBe(true);
+        request().accept();
+        expect(service.deactivate).not.toHaveBeenCalled();
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+    });
+
+    it('ignores a late result of an earlier visit after returning to the same exercise', () => {
+        initEdit(configuredConfig());
+        const lateDeactivation = new Subject<SecurityFrameworkConfig>();
+        service.deactivate.mockReturnValueOnce(lateDeactivation);
+        deactivateConfirmed();
+
+        service.getConfig.mockReturnValue(of(configuredConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('programmingExercise', javaExercise(42));
+        fixture.detectChanges();
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+        lateDeactivation.next(inactiveConfig());
+
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+    });
+
+    it('never lets a late load overwrite a newer one', () => {
+        const firstLoad = new Subject<SecurityFrameworkConfig>();
+        service.getConfig.mockReturnValueOnce(firstLoad);
+        const exercise = javaExercise(42);
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('mode', 'edit');
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.detectChanges();
+
+        service.getConfig.mockReturnValue(of(inactiveConfig()));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('programmingExercise', javaExercise(42));
+        fixture.detectChanges();
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+
+        firstLoad.next(configuredConfig());
+
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+    });
+
+    it('ignores a late result of an operation on the previous exercise', () => {
+        initEdit(configuredConfig());
+        const result = new Subject<SecurityFrameworkConfig>();
+        service.deactivate.mockReturnValueOnce(result);
+        deactivateConfirmed();
+
+        service.getConfig.mockReturnValue(of(configuredConfig('3.3.0')));
+        fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+        fixture.detectChanges();
+        result.next(inactiveConfig());
+
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+        expect(comp.config().frameworkVersion).toBe('3.3.0');
+    });
+
     it('re-syncs when the framework version changes on an active exercise', () => {
         initEdit(configuredConfig('3.4.1'));
         const update$ = new Subject<SecurityFrameworkConfig>();
@@ -798,6 +886,33 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             firstLoad$.complete();
             expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
             expect(comp.sourceConfig()?.status).toBe(SecurityActivationStatus.INACTIVE);
+        });
+
+        it('discards a late config response of an earlier selection of the same source', () => {
+            const firstLoad$ = new Subject<SecurityFrameworkConfig>();
+            service.getConfig.mockReturnValueOnce(firstLoad$.asObservable());
+            fixture.componentRef.setInput('programmingExercise', javaExercise(7));
+            fixture.componentRef.setInput('mode', 'import');
+            fixture.componentRef.setInput('sourceExerciseId', 7);
+            fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+            fixture.detectChanges();
+
+            service.getConfig.mockReturnValue(of(inactiveConfig()));
+            fixture.componentRef.setInput('programmingExercise', javaExercise(8));
+            fixture.componentRef.setInput('sourceExerciseId', 8);
+            fixture.detectChanges();
+            fixture.componentRef.setInput('programmingExercise', javaExercise(7));
+            fixture.componentRef.setInput('sourceExerciseId', 7);
+            fixture.detectChanges();
+            expect(service.getConfig).toHaveBeenLastCalledWith(7);
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+
+            firstLoad$.next(configuredConfig());
+            firstLoad$.complete();
+            fixture.detectChanges();
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+            expect(comp.sourceConfig()?.status).toBe(SecurityActivationStatus.INACTIVE);
+            expect(comp.choiceToSend()).toBeUndefined();
         });
 
         it('shows the reasons of an UNSUPPORTED source without a switch or version select, and sends nothing', () => {
