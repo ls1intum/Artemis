@@ -66,7 +66,7 @@ test.describe.serial('Exam results publication and review period', { tag: '@slow
         await expect(page.locator('#text-editor')).toHaveValue((await Fixtures.get('loremIpsum-short.txt'))!);
         // ... but nothing of the assessment, for the client and for the server alike.
         await expect(page.getByTestId('achieved-percentage')).toHaveCount(0);
-        await expect(page.locator('#complain')).toHaveCount(0);
+        await expect(page.getByTestId('complain')).toHaveCount(0);
         const gradeSummary = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/student-exams/${studentExamId}/grade-summary`);
         expect(gradeSummary.status()).toBe(403);
     });
@@ -89,11 +89,11 @@ test.describe.serial('Exam results publication and review period', { tag: '@slow
         const gradeSummary = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/student-exams/${studentExamId}/grade-summary`);
         expect(gradeSummary.status()).toBe(200);
         expect((await gradeSummary.json()).studentResult.overallPointsAchieved).toBe(7);
-        await expect(page.locator('#complain')).toBeVisible();
+        await expect(page.getByTestId('complain')).toBeVisible();
 
         // The review period ends: the result stays, the complaint form goes.
         await asAdmin(browser, (adminExamRequests) => adminExamRequests.waitUntilServerClockIsAfter(exam, reviewEnd));
         await expect(page.getByTestId('achieved-percentage').first()).toContainText('70%');
-        await expect(page.locator('#complain')).toHaveCount(0);
+        await expect(page.getByTestId('complain')).toHaveCount(0);
     });
 });
