@@ -101,10 +101,6 @@ public class CourseRequestService {
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
         var requester = userRepository.getUserWithAuthorities();
-        if (courseRequestRepository.countByRequesterIdAndStatus(requester.getId(), CourseRequestStatus.PENDING) >= MAX_PENDING_REQUESTS_PER_USER) {
-            throw new BadRequestAlertException("There are too many course requests waiting for a decision, please wait for a decision before you send another one",
-                    CourseRequest.ENTITY_NAME, "courseRequestTooManyPending");
-        }
         validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
         boolean gradeRelevant = resolveGradeRelevant(createDTO);
 
@@ -132,7 +128,7 @@ public class CourseRequestService {
         courseRequest.setCreatedDate(ZonedDateTime.now());
         courseRequest.setStatus(CourseRequestStatus.PENDING);
 
-        courseRequest = courseRequestRepository.save(courseRequest);
+        courseRequest = courseRequestRepository.saveWithPendingLimit(courseRequest, MAX_PENDING_REQUESTS_PER_USER);
         notifyContact(courseRequest);
         sendReceivedEmail(requester, courseRequest);
 

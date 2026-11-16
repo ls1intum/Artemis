@@ -56,9 +56,6 @@ public class UserSshPublicKeyService {
         if (sshPublicKey.expiryDate() != null && sshPublicKey.expiryDate().isBefore(ZonedDateTime.now())) {
             throw new BadRequestAlertException("The expiry date of the key must not lie in the past", "SSH key", "keyExpiryDateInPast", true);
         }
-        if (userSshPublicKeyRepository.countByUserId(user.getId()) >= MAX_KEYS_PER_USER) {
-            throw new BadRequestAlertException("The maximum number of " + MAX_KEYS_PER_USER + " keys is reached", "SSH key", "tooManyKeys", true);
-        }
         if (userSshPublicKeyRepository.findByKeyHash(keyHash).isPresent()) {
             throw new BadRequestAlertException("The key cannot be added", "SSH key", "keyNotAccepted", true);
         }
@@ -75,7 +72,7 @@ public class UserSshPublicKeyService {
             newUserSshPublicKey.setExpiryDate(expiryDate);
         }
 
-        userSshPublicKeyRepository.save(newUserSshPublicKey);
+        userSshPublicKeyRepository.saveWithUserLimit(newUserSshPublicKey, MAX_KEYS_PER_USER);
     }
 
     /**

@@ -43,6 +43,19 @@ public final class RateLimitTestUtil {
      * @throws Exception if the action fails
      */
     public static void withRateLimits(LimitRequestsPerMinuteAspect requestLimitAspect, Consumer<RateLimitingProperties> customizer, ThrowingAction action) throws Exception {
+        try (var ignored = useRateLimits(requestLimitAspect, customizer)) {
+            action.run();
+        }
+    }
+
+    /**
+     * Installs fresh rate-limit buckets until the returned scope is closed. Useful for per-test setup and teardown.
+     *
+     * @param requestLimitAspect the aspect enforcing request limits
+     * @param customizer         configures the temporary limits
+     * @return a scope restoring the original limiter
+     */
+    public static AutoCloseable useRateLimits(LimitRequestsPerMinuteAspect requestLimitAspect, Consumer<RateLimitingProperties> customizer) {
         var properties = new RateLimitingProperties();
         properties.setEnabled(true);
         customizer.accept(properties);
@@ -51,12 +64,7 @@ public final class RateLimitTestUtil {
         var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
         Object aspectTarget = AopTestUtils.getUltimateTargetObject(requestLimitAspect);
         Object originalLimiter = ReflectionTestUtils.getField(aspectTarget, "rateLimitService");
-        try {
-            ReflectionTestUtils.setField(aspectTarget, "rateLimitService", limiter);
-            action.run();
-        }
-        finally {
-            ReflectionTestUtils.setField(aspectTarget, "rateLimitService", originalLimiter);
-        }
+        ReflectionTestUtils.setField(aspectTarget, "rateLimitService", limiter);
+        return () -> ReflectionTestUtils.setField(aspectTarget, "rateLimitService", originalLimiter);
     }
 }

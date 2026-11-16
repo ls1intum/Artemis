@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,14 +61,22 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private User student;
 
+    private AutoCloseable rateLimits;
+
     @BeforeEach
     void setUp() {
+        rateLimits = RateLimitTestUtil.useRateLimits(requestLimitAspect, properties -> properties.setCourseRequestRequestsPerMinute(1000));
         student = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
         userUtilService.addAdmin(TEST_PREFIX);
         // the requests of earlier tests would count towards the limit of pending requests of the user
         courseRequestRepository
                 .deleteAll(courseRequestRepository.findAll().stream().filter(courseRequest -> student.getId().equals(courseRequest.getRequester().getId())).toList());
+    }
+
+    @AfterEach
+    void restoreRateLimits() throws Exception {
+        rateLimits.close();
     }
 
     // ==================== CourseRequestResource Tests ====================
