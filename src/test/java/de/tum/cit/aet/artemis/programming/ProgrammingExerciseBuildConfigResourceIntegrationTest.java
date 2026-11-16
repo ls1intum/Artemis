@@ -7,7 +7,10 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +23,9 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -513,7 +518,10 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsContainerWithoutPhases() throws Exception {
-        request.put(buildConfigEndpoint(), configurationWith(List.of(new BuildContainerDTO("tests", DOCKER_IMAGE, List.of()))), HttpStatus.BAD_REQUEST);
+        // the endpoint returns the error of the shared validator that names the container, as the exercise update does
+        var body = request.getObjectMapper().writeValueAsString(configurationWith(List.of(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of()))));
+        request.performMvcRequest(MockMvcRequestBuilders.put(new URI(buildConfigEndpoint())).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("emptyBuildContainer")).andExpect(jsonPath("$.params.container").value("student_tests"));
     }
 
     @Test
