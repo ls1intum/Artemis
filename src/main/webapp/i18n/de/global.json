@@ -371,7 +371,7 @@
             "confirmpassword.placeholder": "Bestätige dein neues Passwort",
             "email": "E-Mail-Adresse",
             "email.placeholder": "E-Mail-Adresse",
-            "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
+            "email.pattern": "Erlaubte E-Mail-Adressen:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
             "refresh": "Aktualisieren",
@@ -413,7 +413,7 @@
                     "invalid": "Deine E-Mail-Adresse ist ungültig.",
                     "minlength": "Deine E-Mail-Adresse muss mindestens 5 Zeichen lang sein",
                     "maxlength": "Deine E-Mail-Adresse darf nicht länger als 100 Zeichen sein",
-                    "pattern": "Deine E-Mail-Adresse entspricht nicht dem geforderten Muster."
+                    "notAllowed": "Diese E-Mail-Adresse ist nicht erlaubt."
                 }
             }
         },

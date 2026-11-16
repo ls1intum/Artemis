@@ -7,7 +7,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { map } from 'rxjs/operators';
 import { round } from 'app/foundation/util/utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Service()
 export class StatisticsService {
@@ -81,9 +81,8 @@ export class StatisticsService {
     }
 
     private static convertExerciseCategoriesOfCourseManagementStatisticsFromServer(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
-        res.averageScoresOfExercises.forEach((avgScoresOfExercise) => {
-            avgScoresOfExercise.categories = avgScoresOfExercise.categories?.map((category) => new ExerciseCategory(category.category, category.color));
-        });
+        // The server sends the categories of an exercise as JSON strings, the way they are stored, not as objects.
+        res.averageScoresOfExercises.forEach((avgScoresOfExercise) => ExerciseService.parseExerciseCategories(avgScoresOfExercise));
         return res;
     }
 }

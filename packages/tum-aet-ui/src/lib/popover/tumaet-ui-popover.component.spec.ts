@@ -82,6 +82,48 @@ describe('TumAetUiPopoverComponent', () => {
             view.matchMedia = previous;
         });
 
+        it('announces that it is gone only after the fade, when the panel has handed focus back', async () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            fixture.detectChanges();
+            const closedSpy = vi.spyOn(component.closed, 'emit');
+
+            component.close();
+            expect(closedSpy).not.toHaveBeenCalled();
+
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(panel()).toBeNull();
+            expect(closedSpy).toHaveBeenCalledOnce();
+        });
+
+        it('announces that it is gone at once when there is no fade', () => {
+            const closedSpy = vi.spyOn(component.closed, 'emit');
+            component.open(origin);
+            fixture.detectChanges();
+
+            component.close();
+
+            expect(closedSpy).toHaveBeenCalledOnce();
+        });
+
+        it('stays silent when the component is destroyed before the fade ends', async () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            fixture.detectChanges();
+            const closedSpy = vi.spyOn(component.closed, 'emit');
+            component.close();
+
+            fixture.destroy();
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(closedSpy).not.toHaveBeenCalled();
+        });
+
         it('opens again cleanly while the last one is still leaving', async () => {
             const { finish } = stubAnimations();
             component.open(origin);

@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -69,6 +70,8 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         AssessmentNotPossibleYetComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {

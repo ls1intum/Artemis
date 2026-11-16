@@ -1,5 +1,5 @@
 @if (binding()?.available !== false) {
-    <section class="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6" aria-labelledby="gocast-heading">
+    <section class="mx-auto flex max-w-3xl flex-col gap-6! p-6! sm:p-6" aria-labelledby="gocast-heading">
         <header class="flex flex-col gap-2">
             <h2 id="gocast-heading" class="m-0 text-2xl font-semibold" jhiTranslate="artemisApp.gocast.title"></h2>
             <p class="m-0 text-(--text-body-secondary)" jhiTranslate="artemisApp.gocast.description"></p>
@@ -27,14 +27,14 @@
                 <span jhiTranslate="artemisApp.gocast.loading"></span>
             </p>
         } @else if (binding(); as current) {
-            <div class="rounded-xl border border-default bg-surface p-4 sm:p-5">
-                <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="rounded-xl border border-default bg-surface p-6! sm:p-5">
+                <div class="flex flex-wrap items-center justify-between gap-4!">
                     <span class="text-sm font-medium text-(--text-body-secondary)" jhiTranslate="artemisApp.gocast.status.label"></span>
                     <tumaet-ui-tag [severity]="statusSeverity()" [value]="'artemisApp.gocast.status.' + current.status.toLowerCase() | artemisTranslate" />
                 </div>
 
                 @if (current.courseName) {
-                    <dl class="mt-4 mb-0 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <dl class="mt-6! mb-0 grid grid-cols-1 gap-4! sm:grid-cols-2">
                         <div class="min-w-0">
                             <dt class="text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.gocast.courseName"></dt>
                             <dd class="mt-1 mb-0 break-words font-semibold">{{ current.courseName }}</dd>
@@ -47,25 +47,25 @@
                 }
 
                 @if (current.expiresAt && (current.status === 'PENDING' || current.status === 'EXPIRED')) {
-                    <p class="mt-4 mb-0 text-(--text-body-secondary)">
+                    <p class="mt-6! mb-0 text-(--text-body-secondary)">
                         <span jhiTranslate="artemisApp.gocast.expires"></span>
                         {{ current.expiresAt | artemisDate: 'long' }}
                     </p>
                 }
 
                 @if (current.upstreamUnavailable) {
-                    <tumaet-ui-message severity="error" class="mt-4 block">
+                    <tumaet-ui-message severity="error" class="mt-6! block">
                         <span jhiTranslate="artemisApp.gocast.refreshUnavailable"></span>
                     </tumaet-ui-message>
                 }
 
                 @if (isRestricted()) {
-                    <tumaet-ui-message severity="warn" class="mt-4 block">
+                    <tumaet-ui-message severity="warn" class="mt-6! block">
                         <span jhiTranslate="artemisApp.gocast.restrictedWarning"></span>
                     </tumaet-ui-message>
                 }
 
-                <div class="mt-4 flex flex-wrap gap-3 border-t border-default pt-4">
+                <div class="mt-6! flex flex-wrap gap-4! border-t border-default pt-6!">
                     @if (current.status === 'UNLINKED' || current.status === 'PENDING' || current.status === 'EXPIRED' || current.status === 'REVOKED') {
                         <tumaet-ui-button severity="primary" [loading]="action() === 'connect'" [disabled]="!!action()" (clicked)="connect()">
                             <span [jhiTranslate]="current.status === 'UNLINKED' ? 'artemisApp.gocast.connect' : 'artemisApp.gocast.restart'"></span>

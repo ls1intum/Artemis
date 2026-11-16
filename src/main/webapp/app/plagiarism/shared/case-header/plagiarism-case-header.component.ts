@@ -9,6 +9,8 @@ import { getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 @Component({
     selector: 'div[jhi-plagiarism-case-header]',
     templateUrl: './plagiarism-case-header.component.html',
+    // Bootstrap's row: wrapping flex with the negative margin that the 12px padding of the columns cancels
+    host: { class: '-mx-3 flex flex-wrap' },
     imports: [FaIconComponent, TranslateDirective, PlagiarismCaseVerdictComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

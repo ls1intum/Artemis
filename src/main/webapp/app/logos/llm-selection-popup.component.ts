@@ -1,6 +1,7 @@
-import { Component, ElementRef, OnDestroy, OnInit, effect, inject, output, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -11,11 +12,10 @@ import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/a
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
     styleUrls: ['./llm-selection-popup.component.scss'],
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
-    protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
@@ -24,14 +24,8 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     readonly isVisible = signal(false);
     readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
     private modalSubscription?: Subscription;
-    private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 
     readonly isOnPremiseEnabled = signal<boolean>(undefined!);
-
-    constructor() {
-        // Focus starts on the button that opened the dialog; move it inside so keyboard users, and Escape, reach it right away.
-        effect(() => this.dialog()?.nativeElement.focus());
-    }
 
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
@@ -81,8 +75,9 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
-    onBackdropClick(event: MouseEvent): void {
-        if (event.target === event.currentTarget) {
+    /** Escape and a click on the backdrop close the dialog itself; the popup answers that as a dismissal. */
+    onVisibleChange(visible: boolean): void {
+        if (!visible && this.isVisible()) {
             this.dismiss();
         }
     }
@@ -94,6 +89,5 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
-    protected readonly Theme = Theme;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

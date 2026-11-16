@@ -148,6 +148,70 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
 }
 
 /**
+ * Elements that rendered markdown never needs: embedded style sheets, form controls and document level elements.
+ * Authors keep all formatting, tables, code, formulas and images.
+ */
+const MARKDOWN_FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'legend', 'link', 'meta', 'base', 'object', 'embed'];
+
+/** Attributes that only make sense on form controls or that retarget a request. */
+const MARKDOWN_FORBIDDEN_ATTRIBUTES = ['form', 'formaction', 'action', 'formmethod', 'formtarget'];
+
+/** The style properties KaTeX uses to place and decorate its glyphs, each with the values it writes. */
+const FORMULA_STYLE_LENGTH = /^-?\d*\.?\d+(em|ex|px|%)?$/;
+const FORMULA_STYLE_COLOR = /^(#[0-9a-f]{3,8}|[a-z]+|rgba?\([\d\s.,%]+\))$/i;
+const FORMULA_STYLE_VALUES = new Map<string, RegExp>([
+    ...[
+        'height',
+        'width',
+        'min-width',
+        'top',
+        'bottom',
+        'left',
+        'vertical-align',
+        'margin-left',
+        'margin-right',
+        'padding-left',
+        'border-width',
+        'border-bottom-width',
+        'border-top-width',
+        'border-right-width',
+    ].map((property): [string, RegExp] => [property, FORMULA_STYLE_LENGTH]),
+    ['color', FORMULA_STYLE_COLOR],
+    ['background-color', FORMULA_STYLE_COLOR],
+    ['border-style', /^solid$/],
+    ['position', /^relative$/],
+]);
+
+/** The declarations of a style attribute that a formula needs, so that the class of an element is not trusted to carry arbitrary styles. */
+function formulaStyle(style: string): string {
+    return style
+        .split(';')
+        .map((declaration) => declaration.split(':').map((part) => part.trim()))
+        .filter(([property, value]) => FORMULA_STYLE_VALUES.get(property.toLowerCase())?.test(value ?? '') === true)
+        .map(([property, value]) => `${property}:${value}`)
+        .join(';');
+}
+
+/**
+ * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its glyphs with it, and even there only the
+ * placement properties with plain lengths. It is also kept where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so
+ * the address of the page does not reach the image host.
+ */
+export function restrictRenderedAttributes(node: Element, keepStyle = false): void {
+    if (!keepStyle && node.hasAttribute?.('style')) {
+        const allowedStyle = node.closest?.('[class*="katex"]') ? formulaStyle(node.getAttribute('style') ?? '') : '';
+        if (allowedStyle) {
+            node.setAttribute('style', allowedStyle);
+        } else {
+            node.removeAttribute('style');
+        }
+    }
+    if (node.tagName === 'IMG') {
+        node.setAttribute('referrerpolicy', 'no-referrer');
+    }
+}
+
+/**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
  *
@@ -184,13 +248,22 @@ export function htmlForMarkdown(
     const purifyParameters: Config = {};
     // Prevents sanitizer from deleting <testid>id</testid>
     purifyParameters['ADD_TAGS'] = ['testid'];
+    purifyParameters['FORBID_TAGS'] = MARKDOWN_FORBIDDEN_TAGS;
+    purifyParameters['FORBID_ATTR'] = MARKDOWN_FORBIDDEN_ATTRIBUTES;
     if (allowedHtmlTags) {
         purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(markdownRender, purifyParameters);
+    const keepStyle = !!allowedHtmlAttributes?.includes('style');
+    const hook = (node: Element) => restrictRenderedAttributes(node, keepStyle);
+    DOMPurify.addHook('afterSanitizeAttributes', hook);
+    try {
+        return DOMPurify.sanitize(markdownRender, purifyParameters);
+    } finally {
+        DOMPurify.removeHook('afterSanitizeAttributes', hook);
+    }
 }
 
 export function markdownForHtml(htmlText: string): string {

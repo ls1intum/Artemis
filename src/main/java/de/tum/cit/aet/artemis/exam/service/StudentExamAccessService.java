@@ -154,7 +154,16 @@ public class StudentExamAccessService {
      * @param currentUser the user for which the access should be checked
      */
     public void checkCourseAccessForStudentElseThrow(Long courseId, User currentUser) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkCourseAccessForStudentElseThrow(courseRepository.findByIdElseThrow(courseId), currentUser);
+    }
+
+    /**
+     * Checks if the user is allowed to access the already loaded course
+     *
+     * @param course      the course
+     * @param currentUser the user for which the access should be checked
+     */
+    public void checkCourseAccessForStudentElseThrow(Course course, User currentUser) {
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException("You are not allowed to access exams in this course!");
         }
