@@ -486,6 +486,27 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetFinishedBuildJobsForCourse_withoutPagingParametersOrAddressSortIsBadRequest() throws Exception {
+        request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.BAD_REQUEST, CourseFinishedBuildJobDTO.class);
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        pageableSearchDTO.setSortedColumn("buildAgentAddress");
+        request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.BAD_REQUEST, CourseFinishedBuildJobDTO.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_adminCanSortByTheBuildAgentAddressButNeedsPagingParameters() throws Exception {
+        request.getList("/api/admin/finished-jobs", HttpStatus.BAD_REQUEST, FinishedBuildJobDTO.class);
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        pageableSearchDTO.setSortedColumn("buildAgentAddress");
+        request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFinishedBuildJobViewsOfACourseOmitTheAddressOfTheBuildAgent() throws Exception {
         finishedJob1.setBuildAgentAddress("[10.20.30.40]:5701");
         buildJobRepository.save(finishedJob1);

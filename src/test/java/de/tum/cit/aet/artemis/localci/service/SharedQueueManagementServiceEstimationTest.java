@@ -316,6 +316,30 @@ class SharedQueueManagementServiceEstimationTest {
     }
 
     @Test
+    void filteredFinishedBuildJobs_rejectMissingPagingParameters() {
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, null), 5L))
+                .isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, null), null))
+                .isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_sortByTheBuildAgentAddressOnlyInTheAdministration() {
+        when(buildJobRepository.findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new SliceImpl<>(List.of(), PageRequest.of(0, 20), false));
+        SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+        pageable.setPage(1);
+        pageable.setPageSize(20);
+        pageable.setSortedColumn("buildAgentAddress");
+        pageable.setSortingOrder(SortingOrder.ASCENDING);
+        pageable.setSearchTerm("");
+        var search = new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable);
+
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(search, 5L)).isInstanceOf(BadRequestAlertException.class);
+        assertThatCode(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(search, null)).doesNotThrowAnyException();
+    }
+
+    @Test
     void filteredFinishedBuildJobs_rejectAMissingSortColumn() {
         SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
         pageable.setPage(1);
@@ -332,7 +356,7 @@ class SharedQueueManagementServiceEstimationTest {
     void filteredFinishedBuildJobs_acceptEveryColumnTheClientSortsBy() {
         when(buildJobRepository.findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(new SliceImpl<>(List.of(), PageRequest.of(0, 20), false));
-        for (String column : List.of("name", "buildStatus", "buildAgentAddress", "courseId", "buildCompletionDate", "buildSubmissionDate")) {
+        for (String column : List.of("name", "buildStatus", "courseId", "buildCompletionDate", "buildSubmissionDate")) {
             SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
             pageable.setPage(1);
             pageable.setPageSize(20);

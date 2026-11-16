@@ -403,8 +403,13 @@ public class SharedQueueManagementService {
         Duration buildDurationLower = search.buildDurationLower() == null ? null : Duration.ofSeconds(search.buildDurationLower());
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
+        if (search.pageable() == null) {
+            throw new BadRequestAlertException("The paging and sorting parameters are missing", "BuildJob", "invalidSortedColumn");
+        }
         String sortedColumn = search.pageable().getSortedColumn();
-        if (sortedColumn == null || !SORTABLE_FINISHED_BUILD_JOB_PROPERTIES.contains(sortedColumn)) {
+        // The address of the build agent is only shown in the administration, so a course cannot sort by it
+        boolean allowed = sortedColumn != null && SORTABLE_FINISHED_BUILD_JOB_PROPERTIES.contains(sortedColumn) && !(courseId != null && "buildAgentAddress".equals(sortedColumn));
+        if (!allowed) {
             throw new BadRequestAlertException("Finished build jobs cannot be sorted by this column", "BuildJob", "invalidSortedColumn");
         }
         var sortOptions = Sort.by(sortedColumn);
