@@ -102,7 +102,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
 
     it('uses the shared compact scrolling table and sorts newest first', () => {
         createComponent();
-        expect(table().options()).toMatchObject({ lazy: false, scrollable: true, scrollHeight: 'flex', initialSortField: 'timestamp', initialSortOrder: -1 });
+        expect(table().options()).toMatchObject({ lazy: false, fill: true, initialSortField: 'timestamp', initialSortOrder: -1 });
         expect(fixture.nativeElement.querySelector('table[tumAetUiTable]')).toBeTruthy();
         expect(fixture.nativeElement.querySelector('tumaet-ui-paginator')).toBeTruthy();
         expect(cells('author').map((cell) => cell.textContent?.trim())).toEqual(['Bob, bob@example.org', 'Alice, alice@example.org']);

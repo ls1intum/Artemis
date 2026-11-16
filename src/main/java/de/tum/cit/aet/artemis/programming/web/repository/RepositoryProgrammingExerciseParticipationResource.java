@@ -231,7 +231,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for plagiarism view for domainId : {}", participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            var target = repositoryParticipationService.resolvePlagiarismViewTarget(participationId);
+            if (target.commitHash() != null) {
+                return new ResponseEntity<>(repositoryService.getFilesAtCommit(target.participation(), target.commitHash()), HttpStatus.OK);
+            }
+            Repository repository = repositoryParticipationService.getRepositoryFromGitService(true, target.participation());
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
@@ -420,7 +424,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to file {} for plagiarism view for domainId : {}", filename, participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            var target = repositoryParticipationService.resolvePlagiarismViewTarget(participationId);
+            if (target.commitHash() != null) {
+                return repositoryService.getFileAtCommit(target.participation(), target.commitHash(), filename);
+            }
+            Repository repository = repositoryParticipationService.getRepositoryFromGitService(true, target.participation());
             return repositoryService.getFileFromRepository(filename, repository);
         });
     }

@@ -24,6 +24,24 @@ export function sanitizeStringForMarkdownEditor(str: string | undefined): string
 }
 
 /**
+ * Checks whether the given text, ignoring surrounding whitespace, is exactly one absolute http or https URL, i.e. one that starts with
+ * "http://" or "https://". A spelling like "https:example.org" is rejected, because a link to it would resolve relative to the page.
+ * @param text The text to check.
+ */
+export function isHttpUrl(text: string): boolean {
+    const trimmed = text.trim();
+    if (!/^https?:\/\//i.test(trimmed) || /\s/.test(trimmed)) {
+        return false;
+    }
+    try {
+        const protocol = new URL(trimmed).protocol;
+        return protocol === 'http:' || protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+/**
  * Parse the markdown text and apply the result to the target object's data
  *
  * The markdown text is split at QUIZ_HINT_IDENTIFIER and QUIZ_EXPLANATION_IDENTIFIER tags.

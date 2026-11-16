@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
@@ -9,7 +8,6 @@ import { PresentationAssessmentInstancesTableComponent } from 'app/presentation/
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 import { PresentationAssessment, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PresentationAssessmentInstancesTableComponent', () => {
@@ -38,25 +36,27 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         fixture.componentRef.setInput('rows', rows);
         fixture.componentRef.setInput('presentationAssessment', presentationAssessment);
         fixture.componentRef.setInput('canDelete', canDelete);
+        fixture.componentRef.setInput('sortField', 'studentLogin');
+        fixture.componentRef.setInput('sortOrder', 1);
         fixture.detectChanges();
     }
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstancesTableComponent],
-            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }],
+            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentInstancesTableComponent);
         component = fixture.componentInstance;
     });
 
-    it('should render one row per student and a message when there are none', () => {
+    it('should render one row per student and no rows when there are none', () => {
         render([createRow(), createRow({ studentLogin: 'student2', rowKey: '11:student2', displayName: 'Student Two' })]);
         expect(element().querySelectorAll('tbody tr')).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="6"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(element().querySelectorAll('tbody tr')).toHaveLength(0);
     });
 
     it('should show the result points against the maximum only for assessed rows', () => {
@@ -113,5 +113,27 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         fixture.componentRef.setInput('presentationAssessment', { id: 2, title: 'Midterm', maxPoints: 20 });
         fixture.detectChanges();
         expect(query('.presentation-detail-row')).toBeNull();
+    });
+
+    describe('sorting', () => {
+        it('should emit the sort event of a server sortable header and keep the order of the rows', () => {
+            const sortSpy = vi.fn();
+            component.sortChange.subscribe(sortSpy);
+            const rows = [createRow({ studentLogin: 'b', rowKey: '1:b', displayName: 'bob' }), createRow({ studentLogin: 'a', rowKey: '2:a', displayName: 'Alice' })];
+            render(rows);
+
+            const header = query('th[tumAetUiSortableColumn="resultPoints"]')!;
+            ((header.querySelector('button') ?? header) as HTMLElement).click();
+
+            expect(sortSpy).toHaveBeenCalledWith(expect.objectContaining({ field: 'resultPoints' }));
+            const names = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="toggle-row-details"]')).map((el) => el.textContent!.trim());
+            expect(names[0]).toContain('bob');
+        });
+
+        it('should not offer sorting by the status because the server cannot sort by it', () => {
+            render([createRow()]);
+            expect(query('th[tumAetUiSortableColumn="assessed"]')).toBeNull();
+            expect(element().querySelectorAll('th[tumAetUiSortableColumn]')).toHaveLength(3);
+        });
     });
 });

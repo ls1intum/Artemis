@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
@@ -268,11 +269,15 @@ public class LectureUnitService {
      * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
      * It makes sure to be Hibernate compliant by modifying the existing collection rather than replacing it.
      *
-     * @param dto    the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
-     * @param entity the existing DB entity to update
+     * Competencies can only be linked if they belong to the course of the lecture unit.
+     *
+     * @param dto      the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
+     * @param entity   the existing DB entity to update
+     * @param courseId the id of the course of the lecture unit
+     * @throws BadRequestAlertException if a linked competency belongs to another course
      */
     // TODO: duplicated code, try to unify with ExerciseService.updateCompetencyLinks
-    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, LectureUnit entity) {
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, LectureUnit entity, long courseId) {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
@@ -306,6 +311,9 @@ public class LectureUnitService {
                 else {
                     // no existing link → create a new one
                     var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    if (competency.getCourse() == null || competency.getCourse().getId() != courseId) {
+                        throw new BadRequestAlertException("The competency does not belong to the course of the lecture unit", "lectureUnit", "competencyCourseMismatch");
+                    }
                     var newLink = new CompetencyLectureUnitLink(competency, entity, weight);
 
                     updatedLinks.add(newLink);

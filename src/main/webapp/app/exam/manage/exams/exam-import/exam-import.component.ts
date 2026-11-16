@@ -7,6 +7,7 @@ import {
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
@@ -20,6 +21,7 @@ import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
@@ -32,6 +34,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
     imports: [
         FormsModule,
         TranslateDirective,
+        ArtemisTranslatePipe,
         FaIconComponent,
         TumAetUiButtonDirective,
         TumAetUiInputDirective,
@@ -41,6 +44,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
         ExamExerciseImportComponent,
         ExamImportProgressDialogComponent,
         ExamModeBadgeComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> {

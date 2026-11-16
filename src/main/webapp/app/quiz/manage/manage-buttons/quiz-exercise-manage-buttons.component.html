@@ -24,6 +24,9 @@
                     <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
+            <ng-container detailLifecycleActions>
+                <ng-content select="[lifecycleActions]" />
+            </ng-container>
             <ng-container detailMoreActions>
                 @if (quizExercise().isAtLeastEditor) {
                     <button

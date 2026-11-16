@@ -888,6 +888,8 @@ public class ExamResource {
     @GetMapping("exams/{examId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
+        long courseId = examRepository.findCourseIdById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         final var title = examRepository.getExamTitle(examId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }

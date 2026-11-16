@@ -851,9 +851,11 @@ export class CommunicationService implements OnDestroy {
                 const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
                 const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
+                // Like the server, a search matches the content of a message and the name of its author.
+                const searchText = this.currentPostContextFilter.searchText?.toLowerCase().trim();
+                const authorName = (postDTO.post.author?.name ?? '').toLowerCase();
                 const doesNotMatchSearchString =
-                    this.currentPostContextFilter.searchText?.length &&
-                    !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
+                    this.currentPostContextFilter.searchText?.length && !postDTO.post.content?.toLowerCase().includes(searchText!) && !authorName.includes(searchText!);
 
                 if (doesNotMatchAuthorFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;

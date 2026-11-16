@@ -505,7 +505,8 @@ describe('IrisChatService', () => {
 
                 service.openChat(ChatServiceMode.COURSE, courseId, 777);
 
-                expect(await firstValueFrom(service.currentError())).toBeDefined();
+                // The template translates the error, so it has to be the translation key and not the error that the request failed with
+                expect(await firstValueFrom(service.currentError())).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 expect(service.sessionId).toBeUndefined();
             });
         });

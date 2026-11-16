@@ -168,8 +168,9 @@
                             #optionOrigin="cdkOverlayOrigin"
                             [attr.aria-label]="item.label"
                         >
-                            <span class="min-w-0 truncate" [title]="item.resourceLabel ?? item.label">{{ item.resourceLabel ?? item.label }}</span
-                            ><span class="message-editor-muted shrink-0 text-xs">
+                            <span class="min-w-0 truncate" [title]="item.resourceLabel ?? item.label">{{ item.resourceLabel ?? item.label }}</span><span
+                                class="message-editor-muted shrink-0 text-xs"
+                            >
                                 {{ 'artemisApp.communication.formattedEditor.kind.' + item.kind | artemisTranslate }}
                                 @if (item.slideNumber; as slideNumber) {
                                     <span data-testid="message-slide-number">{{ slideNumber }}</span>

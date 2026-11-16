@@ -1,4 +1,12 @@
-<button tumAetUiButton type="button" severity="primary" data-testid="announcement-create-button" [disabled]="!announcementCreationAllowed()" (click)="openDialog($event)">
+<button
+    [attr.aria-label]="'artemisApp.examManagement.announcementCreate.button' | artemisTranslate"
+    tumAetUiButton
+    type="button"
+    severity="primary"
+    data-testid="announcement-create-button"
+    [disabled]="!announcementCreationAllowed()"
+    (click)="openDialog($event)"
+>
     <fa-icon [icon]="faBullhorn" />
     <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.announcementCreate.button"></span>
 </button>

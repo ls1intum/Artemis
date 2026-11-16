@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
-import { faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -11,7 +11,14 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTagComponent,
+} from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 /**
  * Admin component for managing user data exports in accordance with GDPR Art. 15.
@@ -30,6 +37,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
     templateUrl: './admin-data-exports.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FaIconComponent,
         AdminTitleBarTitleDirective,
@@ -68,7 +76,6 @@ export class AdminDataExportsComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faDownload = faDownload;
     protected readonly faPlus = faPlus;
-    protected readonly faSpinner = faSpinner;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faClock = faClock;

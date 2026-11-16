@@ -80,4 +80,22 @@ class RateLimitBudgetContractTest {
             assertThat(service.resolveClientId()).isNull();
         }
     }
+
+    @Test
+    void reservedBudgetOfAKeyIsTakenBeforeTheWorkAndGivenBackOnRequest() {
+        var configuration = mock(RateLimitConfigurationService.class);
+        var features = mock(FeatureToggleService.class);
+        when(configuration.isRateLimitingEnabled()).thenReturn(true);
+        when(configuration.getEffectiveRpm(any())).thenReturn(2);
+        when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var service = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), configuration, features);
+
+        service.enforceBudget("login", RateLimitType.FAILED_LOGIN);
+        service.enforceBudget("login", RateLimitType.FAILED_LOGIN);
+        assertThatThrownBy(() -> service.enforceBudget("login", RateLimitType.FAILED_LOGIN)).isInstanceOf(RateLimitExceededException.class);
+        assertThatCode(() -> service.enforceBudget("other", RateLimitType.FAILED_LOGIN)).doesNotThrowAnyException();
+
+        service.refundBudget("login", RateLimitType.FAILED_LOGIN);
+        assertThatCode(() -> service.enforceBudget("login", RateLimitType.FAILED_LOGIN)).doesNotThrowAnyException();
+    }
 }

@@ -48,7 +48,7 @@
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.exerciseGroups"></span>
                             <hr />
                             <ul class="my-0! flex list-none flex-col gap-1 p-0">
-                                <li class="rounded border border-(--border-color) px-4 py-2">
+                                <li class="rounded border border-(--border-color) px-6! py-2">
                                     <span>
                                         <jhi-checklist-check
                                             [checkAttribute]="exam().exerciseGroups && exam().exerciseGroups!.length > 0"
@@ -57,7 +57,7 @@
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastoneexercisegroup"></span>
                                     </span>
                                 </li>
-                                <li class="rounded border border-(--border-color) px-4 py-2">
+                                <li class="rounded border border-(--border-color) px-6! py-2">
                                     <span>
                                         <!-- assert amount mandatory exercises <= number in settings <= amount total exercises -->
                                         <jhi-checklist-check
@@ -77,19 +77,19 @@
                                         ></span>
                                     </span>
                                 </li>
-                                <li class="rounded border border-(--border-color) px-4 py-2">
+                                <li class="rounded border border-(--border-color) px-6! py-2">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="allGroupsContainExercise()" data-testid="check-each-exercise-group-has-exercises" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.eachexercisegroup"></span>
                                     </span>
                                 </li>
-                                <li class="rounded border border-(--border-color) px-4 py-2">
+                                <li class="rounded border border-(--border-color) px-6! py-2">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="pointsExercisesEqual()" data-testid="check-points-in-exercise-groups-equal" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal"></span>
                                     </span>
                                 </li>
-                                <li class="rounded border border-(--border-color) px-4 py-2">
+                                <li class="rounded border border-(--border-color) px-6! py-2">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="totalPoints()" data-testid="check-total-points-possible" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.totalpointspossible"></span>
@@ -117,7 +117,7 @@
                             <hr />
                             <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                 @if (examChecklist()) {
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.testruns"></span>
                                         {{ examChecklist()!.numberOfTestRuns }}
                                     </li>
@@ -141,7 +141,7 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.register"></span>
                                 <hr />
                                 <ul class="my-0! flex list-none flex-col gap-1 p-0">
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check
                                                 [checkAttribute]="!!exam().numberOfExamUsers && exam().numberOfExamUsers! > 0"
@@ -150,7 +150,7 @@
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastonestudent"></span>
                                         </span>
                                     </li>
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.studentsregistered"></span>
                                         <span> {{ exam().numberOfExamUsers }} </span>
                                     </li>
@@ -178,7 +178,7 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.generateStudentExams"></span>
                                 <hr />
                                 <ul class="my-0! flex list-none flex-col gap-1 p-0">
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="allExamsGenerated()" data-testid="check-all-exams-generated" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allexamsgenerated"></span>
@@ -209,7 +209,7 @@
                                 <hr />
                                 <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     @if (examChecklist()) {
-                                        <li class="rounded border border-(--border-color) px-4 py-2">
+                                        <li class="rounded border border-(--border-color) px-6! py-2">
                                             <jhi-checklist-check
                                                 [checkAttribute]="!!examChecklist()!.allExamExercisesAllStudentsPrepared && allExamsGenerated()"
                                                 data-testid="check-all-exercises-prepared"
@@ -245,19 +245,19 @@
                                 <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
                                 <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
                                 <ul class="my-0! flex list-none flex-col gap-1 p-0">
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.testExam.studentRegistration"></span>
                                         </span>
                                     </li>
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
                                             <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
                                         </span>
                                     </li>
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.testExam.instantResults"></span>
@@ -363,7 +363,13 @@
                             }
                         </td>
                         <td>
-                            <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="getExamRoutesByIdentifier()('students')">
+                            <a
+                                [attr.aria-label]="'artemisApp.examManagement.students' | artemisTranslate"
+                                tumAetUiButton
+                                class="whitespace-nowrap"
+                                severity="info"
+                                [routerLink]="getExamRoutesByIdentifier()('students')"
+                            >
                                 <fa-icon [icon]="faUser" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.students"></span>
                             </a>
@@ -509,7 +515,7 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.publishResults"></span>
                                 <hr />
                                 <ul class="my-0! flex list-none flex-col gap-1 p-0">
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <div>
                                             <div>
                                                 <jhi-checklist-check [checkAttribute]="!!exam().publishResultsDate" data-testid="check-publishing-date-set" />
@@ -649,7 +655,7 @@
                                 <hr />
                                 <ul class="my-0! flex list-none flex-col gap-1 p-0">
                                     @if (disabledExercises().length > 0) {
-                                        <li class="rounded border border-(--border-color) px-4 py-2">
+                                        <li class="rounded border border-(--border-color) px-6! py-2">
                                             <span>
                                                 <jhi-checklist-check [checkAttribute]="disabledExercises().length === 0" />
                                                 <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noDeactivatedExerciseTypes.label"></span>
@@ -657,13 +663,13 @@
                                             <jhi-help-icon text="artemisApp.examManagement.checklist.textitems.noDeactivatedExerciseTypes.tooltip" />
                                         </li>
                                     }
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="!!exam().examStudentReviewStart" data-testid="check-start-date-review-set" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.startdatereviewset"></span>
                                         </span>
                                     </li>
-                                    <li class="rounded border border-(--border-color) px-4 py-2">
+                                    <li class="rounded border border-(--border-color) px-6! py-2">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="!!exam().examStudentReviewEnd" data-testid="check-end-date-review-set" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.enddatereviewset"></span>

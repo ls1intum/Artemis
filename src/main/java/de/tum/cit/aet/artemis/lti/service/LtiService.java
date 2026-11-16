@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -52,6 +55,10 @@ public class LtiService {
     protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private static final Logger log = LoggerFactory.getLogger(LtiService.class);
+
+    private static final int MAX_LOGIN_SUFFIX = 1000;
+
+    private static final int MAX_CREATION_ATTEMPTS = 3;
 
     private final UserCreationService userCreationService;
 
@@ -117,6 +124,12 @@ public class LtiService {
             if (trustExternalLTISystems) {
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
                 User user = userRepository.findOneWithAuthoritiesByEmailIgnoreCase(email).orElseThrow();
+                if (!mayBeTrustedFromLaunch(user)) {
+                    log.warn(
+                            "Not authenticating the account with email {} from a launch: only active accounts without administrator authority are accepted from trusted LTI systems",
+                            email);
+                    throw new LtiAccountNotAcceptedException();
+                }
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 return;
             }
@@ -135,11 +148,34 @@ public class LtiService {
         throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
     }
 
+    /**
+     * Whether the account may be signed in on the word of a trusted platform: not an administrator, and active.
+     *
+     * @param user the account with its authorities
+     * @return true if the platform may sign in as this account
+     */
+    private boolean mayBeTrustedFromLaunch(User user) {
+        boolean administrator = user.getAuthorities().stream().map(Authority::getName)
+                .anyMatch(name -> Role.ADMIN.getAuthority().equals(name) || Role.SUPER_ADMIN.getAuthority().equals(name));
+        // An inactive account is not accepted. This includes an account that a launch created and that has not been initialised yet: it cannot be told from a deactivated one.
+        return !administrator && user.getActivated();
+    }
+
+    /**
+     * Creates the account for a launch and returns its sign-in. The login is derived from names that the platform supplies and is not unique, so an existing account
+     * is only reused when it has the email address of the launch. Otherwise a new account is created with a free login.
+     *
+     * @param email     the email address of the launching user, which no account has yet
+     * @param login     the derived login; a numeric suffix is added if an account already has it
+     * @param firstName the first name
+     * @param lastName  the last name
+     * @return the sign-in of the new account
+     */
     @NonNull
-    protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
-        final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
+    public Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
+        final var user = userRepository.findOneByLogin(login).filter(existing -> email.equalsIgnoreCase(existing.getEmail())).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
-            final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            final User newUser = createUserWithUnusedLogin(login, password, firstName, lastName, email);
             // Marked in user_lti rather than on the user row, which the lti module does not own. createUser already saved
             // the account, so the id is available and no further save of the user itself is needed.
             userLtiRepository.save(new UserLti(newUser.getId(), true));
@@ -155,8 +191,48 @@ public class LtiService {
 
         log.info("createNewUserFromLaunchRequest: {}", user);
 
-        log.info("Signing in as {}", login);
+        log.info("Signing in as {}", user.getLogin());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
+    }
+
+    /**
+     * Creates the account under the login or, if an account has it, under the login with the lowest numeric suffix that no account has. Two launches that choose the same
+     * free login at the same time collide when the second account is saved, so the allocation is repeated for that case. Other failures are not retried.
+     */
+    private User createUserWithUnusedLogin(String login, String password, String firstName, String lastName, String email) {
+        for (int attempt = 1; attempt <= MAX_CREATION_ATTEMPTS; attempt++) {
+            try {
+                return userCreationService.createUser(unusedLogin(login), password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            }
+            catch (DataIntegrityViolationException e) {
+                if (attempt == MAX_CREATION_ATTEMPTS) {
+                    throw e;
+                }
+                log.info("The login for the launching user was taken in the meantime, choosing another one");
+            }
+        }
+        throw new InternalAuthenticationServiceException("Could not create the account of the launching user.");
+    }
+
+    /**
+     * Returns the login, or the login with the lowest numeric suffix that no account has. The suffix is part of the login, so the base is shortened to keep the login within its
+     * maximum length.
+     *
+     * @param login the derived login
+     * @return a login that no account has
+     */
+    private String unusedLogin(String login) {
+        if (userRepository.findOneByLogin(login).isEmpty()) {
+            return login;
+        }
+        for (int suffix = 2; suffix < MAX_LOGIN_SUFFIX; suffix++) {
+            String suffixText = String.valueOf(suffix);
+            String candidate = login.substring(0, Math.min(login.length(), Constants.USERNAME_MAX_LENGTH - suffixText.length())) + suffixText;
+            if (userRepository.findOneByLogin(candidate).isEmpty()) {
+                return candidate;
+            }
+        }
+        throw new InternalAuthenticationServiceException("Could not find an unused login for the launching user.");
     }
 
     /**

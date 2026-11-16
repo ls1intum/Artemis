@@ -42,12 +42,12 @@ describe('StepperComponent', () => {
     });
 
     it('should render step indicators with correct active/inactive classes', () => {
-        const indicators = fixture.nativeElement.querySelectorAll('.step-indicator');
+        const indicators = fixture.nativeElement.querySelectorAll('.iris-tour-stepper__indicator');
         expect(indicators).toHaveLength(3);
-        expect(indicators[0].classList.contains('active')).toBeTruthy();
-        expect(indicators[0].classList.contains('inactive')).toBeFalsy();
-        expect(indicators[1].classList.contains('inactive')).toBeTruthy();
-        expect(indicators[2].classList.contains('inactive')).toBeTruthy();
+        expect(indicators[0].classList.contains('iris-tour-stepper__indicator--active')).toBeTruthy();
+        expect(indicators[0].classList.contains('iris-tour-stepper__indicator--inactive')).toBeFalsy();
+        expect(indicators[1].classList.contains('iris-tour-stepper__indicator--inactive')).toBeTruthy();
+        expect(indicators[2].classList.contains('iris-tour-stepper__indicator--inactive')).toBeTruthy();
     });
 
     it('should update active indicator when currentStep changes', async () => {
@@ -55,9 +55,9 @@ describe('StepperComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const indicators = fixture.nativeElement.querySelectorAll('.step-indicator');
-        expect(indicators[0].classList.contains('inactive')).toBeTruthy();
-        expect(indicators[1].classList.contains('active')).toBeTruthy();
-        expect(indicators[2].classList.contains('inactive')).toBeTruthy();
+        const indicators = fixture.nativeElement.querySelectorAll('.iris-tour-stepper__indicator');
+        expect(indicators[0].classList.contains('iris-tour-stepper__indicator--inactive')).toBeTruthy();
+        expect(indicators[1].classList.contains('iris-tour-stepper__indicator--active')).toBeTruthy();
+        expect(indicators[2].classList.contains('iris-tour-stepper__indicator--inactive')).toBeTruthy();
     });
 });

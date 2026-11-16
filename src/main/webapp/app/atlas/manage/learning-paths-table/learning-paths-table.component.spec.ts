@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
-import { PaginatorState } from 'primeng/paginator';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -12,7 +11,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { By } from '@angular/platform-browser';
-import { ScienceService } from 'app/foundation/science/science.service';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -51,7 +50,6 @@ describe('LearningPathsTableComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: AlertService, useClass: MockAlertService },
-                MockProvider(ScienceService),
                 MockProvider(DialogService),
             ],
         })
@@ -73,6 +71,19 @@ describe('LearningPathsTableComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should show the empty state only when no learning paths were found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        getLearningPathInformationSpy.mockResolvedValue(<SearchResult<LearningPathInformationDTO>>{ numberOfPages: 0, resultsOnPage: [] });
+        component.search('nobody');
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
     });
 
     it('should load learning paths', async () => {
@@ -109,17 +120,13 @@ describe('LearningPathsTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        await component.setPage(2);
+        // The paginator is zero-based while the service and the component are one-based.
+        fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).triggerEventHandler('pageChange', 1);
+        await fixture.whenStable();
 
         expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
         expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
         expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
-    });
-
-    it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
-        const setPageSpy = vi.spyOn(component, 'setPage').mockResolvedValue();
-        component.onPageChange({ page: 1 } as PaginatorState);
-        expect(setPageSpy).toHaveBeenCalledWith(2);
     });
 
     it('should search for learning paths when the search term changes', async () => {
