@@ -7,7 +7,13 @@ import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
-import { SecurityPolicyChange, SecurityPolicyDocument, SecurityPolicyEditor, SecurityPolicyReadOnlyReason } from 'app/programming/shared/entities/security-policy.model';
+import {
+    SecurityPolicyChange,
+    SecurityPolicyDocument,
+    SecurityPolicyEditor,
+    SecurityPolicyPreview,
+    SecurityPolicyReadOnlyReason,
+} from 'app/programming/shared/entities/security-policy.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 import { EditorPolicy, withAssignment, withRows } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
@@ -241,6 +247,34 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
     });
 
+    it('does not commit while the policies reload', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        const reloaded = new Subject<SecurityPolicyEditor>();
+        service.getPolicies.mockReturnValue(reloaded);
+
+        handlers.reload();
+        handlers.commit('Update');
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+
+        reloaded.next(editor('d'.repeat(40)));
+        service.commitPolicies.mockReturnValue(of({ editor: editor('e'.repeat(40)), config: configured() }));
+        handlers.commit('Update');
+        expect(lastChange().baseCommitHash).toBe('d'.repeat(40));
+    });
+
+    it('keeps the language configuration of a new policy when the reloaded policies have none', () => {
+        create(configured(), false);
+        handlers.addPolicy();
+        const added = comp.policies()[1];
+        expect(added.working?.languageConfiguration).toBe(DOCUMENT.languageConfiguration);
+        service.getPolicies.mockReturnValue(of({ ...editor('d'.repeat(40)), policies: [] }));
+
+        handlers.reload();
+
+        expect(comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration).toBe(DOCUMENT.languageConfiguration);
+    });
+
     it('asks before turning the sandbox off and drops the unsaved changes', () => {
         create(configured(), false);
         const deactivated = vi.fn();
@@ -449,6 +483,23 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         service.importPolicy.mockReturnValue(of({ policyPath: 'SecurityPolicy.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3 }));
         handlers.importYaml({ content: 'broken: [', policyPath: 'SecurityPolicy.yaml' });
         expect(comp.importNotice()).toEqual({ severity: 'error', text: 'artemisApp.programmingExercise.security.advanced.policy.readOnlyReason.YAML_ERROR' });
+    });
+
+    it('shows only the latest rendering of the unsaved YAML', () => {
+        create(configured(), false);
+        handlers.openYaml(comp.policies()[0]);
+        const first = new Subject<SecurityPolicyPreview>();
+        const second = new Subject<SecurityPolicyPreview>();
+        service.previewPolicies.mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+        handlers.renderYamlUnsaved();
+        handlers.renderYamlUnsaved();
+        second.next({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [{ path: 'SecurityPolicy.yaml', after: 'second' }] });
+        first.next({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [{ path: 'SecurityPolicy.yaml', after: 'first' }] });
+        first.error(new HttpErrorResponse({ status: 500 }));
+
+        expect(comp.yamlUnsaved()).toBe('second');
+        expect(comp.importNotice()).toBeUndefined();
     });
 
     it('shows the state of the card while turning the sandbox on, off and while committing', () => {

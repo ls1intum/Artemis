@@ -100,7 +100,7 @@
                                     >
                                         {{ prefix + 'commitBar.discard' | artemisTranslate }}
                                     </button>
-                                    <button type="button" tumAetUiButton [disabled]="editingDisabled()" (click)="openReview()" data-testid="security-policies-commit">
+                                    <button type="button" tumAetUiButton [disabled]="editingDisabled() || loading()" (click)="openReview()" data-testid="security-policies-commit">
                                         {{ prefix + 'commitBar.commit' | artemisTranslate }}
                                     </button>
                                 </span>
@@ -260,7 +260,7 @@
     [summary]="reviewSummary()"
     [baseCommit]="shortBaseCommit()"
     [defaultMessage]="defaultCommitMessage()"
-    [committing]="isCommitting()"
+    [busy]="isCommitting() || loading()"
     (commitRequested)="commit($event)"
 />
 

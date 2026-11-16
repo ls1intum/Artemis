@@ -217,6 +217,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private failedRequest: CommitRequest | undefined;
     /** The number of YAML imports started per policy. */
     private readonly importGenerations = new Map<string, number>();
+    /** The number of previews of unsaved YAML started. */
+    private yamlPreviewCount = 0;
     private structureRequested = false;
     private templateFilesRequested = false;
     private versionCheckTimer?: ReturnType<typeof setTimeout>;
@@ -523,7 +525,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
         const added = previous
             .filter((policy) => isNewPolicy(policy))
-            .map((policy) => (policy.working ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) }) : policy));
+            .map((policy) =>
+                policy.working
+                    ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration: languageConfiguration ?? policy.working.languageConfiguration }) })
+                    : policy,
+            );
         // A changed policy whose file someone deleted or renamed meanwhile is kept as a new policy, so the changes are not lost without a word.
         const vanished = [
             ...previous.filter(
@@ -786,7 +792,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Commits a change. A commit of the unsaved changes replaces them with the new commit; a commit of dependency scanning keeps them on top of it. */
     private runCommit(change: SecurityPolicyChange, keepUnsaved: boolean, scan: 'scanOn' | 'scanOff' | undefined): void {
-        if (this.isCommitting()) {
+        // While the policies load, the change may be based on a state the reload is about to replace.
+        if (this.isCommitting() || this.loading()) {
             return;
         }
         this.banner.set({ kind: 'committing' });
@@ -869,6 +876,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Renders the YAML of the policy shown in the YAML dialog with its unsaved changes. */
     protected renderYamlUnsaved(): void {
+        // Only the latest preview of the policy the dialog still shows applies, so an earlier one that answers later does not replace it.
+        const request = ++this.yamlPreviewCount;
         const policy = this.yamlPolicy();
         if (!policy?.working) {
             this.yamlUnsaved.set(policy?.file?.content);
@@ -884,9 +893,18 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             document: cloneWith(policy.working, { policyPath: path }),
             assignedTests: policy.tests,
         };
+        const isCurrent = () => request === this.yamlPreviewCount && this.yamlPolicyId() === policy.id;
         this.securityService.previewPolicies(this.exerciseId(), { baseCommitHash: this.editor()?.baseCommitHash, policies: [entry], removedPolicyPaths: [] }).subscribe({
-            next: (preview) => this.yamlUnsaved.set(preview.files?.[0]?.after),
-            error: (error: HttpErrorResponse) => this.importNotice.set({ severity: 'error', text: this.errorMessage(error) }),
+            next: (preview) => {
+                if (isCurrent()) {
+                    this.yamlUnsaved.set(preview.files?.[0]?.after);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (isCurrent()) {
+                    this.importNotice.set({ severity: 'error', text: this.errorMessage(error) });
+                }
+            },
         });
     }
 

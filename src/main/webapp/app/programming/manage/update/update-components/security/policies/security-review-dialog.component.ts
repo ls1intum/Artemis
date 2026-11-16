@@ -78,7 +78,8 @@ export class SecurityReviewDialogComponent {
     /** The short hash of the commit the changes are based on. */
     readonly baseCommit = input<string | undefined>(undefined);
     readonly defaultMessage = input('');
-    readonly committing = input(false);
+    /** Whether no commit can start now, because one is running or the policies are loading. */
+    readonly busy = input(false);
 
     readonly commitRequested = output<string>();
 
@@ -100,7 +101,7 @@ export class SecurityReviewDialogComponent {
     readonly verdict = computed(() => this.preview()?.verdict);
     readonly blocked = computed(() => this.verdict() === SecurityVersionCompatibilityVerdict.INCOMPATIBLE || this.problems().length > 0);
     readonly canCommit = computed(
-        () => !!this.preview() && !this.blocked() && !this.committing() && (this.diffs().length > 0 || this.assignments().length > 0) && this.message().trim().length > 0,
+        () => !!this.preview() && !this.blocked() && !this.busy() && (this.diffs().length > 0 || this.assignments().length > 0) && this.message().trim().length > 0,
     );
 
     constructor() {
