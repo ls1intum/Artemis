@@ -219,6 +219,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private readonly importGenerations = new Map<string, number>();
     /** The number of YAML imports started. */
     private importSequence = 0;
+    /** Counts the replacements of the unsaved changes, so the YAML dialog drops a file it was still reading when they were replaced. */
+    readonly yamlImportEpoch = signal(0);
+    /** The number of lookups of who caused a conflict, so only the one of the conflict still shown applies. */
+    private conflictLookups = 0;
     /** The change the review shows, serialized, and the number of review previews requested. */
     private reviewedChange: string | undefined;
     private reviewRequests = 0;
@@ -234,7 +238,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private lastStatus?: SecurityActivationStatus;
 
     readonly status = computed(() => this.config().status);
-    readonly isCommitting = computed(() => this.banner()?.kind === 'committing');
+    /** Whether a commit request is pending; tracked apart from the banner that reports it, which a late answer of another request may replace. */
+    private readonly commitPending = signal(false);
+    readonly isCommitting = computed(() => this.commitPending());
     readonly cardState = computed<SecurityCardState>(() => {
         switch (this.status()) {
             case SecurityActivationStatus.GENERATING:
@@ -516,6 +522,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Loads the policies again and keeps the unsaved changes: each changed policy is rebased onto its new committed version; new policies stay. */
     protected reload(announce = false): void {
+        this.conflictLookups++;
         this.loading.set(true);
         this.securityService.getPolicies(this.exerciseId()).subscribe({
             // The requested scanning state stays: its dialog may still be open, and its commit sets the state when it is done.
@@ -758,6 +765,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private dropPendingYamlRequests(): void {
         this.importGenerations.clear();
         this.yamlPreviewCount++;
+        this.yamlImportEpoch.update((epoch) => epoch + 1);
     }
 
     /** Loads the test structure of the commit the policies are based on, once per commit; only the answer to the latest request applies. */
@@ -885,9 +893,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return;
         }
         this.banner.set({ kind: 'committing' });
+        this.commitPending.set(true);
+        this.conflictLookups++;
         this.failedRequest = undefined;
         this.securityService.commitPolicies(this.exerciseId(), change).subscribe({
             next: (result) => {
+                this.commitPending.set(false);
                 this.reviewOpen.set(false);
                 const hash = (result.editor.lastCommit?.hash ?? result.editor.baseCommitHash ?? '').substring(0, 7);
                 this.configChange.emit(result.config);
@@ -907,13 +918,19 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 });
             },
             error: (error: HttpErrorResponse) => {
+                this.commitPending.set(false);
                 this.reviewOpen.set(false);
                 this.pendingScan.set(undefined);
                 if (error.status === 409) {
                     this.banner.set({ kind: 'conflict' });
-                    // Name who changed the policies; the unsaved changes stay until the instructor reloads.
+                    // Name who changed the policies; the unsaved changes stay until the instructor reloads. A later reload or commit supersedes this lookup.
+                    const lookup = ++this.conflictLookups;
                     this.securityService.getPolicies(this.exerciseId()).subscribe({
-                        next: (latest) => this.banner.set({ kind: 'conflict', authorName: latest.lastCommit?.authorName, hash: latest.lastCommit?.hash.substring(0, 7) }),
+                        next: (latest) => {
+                            if (lookup === this.conflictLookups && this.banner()?.kind === 'conflict') {
+                                this.banner.set({ kind: 'conflict', authorName: latest.lastCommit?.authorName, hash: latest.lastCommit?.hash.substring(0, 7) });
+                            }
+                        },
                         error: () => undefined,
                     });
                 } else {

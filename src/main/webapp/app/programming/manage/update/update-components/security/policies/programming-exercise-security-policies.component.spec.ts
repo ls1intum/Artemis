@@ -338,6 +338,23 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration).toBe(DOCUMENT.languageConfiguration);
     });
 
+    it('keeps a newer commit running when the conflict lookup of an earlier commit answers late', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        const lookup = new Subject<SecurityPolicyEditor>();
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+        service.getPolicies.mockReturnValueOnce(lookup);
+        handlers.commit('Update');
+        expect(comp.banner()).toEqual({ kind: 'conflict' });
+
+        service.commitPolicies.mockReturnValueOnce(new Subject());
+        handlers.commit('Update');
+        lookup.next(editor('c'.repeat(40)));
+
+        expect(comp.isCommitting()).toBe(true);
+        expect(comp.banner()).toEqual({ kind: 'committing' });
+    });
+
     it('does not switch the sandbox while a commit runs, and lets a late commit answer settle first', () => {
         create(configured(), false);
         const committed = new Subject<{ editor: SecurityPolicyEditor; config: SecurityFrameworkConfig }>();

@@ -97,6 +97,21 @@ describe('SecurityYamlDialogComponent', () => {
         expect(comp.importError()).toBeUndefined();
     });
 
+    it('drops a file that is still being read when the parent replaces the unsaved changes', async () => {
+        const imported: { content: string; policyPath: string }[] = [];
+        comp.imported.subscribe((content) => imported.push(content));
+        let finishReading: (content: string) => void = () => {};
+
+        const reading = handlers.onFileSelected({
+            target: { files: [{ size: 10, text: () => new Promise<string>((resolve) => (finishReading = resolve)) }], value: 'x' },
+        } as unknown as Event);
+        fixture.componentRef.setInput('importEpoch', 1);
+        finishReading('a: 1\n');
+        await reading;
+
+        expect(imported).toEqual([]);
+    });
+
     it('drops a file that is still being read when a later selection is refused', async () => {
         const imported: { content: string; policyPath: string }[] = [];
         comp.imported.subscribe((content) => imported.push(content));

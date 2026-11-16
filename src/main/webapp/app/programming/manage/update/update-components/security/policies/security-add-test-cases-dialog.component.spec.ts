@@ -167,6 +167,25 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(applied[0]).toContain('de.a.SortingTest');
     });
 
+    it('keeps what was checked before a newer structure arrived and does not apply while it loads', () => {
+        handlers.toggleKeys(['de.a.MathTest#add']);
+        comp.search.set('Math');
+        fixture.componentRef.setInput('structure', undefined);
+        fixture.detectChanges();
+        handlers.apply();
+        expect(applied).toEqual([]);
+
+        fixture.componentRef.setInput('structure', {
+            testClasses: [{ qualifiedName: 'de.a.SortingTest', testCases: ['bubble', 'merge', 'added'], testClass: true }, ...STRUCTURE.testClasses!.slice(1)],
+        });
+        fixture.detectChanges();
+
+        expect([...comp.selection()]).toEqual(expect.arrayContaining(['de.a.SortingTest#added', 'de.a.MathTest#add']));
+        expect(comp.search()).toBe('Math');
+        handlers.apply();
+        expect(applied[0]).toEqual(['de.gone.OldTest', 'de.a.SortingTest', 'de.a.MathTest#add']);
+    });
+
     it('selects a class of overloaded test cases only as a whole, also when the search shows part of it', () => {
         fixture.componentRef.setInput('structure', {
             testClasses: [

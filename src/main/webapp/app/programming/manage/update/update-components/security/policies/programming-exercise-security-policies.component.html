@@ -276,6 +276,7 @@
         [commitHash]="shortBaseCommit()"
         [canImport]="!!policy.working && !editingDisabled()"
         [notice]="importNotice()"
+        [importEpoch]="yamlImportEpoch()"
         (unsavedRequested)="renderYamlUnsaved()"
         (imported)="importYaml($event)"
     />

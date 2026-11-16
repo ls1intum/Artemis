@@ -154,7 +154,7 @@
             }
         </span>
         <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
-        <button type="button" tumAetUiButton [disabled]="!addedCount() && !removedCount()" (click)="apply()" data-testid="security-add-test-cases-apply">
+        <button type="button" tumAetUiButton [disabled]="!structure() || (!addedCount() && !removedCount())" (click)="apply()" data-testid="security-add-test-cases-apply">
             {{ prefix + 'apply' | artemisTranslate }}
         </button>
     </ng-template>

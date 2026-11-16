@@ -65,6 +65,8 @@ export class SecurityYamlDialogComponent {
     readonly canImport = input(true);
     /** What became of the last import, as the parent reports it. */
     readonly notice = input<SecurityImportNotice | undefined>(undefined);
+    /** Changes when the parent replaces the unsaved changes, e.g. on Discard; a file that was still being read then is dropped. */
+    readonly importEpoch = input(0);
 
     readonly unsavedRequested = output<void>();
     /** Emits an imported file with the path of the policy it was selected for, so it never replaces another policy. */
@@ -156,8 +158,9 @@ export class SecurityYamlDialogComponent {
         }
         this.importError.set(undefined);
         const target = this.policyPath();
+        const epoch = this.importEpoch();
         const content = await file.text();
-        if (selection === this.importCount) {
+        if (selection === this.importCount && epoch === this.importEpoch()) {
             this.imported.emit({ content, policyPath: target });
         }
     }

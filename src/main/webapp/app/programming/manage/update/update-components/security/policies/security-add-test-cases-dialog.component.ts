@@ -126,6 +126,8 @@ export class SecurityAddTestCasesDialogComponent {
     private readonly initial = signal<ReadonlySet<string>>(new Set());
     /** Whether the selection of this opening is set up; it waits for the test structure, which the first opening loads. */
     private initialized = false;
+    /** What the instructor checked and unchecked before a newer structure started loading, to apply to it. */
+    private keptChanges: { added: string[]; removed: string[] } | undefined;
 
     readonly packages = computed<PackageNode[]>(() => {
         const byPackage = new Map<string, ClassNode[]>();
@@ -235,8 +237,24 @@ export class SecurityAddTestCasesDialogComponent {
     constructor() {
         effect(() => {
             // A whole class only expands to its test cases once the structure is there, so the selection is set up when it arrives. While a newer structure
-            // loads, e.g. after a reload, the selection is set up again from it, because one made from the old test cases could release assignments.
-            if (!this.visible() || !this.structure()) {
+            // loads, e.g. after a reload, the selection is set up again from it, because one made from the old test cases could release assignments; what the
+            // instructor checked or unchecked meanwhile is kept and applied to it.
+            if (!this.visible()) {
+                this.initialized = false;
+                this.keptChanges = undefined;
+                return;
+            }
+            if (!this.structure()) {
+                if (this.initialized) {
+                    untracked(() => {
+                        const initial = this.initial();
+                        const selection = this.selection();
+                        this.keptChanges = {
+                            added: [...selection].filter((key) => !initial.has(key)),
+                            removed: [...initial].filter((key) => !selection.has(key)),
+                        };
+                    });
+                }
                 this.initialized = false;
                 return;
             }
@@ -246,10 +264,19 @@ export class SecurityAddTestCasesDialogComponent {
             const own = this.ownTests();
             untracked(() => {
                 const initial = this.expand(own);
+                const selection = new Set(initial);
+                const kept = this.keptChanges;
+                if (kept) {
+                    const available = new Set(this.packages().flatMap((group) => group.available));
+                    kept.added.filter((key) => available.has(key)).forEach((key) => selection.add(key));
+                    kept.removed.forEach((key) => selection.delete(key));
+                } else {
+                    this.toggled.set(new Set());
+                    this.search.set('');
+                }
+                this.keptChanges = undefined;
                 this.initial.set(initial);
-                this.selection.set(new Set(initial));
-                this.toggled.set(new Set());
-                this.search.set('');
+                this.selection.set(selection);
                 this.initialized = true;
             });
         });
@@ -351,6 +378,10 @@ export class SecurityAddTestCasesDialogComponent {
 
     /** A fully selected class is assigned as a whole; otherwise its selected cases are. Entries the tree does not show stay. */
     protected apply(): void {
+        // While a newer structure loads, the selection is not set up from it yet.
+        if (!this.structure() || !this.initialized) {
+            return;
+        }
         const classes = this.packages().flatMap((group) => group.classes);
         const known = new Set(classes.map((node) => node.qualifiedName));
         const caseKeys = new Set(classes.flatMap((node) => node.cases.map((testCase) => testCase.key)));
