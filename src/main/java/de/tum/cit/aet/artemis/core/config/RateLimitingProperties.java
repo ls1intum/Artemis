@@ -74,6 +74,8 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#OIDC_AUTHORIZATION}
      */
     private Integer oidcAuthorizationRequestsPerMinute;
+
+    /**
      * Failed password logins per minute that one account tolerates before further logins for it are answered with 429.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#FAILED_LOGIN}.
      */

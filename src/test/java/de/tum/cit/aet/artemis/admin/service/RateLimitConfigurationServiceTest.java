@@ -129,6 +129,9 @@ class RateLimitConfigurationServiceTest {
 
         assertThat(configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION)).isEqualTo(7);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(99);
+    }
+
+    @Test
     void testGetEffectiveRpm_FailedLogin_UsesTheCustomValueOrTheDefault() {
         when(properties.getFailedLoginRequestsPerMinute()).thenReturn(4);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.FAILED_LOGIN)).isEqualTo(4);
