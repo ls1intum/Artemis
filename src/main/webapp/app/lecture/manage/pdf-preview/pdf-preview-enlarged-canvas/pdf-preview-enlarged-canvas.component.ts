@@ -17,6 +17,9 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
 
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
+    private readonly closeButton = viewChild.required('closeButton', { read: ElementRef<HTMLButtonElement> });
+    private readonly previousPageButton = viewChild('previousPageButton', { read: ElementRef<HTMLButtonElement> });
+    private readonly nextPageButton = viewChild('nextPageButton', { read: ElementRef<HTMLButtonElement> });
 
     readonly DEFAULT_ENLARGED_SLIDE_HEIGHT = 800;
 
@@ -227,6 +230,10 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     navigatePages(direction: NavigationDirection) {
         const nextPageIndex = direction === 'next' ? this.currentPage() + 1 : this.currentPage() - 1;
         if (nextPageIndex > 0 && nextPageIndex <= this.totalPages()) {
+            const disappearingButton = nextPageIndex === 1 ? this.previousPageButton() : nextPageIndex === this.totalPages() ? this.nextPageButton() : undefined;
+            if (disappearingButton?.nativeElement === this.enlargedContainer().nativeElement.ownerDocument.activeElement) {
+                this.closeButton().nativeElement.focus();
+            }
             this.currentPage.set(nextPageIndex);
             const canvas = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);

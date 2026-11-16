@@ -108,6 +108,39 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.close-preview-button'));
         });
 
+        it.each([
+            { label: 'Next page', boundary: 3, returnKey: 'ArrowLeft' },
+            { label: 'Previous page', boundary: 1, returnKey: 'ArrowRight' },
+        ])('keeps keyboard focus in the dialog when $label disappears', async ({ label, boundary, returnKey }) => {
+            fixture.componentRef.setInput('totalPages', 3);
+            component.currentPage.set(2);
+            for (let page = 0; page < 3; page++) {
+                const container = document.createElement('div');
+                container.className = 'pdf-canvas-container';
+                container.append(createMockCanvas());
+                mockContainer.append(container);
+            }
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const navigation = fixture.nativeElement.querySelector(`button[aria-label="${label}"]`) as HTMLButtonElement;
+            navigation.focus();
+            expect(document.activeElement).toBe(navigation);
+
+            navigation.click();
+            fixture.detectChanges();
+
+            expect(component.currentPage()).toBe(boundary);
+            expect(navigation.isConnected).toBe(false);
+            const close = fixture.nativeElement.querySelector('.close-preview-button') as HTMLButtonElement;
+            expect(document.activeElement).toBe(close);
+            close.dispatchEvent(new KeyboardEvent('keydown', { key: returnKey, bubbles: true }));
+            expect(component.currentPage()).toBe(2);
+            const closed = vi.fn();
+            component.isEnlargedViewOutput.subscribe(closed);
+            close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+        });
+
         it('closes the enlarged preview with Escape and restores scrolling', () => {
             const closed = vi.fn();
             component.isEnlargedViewOutput.subscribe(closed);

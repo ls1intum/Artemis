@@ -17,6 +17,7 @@
     }
     <canvas #enlargedCanvas></canvas>
     <button
+        #closeButton
         tumAetUiButton
         severity="secondary"
         variant="solid"
@@ -31,6 +32,7 @@
     </button>
     @if (currentPage() !== 1) {
         <button
+            #previousPageButton
             tumAetUiButton
             severity="secondary"
             variant="solid"
@@ -45,6 +47,7 @@
     }
     @if (currentPage() !== totalPages()) {
         <button
+            #nextPageButton
             tumAetUiButton
             severity="secondary"
             variant="solid"
