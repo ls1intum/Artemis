@@ -191,9 +191,12 @@ reconnecting cannot restore message delivery while the filesystem remains full.
 
 **What to do.** Inspect Docker disk usage on the dedicated E2E runner. Setup removes unused
 Artemis-labelled application images older than 24 hours and verifies space below the broker limit
-plus 10 GiB for the run. If that check fails, reclaim space or expand the runner disk. Do not raise
-the broker's disk threshold, retry the assertions, or prune unrelated machines. Registry image
-deletion does not reclaim a runner's local Docker storage.
+plus 10 GiB for the run. Low space triggers a bounded trim of unused default-builder cache to
+2 GB, then a fresh filesystem check against the unchanged reserve. If cleanup or that check
+fails, reclaim space or expand the runner disk. No E2E tests ran if setup failed; missing test
+timers and reports should not add secondary errors, while the required gate still blocks.
+Do not raise the broker's disk threshold, retry the assertions, or prune unrelated machines.
+Registry image deletion does not reclaim a runner's local Docker storage.
 
 ## Helios is unavailable or rejects the E2E credential
 

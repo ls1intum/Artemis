@@ -395,9 +395,13 @@ Registry deletion also does not reclaim Docker disk space on self-hosted runners
 After stopping the dedicated E2E runner's containers, setup prunes unused images older
 than 24 hours carrying this repository's OCI source label. Exercise, browser and database
 images remain cached. Setup then checks the Docker data filesystem for the broker's
-10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. Insufficient
-space is a setup failure: reclaim space or expand the runner disk rather than raising
-the broker's disk limit or retrying websocket-dependent tests.
+10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. If space is
+low, it trims the default builder's unused build cache to a 2 GB budget and reads the
+filesystem statistics again, keeping the same reserve. Persistent insufficient space or
+failed cleanup is a setup failure: reclaim space or expand the runner disk rather than
+raising the broker's disk limit or retrying websocket-dependent tests. Setup failures
+still run teardown, but do not require or classify reports from tests that never started;
+missing reports after test execution starts remain fatal.
 
 There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
 access, expanding the capabilities of repository jobs with package-write tokens across the shared
