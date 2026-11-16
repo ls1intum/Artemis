@@ -404,7 +404,7 @@ public class SharedQueueManagementService {
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
         String sortedColumn = search.pageable().getSortedColumn();
-        if (!SORTABLE_FINISHED_BUILD_JOB_PROPERTIES.contains(sortedColumn)) {
+        if (sortedColumn == null || !SORTABLE_FINISHED_BUILD_JOB_PROPERTIES.contains(sortedColumn)) {
             throw new BadRequestAlertException("Finished build jobs cannot be sorted by this column", "BuildJob", "invalidSortedColumn");
         }
         var sortOptions = Sort.by(sortedColumn);

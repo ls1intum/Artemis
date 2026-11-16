@@ -306,13 +306,26 @@ class SharedQueueManagementServiceEstimationTest {
         SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
         pageable.setPage(1);
         pageable.setPageSize(20);
-        pageable.setSortedColumn("result.participation.student.password");
+        pageable.setSortedColumn("unknownColumn");
         pageable.setSortingOrder(SortingOrder.ASCENDING);
         pageable.setSearchTerm("");
 
         assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
                 .isInstanceOf(BadRequestAlertException.class);
         verify(buildJobRepository, never()).findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_rejectAMissingSortColumn() {
+        SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+        pageable.setPage(1);
+        pageable.setPageSize(20);
+        pageable.setSortedColumn(null);
+        pageable.setSortingOrder(SortingOrder.ASCENDING);
+        pageable.setSearchTerm("");
+
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
