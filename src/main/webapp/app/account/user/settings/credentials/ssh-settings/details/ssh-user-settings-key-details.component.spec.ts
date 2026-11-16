@@ -115,6 +115,19 @@ describe('SshUserSettingsComponent', () => {
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
+    it.each([{ errorKey: 'keyExpiryDateInPast' }, { errorKey: 'tooManyKeys' }])('should show the message of the error $errorKey', ({ errorKey }) => {
+        sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey }, status: 400 })));
+        comp.ngOnInit();
+        comp.displayedSshKey = mockKey;
+        comp.displayedExpiryDate.set(dayjs().add(1, 'day'));
+        comp.displayedKeyLabel = 'label';
+
+        comp.saveSshKey();
+
+        expect(alertServiceMock.error).toHaveBeenCalledWith(`artemisApp.userSettings.sshSettingsPage.${errorKey}`);
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
     describe('expiry date', () => {
         beforeEach(() => {
             comp.ngOnInit();

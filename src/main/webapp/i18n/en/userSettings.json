@@ -113,7 +113,7 @@
                 "invalidKeyFormat": "Failed to save SSH key. Make sure the key is in a valid and supported format.",
                 "keyNotAccepted": "Failed to save SSH key. The provided key cannot be added. Check that you have not added it before, or use a different key.",
                 "keyExpiryDateInPast": "Failed to save SSH key. The expiry date must not lie in the past.",
-                "tooManyKeys": "Failed to save SSH key. You reached the maximum of 50 keys. Delete a key you no longer use first.",
+                "tooManyKeys": "Failed to save SSH key. You reached the maximum number of keys. Delete a key you no longer use first.",
                 "keyLabelTooLong": "Failed to save SSH key. The key label is limited to 50 characters.",
                 "loadKeyFailure": "Failed to load SSH keys.",
                 "saveFailure": "Failed to save SSH key.",
