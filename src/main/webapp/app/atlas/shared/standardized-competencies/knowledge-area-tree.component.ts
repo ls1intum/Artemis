@@ -80,6 +80,15 @@ export class KnowledgeAreaTreeComponent {
         return this.buildKnowledgeAreaNodes(this.dataSource().data ?? [], expanded);
     });
 
+    protected readonly focusedKey = signal<string | undefined>(undefined);
+    /** Keep a single tree row in the tab order, falling back when filtering or collapse removes the focused row. */
+    protected readonly tabStopKey = computed(() => {
+        const visibleKeys = (nodes: KnowledgeAreaTreeNode[]): string[] => nodes.flatMap((node) => [node.key, ...(node.expanded ? visibleKeys(node.children ?? []) : [])]);
+        const keys = visibleKeys(this.nodes());
+        const focused = this.focusedKey();
+        return focused && keys.includes(focused) ? focused : keys[0];
+    });
+
     /** Incremented to force {@link nodes} to recompute after in-place data mutations. */
     private readonly rebuildTrigger = signal(0);
 
@@ -99,7 +108,7 @@ export class KnowledgeAreaTreeComponent {
     }
 
     /**
-     * Toggles the expansion of a knowledge area. The focusable title and the chevron both call it.
+     * Toggles the expansion of a knowledge area. The focusable row, title and chevron call it.
      * @param knowledgeArea the knowledge area whose expansion to toggle
      */
     protected toggle(knowledgeArea: KnowledgeAreaForTree): void {
@@ -118,37 +127,51 @@ export class KnowledgeAreaTreeComponent {
     }
 
     /**
-     * Arrow key navigation of the WAI-ARIA tree pattern for the focusable knowledge area titles: right expands, left
-     * collapses, up and down move to the previous and next visible title, home and end to the first and last one.
-     * Enter and Space are handled by the template.
+     * Navigate all visible tree rows, including competency and empty-state leaves. Keys from projected controls
+     * belong to those controls. Right expands or enters a child; left collapses or returns to the parent.
      */
-    protected onTitleKeydown(event: KeyboardEvent, knowledgeArea: KnowledgeAreaForTree): void {
+    protected onNodeKeydown(event: KeyboardEvent, node: KnowledgeAreaTreeNode): void {
         if (event.target !== event.currentTarget) {
             return;
         }
-        const titles = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[data-tree-title]'));
-        const index = titles.indexOf(event.currentTarget as HTMLElement);
+        const row = event.currentTarget as HTMLElement;
+        const rows = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[role="treeitem"]'));
+        const index = rows.indexOf(row);
+        const knowledgeArea = node.type === KNOWLEDGE_AREA_NODE_TYPE ? (node.data as KnowledgeAreaForTree) : undefined;
         let target: HTMLElement | undefined;
         switch (event.key) {
             case 'ArrowRight':
-                this.expand(knowledgeArea);
+                if (knowledgeArea && !node.expanded) {
+                    this.expand(knowledgeArea);
+                } else if (node.expanded && node.children?.length) {
+                    target = rows[index + 1];
+                }
                 break;
             case 'ArrowLeft':
-                if (this.isExpanded(knowledgeArea)) {
+                if (knowledgeArea && node.expanded) {
                     this.toggle(knowledgeArea);
+                } else {
+                    target = row.parentElement?.closest<HTMLElement>('[role="treeitem"]') ?? undefined;
                 }
                 break;
             case 'ArrowDown':
-                target = titles[index + 1];
+                target = rows[index + 1];
                 break;
             case 'ArrowUp':
-                target = titles[index - 1];
+                target = rows[index - 1];
                 break;
             case 'Home':
-                target = titles[0];
+                target = rows[0];
                 break;
             case 'End':
-                target = titles[titles.length - 1];
+                target = rows[rows.length - 1];
+                break;
+            case 'Enter':
+            case ' ':
+                if (!knowledgeArea) {
+                    return;
+                }
+                this.toggle(knowledgeArea);
                 break;
             default:
                 return;
