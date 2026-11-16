@@ -517,26 +517,29 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if resetting or force-pushing fails
      */
     public void resetToCommitAndForcePush(Repository repo, String commitHash, String expectedCurrentHash, String branch) throws GitAPIException {
-        if (StringUtils.isBlank(expectedCurrentHash)) {
-            throw new TransportException("Refusing to force-push " + branch + " without an expected remote HEAD lease");
-        }
-        boolean pushed = false;
-        try (Git git = new Git(repo)) {
-            setRemoteUrl(repo);
-            // like every operation that changes the index, the reset is done under the lock of the working copy
-            reset(repo, commitHash);
-            String remoteRef = "refs/heads/" + branch;
-            log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
-            Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
-                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedCurrentHash)).call();
-            assertPushAccepted(pushResults, remoteRef);
-            pushed = true;
-        }
-        finally {
-            if (!pushed) {
-                resetToOriginHead(repo);
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            if (StringUtils.isBlank(expectedCurrentHash)) {
+                throw new TransportException("Refusing to force-push " + branch + " without an expected remote HEAD lease");
             }
-        }
+            boolean pushed = false;
+            try (Git git = new Git(repo)) {
+                setRemoteUrl(repo);
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commitHash).call();
+                String remoteRef = "refs/heads/" + branch;
+                log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
+                Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
+                        .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedCurrentHash)).call();
+                assertPushAccepted(pushResults, remoteRef);
+                pushed = true;
+            }
+            finally {
+                if (!pushed) {
+                    resetToOriginHead(repo);
+                }
+            }
+
+            return null;
+        });
     }
 
     /**
