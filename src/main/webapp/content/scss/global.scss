@@ -495,7 +495,7 @@ ui bootstrap tweaks
     color: inherit;
 }
 
-.card-resizable {
+.resizable-dragging {
     user-select: none;
 }
 
@@ -900,12 +900,6 @@ Course Info Bar
     }
 }
 
-// The diff comparison renders in a PrimeNG dialog (.p-dialog), to which the `diff-view-modal` styleClass is
-// applied; the width itself is set via the dialog config. Cap it so it never exceeds the viewport.
-.diff-view-modal {
-    max-width: 95vw;
-}
-
 .warning-modal-window .modal-dialog {
     width: 50%;
 }
@@ -1156,37 +1150,6 @@ body[data-onboarding-active-step='1'] > .p-select-overlay {
     --mdc-outlined-text-field-container-shape: 4px;
 }
 
-/* Connection Warning Tooltip */
-.connection-warning-popover {
-    pointer-events: none;
-    flex-wrap: nowrap;
-    background-color: transparent;
-
-    .popover-arrow::after {
-        border-bottom-color: $artemis-alert-danger-background;
-    }
-
-    .popover-body {
-        border: none;
-        max-width: 70vw;
-        width: 400px;
-        background-color: $artemis-alert-danger-background;
-        color: $artemis-alert-danger-color;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding-left: 20px;
-        box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
-    }
-}
-
-@media only screen and (max-width: 400px) {
-    .connection-warning-popover .popover-body .ng-fa-icon {
-        display: none;
-    }
-}
-
 body.transparent-background {
     background: transparent;
 }
@@ -1265,8 +1228,8 @@ body.transparent-background {
  * While a drag is in progress the pointer is captured by the panel and may no longer be over the divider. The divider is
  * a child of the panel it resizes, or its next sibling when the panel is a column beside it (the lecture video players).
  */
-.card-resizable > .panel-divider-x::after,
-.card-resizable + .panel-divider-x::after {
+.resizable-dragging > .panel-divider-x::after,
+.resizable-dragging + .panel-divider-x::after {
     border-color: var(--primary);
 }
 
