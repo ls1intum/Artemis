@@ -264,7 +264,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         ]);
         fixture.detectChanges();
 
-        compiled.querySelector<HTMLButtonElement>('[data-testid="feedback-instruction-menu"]')!.click();
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
         fixture.detectChanges();
         const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
 
@@ -283,7 +283,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         ]);
         fixture.detectChanges();
 
-        compiled.querySelector<HTMLButtonElement>('[data-testid="feedback-instruction-menu"]')!.click();
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
         fixture.detectChanges();
         const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
 
