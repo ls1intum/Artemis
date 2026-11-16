@@ -274,6 +274,26 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
     });
 
+    it('applies only the latest of two reloads, also when the earlier one answers after a commit', () => {
+        create(configured(), false);
+        handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        const first = new Subject<SecurityPolicyEditor>();
+        const second = new Subject<SecurityPolicyEditor>();
+        service.getPolicies.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        handlers.reload();
+        handlers.reload();
+
+        second.next(editor('c'.repeat(40)));
+        expect(comp.loading()).toBe(false);
+        service.commitPolicies.mockReturnValue(of({ editor: editor('e'.repeat(40)), config: configured() }));
+        handlers.commit('Update');
+        expect(comp.editor()?.baseCommitHash).toBe('e'.repeat(40));
+
+        first.next(editor('a'.repeat(40)));
+        expect(comp.editor()?.baseCommitHash).toBe('e'.repeat(40));
+        expect(comp.loading()).toBe(false);
+    });
+
     it('does not commit while the policies reload', () => {
         create(configured(), false);
         handlers.onPolicyChange(withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));

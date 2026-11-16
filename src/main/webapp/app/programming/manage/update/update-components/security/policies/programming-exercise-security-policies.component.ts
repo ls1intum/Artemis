@@ -223,6 +223,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly yamlImportEpoch = signal(0);
     /** The number of lookups of who caused a conflict, so only the one of the conflict still shown applies. */
     private conflictLookups = 0;
+    /** The number of loads of the policies started, so only the latest one applies. */
+    private loadRequests = 0;
     /** The change the review shows, serialized, and the number of review previews requested. */
     private reviewedChange: string | undefined;
     private reviewRequests = 0;
@@ -493,16 +495,21 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Loads the policies and replaces every unsaved change. */
     private load(exerciseId: number): void {
+        const request = ++this.loadRequests;
         this.loading.set(true);
         this.loadFailed.set(false);
         this.securityService.getPolicies(exerciseId).subscribe({
             next: (editor) => {
-                this.applyEditor(editor);
-                this.loading.set(false);
+                if (request === this.loadRequests) {
+                    this.applyEditor(editor);
+                    this.loading.set(false);
+                }
             },
             error: () => {
-                this.loading.set(false);
-                this.loadFailed.set(true);
+                if (request === this.loadRequests) {
+                    this.loading.set(false);
+                    this.loadFailed.set(true);
+                }
             },
         });
     }
@@ -522,15 +529,23 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Loads the policies again and keeps the unsaved changes: each changed policy is rebased onto its new committed version; new policies stay. */
     protected reload(announce = false): void {
+        // Only the latest load applies, so an earlier one answering after it, or after a commit that followed it, never brings back an older state.
+        const request = ++this.loadRequests;
         this.conflictLookups++;
         this.loading.set(true);
         this.securityService.getPolicies(this.exerciseId()).subscribe({
             // The requested scanning state stays: its dialog may still be open, and its commit sets the state when it is done.
             next: (editor) => {
-                this.rebaseOnto(editor, announce);
-                this.loading.set(false);
+                if (request === this.loadRequests) {
+                    this.rebaseOnto(editor, announce);
+                    this.loading.set(false);
+                }
             },
-            error: () => this.loading.set(false),
+            error: () => {
+                if (request === this.loadRequests) {
+                    this.loading.set(false);
+                }
+            },
         });
     }
 
@@ -899,6 +914,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.securityService.commitPolicies(this.exerciseId(), change).subscribe({
             next: (result) => {
                 this.commitPending.set(false);
+                // A load that is still pending started before this commit, so its answer is older than the editor of the commit.
+                this.loadRequests++;
+                this.loading.set(false);
                 this.reviewOpen.set(false);
                 const hash = (result.editor.lastCommit?.hash ?? result.editor.baseCommitHash ?? '').substring(0, 7);
                 this.configChange.emit(result.config);
