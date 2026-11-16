@@ -8,9 +8,9 @@
             [showRightPanel]="examMode()"
         >
             <!--region Left Panel-->
-            <div left-body class="text-editor-grid w-100" [class.text-editor-grid--fill]="fillsPanel">
+            <div left-body class="text-editor-grid w-full" [class.text-editor-grid--fill]="fillsPanel">
                 @if (teamCollaborationEnabled() && isActive) {
-                    <div class="grid-area-team-info pb-6! ps-md-2">
+                    <div class="grid-area-team-info pb-6! md:ps-2">
                         <jhi-team-participate-info-box
                             [exercise]="textExercise()"
                             [participation]="participation()"
@@ -44,7 +44,7 @@
                                 }
                                 <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
                                 @if (isOwnerOfParticipation() && isExamSummary()) {
-                                    <jhi-rating class="d-block mt-2" [result]="result()" [participation]="participation()" />
+                                    <jhi-rating class="block mt-2" [result]="result()" [participation]="participation()" />
                                 }
                             </jhi-assessment-submission-panel>
                         } @else {

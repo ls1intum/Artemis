@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
@@ -45,6 +45,8 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     readonly formSubmitted = output<ChannelFormData>();
     readonly channelTypeChanged = output<ChannelType>();
     readonly isAnnouncementChannelChanged = output<boolean>();
+    /** Announcement channels can only be created by instructors, as only they can moderate them. */
+    readonly canCreateAnnouncementChannel = input<boolean>(true);
     isCourseWideChannelChanged = output<boolean>();
 
     form!: FormGroup; // set in initializeForm() from ngOnInit()

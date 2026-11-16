@@ -39,7 +39,7 @@ const ACTION_KEYS: Record<ActionType, string> = {
 /**
  * Asks the instructor to confirm a destructive action on an exam, its students, exercise groups or test runs: the question, an optional
  * summary of what is affected, optional extra checks and an optional entity name that has to be typed. It replaces the shared
- * PrimeNG delete dialog for the exam mode. The parent opens it with {@link visible}, reacts to {@link confirmed} and reports the
+ * delete dialog for the exam mode. The parent opens it with {@link visible}, reacts to {@link confirmed} and reports the
  * outcome of the action on {@link dialogError}: an empty message for success, an error message otherwise.
  */
 @Component({

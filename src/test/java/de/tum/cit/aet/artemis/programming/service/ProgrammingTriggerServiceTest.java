@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -428,6 +429,53 @@ class ProgrammingTriggerServiceTest {
             inOrder.verify(throttle).awaitCapacity();
             inOrder.verify(continuousIntegrationTriggerService).triggerBuild(argThat(triggered -> triggered.getId() == participationId), anyBoolean(),
                     any(SharedBuildTriggerData.class));
+        }
+    }
+
+    @Test
+    void triggerBuildForParticipationData_restoresInterruptionAfterQueueingEveryBuild() {
+        BulkTriggerThrottle throttle = mock(BulkTriggerThrottle.class);
+        when(continuousIntegrationTriggerService.createBulkTriggerThrottle()).thenReturn(throttle);
+        doAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            return null;
+        }).when(throttle).awaitCapacity();
+        doAnswer(invocation -> {
+            assertThat(Thread.currentThread().isInterrupted()).as("the next build must still be queueable").isFalse();
+            return null;
+        }).when(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+
+        try {
+            programmingTriggerService.triggerBuildForParticipationData(List.of(triggerData(1L, false), triggerData(2L, false)), exercise);
+
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            verify(continuousIntegrationTriggerService, times(2)).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void triggerBuildForParticipations_restoresInterruptionAfterAllBatchPauses() {
+        ReflectionTestUtils.setField(programmingTriggerService, "externalSystemRequestBatchSize", 1);
+        doAnswer(invocation -> {
+            assertThat(Thread.currentThread().isInterrupted()).as("queueing a build must not inherit a skipped batch pause's interrupt").isFalse();
+            ProgrammingExerciseStudentParticipation participation = invocation.getArgument(0);
+            if (participation.getId() == 1L) {
+                Thread.currentThread().interrupt();
+            }
+            return null;
+        }).when(continuousIntegrationTriggerService).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+
+        try {
+            programmingTriggerService.triggerBuildForParticipations(List.of(participationWithSubmission(1L, exercise), participationWithSubmission(2L, exercise)));
+
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            verify(continuousIntegrationTriggerService, times(2)).triggerBuild(any(), anyBoolean(), any(SharedBuildTriggerData.class));
+        }
+        finally {
+            Thread.interrupted();
         }
     }
 

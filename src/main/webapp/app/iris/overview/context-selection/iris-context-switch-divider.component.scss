@@ -4,14 +4,14 @@ jhi-iris-context-switch-divider {
         align-items: center;
         gap: 0.5rem;
         margin: 0.75rem 0;
-        color: var(--bs-primary);
+        color: var(--primary);
         font-size: 0.75rem;
         opacity: 0.85;
 
         .divider-line {
             flex: 1;
             height: 1px;
-            background: var(--bs-primary);
+            background: var(--primary);
             opacity: 0.3;
         }
 
@@ -21,7 +21,7 @@ jhi-iris-context-switch-divider {
             gap: 0.4rem;
             white-space: nowrap;
             padding: 0.25rem 0.75rem;
-            border: 1px solid color-mix(in srgb, var(--bs-primary) 60%, transparent 40%);
+            border: 1px solid color-mix(in srgb, var(--primary) 60%, transparent 40%);
             border-radius: 9999px;
             background: transparent;
             color: inherit;
@@ -33,7 +33,7 @@ jhi-iris-context-switch-divider {
 
             &:hover,
             &:focus-visible {
-                background: color-mix(in srgb, var(--bs-primary) 12%, transparent 88%);
+                background: color-mix(in srgb, var(--primary) 12%, transparent 88%);
                 opacity: 1;
             }
         }

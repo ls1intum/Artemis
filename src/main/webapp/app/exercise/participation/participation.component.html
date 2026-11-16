@@ -57,7 +57,7 @@
 
     <div class="flex flex-col h-full">
         @if (rangeFilter()) {
-            <h4 class="flex items-center gap-3">
+            <h4 class="flex items-center gap-4!">
                 <span>
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
@@ -116,7 +116,8 @@
                 size="small"
                 severity="warn"
                 tumAetUiButton
-                [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                data-testid="participation-online-editor"
+                [routerLink]="onlineEditorLink(dto.participationId)"
                 [attr.aria-label]="'artemisApp.participation.onlineEditor' | artemisTranslate"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
             >

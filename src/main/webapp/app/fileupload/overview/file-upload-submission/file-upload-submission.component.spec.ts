@@ -826,7 +826,7 @@ describe('FileUploadSubmissionComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const downloadSection = fixture.nativeElement.querySelector('.card-text');
+            const downloadSection = fixture.nativeElement.querySelector('[data-testid="submitted-file"]');
             expect(downloadSection).toBeTruthy();
         });
     });

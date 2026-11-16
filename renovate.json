@@ -16,9 +16,9 @@
   },
   "packageRules": [
     {
-      "description": "Node 24 is the supported runtime. @types/node 25 and later describe the APIs of newer Node versions, which we do not support yet. Move them together with the Node major (.nvmrc, Dockerfiles, CI), not on their own.",
+      "description": "Node 26 is the supported runtime. @types/node 27 and later describe the APIs of newer Node versions, which we do not support yet. Move them together with the Node major (.nvmrc, Dockerfiles, CI), not on their own.",
       "matchPackageNames": ["@types/node"],
-      "allowedVersions": "<25.0.0"
+      "allowedVersions": "<27.0.0"
     }
   ]
 }

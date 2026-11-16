@@ -230,6 +230,24 @@ Artemis is designed to support high availability through its stateless architect
 
 Open development and transparency are considered an important security-strengthening factor.
 
+#### Audit History
+
+Beyond the review of every pull request, Artemis is audited as a whole. The audits are listed here so
+that operators can see what was examined and when.
+
+| Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9 November 2026 | The server REST interfaces and the build agent infrastructure | Improvements to input validation, to tests that cover refused requests, and to the documentation resulted. They are part of the regular releases. |
+
+An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
+and static analysis in the continuous integration), the architecture tests of the repository, and
+assisted review of the code. Confirmed findings are fixed first. They are summarized here once a release
+with the fix is available, in line with [Disclosure and Advisories](#disclosure-and-advisories).
+Audits are repeated regularly, in particular after larger changes to authentication, authorization or the
+build infrastructure. How the continuous checks support this is described in the
+[security assurance case](https://docs.artemis.tum.de/developer/security-assurance#audits-and-continuous-checks).
+Artemis has not been certified by an independent third party.
+
 
 
 ### Standards and Compliance
@@ -264,6 +282,18 @@ specific Artemis instance should go to the institution that operates it.
 
 We appreciate responsible disclosure and will work with reporters to resolve issues promptly.
 
+Targets for a report, which we aim to meet and which are not a contractual commitment:
+
+| Step                                               | Target                                       |
+| -------------------------------------------------- | -------------------------------------------- |
+| Acknowledge the report                             | Within 5 working days                        |
+| First assessment and severity                      | Within 10 working days                       |
+| Fix of a confirmed critical or high severity issue | In the next release, and sooner where needed |
+| Fix of a confirmed medium or low severity issue    | In one of the following releases             |
+
+The contact is also published as [`security.txt`](https://docs.artemis.tum.de/.well-known/security.txt).
+Reporters who want to be named are credited in the advisory.
+
 
 
 ### Disclosure and Advisories
@@ -278,7 +308,7 @@ Artemis handles disclosure through
 3. The advisory is **published** once operators have had a reasonable opportunity to upgrade. It names
    the affected versions, the fixed version, the impact, and any workaround, and it carries a CVE where
    one is warranted.
-4. Reporters are credited in the advisory unless they ask not to be.
+4. Reporters who want to be named are credited in the advisory.
 
 Publishing advisories rather than fixing silently is deliberate: an operator needs to know whether the
 release they skipped mattered, and a project's advisory history is the only way to judge that from the

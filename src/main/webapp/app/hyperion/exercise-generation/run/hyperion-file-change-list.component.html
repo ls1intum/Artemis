@@ -1,7 +1,7 @@
 @if (empty()) {
     <jhi-hyperion-empty [titleKey]="emptyTitleKey()" [descriptionKey]="emptyDescriptionKey()" data-testid="hyperion-files-empty" />
 } @else {
-    <div class="flex flex-col gap-4" data-testid="hyperion-file-change-list">
+    <div class="flex flex-col gap-6!" data-testid="hyperion-file-change-list">
         @for (group of groups(); track group.repo) {
             <div class="min-w-0" [attr.data-repo]="group.repo">
                 <p class="m-0 mb-1 flex items-baseline gap-2 text-sm font-semibold" [id]="group.labelId">

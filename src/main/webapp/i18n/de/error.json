@@ -81,6 +81,8 @@
         "notEnoughSubmissions": "Es gibt in dieser Aufgabe nicht genügend gültige Abgaben zum Vergleichen. Es werden mindestens zwei Abgaben benötigt, die die konfigurierte Mindestpunktzahl und Mindestgröße erfüllen.",
         "incorrectPassword": "Das aktuelle Passwort ist falsch.",
         "invalidActivationKey": "Der Aktivierungsschlüssel ist ungültig. Bitte benutze die Registrierungsmaske, um dich zu registrieren.",
+        "sessionOutdated": "Du hast dich angemeldet, bevor sich deine Zugangsdaten zuletzt geändert haben. Bitte melde dich erneut an, um einen Passkey, SSH-Schlüssel oder Zugriffstoken hinzuzufügen.",
+        "invalidEmailChangeKey": "Der Link zur Bestätigung der E-Mail-Änderung ist ungültig oder abgelaufen.",
         "internalServerError": "Interner Serverfehler",
         "url.not.found": "Nicht gefunden",
         "Email": "Feld {{fieldName}} muss eine gültige E-Mail-Adresse sein!",
@@ -133,6 +135,7 @@
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
         "feedbackIdMismatch": "Die Bewertung enthält Feedback eines anderen Ergebnisses.",
+        "feedbackCreditsOutOfBounds": "Die Punkte eines Feedbacks müssen zwischen -100 und 100 liegen.",
         "resultParticipationMismatch": "Das Ergebnis ist kein manuelles Ergebnis dieser Teilnahme.",
         "textBlockSubmissionMismatch": "Die Bewertung enthält einen Textblock einer anderen Abgabe.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
@@ -155,6 +158,10 @@
         "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
         "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
+        "buildTimeWindowEndBeforeStart": "Das Ende des Build-Zeitfensters muss nach dessen Beginn liegen.",
+        "buildTimeWindowOutsideExerciseDates": "Das Build-Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen.",
+        "buildTimeWindowNotSupportedForExams": "Das Build-Zeitfenster ist für Klausuraufgaben nicht verfügbar.",
+        "buildOutsideTimeWindow": "Außerhalb des Build-Zeitfensters dieser Übung können keine Builds ausgelöst werden.",
         "gradedParticipationMismatch": "Die ausgewählte Teilnahme gehört nicht zu dieser Aufgabe.",
         "sharingInfoInvalid": "Die Sharing-Informationen der Anfrage konnten nicht validiert werden. Bitte starte den Import erneut über die Sharing Platform.",
         "dueDateOver": {
@@ -183,6 +190,15 @@
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
         "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
+        "assessmentUpload": {
+            "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
+            "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
+            "invalidZipFile": "Die hochgeladene Datei konnte nicht als ZIP-Datei gelesen werden",
+            "multipleCorrectionRounds": "Manuelle Bewertungen können nur für Aufgaben mit genau einer Korrekturrunde hochgeladen werden",
+            "manualResultsNotAllowed": "Manuelle Bewertungen sind für diese Aufgabe noch nicht erlaubt",
+            "automaticAssessment": "Manuelle Bewertungen können nur für Aufgaben hochgeladen werden, bei denen die manuelle Bewertung aktiviert ist",
+            "tooManyParticipantsForTemplate": "Die Aufgabe hat zu viele Teilnehmende, um eine Vorlage für den Upload manueller Bewertungen zu erzeugen"
+        },
         "room": {
             "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
             "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",

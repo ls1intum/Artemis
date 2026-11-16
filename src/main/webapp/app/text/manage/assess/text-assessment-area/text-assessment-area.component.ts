@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
@@ -19,7 +20,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             }
         `,
     ],
-    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective],
+    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective, TumAetUiTagComponent],
 })
 export class TextAssessmentAreaComponent {
     private readonly document = inject(DOCUMENT);
@@ -94,6 +95,23 @@ export class TextAssessmentAreaComponent {
             this.blockToFocus.set(undefined);
         }
         this.autoTextBlockAssessment.set(false);
+    }
+
+    /**
+     * The release of Alt can be lost, for example when the operating system consumes it for a keyboard layout switch (Alt+Shift) or a window shortcut. The area would
+     * then stay in manual selection, where unassessed text has no drop targets, so a criterion dropped onto it silently links to nothing until the page is reloaded.
+     * Any key press, pointer press or drag start without Alt proves that Alt is up, so it brings the area back to the automatic selection.
+     * @param event the interaction that was observed on the document
+     */
+    @HostListener('document:pointerdown', ['$event'])
+    @HostListener('document:dragstart', ['$event'])
+    @HostListener('document:keydown', ['$event'])
+    onInteractionWithoutAlt(event: MouseEvent | KeyboardEvent): void {
+        if (this.autoTextBlockAssessment() || event.altKey || (event instanceof KeyboardEvent && event.key === 'Alt')) {
+            return;
+        }
+        this.blockToFocus.set(undefined);
+        this.autoTextBlockAssessment.set(true);
     }
 
     @HostListener('window:blur')

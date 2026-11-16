@@ -11,6 +11,11 @@
     display: inline-flex;
 }
 
+// Padding rather than margin, so the measured width of the item (which the overflow calculation uses) includes it
+.inline-item.group-start {
+    padding-inline-start: 0.5rem;
+}
+
 // Tailwind's global `hidden` loses to the scoped `.inline-item` rule above and only ties with the kit button's
 // `inline-flex`, so restate the collapse scoped. Bootstrap's `.d-none` won on `!important` alone.
 .inline-item.hidden,

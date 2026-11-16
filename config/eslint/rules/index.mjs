@@ -5,6 +5,7 @@ import preferSignalReactivityOverNgOnChanges from './prefer-signal-reactivity-ov
 import preferSignalTemplateState from './prefer-signal-template-state.mjs';
 import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
+import noBootstrapClassesInCode from './no-bootstrap-classes-in-code.mjs';
 import noAmbiguousSpacingUtility from './no-ambiguous-spacing-utility.mjs';
 import noPrimengComponentClasses from './no-primeng-component-classes.mjs';
 import requireChartAccessibleName from './require-chart-accessible-name.mjs';
@@ -26,6 +27,7 @@ export default {
         'prefer-signal-template-state': preferSignalTemplateState,
         'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
         'no-bootstrap-classes': noBootstrapClasses,
+        'no-bootstrap-classes-in-code': noBootstrapClassesInCode,
         'no-ambiguous-spacing-utility': noAmbiguousSpacingUtility,
         'no-primeng-component-classes': noPrimengComponentClasses,
         'require-chart-accessible-name': requireChartAccessibleName,

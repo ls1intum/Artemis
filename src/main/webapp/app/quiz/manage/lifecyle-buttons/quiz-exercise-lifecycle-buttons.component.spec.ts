@@ -146,11 +146,18 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     }
 
     describe('button visibility', () => {
-        it('shows the start button only for a not-yet-started synchronized quiz with editor rights', () => {
-            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: false }));
+        it('shows the start button only for a synchronized quiz whose batch has not started and with editor rights', () => {
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.INVISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: false }));
             expect(flags().showStartButton()).toBe(true);
 
+            // The server flag quizStarted means "visible to students": a visible quiz in the waiting room can still be started.
             fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: true }));
+            expect(flags().showStartButton()).toBe(true);
+
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.ACTIVE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: true }));
+            expect(flags().showStartButton()).toBe(false);
+
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: false, quizStarted: true }));
             expect(flags().showStartButton()).toBe(false);
 
             fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.BATCHED, isAtLeastEditor: true, quizStarted: false }));
