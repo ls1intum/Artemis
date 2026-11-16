@@ -17,6 +17,8 @@
             "404": "Die Seite existiert nicht.",
             "405": "Die verwendete Anfrage Methode ist für diese URL nicht erlaubt.",
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
+            "429": "Zu viele Anfragen. Bitte versuche es später erneut.",
+            "429Wait": "Zu viele Anfragen. Bitte versuche es in {{ seconds }} Sekunden erneut.",
             "500": "Interner Serverfehler."
         },
         "assessmentNotPossibleExamRunning": "Die Bewertung ist noch nicht möglich: Du kannst beginnen, sobald die Klausur für alle Studierenden am {{ date }} beendet ist.",

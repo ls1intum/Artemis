@@ -17,6 +17,8 @@
             "404": "The page does not exist.",
             "405": "The HTTP verb you used is not supported for this URL.",
             "409": "There was a conflict while processing your request.",
+            "429": "Too many requests. Please try again later.",
+            "429Wait": "Too many requests. Please try again in {{ seconds }} seconds.",
             "500": "Internal server error."
         },
         "assessmentNotPossibleExamRunning": "Assessment is not possible yet: you can start once the exam has ended for all students on {{ date }}.",
