@@ -24,7 +24,7 @@ describe('ExerciseGroupDateNoticeComponent', () => {
         const button = fixture.debugElement.query(By.css('[data-testid="edit-exercise-group-button"]')).nativeElement as HTMLButtonElement;
 
         expect(childTags).toEqual(['fa-icon', 'span', 'button']);
-        expect((fixture.nativeElement as HTMLElement).classList).toContain('d-block');
+        expect((fixture.nativeElement as HTMLElement).classList).toContain('block');
         expect((fixture.nativeElement as HTMLElement).dataset.testid).toBe('exercise-group-date-notice');
         expect(button.type).toBe('button');
     });

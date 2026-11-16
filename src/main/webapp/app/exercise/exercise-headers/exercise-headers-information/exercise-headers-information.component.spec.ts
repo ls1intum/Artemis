@@ -161,6 +161,18 @@ describe('ExerciseHeadersInformationComponent', () => {
         });
     });
 
+    it('should map the color of a relative date to a state color class', () => {
+        const colorClass = (color: string | undefined) => component['timeAgoColorClass'](color);
+
+        expect(colorClass('danger')).toBe('text-state-danger');
+        expect(colorClass('warning')).toBe('text-state-warning');
+        expect(colorClass('success')).toBe('text-state-success');
+        expect(colorClass('info')).toBe('text-state-info');
+        // the inherited color for everything else, and for no color
+        expect(colorClass('body-color')).toBe('');
+        expect(colorClass(undefined)).toBe('');
+    });
+
     it('should render one information box per computed item', () => {
         const compiled = fixture.nativeElement as HTMLElement;
         const informationBoxes = compiled.querySelectorAll('jhi-information-box');

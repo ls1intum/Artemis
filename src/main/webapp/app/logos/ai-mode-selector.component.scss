@@ -28,7 +28,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-
     max-width: 350px;
     min-width: min(280px, 100%);
     box-sizing: border-box;
@@ -76,7 +75,6 @@
 .icons-wrapper {
     display: flex;
     justify-content: center;
-
     padding: 16px;
     background: var(--ai-modal-icons-bg);
     border-radius: 12px;
@@ -95,12 +93,12 @@
 .icon-circle {
     width: 110px;
     height: 110px;
-    background: var(--bs-body-bg);
+    background: var(--body-bg);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--body-color) 8%, transparent);
     position: absolute;
     transition: transform 0.3s ease;
 }
@@ -145,22 +143,21 @@
 }
 
 /* --- CARD HEADER --- */
-.card-header {
+.option-header {
     display: flex;
     gap: 12px;
     align-items: center;
-
     flex-wrap: wrap;
     justify-content: center;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
-.card-header h2,
-.card-header h1 {
+.option-header h2,
+.option-header h1 {
     font-size: 22px;
     font-weight: 700;
     margin: 0;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .badge-experimental,
@@ -202,7 +199,7 @@
     gap: 10px;
     padding: 6px 0;
     font-size: 13px;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .check-icon,
@@ -232,10 +229,12 @@
     font-size: 1.25rem;
     font-weight: 700;
 }
+
 .option-card:focus-within {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
+
 .mode-title input {
     accent-color: var(--primary);
     width: 18px;

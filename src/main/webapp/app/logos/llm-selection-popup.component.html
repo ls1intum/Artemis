@@ -1,17 +1,14 @@
-@if (isVisible()) {
-    <div
-        class="modal-backdrop"
-        data-testid="llm-selection-modal"
-        [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
-        (click)="onBackdropClick($event)"
-        (keydown.escape)="dismiss()"
-        role="dialog"
-        tabindex="-1"
-        aria-modal="true"
-        aria-labelledby="ai-modal-title"
-    >
-        <div class="modal-content" role="document">
-            <div class="modal-header">
+<tumaet-ui-dialog
+    [visible]="isVisible()"
+    (visibleChange)="onVisibleChange($event)"
+    size="large"
+    [showHeader]="false"
+    [dismissableMask]="true"
+    [ariaLabel]="'artemisApp.llmSelectionPopup.header' | artemisTranslate"
+>
+    @if (isVisible()) {
+        <div class="llm-modal" data-testid="llm-selection-modal">
+            <div class="llm-modal-header">
                 <h1 id="ai-modal-title" jhiTranslate="artemisApp.llmSelectionPopup.header"></h1>
                 <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleOne"></p>
                 <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleTwo"></p>
@@ -34,5 +31,5 @@
                 ></a>
             </div>
         </div>
-    </div>
-}
+    }
+</tumaet-ui-dialog>
