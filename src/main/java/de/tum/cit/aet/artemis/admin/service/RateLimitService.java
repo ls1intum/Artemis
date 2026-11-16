@@ -162,8 +162,8 @@ public class RateLimitService {
         ConsumptionProbe probe = getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
-            // The key of a per-user limit is the lower-cased login name, any other key is not logged
-            log.warn("Rate limit exceeded at {} for {}, retry after {} seconds", rpmType.name(), key.startsWith("user:") ? key : "a key", seconds);
+            // Keys can originate in request bodies; report the limit and retry delay without logging untrusted identifiers.
+            log.warn("Rate limit exceeded at {}, retry after {} seconds", rpmType.name(), seconds);
             throw new RateLimitExceededException(seconds);
         }
     }
