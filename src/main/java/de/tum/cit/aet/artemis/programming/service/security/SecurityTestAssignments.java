@@ -87,9 +87,10 @@ final class SecurityTestAssignments {
         }
 
         /**
-         * The annotations that give the class the requested entries: an entry of the whole class points the class annotation to its policy; otherwise the class
-         * annotation points to no policy and each assigned test case gets an annotation of its own. The explicit overrides of test cases that are not assigned
-         * stay, so that no test case gets more permissions than before.
+         * The annotations that give the class the requested entries: an entry of the whole class points the class annotation to its policy and removes the
+         * overrides without a policy file of its test cases; otherwise the class annotation points to no policy and each assigned test case gets an annotation
+         * of its own. The explicit overrides of test cases that are not assigned stay, so that no test case gets more permissions than before, and so do
+         * switched-off ones.
          *
          * @param requested the policy file of each requested entry of this class
          * @return the class with the requested annotations
@@ -101,7 +102,8 @@ final class SecurityTestAssignments {
                     methods.put(entry.substring(entry.indexOf(METHOD_SEPARATOR) + 1), path);
                 }
             });
-            Set<String> defaults = new LinkedHashSet<>(defaultMethods);
+            // An assigned test case loses its override without a policy file; assigning the whole class assigns every test case, while a switched-off one stays.
+            Set<String> defaults = requested.containsKey(qualifiedName) ? new LinkedHashSet<>() : new LinkedHashSet<>(defaultMethods);
             defaults.removeAll(methods.keySet());
             return new TestClass(qualifiedName, sourcePath, active, requested.get(qualifiedName), methods, defaults, switchedOff, overloaded, testCases);
         }

@@ -748,9 +748,13 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         });
     }
 
-    /** Loads the test structure again once the policies are based on another commit, whose tests may differ, if it was loaded before. */
+    /**
+     * Loads the test structure again once the policies are based on another commit, whose tests may differ, if it was loaded before. The old structure is
+     * dropped at once, so the test case dialog waits for the new one instead of setting up its selection from test cases that may be gone.
+     */
     private refreshStructure(): void {
         if (this.structureRequested && this.structureCommit !== this.editor()?.baseCommitHash) {
+            this.structure.set(undefined);
             this.requestStructure();
         }
     }

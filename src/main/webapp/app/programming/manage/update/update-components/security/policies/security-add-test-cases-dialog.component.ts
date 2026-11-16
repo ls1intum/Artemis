@@ -234,12 +234,13 @@ export class SecurityAddTestCasesDialogComponent {
 
     constructor() {
         effect(() => {
-            if (!this.visible()) {
+            // A whole class only expands to its test cases once the structure is there, so the selection is set up when it arrives. While a newer structure
+            // loads, e.g. after a reload, the selection is set up again from it, because one made from the old test cases could release assignments.
+            if (!this.visible() || !this.structure()) {
                 this.initialized = false;
                 return;
             }
-            // A whole class only expands to its test cases once the structure is there, so the selection is set up when it arrives.
-            if (this.initialized || !this.structure()) {
+            if (this.initialized) {
                 return;
             }
             const own = this.ownTests();
@@ -322,17 +323,20 @@ export class SecurityAddTestCasesDialogComponent {
 
     /**
      * Overloaded test cases are assigned only with their whole class, so in each class the change touches they are selected exactly when all of its other
-     * test cases are. A class of overloaded test cases only is selected as a whole anyway.
+     * test cases are. A class of overloaded test cases only is selected or released as a whole.
      */
     private withOverloadsFollowing(selection: Set<string>, changed: readonly string[]): Set<string> {
         const changedClasses = new Set(changed.map((key) => testClassOf(key)));
         for (const node of this.packages().flatMap((group) => group.classes)) {
             const overloads = node.cases.filter((testCase) => testCase.overloaded && !testCase.coveredBy && !testCase.switchedOff);
             const others = node.cases.filter((testCase) => !testCase.overloaded);
-            if (!changedClasses.has(node.qualifiedName) || !overloads.length || !others.length) {
+            if (!changedClasses.has(node.qualifiedName) || !overloads.length) {
                 continue;
             }
-            const complete = others.every((testCase) => selection.has(testCase.key));
+            // In a class of overloaded test cases only, e.g. one the search shows in part, selecting any of them selects the class.
+            const complete = others.length
+                ? others.every((testCase) => selection.has(testCase.key))
+                : changed.some((key) => testClassOf(key) === node.qualifiedName && selection.has(key));
             overloads.forEach((testCase) => (complete ? selection.add(testCase.key) : selection.delete(testCase.key)));
         }
         return selection;

@@ -153,6 +153,43 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(comp.selection().has('de.c.OverloadTest#check')).toBe(true);
     });
 
+    it('sets up the selection again from a newer structure that arrives while it is open', () => {
+        fixture.componentRef.setInput('structure', undefined);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('structure', {
+            testClasses: [{ qualifiedName: 'de.a.SortingTest', testCases: ['bubble', 'merge', 'added'], testClass: true }, ...STRUCTURE.testClasses!.slice(1)],
+        });
+        fixture.detectChanges();
+
+        expect([...comp.selection()]).toContain('de.a.SortingTest#added');
+        handlers.toggleKeys(['de.a.MathTest#add']);
+        handlers.apply();
+        expect(applied[0]).toContain('de.a.SortingTest');
+    });
+
+    it('selects a class of overloaded test cases only as a whole, also when the search shows part of it', () => {
+        fixture.componentRef.setInput('structure', {
+            testClasses: [
+                ...STRUCTURE.testClasses!,
+                { qualifiedName: 'de.d.OnlyOverloads', testCases: ['check', 'verify'], testClass: true, overloadedCases: ['check', 'verify'] },
+            ],
+        });
+        fixture.componentRef.setInput('ownTests', []);
+        comp.visible.set(false);
+        fixture.detectChanges();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        comp.search.set('check');
+
+        const node = comp.view().find((group) => group.packageName === 'de.d')!.classes[0];
+        expect(node.available).toEqual(['de.d.OnlyOverloads#check']);
+        handlers.toggleKeys(node.available);
+        expect(comp.addedCount()).toBe(2);
+        handlers.apply();
+
+        expect(applied[0]).toEqual(['de.d.OnlyOverloads']);
+    });
+
     it('checks a whole group and unchecks it when every case is selected', () => {
         const keys = comp.packages()[0].available;
         handlers.toggleKeys(keys);

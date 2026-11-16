@@ -753,6 +753,18 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void assigningAWholeClassRemovesTheOverridesWithoutAPolicyFileOfItsTestCases() throws Exception {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactly("de.example.SortingTest#testMergeSort", "de.example.StressTest");
+
+        editorService.commit(exercise(), change(editor, edited(loadedPolicy(editor), BOTH_CLASSES)), user);
+
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).doesNotContain("@de.tum.cit.ase.ares.api.Policy\n    @Test"));
+        assertThat(editorService.getEditor(exercise()).policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+    }
+
+    @Test
     void deletingAPolicyLetsItsTestsUseTheDefaultPolicy() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 

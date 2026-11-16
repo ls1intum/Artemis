@@ -13,6 +13,7 @@ import {
     SecurityPolicyEditor,
     SecurityPolicyPreview,
     SecurityPolicyReadOnlyReason,
+    SecurityTestStructure,
 } from 'app/programming/shared/entities/security-policy.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { By } from '@angular/platform-browser';
@@ -313,11 +314,15 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         handlers.requestStructure();
         expect(service.getTestStructure).toHaveBeenCalledOnce();
 
-        service.getTestStructure.mockReturnValueOnce(of({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testCases: ['added'], testClass: true }] }));
+        const refreshed = new Subject<SecurityTestStructure>();
+        service.getTestStructure.mockReturnValueOnce(refreshed);
         service.getPolicies.mockReturnValue(of(editor('d'.repeat(40))));
         handlers.reload();
 
+        // The old structure is dropped at once, so the test case dialog waits for the new one.
         expect(service.getTestStructure).toHaveBeenCalledTimes(2);
+        expect(comp.structure()).toBeUndefined();
+        refreshed.next({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testCases: ['added'], testClass: true }] });
         expect(comp.structure()?.testClasses?.[0].testCases).toEqual(['added']);
     });
 
