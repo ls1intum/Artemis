@@ -5,9 +5,9 @@ sidebar_label: Create an Exam
 last_reviewed: 2026-11-16
 ---
 
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../../src/components/Image/Image";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../../src/components/Image/Image';
 import examConfiguration from './assets/exam_configuration.png';
 import examConduction from './assets/exam_conduction.png';
 import examExercises from './assets/exam_exercises.png';
@@ -63,7 +63,12 @@ printed on the exam and on the score export, so fill them in as your examination
 **Exam with attendance check** marks the exam as one where supervisors verify who is sitting at each machine. It is
 what the [Exam Participation Checker](/instructor/exams/participation-checker) app works against.
 
-<Image src={examConfiguration} alt="Exam Configuration fields of the exam creation form: mode, attendance check, examiner, module number and course name" size={ImageSize.large} caption="Exam Configuration" />
+<Image
+    src={examConfiguration}
+    alt="Exam Configuration fields of the exam creation form: mode, attendance check, examiner, module number and course name"
+    size={ImageSize.large}
+    caption="Exam Configuration"
+/>
 
 ### Exam Conduction
 
@@ -136,7 +141,7 @@ above and set the timeline for your own exam. You can also select which exercise
 
 <Callout variant={CalloutVariant.info}>
 
-  Dates are deliberately not copied. An imported exam has no timeline until you give it one, which is also why it
-  cannot accidentally become visible to students.
+Dates are deliberately not copied. An imported exam has no timeline until you give it one, which is also why it
+cannot accidentally become visible to students.
 
 </Callout>

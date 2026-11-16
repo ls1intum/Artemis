@@ -271,6 +271,26 @@ describe('CourseExamsComponent', () => {
         expect(router.navigate).toHaveBeenCalledWith([43], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
     });
 
+    it('should gate the outlet for a simulation exam that is selected by a later navigation', () => {
+        const simulationExam = { ...visibleTestExam1, id: 77, examMode: ExamMode.TEST_WITH_SIMULATION } as ExamForOverview;
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([simulationExam]));
+        const route = TestBed.inject(ActivatedRoute) as any;
+        route.firstChild = undefined;
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
+        component.testStudentExamsLoaded.set(false);
+        expect(component.canRenderSelectedExam()).toBe(true);
+
+        // the auto-navigation activates the exam child route only after the component exists
+        route.firstChild = { snapshot: { params: { examId: 77 } } };
+        router.setUrl('/courses/1/exams/77');
+
+        expect(component.canRenderSelectedExam()).toBe(false);
+        component.testStudentExamsLoaded.set(true);
+        expect(component.canRenderSelectedExam()).toBe(true);
+    });
+
     it('should keep the selected exam from the URL without redirecting', () => {
         (TestBed.inject(ActivatedRoute) as any).firstChild = { snapshot: { params: { examId: 1 } } };
         component['navigateToExam']();

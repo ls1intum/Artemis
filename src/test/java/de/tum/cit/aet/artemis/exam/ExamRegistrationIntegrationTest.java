@@ -486,7 +486,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentsToSimulationExam() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
 
@@ -497,7 +497,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentsToSimulationExam_simulationPhaseEnded() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
 

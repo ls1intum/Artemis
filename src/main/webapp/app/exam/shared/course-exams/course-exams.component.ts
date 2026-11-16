@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { Subscription, distinctUntilChanged, of } from 'rxjs';
+import { ActivatedRoute, NavigationEnd, Params, Router, RouterOutlet } from '@angular/router';
+import { Subscription, distinctUntilChanged, filter, map, of, startWith } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
@@ -56,7 +56,15 @@ export class CourseExamsComponent implements SidebarView {
     private destroyRef = inject(DestroyRef);
 
     private readonly parentParams = toSignal(this.route.parent?.params ?? of<Params>({}), { initialValue: this.route.parent?.snapshot?.params ?? {} });
-    private readonly childParams = toSignal(this.route.firstChild?.params ?? of<Params>({}), { initialValue: this.route.firstChild?.snapshot?.params ?? {} });
+    // The exam child route is activated after this component is constructed (e.g. by the auto-navigation to an exam), so follow the navigations instead of the child present at construction.
+    private readonly childParams = toSignal(
+        this.router.events.pipe(
+            filter((event) => event instanceof NavigationEnd),
+            map(() => this.route.firstChild?.snapshot?.params ?? {}),
+            startWith(this.route.firstChild?.snapshot?.params ?? {}),
+        ),
+        { initialValue: this.route.firstChild?.snapshot?.params ?? {} },
+    );
     readonly courseId = computed(() => Number(this.parentParams()['courseId'] ?? 0));
 
     private examsSubscription?: Subscription;
