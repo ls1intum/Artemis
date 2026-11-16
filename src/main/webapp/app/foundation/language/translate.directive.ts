@@ -5,6 +5,17 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import DOMPurify from 'dompurify';
 
 /**
+ * The markup a translation may contain: simple inline formatting and links. Images, styles, forms and other elements are removed,
+ * and so are all attributes except the ones that links and the formatting classes need.
+ */
+const TRANSLATION_SANITIZE_CONFIG = {
+    ALLOWED_TAGS: ['a', 'b', 'strong', 'em', 'i', 'u', 'br', 'code', 'span', 'p', 'small', 'sub', 'sup'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_ARIA_ATTR: false,
+};
+
+/**
  * A wrapper directive on top of the translate pipe as the inbuilt translate directive from ngx-translate is too verbose and buggy
  */
 @Directive({
@@ -51,8 +62,8 @@ export class TranslateDirective implements OnInit {
                     // Sanitize before assigning to innerHTML. Translations may legitimately contain benign markup
                     // (e.g. <a>, <strong>), but ngx-translate does NOT HTML-escape interpolated `translateValues`,
                     // so a user-controlled value (course/exercise/exam title, user name, ...) could otherwise inject
-                    // markup here. DOMPurify keeps the benign translation markup while stripping scripts/handlers.
-                    this.el.nativeElement.innerHTML = DOMPurify.sanitize(value);
+                    // markup here. DOMPurify keeps the simple inline markup of TRANSLATION_SANITIZE_CONFIG and strips everything else.
+                    this.el.nativeElement.innerHTML = DOMPurify.sanitize(value, TRANSLATION_SANITIZE_CONFIG);
                 },
                 // Render the not-found fallback on a genuine stream error (the common missing-key case already
                 // flows through `next` via ngx-translate's MissingTranslationHandler). textContent avoids markup injection.

@@ -80,4 +80,58 @@ describe('TranslateDirective', () => {
         expect(element.innerHTML).toContain('<strong>here</strong>');
         expect(element.innerHTML).toContain('href="/x"');
     });
+
+    function render(value: string): HTMLElement {
+        spy.mockReturnValue(of(value) as ReturnType<typeof translateService.get>);
+        const fixture = createWithKey(() => 'test');
+        fixture.detectChanges();
+        return fixture.nativeElement as HTMLElement;
+    }
+
+    it.each([
+        ['an image', 'Text <img src="https://example.com/a.png" alt="x"> end', '<img'],
+        ['a form', 'Text <form action="https://example.com"><input name="a"><button>Go</button></form> end', '<form'],
+        ['an input', 'Text <input type="text" value="a"> end', '<input'],
+        ['a style element', 'Text <style>p { color: red }</style> end', '<style'],
+        ['an inline frame', 'Text <iframe src="https://example.com"></iframe> end', '<iframe'],
+        ['a vector graphic', 'Text <svg><circle r="1"></circle></svg> end', '<svg'],
+        ['a style attribute', 'Text <strong style="color:red;">bold</strong> end', 'style='],
+        ['an event attribute', 'Text <strong onclick="doIt()">bold</strong> end', 'onclick'],
+        ['a data attribute', 'Text <strong data-value="1">bold</strong> end', 'data-value'],
+        ['a script address', 'Text <a href="javascript:doIt()">link</a> end', 'javascript:'],
+    ])('removes %s from the translated value but keeps the text', (_name, value, removed) => {
+        const element = render(value);
+
+        expect(element.innerHTML).not.toContain(removed);
+        expect(element.textContent).toContain('Text');
+        expect(element.textContent).toContain('end');
+    });
+
+    it('keeps the markup that the translations use', () => {
+        const element = render(
+            '<strong class="text-danger">a</strong><b>b</b><i>c</i><em>d</em><code>e</code><br>' +
+                '<span class="font-italic text-info">f</span><p class="text-primary small">g</p>' +
+                '<a href="https://example.com/page" target="_blank" rel="noopener">h</a>',
+        );
+
+        expect(element.querySelector('strong.text-danger')?.textContent).toBe('a');
+        expect(element.querySelector('b')?.textContent).toBe('b');
+        expect(element.querySelector('i')?.textContent).toBe('c');
+        expect(element.querySelector('em')?.textContent).toBe('d');
+        expect(element.querySelector('code')?.textContent).toBe('e');
+        expect(element.querySelector('br')).not.toBeNull();
+        expect(element.querySelector('span.font-italic.text-info')?.textContent).toBe('f');
+        expect(element.querySelector('p.text-primary.small')?.textContent).toBe('g');
+        const link = element.querySelector('a');
+        expect(link?.getAttribute('href')).toBe('https://example.com/page');
+        expect(link?.getAttribute('target')).toBe('_blank');
+        expect(link?.getAttribute('rel')).toBe('noopener');
+    });
+
+    it('keeps the text of placeholders that look like elements', () => {
+        const element = render('Format: <participationId>-<login> and <bold>name</bold>');
+
+        expect(element.textContent).toContain('name');
+        expect(element.textContent).toContain('Format:');
+    });
 });
