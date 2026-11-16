@@ -256,11 +256,16 @@ export class ProgrammingExerciseSecurityComponent {
 
     readonly showAdvancedView = computed(() => this.advancedMode() && this.advancedViewEligible());
 
-    /** True once the Advanced view was shown; it then stays mounted while the form is in simple mode, so its unsaved changes survive switching modes. */
-    private readonly advancedViewOpened = signal(false);
+    /**
+     * The exercise whose Advanced view was shown. The view then stays mounted for that exercise, hidden while the form is in simple mode or while the
+     * status needs this card, e.g. after a failed request, so its unsaved changes survive switching modes and the error until it is shown again.
+     */
+    private readonly advancedViewOpenedFor = signal<number | undefined>(undefined);
 
     /** Whether the Advanced view is in the page, shown or hidden. */
-    readonly advancedViewMounted = computed(() => this.advancedViewOpened() && this.advancedViewEligible());
+    readonly advancedViewMounted = computed(
+        () => this.isEditMode() && this.programmingExercise().id !== undefined && this.advancedViewOpenedFor() === this.programmingExercise().id,
+    );
 
     /** The route to the tests repository of a course exercise; exam exercises have none here. */
     readonly testsRepositoryLink = computed<(string | number)[] | undefined>(() => {
@@ -399,7 +404,8 @@ export class ProgrammingExerciseSecurityComponent {
     constructor() {
         effect(() => {
             if (this.showAdvancedView()) {
-                untracked(() => this.advancedViewOpened.set(true));
+                const exerciseId = this.programmingExercise().id;
+                untracked(() => this.advancedViewOpenedFor.set(exerciseId));
             }
         });
         this.securityService.getVersions().subscribe({

@@ -422,6 +422,25 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             expect(comp.showAdvancedView()).toBe(false);
         });
 
+        it('keeps the Advanced view mounted but hidden while a failed request needs this card', () => {
+            initAdvanced(configuredConfig());
+            fixture.detectChanges();
+            expect(comp.advancedViewMounted()).toBe(true);
+            service.updateFrameworkVersion.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+
+            comp.onFrameworkVersionChanged('3.3.0');
+            fixture.detectChanges();
+
+            expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+            expect(comp.showAdvancedView()).toBe(false);
+            expect(comp.advancedViewMounted()).toBe(true);
+
+            service.updateFrameworkVersion.mockReturnValueOnce(of(configuredConfig('3.3.0')));
+            comp.onRetry();
+            fixture.detectChanges();
+            expect(comp.showAdvancedView()).toBe(true);
+        });
+
         it('keeps this card for the states that need a repair, and when creating an exercise', () => {
             initAdvanced(misconfiguredConfig());
             expect(comp.showAdvancedView()).toBe(false);

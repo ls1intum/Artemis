@@ -226,7 +226,7 @@ public final class SecurityPolicyDocuments {
      */
     private static boolean listsAResourceTwice(SecurityPolicyDocumentDTO document) {
         return hasDuplicates(document.files().stream().map(FilePermissionDTO::path))
-                || hasDuplicates(document.network().stream().map(endpoint -> List.of(endpoint.host(), endpoint.port())))
+                || hasDuplicates(document.network().stream().map(endpoint -> Arrays.asList(endpoint.host(), endpoint.port())))
                 || hasDuplicates(document.commands().stream().map(command -> Stream.concat(Stream.of(command.command()), command.arguments().stream()).toList()))
                 || hasDuplicates(document.threads().stream().map(ThreadPermissionDTO::threadClass))
                 || hasDuplicates(document.packages().stream().map(PackagePermissionDTO::packageName));

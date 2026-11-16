@@ -269,6 +269,16 @@ class SecurityPolicyDocumentsTest {
     }
 
     @Test
+    void reportsAMissingHostInsteadOfFailing() {
+        SecurityPolicyDocumentDTO document = new SecurityPolicyDocumentDTO("SecurityPolicy.yaml", null, "JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ", null, null, List.of(), List.of(),
+                List.of(new NetworkPermissionDTO(null, 80, true, false, false), new NetworkPermissionDTO(null, 80, true, false, false)), List.of(), List.of(), List.of(), List.of(),
+                null);
+
+        assertThat(SecurityPolicyDocuments.validate(document)).anySatisfy(problem -> assertThat(problem).contains("host"))
+                .anySatisfy(problem -> assertThat(problem).contains("listed more than once"));
+    }
+
+    @Test
     void readsTheResourceAccessesOfAPreset() {
         Object section = SecurityPolicySchema.readTree("""
                 regardingFileSystemInteractions: [ ]
