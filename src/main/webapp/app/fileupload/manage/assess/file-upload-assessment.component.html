@@ -71,6 +71,7 @@
                     [gradingCriteria]="exercise()?.gradingCriteria ?? []"
                     [allFeedbacks]="assessments"
                     [maxPoints]="getTotalMaxPoints(exercise())"
+                    [course]="course()"
                 />
             }
         </div>

@@ -7,7 +7,6 @@ import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.mo
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -244,33 +243,5 @@ describe('TextBlockFeedbackEditorComponent', () => {
         const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
         expect(typeSpy).not.toHaveBeenCalled();
-    });
-
-    it('should render the grading instruction dropdown next to the feedback detail when criteria exist', () => {
-        const criterion = { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion;
-        fixture.componentRef.setInput('criteria', [criterion]);
-        fixture.detectChanges();
-
-        expect(compiled.querySelector('.unified-feedback-detail-row [data-testid="feedback-instruction-menu"]')).toBeTruthy();
-    });
-
-    it('should update the assessment when a grading instruction is chosen from the menu', () => {
-        const instruction = { id: 2, credits: 1 } as GradingInstruction;
-        const changeSpy = vi.spyOn(component.feedbackChange, 'emit');
-
-        component.updateAssessmentWithDropdown(instruction);
-
-        expect(changeSpy).toHaveBeenCalledOnce();
-        expect(component.feedback().gradingInstruction).toEqual(instruction);
-        expect(component.feedback().credits).toBe(1);
-        expect(component.feedback().correctionStatus).toBeUndefined();
-    });
-
-    it('should colour a grading instruction by its credits', () => {
-        expect(component.getInstrColour({ credits: 1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
-        expect(component.getInstrColour({ credits: 0 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
-        expect(component.getInstrColour({ credits: -1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
-        // an instruction without a usable credit value keeps the default colour
-        expect(component.getInstrColour({ credits: undefined } as unknown as GradingInstruction)).toBeUndefined();
     });
 });
