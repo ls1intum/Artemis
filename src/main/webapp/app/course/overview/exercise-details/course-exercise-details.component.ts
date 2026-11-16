@@ -26,6 +26,7 @@ function isStudentParticipationChange(participation: Participation | undefined):
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
+import { ProgrammingExerciseBuildWindowNoticeComponent } from 'app/programming/shared/build-window-notice/programming-exercise-build-window-notice.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -66,7 +67,7 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
-    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent],
+    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent, ProgrammingExerciseBuildWindowNoticeComponent],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);

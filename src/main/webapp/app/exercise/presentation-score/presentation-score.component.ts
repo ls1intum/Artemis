@@ -19,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     template: `
         <ng-container *jhiHasAnyAuthority="IS_AT_LEAST_EDITOR">
             @if (this.showPresentationScoreCheckbox()) {
-                <div class="flex flex-col gap-1 mb-3">
+                <div class="flex flex-col gap-1 mb-4!">
                     <div class="flex items-center gap-2">
                         <tumaet-ui-checkbox
                             inputId="field_presentationScoreEnabled"

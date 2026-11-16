@@ -27,6 +27,8 @@
             [(displayedResult)]="displayedHistoryResult"
         />
 
+        <jhi-programming-exercise-build-window-notice [exercise]="exercise" [participation]="activeParticipation()" [practiceMode]="participationMode() === 'practice'" />
+
         <jhi-exercise-split-panel
             class="flex-fill overflow-hidden"
             [exercise]="exercise"

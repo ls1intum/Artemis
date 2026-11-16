@@ -399,7 +399,7 @@ public class CourseOverviewResource {
 
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/title")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
         final var title = courseRepository.getCourseTitle(courseId);
@@ -418,7 +418,7 @@ public class CourseOverviewResource {
      */
     @FeatureUsage(UserFeature.COMPLAINTS)
     @GetMapping("courses/{courseId}/allowed-complaints")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
         User user = userRepository.getUser();

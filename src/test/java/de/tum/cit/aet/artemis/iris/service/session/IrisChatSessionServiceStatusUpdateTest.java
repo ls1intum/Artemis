@@ -92,6 +92,8 @@ class IrisChatSessionServiceStatusUpdateTest {
 
     private ExerciseTestRepository exerciseRepository;
 
+    private AuthorizationCheckService authorizationCheckService;
+
     private IrisChatSessionService irisChatSessionService;
 
     @BeforeEach
@@ -104,9 +106,10 @@ class IrisChatSessionServiceStatusUpdateTest {
         pyrisJobService = mock(PyrisJobService.class);
         userRepository = mock(UserTestRepository.class);
         exerciseRepository = mock(ExerciseTestRepository.class);
+        authorizationCheckService = mock(AuthorizationCheckService.class);
 
         irisChatSessionService = new IrisChatSessionService(irisMessageService, irisMessageRepository, llmTokenUsageService, mock(IrisSettingsService.class),
-                irisChatWebsocketService, mock(AuthorizationCheckService.class), irisSessionRepository, mock(IrisChatSessionRepository.class),
+                irisChatWebsocketService, authorizationCheckService, irisSessionRepository, mock(IrisChatSessionRepository.class),
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), exerciseRepository, mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
                 mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, mock(UserAiPreferenceService.class),
@@ -531,6 +534,8 @@ class IrisChatSessionServiceStatusUpdateTest {
         exercise.setTitle("Sorting");
         exercise.setCourse(course);
         when(exerciseRepository.findByIdElseThrow(11L)).thenReturn(exercise);
+        // A student may switch the chat to an exercise that is released
+        when(authorizationCheckService.isAllowedToSeeCourseExercise(exercise, user)).thenReturn(true);
     }
 
     private IrisMessage stubMarker() {

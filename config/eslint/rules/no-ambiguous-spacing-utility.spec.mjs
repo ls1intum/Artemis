@@ -174,4 +174,34 @@ describe('no-ambiguous-spacing-utility', () => {
             ],
         });
     });
+    it('flags a side utility that an important shorthand in the same class list beats, which Bootstrap did not do', () => {
+        const shadowed = (code, cls, shorthand, output) => ({
+            code,
+            errors: [
+                {
+                    messageId: 'shadowedByShorthand',
+                    data: { cls, shorthand },
+                    suggestions: [{ messageId: 'makeSideImportant', data: { replacement: `${cls}!` }, output }],
+                },
+            ],
+        });
+        ruleTester.run('no-ambiguous-spacing-utility', rule, {
+            valid: [
+                // The side is important as well, so it still beats the shorthand.
+                { code: '<div class="p-4! pt-0!"></div>' },
+                { code: '<div class="mx-4! ms-0!"></div>' },
+                // A side that the shorthand does not set, and a shorthand that is not important.
+                { code: '<div class="px-4! pt-0"></div>' },
+                { code: '<div class="py-4! ps-0"></div>' },
+                { code: '<div class="p-2 pt-0"></div>' },
+                // Another element's classes are not judged against each other.
+                { code: '<div class="p-4!"><span class="pt-0"></span></div>' },
+            ],
+            invalid: [
+                shadowed('<div class="p-4! pt-0"></div>', 'pt-0', 'p-4!', '<div class="p-4! pt-0!"></div>'),
+                shadowed('<div class="flex mb-1 my-6!"></div>', 'mb-1', 'my-6!', '<div class="flex mb-1! my-6!"></div>'),
+                shadowed('<div class="ms-1 m-4!"></div>', 'ms-1', 'm-4!', '<div class="ms-1! m-4!"></div>'),
+            ],
+        });
+    });
 });

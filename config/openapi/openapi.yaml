@@ -2339,6 +2339,69 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
+    get:
+      tags: [athena]
+      operationId: getTextFeedbackSuggestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TextFeedback'}
+  /api/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
+    get:
+      tags: [athena]
+      operationId: getProgrammingFeedbackSuggestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ProgrammingFeedback'}
+  /api/athena/modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
+    get:
+      tags: [athena]
+      operationId: getModelingFeedbackSuggestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ModelingFeedback'}
   /api/aiworker/admin/workers:
     get:
       tags: [admin-ai-worker]
@@ -4750,6 +4813,17 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    ModelingFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        credits: {type: number, format: double}
+        structuredGradingInstructionId: {type: integer, format: int64}
+        reference: {type: string}
     QuizExerciseWithQuestions:
       type: object
       properties:
@@ -4865,6 +4939,19 @@ components:
         location: {type: string}
         tutorialGroupFreePeriod: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
         attendanceCount: {type: integer, format: int32}
+    ProgrammingFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        credits: {type: number, format: double}
+        structuredGradingInstructionId: {type: integer, format: int64}
+        filePath: {type: string}
+        lineStart: {type: integer, format: int32}
+        lineEnd: {type: integer, format: int32}
     ShortAnswerSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -5392,6 +5479,18 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    TextFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        credits: {type: number, format: double}
+        structuredGradingInstructionId: {type: integer, format: int64}
+        indexStart: {type: integer, format: int32}
+        indexEnd: {type: integer, format: int32}
     CodeGenerationJobStart:
       type: object
       properties:
