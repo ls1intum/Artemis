@@ -491,6 +491,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private applyEditor(editor: SecurityPolicyEditor): void {
         this.editor.set(editor);
         this.refreshStructure();
+        this.dropPendingYamlRequests();
         this.policies.set((editor.policies ?? []).map(editorPolicyOf));
         this.deletedPolicies.set([]);
         this.stagedVersion.set(undefined);
@@ -724,6 +725,15 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The map for a panel whose policy is not computed yet. */
     protected readonly noOtherTests = new Map<string, string>();
 
+    /**
+     * Ignores the answers of YAML imports and renderings that are still pending, because the unsaved changes they belong to were replaced, e.g. discarded or
+     * committed; an import answering later would bring them back.
+     */
+    private dropPendingYamlRequests(): void {
+        this.importGenerations.clear();
+        this.yamlPreviewCount++;
+    }
+
     /** Loads the test structure of the commit the policies are based on, once per commit; only the answer to the latest request applies. */
     protected requestStructure(): void {
         const commit = this.editor()?.baseCommitHash;
@@ -886,6 +896,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         if (editor) {
             this.policies.set((editor.policies ?? []).map(editorPolicyOf));
         }
+        this.dropPendingYamlRequests();
         this.deletedPolicies.set([]);
         this.stagedVersion.set(undefined);
         this.banner.set(announce ? { kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.discarded`) } : undefined);

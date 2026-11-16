@@ -229,10 +229,11 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * @return whether the method annotation has arguments other than {@code value} and {@code activated} that the class annotation does not have alike
+     * @return whether the arguments of the method annotation other than {@code value} and {@code activated} differ from those of the class annotation, also
+     *         when the method annotation leaves out one the class annotation sets, e.g. {@code withinPath}, so Ares applies its default for the method
      */
     private static boolean hasOwnArguments(Annotation methodAnnotation, Annotation classAnnotation) {
-        return !otherArguments(methodAnnotation).isEmpty() && !otherArguments(methodAnnotation).equals(otherArguments(classAnnotation));
+        return !otherArguments(methodAnnotation).equals(otherArguments(classAnnotation));
     }
 
     private static Map<String, String> otherArguments(Annotation annotation) {
@@ -266,8 +267,9 @@ final class AresPolicyAnnotations {
     /**
      * Rewrites the {@code @Policy} annotations of a test class so that its test cases use the given policy files: the annotation of the class points to
      * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, the annotations of the methods in
-     * {@code keptMethods} stay as they are, and the annotations of the other methods are removed, except one with arguments of its own, e.g. another
-     * {@code withinPath}, which points to {@code classPolicyPath} if the class has one. Annotations that already point to the right file are not
+     * {@code keptMethods} stay as they are, and the annotations of the other methods are removed, except one whose other arguments differ from those of the
+     * class annotation, e.g. another or no {@code withinPath}, which points to {@code classPolicyPath} if the class has one. Annotations that already point to the right file are
+     * not
      * touched, and new method annotations go on their own line above the method's first test annotation, indented like it.
      *
      * @param path              the path of the file relative to the repository root

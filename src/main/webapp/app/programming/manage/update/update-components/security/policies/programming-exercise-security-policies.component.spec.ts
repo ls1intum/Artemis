@@ -705,4 +705,19 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.stagedVersion()).toBeUndefined();
         expect(comp.banner()?.kind).toBe('info');
     });
+
+    it('drops an import that answers after the unsaved changes were discarded', () => {
+        create(configured(), false);
+        const imported = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(imported);
+        handlers.openYaml(comp.policies()[0]);
+        handlers.importYaml({ content: 'content', policyPath: 'SecurityPolicy.yaml' });
+
+        handlers.discard();
+        imported.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.imported' } });
+
+        expect(comp.policies()[0].working?.supervisedPackage).toBe(DOCUMENT.supervisedPackage);
+        expect(comp.totalChanges()).toBe(0);
+        expect(comp.importNotice()).toBeUndefined();
+    });
 });
