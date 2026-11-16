@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.core.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,5 +37,17 @@ class ResponseHeadersIntegrationTest extends AbstractSpringIntegrationIndependen
         for (String path : new String[] { "/api-docs", "/api-docs.yaml", "/api-docs/agent", "/swagger-ui/index.html" }) {
             mockMvc.perform(get(path)).andExpect(status().isUnauthorized());
         }
+    }
+
+    @Test
+    void shouldServeMonacoWorkerAssetsWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/vs/editor/authorization-test-worker.js")).andExpect(status().isOk())
+                .andExpect(content().string("self.postMessage('monaco-worker-public-resource');\n"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "/vs-private/authorization-test-worker.js", "/api/core/account" })
+    void shouldKeepOtherPathsProtected(String path) throws Exception {
+        mockMvc.perform(get(path)).andExpect(status().isUnauthorized());
     }
 }
