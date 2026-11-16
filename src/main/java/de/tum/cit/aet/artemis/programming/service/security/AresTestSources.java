@@ -37,6 +37,8 @@ final class AresTestSources {
     /** A type declaration; the keyword must not follow a dot, so {@code Foo.class} is no declaration. */
     private static final Pattern TYPE_DECLARATION = AresPolicyAnnotations.TYPE_DECLARATION;
 
+    private static final String END_OF_IDENTIFIER = AresPolicyAnnotations.END_OF_IDENTIFIER;
+
     private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
 
     private static final String JUNIT_API_TEST = "@(?:org\\.junit\\.jupiter\\.api\\.)?(?:Test|RepeatedTest|TestFactory|TestTemplate)";
@@ -57,8 +59,11 @@ final class AresTestSources {
 
     private static final String SECURITY_EXTENSION = "JupiterSecurityExtension";
 
+    /** The {@code .class} after a type name. */
+    private static final String CLASS_LITERAL = "\\s*\\.\\s*class" + END_OF_IDENTIFIER;
+
     /** The security extension registered directly, e.g. in {@code @ExtendWith(JupiterSecurityExtension.class)}, with or without its package. */
-    private static final Pattern SECURITY_EXTENSION_USE = Pattern.compile("(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?" + SECURITY_EXTENSION + "\\s*\\.\\s*class\\b");
+    private static final Pattern SECURITY_EXTENSION_USE = Pattern.compile("(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?" + SECURITY_EXTENSION + CLASS_LITERAL);
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
@@ -66,12 +71,14 @@ final class AresTestSources {
 
     private static final Pattern ARES_JUPITER_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+" + Pattern.quote(ARES_JUPITER_PACKAGE) + "\\.\\*\\s*;");
 
+    /** The lower-case subpackages and then the type or the {@code *} after {@link #ARES_2_PACKAGE} in an {@link #ARES_2_REFERENCE}. */
+    private static final String ARES_2_NAMES_AFTER_PACKAGE = "((?:\\s*\\.\\s*[a-z_]\\p{javaJavaIdentifierPart}*)*\\s*\\.\\s*(?:[A-Z]\\p{javaJavaIdentifierPart}*|\\*))";
+
     /**
      * A reference to an Ares 2 type or package in an import, an annotation or the code: the package, any lower-case subpackages and then a type or the
      * {@code *} of a wildcard import. A static import ends at the type, so its member is not part of the match.
      */
-    private static final Pattern ARES_2_REFERENCE = Pattern
-            .compile("(?<![\\w$.])" + Pattern.quote(ARES_2_PACKAGE) + "((?:\\s*\\.\\s*[a-z_][\\w$]*)*\\s*\\.\\s*(?:[A-Z][\\w$]*|\\*))");
+    private static final Pattern ARES_2_REFERENCE = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])" + Pattern.quote(ARES_2_PACKAGE) + ARES_2_NAMES_AFTER_PACKAGE);
 
     /** The JUnit 5 subpackage of Ares, relative to {@link #ARES_2_PACKAGE}, as a prefix of the API names in {@link #SANDBOX_APIS}. */
     private static final String JUPITER = "jupiter.";
@@ -83,10 +90,13 @@ final class AresTestSources {
     private static final Set<String> SANDBOX_APIS = Stream.concat(Stream.of("Policy", JUPITER + "*", JUPITER + SECURITY_EXTENSION, JUPITER + UNSUPPORTED_ARES_MARKER),
             Stream.concat(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream()).map(marker -> JUPITER + marker)).collect(Collectors.toUnmodifiableSet());
 
-    /** The uses of each Ares marker, with or without its package, compiled once. */
+    /** The {@code @} of an Ares marker and its optional package. */
+    private static final String MARKER_PREFIX = "@(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?";
+
+    /** The uses of each Ares marker, with or without its package, compiled once; a name ends where a Java identifier ends, so {@code @Public$Tag} is no {@code @Public}. */
     private static final Map<String, Pattern> MARKER_USES = Stream.of(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream(), Stream.of(UNSUPPORTED_ARES_MARKER))
             .flatMap(Function.identity())
-            .collect(Collectors.toUnmodifiableMap(Function.identity(), marker -> Pattern.compile("@(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?" + marker + "\\b")));
+            .collect(Collectors.toUnmodifiableMap(Function.identity(), marker -> Pattern.compile(MARKER_PREFIX + marker + END_OF_IDENTIFIER)));
 
     /**
      * A top-level type of a source file.

@@ -68,7 +68,7 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final String MAVEN_BUILD_FILE = "pom.xml";
 
-    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
+    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
 
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
 
