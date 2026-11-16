@@ -285,6 +285,11 @@ public class OnlineUnitResource {
             throw new BadRequestException("The specified link does not contain a valid domain");
         }
 
+        // Metadata is only retrieved from the ordinary web ports
+        if (url.getPort() != -1 && url.getPort() != 80 && url.getPort() != 443) {
+            throw new BadRequestException("The metadata of the specified link cannot be retrieved, because it does not use the port 80 or 443");
+        }
+
         log.info("Requesting online resource at {}", LINE_BREAK_PATTERN.matcher(url.toString()).replaceAll("_"));
 
         try {
@@ -346,7 +351,10 @@ public class OnlineUnitResource {
         if (source == null || source.isBlank()) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        validateUrlStringAndReturnUrl(source);
+        URL url = validateUrlStringAndReturnUrl(source);
+        if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+            throw new BadRequestAlertException("The source of an online unit must be an http or https address", ENTITY_NAME, "inputInvalid");
+        }
     }
 
     private static URL validateUrlStringAndReturnUrl(String urlString) {

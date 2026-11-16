@@ -159,6 +159,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", OnlineUnitDTO.of(onlineUnit), OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "ftp://example.com/a", "mailto:a@b.de", "file:///tmp/a" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createOnlineUnit_sourceWithoutWebScheme_shouldReturnBadRequest(String source) throws Exception {
+        onlineUnit.setSource(source);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", OnlineUnitDTO.of(onlineUnit), OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createOnlineUnit_missingSource_shouldReturnBadRequest() throws Exception {
@@ -422,7 +430,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "abc", "123", "file://", "ftp://", "http://127.0.0.1", "http://localhost:80", "http://example..com", "http://intranet", "http://-bad.example.com",
-            "http://bad_label.example.com", "http://bad-.example.com", "http://example.c0m", "http://example.c", "ftp://example.com" })
+            "http://bad_label.example.com", "http://bad-.example.com", "http://example.c0m", "http://example.c", "ftp://example.com", "https://example.com:8443/page",
+            "http://example.com:8080" })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void getOnlineResource_malformedUrl(String link) throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
