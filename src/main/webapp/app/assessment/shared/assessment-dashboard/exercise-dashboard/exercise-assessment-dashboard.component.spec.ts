@@ -879,11 +879,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
-    it('generate exercise detail link', () => {
-        comp.exercise.set(modelingExercise);
+    it('generate exercise detail link of a course exercise', () => {
+        comp.exercise.set({ ...modelingExercise, exerciseGroup: undefined });
         comp.courseId.set(4);
         const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
+    });
+
+    it('generates the exercise detail link of an exam exercise below its exam', () => {
+        comp.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, id: 7, exerciseGroup: { id: 8, exam: { id: 9 } } as ExerciseGroup });
+        comp.courseId.set(4);
+        expect(comp.exerciseDetailsLink()).toEqual(['/course-management', 4, 'exams', 9, 'exercise-groups', 8, 'programming-exercises', 7]);
     });
 
     it('should toggle second correction', () => {
