@@ -13,11 +13,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -432,7 +432,9 @@ public class BuildJobContainerService {
      * @param containerId The ID of the container to stop or kill.
      */
     public void stopUnresponsiveContainer(String containerId) {
-        try (final var executor = Executors.newSingleThreadExecutor()) {
+        boolean interrupted = Thread.interrupted();
+        try {
+            final var executor = Executors.newSingleThreadExecutor();
             try {
                 // Attempt to stop the container. It should stop the container and auto-remove it.
                 // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
@@ -440,27 +442,20 @@ public class BuildJobContainerService {
                 log.warn("Stopping unresponsive container with id {}", containerId);
 
                 // Submit Docker stop command to executor service
-                Future<Void> future = executor.submit(() -> {
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     try (final var stopCommand = buildAgentConfiguration.getDockerClient().stopContainerCmd(containerId)) {
                         stopCommand.withTimeout(15).exec();
-                        return null;  // Return type to match Future<Void>
                     }
-                });
+                }, executor);
 
-                // Await the future with a timeout
-                future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
+                // join preserves interruption while cleanup finishes. Time out a copy so queued cleanup still runs.
+                future.copy().orTimeout(20, TimeUnit.SECONDS).join();
             }
             catch (Exception e) {
-                // The interrupt status is deliberately left cleared here, which is what java:S2142 would ask to
-                // restore. This method is reached during cancellation from callers that have already restored the flag
-                // themselves - BuildJobManagementService.awaitTermination and the pause grace period in
-                // SharedQueueProcessingService both do - and every Docker call below waits on a Future, which fails
-                // immediately while the flag is set. Restoring it would abandon a running container per cancelled job
-                // and leave the students' build scripts burning CPU until the hourly container cleanup reaps them.
                 Throwable cause = e.getCause();
-                // e will be ExecutionException if thrown in executor service by submitted task
+                // CompletionException wraps failures from the submitted Docker command.
                 // We are interested in the underlying cause in this case
-                if (e instanceof ExecutionException && (cause instanceof NotFoundException || cause instanceof NotModifiedException)) {
+                if (e instanceof CompletionException && (cause instanceof NotFoundException || cause instanceof NotModifiedException)) {
                     log.warn("Container with id {} is already stopped. Attempting to remove container.", containerId, cause);
                     // this can also happen for containers that are stuck in "Ready" state so they can not be stopped or killed
                     // try to remove the container so it won't show up in the next cleanup again
@@ -472,6 +467,24 @@ public class BuildJobContainerService {
                     // Attempt to kill the container if stop fails
                     killContainer(containerId, executor);
                 }
+            }
+            finally {
+                // Keep queued fallback commands even when cancellation interrupts the caller while the executor drains.
+                executor.shutdown();
+                boolean terminated = false;
+                while (!terminated) {
+                    try {
+                        terminated = executor.awaitTermination(1, TimeUnit.DAYS);
+                    }
+                    catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+            }
+        }
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -501,19 +514,15 @@ public class BuildJobContainerService {
      * @param executor    The ExecutorService for running the command.
      */
     private void killContainer(String containerId, ExecutorService executor) {
-        try (final var killCommand = buildAgentConfiguration.getDockerClient().killContainerCmd(containerId)) {
-            Future<Void> killFuture = executor.submit(() -> {
-                killCommand.exec();
-                return null;
-            });
-
-            killFuture.get(10, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+        try {
+            CompletableFuture<Void> killFuture = CompletableFuture.runAsync(() -> {
+                try (final var killCommand = buildAgentConfiguration.getDockerClient().killContainerCmd(containerId)) {
+                    killCommand.exec();
+                }
+            }, executor);
+            killFuture.copy().orTimeout(10, TimeUnit.SECONDS).join();
         }
         catch (Exception e) {
-            // Not restoring the interrupt status is deliberate; see stopUnresponsiveContainer. Restoring it here would
-            // additionally make the enclosing try-with-resources close the executor with shutdownNow() instead of
-            // shutdown(), which drains the work queue and so drops a kill or remove task still queued behind a
-            // wedged stop.
             log.error("Failed to kill container with id {}.", containerId, e);
         }
     }
@@ -526,15 +535,15 @@ public class BuildJobContainerService {
      * @param executor    The ExecutorService for running the command.
      */
     private void removeContainer(String containerId, ExecutorService executor) {
-        try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeContainerCmd(containerId)) {
-            Future<Void> removeFuture = executor.submit(() -> {
-                removeCommand.exec();
-                return null;
-            });
-            removeFuture.get(10, TimeUnit.SECONDS); // Wait for the remove command to complete with a timeout
+        try {
+            CompletableFuture<Void> removeFuture = CompletableFuture.runAsync(() -> {
+                try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeContainerCmd(containerId)) {
+                    removeCommand.exec();
+                }
+            }, executor);
+            removeFuture.copy().orTimeout(10, TimeUnit.SECONDS).join();
         }
         catch (Exception e) {
-            // Not restoring the interrupt status is deliberate; see killContainer.
             log.error("Failed to remove container with id {}", containerId, e);
         }
     }

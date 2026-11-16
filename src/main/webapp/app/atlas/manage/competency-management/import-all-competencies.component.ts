@@ -1,12 +1,9 @@
-import { Component, OnInit, inject, model } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared-ui/import/import.component';
 
-import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-
 export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
-    competencyType?: CourseCompetencyType | 'courseCompetency';
 }
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
@@ -64,8 +61,6 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
     //import relations by default
     protected importRelations = true;
 
-    public competencyType = model<CourseCompetencyType | 'courseCompetency'>(CourseCompetencyType.COMPETENCY);
-
     constructor() {
         const pagingService = inject(CourseForImportDTOPagingService);
         super(pagingService);
@@ -77,9 +72,6 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
         if (dialogData) {
             if (dialogData.disabledIds) {
                 this.disabledIds = dialogData.disabledIds;
-            }
-            if (dialogData.competencyType) {
-                this.competencyType.set(dialogData.competencyType);
             }
         }
         super.ngOnInit();

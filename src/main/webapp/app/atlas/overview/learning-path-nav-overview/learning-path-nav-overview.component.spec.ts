@@ -8,13 +8,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningObjectType, LearningPathCompetencyDTO, LearningPathNavigationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('LearningPathNavOverviewComponent', () => {
     let component: LearningPathNavOverviewComponent;
@@ -36,7 +37,7 @@ describe('LearningPathNavOverviewComponent', () => {
                 },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ScienceService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
             ],
         })
             .overrideComponent(LearningPathNavOverviewComponent, {
@@ -114,9 +115,44 @@ describe('LearningPathNavOverviewComponent', () => {
         expect(openCompetencyGraphSpy).toHaveBeenCalled();
     });
 
+    it('should expand the competency of the current learning object and collapse the previous one', () => {
+        const navigation = TestBed.inject(LearningPathNavigationService);
+        const navigationWith = (competencyId: number) =>
+            ({ currentLearningObject: { id: competencyId, competencyId, type: LearningObjectType.LECTURE } }) as unknown as LearningPathNavigationDTO;
+
+        navigation.learningPathNavigation.set(navigationWith(1));
+        expect(component.isExpanded(1)).toBe(true);
+
+        navigation.learningPathNavigation.set(navigationWith(2));
+        expect(component.isExpanded(1)).toBe(false);
+        expect(component.isExpanded(2)).toBe(true);
+    });
+
+    it('should toggle a competency', () => {
+        expect(component.isExpanded(5)).toBe(false);
+
+        component.toggleCompetency(5);
+        expect(component.isExpanded(5)).toBe(true);
+
+        component.toggleCompetency(5);
+        expect(component.isExpanded(5)).toBe(false);
+    });
+
+    it('should emit the selection and collapse all competencies when a learning object is selected', () => {
+        const emitSpy = vi.spyOn(component.onLearningObjectSelected, 'emit');
+        component.toggleCompetency(1);
+        component.toggleCompetency(2);
+
+        component.selectLearningObject();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(component.isExpanded(1)).toBe(false);
+        expect(component.isExpanded(2)).toBe(false);
+    });
+
     it('should log opening the competency graph, which the modal cannot do outside the course overview', () => {
         const logEventSpy = vi.spyOn(TestBed.inject(ScienceService), 'logEvent');
-        const openSpy = vi.spyOn(TestBed.inject(DialogService), 'open');
+        const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open');
 
         component.openCompetencyGraph();
 
