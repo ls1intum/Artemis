@@ -24,8 +24,13 @@ export type FileAction = (typeof FILE_ACTIONS)[number];
 export const NETWORK_ACTIONS = ['open', 'send', 'receive'] as const;
 export type NetworkAction = (typeof NETWORK_ACTIONS)[number];
 
-/** A fully qualified Java name: a package or a class. */
-const QUALIFIED_NAME = /^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*$/;
+/** One part of a fully qualified Java name. */
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+
+/** Whether the text is a fully qualified Java name, a package or a class: identifiers separated by dots. */
+function isQualifiedName(text: string): boolean {
+    return text.split('.').every((part) => IDENTIFIER.test(part));
+}
 
 /** The special thread tokens Ares accepts besides class names. */
 const THREAD_TOKENS = /^(\*|Lambda-Expression|<implicit-thread-op:(parallelStream|parallel|Thread\.sleep|SubmissionPublisher\.(submit|offer))>)$/;
@@ -176,7 +181,7 @@ export class SecurityPermissionDialogComponent {
                 }
                 break;
             case 'threads':
-                if (!QUALIFIED_NAME.test(this.threadClass().trim()) && !THREAD_TOKENS.test(this.threadClass().trim())) {
+                if (!isQualifiedName(this.threadClass().trim()) && !THREAD_TOKENS.test(this.threadClass().trim())) {
                     return prefix + 'className';
                 }
                 if (!isWholeNumberWithin(this.maxThreads(), 1, Number.MAX_SAFE_INTEGER)) {
@@ -184,7 +189,7 @@ export class SecurityPermissionDialogComponent {
                 }
                 break;
             case 'packages':
-                if (!QUALIFIED_NAME.test(this.packageName().trim())) {
+                if (!isQualifiedName(this.packageName().trim())) {
                     return prefix + 'packageName';
                 }
                 break;
