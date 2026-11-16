@@ -154,7 +154,7 @@ To keep the check of branch names fast and predictable, the expression can be at
 | The anchors `^` at the start and `$` at the end of an alternative | `^(feature\|bugfix)/[a-z0-9-]+$` |
 | The quantifiers `*`, `+`, `?`, `{n}`, `{n,}` and `{n,m}` after an element, with counts up to 1000 and one quantifier per element | `[a-z]{3,10}-\d{2}` |
 
-Every alternative inside a group must consume at least one character. For example, `(a?b|c)` is supported, but `(^|^)`, `(a?|b*)` and `(x{0}|y{0})` are not: they can match without consuming input. A group that is repeated by a quantifier may not contain alternatives, quantifiers or anchors. For example, `(?:ab){2,5}` is supported, while `(a+)+` and `(a\|b)*` are not. Lazy and possessive quantifiers (`a*?`, `a++`), look-ahead and look-behind groups, back references, inline flags such as `(?i)`, quoting with `\Q...\E`, and property classes such as `\p{Alpha}` are not supported.
+Every alternative inside a group must consume at least one character. For example, `(a?b|c)` is supported, but `(^|^)`, `(a?|b*)` and `(x{0}|y{0})` are not: they can match without consuming input. A group that is repeated by a quantifier may not contain alternatives, quantifiers or anchors. For example, `(?:ab){2,5}` is supported, while `(a+)+` and `(a|b)*` are not. Lazy and possessive quantifiers (`a*?`, `a++`), look-ahead and look-behind groups, back references, inline flags such as `(?i)`, quoting with `\Q...\E`, and property classes such as `\p{Alpha}` are not supported.
 
 If an exercise was saved with an expression that is not supported, no custom branch name matches it, so creating a branch is refused until the expression is changed. Pushes to the default branch are not affected.
 
