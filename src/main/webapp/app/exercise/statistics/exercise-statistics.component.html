@@ -1,7 +1,7 @@
 @if (exercise(); as exercise) {
     <div>
-        <h2 class="col-span-12 grid grid-cols-12 gap-4 mb-5 md:col-span-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title"></h2>
-        <div class="mb-3 flex justify-around">
+        <h2 class="col-span-12 grid grid-cols-12 gap-6! mb-12! md:col-span-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title"></h2>
+        <div class="mb-4! flex justify-around">
             <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics()" [exerciseType]="exercise.type!" />
         </div>
         @if (exerciseStatistics(); as exerciseStatistics) {
@@ -15,8 +15,8 @@
                 [exerciseGroup]="exercise.exerciseGroup"
             />
         }
-        <div class="separator w-full mb-4"></div>
-        <div class="grid grid-cols-12 gap-4 mb-5">
+        <div class="separator w-full mb-6!"></div>
+        <div class="grid grid-cols-12 gap-6! mb-12!">
             <div
                 jhi-statistics-span-selector
                 [currentSpan]="currentSpan()"

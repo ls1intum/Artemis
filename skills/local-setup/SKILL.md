@@ -10,12 +10,13 @@ description: Set up or troubleshoot a local Artemis server and client developmen
 | Tool   | Version          | Note                                                                  |
 | ------ | ---------------- | --------------------------------------------------------------------- |
 | JDK    | 25               | Pinned by the Gradle toolchain                                        |
-| Node   | 24.21.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
+| Node   | 26.13.1 or newer | Pinned in `gradle.properties` and `package.json`                      |
 | pnpm   | 12.18.0          | Pinned by the `packageManager` field; activate with `corepack enable` |
 | Docker | current          | Required for the database and for server tests                        |
 
-Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
-whole category of lockfile arguments.
+Run `npm install --global corepack` and `corepack enable` once (Node 25 and later no longer bundle
+Corepack). It activates the exact pnpm version the repository pins, which avoids a whole category of
+lockfile arguments.
 
 Python helper tools install with `python -m pip install --require-hashes -r requirements.txt` in a
 virtual environment. Change `requirements.in` and regenerate locks with
@@ -36,6 +37,7 @@ sudo ln -sfn "$(brew --prefix openjdk@25)/libexec/openjdk.jdk" /Library/Java/Jav
 ## Install dependencies
 
 ```bash
+npm install --global corepack   # once; Node 25 and later do not bundle it
 corepack enable
 pnpm install --frozen-lockfile
 ```

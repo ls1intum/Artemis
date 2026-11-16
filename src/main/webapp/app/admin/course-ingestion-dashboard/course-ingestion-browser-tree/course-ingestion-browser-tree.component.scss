@@ -5,7 +5,7 @@
  * group rows already use for a hovered or active list item, so the tree matches the rest of the admin area.
  */
 .tree-node {
-    color: var(--p-text-color);
+    color: var(--tumaet-ui-text-color);
 
     &:hover,
     &.active {
@@ -22,7 +22,7 @@
 
 /* The chevron is its own control, so it highlights independently of the row it belongs to. */
 .tree-toggle {
-    color: var(--p-text-muted-color);
+    color: var(--tumaet-ui-muted-color);
 
     &:hover:not(:disabled),
     &:focus-visible:not(:disabled) {
