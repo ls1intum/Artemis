@@ -279,7 +279,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
-    void testGetAttendanceCheckerInformationOmitsEmailAndSignaturePath() throws Exception {
+    void testGetAttendanceCheckerInformationOmitsEmail() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 3);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
@@ -293,7 +293,8 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
         var students = (List<Map<String, Object>>) information.get("examUsersWithExamRoomAndSeat");
         assertThat(students).hasSize(3).allSatisfy(student -> {
-            assertThat(student).doesNotContainKeys("email", "signingImagePath");
+            assertThat(student).doesNotContainKey("email");
+            assertThat(student).containsEntry("signingImagePath", "/api/core/files/exam/signature.png");
             assertThat(student).containsKeys("login", "firstName", "plannedLocation");
         });
     }

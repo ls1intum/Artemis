@@ -82,7 +82,7 @@ record ExamUserLocationDTO(
     }
 }
 
-// The e-mail address and the path of the signature are not part of the attendance check, so they are not sent to the teaching assistants operating the app
+// The e-mail address is not needed to check the attendance, so it is not sent to the teaching assistants operating the app
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamUserWithExamRoomAndSeatDTO (
     @NotBlank @Size(max = 50) String login,
@@ -95,6 +95,7 @@ record ExamUserWithExamRoomAndSeatDTO (
     boolean didCheckName,
     boolean didCheckRegistrationNumber,
     boolean didCheckLogin,
+    @Nullable String signingImagePath,
     @NotNull ExamUserLocationDTO plannedLocation,
     @Nullable ExamUserLocationDTO actualLocation
 ) {
@@ -109,6 +110,7 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getDidCheckName(),
             examUser.getDidCheckRegistrationNumber(),
             examUser.getDidCheckLogin(),
+            examUser.getSigningImagePath(),
             ExamUserLocationDTO.plannedFrom(examUser),
             ExamUserLocationDTO.actualFrom(examUser)
         );
