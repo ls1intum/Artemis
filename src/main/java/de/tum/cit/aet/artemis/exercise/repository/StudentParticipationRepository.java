@@ -1932,6 +1932,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - The corresponding task name for each feedback item by checking if the feedback test case name is associated with a task.
      * If a feedback item is not assigned to a task, it is labeled as "Not assigned to task."
      * - The error category for each feedback item, classified as one of "Student Error", "Ares Error", or "AST Error".
+     * The category is derived from the start of the message, ignoring case: an English or German Ares security message
+     * (also behind the {@code java.lang.SecurityException: } prefix a Gradle test report adds) is an "Ares Error", an English
+     * or German Ares AST message is an "AST Error", and every other message is a "Student Error".
+     * The German AST message is recognised in three spellings: with a precomposed "ü", with "u" followed by U+0308, and with
+     * "w" followed by U+0308, which Ares 2 writes by mistake. Stored results keep that text even once Ares corrects its
+     * message bundle.
      * <br>
      * It supports filtering by:
      * - Search term: Case-insensitive filtering on feedback detail text.
@@ -1978,8 +1984,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
                 ), 'Not assigned to task'),
                 CASE
-                    WHEN LOWER(MIN(m.text)) LIKE 'ares security error%' THEN 'Ares Error'
-                    WHEN LOWER(MIN(m.text)) LIKE 'unwanted statement found%' THEN 'AST Error'
+                    WHEN LOWER(MIN(m.text)) LIKE 'ares security error%'
+                        OR LOWER(MIN(m.text)) LIKE 'ares sicherheitsfehler%'
+                        OR LOWER(MIN(m.text)) LIKE 'ares-sicherheitsfehler%'
+                        OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares security error%'
+                        OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares sicherheitsfehler%'
+                        OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares-sicherheitsfehler%' THEN 'Ares Error'
+                    WHEN LOWER(MIN(m.text)) LIKE 'unwanted statement found%'
+                        OR LOWER(MIN(m.text)) LIKE 'unerwünschte anweisung gefunden%'
+                        OR LOWER(MIN(m.text)) LIKE 'unerwu\u0308nschte anweisung gefunden%'
+                        OR LOWER(MIN(m.text)) LIKE 'unerw\u0308nschte anweisung gefunden%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
                 CASE WHEN MAX(LENGTH(m.text)) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH THEN TRUE ELSE FALSE END
@@ -2006,8 +2020,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         WHERE t.taskName IN (:filterTaskNames)
                     ))
                 AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
-                            WHEN LOWER(m.text) LIKE 'ares security error%' THEN 'Ares Error'
-                            WHEN LOWER(m.text) LIKE 'unwanted statement found%' THEN 'AST Error'
+                            WHEN LOWER(m.text) LIKE 'ares security error%'
+                                OR LOWER(m.text) LIKE 'ares sicherheitsfehler%'
+                                OR LOWER(m.text) LIKE 'ares-sicherheitsfehler%'
+                                OR LOWER(m.text) LIKE 'java.lang.securityexception: ares security error%'
+                                OR LOWER(m.text) LIKE 'java.lang.securityexception: ares sicherheitsfehler%'
+                                OR LOWER(m.text) LIKE 'java.lang.securityexception: ares-sicherheitsfehler%' THEN 'Ares Error'
+                            WHEN LOWER(m.text) LIKE 'unwanted statement found%'
+                                OR LOWER(m.text) LIKE 'unerwünschte anweisung gefunden%'
+                                OR LOWER(m.text) LIKE 'unerwu\u0308nschte anweisung gefunden%'
+                                OR LOWER(m.text) LIKE 'unerw\u0308nschte anweisung gefunden%' THEN 'AST Error'
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
             GROUP BY m.id, tc.testName
