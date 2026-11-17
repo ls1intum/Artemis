@@ -61,6 +61,7 @@ describe('QuizQuestionPoolItemListComponent', () => {
             decision: judged
                 ? { accepted: options.accepted ?? true, aggregateScore: 1 - Math.max(...allVerdicts.map((v) => v.severity)), verdicts: allVerdicts, rationale: 'checked' }
                 : undefined,
+            materialChanged: false,
             updatedAt: '2026-10-13T10:00:00Z',
         };
     }
