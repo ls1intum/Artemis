@@ -41,7 +41,7 @@
             <div jhiTranslate="entity.action.saving"></div>
         }
         @if (hasUploadInformation()) {
-            <tumaet-ui-card class="mt-4">
+            <tumaet-ui-card class="mt-6!">
                 <h3 class="mt-0! mb-2!"><span jhiTranslate="artemisApp.examRooms.management.uploadSummary.title"></span></h3>
                 <ul class="my-0! ps-6">
                     <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
@@ -54,7 +54,7 @@
             <div jhiTranslate="artemisApp.examRooms.management.deleting"></div>
         }
         @if (hasDeletionInformation()) {
-            <tumaet-ui-card class="mt-4">
+            <tumaet-ui-card class="mt-6!">
                 <h3 class="mt-0! mb-2!"><span jhiTranslate="artemisApp.examRooms.management.deletionSummary.title"></span></h3>
                 <ul class="my-0! ps-6">
                     <li><strong jhiTranslate="artemisApp.examRooms.management.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>

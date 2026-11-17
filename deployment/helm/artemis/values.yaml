@@ -277,7 +277,7 @@ postgresql:
   deploy: true
   image:
     repository: postgres
-    tag: "18.6-alpine"
+    tag: "18.7-alpine"
     pullPolicy: IfNotPresent
   auth:
     database: "Artemis"

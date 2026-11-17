@@ -5,7 +5,6 @@ import { MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { Component } from '@angular/core';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +31,6 @@ describe('CompetencyPopoverComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                NgbPopoverModule,
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/competencies', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/competency-management', component: DummyManagementComponent },

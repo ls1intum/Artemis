@@ -135,7 +135,8 @@ public class StudentExamConductionResource {
     private ResponseEntity<StudentExamForConductionDTO> getStudentExamForConduction(Long courseId, Long examId, Long studentExamId, HttpServletRequest request,
             ExamReadAudience audience) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithAuthorities();
+        // the course roles are loaded together with the user, so the course membership check below needs no further query
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
         if (!currentUser.equals(studentExam.getUser())) {
@@ -149,6 +150,10 @@ public class StudentExamConductionResource {
         if (studentExam.isTestRun()) {
             // this check is quite expensive, so we only so it for test runs
             studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
+        else {
+            // the exam content is only served to users who are still members of the course
+            studentExamAccessService.checkCourseAccessForStudentElseThrow(studentExam.getExam().getCourse(), currentUser);
         }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client

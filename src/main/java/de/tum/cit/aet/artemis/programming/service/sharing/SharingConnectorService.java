@@ -1,13 +1,15 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
+import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
+
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -307,7 +309,7 @@ public class SharingConnectorService {
             apiKey = matcher.group(1);
         }
 
-        boolean success = Objects.equals(sharingApiKey, apiKey);
+        boolean success = sharingApiKey != null && MessageDigest.isEqual(hashSha256(sharingApiKey), hashSha256(apiKey));
         if (!success) {
             lastHealthStati.add(new HealthStatus("Failed api Key validation (unequal)"));
         }

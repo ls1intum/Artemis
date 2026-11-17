@@ -96,7 +96,8 @@ describe('StatisticsService', () => {
                         releaseDate: '2026-10-01T08:00:00Z',
                         averageScore: 75,
                         exerciseType: ExerciseType.TEXT,
-                        categories: [{ category: 'Week 1', color: '#6ae8ac' }],
+                        // The server sends the categories of an exercise as the JSON strings they are stored as.
+                        categories: [JSON.stringify({ category: 'Week 1', color: '#6ae8ac' })],
                     },
                 ],
             });
@@ -106,6 +107,26 @@ describe('StatisticsService', () => {
             expect(dayjs.isDayjs(exercise.releaseDate)).toBe(true);
             expect(exercise.releaseDate!.toISOString()).toBe('2026-10-01T08:00:00.000Z');
             expect(exercise.categories).toEqual([new ExerciseCategory('Week 1', '#6ae8ac')]);
+        });
+
+        it('should skip a category that is not valid JSON and keep the valid ones', () => {
+            let statistics: CourseManagementStatisticsDTO | undefined;
+            service.getCourseStatistics(1).subscribe((result) => (statistics = result));
+
+            httpMock.expectOne(url).flush({
+                averageScoreOfCourse: 75,
+                averageScoresOfExercises: [
+                    {
+                        exerciseId: 2,
+                        exerciseName: 'Requirements',
+                        averageScore: 75,
+                        exerciseType: ExerciseType.TEXT,
+                        categories: ['not json', JSON.stringify({ category: 'Week 2', color: '#0ab84f' })],
+                    },
+                ],
+            });
+
+            expect(statistics!.averageScoresOfExercises[0].categories).toEqual([new ExerciseCategory('Week 2', '#0ab84f')]);
         });
 
         it('should take a course whose exercises have no average score yet, which the server sends without the list', () => {

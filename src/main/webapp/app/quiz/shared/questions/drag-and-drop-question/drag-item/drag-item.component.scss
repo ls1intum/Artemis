@@ -42,9 +42,9 @@
         }
 
         span {
-            border: 1px solid #000;
-            background: white;
-            color: black;
+            border: 1px solid var(--tumaet-ui-border-color);
+            background: var(--tumaet-ui-content-background);
+            color: var(--tumaet-ui-text-color);
             padding: 4px;
             overflow: hidden;
             text-overflow: ellipsis;

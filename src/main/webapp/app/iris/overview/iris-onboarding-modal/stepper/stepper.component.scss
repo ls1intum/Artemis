@@ -1,29 +1,23 @@
-.stepper {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.step-indicator {
+.iris-tour-stepper__indicator {
     height: 8px;
     border-radius: 16px;
-    background: var(--bs-secondary-bg);
+    background: var(--iris-tertiary-background);
     transition:
         width 0.3s ease,
         background-color 0.3s ease;
 
-    &.active {
+    &--active {
         width: 20px;
-        background: var(--bs-primary);
+        background: var(--primary);
     }
 
-    &.inactive {
+    &--inactive {
         width: 8px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .step-indicator {
+    .iris-tour-stepper__indicator {
         transition: none;
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -162,7 +163,7 @@ public class HyperionQuizQuestionPoolModelService {
             }
             return Optional.of(modelList.data().stream().filter(Objects::nonNull).map(Model::id).filter(Objects::nonNull).toList());
         }
-        catch (RestClientException e) {
+        catch (RestClientException | InvalidMediaTypeException e) {
             log.warn("Could not check the models of the quiz question pool at {}: {}; the pool stays on", modelsUri, e.getMessage());
             return Optional.empty();
         }

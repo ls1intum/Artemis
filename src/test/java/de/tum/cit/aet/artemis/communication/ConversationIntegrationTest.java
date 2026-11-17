@@ -306,6 +306,21 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateIsFavorite_conversationOfAnotherCourse_shouldBeRejected() throws Exception {
+        var otherCourse = courseUtilService.createCourseWithMessagingEnabled();
+        Channel channel = conversationUtilService.createCourseWideChannel(courseRepository.save(otherCourse), "course-wide-other");
+
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isFavorite", String.valueOf(true));
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.BAD_REQUEST, trueParams);
+        assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(),
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).isEmpty();
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateIsFavorite_shouldToggleIsFavorite_IfNoParticipant() throws Exception {
         // given
         Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");

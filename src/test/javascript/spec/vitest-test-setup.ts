@@ -94,7 +94,8 @@ window.scrollBy = vi.fn();
 
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
+    // Restoring a per-test spy must retain the factory rather than reset matchMedia to return undefined.
+    value: vi.fn((query: string) => ({
         matches: false,
         media: query,
         onchange: null,

@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 153 features, 1184 REST endpoints in 29 modules, and 71 interaction overrides.
+Currently 20 product areas, 153 features, 1191 REST endpoints in 29 modules, and 72 interaction overrides.
 
 ## Courses
 
@@ -536,6 +536,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| assessment | `AssessmentUploadResource` | 1 | 1 | 0 | 0 |
 | fileupload | `FileUploadAssessmentResource` | 4 | 0 | 0 | 0 |
 | fileupload | `FileUploadSubmissionResource` | 0 | 4 | 0 | 0 |
 | modeling | `ModelingAssessmentResource` | 4 | 0 | 0 | 0 |
@@ -1246,7 +1247,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | account | `AccountResource` | 1 | 0 | 0 | 0 |
-| core | `PublicAccountResource` | 3 | 1 | 0 | 0 |
+| core | `PublicAccountResource` | 3 | 1 | 1 | 0 |
 
 ### Account settings
 
@@ -1254,10 +1255,11 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| account | `AccountResource` | 4 | 0 | 0 | 0 |
+| account | `AccountResource` | 6 | 1 | 0 | 0 |
 | account | `UserResource` | 2 | 0 | 0 | 0 |
 | core | `FileResource` | 0 | 0 | 1 | 0 |
 | core | `PublicAccountResource` | 1 | 0 | 1 | 0 |
+| core | `PublicEmailChangeResource` | 1 | 0 | 0 | 0 |
 
 ### Passkeys
 
@@ -1564,6 +1566,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
 * `POST api/core/public/client-errors` (`MONITORING`)
+* `POST api/core/public/email-allowed` (`REGISTRATION_PASSWORD`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
 * `POST api/iris/tutor-suggestion/posts/{postId}/sessions/current` (`IRIS_TUTOR_SUGGESTIONS`)
 * `PUT api/notification/courses/{courseId}/seen` (`COURSE_NOTIFICATIONS`)

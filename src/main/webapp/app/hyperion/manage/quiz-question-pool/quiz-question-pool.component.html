@@ -76,7 +76,7 @@
 
 <tumaet-ui-confirm-dialog />
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-6!">
     <p class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.intro"></p>
 
     @if (isModelMissing()) {
@@ -86,7 +86,7 @@
     <tumaet-ui-card [header]="'artemisApp.hyperion.quizQuestionPool.progress.title' | artemisTranslate" data-testid="pool-progress-card">
         @if (progress(); as progressValue) {
             @if (progressValue.total > 0) {
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4!">
                     <tumaet-ui-progress-bar
                         class="block"
                         [value]="progressPercent()"
@@ -188,7 +188,7 @@
         }
         @if (isInstructor() && settings()) {
             @if (runningBuildSettings()) {
-                <p class="mt-3 mb-0 flex flex-wrap gap-x-2 text-sm text-muted-color" data-testid="pool-build-settings-summary">
+                <p class="mt-4! mb-0 flex flex-wrap gap-x-2 text-sm text-muted-color" data-testid="pool-build-settings-summary">
                     <span class="font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.summaryRunningBuild"></span>
                     @for (fact of runningBuildFacts(); track fact.key; let last = $last) {
                         <span [jhiTranslate]="fact.key" [translateValues]="fact.values"></span>
@@ -200,7 +200,7 @@
             }
             <p
                 class="mb-0 flex flex-wrap gap-x-2 text-sm text-muted-color"
-                [class.mt-3]="!runningBuildSettings()"
+                [class.mt-4!]="!runningBuildSettings()"
                 [class.mt-1]="runningBuildSettings()"
                 data-testid="pool-settings-summary"
             >
@@ -255,7 +255,7 @@
                     </tumaet-ui-tag>
                 }
             </div>
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-6!">
                 <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.hint"></p>
                 @for (group of lectureUnitGroups(); track group.competencyId) {
                     <section class="flex flex-col" [attr.data-testid]="'pool-units-competency-' + group.competencyId">
@@ -353,7 +353,7 @@
                     <span class="font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReview" [translateValues]="{ count: pendingInQueue() }"></span>
                 }
             </div>
-            <div class="flex flex-col gap-3 pt-1">
+            <div class="flex flex-col gap-4! pt-1">
                 <jhi-quiz-question-pool-item-list
                     [questions]="needsReviewQuestions()"
                     [canReview]="canReview()"
@@ -403,14 +403,14 @@
     }
 
     <div
-        class="flex flex-col gap-4"
+        class="flex flex-col gap-6!"
         infiniteScroll
         [infiniteScrollDisabled]="isLoadingMore() || remainingQuestions() === 0"
         (scrolled)="loadMoreQuestions()"
         data-testid="pool-question-list"
     >
         @for (group of groups(); track group.id) {
-            <section class="flex flex-col gap-3" [attr.data-testid]="'pool-group-' + group.id">
+            <section class="flex flex-col gap-4!" [attr.data-testid]="'pool-group-' + group.id">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h6 class="m-0 text-lg font-semibold">{{ group.title }}</h6>
                     @if (isInstructor()) {
@@ -456,7 +456,7 @@
         }
 
         @if (questions().length > 0) {
-            <div class="flex flex-wrap items-center gap-3 text-sm text-muted-color" data-testid="pool-question-count">
+            <div class="flex flex-wrap items-center gap-4! text-sm text-muted-color" data-testid="pool-question-count">
                 <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.loaded" [translateValues]="{ loaded: questions().length, total: totalQuestionCount() }"></span>
                 @if (remainingQuestions() > 0) {
                     <button

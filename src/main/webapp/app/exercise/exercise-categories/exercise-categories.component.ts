@@ -22,7 +22,6 @@ interface ShowTagsConfig {
 @Component({
     selector: 'jhi-exercise-categories',
     templateUrl: './exercise-categories.component.html',
-    styleUrls: ['./exercise-categories.component.scss'],
     imports: [NgClass, RouterLink, NotReleasedTagComponent, TranslateDirective, IncludedInScoreBadgeComponent, DifficultyBadgeComponent, TruncatePipe],
 })
 export class ExerciseCategoriesComponent {

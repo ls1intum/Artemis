@@ -1,5 +1,5 @@
 # Shape of the types stored in the distributed store. See DistributedDataSurfaceTest.
-schema-version=1
+schema-version=2
 record de.tum.cit.aet.artemis.account.dto.passkey.ArtemisAttestationConveyancePreferenceDTO serialVersionUID=0 serializable=true [java.lang.String value]
 record de.tum.cit.aet.artemis.account.dto.passkey.ArtemisAuthenticatorSelectionCriteriaDTO serialVersionUID=0 serializable=true [org.springframework.security.web.webauthn.api.AuthenticatorAttachment authenticatorAttachment, java.lang.String residentKey, org.springframework.security.web.webauthn.api.UserVerificationRequirement userVerification]
 record de.tum.cit.aet.artemis.account.dto.passkey.ArtemisPublicKeyCredentialParametersDTO serialVersionUID=0 serializable=true [org.springframework.security.web.webauthn.api.PublicKeyCredentialType type, long coseAlgorithmIdentifier]
@@ -40,7 +40,7 @@ record de.tum.cit.aet.artemis.buildagent.dto.BuildResult serialVersionUID=0 seri
 record de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig serialVersionUID=0 serializable=true [java.util.List<java.lang.String> env, java.lang.String network, int cpuCount, int memory, int memorySwap]
 record de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo serialVersionUID=0 serializable=true [java.time.ZonedDateTime submissionDate, java.time.ZonedDateTime buildStartDate, java.time.ZonedDateTime buildCompletionDate, java.time.ZonedDateTime estimatedCompletionDate, long estimatedDuration]
 record de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO serialVersionUID=0 serializable=true [java.util.List<de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO> failedTests, java.util.List<de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO> successfulTests]
-record de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO serialVersionUID=0 serializable=true [java.lang.String name, java.util.List<java.lang.String> testMessages]
+record de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO serialVersionUID=0 serializable=true [java.lang.String name, java.util.List<java.lang.String> testMessages, java.lang.String testClass]
 record de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo serialVersionUID=0 serializable=true [java.lang.String repositoryName, de.tum.cit.aet.artemis.programming.domain.RepositoryType repositoryType, de.tum.cit.aet.artemis.programming.domain.RepositoryType triggeredByPushTo, java.lang.String assignmentRepositoryUri, java.lang.String testRepositoryUri, java.lang.String solutionRepositoryUri, java.lang.String[] auxiliaryRepositoryUris, java.lang.String[] auxiliaryRepositoryCheckoutDirectories]
 record de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem serialVersionUID=0 serializable=true [de.tum.cit.aet.artemis.buildagent.dto.BuildResult buildResult, de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem buildJobQueueItem, java.util.List<de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO> buildLogs, java.lang.Throwable exception]
 record de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO serialVersionUID=1 serializable=true [java.lang.String title, java.lang.String description, java.lang.String image, java.lang.String url]
