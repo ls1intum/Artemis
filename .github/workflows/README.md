@@ -549,6 +549,15 @@ All configured **new-code** conditions apply: reliability, security, maintainabi
 duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
 quality gate nor the source/exclusion contract with Codacy is weakened.
 
+The existing Sonar job also requires **zero newly duplicated lines** on PRs. It reads the absolute
+`new_duplicated_lines` count from the completed analysis: a rounded **0.0%** does not pass if even
+one newly duplicated line remains. The job summary records new duplicated lines, blocks and total
+new lines. This verification performs only metadata/measure reads; it does not start another scan
+or repeat tests. It applies to scanned PRs and secretless verification of maintainer-published
+fork analyses. Missing or invalid metrics, unavailable APIs, changed analyses and source/target
+mismatches fail verification. Existing default-branch duplication remains visible in Sonar while
+the PR guard prevents additions; analysis scope and duplication detection settings stay unchanged.
+
 ### Scope, coverage and runner cost
 
 Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 26, client dependencies, the TUM

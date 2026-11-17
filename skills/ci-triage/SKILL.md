@@ -125,6 +125,17 @@ verification job. Never automatically execute fork build scripts with the token.
 policy for the promotion procedure. Head or target changes invalidate evidence. Metadata-only
 edits neither replace canonical validation nor cancel active coverage reporting.
 
+## Diagnose a Sonar duplication failure
+
+The existing Sonar job requires zero newly duplicated lines in PRs and reports absolute line/block
+counts in its summary. A displayed 0.0% can still contain duplicate lines. Inspect the exact-head
+PR analysis and its duplication blocks; share the repeated behavior without changing scan scope
+or detection thresholds. The guard verifies the current open PR head/target and analysis identity
+before and after reading metrics. Missing metrics, API failures or replaced analyses cannot pass.
+If the analysis was replaced, verify the current head and rerun verification once; no new build or
+scan is needed when a passing exact-head analysis already exists. See the
+[Sonar workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
+
 ## Investigate Scorecard findings
 
 Read the published report at
