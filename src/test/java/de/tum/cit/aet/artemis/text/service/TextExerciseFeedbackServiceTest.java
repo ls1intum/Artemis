@@ -28,10 +28,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -269,6 +271,49 @@ class TextExerciseFeedbackServiceTest {
             releaseAthena.countDown();
             assertThat(completed.await(2, TimeUnit.SECONDS)).isTrue();
         }
+    }
+
+    @Test
+    void preservesFeedbackContentAndCompletedResultThroughSharedScheduling() throws Exception {
+        TextSubmission submission = new TextSubmission();
+        submission.setId(7L);
+        submission.setText("A useful student answer");
+        User requestingUser = new User();
+        when(userRepository.getUser()).thenReturn(requestingUser);
+        when(athenaFeedbackApi.getTextFeedbackSuggestions(textExercise, submission, false, requestingUser)).thenReturn(List
+                .of(new TextFeedbackDTO(null, 1L, 7L, "Correct", "Useful feedback", 4.0, null, 0, 8), new TextFeedbackDTO(null, 1L, 7L, "Ignored", null, 9.0, null, null, null)));
+        CountDownLatch completed = new CountDownLatch(1);
+        AtomicReference<Result> completedResult = new AtomicReference<>();
+        doAnswer(invocation -> {
+            Result result = invocation.getArgument(1);
+            if (Boolean.TRUE.equals(result.isSuccessful())) {
+                completedResult.set(result);
+                completed.countDown();
+            }
+            return null;
+        }).when(resultWebsocketService).broadcastNewResult(eq(participation), any(Result.class));
+
+        newService(Optional.of(athenaFeedbackApi)).generateAutomaticFeedbackForTestExamAsync(participation, textExercise, submission);
+
+        assertThat(completed.await(2, TimeUnit.SECONDS)).isTrue();
+        Result result = completedResult.get();
+        assertThat(result).isSameAs(submission.getLatestResult());
+        assertThat(result.getScore()).isEqualTo(40.0);
+        assertThat(result.isRated()).isTrue();
+        assertThat(result.getFeedbacks()).singleElement().satisfies(item -> {
+            assertThat(item.getText()).isEqualTo("Correct");
+            assertThat(item.getDetailText()).isEqualTo("Useful feedback");
+            assertThat(item.getCredits()).isEqualTo(4.0);
+            assertThat(item.getType()).isEqualTo(FeedbackType.AUTOMATIC);
+        });
+        assertThat(submission.getBlocks()).singleElement().satisfies(block -> {
+            assertThat(block.getText()).isEqualTo("A useful");
+            assertThat(block.getStartIndex()).isZero();
+            assertThat(block.getEndIndex()).isEqualTo(8);
+            assertThat(block.getFeedback()).isSameAs(result.getFeedbacks().iterator().next());
+            assertThat(block.getId()).isEqualTo(result.getFeedbacks().iterator().next().getReference());
+        });
+        verify(athenaFeedbackRequestRepository, never()).failAthenaFeedbackRequest(any());
     }
 
 }
