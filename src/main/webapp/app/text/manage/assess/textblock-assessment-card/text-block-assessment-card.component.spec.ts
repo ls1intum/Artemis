@@ -17,8 +17,6 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 /**
  * Test suite for TextBlockAssessmentCardComponent.
@@ -50,7 +48,6 @@ describe('TextblockAssessmentCardComponent', () => {
                 MockProvider(TextAssessmentService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
