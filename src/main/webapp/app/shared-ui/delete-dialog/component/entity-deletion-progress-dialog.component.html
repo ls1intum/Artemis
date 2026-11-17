@@ -1,6 +1,6 @@
 <!-- <output> is a polite live region with the status role by itself, so the state changes of the deletion are announced without extra attributes. -->
-<output class="block pt-5" data-testid="entity-deletion-progress" [attr.data-status]="progress()?.status ?? 'PREPARING'">
-    <div class="mb-4 flex items-center">
+<output class="block pt-12!" data-testid="entity-deletion-progress" [attr.data-status]="progress()?.status ?? 'PREPARING'">
+    <div class="mb-6! flex items-center">
         @if (isCompleted()) {
             <fa-icon [icon]="faCheckCircle" size="lg" class="me-2 text-state-success" />
             <strong data-testid="entity-deletion-title">{{ 'artemisApp.deletionProgress.title.completed' | artemisTranslate: { title: target.title } }}</strong>
@@ -42,8 +42,8 @@
                 }
             </div>
         }
-        <p class="mt-4 mb-0! text-sm text-(color:--text-body-secondary)">{{ 'artemisApp.deletionProgress.backgroundHint' | artemisTranslate }}</p>
-        <div class="mt-4 flex justify-end">
+        <p class="mt-6! mb-0! text-sm text-(color:--text-body-secondary)">{{ 'artemisApp.deletionProgress.backgroundHint' | artemisTranslate }}</p>
+        <div class="mt-6! flex justify-end">
             <button tumAetUiButton severity="secondary" type="button" data-testid="entity-deletion-background" (click)="continueInBackground()">
                 {{ 'artemisApp.deletionProgress.continueInBackground' | artemisTranslate }}
             </button>
@@ -52,7 +52,7 @@
         @if (isFailed()) {
             <p class="mb-2!">{{ 'artemisApp.deletionProgress.failedHint' | artemisTranslate }}</p>
             @if (progress()!.errorMessage; as error) {
-                <p class="mb-0! rounded-md border border-(--border-color) p-3 text-state-danger" data-testid="entity-deletion-error">{{ error }}</p>
+                <p class="mb-0! rounded-md border border-(--border-color) p-4! text-state-danger" data-testid="entity-deletion-error">{{ error }}</p>
             }
         }
         <div class="mt-6 flex justify-end">
