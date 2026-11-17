@@ -17,23 +17,29 @@ import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/co
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCalendarPlus, faUser, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
-import { SelectButton } from 'primeng/selectbutton';
+import { TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { RouterLink } from '@angular/router';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
-    styleUrls: ['./conversation-info.component.scss'],
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent, RouterLink, SelectButton, InputTextModule, TextareaModule],
+    imports: [
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FaIconComponent,
+        RouterLink,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectButtonComponent,
+    ],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private channelService = inject(ChannelService);

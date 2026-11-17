@@ -1,4 +1,7 @@
 import { Component, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
@@ -10,9 +13,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-one-to-one-chat-create-dialog',
     templateUrl: './one-to-one-chat-create-dialog.component.html',
-    imports: [TranslateDirective, CourseUsersSelectorComponent, FormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, CourseUsersSelectorComponent, FormsModule, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
 })
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
+    protected readonly faXmark = faXmark;
+
     course = signal<Course | undefined>(undefined);
 
     override isInitialized = false;

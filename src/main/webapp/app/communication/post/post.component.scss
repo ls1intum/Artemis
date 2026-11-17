@@ -1,5 +1,3 @@
-@import '../communication.component';
-
 .linked-context-information,
 .context-information {
     font-weight: 600;
@@ -14,10 +12,6 @@
 
 .announcement-icon {
     color: var(--communication-blue);
-}
-
-.reference-hash {
-    color: inherit;
 }
 
 .hover-actions {
@@ -68,7 +62,7 @@
     transition: background-color 0.2s ease-in-out;
 
     &.is-saved {
-        background-color: rgba($primary, 0.1);
+        background-color: color-mix(in srgb, var(--primary) 10%, transparent);
     }
 }
 

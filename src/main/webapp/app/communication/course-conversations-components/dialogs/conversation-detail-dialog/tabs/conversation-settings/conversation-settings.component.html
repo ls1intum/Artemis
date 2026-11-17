@@ -1,70 +1,64 @@
 @if (activeConversation() && course()) {
-    <div class="container-fluid conversation-settings">
+    <div class="flex flex-col items-center gap-4!">
         @if (canLeaveConversation() || canChangeChannelArchivalState() || canDeleteChannel()) {
-            <div class="row settings-container">
-                <div class="col-12 settings-section text-center">
-                    @if (canLeaveConversation()) {
-                        <button
-                            type="button"
-                            class="btn btn-danger leave-conversation"
-                            (click)="leaveConversation($event)"
-                            jhiTranslate="artemisApp.dialogs.conversationSettings.actions.leave"
-                        ></button>
-                    }
-                </div>
-                @if (conversationAsChannel(); as channel) {
-                    @if (canChangeChannelPrivacyState()) {
-                        <div class="col-12 settings-section text-center">
-                            <button type="button" class="btn btn-danger privacy-toggle" (click)="toggleChannelPrivacy()">
-                                <fa-icon [icon]="channel.isPublic ? faLock : faHashtag" class="me-2" />
-                                <span
-                                    jhiTranslate="{{
-                                        channel.isPublic
-                                            ? 'artemisApp.dialogs.conversationSettings.actions.privateChannel'
-                                            : 'artemisApp.dialogs.conversationSettings.actions.publicChannel'
-                                    }}"
-                                ></span>
-                            </button>
-                        </div>
-                    }
-                    @if (canChangeChannelArchivalState()) {
-                        <div class="col-12 settings-section text-center">
-                            <button type="button" class="btn btn-danger archive-toggle" (click)="toggleChannelArchivalState($event)">
-                                <fa-icon [icon]="channel.isArchived ? faBoxOpen : faBoxArchive" class="me-2" />
-                                <span
-                                    jhiTranslate="{{
-                                        channel.isArchived
-                                            ? 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel'
-                                            : 'artemisApp.dialogs.conversationSettings.actions.archiveChannel'
-                                    }}"
-                                ></span>
-                            </button>
-                        </div>
-                    }
-                    @if (canDeleteChannel()) {
-                        <div class="col-12 settings-section text-center">
-                            <button
-                                type="button"
-                                class="btn btn-danger delete"
-                                [id]="'delete-' + channel.id"
-                                jhiDeleteButton
-                                [renderButtonStyle]="false"
-                                [renderButtonText]="false"
-                                [entityTitle]="channel.name || ''"
-                                deleteQuestion="artemisApp.dialogs.deleteChannel.question"
-                                deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
-                                (delete)="deleteChannel()"
-                                [dialogError]="dialogError$"
-                            >
-                                <fa-icon [icon]="faTrash" />
-                                <span class="ms-2" jhiTranslate="artemisApp.dialogs.conversationSettings.actions.deleteChannel"></span>
-                            </button>
-                        </div>
-                    }
+            @if (canLeaveConversation()) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    severity="danger"
+                    class="leave-conversation w-1/2"
+                    (click)="leaveConversation($event)"
+                    jhiTranslate="artemisApp.dialogs.conversationSettings.actions.leave"
+                ></button>
+            }
+            @if (conversationAsChannel(); as channel) {
+                @if (canChangeChannelPrivacyState()) {
+                    <button type="button" tumAetUiButton severity="danger" class="privacy-toggle w-1/2" (click)="toggleChannelPrivacy()">
+                        <fa-icon [icon]="channel.isPublic ? faLock : faHashtag" />
+                        <span
+                            jhiTranslate="{{
+                                channel.isPublic
+                                    ? 'artemisApp.dialogs.conversationSettings.actions.privateChannel'
+                                    : 'artemisApp.dialogs.conversationSettings.actions.publicChannel'
+                            }}"
+                        ></span>
+                    </button>
                 }
-            </div>
+                @if (canChangeChannelArchivalState()) {
+                    <button type="button" tumAetUiButton severity="danger" class="archive-toggle w-1/2" (click)="toggleChannelArchivalState($event)">
+                        <fa-icon [icon]="channel.isArchived ? faBoxOpen : faBoxArchive" />
+                        <span
+                            jhiTranslate="{{
+                                channel.isArchived
+                                    ? 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel'
+                                    : 'artemisApp.dialogs.conversationSettings.actions.archiveChannel'
+                            }}"
+                        ></span>
+                    </button>
+                }
+                @if (canDeleteChannel()) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="danger"
+                        class="delete w-1/2"
+                        [id]="'delete-' + channel.id"
+                        jhiDeleteButton
+                        [renderButtonStyle]="false"
+                        [renderButtonText]="false"
+                        [entityTitle]="channel.name || ''"
+                        deleteQuestion="artemisApp.dialogs.deleteChannel.question"
+                        deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
+                        (delete)="deleteChannel()"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                        <span jhiTranslate="artemisApp.dialogs.conversationSettings.actions.deleteChannel"></span>
+                    </button>
+                }
+            }
         } @else {
-            <div class="col-12 settings-section text-center" jhiTranslate="artemisApp.dialogs.conversationSettings.settingsUnavailable"></div>
+            <div class="text-center" jhiTranslate="artemisApp.dialogs.conversationSettings.settingsUnavailable"></div>
         }
     </div>
 }
