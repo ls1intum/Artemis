@@ -225,31 +225,41 @@ Hyperion can pre-generate a pool of multiple-choice questions per course, compet
 artemis:
   hyperion:
     quiz-pool:
-      base-url: https://logos.example.org/v1 # the pool's own self-hosted, OpenAI-compatible endpoint, including the /v1 prefix
-      api-key: <api-key> # leave empty if the endpoint needs none
+      base-url: # the pool's own self-hosted, OpenAI-compatible endpoint, including the /v1 prefix; empty to use spring.ai.openai.base-url
+      api-key: # the key of base-url; leave empty if the endpoint needs none
       timeout: 5m # HTTP timeout of one model call
-      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B # self-hosted models the pool may use
-      generator-model: openai/gpt-oss-120b # model that generates pool questions; must be listed in allowed-models
-      judge-model: openai/gpt-oss-120b # model that judges generated questions; must be listed in allowed-models
+      allowed-models: Qwen/Qwen3.8-27B # self-hosted models the pool may use
+      generator-model: Qwen/Qwen3.8-27B # model that generates pool questions; must be listed in allowed-models
+      judge-model: Qwen/Qwen3.8-27B # model that judges generated questions; must be listed in allowed-models
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
+      schedule-cron: "0 0 0 * * *" # when the overnight run over the courses that enabled overnight generation starts, on the node with the scheduling profile
+      schedule-window-hours: 7 # how long the overnight run lasts at most (1-23); a build still running at the end stops after its current unit of work
       build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    The pool sends lecture material to its model endpoint. It must be a self-hosted endpoint inside your institution, never a cloud provider. The pool does not use the chat model configured under `spring.ai` for Hyperion and Atlas, and it does not fall back to it.
+    The pool sends lecture material to its model endpoint. It must be a self-hosted endpoint inside your institution, never a cloud provider. The pool refuses known cloud provider hosts and Microsoft Foundry endpoints, both its own and the one under `spring.ai`.
 </Callout>
 
-The pool connects only through `base-url`, `api-key` and `timeout` above, independently of the `spring.ai` configuration. Both models must be served by that endpoint, and both must appear in `allowed-models`; `application-artemis.yml` ships the list of self-hosted models the pool has been evaluated with, so using another model is an explicit change of that list. If the endpoint is a gateway that also routes to hosted models, such as Logos, the allowlist is what keeps the pool on the self-hosted ones.
+With `base-url` empty, the pool calls the endpoint of Hyperion's chat model, `spring.ai.openai.base-url` with `spring.ai.openai.api-key`, provided `spring.ai.model.chat` is `openai`. A deployment whose Hyperion already runs on a self-hosted, OpenAI-compatible gateway such as Logos therefore needs no pool settings at all. If that endpoint is a cloud provider or `spring.ai.openai.microsoft-foundry` is `true`, the pool stays off until `base-url` names a self-hosted endpoint, with its own `api-key`.
+
+Both models must be served by the endpoint, and both must appear in `allowed-models`; `application-artemis.yml` ships `Qwen/Qwen3.8-27B` for both, so using another model is an explicit change of that list. If the endpoint is a gateway that also routes to hosted models, such as Logos, the allowlist keeps the pool on the model names you list, but Artemis cannot see where the gateway routes a name: list only models that the gateway serves from your own hardware, and make sure the gateway never routes them to a hosted provider.
+
+An institution without its own model gateway hosts the model on an OpenAI-compatible server and sets `base-url` to it. With [vLLM](https://docs.vllm.ai/), `vllm serve Qwen/Qwen3.8-27B` serves the model under the name `Qwen/Qwen3.8-27B`, which `allowed-models` already contains, at `http://<host>:8000/v1`; at 16-bit precision it needs a GPU with about 80 GB of memory. A server that names the model differently, such as Ollama, needs that name in both models and in `allowed-models`. Leave `api-key` empty if the server requires none.
 
 The server checks this configuration at startup:
 
-- With `base-url`, `generator-model` and `judge-model` all empty, the pool is off. The pool page tells instructors that no local model is configured, and builds are refused. The log reads `The quiz question pool is off: no model endpoint is configured`.
-- If only some of the three are set, if a model is missing from `allowed-models`, or if `base-url` is not an http(s) URL or points at a known cloud provider (for example Azure OpenAI, OpenAI, Anthropic or Google), the pool stays off in the same way and the log shows a warning that names the setting to fix: `The quiz question pool is off because its model configuration is invalid: …`. The rest of Artemis starts normally. Instructors only see that an administrator has to configure the pool; the details appear in the log alone.
-- Otherwise the log names the endpoint and the two models: `The quiz question pool uses the endpoint … with the generator model … and the judge model …`.
+- With `generator-model` and `judge-model` both empty, the pool is off. The pool page tells instructors that no local model is configured, and builds are refused. The log reads `The quiz question pool is off: no models are configured …`.
+- Without any endpoint, or when the pool would fall back to a cloud endpoint under `spring.ai`, the pool is off in the same way, and the log says which of the two applies.
+- If only one model is set, if a model is missing from `allowed-models`, or if the endpoint is not an http(s) URL or points at a known cloud provider (for example Azure OpenAI, OpenAI, Anthropic or Google), the pool stays off as well and the log shows a warning that names the setting to fix: `The quiz question pool is off because its model configuration is invalid: …`. The rest of Artemis starts normally. Instructors only see that an administrator has to configure the pool; the details appear in the log alone.
+- The server then asks the endpoint for its models (`GET <base-url>/models`). If the endpoint does not serve a configured model under exactly that name, the pool stays off and the warning lists the models the endpoint serves. If the endpoint cannot be asked at startup, the pool stays on and a warning says that the models could not be checked.
+- Otherwise the log names the endpoint, the property it was read from and the two models: `The quiz question pool uses the endpoint … (from …) with the generator model … and the judge model …`.
 
 Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
+
+Overnight generation runs only for courses whose instructors enabled it on the pool page, and only while the course has not ended. The run starts at `schedule-cron` (default midnight) on the node that carries the `scheduling` profile and builds one course after another on the pool's own build executor, so manual builds keep a thread of their own. It ends after `schedule-window-hours` (default 7, so at seven in the morning): it then starts no further course, and the build still running stops after its current unit of work and keeps its remaining questions for the next night. Courses whose last completed build is oldest come first, and courses that never completed a build before them, so a course the window cut off continues early the next night. Expect a few minutes per course with new or changed lecture material; filling the pools of many courses for the first time can take several nights. One build per course runs at a time across the cluster.
 
 Every server log line of the pool starts with `Quiz question pool`, so `grep "Quiz question pool"` shows its activity. A build logs one line when it starts (course, user, new questions, settings and models) and one when it ends (duration, and how many questions were generated, accepted, rejected, regenerated after a rejection, and failed, with the failure reasons such as `CALL_FAILED` or `NO_MATERIAL`). Refused builds, cancel requests, deletions and settings changes are logged with the user who made them; failed model calls and lecture units without usable material are logged as warnings.
 
