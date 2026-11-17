@@ -30,8 +30,10 @@ import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
@@ -151,12 +153,13 @@ public class ProgrammingSubmissionResource {
      * @param participationId of the participation.
      * @param submissionType  will be used for the newly created submission.
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is
-     *         not available.
+     *         not available. Answers 429 (Too Many Requests) if the user triggers builds too often.
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping({ "participations/{participationId}/trigger-build", "programming-submissions/{participationId}/trigger-build" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
+    @LimitRequestsPerMinute(type = RateLimitType.PROGRAMMING_BUILD_TRIGGER, perUser = true)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation

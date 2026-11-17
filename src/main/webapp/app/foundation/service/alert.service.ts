@@ -163,6 +163,16 @@ export class AlertService {
                     // Disabled
                     break;
 
+                case 429: {
+                    const seconds = Math.ceil(Number(httpErrorResponse.headers?.get('Retry-After')));
+                    if (Number.isFinite(seconds) && seconds > 0) {
+                        this.addErrorAlert('Too many requests. Please try again in a few seconds.', 'error.http.429Wait', { seconds });
+                    } else {
+                        this.addErrorAlert('Too many requests. Please try again later.', 'error.http.429');
+                    }
+                    break;
+                }
+
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
@@ -205,6 +215,8 @@ export class AlertService {
                 return !this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey);
             case 404:
                 return false;
+            case 429:
+                return true;
             default:
                 return !!httpErrorResponse.error?.title;
         }

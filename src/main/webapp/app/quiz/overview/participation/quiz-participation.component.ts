@@ -1124,7 +1124,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                 }
             },
             error: (error: HttpErrorResponse) => {
-                const errorMessage = 'Joining the quiz was not possible: ' + error.headers?.get('X-artemisApp-message') || error.message;
+                const errorMessage = 'Joining the quiz was not possible: ' + (error.headers?.get('X-artemisApp-message') || error.message);
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: errorMessage,
