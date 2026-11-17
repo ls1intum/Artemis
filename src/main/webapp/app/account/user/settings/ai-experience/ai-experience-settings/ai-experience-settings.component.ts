@@ -1,3 +1,4 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGhost } from '@fortawesome/free-solid-svg-icons';
 import { AiModeSelectorComponent } from 'app/logos/ai-mode-selector.component';
@@ -17,7 +18,16 @@ import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angul
 
 @Component({
     selector: 'jhi-ai-experience-settings',
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, RouterLink, AiModeSelectorComponent, TumAetUiButtonDirective, TumAetUiCardComponent],
+    imports: [
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TranslateDirective,
+        DeleteButtonDirective,
+        RouterLink,
+        AiModeSelectorComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+    ],
     templateUrl: './ai-experience-settings.component.html',
 })
 export class AiExperienceSettingsComponent implements OnInit {

@@ -24,22 +24,22 @@
 
     <!-- Profile settings section - only visible when a course is selected -->
     @if (!disabled()) {
-        <div class="grid grid-cols-1 gap-4! xl:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4! md:grid-cols-2">
             <!-- Aim for Grade/Bonus setting -->
             <tumaet-ui-panel>
                 <span tumAetUiPanelHeader id="aim-for-grade-or-bonus-label" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label"></span>
-                <div class="flex flex-col gap-4.5">
-                    <div class="text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description"></div>
-                    <tumaet-ui-select-button
-                        class="w-full"
-                        aria-labelledby="aim-for-grade-or-bonus-label"
+                <div class="flex items-start gap-4!">
+                    <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description"></div>
+                    <tumaet-ui-select
+                        size="small"
+                        class="w-36 max-w-full shrink-0"
+                        [ariaLabel]="'artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label' | artemisTranslate"
                         [options]="aimForGradeOrBonusOptions"
                         optionLabel="label"
                         optionValue="value"
-                        [allowEmpty]="false"
                         [ngModel]="aimForGradeOrBonus()"
                         [ngModelOptions]="{ standalone: true }"
-                        (changed)="onSelectionChange(aimForGradeOrBonus, $event)"
+                        (selectionChange)="onSelectionChange(aimForGradeOrBonus, $event)"
                     />
                 </div>
             </tumaet-ui-panel>
@@ -47,18 +47,18 @@
             <!-- Time Investment setting -->
             <tumaet-ui-panel>
                 <span tumAetUiPanelHeader id="time-investment-label" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label"></span>
-                <div class="flex flex-col gap-4.5">
-                    <div class="text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description"></div>
-                    <tumaet-ui-select-button
-                        class="w-full"
-                        aria-labelledby="time-investment-label"
+                <div class="flex items-start gap-4!">
+                    <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description"></div>
+                    <tumaet-ui-select
+                        size="small"
+                        class="w-36 max-w-full shrink-0"
+                        [ariaLabel]="'artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label' | artemisTranslate"
                         [options]="timeInvestmentOptions"
                         optionLabel="label"
                         optionValue="value"
-                        [allowEmpty]="false"
                         [ngModel]="timeInvestment()"
                         [ngModelOptions]="{ standalone: true }"
-                        (changed)="onSelectionChange(timeInvestment, $event)"
+                        (selectionChange)="onSelectionChange(timeInvestment, $event)"
                     />
                 </div>
             </tumaet-ui-panel>
@@ -66,18 +66,18 @@
             <!-- Repetition Intensity setting -->
             <tumaet-ui-panel>
                 <span tumAetUiPanelHeader id="repetition-intensity-label" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label"></span>
-                <div class="flex flex-col gap-4.5">
-                    <div class="text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
-                    <tumaet-ui-select-button
-                        class="w-full"
-                        aria-labelledby="repetition-intensity-label"
+                <div class="flex items-start gap-4!">
+                    <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
+                    <tumaet-ui-select
+                        size="small"
+                        class="w-36 max-w-full shrink-0"
+                        [ariaLabel]="'artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label' | artemisTranslate"
                         [options]="repetitionIntensityOptions"
                         optionLabel="label"
                         optionValue="value"
-                        [allowEmpty]="false"
                         [ngModel]="repetitionIntensity()"
                         [ngModelOptions]="{ standalone: true }"
-                        (changed)="onSelectionChange(repetitionIntensity, $event)"
+                        (selectionChange)="onSelectionChange(repetitionIntensity, $event)"
                     />
                 </div>
             </tumaet-ui-panel>

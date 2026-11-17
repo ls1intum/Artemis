@@ -39,6 +39,7 @@
                         severity="danger"
                         size="small"
                         jhiDeleteButton
+                        [attr.aria-label]="'entity.action.deleteAll' | artemisTranslate"
                         [renderButtonStyle]="false"
                         [actionType]="ActionType.Cleanup"
                         [renderButtonText]="false"
