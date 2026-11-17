@@ -14,7 +14,7 @@ The remaining items depend on how and where you run Artemis, so only you can ver
 ## Network and reverse proxy
 
 - [ ] Only the reverse proxy is reachable from the internet. The database, the broker, the distributed data provider and the build agents are on a private network.
-- [ ] Iris (Pyris), Athena, Weaviate and the other extension services are on the private network and reachable only from the core nodes. Production has its own instances, environments that share an instance hold test
+- [ ] Iris (Pyris), Athena, Weaviate and the other extension services are on the private network and reachable from the core nodes and, where they work together (for example Iris and its Weaviate), from each other, but not from the internet. Production has its own instances, environments that share an instance hold test
       data only, and every Artemis installation has its own shared secret. See [Extension Services](/admin/production-setup/network-model#extension-services).
 - [ ] HTTPS terminates at the reverse proxy with a valid certificate and current TLS settings.
 - [ ] The reverse proxy sets `X-Forwarded-For`, and both `server.tomcat.remoteip.internal-proxies` and `artemis.continuous-integration.build-agent-network.trusted-proxies` list only your own proxies, so the rate limit counts the real client address. See

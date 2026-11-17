@@ -29,7 +29,7 @@ a container can reach. For these, Artemis and the scripts of the repository chec
 | Service registry, if used                 | 8761               | no                          | no                             | no                              |
 
 Only the reverse proxy, and where Git over SSH is offered the SSH port, is connected to the internet. Everything else is reachable only from the core nodes and the build agents, on a private network or on the
-loopback interface of the host. The [extension services](#extension-services) belong to this private part of the installation as well.
+loopback interface of the host. The [extension services](#extension-services) belong to this private part of the installation as well. They are reached from the core nodes and, where they work together, from each other.
 
 The services that hold the state of the installation need special care:
 
@@ -41,12 +41,12 @@ The services that hold the state of the installation need special care:
 ## Extension Services
 
 The extension services of the [EduTelligence](https://github.com/ls1intum/edutelligence) suite, such as Iris with its service Pyris and Athena, and the Weaviate instances behind Iris and global search, are called by the
-core nodes only. Nobody else needs to reach them, so keep them on the private network:
+core nodes. Besides the core nodes, only the services that work together need to reach each other, for example Iris and its Weaviate, so keep them on the private network:
 
 - **Reachable from the core nodes**, which pass requests on to them and receive their callbacks. The services can reach each other where they need to, and they reach the addresses they work with, such as the
   Artemis installations they serve and the providers of their language models.
 - **Not reachable from the internet, from users' browsers or from build containers.** Do not publish their ports on a public address. Where a reverse proxy is needed in front of a service, for example to use TLS between
-  hosts, let only the core nodes connect to it.
+  hosts, let only the core nodes and the services that use it connect to it, for example Iris for its Weaviate.
 - **One instance per environment that holds real data.** Give production its own Iris and its own Weaviate. Environments that hold only test data, such as a test and a staging server, can share one instance of a
   service. Give every Artemis installation its own shared secret (`artemis.iris.secret-token`, `artemis.athena.secret`) and never use a secret in more than one environment.
 - **Tell the service which installation a secret belongs to** where the service supports it. Iris can limit each key to the base URLs of the Artemis installations that use it (`allowed_base_urls`), which is the `server.url`
@@ -110,6 +110,14 @@ supporting_scripts/security/check-network-exposure.sh artemis.example.org
 
 It tries to connect to the ports of the internal services above and fails when one of them answers. It also fails when the HTTPS port is not reachable. Use `INTERNAL_PORTS`, `EXPECTED_PORTS` and `OPTIONAL_PORTS` to
 adjust the lists, for example when the database listens on a non-standard port.
+
+The default list covers the services of the core installation, but not the ports of the [extension services](#extension-services). Where they run on a host that you check, add their ports, for example Iris (`8000`),
+Weaviate (`8001`, `50051`) and the port of your Athena:
+
+```bash
+INTERNAL_PORTS="5701 5702 5703 6379 5432 3306 61613 61616 8080 8761 8000 8001 50051" \
+    supporting_scripts/security/check-network-exposure.sh artemis.example.org
+```
 
 **From a build container.** Start a container on the network of your builds and try to connect to a service. The agents do the same at startup, so the log is the first place to look. To try it by hand:
 
