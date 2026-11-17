@@ -9,7 +9,7 @@ import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/fea
 import { By } from '@angular/platform-browser';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { PostService } from 'app/communication/service/post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { ReactionService } from 'app/communication/service/reaction.service';
@@ -84,7 +84,7 @@ describe('CourseConversationComponent with communication disabled', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(EventManager),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
             ],
         });
 

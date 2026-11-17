@@ -3,9 +3,15 @@ import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fo
 import { User } from 'app/account/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject, takeUntil } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDialogService,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -23,7 +29,6 @@ import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-p
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgClass } from '@angular/common';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/communication/conversations/conversation-permissions.utils';
@@ -40,20 +45,18 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     imports: [
         ProfilePictureComponent,
         FaIconComponent,
-        NgbTooltip,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
         TranslateDirective,
         ArtemisTranslatePipe,
-        NgClass,
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private translateService = inject(TranslateService);
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
@@ -136,16 +139,15 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    openGrantChannelModeratorRoleDialog(event: MouseEvent) {
-        this.openChannelModeratorRoleDialog(event, true);
+    openGrantChannelModeratorRoleDialog() {
+        this.openChannelModeratorRoleDialog(true);
     }
 
-    openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
-        this.openChannelModeratorRoleDialog(event, false);
+    openRevokeChannelModeratorRoleDialog() {
+        this.openChannelModeratorRoleDialog(false);
     }
 
-    private openChannelModeratorRoleDialog(event: MouseEvent, grant: boolean) {
-        event.stopPropagation();
+    private openChannelModeratorRoleDialog(grant: boolean) {
         const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
@@ -175,8 +177,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
-    openRemoveFromChannelDialog(event: MouseEvent) {
-        event.stopPropagation();
+    openRemoveFromChannelDialog() {
         const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
@@ -214,8 +215,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
-    openRemoveFromGroupChatDialog(event: MouseEvent) {
-        event.stopPropagation();
+    openRemoveFromGroupChatDialog() {
         const groupChat = getAsGroupChatDTO(this.activeConversation());
         if (!groupChat) {
             return;
@@ -249,6 +249,8 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const ref = this.dialogService.open(
             GenericConfirmationDialogComponent,
             cloneWith(defaultSecondLayerDialogOptions, {
+                ariaLabel: this.translateService.instant(translationKeys.titleKey, translationParams),
+                autoFocus: 'first-tabbable',
                 data: {
                     translationParameters: translationParams,
                     translationKeys,
@@ -275,11 +277,11 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             });
     }
 
-    openRemoveFromConversationDialog(event: MouseEvent) {
+    openRemoveFromConversationDialog() {
         if (isChannelDTO(this.activeConversation())) {
-            this.openRemoveFromChannelDialog(event);
+            this.openRemoveFromChannelDialog();
         } else if (isGroupChatDTO(this.activeConversation())) {
-            this.openRemoveFromGroupChatDialog(event);
+            this.openRemoveFromGroupChatDialog();
         } else {
             throw new Error('Unsupported conversation type');
         }
