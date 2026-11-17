@@ -2,10 +2,9 @@
 
 .drag-and-drop-quizStatistic-picture {
     position: relative;
-    width: 100%;
     box-sizing: border-box;
     margin-bottom: 18px;
-    background: #fefefe;
+    background: var(--quiz-statistic-picture-background);
 
     @include user-select(none);
 
@@ -24,8 +23,8 @@
         width: 100%;
 
         .drag-item {
-            border: 1px solid #696969;
-            background: #fafafa;
+            border: 1px solid var(--quiz-statistic-drag-item-border);
+            background: var(--quiz-statistic-drag-item-background);
 
             .drag-item-picture {
                 cursor: default !important;
@@ -81,12 +80,12 @@
 
         /* letter for solution mapping */
         .letter {
-            @include quiz-mapping-letter-number(#428bca);
+            @include quiz-mapping-letter-number(var(--quiz-statistic-letter-background));
             @include dnd-letter-position(-63%, -63%, 0);
         }
 
         .letter-solution {
-            @include quiz-mapping-letter-number(#5cb85c);
+            @include quiz-mapping-letter-number(var(--quiz-statistic-letter-solution-background));
             @include dnd-letter-position(-63%, -63%, 0);
         }
 

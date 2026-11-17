@@ -17,6 +17,7 @@ import { TumAetUiDialogConfig, TumAetUiDialogRef } from './tumaet-ui-dialog.type
             [closeOnEscape]="options.closeOnEscape ?? true"
             [dismissableMask]="options.dismissableMask ?? false"
             [autoFocus]="options.autoFocus ?? 'dialog'"
+            [contentPadding]="options.contentPadding ?? 'default'"
             (hidden)="ref.dismiss()"
         >
             <ng-template #header>
