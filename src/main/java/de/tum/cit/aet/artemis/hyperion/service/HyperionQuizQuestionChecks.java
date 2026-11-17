@@ -20,6 +20,16 @@ final class HyperionQuizQuestionChecks {
 
     private static final int TRUE_FALSE_OPTION_COUNT = 2;
 
+    /**
+     * Returns how many answer options a question of the given type carries: two for true-false, four otherwise.
+     *
+     * @param type the question type
+     * @return the option count the generator is asked for and the checks require
+     */
+    static int optionCountFor(QuizQuestionGenerationType type) {
+        return type == QuizQuestionGenerationType.TRUE_FALSE ? TRUE_FALSE_OPTION_COUNT : OPTION_COUNT;
+    }
+
     /** Length limits matching the size constraints of {@code GeneratedQuizQuestionDTO} and {@code GeneratedQuizAnswerOptionDTO}. */
     private static final int MAX_QUESTION_TITLE_LENGTH = 500;
 
@@ -27,6 +37,7 @@ final class HyperionQuizQuestionChecks {
 
     private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
 
+    /** Options a multiple-choice question may mark correct at most when the caller names no bound. */
     private static final int MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE = 3;
 
     /** Minimum absolute length excess before the correct option counts as conspicuously long. */
@@ -91,13 +102,26 @@ final class HyperionQuizQuestionChecks {
     }
 
     /**
-     * Validates a question against the rules every question of a filtered generation must satisfy.
+     * Validates a question against the rules every question of a filtered generation must satisfy; a multiple-choice question may mark
+     * one to three options correct.
      *
      * @param question     the mapped question
      * @param allowedTypes question types the request asked for
      * @return the first defect found, empty when the question is usable
      */
     static Optional<Defect> defectOf(GeneratedQuizQuestionDTO question, Set<QuizQuestionGenerationType> allowedTypes) {
+        return defectOf(question, allowedTypes, MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE);
+    }
+
+    /**
+     * Validates a question against the rules every question of a filtered generation must satisfy.
+     *
+     * @param question          the mapped question
+     * @param allowedTypes      question types the request asked for
+     * @param maxCorrectOptions the most options a multiple-choice question may mark correct
+     * @return the first defect found, empty when the question is usable
+     */
+    static Optional<Defect> defectOf(GeneratedQuizQuestionDTO question, Set<QuizQuestionGenerationType> allowedTypes, int maxCorrectOptions) {
         if (!allowedTypes.contains(question.type())) {
             return Optional.of(Defect.TYPE_NOT_REQUESTED);
         }
@@ -110,8 +134,13 @@ final class HyperionQuizQuestionChecks {
         if (DANGLING_REFERENCE.matcher(question.questionText()).find() && !question.questionText().contains("\n")) {
             return Optional.of(Defect.DANGLING_REFERENCE);
         }
+        return optionDefectOf(question, maxCorrectOptions);
+    }
+
+    /** The first defect of the question's answer options, empty when they are usable. */
+    private static Optional<Defect> optionDefectOf(GeneratedQuizQuestionDTO question, int maxCorrectOptions) {
         List<GeneratedQuizAnswerOptionDTO> options = question.options();
-        int requiredOptions = question.type() == QuizQuestionGenerationType.TRUE_FALSE ? TRUE_FALSE_OPTION_COUNT : OPTION_COUNT;
+        int requiredOptions = optionCountFor(question.type());
         if (options == null || options.size() != requiredOptions) {
             return Optional.of(Defect.OPTION_COUNT);
         }
@@ -134,7 +163,7 @@ final class HyperionQuizQuestionChecks {
         long correct = options.stream().filter(GeneratedQuizAnswerOptionDTO::correct).count();
         boolean correctCountValid = switch (question.type()) {
             case SINGLE_CHOICE, TRUE_FALSE -> correct == 1;
-            case MULTIPLE_CHOICE -> correct >= 1 && correct <= MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE;
+            case MULTIPLE_CHOICE -> correct >= 1 && correct <= maxCorrectOptions;
         };
         if (!correctCountValid) {
             return Optional.of(Defect.CORRECT_COUNT);

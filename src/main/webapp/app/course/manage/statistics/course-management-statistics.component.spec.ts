@@ -58,8 +58,8 @@ describe('CourseManagementStatisticsComponent', () => {
         const tabSpy = vi.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
-        const button = fixture.debugElement.nativeElement.querySelector('#option3');
-        button.click();
+        const buttons: HTMLButtonElement[] = Array.from(fixture.debugElement.nativeElement.querySelectorAll('tumaet-ui-select-button button'));
+        buttons.find((button) => button.textContent?.trim() === 'statistics.span.month')!.click();
 
         await fixture.whenStable();
         expect(tabSpy).toHaveBeenCalledOnce();

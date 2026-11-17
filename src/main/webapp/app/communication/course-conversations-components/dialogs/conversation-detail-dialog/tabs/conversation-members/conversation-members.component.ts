@@ -7,7 +7,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { EMPTY, Subject, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogService } from 'primeng/dynamicdialog';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -16,7 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ConversationMemberRowComponent } from './conversation-member-row/conversation-member-row.component';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -33,7 +32,7 @@ interface SearchQuery {
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
     styleUrls: ['./conversation-members.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, PaginatorModule, ArtemisTranslatePipe, SelectModule],
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, TumAetUiPaginatorComponent, ArtemisTranslatePipe, SelectModule],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     public conversationService = inject(ConversationService);
@@ -204,8 +203,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
         });
     }
 
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
         this.transition();
     }
 

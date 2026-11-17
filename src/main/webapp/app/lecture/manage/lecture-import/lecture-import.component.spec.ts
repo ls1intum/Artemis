@@ -49,7 +49,7 @@ describe('Lecture import picker', () => {
         await fixture.whenStable();
         fixture.detectChanges();
         expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ searchTerm: '<script>' }));
-        expect(fixture.nativeElement.querySelector('mark')?.textContent).toBe('<script>');
+        expect(fixture.nativeElement.querySelector('.search-highlight')?.textContent).toBe('<script>');
         expect(fixture.nativeElement.querySelector('script')).toBeNull();
     });
 

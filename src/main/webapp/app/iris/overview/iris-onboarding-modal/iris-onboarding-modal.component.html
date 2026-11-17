@@ -1,78 +1,80 @@
-<div class="onboarding-container">
-    <!-- Welcome screen with full backdrop, shown before the numbered tour starts. -->
+<div class="iris-onboarding fixed inset-0 h-screen w-screen pointer-events-none" data-testid="iris-onboarding">
     @if (isWelcomeStep()) {
-        <div class="full-backdrop"></div>
-        <div class="centered-modal-wrapper">
-            <div class="iris-onboarding-modal-welcome" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
-                <!-- Left Side: Text Content -->
-                <div class="welcome-text-section">
-                    <div class="text-content">
-                        <h2 id="onboarding-welcome-title" class="title" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
-                        <p class="description" jhiTranslate="artemisApp.iris.onboarding.description"></p>
+        <tumaet-ui-dialog
+            [visible]="true"
+            [showHeader]="false"
+            contentPadding="none"
+            [ariaLabel]="'artemisApp.iris.onboarding.title' | artemisTranslate"
+            (visibleChange)="onWelcomeVisibleChange($event)"
+        >
+            <div class="iris-onboarding__welcome flex h-[450px] w-[700px] max-w-[calc(90dvw_-_2px)] pointer-events-auto">
+                <div class="iris-onboarding__welcome-text flex w-[380px] max-w-[60%] shrink-0 flex-col justify-center gap-10 p-6!">
+                    <div class="flex max-w-96 flex-col gap-4!">
+                        <h2 class="iris-onboarding__title m-0! text-[1.35rem]! leading-[1.2] font-bold!" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
+                        <p class="iris-onboarding__muted m-0! text-[0.9rem] leading-[1.6]" jhiTranslate="artemisApp.iris.onboarding.description"></p>
                     </div>
-
-                    <div class="actions">
-                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.getStarted'" (onClick)="onStartTour()" />
-                        <p class="note" jhiTranslate="artemisApp.iris.onboarding.note"></p>
+                    <div class="flex w-full flex-col items-start gap-3!">
+                        <button type="button" tumAetUiButton data-testid="start-iris-tour" (click)="onStartTour()" jhiTranslate="artemisApp.iris.onboarding.getStarted"></button>
+                        <p class="iris-onboarding__muted m-0! text-xs leading-[1.6]" jhiTranslate="artemisApp.iris.onboarding.note"></p>
                     </div>
                 </div>
-
-                <!-- Right Side: Iris Chat Illustration -->
-                <div class="welcome-illustration-section">
-                    <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-
-                    <div class="chat-preview" aria-hidden="true">
-                        <div class="chat-widget-preview">
-                            <div class="chat-header-preview">
-                                <!-- Toolbar icons placeholder -->
-                                <div class="toolbar-icons">
-                                    <div class="icon-btn"></div>
-                                    <div class="icon-btn"></div>
-                                    <div class="icon-btn"></div>
+                <div class="iris-onboarding__illustration relative flex min-w-0 flex-1 flex-col p-2">
+                    <tumaet-ui-button
+                        class="absolute top-2 right-2 z-10"
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        [rounded]="true"
+                        [icon]="faXmark"
+                        [ariaLabel]="'artemisApp.iris.onboarding.close' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.iris.onboarding.close' | artemisTranslate"
+                        [tumAetUiTooltipDescribesHost]="false"
+                        (clicked)="close()"
+                    />
+                    <div class="flex flex-1 flex-col justify-end gap-2" aria-hidden="true">
+                        <div class="iris-onboarding__chat-widget ml-auto w-[90%] overflow-hidden">
+                            <div class="iris-onboarding__chat-header flex justify-end p-1">
+                                <div class="flex gap-1">
+                                    <div class="iris-onboarding__preview-icon h-5 w-6 rounded-sm"></div>
+                                    <div class="iris-onboarding__preview-icon h-5 w-6 rounded-sm"></div>
+                                    <div class="iris-onboarding__preview-icon h-5 w-6 rounded-sm"></div>
                                 </div>
                             </div>
-                            <div class="chat-body-preview">
-                                <p class="chat-greeting" jhiTranslate="artemisApp.iris.chat.helpOffer"></p>
-                                <div class="chat-bubble-preview"></div>
-                                <div class="chat-input-preview">
-                                    <span class="input-placeholder" jhiTranslate="artemisApp.exerciseChatbot.inputMessage"></span>
+                            <div class="flex min-h-60 flex-col items-center justify-center gap-2 p-4!">
+                                <p class="iris-onboarding__title m-0! text-center text-base" jhiTranslate="artemisApp.iris.chat.helpOffer"></p>
+                                <div class="iris-onboarding__chat-bubble w-[200px] max-w-full self-end p-4!"></div>
+                                <div class="iris-onboarding__chat-input mt-1 w-full p-4!">
+                                    <span class="iris-onboarding__muted cursor-default text-[0.8rem]" jhiTranslate="artemisApp.exerciseChatbot.inputMessage"></span>
                                 </div>
                             </div>
                         </div>
-                        <div class="iris-logo-badge">
-                            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-                        </div>
+                        <div class="flex items-center justify-start rounded-lg p-2"><jhi-iris-logo [size]="IrisLogoSize.SMALL" [decorative]="true" /></div>
                     </div>
                 </div>
             </div>
-        </div>
+        </tumaet-ui-dialog>
     }
 
-    <!-- Numbered tour steps: tooltips pointing at Iris chat UI elements. -->
+    <!-- The numbered steps stay non-modal so students can use the highlighted chat controls. -->
     @if (tooltipConfig(); as config) {
         @if (isStepPositionReady()) {
-            <div class="spotlight-click-guard" [class.interactive]="isInteractiveStep()" aria-hidden="true"></div>
+            <div class="iris-onboarding__click-guard" [class.iris-onboarding__click-guard--interactive]="isInteractiveStep()" aria-hidden="true"></div>
             <div
                 aria-hidden="true"
-                class="spotlight-blocker rounded-cutout"
-                [class.interactive]="isInteractiveStep()"
+                class="iris-onboarding__spotlight"
+                [class.iris-onboarding__spotlight--interactive]="isInteractiveStep()"
                 [style.top.px]="config.spotlight.top"
                 [style.left.px]="config.spotlight.left"
                 [style.width.px]="config.spotlight.width"
                 [style.height.px]="config.spotlight.height"
             ></div>
-
-            <div class="coach-mark" aria-hidden="true" [style.top.px]="config.coachMarkPosition.top" [style.left.px]="config.coachMarkPosition.left"></div>
-
+            <div class="iris-onboarding__coach-mark" aria-hidden="true" [style.top.px]="config.coachMarkPosition.top" [style.left.px]="config.coachMarkPosition.left"></div>
             <div
-                class="onboarding-tooltip"
-                [class.tooltip-arrow-up]="config.arrowDirection === 'up'"
-                [class.tooltip-arrow-down]="config.arrowDirection === 'down'"
-                [class.tooltip-arrow-down-left]="config.arrowDirection === 'down-left'"
-                [class.tooltip-arrow-left]="config.arrowDirection === 'left'"
-                [class.tooltip-arrow-right]="config.arrowDirection === 'right'"
+                #tourTooltip
+                class="iris-onboarding__tooltip absolute flex flex-col gap-2 p-4! pointer-events-auto"
+                [class.iris-onboarding__tooltip--up]="config.arrowDirection === 'up'"
+                [class.iris-onboarding__tooltip--down]="config.arrowDirection === 'down'"
+                [class.iris-onboarding__tooltip--right]="config.arrowDirection === 'right'"
                 [style.top.px]="config.tooltipPosition.top"
                 [style.left.px]="config.tooltipPosition.left"
                 role="region"
@@ -80,19 +82,49 @@
                 [attr.aria-describedby]="'onboarding-tooltip-desc-' + config.currentStep"
                 aria-live="polite"
             >
-                <div class="tooltip-header">
-                    <p class="tooltip-header-text" [id]="'onboarding-tooltip-title-' + config.currentStep" [jhiTranslate]="config.titleTranslationKey"></p>
-                    <button type="button" class="tooltip-close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                <div class="flex items-start justify-between gap-2">
+                    <p
+                        class="iris-onboarding__title m-0! flex-1 text-sm leading-[1.4] font-medium"
+                        [id]="'onboarding-tooltip-title-' + config.currentStep"
+                        [jhiTranslate]="config.titleTranslationKey"
+                    ></p>
+                    <tumaet-ui-button
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        [rounded]="true"
+                        [icon]="faXmark"
+                        [ariaLabel]="'artemisApp.iris.onboarding.close' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.iris.onboarding.close' | artemisTranslate"
+                        [tumAetUiTooltipDescribesHost]="false"
+                        (clicked)="close()"
+                    />
                 </div>
-                <p class="tooltip-description" [id]="'onboarding-tooltip-desc-' + config.currentStep" [jhiTranslate]="config.descriptionTranslationKey"></p>
-                <div class="tooltip-footer">
+                <p
+                    class="iris-onboarding__title m-0! text-sm leading-[1.6] font-normal"
+                    [id]="'onboarding-tooltip-desc-' + config.currentStep"
+                    [jhiTranslate]="config.descriptionTranslationKey"
+                ></p>
+                <div class="mt-2 flex items-center justify-between gap-3!">
                     <jhi-stepper [currentStep]="config.currentStep" [totalSteps]="totalTourSteps" />
                     @if (config.currentStep < totalTourSteps) {
-                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.next'" (onClick)="next()" />
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            data-testid="next-iris-tour-step"
+                            (click)="next()"
+                            jhiTranslate="artemisApp.iris.onboarding.next"
+                        ></button>
                     } @else {
-                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.finish'" (onClick)="finish()" />
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            data-testid="finish-iris-tour"
+                            (click)="finish()"
+                            jhiTranslate="artemisApp.iris.onboarding.finish"
+                        ></button>
                     }
                 </div>
             </div>

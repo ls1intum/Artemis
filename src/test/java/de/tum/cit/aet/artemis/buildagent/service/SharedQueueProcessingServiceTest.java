@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -88,5 +89,13 @@ class SharedQueueProcessingServiceTest {
     private BuildJobQueueItem buildJob(int retryCount, BuildStatus status, String agentName) {
         return new BuildJobQueueItem("job-1", "job", new BuildAgentDTO(agentName, "address", agentName), 1, 2, 3, retryCount, 1, status, null,
                 new JobTimingInfo(SUBMISSION_DATE, null, null, null, 0), null, null);
+    }
+
+    @Test
+    void aRefusedContainerNetworkIsRecognizedAndDoesNotCountAsAFailureOfTheAgent() {
+        var refused = new CompletionException(new ContainerNetworkNotAllowedException("not allowed"));
+
+        assertThat(SharedQueueProcessingService.isCausedByNetworkNotAllowed(refused)).isTrue();
+        assertThat(SharedQueueProcessingService.isCausedByNetworkNotAllowed(new CompletionException(new IllegalStateException("other failure")))).isFalse();
     }
 }

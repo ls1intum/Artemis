@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -15,14 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
@@ -48,16 +43,13 @@ public class QuizExerciseDeletionResource {
 
     private final UserRepository userRepository;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     public QuizExerciseDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
-            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, Optional<AtlasMLApi> atlasMLApi) {
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -76,36 +68,14 @@ public class QuizExerciseDeletionResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly and, for quizzes, deletes the drag-and-drop image files
         // (see ExerciseDeletionService#delete) across all deletion entry points.
-        // AtlasML is notified, the request is audited and the schedule of the quiz is cancelled only once the deletion is accepted, so a request that is refused because the
-        // exercise is already being deleted does none of that. The quiz must not start while its deletion waits for a free worker, so the schedule is cancelled before the
-        // deletion starts, not after it.
+        // Audit and cancel the quiz schedule only once the deletion is accepted. A refused duplicate request must do neither.
+        // Cancel before the deletion starts so the quiz cannot start while its deletion waits for a free worker.
         exerciseDeletionService.startAsyncDeletion(quizExercise, false, () -> {
-            notifyAtlasML(quizExercise, OperationTypeDTO.DELETE, "quiz exercise deletion");
             exerciseService.logDeletion(quizExercise, course, user);
             quizExerciseService.cancelScheduledQuiz(quizExerciseId);
         }, () -> quizExerciseService.rescheduleQuizAfterFailedDeletion(quizExerciseId));
 
         return ResponseEntity.accepted().build();
-    }
-
-    /**
-     * Helper method to notify AtlasML about quiz exercise changes with consistent
-     * error handling.
-     *
-     * @param exercise             the exercise to save
-     * @param operationType        the operation type (UPDATE or DELETE)
-     * @param operationDescription the description of the operation for logging
-     *                                 purposes
-     */
-    private void notifyAtlasML(QuizExercise exercise, OperationTypeDTO operationType, String operationDescription) {
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, operationType);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-            }
-        });
     }
 
 }

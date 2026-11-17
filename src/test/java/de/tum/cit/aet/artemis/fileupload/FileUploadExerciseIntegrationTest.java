@@ -44,14 +44,11 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
-import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -88,12 +85,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
@@ -1040,41 +1031,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
-        featureToggleService.enableFeature(Feature.AtlasML);
-        try {
-            provider.reset();
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-
-            // Create
-            courseUtilService.enableMessagingForCourse(course);
-            var create = new FileUploadExercise();
-            create.setCourse(course);
-            create.setTitle("AtlasML FileUpload Create");
-            create.setFilePattern("pdf, png");
-            create.setMaxPoints(10.0);
-            create.setChannelName("atlasml-fileupload-create");
-            request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(create), FileUploadExerciseDTO.class, HttpStatus.CREATED);
-
-            // Update
-            FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-            persisted.setTitle("AtlasML FileUpload Update");
-            request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
-                    FileUploadExerciseDTO.class, HttpStatus.OK);
-
-            // Delete
-            request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.ACCEPTED);
-            asyncDeletionTestUtilService.awaitExerciseDeletion(persisted.getId());
-        }
-        finally {
-            featureToggleService.disableFeature(Feature.AtlasML);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         courseUtilService.enableMessagingForCourse(course);
         fileUploadExercise.setId(null);
@@ -1143,6 +1099,16 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void importFileUploadExerciseWithInvalidTitleIsRejected(String title) throws Exception {
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         fileUploadExercise.setTitle(title);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), inputDTO(fileUploadExercise),
+                FileUploadExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { ".png", "png, pdf!", "toolongending" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importFileUploadExerciseWithInvalidFilePatternIsRejected(String filePattern) throws Exception {
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        fileUploadExercise.setFilePattern(filePattern);
         request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), inputDTO(fileUploadExercise),
                 FileUploadExerciseDTO.class, HttpStatus.BAD_REQUEST);
     }

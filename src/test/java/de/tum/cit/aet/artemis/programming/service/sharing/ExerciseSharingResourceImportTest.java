@@ -245,6 +245,77 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @Test
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void setUpWithInvalidChecksumIsRejected() throws Exception {
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "invalidChecksum", 0);
+        SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(null, 0, sharingInfo);
+
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(setupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("sharingInfoInvalid"));
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void setUpWithBaseUrlOfOtherPlatformIsRejected() throws Exception {
+        String otherBaseUrl = "http://other-platform.example/pluginIF/v0.1";
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, otherBaseUrl,
+                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL", otherBaseUrl),
+                0);
+        SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(null, 0, sharingInfo);
+
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(setupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("sharingInfoInvalid"));
+    }
+
+    /**
+     * The follow-up calls to the platform use the base URL of the request, so every endpoint that makes them compares it with the URL this instance is connected to, not only
+     * the setup of the import.
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void loadingTheBasketWithBaseUrlOfOtherPlatformIsRejected() throws Exception {
+        String otherBaseUrl = "http://other-platform.example/pluginIF/v0.1";
+
+        requestUtilService.performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL",
+                TEST_RETURN_URL, "apiBaseURL", otherBaseUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void exerciseDetailsWithBaseUrlOfOtherPlatformIsRejected() throws Exception {
+        String otherBaseUrl = "http://other-platform.example/pluginIF/v0.1";
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, otherBaseUrl,
+                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL", otherBaseUrl),
+                0);
+
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+    }
+
+    /**
+     * An incomplete sharing information is answered as a bad request by both endpoints that take it in the body, instead of failing while the checksum is calculated.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "missingReturnUrl", "missingBaseUrl", "missingChecksum" })
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void incompleteSharingInformationIsRejected(String missingField) throws Exception {
+        SharingInfoDTO complete = correctSharingInfo();
+        String returnUrl = "missingReturnUrl".equals(missingField) ? null : complete.returnURL();
+        String baseUrl = "missingBaseUrl".equals(missingField) ? null : complete.apiBaseURL();
+        String checksum = "missingChecksum".equals(missingField) ? null : complete.checksum();
+        SharingInfoDTO incomplete = new SharingInfoDTO(complete.basketToken(), returnUrl, baseUrl, checksum, complete.exercisePosition());
+
+        requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new SharingSetupInfoDTO(null, 0, incomplete))).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("sharingInfoInvalid"));
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(incomplete)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void importExerciseInfosWrongChecksum() throws Exception {
 
         SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);

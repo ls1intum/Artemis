@@ -174,8 +174,9 @@ Each answer links to the page that explains the topic in full.
 LocalCI can be extended to support further use cases. Where an answer says that something is not available, it describes the current state and not a fixed limit.
 To request a setting or a behavior that is missing, open an issue in the [Artemis repository](https://github.com/ls1intum/Artemis/issues) and describe the use case.
 
-**Can a script detect that it runs in CI?** There is no `CI` variable. `INITIAL_WORKING_DIRECTORY` is set in every build, and instructors can add variables per exercise.
-See [Detecting that a script runs in LocalCI](/admin/production-setup/localci-build-environment#detecting-that-a-script-runs-in-localci).
+**Can a script detect that it runs in CI?** `INITIAL_WORKING_DIRECTORY` is set in every build. There is no `CI` variable by default, but administrators can set it, or any other variable, for all exercises
+with `container-defaults.env`, and instructors can add variables per exercise. See [Detecting that a script runs in LocalCI](/admin/production-setup/localci-build-environment#detecting-that-a-script-runs-in-localci)
+and [Container defaults](/admin/production-setup/localci-build-environment#container-defaults).
 
 **Can builds use a custom Docker registry with credentials?** Yes. Log the Docker user of every build agent in to the registry, with the login stored in `config.json` rather than in a credential helper.
 See [Images from a private registry](/admin/production-setup/localci-build-environment#images-from-a-private-registry).
@@ -193,7 +194,8 @@ Lock Repository [submission policy](/instructor/exercises/programming-exercise/g
 The same section describes what protects the installation instead.
 
 **Do all steps run in the container, with and without network?** The build script runs in the container, the clone of the repositories does not. A container has one network
-setting for all of its phases, and an exercise without a selection gets Docker's default network. See [Network access](/admin/production-setup/localci-build-environment#network-access).
+setting for all of its phases, and an exercise without a selection gets Docker's default network, or the one that the administrator sets for all exercises with `container-defaults.network`.
+See [Network access](/admin/production-setup/localci-build-environment#network-access).
 
 **Can I inject a Maven configuration for credentials, or a global offline configuration?** There is no installation-wide Maven setting. Put it in the Docker image or in the default
 phases. See [Dependencies and Maven configuration](/admin/production-setup/localci-build-environment#dependencies-and-maven-configuration).
@@ -236,8 +238,8 @@ Gaps in comparison with Jenkins. The documentation states each one as it is toda
 - **No debounce for builds, and no installation-wide limit.** Instructors can cap submissions per exercise with a Lock Repository policy, which takes effect when a result is processed.
   A waiting period that merges quick successive pushes, or a limit on the queued builds of one participation, would protect the queue at a deadline,
   see [When many students push at once](/admin/scaling#when-many-students-push-at-once).
-- **No installation-wide build environment.** There is no setting for environment variables (such as `CI=true`), a default Docker network, or a Maven configuration that applies to the builds
-  of all exercises. Administrators use the image or the default phases instead.
+- **No installation-wide Maven configuration.** Environment variables (such as `CI=true`) and a default network apply to the builds of all exercises with `container-defaults`, but there is no
+  setting for a Maven or Gradle configuration. Administrators use the image or the default phases instead.
 - **No configurable pull policy.** The Docker runner pulls an image only when it is missing, and reads registry credentials from the Docker configuration of the agent host without credential helpers.
   An explicit registry credential setting and a policy to always check for a newer image are not available.
 - **No built-in autoscaling.** Artemis exposes the queue and the agents, but starting and stopping agents is left to the environment. The Helm chart of the experimental

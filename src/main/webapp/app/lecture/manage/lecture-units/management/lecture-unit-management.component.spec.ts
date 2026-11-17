@@ -21,7 +21,7 @@ import { Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { faCheck, faFile, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFile, faFileCircleQuestion, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -32,6 +32,7 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { TumLiveUploadService, TumLiveUploadedUnit } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
@@ -109,6 +110,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 MockProvider(AttachmentVideoUnitService),
+                MockProvider(TumLiveUploadService, { getUploadedUnits: () => of([{ lectureId: 1, lectureUnitId: 3 }]) }),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -182,6 +184,40 @@ describe('LectureUnitManagementComponent', () => {
         }
         lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
+    });
+
+    it('asks about the TUM.Live video only for units that show an uploaded one, and passes the answer on', () => {
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([3]));
+
+        lectureUnitManagementComponent.deleteLectureUnit(3, { deleteTumLiveRecordings: true });
+        lectureUnitManagementComponent.deleteLectureUnit(1);
+
+        expect(deleteLectureUnitSpy).toHaveBeenCalledWith(3, expect.any(Number), true);
+        expect(deleteLectureUnitSpy).toHaveBeenCalledWith(1, expect.any(Number), false);
+    });
+
+    it('reads the uploaded TUM.Live videos again on request, ignores an older answer, and keeps them when reading fails', () => {
+        const tumLiveUploadService = TestBed.inject(TumLiveUploadService);
+        const older = new Subject<TumLiveUploadedUnit[]>();
+        const newer = new Subject<TumLiveUploadedUnit[]>();
+        vi.spyOn(tumLiveUploadService, 'getUploadedUnits').mockReturnValueOnce(older).mockReturnValueOnce(newer);
+
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+        newer.next([{ lectureId: 1, lectureUnitId: 4 }]);
+        older.next([]);
+
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
+
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(tumLiveUploadService, 'getUploadedUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        // Since it is not known which units have a video in TUM.Live now, deleting any file or video unit asks about it.
+        expect(lectureUnitManagementComponent.asksAboutTumLiveVideo({ id: 9, type: LectureUnitType.ATTACHMENT_VIDEO } as LectureUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.asksAboutTumLiveVideo({ id: 10, type: LectureUnitType.TEXT } as LectureUnit)).toBe(false);
     });
 
     it('should show loadData on delete', () => {
@@ -496,6 +532,10 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('isAwaitingProcessing', () => {
+        beforeEach(() => {
+            attachmentVideoUnit.videoSource = 'https://tum.live/w/algo/1';
+        });
+
         it('should return true when status is IDLE and course is active', () => {
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 },
@@ -514,6 +554,16 @@ describe('LectureUnitManagementComponent', () => {
             currentLecture.course!.endDate = undefined;
             lectureUnitManagementComponent.lecture.set(currentLecture);
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(true);
+        });
+
+        it('should return false for a unit without a file and a video', () => {
+            attachmentVideoUnit.videoSource = undefined;
+            lectureUnitManagementComponent.processingStatus.set({});
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course!.startDate = undefined;
+            currentLecture.course!.endDate = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
         });
 
         it('should return false when processing is in progress', () => {
@@ -837,6 +887,7 @@ describe('LectureUnitManagementComponent', () => {
             ['another file', withAttachment('attachments/sheet.zip'), 'file', faFile],
             ['a video', withAttachment(undefined, 'https://live.rbg.tum.de/w/1'), 'video', faFileVideo],
             ['a file and a video', withAttachment('attachments/slides.pdf', 'https://live.rbg.tum.de/w/1'), 'fileAndVideo', faFileVideo],
+            ['neither a file nor a video yet', withAttachment(undefined), 'empty', faFileCircleQuestion],
         ])('should name a file unit with %s by what it holds', (_, unit, kind, icon) => {
             expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
             expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);

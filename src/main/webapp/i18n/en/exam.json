@@ -607,6 +607,10 @@
                 "delete": {
                     "question": "Should the <strong>{{ title }}</strong> really be deleted? All associated elements will also be deleted, if they are not referenced by any other test run.",
                     "typeNameToConfirm": "Please type: Test Run to confirm."
+                },
+                "empty": {
+                    "title": "No test runs yet",
+                    "description": "Create a test run to try out the exam from the student perspective."
                 }
             },
             "examStudents": {

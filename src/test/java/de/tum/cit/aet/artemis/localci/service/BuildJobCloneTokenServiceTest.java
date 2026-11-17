@@ -1,6 +1,14 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -12,6 +20,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -20,8 +29,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService;
 import de.tum.cit.aet.artemis.core.config.LoggingAspect;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
  * Tests for {@link BuildJobCloneTokenService}.
@@ -32,7 +44,11 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  */
 class BuildJobCloneTokenServiceTest {
 
-    private final BuildJobCloneTokenService service = new BuildJobCloneTokenService();
+    private final ParticipationTestRepository participationRepository = mock(ParticipationTestRepository.class);
+
+    private final ProgrammingExerciseTestRepository programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
+
+    private final BuildJobCloneTokenService service = BuildJobCloneTokenServiceFixture.service(participationRepository, programmingExerciseRepository);
 
     private static BuildJobQueueItem buildJob(RepositoryInfo repositoryInfo, String cloneToken) {
         var jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 60);
@@ -104,6 +120,62 @@ class BuildJobCloneTokenServiceTest {
     }
 
     @Test
+    void shouldLeaveOutADeclaredRepositoryThatTheDatabaseDoesNotHoldForTheJob() {
+        // the project key and the slug of the declared repositories are data of the job, so they are compared with the database
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student2"), "http://localhost:8000/git/OTHER/other-tests.git", uri("solution")), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student2")))).as("the repository of another participation").isFalse();
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri("http://localhost:8000/git/OTHER/other-tests.git"))).as("a repository of another project").isFalse();
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("solution")))).as("a repository of the exercise of the job").isTrue();
+    }
+
+    @Test
+    void shouldCoverNothingWhenTheParticipationDoesNotBelongToTheExerciseOfTheJob() {
+        var otherExerciseInfo = repositoryInfo(uri("student1"), uri("tests"), null);
+        var timing = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 60);
+        var config = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
+        BuildJobQueueItem job = new BuildJobQueueItem("job-2", "name", new BuildAgentDTO("agent-1", "address", "display"), BuildJobCloneTokenServiceFixture.PARTICIPATION_ID, 2L,
+                99L, 0, 1, null, otherExerciseInfo, timing, config, null, "bjct-x");
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(any())).thenReturn(exerciseWithId(3L));
+
+        assertThat(service.getRepositoryIdentities(job)).isEmpty();
+    }
+
+    @Test
+    void shouldReadTheDatabaseOncePerJob() {
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), null), "bjct-x");
+
+        for (int i = 0; i < 5; i++) {
+            assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student1")))).isTrue();
+        }
+
+        verify(participationRepository, times(1)).findWithProgrammingExerciseById(BuildJobCloneTokenServiceFixture.PARTICIPATION_ID);
+    }
+
+    @Test
+    void shouldNotReadTheDatabaseForARepositoryTheJobDoesNotDeclare() {
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), null), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student2")))).isFalse();
+
+        verify(participationRepository, never()).findWithProgrammingExerciseById(anyLong());
+    }
+
+    @Test
+    void shouldCoverNothingWhenTheDatabaseCannotBeRead() {
+        when(participationRepository.findWithProgrammingExerciseById(anyLong())).thenThrow(new DataAccessResourceFailureException("no connection"));
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), null), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student1")))).isFalse();
+    }
+
+    private static ProgrammingExercise exerciseWithId(long id) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(id);
+        return exercise;
+    }
+
+    @Test
     void shouldIgnoreBlankRepositoryUris() {
         BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), "", "   "), "bjct-x");
 
@@ -111,9 +183,10 @@ class BuildJobCloneTokenServiceTest {
     }
 
     @Test
-    void shouldReturnNoRepositoriesForAJobWithoutRepositoryInfo() {
+    void shouldReturnNoRepositoriesForAMissingJob() {
         assertThat(service.getRepositoryIdentities(null)).isEmpty();
         assertThat(service.coversRepository(null, new LocalVCRepositoryUri(uri("student1")))).isFalse();
+        verifyNoInteractions(participationRepository, programmingExerciseRepository);
     }
 
     /**

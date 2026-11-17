@@ -1,13 +1,15 @@
-import { Component, input } from '@angular/core';
+import { Component, booleanAttribute, input } from '@angular/core';
 import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-students-table',
-    template: '',
+    template: '<ng-content />',
 })
 export class TutorialRegistrationsStudentsTableMockComponent {
     students = input.required<TutorialGroupStudent[]>();
+    hasToolbar = input(false, { transform: booleanAttribute });
+    emptyTitle = input<string>();
     removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
 
     triggerRemove(student: TutorialGroupStudent, event = new Event('click')) {

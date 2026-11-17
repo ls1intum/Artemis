@@ -52,7 +52,6 @@
             "type": "Type",
             "typeStandalone": "Standalone",
             "typeExercise": "Exercise",
-            "rows": "rows",
             "statistics": {
                 "total": "Total"
             },
@@ -94,7 +93,9 @@
             },
             "students": {
                 "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation instance?"
-            }
+            },
+            "noPresenters": "No presenters yet",
+            "noPresentersDescription": "Search for a student above to add the first presenter."
         }
     }
 }

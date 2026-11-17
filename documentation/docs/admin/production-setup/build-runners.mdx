@@ -2,7 +2,7 @@
 id: build-runners
 title: LocalCI Build Runners
 sidebar_label: LocalCI Build Runners
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-14
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -108,12 +108,14 @@ neither a Docker socket nor a Kubernetes API token.
 - The **controller** service account, used by the build agent pod, is granted only what it needs in the build
   namespace: create, read, watch, and delete `Job`s and `Pod`s, read pod logs and events, and open exec sessions into a
   pod. It has no cluster-wide permissions and no permissions in any other namespace.
-- The builder container requests the `RuntimeDefault` seccomp profile. It deliberately keeps the default capability set
-  and allows privilege escalation, because exercise images legitimately install packages as root and use setuid tooling
-  such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises
-  on Kubernetes that build fine on Docker.
+- The builder container requests the `RuntimeDefault` seccomp profile and drops the capabilities `MKNOD`, `SYS_CHROOT` and `SETFCAP`. The Docker runner applies the same
+  restriction. Builds that run as root still install packages, change file ownership and open network connections. By default, setuid programs such as `sudo` keep working, because some
+  build scripts use them. `artemis.continuous-integration.allow-privilege-escalation: false` refuses them, see
+  [Which privileges a build has](/admin/production-setup/localci-build-environment#which-privileges-a-build-has).
 - Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
-  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not.
+  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not. The builder
+  of such an exercise also loses `CAP_NET_RAW`, because raw sockets are of no
+  use to a build without a network and could send frames past those firewall rules.
 
 ### Configuration
 

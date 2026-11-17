@@ -13,7 +13,14 @@ import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/e
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
@@ -26,6 +33,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         TumAetUiTableSortableColumnComponent,
         ArtemisDatePipe,
     ],

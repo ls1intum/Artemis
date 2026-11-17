@@ -1,6 +1,7 @@
 api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
+api/athena-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -120,6 +121,8 @@ model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
+model/generated-quiz-answer-option.ts
+model/generated-quiz-question.ts
 model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
@@ -135,6 +138,7 @@ model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
 model/missing-content.ts
 model/missing-entity.ts
+model/modeling-feedback.ts
 model/multiple-choice-question-create.ts
 model/multiple-choice-question-from-editor.ts
 model/multiple-choice-question-re-evaluate.ts
@@ -153,6 +157,7 @@ model/problem-statement-refinement-response.ts
 model/problem-statement-rewrite-request.ts
 model/problem-statement-rewrite-response.ts
 model/problem-statement-targeted-refinement-request.ts
+model/programming-feedback.ts
 model/quality-issue-location.ts
 model/quality-issue.ts
 model/question-statistics.ts
@@ -186,8 +191,13 @@ model/quiz-question-from-editor.ts
 model/quiz-question-generation-request.ts
 model/quiz-question-generation-response.ts
 model/quiz-question-pool-build-start.ts
+model/quiz-question-pool-competency.ts
+model/quiz-question-pool-deletion.ts
 model/quiz-question-pool-item.ts
+model/quiz-question-pool-page.ts
+model/quiz-question-pool-plan.ts
 model/quiz-question-pool-progress.ts
+model/quiz-question-pool-review.ts
 model/quiz-question-re-evaluate.ts
 model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts
@@ -249,6 +259,7 @@ model/submitted-answer-after-evaluation.ts
 model/submitted-answer-before-evaluation.ts
 model/submitted-answer-from-live-client.ts
 model/submitted-answer-from-student.ts
+model/text-feedback.ts
 model/timing.ts
 model/tokens.ts
 model/tutorial-group-configuration-free-period.ts

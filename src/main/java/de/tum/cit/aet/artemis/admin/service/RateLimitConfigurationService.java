@@ -115,6 +115,8 @@ public class RateLimitConfigurationService {
         return switch (type) {
             case ACCOUNT_MANAGEMENT -> properties.getAccountManagementRequestsPerMinute() != null ? properties.getAccountManagementRequestsPerMinute() : type.getDefaultRpm();
             case AUTHENTICATION -> properties.getAuthenticationRequestsPerMinute() != null ? properties.getAuthenticationRequestsPerMinute() : type.getDefaultRpm();
+            case FAILED_LOGIN -> properties.getFailedLoginRequestsPerMinute() != null ? properties.getFailedLoginRequestsPerMinute() : type.getDefaultRpm();
+            case GIT_AUTHENTICATION -> properties.getGitAuthenticationRequestsPerMinute() != null ? properties.getGitAuthenticationRequestsPerMinute() : type.getDefaultRpm();
             case LOGIN_OPTIONS -> properties.getLoginOptionsRequestsPerMinute() != null ? properties.getLoginOptionsRequestsPerMinute() : type.getDefaultRpm();
             case PROBLEM_STATEMENT_RENDERING ->
                 properties.getProblemStatementRenderingRequestsPerMinute() != null ? properties.getProblemStatementRenderingRequestsPerMinute() : type.getDefaultRpm();
@@ -122,11 +124,14 @@ public class RateLimitConfigurationService {
             case STRUGGLE_INTERVENTION ->
                 properties.getStruggleInterventionRequestsPerMinute() != null ? properties.getStruggleInterventionRequestsPerMinute() : type.getDefaultRpm();
             case CONTENT_SEARCH -> properties.getContentSearchRequestsPerMinute() != null ? properties.getContentSearchRequestsPerMinute() : type.getDefaultRpm();
+            case EMAIL_ADDRESS_CHECK -> properties.getEmailAddressCheckRequestsPerMinute() != null ? properties.getEmailAddressCheckRequestsPerMinute() : type.getDefaultRpm();
             case BUILD_AGENT_CLONE_TOKEN ->
                 properties.getBuildAgentCloneTokenRequestsPerMinute() != null ? properties.getBuildAgentCloneTokenRequestsPerMinute() : type.getDefaultRpm();
             case ONLINE_RESOURCE_FETCH ->
                 properties.getOnlineResourceFetchRequestsPerMinute() != null ? properties.getOnlineResourceFetchRequestsPerMinute() : type.getDefaultRpm();
             case CLIENT_ERROR_REPORT -> properties.getClientErrorReportRequestsPerMinute() != null ? properties.getClientErrorReportRequestsPerMinute() : type.getDefaultRpm();
+            case SERVICE_CREDENTIAL_FAILURE ->
+                properties.getServiceCredentialFailureRequestsPerMinute() != null ? properties.getServiceCredentialFailureRequestsPerMinute() : type.getDefaultRpm();
         };
     }
 }

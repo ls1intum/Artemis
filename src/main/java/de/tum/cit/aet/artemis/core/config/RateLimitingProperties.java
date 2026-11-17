@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+
 /**
  * Configuration properties for rate limiting functionality.
  *
@@ -56,10 +58,22 @@ public class RateLimitingProperties {
     private Integer authenticationRequestsPerMinute;
 
     /**
+     * Requests per minute for the authentication of git operations over HTTP and SSH.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#GIT_AUTHENTICATION}.
+     */
+    private Integer gitAuthenticationRequestsPerMinute;
+
+    /**
      * Requests per minute for the unauthenticated login-options lookup.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#LOGIN_OPTIONS}.
      */
     private Integer loginOptionsRequestsPerMinute;
+
+    /**
+     * Failed password logins per minute that one account tolerates before further logins for it are answered with 429.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#FAILED_LOGIN}.
+     */
+    private Integer failedLoginRequestsPerMinute;
 
     /**
      * Requests per minute for the problem-statement rendering endpoint.
@@ -86,6 +100,12 @@ public class RateLimitingProperties {
     private Integer contentSearchRequestsPerMinute;
 
     /**
+     * Requests per minute for the check whether an email address is allowed by the configured restriction.
+     * If not specified, uses the default from {@link RateLimitType#EMAIL_ADDRESS_CHECK}.
+     */
+    private Integer emailAddressCheckRequestsPerMinute;
+
+    /**
      * Requests per minute for the build agent clone-token check on the git https path.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
      */
@@ -102,6 +122,12 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CLIENT_ERROR_REPORT}.
      */
     private Integer clientErrorReportRequestsPerMinute;
+
+    /**
+     * Failed shared-secret checks per minute for the endpoints called by external services.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#SERVICE_CREDENTIAL_FAILURE}.
+     */
+    private Integer serviceCredentialFailureRequestsPerMinute;
 
     public List<String> getExemptAddresses() {
         return exemptAddresses;
@@ -155,6 +181,14 @@ public class RateLimitingProperties {
         return aiSearchPipelineRequestsPerMinute;
     }
 
+    public Integer getGitAuthenticationRequestsPerMinute() {
+        return gitAuthenticationRequestsPerMinute;
+    }
+
+    public void setGitAuthenticationRequestsPerMinute(Integer gitAuthenticationRequestsPerMinute) {
+        this.gitAuthenticationRequestsPerMinute = gitAuthenticationRequestsPerMinute;
+    }
+
     public Integer getBuildAgentCloneTokenRequestsPerMinute() {
         return buildAgentCloneTokenRequestsPerMinute;
     }
@@ -183,6 +217,14 @@ public class RateLimitingProperties {
         this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
     }
 
+    public Integer getEmailAddressCheckRequestsPerMinute() {
+        return emailAddressCheckRequestsPerMinute;
+    }
+
+    public void setEmailAddressCheckRequestsPerMinute(Integer emailAddressCheckRequestsPerMinute) {
+        this.emailAddressCheckRequestsPerMinute = emailAddressCheckRequestsPerMinute;
+    }
+
     public Integer getOnlineResourceFetchRequestsPerMinute() {
         return onlineResourceFetchRequestsPerMinute;
     }
@@ -191,11 +233,27 @@ public class RateLimitingProperties {
         this.onlineResourceFetchRequestsPerMinute = onlineResourceFetchRequestsPerMinute;
     }
 
+    public Integer getServiceCredentialFailureRequestsPerMinute() {
+        return serviceCredentialFailureRequestsPerMinute;
+    }
+
+    public void setServiceCredentialFailureRequestsPerMinute(Integer serviceCredentialFailureRequestsPerMinute) {
+        this.serviceCredentialFailureRequestsPerMinute = serviceCredentialFailureRequestsPerMinute;
+    }
+
     public Integer getClientErrorReportRequestsPerMinute() {
         return clientErrorReportRequestsPerMinute;
     }
 
     public void setClientErrorReportRequestsPerMinute(Integer clientErrorReportRequestsPerMinute) {
         this.clientErrorReportRequestsPerMinute = clientErrorReportRequestsPerMinute;
+    }
+
+    public Integer getFailedLoginRequestsPerMinute() {
+        return failedLoginRequestsPerMinute;
+    }
+
+    public void setFailedLoginRequestsPerMinute(Integer failedLoginRequestsPerMinute) {
+        this.failedLoginRequestsPerMinute = failedLoginRequestsPerMinute;
     }
 }

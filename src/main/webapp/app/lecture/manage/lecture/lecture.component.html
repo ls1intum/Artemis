@@ -20,10 +20,10 @@
                 <tumaet-ui-popover #filters [ariaLabel]="'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size }">
                     <div class="flex flex-col gap-2">
                         @for (filter of [filterType.PAST, filterType.CURRENT, filterType.FUTURE, filterType.UNSPECIFIED]; track filter) {
-                            <label class="flex items-center gap-2" [for]="filter">
+                            <div class="flex items-center gap-2">
                                 <tumaet-ui-checkbox [inputId]="filter" [checked]="activeFilters.has(filter)" (changed)="toggleFilters([filter])" />
-                                <span [jhiTranslate]="'artemisApp.lecture.home.filterOptions.' + filter"></span>
-                            </label>
+                                <label class="cursor-pointer leading-5" [for]="filter" [jhiTranslate]="'artemisApp.lecture.home.filterOptions.' + filter"></label>
+                            </div>
                         }
                     </div>
                 </tumaet-ui-popover>
@@ -70,9 +70,10 @@
     }
 
     @if (loaded() && filteredLectures().length > 0) {
-        <div class="overflow-x-auto">
+        <tumaet-ui-table-layout>
             <table
                 tumAetUiTable
+                size="small"
                 [striped]="true"
                 [sortField]="predicate"
                 [sortOrder]="ascending ? 1 : -1"
@@ -148,7 +149,12 @@
                                             [entityTitle]="lecture.title || ''"
                                             deleteQuestion="artemisApp.lecture.delete.question"
                                             deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
-                                            (delete)="deleteLecture(lecture.id!)"
+                                            [additionalChecks]="
+                                                tumLiveUploadsUnknown() || tumLiveUploadLectureIds().has(lecture.id!)
+                                                    ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecordings' }
+                                                    : {}
+                                            "
+                                            (delete)="deleteLecture(lecture.id!, $event)"
                                             [dialogError]="dialogError$"
                                         >
                                             <fa-icon [icon]="faTrash" />
@@ -160,7 +166,7 @@
                     }
                 </tbody>
             </table>
-        </div>
+        </tumaet-ui-table-layout>
     } @else if (loaded()) {
         <tumaet-ui-empty-state
             class="mt-12!"

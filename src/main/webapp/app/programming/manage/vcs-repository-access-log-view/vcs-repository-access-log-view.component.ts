@@ -87,8 +87,7 @@ export class VcsRepositoryAccessLogViewComponent {
 
     protected readonly tableOptions: TableViewOptions = {
         lazy: false,
-        scrollable: true,
-        scrollHeight: 'flex',
+        fill: true,
         searchPlaceholder: 'artemisApp.repository.vcsAccessLog.searchPlaceholder',
         emptyMessageTranslation: 'artemisApp.repository.vcsAccessLog.empty',
         initialSortField: 'timestamp',

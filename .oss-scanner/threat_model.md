@@ -65,7 +65,7 @@ Less important:
 
 - The client enforces nothing by itself. Client-side checks only shape the UI. Report a client issue only when it is
   exploitable on its own (XSS, open redirect, credential or token leakage), not because a button is visible.
-- The AI integrations (`iris`, `athena`, `hyperion`, and the AtlasML and Atlas LLM parts of `atlas`) are optional and
+- The AI integrations (`iris`, `athena`, `hyperion`, and the Atlas LLM part of `atlas`) are optional and
   gated by configuration. They are in scope, but a flaw only matters where the feature is enabled. The rest of `atlas`
   (competencies, learning paths, learner profiles) is not an AI feature and is on by default, so review it like any other
   module.

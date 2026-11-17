@@ -8,6 +8,8 @@ import java.io.InputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -49,5 +51,13 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
         final var apollonModel = new ApollonModelDTO("model");
         String response = request.postWithResponseBodyString("/api/modeling/apollon/convert-to-pdf", apollonModel, HttpStatus.OK);
         assertThat(response).isEqualTo(mockPdf);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, ApollonModelDTO.MAX_MODEL_LENGTH + 1 })
+    @WithMockUser(username = "instructor1", roles = "USER")
+    void testConvertingModelWithInvalidSizeIsRejected(int length) throws Exception {
+        final var apollonModel = new ApollonModelDTO("a".repeat(length));
+        request.postWithResponseBodyString("/api/modeling/apollon/convert-to-pdf", apollonModel, HttpStatus.BAD_REQUEST);
     }
 }

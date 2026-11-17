@@ -1,7 +1,7 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.examManagement.announcementCreate.title' | artemisTranslate" size="medium">
-    <form name="makeLiveExamAnnouncementForm" class="flex flex-col gap-4">
+    <form name="makeLiveExamAnnouncementForm" class="flex flex-col gap-6!">
         @if (status() === 'not_submitted') {
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-6!">
                 <div jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
                 <jhi-markdown-editor-monaco
                     class="markdown-editor"

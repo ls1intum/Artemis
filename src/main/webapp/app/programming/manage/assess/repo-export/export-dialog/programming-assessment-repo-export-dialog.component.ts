@@ -10,7 +10,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,7 +28,17 @@ interface ProgrammingAssessmentRepoExportDialogData {
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, TumAetUiDatePickerComponent, FeatureToggleDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        TumAetUiDatePickerComponent,
+        FeatureToggleDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+    ],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);

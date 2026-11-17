@@ -106,6 +106,32 @@ class SecurityConfigurationTest {
     }
 
     @Test
+    void contentSecurityPolicy_withoutLti_forbidsFraming() {
+        assertThat(securityConfiguration.contentSecurityPolicy(false)).contains("base-uri 'self'").endsWith("frame-ancestors 'none'");
+    }
+
+    @Test
+    void contentSecurityPolicy_withLti_leavesFramingToTheLtiConfiguration() {
+        assertThat(securityConfiguration.contentSecurityPolicy(true)).contains("base-uri 'self'").doesNotContain("frame-ancestors");
+    }
+
+    @Test
+    void contentSecurityPolicy_withConfiguredOrigins_listsThem() {
+        ReflectionTestUtils.setField(securityConfiguration, "frameAncestors", "https://lms.example.org, https://*.example.com:8443");
+
+        assertThat(securityConfiguration.contentSecurityPolicy(true)).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
+        assertThat(securityConfiguration.contentSecurityPolicy(false)).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "lms.example.org", "https://lms.example.org; script-src *", "'none'", "https://lms.example.org/path" })
+    void contentSecurityPolicy_withInvalidOrigin_isRejected(String origin) {
+        ReflectionTestUtils.setField(securityConfiguration, "frameAncestors", origin);
+
+        assertThatThrownBy(() -> securityConfiguration.contentSecurityPolicy(true)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void testCspPolicyDirectives_scriptSrc_shouldAllowYouTubeIFrameApiOrigin() {
         // The YouTube IFrame API is loaded from https://www.youtube.com.
         // The CSP script-src directive must explicitly allow this origin so the browser
