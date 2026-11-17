@@ -184,6 +184,22 @@ class TextExerciseFeedbackServiceTest {
         verify(athenaFeedbackRequestRepository, never()).failAthenaFeedbackRequest(any());
     }
 
+    @Test
+    void reservationRejectionDoesNotAttachBroadcastOrDispatch() throws Exception {
+        TextSubmission submission = new TextSubmission();
+        submission.setId(7L);
+        submission.setText("A saved student answer");
+        when(userRepository.getUser()).thenReturn(new User());
+        when(athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission))
+                .thenThrow(new de.tum.cit.aet.artemis.core.exception.BadRequestAlertException("Duplicate", "submission", "duplicate"));
+
+        newService(Optional.of(athenaFeedbackApi)).generateAutomaticFeedbackForTestExamAsync(participation, textExercise, submission);
+
+        assertThat(submission.getResults()).isEmpty();
+        verifyNoInteractions(resultWebsocketService);
+        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false), any());
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void exposesPersistedPendingResultBeforeAthenaCompletes(boolean testExam) throws Exception {
@@ -193,7 +209,11 @@ class TextExerciseFeedbackServiceTest {
         submission.setSubmitted(true);
         submission.setSubmissionDate(java.time.ZonedDateTime.now());
         submission.setParticipation(participation);
-        participation.addSubmission(submission);
+        TextSubmission participationSubmission = new TextSubmission();
+        participationSubmission.setId(submission.getId());
+        participationSubmission.setSubmitted(true);
+        participationSubmission.setSubmissionDate(submission.getSubmissionDate());
+        participation.addSubmission(participationSubmission);
         CountDownLatch athenaStarted = new CountDownLatch(1);
         CountDownLatch releaseAthena = new CountDownLatch(1);
         CountDownLatch completed = new CountDownLatch(1);
@@ -201,7 +221,9 @@ class TextExerciseFeedbackServiceTest {
         AtomicReference<java.time.ZonedDateTime> pendingDeadline = new AtomicReference<>();
         when(userRepository.getUser()).thenReturn(new User());
         if (!testExam) {
-            when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+            StudentParticipation reloadedParticipation = new StudentParticipation();
+            reloadedParticipation.addSubmission(submission);
+            when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(reloadedParticipation);
         }
         when(athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(any())).thenAnswer(invocation -> {
             Result result = new Result();
@@ -238,6 +260,8 @@ class TextExerciseFeedbackServiceTest {
                 service.handleNonGradedFeedbackRequest(participation, textExercise);
             }
             assertThat(athenaStarted.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(submission.getLatestResult()).isNotNull();
+            assertThat(participationSubmission.getLatestResult()).isSameAs(submission.getLatestResult());
             assertThat(pendingId.get()).as("Reloads need a persisted pending result id").isEqualTo(11L);
             assertThat(pendingDeadline.get()).as("Pending feedback has a retry deadline").isAfter(java.time.ZonedDateTime.now());
         }
