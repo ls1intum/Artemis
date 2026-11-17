@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -93,27 +94,35 @@ class KubernetesBuildJobFactoryTest {
     }
 
     @Test
-    void networkNoneDropsRawSocketsFromTheBuilderSoThatThePacketSocketCannotBypassTheFirewallRules() {
+    void administratorCanRestrictPrivilegeGain() {
+        ReflectionTestUtils.setField(factory, "allowPrivilegeEscalation", false);
+
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), null, 0, 0, 0)), "local-ci-job-r3", "agent");
+
+        Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isFalse();
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactlyInAnyOrder("MKNOD", "SYS_CHROOT", "SETFCAP", "AUDIT_WRITE");
+    }
+
+    @Test
+    void networkNoneAlsoDropsRawSockets() {
         Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), "none", 0, 0, 0)), "local-ci-job-r2", "agent");
 
         Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
-        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactly("NET_RAW");
-        // the rest of the context is unchanged: the seccomp profile stays, and nothing else is dropped or added
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactlyInAnyOrder("NET_RAW", "MKNOD", "SYS_CHROOT", "SETFCAP");
         assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
         assertThat(builder.getSecurityContext().getCapabilities().getAdd()).isNullOrEmpty();
-        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isNull();
         // the helper container keeps dropping everything
         assertThat(container(job, KubernetesBuildJobFactory.HELPER_CONTAINER).getSecurityContext().getCapabilities().getDrop()).containsExactly("ALL");
     }
 
     @Test
-    void theDefaultNetworkKeepsTheDefaultCapabilitiesOfTheBuilder() {
+    void theDefaultNetworkDropsTheUnusualCapabilitiesAndKeepsRawSockets() {
         for (String network : new String[] { null, "", " " }) {
             Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), network, 0, 0, 0)), "local-ci-job-r2", "agent");
-
             Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
-            assertThat(builder.getSecurityContext().getCapabilities()).as("network '%s'", network).isNull();
-            assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
+            assertThat(builder.getSecurityContext().getCapabilities().getDrop()).as("network '%s'", network).containsExactlyInAnyOrder("MKNOD", "SYS_CHROOT", "SETFCAP");
+            assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isNull();
         }
     }
 
@@ -125,6 +134,12 @@ class KubernetesBuildJobFactoryTest {
                 .hasMessageContaining("memory swap");
         assertThatThrownBy(() -> factory.createJob(buildJob(new DockerRunConfig(List.of("MISSING_VALUE"), null, 0, 0, 0)), "job", "agent")).isInstanceOf(LocalCIException.class)
                 .hasMessageContaining("KEY=value");
+    }
+
+    @Test
+    void aNamedNetworkRefusalUsesTheNonAgentFailureCategory() {
+        assertThatThrownBy(() -> factory.createJob(buildJob(new DockerRunConfig(List.of(), "named-network", 0, 0, 0)), "job", "agent"))
+                .isInstanceOf(ContainerNetworkNotAllowedException.class).hasMessageContaining("Named Docker networks");
     }
 
     @Test

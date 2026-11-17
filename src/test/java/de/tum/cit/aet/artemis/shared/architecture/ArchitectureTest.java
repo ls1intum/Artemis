@@ -255,7 +255,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
             // the placeholder names the caller asks to replace
             "de.tum.cit.aet.artemis.core.util.FileUtil.replacePlaceholderSections(java.nio.file.Path, java.util.Map)",
             // the branch expression configured on the exercise
-            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
+            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.compileBranchRegex(java.lang.String)",
+            // the branch expression of an exercise, checked when it is saved
+            "de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService.validateBranchRegex(java.lang.String, boolean)",
             // the exceptions to filter, which the caller passes in
             "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)",
             // Hyperion probes build expressions from the generated names and contracts of each exercise.
@@ -962,9 +964,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
-                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
-                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest", "IrisGlobalSearchResourceTest",
-                "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest", "GlobalSearchResourceCandidateTest", "FaqImportResourceTest" };
+                "AssessmentUploadConstructorTest", "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest",
+                "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest",
+                "IrisGlobalSearchResourceTest", "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest", "GlobalSearchResourceCandidateTest",
+                "FaqImportResourceTest", "AthenaSecretHandlingTest", "SharingSupportResourceTest" };
         // Resource unit tests exercise validation and ownership checks directly. Their nested parameterized cases belong to the same test, not production code.
         final var resourceBehaviourTests = new String[] { "ParticipationResourceGenerationGuardTest", "ProgrammingExerciseCreationResourceMutationGuardTest",
                 "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",

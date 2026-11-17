@@ -18,6 +18,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -37,6 +38,7 @@ import org.assertj.core.api.ThrowingConsumer;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
@@ -61,6 +63,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -465,6 +468,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Users cannot create new branches.
         assignmentRepository.workingCopy().branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        // The branch holds a commit that the repository does not have yet
+        assignmentRepository.workingCopy().checkout().setName("new-branch").call();
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "new-branch-file.txt");
+        ObjectId newCommit = assignmentRepository.workingCopy().getRepository().resolve("refs/heads/new-branch");
         String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
@@ -473,6 +480,31 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+        assertNothingOfThePushIsStored(newCommit);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPushWithWrongPasswordStoresNothingAndCreatesNoPlaceForTheObjects() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "rejected-before-the-receipt.txt");
+        ObjectId commit = assignmentRepository.workingCopy().getRepository().resolve("HEAD");
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, "wrong-" + USER_PASSWORD, projectKey1, assignmentRepositorySlug);
+
+        assertThatExceptionOfType(GitAPIException.class).isThrownBy(
+                () -> assignmentRepository.workingCopy().push().setRemote(repositoryUri).setCredentialsProvider(LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI).call());
+
+        assertNothingOfThePushIsStored(commit);
+    }
+
+    /**
+     * A push that is rejected leaves nothing in the repository: neither the objects it sent nor a place for them.
+     */
+    private void assertNothingOfThePushIsStored(ObjectId commit) throws IOException {
+        assertThat(assignmentRepository.bareRepository().getRepository().getObjectDatabase().has(commit)).as("the objects of a rejected push are not stored").isFalse();
+        try (var entries = Files.list(assignmentRepository.bareRepositoryPath())) {
+            assertThat(entries.map(entry -> entry.getFileName().toString())).as("the place of the push is removed").noneMatch(name -> name.startsWith("incoming-"));
+        }
     }
 
     @Test
@@ -909,7 +941,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         FileUtils.writeByteArrayToFile(largeFile.toFile(), new byte[11 * 1024 * 1024]); // 11 MB
 
         assignmentRepository.workingCopy().add().addFilepattern("large-file.txt").call();
-        GitService.commit(assignmentRepository.workingCopy()).setMessage("Add large file").call();
+        ObjectId largeCommit = GitService.commit(assignmentRepository.workingCopy()).setMessage("Add large file").call().getId();
 
         String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
@@ -917,6 +949,29 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
+        // the content is examined after its objects were received, and they are removed right away
+        assertNothingOfThePushIsStored(largeCommit);
+    }
+
+    @Test
+    void testStudentRepositoryLargerThan20MbIsRejected() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Every file is below the limit for a single file, but together they are larger than a student repository may be.
+        for (int i = 0; i < 5; i++) {
+            Path file = assignmentRepository.workingCopyPath().resolve("data" + i + ".txt");
+            FileUtils.writeByteArrayToFile(file.toFile(), new byte[5 * 1024 * 1024]);
+        }
+        assignmentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(assignmentRepository.workingCopy()).setMessage("Add data files").call();
+
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).contains("limit is 20 MB").contains("Download them during the build instead")
+                .contains("write-code-and-tests#keep-repositories-small");
     }
 
     @Test

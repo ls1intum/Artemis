@@ -1,15 +1,13 @@
-<div class="container">
-    <div class="d-flex align-items-center">
+<div class="mx-auto w-full px-2 min-[576px]:max-w-[540px] min-[768px]:max-w-[720px] min-[992px]:max-w-[960px] min-[1200px]:max-w-[1140px] min-[1400px]:max-w-[1320px]">
+    <div class="flex items-center">
         <h2 id="page-heading" jhiTranslate="artemisApp.competency.generate.title"></h2>
         <jhi-documentation-button [type]="documentationType" />
     </div>
     <jhi-course-description-form (formSubmitted)="getCompetencyRecommendations($event)" [isLoading]="isLoading() || isDescriptionLoading()" />
     <h3 jhiTranslate="artemisApp.competency.generate.listTitle" class="mt-2"></h3>
     @if (isLoading()) {
-        <div class="d-flex flex-column align-items-center mb-1">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
-            </div>
+        <div class="mb-1 flex flex-col items-center">
+            <tumaet-ui-progress-spinner [style.width.rem]="2" [style.height.rem]="2" [ariaLabel]="'loading' | artemisTranslate" />
             <span jhiTranslate="artemisApp.competency.generate.loading"></span>
         </div>
     }
@@ -17,14 +15,15 @@
         @if (!competencies.length && !isLoading()) {
             <div class="mb-1" jhiTranslate="global.generic.emptyList"></div>
         }
-        <div class="border-0" formArrayName="competencies">
+        <div formArrayName="competencies">
             @for (competencies of competencies.controls; track competencies; let i = $index) {
                 <jhi-competency-recommendation [form]="competencies" [index]="i" (onDelete)="onDelete(i)" />
             }
         </div>
-        <div class="mt-4">
+        <div class="mt-6!">
             <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
             <jhi-button id="saveButton" [title]="'entity.action.save'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading()" />
         </div>
     </form>
+    <tumaet-ui-confirm-dialog />
 </div>

@@ -52,7 +52,7 @@ describe('Test Run Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 MockDirective(TranslateDirective),
                 { provide: AccountService, useClass: MockAccountService },
-                // the delete button directive injects the shared PrimeNG dialog service
+                // the delete button directive injects the shared dialog service
             ],
         })
             .compileComponents()
