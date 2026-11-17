@@ -2,61 +2,113 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
-/// The declarations of one source file of the students, collected with SwiftSyntax.
-struct SourceFileStructure {
-    /// Names of the classes, structs, enums, protocols and actors
-    var types: Set<String> = []
-    /// Names of the functions, also the ones inside of types and protocols
+/// The members that one type declares directly.
+struct TypeStructure {
+    /// Names of the functions of the type
     var methods: Set<String> = []
-    /// Names of the stored and computed properties
+    /// Names of the stored and computed properties of the type
     var attributes: Set<String> = []
 }
 
-/// Walks the syntax tree of a source file and collects its declarations.
+/// The declarations of one source file of the students, collected with SwiftSyntax.
+struct SourceFileStructure {
+    /// The classes, structs, enums, protocols and actors by name. The members of an extension belong to the type that it extends.
+    var types: [String: TypeStructure] = [:]
+}
+
+/// Walks the syntax tree of a source file and collects its types with their own members.
+/// A function or property that is declared inside of another function or property is local and is not collected.
 private final class StructureCollector: SyntaxVisitor {
     var structure = SourceFileStructure()
+
+    /// The names of the types around the declaration that is visited, the innermost last. An extension of a type that has no plain name is nil.
+    private var enclosingTypes: [String?] = []
 
     init() {
         super.init(viewMode: .sourceAccurate)
     }
 
-    override func visit(_ node: ClassDeclSyntax) -> SyntaxVisitorContinueKind {
-        structure.types.insert(node.name.text)
+    private func enter(_ name: String?) -> SyntaxVisitorContinueKind {
+        if let name, structure.types[name] == nil {
+            structure.types[name] = TypeStructure()
+        }
+        enclosingTypes.append(name)
         return .visitChildren
+    }
+
+    private func leave() {
+        enclosingTypes.removeLast()
+    }
+
+    /// Records a member in the innermost type, which is none for a function or property outside of every type.
+    private func record(_ update: (inout TypeStructure) -> Void) {
+        guard let enclosing = enclosingTypes.last, let name = enclosing else {
+            return
+        }
+        update(&structure.types[name, default: TypeStructure()])
+    }
+
+    override func visit(_ node: ClassDeclSyntax) -> SyntaxVisitorContinueKind {
+        enter(node.name.text)
+    }
+
+    override func visitPost(_ node: ClassDeclSyntax) {
+        leave()
     }
 
     override func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
-        structure.types.insert(node.name.text)
-        return .visitChildren
+        enter(node.name.text)
+    }
+
+    override func visitPost(_ node: StructDeclSyntax) {
+        leave()
     }
 
     override func visit(_ node: EnumDeclSyntax) -> SyntaxVisitorContinueKind {
-        structure.types.insert(node.name.text)
-        return .visitChildren
+        enter(node.name.text)
+    }
+
+    override func visitPost(_ node: EnumDeclSyntax) {
+        leave()
     }
 
     override func visit(_ node: ProtocolDeclSyntax) -> SyntaxVisitorContinueKind {
-        structure.types.insert(node.name.text)
-        return .visitChildren
+        enter(node.name.text)
+    }
+
+    override func visitPost(_ node: ProtocolDeclSyntax) {
+        leave()
     }
 
     override func visit(_ node: ActorDeclSyntax) -> SyntaxVisitorContinueKind {
-        structure.types.insert(node.name.text)
-        return .visitChildren
+        enter(node.name.text)
+    }
+
+    override func visitPost(_ node: ActorDeclSyntax) {
+        leave()
+    }
+
+    override func visit(_ node: ExtensionDeclSyntax) -> SyntaxVisitorContinueKind {
+        enter(node.extendedType.as(IdentifierTypeSyntax.self)?.name.text)
+    }
+
+    override func visitPost(_ node: ExtensionDeclSyntax) {
+        leave()
     }
 
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
-        structure.methods.insert(node.name.text)
-        return .visitChildren
+        record { $0.methods.insert(node.name.text) }
+        // what the body declares is local
+        return .skipChildren
     }
 
     override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
         for binding in node.bindings {
             if let identifier = binding.pattern.as(IdentifierPatternSyntax.self) {
-                structure.attributes.insert(identifier.identifier.text)
+                record { $0.attributes.insert(identifier.identifier.text) }
             }
         }
-        return .visitChildren
+        return .skipChildren
     }
 }
 

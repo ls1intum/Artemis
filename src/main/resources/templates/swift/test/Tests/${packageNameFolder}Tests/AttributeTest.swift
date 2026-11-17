@@ -12,7 +12,7 @@ import Testing
 
     /// Test implementation of attributes
     private func checkAttributesFor(_ className: String) {
-        guard let structure = getSourceFileStructure(for: className) else {
+        guard let structure = getSourceFileStructure(for: className)?.types[className] else {
             Issue.record("\(className).swift is not implemented!")
             return
         }
