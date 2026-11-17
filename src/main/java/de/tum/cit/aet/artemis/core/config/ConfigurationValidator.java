@@ -48,6 +48,7 @@ import net.sourceforge.plantuml.security.SecurityUtils;
  * <li>Internal admin credentials (username/password present together and within length bounds)</li>
  * <li>Security-critical properties that still hold a shipped example value ({@code prod} profile only)</li>
  * <li>Diagram rendering profile (pinned to the restrictive profile, which the library does not default to)</li>
+ * <li>Address ranges of the endpoints for other components, which are reported under the {@code prod} profile if they cover every address</li>
  * <li>Weaviate configuration (required properties when enabled)</li>
  * </ul>
  */
@@ -75,6 +76,11 @@ public class ConfigurationValidator {
     private static final String ATHENA_ENABLED_PROPERTY = "artemis.athena.enabled";
 
     private static final String ATHENA_SECRET_PROPERTY = "artemis.athena.secret";
+
+    private static final String INTERNAL_ALLOWED_CIDRS_PROPERTY = "artemis.security.internal.allowed-cidrs";
+
+    /** An upper bound for the indexed entries that are read from the list of address ranges. */
+    private static final int MAX_ALLOWED_CIDR_ENTRIES = 100;
 
     /**
      * Shared secrets for the Athena service that Artemis has shipped as examples: the packaged configuration value, the
@@ -201,7 +207,52 @@ public class ConfigurationValidator {
         validatePasskeyConfiguration();
         validateAdminConfiguration();
         validateNoShippedDefaultCredentials();
+        warnAboutUnrestrictedInternalEndpoints();
         validateWeaviateConfiguration();
+    }
+
+    /**
+     * Logs a warning under the {@code prod} profile if the endpoints for other components of the installation accept requests from every address, which is the shipped
+     * default so that a first installation works. The setting is not rejected, because the right ranges depend on the installation.
+     */
+    private void warnAboutUnrestrictedInternalEndpoints() {
+        if (!environment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
+            return;
+        }
+        List<String> openRanges = configuredInternalRanges().stream().filter(ConfigurationValidator::coversEveryAddress).toList();
+        if (!openRanges.isEmpty()) {
+            log.warn(
+                    "The endpoints for other components of the installation accept requests from every address, because {} contains {}. "
+                            + "Set it to the address ranges of the components that call Artemis, see the documentation of the production setup.",
+                    INTERNAL_ALLOWED_CIDRS_PROPERTY, openRanges);
+        }
+    }
+
+    /**
+     * Reads the address ranges as a comma separated value or as a list, so that both ways to configure them are found.
+     *
+     * @return the configured ranges, empty if none are configured
+     */
+    private List<String> configuredInternalRanges() {
+        List<String> ranges = new ArrayList<>();
+        String commaSeparated = environment.getProperty(INTERNAL_ALLOWED_CIDRS_PROPERTY);
+        if (StringUtils.hasText(commaSeparated)) {
+            Arrays.stream(commaSeparated.split(",")).map(String::trim).filter(StringUtils::hasText).forEach(ranges::add);
+        }
+        for (int index = 0; index < MAX_ALLOWED_CIDR_ENTRIES; index++) {
+            String entry = environment.getProperty(INTERNAL_ALLOWED_CIDRS_PROPERTY + "[" + index + "]");
+            if (entry == null) {
+                break;
+            }
+            if (StringUtils.hasText(entry)) {
+                ranges.add(entry.trim());
+            }
+        }
+        return ranges;
+    }
+
+    private static boolean coversEveryAddress(String range) {
+        return range.endsWith("/0");
     }
 
     /**

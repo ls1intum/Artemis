@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -7,14 +8,20 @@ import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
@@ -113,6 +120,58 @@ class ConfigurationValidatorTest {
         @Test
         void testUniqueAthenaSecretIsAcceptedUnderProdProfile() {
             assertThatCode(createAthenaValidator(true, true, "4f9a8c1e7b2d44e0a6c3d5f7")::validateConfigurations).doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
+    class InternalEndpointRangesTest {
+
+        private List<String> warningsOf(boolean productionProfileActive, String commaSeparated, String... listed) {
+            Environment mockEnvironment = mock(Environment.class);
+            when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+            when(mockEnvironment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)).thenReturn(productionProfileActive);
+            when(mockEnvironment.getProperty("jhipster.security.authentication.jwt.base64-secret"))
+                    .thenReturn(Base64.getEncoder().encodeToString("k".repeat(64).getBytes(StandardCharsets.UTF_8)));
+            when(mockEnvironment.getProperty("artemis.security.internal.allowed-cidrs")).thenReturn(commaSeparated);
+            for (int index = 0; index < listed.length; index++) {
+                when(mockEnvironment.getProperty("artemis.security.internal.allowed-cidrs[" + index + "]")).thenReturn(listed[index]);
+            }
+            ConfigurationValidator validator = new ConfigurationValidator(mockEnvironment, false, null, null, false, null, VALID_HTTP_PORT, VALID_GRPC_PORT, null, null, null, null,
+                    false, "http://localhost");
+
+            var logger = (Logger) LoggerFactory.getLogger(ConfigurationValidator.class);
+            // another test of the same JVM may have changed the level of this logger
+            Level previousLevel = logger.getLevel();
+            logger.setLevel(Level.WARN);
+            var appender = new ListAppender<ILoggingEvent>();
+            appender.start();
+            logger.addAppender(appender);
+            try {
+                validator.validateConfigurations();
+                return appender.list.stream().filter(event -> event.getLevel() == Level.WARN).map(ILoggingEvent::getFormattedMessage).toList();
+            }
+            finally {
+                logger.detachAppender(appender);
+                logger.setLevel(previousLevel);
+            }
+        }
+
+        @Test
+        void warnsUnderProdWhenAListedRangeCoversEveryAddress() {
+            assertThat(warningsOf(true, null, "10.0.0.0/8", "0.0.0.0/0", "::/0")).singleElement().asString().contains("artemis.security.internal.allowed-cidrs")
+                    .contains("0.0.0.0/0").contains("::/0").doesNotContain("10.0.0.0/8");
+        }
+
+        @Test
+        void warnsUnderProdWhenACommaSeparatedValueCoversEveryAddress() {
+            assertThat(warningsOf(true, "10.0.0.0/8, 0.0.0.0/0")).singleElement().asString().contains("0.0.0.0/0");
+        }
+
+        @Test
+        void doesNotWarnForRestrictedRangesNoRangesOrOutsideProd() {
+            assertThat(warningsOf(true, null, "10.0.0.0/8", "192.168.1.0/24")).isEmpty();
+            assertThat(warningsOf(true, null)).isEmpty();
+            assertThat(warningsOf(false, null, "0.0.0.0/0")).isEmpty();
         }
     }
 
