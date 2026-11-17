@@ -244,54 +244,164 @@ describe('CalendarService', () => {
         expect(service.subscriptionToken()).toBe(testToken);
     });
 
-    it('should replace the subscription token when it is rotated', async () => {
+    it('should replace the subscription token with the rotated one', async () => {
         await Promise.resolve();
         calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('rotatedToken'));
 
-        service.rotateSubscriptionToken();
+        await firstValueFrom(service.rotateSubscriptionToken());
 
         expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
         expect(service.subscriptionToken()).toBe('rotatedToken');
     });
 
-    it('should send only one request while a rotation is running', async () => {
+    it('should keep the subscription token and show an alert if the rotation fails', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        const addErrorAlert = vi.spyOn(TestBed.inject(AlertService), 'addErrorAlert');
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(service.subscriptionToken()).toBe(testToken);
+        expect(addErrorAlert).toHaveBeenCalledWith('artemisApp.calendar.tokenRotationError');
+    });
+
+    it('should report the running rotation and clear it when the rotation ends or fails', async () => {
         await Promise.resolve();
         const pending = new Subject<string>();
         calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(pending);
+        expect(service.subscriptionTokenRotating()).toBe(false);
 
-        service.rotateSubscriptionToken();
-        service.rotateSubscriptionToken();
+        const done = firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(service.subscriptionTokenRotating()).toBe(true);
+        pending.error(new HttpErrorResponse({ status: 500 }));
+        await expect(done).rejects.toBeInstanceOf(HttpErrorResponse);
 
+        expect(service.subscriptionTokenRotating()).toBe(false);
+        // the token that was in use stays
+        expect(service.subscriptionToken()).toBe(testToken);
+    });
+
+    it('should read the token again after a failure that may have replaced it', async () => {
+        await Promise.resolve();
+        // the server stored a new token, but the response of the replacement was lost
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of('tokenStoredByTheServer'));
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(service.subscriptionToken()).toBe('tokenStoredByTheServer');
+    });
+
+    it('should keep the replacement running until the token is read again after a failure that may have replaced it', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+        const pendingRead = new Subject<string>();
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(pendingRead);
+        const failures: unknown[] = [];
+        service.rotateSubscriptionToken().subscribe({ error: (error) => failures.push(error) });
+
+        // the token is unknown and the replacement has not ended, so no other replacement can start
+        expect(service.subscriptionToken()).toBeUndefined();
+        expect(service.subscriptionTokenRotating()).toBe(true);
+        expect(failures).toHaveLength(0);
+        await firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
         expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
-        expect(service.isRotatingSubscriptionToken()).toBe(true);
 
-        pending.next('rotatedToken');
-        pending.complete();
+        pendingRead.next('tokenStoredByTheServer');
+        pendingRead.complete();
 
-        expect(service.isRotatingSubscriptionToken()).toBe(false);
-        expect(service.subscriptionToken()).toBe('rotatedToken');
+        expect(service.subscriptionToken()).toBe('tokenStoredByTheServer');
+        expect(service.subscriptionTokenRotating()).toBe(false);
+        expect(failures).toHaveLength(1);
+        expect(failures[0]).toBeInstanceOf(HttpErrorResponse);
+
+        // the next replacement runs and is the one that sets the token
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('nextToken'));
+        await firstValueFrom(service.rotateSubscriptionToken());
+        expect(service.subscriptionToken()).toBe('nextToken');
+    });
+
+    it('should report the failed replacement and offer a retry when the token cannot be read again either', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(service.subscriptionToken()).toBeUndefined();
+        expect(service.subscriptionTokenLoadFailed()).toBe(true);
+        expect(service.subscriptionTokenRotating()).toBe(false);
+
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of('tokenAfterRetry'));
+        service.reloadSubscriptionToken();
+
+        expect(service.subscriptionToken()).toBe('tokenAfterRetry');
+        expect(service.subscriptionTokenLoadFailed()).toBe(false);
+    });
+
+    it('should not read the token again while it is known', async () => {
+        await Promise.resolve();
+        const reads = calendarApiService.getCalendarEventSubscriptionToken.mock.calls.length;
+
+        service.reloadSubscriptionToken();
+
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledTimes(reads);
+    });
+
+    it('should keep the token after a rejection that cannot have replaced it', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
+        expect(service.subscriptionToken()).toBe(testToken);
+    });
+
+    it('should not show a second alert for a failure that the global handler shows', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const alertService = TestBed.inject(AlertService);
+        vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(true);
+        const addErrorAlert = vi.spyOn(alertService, 'addErrorAlert');
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(addErrorAlert).not.toHaveBeenCalled();
+    });
+
+    it('should run only one token rotation at a time', async () => {
+        await Promise.resolve();
+        const first = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(first);
+        const firstDone = firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
+
+        // a second request while the first runs does not call the server and does not change the token
+        await firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
+
+        first.next('firstRotation');
+        first.complete();
+        await firstDone;
+        expect(service.subscriptionToken()).toBe('firstRotation');
+
+        // after the first one finished, the next one runs
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('secondRotation'));
+        await firstValueFrom(service.rotateSubscriptionToken());
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(service.subscriptionToken()).toBe('secondRotation');
     });
 
     it('should allow another rotation after a failed one', async () => {
         await Promise.resolve();
-        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
 
-        service.rotateSubscriptionToken();
-        service.rotateSubscriptionToken();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('afterFailure'));
+        await firstValueFrom(service.rotateSubscriptionToken());
 
-        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
-        expect(service.isRotatingSubscriptionToken()).toBe(false);
-    });
-
-    it('should keep the subscription token and show an error when the rotation fails', async () => {
-        await Promise.resolve();
-        const addErrorAlert = vi.spyOn(TestBed.inject(AlertService), 'addErrorAlert');
-        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-
-        service.rotateSubscriptionToken();
-
-        expect(service.subscriptionToken()).toBe(testToken);
-        expect(addErrorAlert).toHaveBeenCalledWith('artemisApp.calendar.subscriptionPopover.rotateError');
+        expect(service.subscriptionToken()).toBe('afterFailure');
     });
 
     it('should refresh', async () => {
@@ -329,6 +439,7 @@ describe('CalendarService - authentication state changes', () => {
     let calendarApiService: {
         getCalendarEventsOverlappingMonths: ReturnType<typeof vi.fn>;
         getCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
+        rotateCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
     };
 
     beforeEach(() => {
@@ -340,6 +451,7 @@ describe('CalendarService - authentication state changes', () => {
         calendarApiService = {
             getCalendarEventsOverlappingMonths: vi.fn(),
             getCalendarEventSubscriptionToken: vi.fn(),
+            rotateCalendarEventSubscriptionToken: vi.fn(),
         };
 
         calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of(testToken));
@@ -380,6 +492,36 @@ describe('CalendarService - authentication state changes', () => {
         authState.next({ id: 42 } as User);
         expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
         expect(scoped.subscriptionToken()).toBe('newToken');
+    });
+
+    it('should let the next user replace the token while a replacement of the previous user is still running', async () => {
+        const previousUsersRotation = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValueOnce(previousUsersRotation);
+        const previousDone = firstValueFrom(scoped.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(scoped.subscriptionTokenRotating()).toBe(true);
+
+        authState.next({ id: 42 } as User);
+        expect(scoped.subscriptionTokenRotating()).toBe(false);
+
+        // the replacement of the new user runs, although the one of the previous user has not answered yet
+        const currentUsersRotation = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValueOnce(currentUsersRotation);
+        const currentDone = firstValueFrom(scoped.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(scoped.subscriptionTokenRotating()).toBe(true);
+
+        // the end of the previous replacement neither changes the token nor ends the running one
+        previousUsersRotation.next('tokenOfThePreviousUser');
+        previousUsersRotation.complete();
+        await previousDone;
+        expect(scoped.subscriptionToken()).not.toBe('tokenOfThePreviousUser');
+        expect(scoped.subscriptionTokenRotating()).toBe(true);
+
+        currentUsersRotation.next('tokenOfTheCurrentUser');
+        currentUsersRotation.complete();
+        await currentDone;
+        expect(scoped.subscriptionToken()).toBe('tokenOfTheCurrentUser');
+        expect(scoped.subscriptionTokenRotating()).toBe(false);
     });
 
     it('should not reset state when the same user re-emits', () => {

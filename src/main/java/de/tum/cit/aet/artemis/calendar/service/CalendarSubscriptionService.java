@@ -88,7 +88,7 @@ public class CalendarSubscriptionService {
                 calendarSubscriptionTokenStoreRepository.saveAndFlush(store);
                 return token;
             }
-            catch (DataIntegrityViolationException _) {
+            catch (DataIntegrityViolationException ignored) {
                 // Either a token collision (rare; retry with a fresh token) or a user-already-has-a-token
                 // collision (concurrent request inserted the row). Read back the user's token: if present,
                 // a concurrent insert won and we return the winner; otherwise it was a token collision and
@@ -103,24 +103,24 @@ public class CalendarSubscriptionService {
     }
 
     /**
-     * Replaces the subscription token of the user with a new one, so that subscription links that contain the previous token stop working.
-     * A user who has no token yet receives a new one.
+     * Replaces the token of the user with a new one, so that the subscription links that carry the old token stop working. A user who has no token yet receives one.
      *
-     * @param userLogin the login of the {@link User} whose token is rotated
+     * @param userLogin the login of the {@link User} whose subscription token is replaced
      * @return the new token
      */
     public String rotateSubscriptionTokenForUser(String userLogin) {
+        User user = userRepository.getUserByLoginElseThrow(userLogin);
         final int MAXIMUM_ATTEMPT_NUMBER = 10;
         for (int attempt = 1; attempt <= MAXIMUM_ATTEMPT_NUMBER; attempt++) {
             String token = convertBytesToSubscriptionToken(generateSubscriptionTokenBytes());
             try {
-                if (calendarSubscriptionTokenStoreRepository.replaceTokenByUserLogin(userLogin, token) > 0) {
+                if (calendarSubscriptionTokenStoreRepository.replaceTokenOfUser(user.getId(), token) > 0) {
                     return token;
                 }
                 return createSubscriptionTokenForUser(userLogin);
             }
             catch (DataIntegrityViolationException ignored) {
-                // The token collided with the token of another user, which is astronomically rare: retry with a fresh one
+                // the new token equals the token of another user, which is astronomically rare, so a fresh one is tried
             }
         }
         throw new IllegalStateException("Could not generate a unique calendar subscription token after " + MAXIMUM_ATTEMPT_NUMBER + " attempts");

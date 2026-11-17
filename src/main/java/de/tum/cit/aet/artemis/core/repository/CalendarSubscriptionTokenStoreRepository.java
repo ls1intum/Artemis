@@ -29,18 +29,18 @@ public interface CalendarSubscriptionTokenStoreRepository extends ArtemisJpaRepo
     Optional<String> findTokenByUserLogin(@Param("login") String login);
 
     /**
-     * Replaces the token of the user, which ends the validity of the previous token.
+     * Replaces the token of a user, which ends the use of the old one.
      *
-     * @param login the login of the user
-     * @param token the new token
-     * @return the number of replaced tokens, which is 0 if the user has no token yet
+     * @param userId the id of the user
+     * @param token  the new token
+     * @return the number of replaced tokens, 0 if the user has no token yet
      */
-    @Modifying
     @Transactional // ok because of modifying query
+    @Modifying
     @Query("""
-            UPDATE CalendarSubscriptionTokenStore store
-            SET store.token = :token
-            WHERE store.user.id = (SELECT jhiUser.id FROM User jhiUser WHERE jhiUser.login = :login)
+                UPDATE CalendarSubscriptionTokenStore store
+                SET store.token = :token
+                WHERE store.user.id = :userId
             """)
-    int replaceTokenByUserLogin(@Param("login") String login, @Param("token") String token);
+    int replaceTokenOfUser(@Param("userId") long userId, @Param("token") String token);
 }

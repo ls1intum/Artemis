@@ -102,63 +102,73 @@
                 </div>
             </div>
         }
-        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
-        <div class="flex">
-            <div class="flex-1 rounded-s-sm border border-e-0 border-(--border-color) p-1.5">
-                <!-- One line: a long link is cut off with an ellipsis instead of wrapping, the copy button copies the whole link -->
-                <input
-                    type="text"
-                    data-testid="subscription-link-input"
-                    [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
-                    [attr.title]="subscriptionUrl()"
-                    class="w-full truncate border-0 bg-transparent text-xs leading-4 outline-none focus:ring-0 focus:outline-none"
-                    [ngModel]="subscriptionUrl()"
-                    readonly
-                />
+        @if (resetting()) {
+            <span data-testid="subscription-link-reset-pending" jhiTranslate="artemisApp.calendar.subscriptionPopover.resetPending"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
+            <div class="flex">
+                <div class="flex-1 rounded-s-sm border border-e-0 border-(--border-color) p-1.5">
+                    <textarea
+                        [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
+                        class="w-full resize-none overflow-hidden border-0 bg-transparent text-xs leading-4 break-all outline-none focus:ring-0 focus:outline-none"
+                        cdkTextareaAutosize
+                        cdkAutosizeMinRows="1"
+                        cdkAutosizeMaxRows="10"
+                        [ngModel]="subscriptionUrl()"
+                        readonly
+                    ></textarea>
+                </div>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="outlined"
+                    class="rounded-s-none!"
+                    data-testid="subscription-link-copy-button"
+                    [attr.aria-label]="'artemisApp.calendar.subscriptionPopover.copyButtonLabel' | artemisTranslate"
+                    (click)="copySubscriptionUrlToClipboard()"
+                >
+                    @if (copiedUrl()) {
+                        <fa-icon [icon]="faCheck" />
+                    } @else {
+                        <fa-icon [icon]="faCopy" />
+                    }
+                </button>
             </div>
-            <button
-                type="button"
-                tumAetUiButton
-                variant="outlined"
-                class="rounded-s-none!"
-                data-testid="subscription-link-copy-button"
-                [attr.aria-label]="'artemisApp.calendar.subscriptionPopover.copyButtonLabel' | artemisTranslate"
-                (click)="copySubscriptionUrlToClipboard()"
-            >
-                @if (copiedUrl()) {
-                    <fa-icon [icon]="faCheck" />
-                } @else {
-                    <fa-icon [icon]="faCopy" />
-                }
-            </button>
-        </div>
-        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateExplanation"></span>
-        @if (confirmingRotation()) {
-            <div class="flex flex-col gap-2" data-testid="subscription-token-rotate-confirmation">
-                <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateConfirmation"></span>
+        }
+        @if (!resetting()) {
+            @if (confirmingReset()) {
+                <span data-testid="subscription-link-reset-explanation" jhiTranslate="artemisApp.calendar.subscriptionPopover.resetExplanation"></span>
                 <div class="flex gap-2">
                     <button
                         type="button"
                         tumAetUiButton
+                        severity="danger"
+                        data-testid="subscription-link-reset-confirm"
+                        (click)="resetSubscriptionLink()"
+                        jhiTranslate="artemisApp.calendar.subscriptionPopover.resetButtonLabel"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
                         variant="outlined"
-                        data-testid="subscription-token-rotate-confirm-button"
-                        [disabled]="isRotating()"
-                        (click)="rotateSubscriptionToken()"
-                    >
-                        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateConfirmButtonLabel"></span>
-                    </button>
-                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" data-testid="subscription-token-rotate-cancel-button" (click)="cancelRotation()">
-                        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateCancelButtonLabel"></span>
-                    </button>
+                        severity="secondary"
+                        data-testid="subscription-link-reset-cancel"
+                        (click)="confirmingReset.set(false)"
+                        jhiTranslate="entity.action.cancel"
+                    ></button>
                 </div>
-            </div>
-        } @else {
-            <div>
-                <button type="button" tumAetUiButton variant="outlined" data-testid="subscription-token-rotate-button" [disabled]="isRotating()" (click)="askToConfirmRotation()">
-                    <fa-icon [icon]="faRotate" />
-                    <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateButtonLabel"></span>
-                </button>
-            </div>
+            } @else {
+                <div>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="text"
+                        data-testid="subscription-link-reset-button"
+                        (click)="confirmingReset.set(true)"
+                        jhiTranslate="artemisApp.calendar.subscriptionPopover.resetButtonLabel"
+                    ></button>
+                </div>
+            }
         }
     </div>
 </tumaet-ui-popover>

@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
-import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 const getParametersOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invalid').searchParams;
 const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
@@ -11,22 +9,15 @@ const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('
 describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
     let component: CalendarSubscriptionPopoverComponent;
-    const isRotatingSubscriptionToken = signal(false);
-    const calendarService = { rotateSubscriptionToken: vi.fn(), isRotatingSubscriptionToken };
 
     afterEach(() => {
-        isRotatingSubscriptionToken.set(false);
-        calendarService.rotateSubscriptionToken.mockClear();
         vi.restoreAllMocks();
     });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarSubscriptionPopoverComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: CalendarService, useValue: calendarService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarSubscriptionPopoverComponent);
@@ -77,40 +68,6 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         vi.unstubAllGlobals();
     });
 
-    it('asks the calendar service for a new token', () => {
-        component.rotateSubscriptionToken();
-
-        expect(calendarService.rotateSubscriptionToken).toHaveBeenCalledOnce();
-    });
-
-    it('asks for a confirmation before it rotates the token', () => {
-        component.askToConfirmRotation();
-
-        expect(component.confirmingRotation()).toBe(true);
-        expect(calendarService.rotateSubscriptionToken).not.toHaveBeenCalled();
-
-        component.rotateSubscriptionToken();
-
-        expect(calendarService.rotateSubscriptionToken).toHaveBeenCalledOnce();
-        expect(component.confirmingRotation()).toBe(false);
-    });
-
-    it('does not rotate the token when the confirmation is cancelled', () => {
-        component.askToConfirmRotation();
-        component.cancelRotation();
-
-        expect(component.confirmingRotation()).toBe(false);
-        expect(calendarService.rotateSubscriptionToken).not.toHaveBeenCalled();
-    });
-
-    it('exposes the running rotation of the service so that the buttons can be disabled', () => {
-        expect(component.isRotating()).toBe(false);
-
-        isRotatingSubscriptionToken.set(true);
-
-        expect(component.isRotating()).toBe(true);
-    });
-
     it('marks the last remaining checkbox as disabled', () => {
         component.includeLectureEvents.set(false);
         component.includeTutorialEvents.set(false);
@@ -122,5 +79,46 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(component.lecturesIsLastSelectedEventType()).toBe(false);
         expect(component.tutorialsIsLastSelectedEventType()).toBe(false);
         expect(component.examsIsLastSelectedEventType()).toBe(false);
+    });
+
+    it('asks for a confirmation before it requests a new subscription link', () => {
+        const resetSpy = vi.fn();
+        component.subscriptionResetRequested.subscribe(resetSpy);
+
+        expect(component.confirmingReset()).toBe(false);
+        component.confirmingReset.set(true);
+        component.confirmingReset.set(false);
+        expect(resetSpy).not.toHaveBeenCalled();
+
+        component.confirmingReset.set(true);
+        component.resetSubscriptionLink();
+
+        expect(resetSpy).toHaveBeenCalledOnce();
+        expect(component.confirmingReset()).toBe(false);
+    });
+
+    it('starts without a pending confirmation each time it is opened', () => {
+        component.confirmingReset.set(true);
+        const button = document.createElement('button');
+
+        component.open({ currentTarget: button } as unknown as Event);
+
+        expect(component.confirmingReset()).toBe(false);
+    });
+
+    it('offers neither the link nor its copy action while the link is replaced', () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+        fixture.componentRef.setInput('resetting', true);
+        component.copySubscriptionUrlToClipboard();
+
+        expect(writeText).not.toHaveBeenCalled();
+        expect(component.copiedUrl()).toBe(false);
+
+        fixture.componentRef.setInput('resetting', false);
+        component.copySubscriptionUrlToClipboard();
+
+        expect(writeText).toHaveBeenCalledOnce();
     });
 });

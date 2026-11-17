@@ -1,13 +1,13 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
-import { faCheck, faCopy, faRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
@@ -16,6 +16,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         TumAetUiCheckboxComponent,
         TumAetUiPopoverComponent,
         TumAetUiSelectButtonComponent,
+        TextFieldModule,
         FormsModule,
         FaIconComponent,
         TranslateDirective,
@@ -25,21 +26,22 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 })
 export class CalendarSubscriptionPopoverComponent {
     private translateService = inject(TranslateService);
-    private calendarService = inject(CalendarService);
     private isOnlyOneEventTypeSelected = computed<boolean>(() => this.computeIsOnlyOneEventTypeSelected());
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly faCopy = faCopy;
     readonly faCheck = faCheck;
-    readonly faRotate = faRotate;
 
     calendarSubscriptionPopover = viewChild<TumAetUiPopoverComponent>('calendarSubscriptionPopover');
     subscriptionToken = input.required<string>();
     courseId = input.required<number>();
     isMobile = input<boolean>(false);
+    /** Whether a replacement of the subscription link is running, during which the old link is not offered. */
+    resetting = input<boolean>(false);
+    /** Emitted when the user confirms that the subscription link is replaced by a new one. */
+    subscriptionResetRequested = output<void>();
+    confirmingReset = signal(false);
     copiedUrl = signal(false);
-    confirmingRotation = signal(false);
-    isRotating = this.calendarService.isRotatingSubscriptionToken;
     includeLectureEvents = signal(true);
     includeExerciseEvents = signal(true);
     includeTutorialEvents = signal(true);
@@ -63,29 +65,21 @@ export class CalendarSubscriptionPopoverComponent {
 
     copySubscriptionUrlToClipboard() {
         const url = this.subscriptionUrl();
-        if (url) {
+        if (url && !this.resetting()) {
             this.copiedUrl.set(true);
             void navigator.clipboard.writeText(url);
         }
     }
 
-    /** The first click only asks for a confirmation, because every link in use stops working. */
-    askToConfirmRotation() {
-        this.confirmingRotation.set(true);
-    }
-
-    cancelRotation() {
-        this.confirmingRotation.set(false);
-    }
-
-    rotateSubscriptionToken() {
-        this.confirmingRotation.set(false);
-        this.calendarService.rotateSubscriptionToken();
+    resetSubscriptionLink() {
+        this.confirmingReset.set(false);
+        this.subscriptionResetRequested.emit();
     }
 
     /** Opens the popover next to the element that received the click. */
     open(event: Event): void {
         const origin = event.currentTarget;
+        this.confirmingReset.set(false);
         if (origin instanceof HTMLElement) {
             this.calendarSubscriptionPopover()?.open(origin);
         }
