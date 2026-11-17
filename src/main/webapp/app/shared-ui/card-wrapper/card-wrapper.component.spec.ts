@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CardWrapperComponent } from './card-wrapper.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -13,10 +11,6 @@ describe('CardWrapperComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CardWrapperComponent],
             providers: [
-                {
-                    provide: TranslateDirective,
-                    useClass: MockJhiTranslateDirective,
-                },
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
@@ -29,52 +23,39 @@ describe('CardWrapperComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should display the title using jhiTranslate directive', () => {
-        const testTitle = 'test.title.key';
-        fixture.componentRef.setInput('title', testTitle);
+    function card(): HTMLElement {
+        return fixture.debugElement.query(By.css('[data-testid="card-wrapper"]')).nativeElement;
+    }
+
+    it('should display the translated title as the card header', () => {
+        fixture.componentRef.setInput('title', 'test.title.key');
         fixture.detectChanges();
 
-        const cardHeaderElement = fixture.debugElement.query(By.css('.card-header'));
-        expect(cardHeaderElement).toBeTruthy();
-        const titleH5Element = fixture.debugElement.query(By.css('h5'));
-        expect(titleH5Element).toBeTruthy();
-        expect(titleH5Element.nativeElement.textContent).toBe('test.title.key');
+        const title = card().querySelector('.tumaet-ui-card-title');
+        expect(title).toBeTruthy();
+        expect(title!.textContent).toContain('test.title.key');
     });
 
     it('should apply default maxWidth and minHeight if not provided', () => {
-        fixture.componentRef.setInput('title', 'test.title');
-        fixture.detectChanges();
-
-        const cardElement = fixture.debugElement.query(By.css('.card'));
-        expect(cardElement.nativeElement.style.maxWidth).toBe('50rem');
-        expect(cardElement.nativeElement.style.minHeight).toBe('90%');
+        expect(card().style.maxWidth).toBe('50rem');
+        expect(card().style.minHeight).toBe('90%');
     });
 
     it('should apply provided maxWidth style', () => {
-        const testMaxWidth = '500px';
-        fixture.componentRef.setInput('title', 'test.title');
-        fixture.componentRef.setInput('maxWidth', testMaxWidth);
+        fixture.componentRef.setInput('maxWidth', '500px');
         fixture.detectChanges();
 
-        const cardElement = fixture.debugElement.query(By.css('.card'));
-        expect(cardElement.nativeElement.style.maxWidth).toBe(testMaxWidth);
+        expect(card().style.maxWidth).toBe('500px');
     });
 
     it('should apply provided minHeight style', () => {
-        const testMinHeight = '50%';
-
-        fixture.componentRef.setInput('minHeight', testMinHeight);
+        fixture.componentRef.setInput('minHeight', '50%');
         fixture.detectChanges();
 
-        const cardElement = fixture.debugElement.query(By.css('.card'));
-        expect(cardElement.nativeElement.style.minHeight).toBe(testMinHeight);
+        expect(card().style.minHeight).toBe('50%');
     });
 
-    it('should have a card-body for content projection', () => {
-        fixture.componentRef.setInput('title', 'test.title');
-        fixture.detectChanges();
-
-        const cardBodyElement = fixture.debugElement.query(By.css('.card-body'));
-        expect(cardBodyElement).toBeTruthy();
+    it('should have a content area for content projection', () => {
+        expect(card().querySelector('.tumaet-ui-card-content')).toBeTruthy();
     });
 });
