@@ -31,10 +31,9 @@
     .ngx-ic-cropper {
         position: absolute;
         display: flex;
-        color: #53535c;
+        color: var(--tumaet-ui-muted-color);
         background: transparent;
-        outline: rgba(255, 255, 255, 0.3) solid 100vw;
-        outline: var(--cropper-outline-color, rgba(255, 255, 255, 0.3)) solid 100vw;
+        outline: var(--cropper-outline-color, color-mix(in srgb, white 30%, transparent)) solid 100vw;
         touch-action: none;
 
         @media (orientation: portrait) {
@@ -58,7 +57,7 @@
         .ngx-ic-move {
             width: 100%;
             cursor: move;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid color-mix(in srgb, white 50%, transparent);
         }
 
         &:focus {
@@ -78,10 +77,10 @@
 
             .ngx-ic-square {
                 display: inline-block;
-                background: #53535c;
+                background: var(--tumaet-ui-muted-color);
                 width: 6px;
                 height: 6px;
-                border: 1px solid rgba(255, 255, 255, 0.5);
+                border: 1px solid color-mix(in srgb, white 50%, transparent);
                 box-sizing: content-box;
             }
 
@@ -176,12 +175,10 @@
 
             &::after {
                 border-radius: 100%;
-                box-shadow: 0 0 0 100vw rgba(255, 255, 255, 0.3);
-                box-shadow: 0 0 0 100vw (var(--cropper-outline-color, rgba(255, 255, 255, 0.3)));
+                box-shadow: 0 0 0 100vw var(--cropper-outline-color, color-mix(in srgb, white 30%, transparent));
 
                 @media (orientation: portrait) {
-                    box-shadow: 0 0 0 100vh rgba(255, 255, 255, 0.3);
-                    box-shadow: 0 0 0 100vh (var(--cropper-outline-color, rgba(255, 255, 255, 0.3)));
+                    box-shadow: 0 0 0 100vh var(--cropper-outline-color, color-mix(in srgb, white 30%, transparent));
                 }
             }
 

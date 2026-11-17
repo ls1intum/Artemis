@@ -85,6 +85,8 @@ export class ContextSelectionComponent {
     private readonly lecturesSignal = signal<LectureForOverview[]>([]);
     private readonly exercisesSignal = signal<ExerciseTitle[]>([]);
     private optionsLoadedForCourseId?: number;
+    /** True while the options are being loaded, so the open picker says so instead of claiming that nothing matches. */
+    protected readonly optionsLoading = signal(false);
 
     readonly lectures = this.lecturesSignal.asReadonly();
     readonly exercises = this.exercisesSignal.asReadonly();
@@ -162,6 +164,7 @@ export class ContextSelectionComponent {
             return;
         }
         this.optionsLoadedForCourseId = courseId;
+        this.optionsLoading.set(true);
         forkJoin({
             lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
             exercises: this.exerciseService.getTitlesForAccessibleCourse(courseId),
@@ -171,10 +174,12 @@ export class ContextSelectionComponent {
                 next: ({ lectures, exercises }) => {
                     this.lecturesSignal.set(lectures);
                     this.exercisesSignal.set(exercises);
+                    this.optionsLoading.set(false);
                 },
                 error: () => {
                     this.lecturesSignal.set([]);
                     this.exercisesSignal.set([]);
+                    this.optionsLoading.set(false);
                     if (this.optionsLoadedForCourseId === courseId) {
                         this.optionsLoadedForCourseId = undefined;
                     }
