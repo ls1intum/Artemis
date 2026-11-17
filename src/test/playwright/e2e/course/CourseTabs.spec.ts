@@ -215,7 +215,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
 
         await expect(page.getByText(competencyTitle).first()).toBeVisible();
         // Prerequisites live behind their own collapsed section, so the count in its header is what proves they arrived
-        const prerequisiteSection = page.locator('.control-label').filter({ hasText: '1' }).first();
+        const prerequisiteSection = page.getByTestId('prerequisites-toggle').filter({ hasText: '1' });
         await expect(prerequisiteSection).toBeVisible();
         await prerequisiteSection.click();
         await expect(page.getByText(prerequisiteTitle).first()).toBeVisible();
@@ -316,7 +316,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         if (await confirmButton.isVisible()) {
             await confirmButton.click();
         }
-        await expect(page.getByTestId('quiz-training-dialog-mask')).toHaveCount(0);
+        await expect(page.getByTestId('quiz-training-dialog')).toHaveCount(0);
         await expect(leagueBadge).toBeVisible({ timeout: 20_000 });
 
         await expect.poll(() => leaderboardRequests.length, { timeout: 20_000 }).toBeGreaterThan(0);

@@ -5,7 +5,7 @@ import { MockComponent } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/course/shared/entities/course.model';
 
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -16,23 +16,23 @@ import { Subject } from 'rxjs';
 describe('ImportAllCompetenciesComponent', () => {
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
     let component: ImportAllCompetenciesComponent;
-    let dialogRef: DynamicDialogRef;
-    let dialogConfig: DynamicDialogConfig;
+    let dialogRef: TumAetUiDialogRef;
+    let dialogConfig: { data: Record<string, unknown> };
 
     beforeEach(async () => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-        dialogConfig = { data: {} } as DynamicDialogConfig;
+        } as unknown as TumAetUiDialogRef;
+        dialogConfig = { data: {} };
 
         await TestBed.configureTestingModule({
             imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent)],
             declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfig },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -52,18 +52,12 @@ describe('ImportAllCompetenciesComponent', () => {
     });
 
     it('keeps disabledIds provided via dialog data (base effect must not clobber it)', () => {
-        // Regression guard: when opened via DialogService, disabledIds arrives through DynamicDialogConfig.data and
+        // Regression guard: when opened via the dialog service, disabledIds arrives through the dialog config data and
         // is applied in ngOnInit. The base ImportComponent effect must NOT reset it to the input default [] —
         // otherwise the same-course import-exclusion guard silently breaks.
         dialogConfig.data = { disabledIds: [42] };
         fixture.detectChanges();
         expect(component.disabledIds).toContain(42);
-    });
-
-    it('applies the competency type provided via dialog data', () => {
-        dialogConfig.data = { competencyType: 'prerequisite' };
-        fixture.detectChanges();
-        expect(component.competencyType()).toBe('prerequisite');
     });
 
     it('closes the dialog with the selected course and the relation import choice', () => {

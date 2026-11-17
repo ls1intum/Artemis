@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -30,10 +31,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -44,7 +48,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultLimits;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
@@ -57,6 +64,7 @@ import de.tum.cit.aet.artemis.localci.dto.BuildJobStatisticsDTO;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -85,6 +93,8 @@ class LocalCIResultProcessingServiceTest {
     private static final long PARTICIPATION_ID = 10L;
 
     private static final long EXERCISE_ID = 3L;
+
+    private static final long COURSE_ID = 1L;
 
     private static final java.util.UUID LISTENER_ID = java.util.UUID.randomUUID();
 
@@ -165,6 +175,11 @@ class LocalCIResultProcessingServiceTest {
         lenient().when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.of(resultProcessingPermit));
         lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(followUpProcessingPermit);
         lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
+        lenient().when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenReturn(Optional.of(COURSE_ID));
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(any())).thenAnswer(invocation -> {
+            ProgrammingExerciseParticipation loaded = invocation.getArgument(0);
+            return loaded.getProgrammingExercise();
+        });
         lenient().when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredResultQueue);
     }
 
@@ -303,6 +318,149 @@ class LocalCIResultProcessingServiceTest {
 
         assertThat(withoutExercise.getProgrammingExercise()).isSameAs(exercise);
         verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean());
+    }
+
+    @Test
+    void aResultWithMoreTestsThanTheLimitIsShortenedBeforeItIsGraded() {
+        List<LocalCITestJobDTO> tests = Collections.nCopies(BuildResultLimits.MAX_TESTS + 1, new LocalCITestJobDTO("test", List.of()));
+        BuildResult oversized = new BuildResult("main", "a", "b", true, ZonedDateTime.now(), List.of(new LocalCIJobDTO(List.of(), tests)), List.of(), List.of(), false, 0);
+        withQueuedResult(new ResultQueueItem(oversized, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildResult> graded = ArgumentCaptor.captor();
+        verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(any(), graded.capture(), anyBoolean());
+        assertThat(graded.getValue().jobs().getFirst().successfulTests()).hasSize(BuildResultLimits.MAX_TESTS);
+    }
+
+    @Test
+    void aResultWhoseParticipationBelongsToAnotherExerciseIsDroppedBeforeItIsGraded() {
+        ProgrammingExercise otherExercise = new ProgrammingExercise();
+        otherExercise.setId(EXERCISE_ID + 1);
+        participation.setProgrammingExercise(otherExercise);
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aResultWhoseCourseIsNotTheCourseOfTheExerciseIsDropped() {
+        when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenReturn(Optional.of(COURSE_ID + 1));
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aResultWhoseJobIdBelongsToAnotherParticipationIsDropped() {
+        BuildJob recorded = new BuildJob();
+        recorded.setParticipationId(PARTICIPATION_ID + 1);
+        recorded.setExerciseId(EXERCISE_ID);
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "participation", "exercise", "course" })
+    void aMissingParticipationCannotOverwriteAnotherJobsRecord(String mismatchedOwner) {
+        withSavedBuildJob();
+        BuildJob recorded = new BuildJob();
+        recorded.setId(55L);
+        recorded.setParticipationId(PARTICIPATION_ID + (mismatchedOwner.equals("participation") ? 1 : 0));
+        recorded.setExerciseId(EXERCISE_ID + (mismatchedOwner.equals("exercise") ? 1 : 0));
+        recorded.setCourseId(COURSE_ID + (mismatchedOwner.equals("course") ? 1 : 0));
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+
+        resultProcessingService.processResultAsync();
+
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
+    }
+
+    @Test
+    void aMissingParticipationStillRecordsItsOwnBuild() {
+        withSavedBuildJob();
+        BuildJob recorded = new BuildJob();
+        recorded.setId(55L);
+        recorded.setParticipationId(PARTICIPATION_ID);
+        recorded.setExerciseId(EXERCISE_ID);
+        recorded.setCourseId(COURSE_ID);
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getId()).isEqualTo(55L);
+        assertThat(saved.getValue().getParticipationId()).isEqualTo(PARTICIPATION_ID);
+        verifyNoInteractions(programmingExerciseGradingService);
+    }
+
+    @Test
+    void aResultIsKeptForALaterAttemptWhenTheConsistencyCheckCannotReadTheDatabase() {
+        when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+        withParticipation();
+
+        resultProcessingService.processResultAsync();
+
+        verify(deferredResultQueue).add(item);
+        verifyNoInteractions(programmingExerciseGradingService);
+    }
+
+    @Test
+    void aResultIsKeptWhenTheParticipationLookupFailsAndAgainWhenTheRetryFindsTheDatabaseStillUnavailable() {
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+
+        resultProcessingService.processResultAsync();
+        verify(deferredResultQueue, times(1)).add(item);
+
+        // the retry polls the deferred queue and finds the database still unavailable
+        when(deferredResultQueue.poll()).thenReturn(item);
+        resultProcessingService.processDeferredResultAsync();
+
+        verify(deferredResultQueue, times(2)).add(item);
+        verifyNoInteractions(programmingExerciseGradingService);
+    }
+
+    @Test
+    void aDeferredResultIsKeptWhenItsParticipationCannotBeReadOnRetry() {
+        when(programmingExerciseRepository.findCourseIdById(EXERCISE_ID)).thenThrow(new DataAccessResourceFailureException("no connection"));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(participation))
+                .thenThrow(new DataAccessResourceFailureException("still no connection"));
+        ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
+        withQueuedResult(item);
+        when(deferredResultQueue.poll()).thenReturn(item);
+
+        resultProcessingService.processResultAsync();
+        resultProcessingService.processDeferredResultAsync();
+
+        verify(deferredResultQueue, times(2)).add(item);
+        verifyNoInteractions(programmingExerciseGradingService);
+        verify(buildJobRepository, never()).save(any(BuildJob.class));
     }
 
     // --- lifecycle and health --------------------------------------------------------------------------------------
@@ -510,6 +668,7 @@ class LocalCIResultProcessingServiceTest {
         otherParticipation.setId(11L);
         otherParticipation.setProgrammingExercise(otherExercise);
         when(participationRepository.findWithProgrammingExerciseById(11L)).thenReturn(Optional.of(otherParticipation));
+        when(programmingExerciseRepository.findCourseIdById(4L)).thenReturn(Optional.of(COURSE_ID));
         withSavedBuildJob();
         when(programmingExerciseGradingService.processNewProgrammingExerciseResult(any(), any(BuildResult.class), anyBoolean())).thenReturn(new Result());
         ResultQueueItem busy = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
@@ -624,6 +783,24 @@ class LocalCIResultProcessingServiceTest {
         assertThat(capturedBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any());
+    }
+
+    @Test
+    void aResultForADeletedParticipationReplacesTheRecordOfTheSameParticipation() {
+        BuildJob recorded = new BuildJob();
+        recorded.setId(77L);
+        recorded.setParticipationId(PARTICIPATION_ID);
+        recorded.setExerciseId(EXERCISE_ID);
+        withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        when(buildJobRepository.findByBuildJobId("job-1")).thenReturn(Optional.of(recorded));
+        when(buildJobRepository.save(any(BuildJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getId()).isEqualTo(77L);
     }
 
     @Test

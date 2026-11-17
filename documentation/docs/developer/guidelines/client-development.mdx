@@ -1093,11 +1093,11 @@ or `space-x-3`. It judges the class names that are in the template text: a name 
 body of an ICU expression and the inline `template:` of a component are not looked at.
 
 It is enabled as an error for every migrated module, that is the modules in `migratedModules` of `eslint.config.mjs`
-(`account`, `admin`, `aiworker`, `assessment`, `calendar`, `exam`, `exercise`, `fileupload`, `foundation`, `hyperion`,
-`lecture`, `localci`, `localvc`, `logos`, `lti`, `modeling`, `notification`, `plagiarism`, `presentation`, `shared`,
-`sharing`, `tutorialgroup` and `videosource`), in their external templates and in their `template:` strings, plus the
-templates under `app/course/overview/course-statistics`, `app/course/manage/athena-settings-update`,
-`app/course/manage/control-center/about-athena-modal` and `app/text/overview/text-editor`. Folders that are still laid out
+(`account`, `admin`, `aiworker`, `assessment`, `atlas`, `calendar`, `editor`, `exam`, `exercise`, `fileupload`,
+`foundation`, `hyperion`, `iris`, `lecture`, `localci`, `localvc`, `logos`, `lti`, `modeling`, `notification`,
+`plagiarism`, `presentation`, `shared`, `sharing`, `text`, `tutorialgroup` and `videosource`), in their external
+templates and in their `template:` strings, plus the templates under `app/course/overview/course-statistics`,
+`app/course/manage/athena-settings-update` and `app/course/manage/control-center/about-athena-modal`. Folders that are still laid out
 with Bootstrap, such as the code editor, join the list with their migration. Those modules are also covered by the
 Bootstrap class lock, the SCSS lock and the ban on importing PrimeNG or ng-bootstrap. To adopt it
 for another folder,

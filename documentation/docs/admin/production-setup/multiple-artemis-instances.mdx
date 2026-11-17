@@ -720,7 +720,8 @@ nodes that read a setting matter.
 | `artemis.version-control.url` and the repository authentication | Yes | `url` and `default-branch` only, see [Build Agents](#build-agents) |
 | `artemis.continuous-integration.build.images` (default Docker image per language) | Yes, exercises are created on core nodes | Not needed |
 | `build-timeout-seconds` (`min`, `default`, `max`) | Yes, `application-localci.yml` | Yes, `application-buildagent.yml`. The `max` values must be equal. |
-| `container-flags-limit`, including `allowed-custom-networks` | Yes | Yes, with the same values |
+| `container-flags-limit` (`max-cpu-count`, `max-memory`, `max-memory-swap`) | Yes | Yes, with the same values |
+| `container-flags-limit.allowed-custom-networks` | Yes | Optional. If set, the agent also refuses every network that is not in its list (except `none`), including the default network `bridge` for builds that select no network, and includes these networks in the isolation check. If unset, the agent does not check the network. |
 | `bulk-trigger`, `concurrent-result-processing-size` | Yes | No |
 | `concurrent-build-size`, `specify-concurrent-builds`, `image-cleanup`, `container-cleanup`, `build-logs`, `proxies`, `docker-connection-uri` | No | Yes |
 | `build-agent.short-name` | No | Yes, unique per agent |

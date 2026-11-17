@@ -1,7 +1,4 @@
-import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 import { CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
 
@@ -13,7 +10,6 @@ export interface SizeUpdate {
 @Component({
     selector: 'jhi-learning-path-competency-node',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownModule, FontAwesomeModule, NgbAccordionModule, CommonModule],
     templateUrl: './competency-node.component.html',
     styleUrl: './competency-node.component.scss',
 })

@@ -100,7 +100,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         expect(lectureRequests, 'the picker must not load its lectures before it is opened').toHaveLength(0);
         expect(exerciseTitleRequests, 'the picker must not load its exercises before it is opened').toHaveLength(0);
 
-        await picker.locator('.iris-context-trigger').click();
+        await picker.getByTestId('iris-context-trigger').click();
 
         // Both come from the server, not from a course object the overview happened to have loaded
         await expect.poll(() => lectureRequests.length, { timeout: 15_000 }).toBe(1);
@@ -117,7 +117,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
         await expect(chip).toContainText(exercise.title!);
 
         // Opening the picker a second time must reuse what it already has rather than asking again
-        await picker.locator('.iris-context-trigger').click();
+        await picker.getByTestId('iris-context-trigger').click();
         await expect(options.filter({ hasText: lecture.title! })).toBeVisible();
         expect(lectureRequests, 'the options are loaded once per course, not on every open').toHaveLength(1);
         expect(exerciseTitleRequests, 'the options are loaded once per course, not on every open').toHaveLength(1);
