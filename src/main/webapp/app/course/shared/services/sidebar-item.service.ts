@@ -12,6 +12,7 @@ import {
     faDumbbell,
     faFileAlt,
     faHouse,
+    faLightbulb,
     faList,
     faListCheck,
     faNetworkWired,
@@ -181,6 +182,16 @@ export class CourseSidebarItemService {
             iconColor: '#10b981',
             title: 'Competencies',
             translation: 'artemisApp.courseOverview.menu.competencies',
+            hidden: false,
+        };
+    }
+    getSmartQuizzesItem(): SidebarItem {
+        return {
+            routerLink: 'smart-quizzes',
+            icon: faLightbulb,
+            iconColor: '#f59e0b',
+            title: 'Smart Practice',
+            translation: 'artemisApp.courseOverview.menu.smartQuizzes',
             hidden: false,
         };
     }

@@ -313,6 +313,16 @@ export const courseRoutes: Routes = [
                 canActivate: [CourseOverviewGuard],
             },
             {
+                path: CourseOverviewRoutePath.SMART_QUIZZES,
+                loadComponent: () => import('app/atlas/overview/practice-quiz/practice-quiz.component').then((m) => m.PracticeQuizComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.smartQuizzes',
+                    hasSidebar: false,
+                },
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
+            },
+            {
                 path: CourseOverviewRoutePath.COMMUNICATION,
                 pathMatch: 'full',
                 loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),

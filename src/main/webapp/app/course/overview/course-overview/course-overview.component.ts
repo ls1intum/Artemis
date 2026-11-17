@@ -462,6 +462,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             }
         }
 
+        if (this.atlasEnabled) {
+            const smartQuizzesItem = this.sidebarItemService.getSmartQuizzesItem();
+            sidebarItems.push(smartQuizzesItem);
+        }
+
         if (tabs?.faq) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);

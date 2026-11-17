@@ -79,6 +79,9 @@ export class CourseOverviewGuard implements CanActivate {
             case CourseOverviewRoutePath.TRAINING_QUIZ:
                 hasAccess = tabs.training;
                 break;
+            case CourseOverviewRoutePath.SMART_QUIZZES:
+                hasAccess = true;
+                break;
             default:
                 hasAccess = false;
         }

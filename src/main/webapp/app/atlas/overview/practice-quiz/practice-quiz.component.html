@@ -1,0 +1,333 @@
+<div class="practice-quiz-container p-4 max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b pb-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <fa-icon [icon]="faLightbulb" class="text-state-warning" />
+                Smart Practice Quizzes
+            </h2>
+            <p class="text-sm text-muted-color mt-1">Formative adaptive practice tailored to your course concepts. These quizzes do not affect your grade.</p>
+        </div>
+        @if (state() !== 'OVERVIEW') {
+            <button type="button" class="btn btn-outline-secondary btn-sm flex items-center gap-2" (click)="backToOverview()">
+                <fa-icon [icon]="faArrowLeft" />
+                <span>Back to Overview</span>
+            </button>
+        }
+    </div>
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+        <div class="alert alert-danger mb-4 flex items-center justify-between">
+            <span>{{ errorMessage() }}</span>
+            <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+        </div>
+    }
+
+    <!-- Main View Switch -->
+    @switch (state()) {
+        <!-- 1. OVERVIEW / DASHBOARD STATE -->
+        @case ('OVERVIEW') {
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Action Hero Card -->
+                <div class="md:col-span-2 bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-100 text-primary mb-3">
+                            <fa-icon [icon]="faAward" />
+                            Smart Practice Engine
+                        </span>
+                        <h3 class="text-xl font-bold text-color mb-2">Ready to test your knowledge?</h3>
+                        <p class="text-sm text-muted-color mb-4">
+                            Generate an on-demand practice quiz dynamically sampled from the course AI Question Pool with an exact 50/50 split between adaptive recommendations and
+                            baseline items.
+                        </p>
+                    </div>
+                    <div>
+                        <button
+                            type="button"
+                            class="btn btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 text-base font-semibold shadow hover:shadow-md transition"
+                            [disabled]="isLoading()"
+                            (click)="startNewQuiz()"
+                        >
+                            <fa-icon [icon]="faPlay" />
+                            <span>{{ isLoading() ? 'Generating Quiz...' : 'Generate Quiz' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="border border-surface-200 rounded-xl p-6 bg-surface-card shadow-sm flex flex-col justify-center">
+                    <h4 class="text-base font-semibold text-color mb-2 flex items-center gap-2">
+                        <fa-icon [icon]="faClock" class="text-primary" />
+                        Safe Practice Space
+                    </h4>
+                    <p class="text-xs text-muted-color leading-relaxed">
+                        • Zero impact on your official course grade.<br />
+                        • Solutions and detailed explanations revealed right after submission.<br />
+                        • Review past sessions anytime to track your progress.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Past Sessions Section -->
+            <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-color mb-4 flex items-center gap-2">
+                    <fa-icon [icon]="faHistory" class="text-muted-color" />
+                    Your Practice History
+                </h3>
+
+                @if (isLoading()) {
+                    <div class="text-center py-8 text-muted-color">
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Loading sessions...
+                    </div>
+                } @else if (pastSessions().length === 0) {
+                    <div class="text-center py-10 bg-surface-50 rounded-lg border border-dashed border-surface-200">
+                        <p class="text-muted-color text-sm mb-3">No practice sessions completed yet.</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm" (click)="startNewQuiz()">Start your first session</button>
+                    </div>
+                } @else {
+                    <div class="overflow-x-auto">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Session ID</th>
+                                    <th>Started At</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (s of pastSessions(); track s.id) {
+                                    <tr>
+                                        <td class="font-mono text-xs text-muted-color">#{{ s.id }}</td>
+                                        <td>{{ s.startTime | artemisDate: 'short' }}</td>
+                                        <td>
+                                            @if (s.completed) {
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle">Completed</span>
+                                            } @else {
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">In Progress</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (s.completed && s.score !== undefined && s.score !== null && s.maxPoints !== undefined && s.maxPoints !== null) {
+                                                <span class="font-semibold">{{ s.score | number: '1.0-1' }}</span>
+                                                / {{ s.maxPoints | number: '1.0-1' }}
+                                            } @else {
+                                                <span class="text-muted-color">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (s.completed && s.score !== undefined && s.score !== null && s.maxPoints !== undefined && s.maxPoints !== null && s.maxPoints > 0) {
+                                                <span class="font-medium">{{ (s.score / s.maxPoints) * 100 | number: '1.0-0' }}%</span>
+                                            } @else {
+                                                <span class="text-muted-color">-</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (s.completed) {
+                                                <button type="button" class="btn btn-sm btn-outline-primary" (click)="openReview(s.id)">Review</button>
+                                            } @else {
+                                                <button type="button" class="btn btn-sm btn-primary" (click)="loadOverview()">Resume</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- 2. QUIZ RUNNER STATE -->
+        @case ('QUIZ') {
+            @if (currentSession(); as session) {
+                <div class="space-y-6">
+                    <!-- Session Status Bar -->
+                    <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs uppercase font-bold tracking-wider text-primary">Practice Session Active</span>
+                            <p class="text-sm text-color font-medium mt-0.5">{{ session.questions.length }} Questions to solve. Select your answers below.</p>
+                        </div>
+                        <button type="button" class="btn btn-success px-4 py-2 font-semibold flex items-center gap-2" [disabled]="isSubmitting()" (click)="submitQuiz()">
+                            <fa-icon [icon]="faCheck" />
+                            <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
+                        </button>
+                    </div>
+
+                    <!-- Questions List -->
+                    @for (q of session.questions; track q.id; let i = $index) {
+                        <div class="card shadow-sm border border-surface-200 rounded-xl overflow-hidden">
+                            <div class="card-header bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
+                                <span class="font-bold text-color">Question {{ i + 1 }}: {{ q.title || 'Practice Question' }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-xs">
+                                    {{ q.points ?? 1 }} {{ (q.points ?? 1) === 1 ? 'Point' : 'Points' }}
+                                </span>
+                            </div>
+
+                            <div class="card-body p-5">
+                                <!-- Question Text -->
+                                @if (q.text) {
+                                    <div class="text-base text-color mb-4 whitespace-pre-wrap">{{ q.text }}</div>
+                                }
+
+                                <!-- Answer Options -->
+                                @if (q.answerOptions && q.answerOptions.length > 0) {
+                                    <div class="space-y-2.5">
+                                        @for (opt of q.answerOptions; track opt.id) {
+                                            <div
+                                                class="border rounded-lg p-3.5 flex items-start gap-3 cursor-pointer transition select-none"
+                                                [class.border-primary]="isOptionSelected(q.id, opt.id)"
+                                                [class.bg-surface-100]="isOptionSelected(q.id, opt.id)"
+                                                [class.border-surface-200]="!isOptionSelected(q.id, opt.id)"
+                                                role="button"
+                                                tabindex="0"
+                                                (keydown.enter)="toggleOption(q.id, opt.id, q.singleChoice)"
+                                                (keydown.space)="$event.preventDefault(); toggleOption(q.id, opt.id, q.singleChoice)"
+                                                (click)="toggleOption(q.id, opt.id, q.singleChoice)"
+                                            >
+                                                <input
+                                                    [type]="q.singleChoice ? 'radio' : 'checkbox'"
+                                                    [name]="'question-' + q.id"
+                                                    [checked]="isOptionSelected(q.id, opt.id)"
+                                                    class="mt-1 cursor-pointer"
+                                                    (click)="$event.stopPropagation(); toggleOption(q.id, opt.id, q.singleChoice)"
+                                                />
+                                                <div class="flex-1">
+                                                    <div class="text-sm font-medium text-color">{{ opt.text }}</div>
+                                                    @if (opt.hint) {
+                                                        <div class="text-xs text-muted-color mt-0.5">{{ opt.hint }}</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Bottom Submit Action -->
+                    <div class="flex items-center justify-between pt-4 border-t">
+                        <button type="button" class="btn btn-outline-secondary" (click)="backToOverview()">Cancel</button>
+                        <button type="button" class="btn btn-success px-6 py-2.5 font-bold flex items-center gap-2 shadow" [disabled]="isSubmitting()" (click)="submitQuiz()">
+                            <fa-icon [icon]="faCheck" />
+                            <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers & See Solutions' }}</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- 3. REVIEW & RESULTS STATE -->
+        @case ('REVIEW') {
+            @if (reviewSession(); as review) {
+                <div class="space-y-6">
+                    <!-- Results Banner -->
+                    <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-success-subtle text-success mb-2">
+                                <fa-icon [icon]="faAward" />
+                                Session Completed
+                            </span>
+                            <h3 class="text-2xl font-extrabold text-color">
+                                Your Result: {{ review.score | number: '1.0-1' }} / {{ review.maxPoints | number: '1.0-1' }} Points
+                                @if (review.score !== undefined && review.score !== null && review.maxPoints !== undefined && review.maxPoints !== null && review.maxPoints > 0) {
+                                    <span class="text-xl font-normal text-muted-color">({{ (review.score / review.maxPoints) * 100 | number: '1.0-0' }}%)</span>
+                                }
+                            </h3>
+                            <p class="text-xs text-muted-color mt-1">Completed on {{ review.completedAt | artemisDate: 'long' }} • Formative attempt</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="backToOverview()">Back to Overview</button>
+                            <button type="button" class="btn btn-primary btn-sm flex items-center gap-2" (click)="startNewQuiz()">
+                                <fa-icon [icon]="faRedo" />
+                                <span>Practice Again</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Per-Question Review List -->
+                    @for (item of review.questions; track item.question.id; let i = $index) {
+                        <div class="card shadow-sm border border-surface-200 rounded-xl overflow-hidden">
+                            <div class="card-header bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-color">Question {{ i + 1 }}: {{ item.question.title || 'Practice Question' }}</span>
+                                    <span
+                                        class="badge text-xs"
+                                        [class.bg-purple-subtle]="item.isAdaptive"
+                                        [class.text-purple]="item.isAdaptive"
+                                        [class.border-purple-subtle]="item.isAdaptive"
+                                        [class.bg-blue-subtle]="!item.isAdaptive"
+                                        [class.text-blue]="!item.isAdaptive"
+                                        [class.border-blue-subtle]="!item.isAdaptive"
+                                    >
+                                        {{ item.isAdaptive ? 'Adaptive Item' : 'Baseline Item' }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="badge font-bold px-3 py-1.5" [class.bg-success]="(item.score ?? 0) > 0" [class.bg-danger]="(item.score ?? 0) === 0">
+                                        {{ item.score ?? 0 | number: '1.0-1' }} / {{ item.question.points ?? 1 | number: '1.0-1' }} P
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="card-body p-5">
+                                @if (item.question.text) {
+                                    <div class="text-base text-color mb-4 whitespace-pre-wrap">{{ item.question.text }}</div>
+                                }
+
+                                <!-- Answer Options Review -->
+                                @if (item.question.answerOptions && item.question.answerOptions.length > 0) {
+                                    <div class="space-y-2">
+                                        @for (opt of item.question.answerOptions; track opt.id) {
+                                            <div
+                                                class="border rounded-lg p-3.5 flex items-start gap-3"
+                                                [class.border-state-success]="opt.isCorrect"
+                                                [class.bg-surface-100]="opt.isCorrect"
+                                                [class.border-surface-200]="!opt.isCorrect"
+                                                [class.bg-surface-card]="!opt.isCorrect"
+                                            >
+                                                <div class="mt-0.5">
+                                                    @if (opt.isCorrect) {
+                                                        <fa-icon [icon]="faCheckCircle" class="text-state-success text-lg" />
+                                                    } @else {
+                                                        <fa-icon [icon]="faTimesCircle" class="text-muted-color text-lg" />
+                                                    }
+                                                </div>
+                                                <div class="flex-1">
+                                                    <div class="text-sm font-medium" [class.text-state-success]="opt.isCorrect" [class.text-color]="!opt.isCorrect">
+                                                        {{ opt.text }}
+                                                        @if (opt.isCorrect) {
+                                                            <span class="badge bg-success-subtle text-success text-xs ms-2">Correct Solution</span>
+                                                        }
+                                                    </div>
+                                                    @if (opt.explanation) {
+                                                        <div class="text-xs text-state-success mt-1 font-normal bg-surface-50 p-2 rounded">
+                                                            <strong>Explanation:</strong>
+                                                            {{ opt.explanation }}
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Bottom Return Action -->
+                    <div class="flex justify-center pt-4">
+                        <button type="button" class="btn btn-outline-secondary px-6 py-2.5 font-semibold" (click)="backToOverview()">Back to Practice Overview</button>
+                    </div>
+                </div>
+            }
+        }
+
+        @default {}
+    }
+</div>
