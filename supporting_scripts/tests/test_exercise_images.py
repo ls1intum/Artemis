@@ -483,6 +483,9 @@ class NpmAndSwiftTest(unittest.TestCase):
         image = sync_check.versions_of("package-lock.json", lock.format(commit="b" * 40))
         self.assertEqual(len(sync_check.compare(template, image)), 1)
         self.assertEqual(sync_check.compare(template, template), [])
+        unversioned = '{{"packages": {{"node_modules/tool": {{"resolved": "git+ssh://git@example.com/tool.git#{commit}"}}}}}}'
+        self.assertEqual(len(sync_check.compare(sync_check.versions_of("package-lock.json", unversioned.format(commit="a" * 40)), sync_check.versions_of("package-lock.json", unversioned.format(commit="b" * 40)))), 1)
+        self.assertEqual(sync_check.versions_of("package-lock.json", '{"packages": {"node_modules/tool": {"resolved": "https://registry.npmjs.org/tool.tgz"}}}'), {})
         registry = '{"packages": {"node_modules/tool": {"version": "1.0.0", "resolved": "https://registry.npmjs.org/tool/-/tool-1.0.0.tgz"}}}'
         self.assertEqual(sync_check.versions_of("package-lock.json", registry), {"tool": {"1.0.0"}})
 

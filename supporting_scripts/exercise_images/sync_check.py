@@ -184,10 +184,17 @@ def npm_lock_versions(text: str) -> Versions:
     """
     versions: Versions = {}
     for path, package in json.loads(text).get("packages", {}).items():
-        if "node_modules" in path.split("/") and "version" in package and not package.get("link"):
-            resolved = package.get("resolved", "")
-            version = f"{package['version']} ({resolved})" if resolved.startswith("git+") else package["version"]
-            versions.setdefault(path.rpartition("node_modules/")[2], set()).add(version)
+        if "node_modules" not in path.split("/") or package.get("link"):
+            continue
+        resolved = package.get("resolved", "")
+        if resolved.startswith("git+"):
+            # the manifest of a package from a repository does not have to declare a version
+            version = f"{package.get('version', '')} ({resolved})".strip()
+        elif "version" in package:
+            version = package["version"]
+        else:
+            continue
+        versions.setdefault(path.rpartition("node_modules/")[2], set()).add(version)
     return versions
 
 
