@@ -1,5 +1,5 @@
-<div class="row">
-    <div class="col-12">
+<div class="w-full">
+    <div>
         @if (form) {
             <form [formGroup]="form" (ngSubmit)="submitForm()">
                 <jhi-common-course-competency-form
@@ -10,11 +10,11 @@
                     [courseCompetency]="prerequisite()"
                 />
                 <div>
-                    <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
+                    <button id="submitButton" tumAetUiButton severity="primary" class="me-2" type="submit" [disabled]="!isSubmitPossible">
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (hasCancelButton()) {
-                        <button type="button" (click)="cancelForm()" class="btn btn-secondary">
+                        <button type="button" tumAetUiButton severity="secondary" (click)="cancelForm()">
                             <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
                     }

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -783,7 +783,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<Long> userIds) {
         List<StudentExam> studentExams = new ArrayList<>();
-        SecureRandom random = new SecureRandom();
 
         // In case the total number of exercises in the exam is not set by the instructor
         if (exam.getNumberOfExercisesInExam() == null) {
@@ -822,7 +821,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
             for (Integer index : assembledIndices) {
                 // We get one random exercise from all preselected exercise groups
-                studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(index)));
+                studentExam.addExercise(selectRandomExercise(exam.getExerciseGroups().get(index)));
             }
 
             // Apply random exercise order
@@ -851,9 +850,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         return indices;
     }
 
-    private Exercise selectRandomExercise(SecureRandom random, ExerciseGroup exerciseGroup) {
+    private Exercise selectRandomExercise(ExerciseGroup exerciseGroup) {
         List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
-        int randomIndex = random.nextInt(exercises.size());
+        int randomIndex = RandomUtil.nextInt(exercises.size());
         return exercises.get(randomIndex);
     }
 

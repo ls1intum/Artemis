@@ -1,29 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 
 describe('ApollonDiagramImportDialog Component', () => {
     let fixture: ComponentFixture<ApollonDiagramImportDialogComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     const apollonDiagramId = 5;
-    const dialogRefMock = { close: vi.fn() } as unknown as DynamicDialogRef;
-    const dialogConfigMock = { data: { courseId: 123 } } as DynamicDialogConfig;
+    const dialogRefMock = { close: vi.fn() } as unknown as TumAetUiDialogRef;
+    const dialogConfigMock = new TumAetUiDialogConfig({ data: { courseId: 123 } });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ApollonDiagramImportDialogComponent],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRefMock },
-                { provide: DynamicDialogConfig, useValue: dialogConfigMock },
+                { provide: TumAetUiDialogRef, useValue: dialogRefMock },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfigMock },
             ],
         })
             .overrideTemplate(ApollonDiagramImportDialogComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramImportDialogComponent);
-                dialogRef = TestBed.inject(DynamicDialogRef);
+                dialogRef = TestBed.inject(TumAetUiDialogRef);
             });
     });
 
