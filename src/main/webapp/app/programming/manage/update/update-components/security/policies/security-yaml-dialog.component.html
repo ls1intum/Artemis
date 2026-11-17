@@ -70,7 +70,7 @@
                 </div>
             }
         } @else {
-            <div class="sp-code" role="region" tabindex="0" [attr.aria-label]="prefix + 'source' | artemisTranslate" data-testid="security-yaml-code">
+            <div class="sp-code" role="region" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'source' | artemisTranslate" data-testid="security-yaml-code">
                 @for (line of lines(); track line.number) {
                     <div class="sp-code-line" [class.sp-code-new]="line.highlighted">
                         <span>{{ line.number }}</span>

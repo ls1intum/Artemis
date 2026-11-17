@@ -25,7 +25,7 @@
                             <tumaet-ui-tag severity="danger" size="sm" [value]="'−' + diff.removed" />
                         </span>
                     </summary>
-                    <div class="sp-diff-scroll" role="region" tabindex="0" [attr.aria-label]="prefix + 'diffOf' | artemisTranslate: { file: diff.path }">
+                    <div class="sp-diff-scroll" role="region" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'diffOf' | artemisTranslate: { file: diff.path }">
                         <div class="sp-diff">
                             <div class="sp-diff-head">
                                 <span></span>
@@ -127,7 +127,7 @@
             }
         }
         <div class="sp-stack">
-            <label class="sp-label" for="securityCommitMessage" [jhiTranslate]="prefix + 'commitMessage'"></label>
+            <label class="sp-label" for="securityCommitMessage">{{ prefix + 'commitMessage' | artemisTranslate }}</label>
             <input
                 id="securityCommitMessage"
                 tumAetUiInput

@@ -248,7 +248,7 @@ function normalized(value: unknown): unknown {
     }
     if (value !== null && typeof value === 'object') {
         const result: Record<string, unknown> = {};
-        for (const key of Object.keys(value).sort()) {
+        for (const key of Object.keys(value).sort((first, second) => first.localeCompare(second))) {
             const entry = normalized((value as Record<string, unknown>)[key]);
             const isEmpty = entry === undefined || entry === null || (Array.isArray(entry) && entry.length === 0) || entry === '';
             if (!isEmpty) {

@@ -25,12 +25,15 @@ import de.tum.cit.aet.artemis.programming.dto.SecurityTestStructureDTO;
  */
 final class AresTestCases {
 
-    /** The annotations that make a method a test case: JUnit Jupiter, the Ares markers and jqwik. */
+    /**
+     * The annotations that make a method a test case: JUnit Jupiter, the Ares markers and jqwik. The qualifier repeats possessively, so long qualified names do
+     * not grow the stack; giving back a qualifier part could only match a nested type such as {@code @Test.Inner}, which is no test annotation.
+     */
     private static final Pattern TEST_ANNOTATION = Pattern
-            .compile("@\\s*(?:[\\w$]+\\s*\\.\\s*)*(?:Test|PublicTest|HiddenTest|ParameterizedTest|RepeatedTest|TestFactory|TestTemplate|Property|Example)\\b");
+            .compile("@\\s*(?:[\\w$]+\\s*\\.\\s*)*+(?:Test|PublicTest|HiddenTest|ParameterizedTest|RepeatedTest|TestFactory|TestTemplate|Property|Example)\\b");
 
-    /** The name of any annotation, also a qualified one. */
-    private static final Pattern ANNOTATION_NAME = Pattern.compile("@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*");
+    /** The name of any annotation, also a qualified one. Its parts repeat possessively, so long qualified names do not grow the stack. */
+    private static final Pattern ANNOTATION_NAME = Pattern.compile("@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*+");
 
     /** A complete Java identifier, also with letters outside ASCII, that is followed by an opening parenthesis. */
     private static final Pattern IDENTIFIER_BEFORE_PARENTHESIS = Pattern

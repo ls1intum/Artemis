@@ -129,7 +129,7 @@ export class SecurityBrowseDialogComponent {
         return rows;
     });
 
-    readonly selectedPaths = computed(() => [...this.selection()].sort());
+    readonly selectedPaths = computed(() => [...this.selection()].sort((first, second) => first.localeCompare(second)));
 
     constructor() {
         // Every opening starts with the paths of the field and with collapsed folders.

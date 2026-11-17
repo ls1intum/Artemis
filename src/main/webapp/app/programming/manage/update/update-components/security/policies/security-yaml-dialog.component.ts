@@ -51,6 +51,8 @@ export class SecurityYamlDialogComponent {
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faCopy = faCopy;
+    /** The tab index of the horizontally scrolling YAML source: it takes keyboard focus, so keyboard users can scroll it too. */
+    protected readonly scrollableRegionTabIndex = 0;
     protected readonly faDownload = faDownload;
     protected readonly faUpload = faUpload;
 

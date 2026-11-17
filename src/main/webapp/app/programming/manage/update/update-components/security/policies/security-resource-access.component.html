@@ -124,15 +124,15 @@
                             <td class="sp-col-actions">
                                 @switch (entry.source) {
                                     @case (RowSource.PRESET) {
-                                        <span
+                                        <button
+                                            type="button"
                                             class="sp-inherited"
-                                            tabindex="0"
                                             [tumAetUiTooltip]="prefix + 'lockedHelp' | artemisTranslate: { preset: entry.preset ?? '' }"
                                             data-testid="security-resource-locked"
                                         >
                                             <fa-icon [icon]="faLock" />
                                             <span [jhiTranslate]="prefix + 'locked'"></span>
-                                        </span>
+                                        </button>
                                     }
                                     @case (RowSource.REMOVED) {
                                         <button

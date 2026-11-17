@@ -63,6 +63,8 @@ export class SecurityReviewDialogComponent {
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly SecurityVersionCompatibilityVerdict = SecurityVersionCompatibilityVerdict;
+    /** The tab index of the horizontally scrolling diffs: it takes keyboard focus, so keyboard users can scroll it too. */
+    protected readonly scrollableRegionTabIndex = 0;
 
     readonly visible = model(false);
     /** The rendered files; undefined while the preview loads. */
