@@ -19,8 +19,11 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -78,9 +81,6 @@ public class ConfigurationValidator {
     private static final String ATHENA_SECRET_PROPERTY = "artemis.athena.secret";
 
     private static final String INTERNAL_ALLOWED_CIDRS_PROPERTY = "artemis.security.internal.allowed-cidrs";
-
-    /** An upper bound for the indexed entries that are read from the list of address ranges. */
-    private static final int MAX_ALLOWED_CIDR_ENTRIES = 100;
 
     /**
      * Shared secrets for the Athena service that Artemis has shipped as examples: the packaged configuration value, the
@@ -216,10 +216,7 @@ public class ConfigurationValidator {
      * default so that a first installation works. The setting is not rejected, because the right ranges depend on the installation.
      */
     private void warnAboutUnrestrictedInternalEndpoints() {
-        if (!environment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
-            return;
-        }
-        List<String> openRanges = configuredInternalRanges().stream().filter(ConfigurationValidator::coversEveryAddress).toList();
+        List<String> openRanges = unrestrictedInternalRanges();
         if (!openRanges.isEmpty()) {
             log.warn(
                     "The endpoints for other components of the installation accept requests from every address, because {} contains {}. "
@@ -229,26 +226,30 @@ public class ConfigurationValidator {
     }
 
     /**
-     * Reads the address ranges as a comma separated value or as a list, so that both ways to configure them are found.
+     * The configured address ranges for the endpoints for other components that cover every address, which are only reported under the {@code prod} profile.
+     *
+     * @return the ranges that cover every address, empty if there are none or the profile is not {@code prod}
+     */
+    List<String> unrestrictedInternalRanges() {
+        if (!environment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
+            return List.of();
+        }
+        return configuredInternalRanges().stream().filter(ConfigurationValidator::coversEveryAddress).toList();
+    }
+
+    /**
+     * Reads the address ranges the way {@link InternalAccessConfiguration} binds them, so that a list that is set in several places counts as the one of the source with the
+     * highest
+     * priority and a comma separated value counts as a list as well.
      *
      * @return the configured ranges, empty if none are configured
      */
     private List<String> configuredInternalRanges() {
-        List<String> ranges = new ArrayList<>();
-        String commaSeparated = environment.getProperty(INTERNAL_ALLOWED_CIDRS_PROPERTY);
-        if (StringUtils.hasText(commaSeparated)) {
-            Arrays.stream(commaSeparated.split(",")).map(String::trim).filter(StringUtils::hasText).forEach(ranges::add);
+        // A running application always has a configurable environment; a plain one has no property sources to bind
+        if (!(environment instanceof ConfigurableEnvironment configurableEnvironment)) {
+            return List.of();
         }
-        for (int index = 0; index < MAX_ALLOWED_CIDR_ENTRIES; index++) {
-            String entry = environment.getProperty(INTERNAL_ALLOWED_CIDRS_PROPERTY + "[" + index + "]");
-            if (entry == null) {
-                break;
-            }
-            if (StringUtils.hasText(entry)) {
-                ranges.add(entry.trim());
-            }
-        }
-        return ranges;
+        return Binder.get(configurableEnvironment).bind(INTERNAL_ALLOWED_CIDRS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
     }
 
     private static boolean coversEveryAddress(String range) {
