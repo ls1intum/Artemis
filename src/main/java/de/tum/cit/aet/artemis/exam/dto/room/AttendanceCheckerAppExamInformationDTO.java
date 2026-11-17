@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -83,6 +82,7 @@ record ExamUserLocationDTO(
     }
 }
 
+// The e-mail address is not needed to check the attendance, so it is not sent to the teaching assistants operating the app
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamUserWithExamRoomAndSeatDTO (
     @NotBlank @Size(max = 50) String login,
@@ -90,7 +90,6 @@ record ExamUserWithExamRoomAndSeatDTO (
     @Nullable @Size(max = 50) String firstName,
     @Nullable @Size(max = 50) String lastName,
     @NotBlank @Size(max = 10) String registrationNumber,
-    @Nullable @Email @Size(max = 100) String email,
     @Nullable String imageUrl,
     boolean didCheckImage,
     boolean didCheckName,
@@ -106,7 +105,6 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getUser().getFirstName(),
             examUser.getUser().getLastName(),
             examUser.getUser().getRegistrationNumber(),
-            examUser.getUser().getEmail(),
             examUser.getStudentImagePath(),
             examUser.getDidCheckImage(),
             examUser.getDidCheckName(),
