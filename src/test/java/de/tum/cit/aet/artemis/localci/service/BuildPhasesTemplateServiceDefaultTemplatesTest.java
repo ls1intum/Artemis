@@ -112,6 +112,34 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
     }
 
     @Test
+    void shouldCollectTheReportsOfXCTestAndSwiftTestingForSwift() throws Exception {
+        // an exercise whose build plans are recreated keeps its test repository, which may still contain XCTest tests that write tests.xml
+        for (boolean staticAnalysis : List.of(false, true)) {
+            var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), staticAnalysis, false);
+
+            var test = phases.stream().filter(phase -> phase.name().equals("test")).findFirst().orElseThrow();
+            assertThat(test.resultPaths()).hasSize(2);
+            assertThat(test.resultPaths().get(0)).endsWith("/tests.xml");
+            assertThat(test.resultPaths().get(1)).endsWith("/tests-swift-testing.xml");
+        }
+    }
+
+    @Test
+    void shouldCollectTheReportsOfXCTestAndSwiftTestingForSequentialSwift() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), false, true);
+
+        for (String stage : List.of("structural", "behavior")) {
+            var phase = phases.stream().filter(candidate -> candidate.name().equals(stage + "_tests")).findFirst().orElseThrow();
+            // each report is renamed only if it exists, because a test repository has the tests of one framework only
+            assertThat(phase.script()).contains("if [ -e tests-swift-testing.xml ]; then mv tests-swift-testing.xml " + stage + "-tests.xml; fi")
+                    .contains("if [ -e tests.xml ]; then mv tests.xml " + stage + "-tests-xctest.xml; fi");
+            assertThat(phase.resultPaths()).hasSize(2);
+            assertThat(phase.resultPaths().get(0)).endsWith("/" + stage + "-tests.xml");
+            assertThat(phase.resultPaths().get(1)).endsWith("/" + stage + "-tests-xctest.xml");
+        }
+    }
+
+    @Test
     void shouldNotCopyTheSourcesOfTheTestRepositoryForSwift() throws Exception {
         // the test repository has no Sources directory, and a failing copy would fail every build, because the script stops at the first error
         for (boolean staticAnalysis : List.of(false, true)) {

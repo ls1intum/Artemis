@@ -10,21 +10,26 @@
   script: |-
     cd ${studentParentWorkingDirectoryName}
     status=0
-    # Swift Testing appends -swift-testing to the name of the xUnit file
+    # Swift Testing appends -swift-testing to the name of the xUnit file. XCTest, which exercises created before the Swift Testing
+    # templates still use, writes tests.xml.
     swift test --filter 'AttributeTest|ClassTest|MethodTest' --xunit-output tests.xml || status=$?
-    mv tests-swift-testing.xml structural-tests.xml
+    if [ -e tests-swift-testing.xml ]; then mv tests-swift-testing.xml structural-tests.xml; fi
+    if [ -e tests.xml ]; then mv tests.xml structural-tests-xctest.xml; fi
     exit $status
   resultPaths:
     - '${studentParentWorkingDirectoryName}/structural-tests.xml'
+    - '${studentParentWorkingDirectoryName}/structural-tests-xctest.xml'
 - name: behavior_tests
   script: |-
     cd ${studentParentWorkingDirectoryName}
     status=0
     swift test --filter 'SortingExampleBehaviorTest' --xunit-output tests.xml || status=$?
-    mv tests-swift-testing.xml behavior-tests.xml
+    if [ -e tests-swift-testing.xml ]; then mv tests-swift-testing.xml behavior-tests.xml; fi
+    if [ -e tests.xml ]; then mv tests.xml behavior-tests-xctest.xml; fi
     exit $status
   resultPaths:
     - '${studentParentWorkingDirectoryName}/behavior-tests.xml'
+    - '${studentParentWorkingDirectoryName}/behavior-tests-xctest.xml'
 - name: finalize
   script: |-
     # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),

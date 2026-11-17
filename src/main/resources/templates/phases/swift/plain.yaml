@@ -9,9 +9,11 @@
 - name: test
   script: |-
     cd ${studentParentWorkingDirectoryName}
-    # Swift Testing appends -swift-testing to the name of the xUnit file, so the results are in tests-swift-testing.xml
+    # Swift Testing appends -swift-testing to the name of the xUnit file. XCTest, which exercises created before the Swift Testing
+    # templates still use, writes tests.xml. A test repository has the tests of one framework only, so no result is reported twice.
     swift test --xunit-output tests.xml
   resultPaths:
+    - '${studentParentWorkingDirectoryName}/tests.xml'
     - '${studentParentWorkingDirectoryName}/tests-swift-testing.xml'
 - name: finalize
   script: |-
