@@ -74,6 +74,14 @@ describe('markdown.conversion.util', () => {
             expect(image.hasAttribute('srcset')).toBe(false);
         });
 
+        it('reads a candidate with a long run of commas inside its address without taking long', () => {
+            const started = performance.now();
+            const image = restricted(`<img srcset="https://unlisted.example/a${','.repeat(200000)}x,">`, 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+            expect(performance.now() - started).toBeLessThan(1000);
+        });
+
         it('removes the srcset of a source in a picture', () => {
             const source = restricted('<picture><source srcset="https://unlisted.example/b.png"><img src="/ok.png"></picture>', 'source');
 
@@ -106,6 +114,20 @@ describe('markdown.conversion.util', () => {
 
         it('removes a mask whose url function is not closed', () => {
             const rect = restricted('<svg><rect width="1" height="1" mask="url(https://unlisted.example/m.png"></rect></svg>', 'rect');
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+        });
+
+        it('removes a mask whose url function is not closed without taking long on a long run of white space', () => {
+            const started = performance.now();
+            const rect = restricted(`<svg><rect width="1" height="1" mask="url(${' '.repeat(4000)}"></rect></svg>`, 'rect');
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+            expect(performance.now() - started).toBeLessThan(1000);
+        });
+
+        it('removes a mask with a url function inside the address of another one', () => {
+            const rect = restricted('<svg><rect width="1" height="1" mask="url(#m url(https://unlisted.example/m.png)"></rect></svg>', 'rect');
 
             expect(rect.hasAttribute('mask')).toBe(false);
         });

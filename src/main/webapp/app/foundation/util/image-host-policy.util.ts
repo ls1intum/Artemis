@@ -62,7 +62,12 @@ export function srcsetAddresses(srcset: string): string[] {
         }
         let address = srcset.substring(start, position);
         if (address.endsWith(',')) {
-            address = address.replace(/,+$/, '');
+            // a loop and not a regular expression: one that looks for the commas at the end tries every comma of a long run in the middle as well
+            let end = address.length;
+            while (end > 0 && address[end - 1] === ',') {
+                end--;
+            }
+            address = address.substring(0, end);
         } else {
             position = skipDescriptors(srcset, position);
         }

@@ -240,9 +240,16 @@ function areFunctionAddressesAllowed(value: string | null): boolean {
     if (/\\|\/\*|(?:image-set|image|element|cross-fade|paint|src)\s*\(/i.test(value)) {
         return false;
     }
+    // A `url(` without a closing parenthesis behind it is read to the end of the value, so it must not pass unchecked. This is decided before the matcher below runs, because
+    // that matcher fails on exactly such a value, and only after it has tried every way to split the white space that follows the opening parenthesis.
+    const openings = [...value.matchAll(/url\s*\(/gi)];
+    const lastOpening = openings.at(-1);
+    if (lastOpening && !value.includes(')', lastOpening.index)) {
+        return false;
+    }
     const matches = [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi)];
-    // a `url(` without its closing parenthesis is read to the end of the value, so it must not pass unchecked
-    if (matches.length !== (value.match(/url\s*\(/gi) ?? []).length) {
+    // a `url(` inside the address of an earlier one is not matched of its own, so it must not pass unchecked either
+    if (matches.length !== openings.length) {
         return false;
     }
     return matches.every((match) => {
