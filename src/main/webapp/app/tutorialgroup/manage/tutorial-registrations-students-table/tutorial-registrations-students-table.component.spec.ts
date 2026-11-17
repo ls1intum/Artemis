@@ -210,6 +210,24 @@ describe('TutorialRegistrationsStudentsTable', () => {
             expect(cell.querySelector('.sr-only')!.getAttribute('jhiTranslate')).toBe('artemisApp.pages.tutorialGroupRegistrations.studentsTableNoRegistrationDate');
         });
 
+        it('should sort registration dates in the same second by time, not by their string form', () => {
+            // Serialized instants drop a zero fraction: 08:30:00 is earlier than 08:30:00.5, although '00Z' sorts after '00.5Z' as a string
+            const later: TutorialGroupStudent = { id: 5, name: 'Later Student', login: 'later', registrationDate: '2026-10-14T08:30:00.5Z' };
+            const earlier: TutorialGroupStudent = { id: 6, name: 'Earlier Student', login: 'earlier', registrationDate: '2026-10-14T08:30:00Z' };
+            fixture.componentRef.setInput('students', [later, undatedStudent, earlier]);
+            fixture.componentRef.setInput('showRegistrationDate', true);
+            fixture.detectChanges();
+            const order = () => fixture.componentInstance.sortedStudents().map((student) => student.login);
+
+            fixture.componentInstance.onSort({ field: 'registrationDate', order: 1 });
+            fixture.detectChanges();
+            expect(order()).toEqual(['earlier', 'later', 'alan']);
+
+            fixture.componentInstance.onSort({ field: 'registrationDate', order: -1 });
+            fixture.detectChanges();
+            expect(order()).toEqual(['later', 'earlier', 'alan']);
+        });
+
         it('should sort by registration date in both directions and keep students without a date last', () => {
             const earliest: TutorialGroupStudent = { id: 3, name: 'Grace Hopper', login: 'grace', registrationDate: '2026-10-01T09:00:00Z' };
             const latest: TutorialGroupStudent = { id: 4, name: 'Barbara Liskov', login: 'barbara', registrationDate: '2026-10-20T09:00:00Z' };

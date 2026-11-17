@@ -4,6 +4,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Component, booleanAttribute, computed, input, signal } from '@angular/core';
 import { orderBy } from 'lodash-es';
+import dayjs from 'dayjs/esm';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -61,7 +62,8 @@ export class TutorialRegistrationsStudentsTableComponent {
         if (this.sortField() === 'registrationDate') {
             // Registrations from before the date was recorded have none; they stay last in both directions instead of sorting as the empty string
             const hasNoDate = (student: TutorialGroupStudent) => !student.registrationDate;
-            const date = (student: TutorialGroupStudent) => student.registrationDate ?? '';
+            // Compare parsed instants: serialized ISO strings differ in their number of fractional-second digits
+            const date = (student: TutorialGroupStudent) => (student.registrationDate ? dayjs(student.registrationDate).valueOf() : 0);
             return orderBy(this.studentsWithCompleteProfilePictureUrl(), [hasNoDate, date], ['asc', order]);
         }
         const field = this.sortField() as keyof TutorialGroupStudent;
