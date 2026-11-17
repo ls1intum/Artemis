@@ -164,12 +164,8 @@ function guardStep() {
 
 test('the workflow enforces PR duplication for scanned and secretless-verification paths, without gating the existing default-branch backlog', () => {
     const condition = guardStep().match(/^        if: (.+)$/m)?.[1];
-    assert.ok(condition);
-    const evaluate = new Function('steps', 'return (' + condition + ')');
-    for (const scan of ['true', 'false']) {
-        assert.equal(evaluate({ analysis: { outputs: { pull_request: '123', scan } } }), true);
-        assert.equal(evaluate({ analysis: { outputs: { pull_request: '0', scan } } }), false);
-    }
+    // The PR-only condition must not depend on whether the source checkout/scan ran.
+    assert.equal(condition, "steps.analysis.outputs.pull_request != '0'");
 });
 
 test('the workflow verifies with trusted tools and publishes the absolute counts in the job summary', async () => {
@@ -247,6 +243,9 @@ for (const scan of ['true', 'false']) {
         const expression = guardStep().match(/^          SOURCE_SHA: \$\{\{ (.+) \}\}$/m)?.[1];
         assert.ok(expression);
         const steps = { analysis: { outputs: { sha, scan } }, source: { outputs: scan === 'true' ? { sha } : {} } };
-        assert.equal(new Function('steps', 'return (' + expression + ')')(steps), sha);
+        assert.equal(expression, 'steps.analysis.outputs.sha');
+        // Resolve this data path without evaluating workflow expressions as JavaScript.
+        const value = expression.split('.').reduce((current, key) => current[key], { steps });
+        assert.equal(value, sha);
     });
 }
