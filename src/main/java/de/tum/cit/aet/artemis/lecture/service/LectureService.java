@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -351,6 +352,21 @@ public class LectureService {
     }
 
     /**
+     * Checks that the lecture unit is available for the user, i.e. that the user is at least a teaching assistant of the course, or a student of the course and the release
+     * date of the lecture unit has passed.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @param user          the requesting user
+     * @throws AccessForbiddenException if the lecture unit is not available for the user
+     */
+    public void checkLectureUnitVisibleToUserElseThrow(long lectureUnitId, User user) {
+        LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        if (!authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
+    }
+
+    /**
      * Loads a single lecture unit the way the lecture details page projects it, for the user requesting it.
      * <p>
      * The unit's lecture reference carries the course, since this response has no lecture envelope around it. Exercise
@@ -362,6 +378,10 @@ public class LectureService {
      */
     public LectureDetailsDTO.LectureUnitDetailsDTO getUnitForDetails(long lectureUnitId, User user) {
         LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        // The unit has to be available for the requesting user, as for the units listed on the lecture details page
+        if (!authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
         lectureUnit.setCompleted(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnitId, user.getId()).isPresent());
         if (lectureUnit instanceof ExerciseUnit exerciseUnit && exerciseUnit.getExercise() != null) {
             exerciseService.loadExercisesWithInformationForDashboard(Set.of(exerciseUnit.getExercise().getId()), user).stream().findFirst().ifPresent(exerciseUnit::setExercise);

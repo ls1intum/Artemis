@@ -75,7 +75,7 @@ describe('FormFooterComponent', () => {
     it('should display saving badge when isSaving is true', () => {
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
-        const savingBadge = fixture.debugElement.query(By.css('.badge.bg-secondary'));
+        const savingBadge = fixture.debugElement.query(By.css('[data-testid="form-footer-saving"]'));
         expect(savingBadge).toBeTruthy();
     });
 
@@ -91,7 +91,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.badge.bg-danger'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('tumaet-ui-tag'))).toBeNull();
     });
 
     it('should render every invalid reason as its own list item', () => {

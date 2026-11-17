@@ -1,9 +1,7 @@
-import { Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { faCircleNotch, faPaperPlane, faRotateLeft, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -22,9 +20,7 @@ import { debounceTime, finalize } from 'rxjs/operators';
 @Component({
     selector: 'jhi-quiz-ai-question-refinement-panel',
     templateUrl: './quiz-ai-question-refinement-panel.component.html',
-    styleUrl: './quiz-ai-question-refinement-panel.component.scss',
-    encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ButtonModule, TextareaModule, TooltipModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class QuizAiQuestionRefinementPanelComponent {
     private alertService = inject(AlertService);

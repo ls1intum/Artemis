@@ -140,6 +140,13 @@ class HyperionQuizQuestionChecksTest {
     }
 
     @Test
+    void optionCountFor_asksTwoOptionsForTrueFalseAndFourOtherwise() {
+        assertThat(HyperionQuizQuestionChecks.optionCountFor(QuizQuestionGenerationType.TRUE_FALSE)).isEqualTo(2);
+        assertThat(HyperionQuizQuestionChecks.optionCountFor(QuizQuestionGenerationType.SINGLE_CHOICE)).isEqualTo(4);
+        assertThat(HyperionQuizQuestionChecks.optionCountFor(QuizQuestionGenerationType.MULTIPLE_CHOICE)).isEqualTo(4);
+    }
+
+    @Test
     void normalise_collapsesCaseAndWhitespace() {
         assertThat(HyperionQuizQuestionChecks.normalise("  Which  Method\nis Idempotent? ")).isEqualTo("which method is idempotent?");
     }

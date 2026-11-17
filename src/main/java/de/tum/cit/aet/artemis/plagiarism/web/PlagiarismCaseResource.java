@@ -279,6 +279,9 @@ public class PlagiarismCaseResource {
         if (plagiarismCase.student() == null || !Objects.equals(plagiarismCase.student().login(), user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
+        if (plagiarismCase.post() == null) {
+            throw new AccessForbiddenException("The plagiarism case has not been communicated to the student yet");
+        }
 
         return ResponseEntity.ok(getPlagiarismCaseDetailResponse(plagiarismCase));
     }

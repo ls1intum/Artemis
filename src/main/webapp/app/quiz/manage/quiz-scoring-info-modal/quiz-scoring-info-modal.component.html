@@ -1,17 +1,5 @@
-<p-dialog
-    [(visible)]="isVisible"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    [closeOnEscape]="true"
-    [closable]="true"
-    appendTo="body"
-    [style]="{ width: '50rem' }"
-    [breakpoints]="{ '850px': '95vw' }"
-    [header]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"
->
-    <table class="table">
+<tumaet-ui-dialog [(visible)]="isVisible" [dismissableMask]="true" size="medium" [header]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate">
+    <table tumAetUiTable>
         <tr>
             <th jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></th>
             <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.all_or_nothing"></td>
@@ -28,13 +16,15 @@
         </tr>
     </table>
     <ng-template #footer>
-        <button type="button" class="btn btn-outline" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>
 <div>
     <button
         type="button"
-        class="btn"
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
         (click)="open()"
         [attr.aria-label]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"
         [attr.title]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"

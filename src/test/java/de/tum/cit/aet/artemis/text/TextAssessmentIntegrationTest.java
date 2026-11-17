@@ -462,6 +462,19 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testDeleteTextExampleAssessment_asTutor_forbidden() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission.setExampleSubmission(true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
+        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
+        request.delete("/api/text/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
+                HttpStatus.FORBIDDEN);
+        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTextExampleAssessment() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
@@ -475,7 +488,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteTextExampleAssessment_wrongExerciseId() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);

@@ -167,7 +167,7 @@ file into `build/libs` first; see the
 The following command automates deployment to a test server:
 
 ```shell
-./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.7.war
+./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.8.war
 ```
 
 ## Repository layout

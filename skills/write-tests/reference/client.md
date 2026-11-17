@@ -83,8 +83,8 @@ Keep a host component when:
 
 - the directive is structural and injects `TemplateRef` (`*jhiHasAnyAuthority`,
   `*jhiExtensionPoint`, the title bar directives);
-- it needs something around or beside it, or content Angular keeps rendering inside it: `jhiSortBy`
-  needs `jhiSort` on an enclosing element and reads its projected `fa-icon`, a validator tested
+- it needs something around or beside it, or content Angular keeps rendering inside it: `tumAetUiSortableColumn`
+  needs `tumAetUiTable` on an enclosing element and renders its own sort trigger, a validator tested
   through `ngModel` needs the `NgModel`, `infinite-scroll` must keep its sentinels around a `@for`
   list;
 - its constructor reads a static attribute the template writes on the host (`jhiSecureLink` must

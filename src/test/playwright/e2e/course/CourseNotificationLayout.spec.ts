@@ -3,6 +3,7 @@ import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { expectWithinViewport, forEachViewport } from '../../support/layout';
 import { generateUUID } from '../../support/utils';
+import { trackWebsocketSubscriptions } from '../../support/websocketSubscriptions';
 
 test('Conversation notifications leave Send accessible, preserve the draft and open the reply', async ({
     browser,
@@ -45,15 +46,12 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         expect(currentMessage.ok()).toBe(true);
 
         const studentPage = await studentContext.newPage();
-        let subscribedToNotifications = false;
-        studentPage.on('websocket', (socket) => {
-            socket.on('framesent', ({ payload }) => {
-                if (payload.toString().includes(`/user/topic/notification/${course.id}`)) subscribedToNotifications = true;
-            });
-        });
+        const subscriptions = trackWebsocketSubscriptions(studentPage);
         await studentPage.goto(`/courses/${course.id}/communication?conversationId=${currentChannel.id}`);
         await expect(studentPage.getByTestId('conversation-name')).toContainText(currentChannel.name!);
-        await expect.poll(() => subscribedToNotifications).toBe(true);
+        await subscriptions.waitFor(`/user/topic/notification/${course.id}`);
+        // The notifications are addressed to the user: every node has to know the new session before the replies are sent.
+        await subscriptions.waitUntilKnownToAllNodes();
         const input = studentPage.getByTestId('formatted-message-input');
         const draft = 'Continue typing while another reply arrives';
         await input.fill(draft);
@@ -80,6 +78,7 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         expect(await input.evaluate(() => window.getSelection()?.anchorOffset)).toBe(selectionBefore);
         await studentPage.screenshot({ path: testInfo.outputPath('conversation-notification-layout.png') });
 
+        const cards = studentPage.getByTestId('notification-popup-card');
         let latestContent = 'Reply notification layout regression';
         for (let index = 1; index <= 7; index++) {
             latestContent = `Long notification ${index}: ${'Long message for the notification layout. '.repeat(30)}`;
@@ -88,8 +87,9 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
             });
             expect(response.ok()).toBe(true);
             reply = await response.json();
+            // Notifications are delivered asynchronously. Wait for each popup, so a delayed delivery is not mistaken for a missing one.
+            await expect(cards).toHaveCount(index + 1);
         }
-        const cards = studentPage.getByTestId('notification-popup-card');
         await expect(cards).toHaveCount(8);
         await studentPage.setViewportSize({ width: 390, height: 844 });
         const latestCard = cards.last();

@@ -60,6 +60,11 @@ public class CourseRequestService {
 
     private static final int MAX_TITLE_LENGTH = 255;
 
+    /**
+     * The number of course requests of one user that can wait for a decision at the same time. Raise this value to allow more.
+     */
+    private static final int MAX_PENDING_REQUESTS_PER_USER = 5;
+
     private final ResourceLoaderService resourceLoaderService;
 
     @Value("${info.contact:}")
@@ -123,7 +128,7 @@ public class CourseRequestService {
         courseRequest.setCreatedDate(ZonedDateTime.now());
         courseRequest.setStatus(CourseRequestStatus.PENDING);
 
-        courseRequest = courseRequestRepository.save(courseRequest);
+        courseRequest = courseRequestRepository.saveWithPendingLimit(courseRequest, MAX_PENDING_REQUESTS_PER_USER);
         notifyContact(courseRequest);
         sendReceivedEmail(requester, courseRequest);
 

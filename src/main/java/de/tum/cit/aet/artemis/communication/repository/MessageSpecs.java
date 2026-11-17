@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost_;
@@ -35,14 +37,15 @@ public class MessageSpecs {
 
     /**
      * Specification which filters Messages and answer posts according to a search string and a list of authors
-     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
-     * and the author of the message or answer post is in the list of authors
+     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the content or author name (all strings lowercased)
+     * and the author of that same message or answer post is in the list of authors
      *
-     * @param searchText Text to be searched within messages
-     * @param authorIds  ids of the authors
+     * @param searchText                   Text to be searched within messages
+     * @param authorIds                    ids of the authors
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getSearchTextAndAuthorSpecification(String searchText, long[] authorIds) {
+    public static Specification<Post> getSearchTextAndAuthorSpecification(String searchText, long[] authorIds, boolean includeUnverifiedIrisAnswers) {
         return (root, query, criteriaBuilder) -> {
             boolean hasText = searchText != null && !searchText.isBlank();
             boolean hasAuthors = authorIds != null && authorIds.length > 0;
@@ -52,23 +55,32 @@ public class MessageSpecs {
             }
             // if only a search text is given, use the search text specification
             if (hasText && !hasAuthors) {
-                return getSearchTextSpecification(searchText).toPredicate(root, query, criteriaBuilder);
+                return getSearchTextSpecification(searchText, includeUnverifiedIrisAnswers).toPredicate(root, query, criteriaBuilder);
             }
             // if only author ids are given, use the author specification
             if (!hasText && hasAuthors) {
-                return getAuthorSpecification(authorIds).toPredicate(root, query, criteriaBuilder);
+                return getAuthorSpecification(authorIds, includeUnverifiedIrisAnswers).toPredicate(root, query, criteriaBuilder);
             }
 
             List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
             Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
-            Predicate baseTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
-            Predicate baseAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
+            Join<Post, User> authorJoin = root.join(Post_.AUTHOR, JoinType.LEFT);
+            Predicate baseTextPredicate = criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral),
+                    authorNameMatches(criteriaBuilder, authorJoin, searchTextLiteral));
+            Predicate baseAuthorPredicate = authorJoin.get(User_.ID).in(authorIdList);
             Predicate baseCombined = criteriaBuilder.and(baseTextPredicate, baseAuthorPredicate);
 
-            Join<Post, AnswerPost> answerJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-            Predicate answerTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(answerJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
-            Predicate answerAuthorPredicate = answerJoin.get(AnswerPost_.AUTHOR).get(User_.ID).in(authorIdList);
-            Predicate answerCombined = criteriaBuilder.and(answerTextPredicate, answerAuthorPredicate);
+            // Keep answers inside EXISTS so multiple matching replies do not multiply paged post rows.
+            Subquery<Long> answerSubquery = query.subquery(Long.class);
+            Root<AnswerPost> answerRoot = answerSubquery.from(AnswerPost.class);
+            Join<AnswerPost, User> answerAuthorJoin = answerRoot.join(AnswerPost_.AUTHOR, JoinType.LEFT);
+            answerSubquery.select(answerRoot.get(AnswerPost_.ID));
+            Predicate answerNamePredicate = authorNameMatches(criteriaBuilder, answerAuthorJoin, searchTextLiteral);
+            Predicate answerTextPredicate = criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(answerRoot.get(AnswerPost_.CONTENT)), searchTextLiteral),
+                    answerNamePredicate);
+            answerSubquery.where(criteriaBuilder.equal(answerRoot.get(AnswerPost_.POST), root), answerTextPredicate, answerAuthorJoin.get(User_.ID).in(authorIdList),
+                    answerIsVisible(criteriaBuilder, answerRoot, answerAuthorJoin, includeUnverifiedIrisAnswers));
+            Predicate answerCombined = criteriaBuilder.exists(answerSubquery);
 
             return criteriaBuilder.or(baseCombined, answerCombined);
         };
@@ -76,13 +88,15 @@ public class MessageSpecs {
 
     /**
      * Specification which filters Messages and answer posts according to a search string in a match-all-manner
-     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
+     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content or in the name of the author
+     * of the message or of one of its answers (all strings lowercased). The name is matched as first name, last name or "first last".
      *
-     * @param searchText Text to be searched within messages
+     * @param searchText                   Text to be searched within messages
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return specification used to chain DB operations
      */
     @NonNull
-    public static Specification<Post> getSearchTextSpecification(String searchText) {
+    public static Specification<Post> getSearchTextSpecification(String searchText, boolean includeUnverifiedIrisAnswers) {
         return ((root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
                 return criteriaBuilder.conjunction();
@@ -97,12 +111,57 @@ public class MessageSpecs {
                 Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
 
                 Predicate searchInMessageContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
-                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-                Predicate searchInAnswerContent = criteriaBuilder.like(criteriaBuilder.lower(answersJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
+                Join<Post, User> authorJoin = root.join(Post_.AUTHOR, JoinType.LEFT);
+                Predicate searchInAuthorName = authorNameMatches(criteriaBuilder, authorJoin, searchTextLiteral);
 
-                return criteriaBuilder.or(searchInMessageContent, searchInAnswerContent);
+                // EXISTS instead of a join: a join returns one row per answer, which would repeat a post and distort the paging and the total count.
+                Subquery<Long> answerSubquery = query.subquery(Long.class);
+                Root<AnswerPost> answerRoot = answerSubquery.from(AnswerPost.class);
+                Join<AnswerPost, User> answerAuthorJoin = answerRoot.join(AnswerPost_.AUTHOR, JoinType.LEFT);
+                answerSubquery.select(answerRoot.get(AnswerPost_.ID));
+                Predicate searchInAnswerContent = criteriaBuilder.like(criteriaBuilder.lower(answerRoot.get(AnswerPost_.CONTENT)), searchTextLiteral);
+                Predicate searchInAnswerAuthorName = authorNameMatches(criteriaBuilder, answerAuthorJoin, searchTextLiteral);
+                answerSubquery.where(criteriaBuilder.equal(answerRoot.get(AnswerPost_.POST), root), criteriaBuilder.or(searchInAnswerContent, searchInAnswerAuthorName),
+                        answerIsVisible(criteriaBuilder, answerRoot, answerAuthorJoin, includeUnverifiedIrisAnswers));
+
+                return criteriaBuilder.or(searchInMessageContent, searchInAuthorName, criteriaBuilder.exists(answerSubquery));
             }
         });
+    }
+
+    /**
+     * Keeps answers hidden from students from influencing search results and counts.
+     *
+     * @param criteriaBuilder              the builder of the query
+     * @param answer                       the answer being matched
+     * @param author                       the answer's author
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
+     * @return the predicate matching answers visible to the requester
+     */
+    private static Predicate answerIsVisible(CriteriaBuilder criteriaBuilder, Root<AnswerPost> answer, Join<AnswerPost, User> author, boolean includeUnverifiedIrisAnswers) {
+        if (includeUnverifiedIrisAnswers) {
+            return criteriaBuilder.conjunction();
+        }
+        return criteriaBuilder.or(criteriaBuilder.notEqual(author.get(User_.LOGIN), User.IRIS_BOT_LOGIN), criteriaBuilder.isTrue(answer.get(AnswerPost_.VERIFIED)));
+    }
+
+    /**
+     * Builds the predicate that checks whether the lowercased name of the author, written as "first last", contains the lowercased search literal. This also covers a
+     * search for the first name or the last name alone. The login is only searched when both names are blank and it is displayed as the fallback name.
+     * The email address is never searched, so a search cannot reveal more than the name displayed next to a message.
+     *
+     * @param criteriaBuilder   the builder of the query
+     * @param author            the join to the author
+     * @param searchTextLiteral the lowercased search text wrapped in wildcards
+     * @return the predicate matching the author's name
+     */
+    private static Predicate authorNameMatches(CriteriaBuilder criteriaBuilder, Join<?, User> author, Expression<String> searchTextLiteral) {
+        Expression<String> firstName = criteriaBuilder.coalesce(author.get(User_.FIRST_NAME), "");
+        Expression<String> lastName = criteriaBuilder.coalesce(author.get(User_.LAST_NAME), "");
+        Expression<String> fullName = criteriaBuilder.concat(criteriaBuilder.concat(firstName, " "), lastName);
+        Predicate hasNoName = criteriaBuilder.and(criteriaBuilder.equal(criteriaBuilder.trim(firstName), ""), criteriaBuilder.equal(criteriaBuilder.trim(lastName), ""));
+        Predicate displayedLoginMatches = criteriaBuilder.and(hasNoName, criteriaBuilder.like(criteriaBuilder.lower(author.get(User_.LOGIN)), searchTextLiteral));
+        return criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(fullName), searchTextLiteral), displayedLoginMatches);
     }
 
     /**
@@ -151,21 +210,26 @@ public class MessageSpecs {
     /**
      * Specification to fetch Posts that were created by given authors for the calling user
      *
-     * @param authorIds ids of the post authors
+     * @param authorIds                    ids of the post authors
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return specification used to chain DB operations
      */
     @NonNull
-    public static Specification<Post> getAuthorSpecification(long[] authorIds) {
+    public static Specification<Post> getAuthorSpecification(long[] authorIds, boolean includeUnverifiedIrisAnswers) {
         return ((root, query, criteriaBuilder) -> {
             if (authorIds == null || authorIds.length == 0) {
                 return criteriaBuilder.conjunction();
             }
             else {
                 List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
-                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-                Predicate isAnswerPostAuthorPredicate = answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID).in(authorIdList);
+                Subquery<Long> answerSubquery = query.subquery(Long.class);
+                Root<AnswerPost> answerRoot = answerSubquery.from(AnswerPost.class);
+                Join<AnswerPost, User> answerAuthor = answerRoot.join(AnswerPost_.AUTHOR, JoinType.LEFT);
+                answerSubquery.select(answerRoot.get(AnswerPost_.ID));
+                answerSubquery.where(criteriaBuilder.equal(answerRoot.get(AnswerPost_.POST), root), answerAuthor.get(User_.ID).in(authorIdList),
+                        answerIsVisible(criteriaBuilder, answerRoot, answerAuthor, includeUnverifiedIrisAnswers));
                 Predicate isPostAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
-                return criteriaBuilder.or(isAnswerPostAuthorPredicate, isPostAuthorPredicate);
+                return criteriaBuilder.or(isPostAuthorPredicate, criteriaBuilder.exists(answerSubquery));
             }
         });
     }

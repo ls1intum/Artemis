@@ -52,75 +52,74 @@
             </small>
         </div>
     }
-    @if (!loading()) {
-        <div class="flex items-center gap-2 mb-4!">
-            <tumaet-ui-checkbox
-                name="showAddressedComplaint"
-                inputId="field_showAddressedComplaint"
-                [ngModel]="showAddressedComplaints()"
-                (ngModelChange)="triggerAddressedComplaints()"
-            />
-            <label class="inline-block" for="field_showAddressedComplaint">
-                @if (complaintType() === ComplaintType.COMPLAINT) {
-                    <span
-                        jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '' }}AddressedComplaints"
-                    ></span>
-                }
-                @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
-                    <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
-                }
-            </label>
+    <tumaet-ui-table-layout
+        [loading]="loading()"
+        [empty]="complaintsToShow().length === 0 && !loading()"
+        [emptyTitle]="
+            complaints().length !== 0
+                ? 'tumAetUi.table.empty'
+                : complaintType() === ComplaintType.COMPLAINT
+                  ? 'artemisApp.exerciseAssessmentDashboard.noComplaints'
+                  : 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests'
+        "
+    >
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            @if (!loading()) {
+                <tumaet-ui-checkbox
+                    name="showAddressedComplaint"
+                    inputId="field_showAddressedComplaint"
+                    [ngModel]="showAddressedComplaints()"
+                    (ngModelChange)="triggerAddressedComplaints()"
+                />
+                <label class="inline-block text-sm" for="field_showAddressedComplaint">
+                    @if (complaintType() === ComplaintType.COMPLAINT) {
+                        <span
+                            jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '' }}AddressedComplaints"
+                        ></span>
+                    }
+                    @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
+                        <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
+                    }
+                </label>
+            }
         </div>
-    }
-    <div class="flex flex-wrap gap-y-2 overflow-x-auto pt-4!">
-        <table class="w-full text-left" [hidden]="complaintsToShow().length === 0" tumAetUiTable>
+        <table size="small" striped tumAetUiTable [sortField]="complaintsSortingPredicate" [sortOrder]="complaintsReverseOrder ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
-                <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" (sortChange)="sortRows()">
-                    <th jhiSortBy="id">
-                        <a class="th-link">#</a>
-                        <fa-icon [icon]="faSort" />
+                <tr>
+                    <th tumAetUiSortableColumn="id">
+                        <span>#</span>
                     </th>
-                    <th jhiSortBy="result.participation.exercise.title">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.exercise"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="result.participation.exercise.title">
+                        <span jhiTranslate="artemisApp.complaint.listOfComplaints.exercise"></span>
                     </th>
-                    <th jhiSortBy="result.submission.id">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.submissionId"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="result.submission.id">
+                        <span jhiTranslate="artemisApp.complaint.listOfComplaints.submissionId"></span>
                     </th>
-                    <th jhiSortBy="assessorName">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="assessorName">
+                        <span jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></span>
                     </th>
                     @if (course()?.isAtLeastInstructor) {
-                        <th jhiSortBy="student.login">
-                            <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.studentLogin"></a>
-                            <fa-icon [icon]="faSort" />
+                        <th tumAetUiSortableColumn="student.login">
+                            <span jhiTranslate="artemisApp.complaint.listOfComplaints.studentLogin"></span>
                         </th>
-                        <th jhiSortBy="student.name">
-                            <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.studentName"></a>
-                            <fa-icon [icon]="faSort" />
+                        <th tumAetUiSortableColumn="student.name">
+                            <span jhiTranslate="artemisApp.complaint.listOfComplaints.studentName"></span>
                         </th>
-                        <th jhiSortBy="complaintResponse.reviewer.name">
-                            <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.reviewerName"></a>
-                            <fa-icon [icon]="faSort" />
+                        <th tumAetUiSortableColumn="complaintResponse.reviewer.name">
+                            <span jhiTranslate="artemisApp.complaint.listOfComplaints.reviewerName"></span>
                         </th>
                     }
-                    <th jhiSortBy="submittedTime">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.dateAndTime"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="submittedTime">
+                        <span jhiTranslate="artemisApp.complaint.listOfComplaints.dateAndTime"></span>
                     </th>
-                    <th jhiSortBy="responseTime">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.responseTime"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="responseTime">
+                        <span jhiTranslate="artemisApp.complaint.listOfComplaints.responseTime"></span>
                     </th>
-                    <th jhiSortBy="accepted">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.status"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="accepted">
+                        <span jhiTranslate="artemisApp.complaint.listOfComplaints.status"></span>
                     </th>
-                    <th jhiSortBy="lockStatus">
-                        <a class="th-link" jhiTranslate="artemisApp.locks.lockStatus"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="lockStatus">
+                        <span jhiTranslate="artemisApp.locks.lockStatus"></span>
                     </th>
                     <th jhiTranslate="artemisApp.complaint.listOfComplaints.actions"></th>
                 </tr>
@@ -201,13 +200,5 @@
                 }
             </tbody>
         </table>
-    </div>
-    <tumaet-ui-message [hidden]="complaints().length !== 0" severity="info">
-        @if (complaintType() === ComplaintType.COMPLAINT) {
-            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></span>
-        }
-        @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
-            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></span>
-        }
-    </tumaet-ui-message>
+    </tumaet-ui-table-layout>
 </div>

@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,20 +21,33 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.task.TaskRejectedException;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionFailureMode;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterDecisionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCompetencyDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -58,6 +74,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @Mock
     private LectureUnitApi lectureUnitApi;
 
+    @Mock
+    private HyperionQuizQuestionPoolModelService modelService;
+
     private HyperionQuizQuestionPoolService service;
 
     private AutoCloseable mocks;
@@ -67,7 +86,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi));
+        when(modelService.isConfigured()).thenReturn(true);
+        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi),
+                modelService);
         course = new Course();
         course.setId(5L);
     }
@@ -86,6 +107,15 @@ class HyperionQuizQuestionPoolServiceTest {
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(true, 12));
         verify(taskService).runBuildAsync(5L, 7L, "lease");
+    }
+
+    @Test
+    void startBuild_isRefusedWithoutAConfiguredModel() {
+        when(modelService.isConfigured()).thenReturn(false);
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        verify(buildService, never()).tryStart(anyLong());
+        verify(buildService, never()).enqueue(course);
     }
 
     @Test
@@ -124,15 +154,40 @@ class HyperionQuizQuestionPoolServiceTest {
     @Test
     void getProgress_aggregatesTheStateCounts() {
         when(buildService.isRunning(5L)).thenReturn(true);
-        when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of(new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.PENDING, 3),
-                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.GENERATING, 1), new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.GENERATED, 2),
-                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FILTERED, 10), new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FAILED_FILTER, 1)));
-        when(itemRepository.countByCourseIdAndAccepted(5L, true)).thenReturn(8);
-        when(itemRepository.countByCourseIdAndAccepted(5L, false)).thenReturn(2);
+        when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of(new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.PENDING, null, 3),
+                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.GENERATING, null, 1), new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.GENERATED, null, 2),
+                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FILTERED, true, 8), new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FILTERED, false, 2),
+                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FAILED_FILTER, null, 1)));
 
         QuizQuestionPoolProgressDTO progress = service.getProgress(5L);
 
-        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1));
+        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null, true));
+    }
+
+    @Test
+    void cancelBuild_throwsConflictWithoutARunningBuild() {
+        when(buildService.requestCancel(5L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.cancelBuild(5L)).isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void cancelBuild_asksTheRunningBuildToStop() {
+        when(buildService.requestCancel(5L)).thenReturn(true);
+
+        service.cancelBuild(5L);
+
+        verify(buildService).requestCancel(5L);
+    }
+
+    @Test
+    void getProgress_carriesTheSettingsOfTheRunningBuild() {
+        HyperionCourseSettings settings = new HyperionCourseSettings(false, 5, false, 12, 1, 4, 20, 50, 30);
+        when(buildService.isRunning(5L)).thenReturn(true);
+        when(buildService.settingsOfRunningBuild(5L)).thenReturn(settings);
+        when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of());
+
+        assertThat(service.getProgress(5L).buildSettings()).isEqualTo(HyperionCourseSettingsDTO.of(settings));
     }
 
     @Test
@@ -154,24 +209,114 @@ class HyperionQuizQuestionPoolServiceTest {
         item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
         item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
         item.setUpdatedAt(ZonedDateTime.now());
-        when(itemRepository.findAllByCourseIdAndCompetencyIdOrdered(5L, 9L)).thenReturn(List.of(item));
+        when(itemRepository.findPageForCourse(5L, 9L, PageRequest.of(0, 100))).thenReturn(new PageImpl<>(List.of(item), PageRequest.of(0, 100), 1));
+        when(itemRepository.findCompetencyIdsForCourse(5L)).thenReturn(List.of(9L, 10L));
 
-        List<QuizQuestionPoolItemDTO> items = service.getItems(5L, 9L);
+        QuizQuestionPoolPageDTO page = service.getItems(5L, 9L, false, 0, 100);
 
-        assertThat(items).hasSize(1);
-        assertThat(items.getFirst().competencyTitle()).isEqualTo("Arrays");
-        assertThat(items.getFirst().lectureUnitId()).isEqualTo(4L);
-        assertThat(items.getFirst().lectureUnitName()).isEqualTo("Arrays in Java");
-        assertThat(items.getFirst().state()).isEqualTo(QuizQuestionPoolItemState.PENDING);
-        verify(itemRepository, never()).findAllByCourseIdOrdered(5L);
+        assertThat(page.pendingCount()).isNull();
+        verify(itemRepository, never()).findAllWithoutFlagForCourse(anyLong(), any());
+
+        assertThat(page.totalCount()).isEqualTo(1);
+        assertThat(page.items()).hasSize(1);
+        assertThat(page.items().getFirst().competencyTitle()).isEqualTo("Arrays");
+        assertThat(page.items().getFirst().lectureUnitId()).isEqualTo(4L);
+        assertThat(page.items().getFirst().lectureUnitName()).isEqualTo("Arrays in Java");
+        assertThat(page.items().getFirst().state()).isEqualTo(QuizQuestionPoolItemState.PENDING);
+        assertThat(page.items().getFirst().flagged()).isNull();
+        assertThat(page.competencies()).containsExactly(new QuizQuestionPoolCompetencyDTO(9L, "Arrays"), new QuizQuestionPoolCompetencyDTO(10L, null));
     }
 
     @Test
-    void getItems_listsTheWholePoolWithoutACompetency() {
+    void getItems_pagesTheWholePoolAndDerivesTheFlagOfOlderJudgedItems() {
         when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of());
-        when(itemRepository.findAllByCourseIdOrdered(5L)).thenReturn(List.of());
+        when(itemRepository.findCompetencyIdsForCourse(5L)).thenReturn(List.of());
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(2L);
+        item.setCourse(course);
+        item.setCompetencyId(9L);
+        item.setLectureUnitId(4L);
+        item.setLanguage(QuizQuestionGenerationLanguage.EN);
+        item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
+        item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        item.setAccepted(true);
+        item.setDecision(new QuizQuestionFilterDecisionDTO(true, 0.6, List.of(new QuizQuestionFilterVerdictDTO(QuizQuestionFailureMode.ILL_FORMED_DISTRACTORS, 0.4, false, "weak")),
+                "checked"));
+        item.setUpdatedAt(ZonedDateTime.now());
+        when(itemRepository.findAllWithoutFlagForCourse(5L, QuizQuestionPoolItemState.FILTERED)).thenReturn(List.of(item));
+        when(itemRepository.findFlaggedPageForCourse(5L, PageRequest.of(1, 50))).thenReturn(new PageImpl<>(List.of(item), PageRequest.of(1, 50), 51));
+        when(itemRepository.countFlaggedPendingForCourse(5L)).thenReturn(7L);
+        when(lectureUnitApi.findAllByIds(anyCollection())).thenReturn(List.of());
 
-        assertThat(service.getItems(5L, null)).isEmpty();
-        verify(lectureUnitApi, never()).findAllByIds(anyCollection());
+        QuizQuestionPoolPageDTO page = service.getItems(5L, null, true, 1, 50);
+
+        verify(itemRepository).storeFlag(2L, true);
+        assertThat(page.totalCount()).isEqualTo(51);
+        assertThat(page.pendingCount()).isEqualTo(7L);
+        assertThat(page.items().getFirst().flagged()).isTrue();
+        assertThat(page.items().getFirst().decision().verdicts().getFirst().flagged()).isTrue();
+    }
+
+    @Test
+    void deleteItem_removesAnItemOfTheCourseWhileNoBuildRuns() {
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(3L);
+        item.setCourse(course);
+        when(itemRepository.findByIdElseThrow(3L)).thenReturn(item);
+        when(buildService.tryStart(5L)).thenReturn("lease");
+
+        service.deleteItem(5L, 3L);
+
+        InOrder order = inOrder(buildService, itemRepository);
+        order.verify(buildService).tryStart(5L);
+        order.verify(itemRepository).deleteById(3L);
+        order.verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void deleteItem_refusesAnItemOfAnotherCourseAndADeletionDuringABuild() {
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(3L);
+        item.setCourse(course);
+        when(itemRepository.findByIdElseThrow(3L)).thenReturn(item);
+
+        assertThatThrownBy(() -> service.deleteItem(6L, 3L)).isInstanceOf(EntityNotFoundException.class);
+        when(buildService.tryStart(5L)).thenReturn(null);
+        assertThatThrownBy(() -> service.deleteItem(5L, 3L)).isInstanceOf(ConflictException.class);
+        verify(itemRepository, never()).deleteById(anyLong());
+        verify(buildService, never()).release(anyLong(), any());
+    }
+
+    @Test
+    void deleteItems_clearsTheCompetencyOrThePoolUnderTheBuildLeaseAndReportsTheCount() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(itemRepository.deleteAllForCourse(5L, 9L)).thenReturn(4);
+        when(itemRepository.deleteAllForCourse(5L, null)).thenReturn(12);
+
+        assertThat(service.deleteItems(5L, 9L).deleted()).isEqualTo(4);
+        assertThat(service.deleteItems(5L, null).deleted()).isEqualTo(12);
+        verify(buildService, times(2)).release(5L, "lease");
+
+        when(buildService.tryStart(5L)).thenReturn(null);
+        assertThatThrownBy(() -> service.deleteItems(5L, null)).isInstanceOf(ConflictException.class);
+        verify(itemRepository, never()).deleteAllForCourse(5L, 10L);
+    }
+
+    @Test
+    void deleteItems_releasesTheBuildLeaseWhenTheDeletionFails() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(itemRepository.deleteAllForCourse(5L, null)).thenThrow(new IllegalStateException("database down"));
+
+        assertThatThrownBy(() -> service.deleteItems(5L, null)).isInstanceOf(IllegalStateException.class);
+
+        verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void getItems_rejectsAPageOutOfRange() {
+        assertThatThrownBy(() -> service.getItems(5L, null, false, -1, 100)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> service.getItems(5L, null, false, 0, 501)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> service.getItems(5L, null, false, 0, 0)).isInstanceOf(BadRequestAlertException.class);
     }
 }

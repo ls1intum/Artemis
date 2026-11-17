@@ -1,3 +1,4 @@
+import { TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { vi } from 'vitest';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -20,7 +21,6 @@ import { Router } from '@angular/router';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
-import { DialogModule } from 'primeng/dialog';
 import * as readUsersFromCsv from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -57,7 +57,16 @@ describe('UsersImportDialogComponent', () => {
         })
             .overrideComponent(UsersImportDialogComponent, {
                 set: {
-                    imports: [FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent), FaIconComponent, DialogModule],
+                    imports: [
+                        FormsModule,
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe, (value: string) => value),
+                        MockComponent(HelpIconComponent),
+                        FaIconComponent,
+                        TumAetUiDialogComponent,
+                        TumAetUiTableDirective,
+                        TumAetUiTableLayoutComponent,
+                    ],
                 },
             })
             .compileComponents()

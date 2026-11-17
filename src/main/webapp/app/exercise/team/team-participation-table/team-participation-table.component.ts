@@ -108,7 +108,6 @@ export class TeamParticipationTableComponent implements OnInit {
         lazy: false,
         paginated: false,
         showSearch: false,
-        scrollable: true,
         tableStyle: { 'min-width': '60rem' },
     };
 

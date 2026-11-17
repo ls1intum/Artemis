@@ -193,4 +193,16 @@ class LinkPreviewDocumentFetcherTest {
             responseBody.write(body);
         }
     }
+
+    @Test
+    void anInternationalizedHostIsConvertedToItsAsciiForm() throws Exception {
+        assertThat(LinkPreviewDocumentFetcher.createUri("https://bücher.example/path?q=1").getHost()).isEqualTo("xn--bcher-kva.example");
+        assertThat(LinkPreviewDocumentFetcher.createUri("https://bücher.example:8443/").getPort()).isEqualTo(8443);
+        assertThat(LinkPreviewDocumentFetcher.createUri("https://example.org/").getHost()).isEqualTo("example.org");
+        // escaped delimiters stay escaped
+        URI escaped = LinkPreviewDocumentFetcher.createUri("https://bücher.example/a%2Fb?q=x%26y#f%23g");
+        assertThat(escaped.getRawPath()).isEqualTo("/a%2Fb");
+        assertThat(escaped.getRawQuery()).isEqualTo("q=x%26y");
+        assertThat(escaped.getRawFragment()).isEqualTo("f%23g");
+    }
 }
