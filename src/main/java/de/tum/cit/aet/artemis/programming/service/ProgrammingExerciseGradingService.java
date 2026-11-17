@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.SubmissionResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
@@ -147,6 +148,8 @@ public class ProgrammingExerciseGradingService {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final SubmissionResultRepository submissionResultRepository;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -156,7 +159,8 @@ public class ProgrammingExerciseGradingService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
             TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, FeedbackRepository feedbackRepository, BuildJobRepository buildJobRepository) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, FeedbackRepository feedbackRepository, BuildJobRepository buildJobRepository,
+            SubmissionResultRepository submissionResultRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -182,6 +186,7 @@ public class ProgrammingExerciseGradingService {
         this.testCasePointsService = testCasePointsService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
         this.buildJobRepository = buildJobRepository;
+        this.submissionResultRepository = submissionResultRepository;
     }
 
     /**
@@ -504,7 +509,7 @@ public class ProgrammingExerciseGradingService {
         // An older build that finalizes after a newer one is discarded before it gets here (see
         // LocalCIResultProcessingService#finalizeIfGroupComplete), so this build may write the submission's state.
         List<Result> resultsOfSubmission = aggregatedResult.getSubmission() == null ? List.of()
-                : resultRepository.findAllBySubmissionIdOrderByIdDesc(aggregatedResult.getSubmission().getId());
+                : submissionResultRepository.findAllBySubmissionIdOrderByIdDesc(aggregatedResult.getSubmission().getId());
         if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
             programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
             submission.setBuildFailed(anyContainerFailedToBuild);
