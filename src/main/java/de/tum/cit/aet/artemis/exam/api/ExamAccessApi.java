@@ -63,6 +63,17 @@ public class ExamAccessApi extends AbstractExamApi {
     }
 
     /**
+     * Checks that the current user may read exam exercise content such as quiz pictures: teaching assistants and above always,
+     * students only with a student exam of this exam once the exam content is available.
+     *
+     * @param exercise the exam exercise
+     * @param user     the current user, loaded with its course roles
+     */
+    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise, User user) {
+        examAccessService.checkExamContentAvailableForStudentElseThrow(exercise, user);
+    }
+
+    /**
      * Checks actual student-exam enrollment and publication for the fixed student snapshot operation.
      *
      * @param exercise the exam exercise

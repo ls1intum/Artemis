@@ -1,147 +1,146 @@
-<form [formGroup]="form" class="form-group col-auto border border-warning p-3" data-testid="plagiarism-control-settings">
+<form [formGroup]="form" class="border border-state-warning p-4!" data-testid="plagiarism-control-settings">
     <button
         type="button"
+        tumAetUiButton
+        severity="secondary"
         data-testid="plagiarism-control-toggle"
-        class="btn btn-secondary me-1"
+        class="me-1 max-w-full whitespace-normal!"
         (click)="isCPCCollapsed = !isCPCCollapsed"
         jhiTranslate="{{ isCPCCollapsed ? 'artemisApp.plagiarism.showContinuousPlagiarismControl' : 'artemisApp.plagiarism.hideContinuousPlagiarismControl' }}"
     ></button>
 
-    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate" />
-    <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+    <jhi-help-icon placement="bottom auto" text="artemisApp.plagiarism.continuousPlagiarismControlTooltip" />
+    <tumaet-ui-tag severity="warn" rounded class="ms-1" value="BETA" />
 
-    <div class="row" [hidden]="isCPCCollapsed">
-        <div class="plagiarism-option">
-            <div class="form-check form-check-inline">
-                <input
-                    [attr.aria-label]="'artemisApp.plagiarism.continuousPlagiarismControlEnabled' | artemisTranslate"
-                    type="checkbox"
-                    id="continuous_plagiarism_control_enabled"
-                    class="plagiarism-option-checkbox form-check-input"
-                    formControlName="continuousPlagiarismControlEnabled"
-                />
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled"></div>
-            </div>
+    <div [hidden]="isCPCCollapsed">
+        <div class="plagiarism-option flex items-center gap-2 py-1">
+            <tumaet-ui-checkbox inputId="continuous_plagiarism_control_enabled" formControlName="continuousPlagiarismControlEnabled" />
+            <label
+                for="continuous_plagiarism_control_enabled"
+                class="plagiarism-option-label mb-0! cursor-pointer"
+                jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled"
+            ></label>
         </div>
 
-        <div class="plagiarism-option">
-            <div class="form-check form-check-inline">
-                <input
-                    [attr.aria-label]="'artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled' | artemisTranslate"
-                    type="checkbox"
-                    id="continuous_plagiarism_control_post_due_date_checks_enabled"
-                    class="plagiarism-option-checkbox form-check-input"
-                    formControlName="continuousPlagiarismControlPostDueDateChecksEnabled"
-                />
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled"></div>
-            </div>
+        <div class="plagiarism-option flex items-center gap-2 py-1">
+            <tumaet-ui-checkbox inputId="continuous_plagiarism_control_post_due_date_checks_enabled" formControlName="continuousPlagiarismControlPostDueDateChecksEnabled" />
+            <label
+                for="continuous_plagiarism_control_post_due_date_checks_enabled"
+                class="plagiarism-option-label mb-0! cursor-pointer"
+                jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled"
+            ></label>
         </div>
 
-        <div class="row">
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="form-group d-flex flex-column h-100">
-                    <div class="label-row">
-                        <span class="form-control-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></span>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
-                    </div>
-                    <input
-                        [attr.aria-label]="'artemisApp.plagiarism.similarityThreshold' | artemisTranslate"
-                        type="number"
-                        class="form-control"
-                        [class.is-invalid]="form.get('similarityThreshold')?.invalid && form.get('similarityThreshold')?.touched"
-                        min="0"
-                        max="100"
-                        step="1"
-                        id="plagiarism-similarity-threshold"
-                        formControlName="similarityThreshold"
-                        required
-                    />
-                    @if (form.get('similarityThreshold')?.hasError('notInteger') && form.get('similarityThreshold')?.touched) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+        <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2 min-[1200px]:grid-cols-4">
+            <div class="flex h-full flex-col py-2.5">
+                <div class="mb-2 inline-flex min-w-0 items-start gap-1.5">
+                    <label
+                        class="min-w-0 flex-1 basis-0 leading-normal whitespace-normal [overflow-wrap:anywhere]"
+                        for="plagiarism-similarity-threshold"
+                        jhiTranslate="artemisApp.plagiarism.similarityThreshold"
+                    ></label>
+                    <jhi-help-icon class="shrink-0" placement="bottom auto" text="artemisApp.plagiarism.similarityThresholdTooltip" />
                 </div>
+                <input
+                    tumAetUiInput
+                    type="number"
+                    [tumAetUiInputInvalid]="!!form.get('similarityThreshold')?.invalid && !!form.get('similarityThreshold')?.touched"
+                    min="0"
+                    max="100"
+                    step="1"
+                    id="plagiarism-similarity-threshold"
+                    formControlName="similarityThreshold"
+                    required
+                />
+                @if (form.get('similarityThreshold')?.hasError('notInteger') && form.get('similarityThreshold')?.touched) {
+                    <small class="mt-1 text-state-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                }
             </div>
 
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="form-group d-flex flex-column h-100">
-                    <div class="label-row">
-                        <span class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></span>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
-                    </div>
-                    <input
-                        [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
-                        type="number"
-                        class="form-control"
-                        [class.is-invalid]="form.get('minimumScore')?.invalid && form.get('minimumScore')?.touched"
-                        min="0"
-                        max="100"
-                        step="1"
-                        id="plagiarism-minimum-score"
-                        formControlName="minimumScore"
-                        required
-                    />
-                    @if (form.get('minimumScore')?.hasError('notInteger') && form.get('minimumScore')?.touched) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+            <div class="flex h-full flex-col py-2.5">
+                <div class="mb-2 inline-flex min-w-0 items-start gap-1.5">
+                    <label
+                        class="min-w-0 flex-1 basis-0 leading-normal whitespace-normal [overflow-wrap:anywhere]"
+                        for="plagiarism-minimum-score"
+                        jhiTranslate="artemisApp.plagiarism.minimumScore"
+                    ></label>
+                    <jhi-help-icon class="shrink-0" placement="bottom auto" text="artemisApp.plagiarism.minimumScoreTooltip" />
                 </div>
+                <input
+                    tumAetUiInput
+                    type="number"
+                    [tumAetUiInputInvalid]="!!form.get('minimumScore')?.invalid && !!form.get('minimumScore')?.touched"
+                    min="0"
+                    max="100"
+                    step="1"
+                    id="plagiarism-minimum-score"
+                    formControlName="minimumScore"
+                    required
+                />
+                @if (form.get('minimumScore')?.hasError('notInteger') && form.get('minimumScore')?.touched) {
+                    <small class="mt-1 text-state-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                }
             </div>
 
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="form-group d-flex flex-column h-100">
-                    <div class="label-row">
-                        <span class="form-control-label" [jhiTranslate]="getMinimumSizeLabel()"></span>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
-                    </div>
-                    <input
-                        [attr.aria-label]="getMinimumSizeLabel() | artemisTranslate"
-                        type="number"
-                        class="form-control"
-                        [class.is-invalid]="form.get('minimumSize')?.invalid && form.get('minimumSize')?.touched"
-                        min="0"
-                        step="1"
-                        id="plagiarism-minimum-size"
-                        formControlName="minimumSize"
-                        required
-                    />
-                    @if (form.get('minimumSize')?.hasError('notInteger') && form.get('minimumSize')?.touched) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
+            <div class="flex h-full flex-col py-2.5">
+                <div class="mb-2 inline-flex min-w-0 items-start gap-1.5">
+                    <label
+                        class="min-w-0 flex-1 basis-0 leading-normal whitespace-normal [overflow-wrap:anywhere]"
+                        for="plagiarism-minimum-size"
+                        [jhiTranslate]="getMinimumSizeLabel()"
+                    ></label>
+                    <jhi-help-icon class="shrink-0" placement="bottom auto" [text]="getMinimumSizeTooltip()" />
                 </div>
+                <input
+                    tumAetUiInput
+                    type="number"
+                    [tumAetUiInputInvalid]="!!form.get('minimumSize')?.invalid && !!form.get('minimumSize')?.touched"
+                    min="0"
+                    step="1"
+                    id="plagiarism-minimum-size"
+                    formControlName="minimumSize"
+                    required
+                />
+                @if (form.get('minimumSize')?.hasError('notInteger') && form.get('minimumSize')?.touched) {
+                    <small class="mt-1 text-state-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                }
             </div>
 
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="form-group d-flex flex-column h-100" data-testid="plagiarism-response-period-field">
-                    <div class="label-row" data-testid="plagiarism-response-period-label-row">
-                        <span class="form-control-label" data-testid="plagiarism-response-period-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"></span>
-                        <fa-icon
-                            data-testid="plagiarism-response-period-help"
-                            [icon]="faQuestionCircle"
-                            placement="bottom auto"
-                            [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate"
-                        />
-                    </div>
-                    <input
-                        [attr.aria-label]="'artemisApp.plagiarism.plagiarismCaseResponsePeriod' | artemisTranslate"
-                        type="number"
-                        class="form-control"
-                        [class.is-invalid]="
-                            form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.invalid &&
-                            form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.touched
-                        "
-                        min="7"
-                        max="31"
-                        step="1"
-                        id="plagiarism-case-response-period"
-                        formControlName="continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
-                        required
+            <div class="flex h-full flex-col py-2.5" data-testid="plagiarism-response-period-field">
+                <div class="mb-2 inline-flex min-w-0 items-start gap-1.5" data-testid="plagiarism-response-period-label-row">
+                    <label
+                        class="min-w-0 flex-1 basis-0 leading-normal whitespace-normal [overflow-wrap:anywhere]"
+                        for="plagiarism-case-response-period"
+                        data-testid="plagiarism-response-period-label"
+                        jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"
+                    ></label>
+                    <jhi-help-icon
+                        class="shrink-0"
+                        data-testid="plagiarism-response-period-help"
+                        placement="bottom auto"
+                        text="artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip"
                     />
-                    @if (
-                        form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger') &&
-                        form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.touched
-                    ) {
-                        <small class="form-text text-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
-                    }
                 </div>
+                <input
+                    tumAetUiInput
+                    type="number"
+                    [tumAetUiInputInvalid]="
+                        !!form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.invalid &&
+                        !!form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.touched
+                    "
+                    min="7"
+                    max="31"
+                    step="1"
+                    id="plagiarism-case-response-period"
+                    formControlName="continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
+                    required
+                />
+                @if (
+                    form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger') &&
+                    form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.touched
+                ) {
+                    <small class="mt-1 text-state-danger" jhiTranslate="artemisApp.plagiarism.validation.mustBeInteger"></small>
+                }
             </div>
         </div>
     </div>

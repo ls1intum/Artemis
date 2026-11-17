@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model, output, signal } from '@angular/core';
-import { FormField, disabled, email, form, maxLength, minLength, pattern, required } from '@angular/forms/signals';
+import { FormField, disabled, email, form, maxLength, minLength, required, validateHttp } from '@angular/forms/signals';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -7,10 +7,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_TIMEOUT_MS, EMAIL_ALLOWED_URL, EmailAllowedResponse, emailAllowedRequestContext } from 'app/account/shared/email-allowed';
+import { EMAIL_NOT_ALLOWED_ERROR_KEY } from 'app/foundation/constants/error.constants';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /** Error keys of the server that are shown as their own message. All other failures show a generic message. */
-const EMAIL_CHANGE_ERROR_KEYS = ['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'emailChangeDailyLimitReached', 'noPendingEmailChange'];
+const EMAIL_CHANGE_ERROR_KEYS = [EMAIL_NOT_ALLOWED_ERROR_KEY, 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'emailChangeDailyLimitReached', 'noPendingEmailChange'];
 const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 
 interface AccountSettingsFormModel {
@@ -51,7 +53,8 @@ export class AccountSettingsDialogComponent {
     /** Whether the server can send emails. Without it an email change cannot be confirmed, so the email cannot be changed. */
     readonly mailConfigured = this.profileInfo.mailConfigured ?? true;
     readonly isSaml2Active = signal(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2));
-    readonly allowedEmailPatternReadable = this.profileInfo.allowedEmailPatternReadable ?? this.profileInfo.allowedEmailPattern;
+    /** The description of the allowed addresses that the administrators configured, shown below the email field so that people know what is accepted before they save */
+    readonly allowedEmailPatternHint = this.profileInfo.allowedEmailPatternReadable;
 
     readonly settingsModel = signal<AccountSettingsFormModel>({ firstName: '', lastName: '', email: '' });
     readonly settingsChanged = computed(() => this.haveSettingsChanged());
@@ -65,9 +68,23 @@ export class AccountSettingsDialogComponent {
         required(path.email);
         minLength(path.email, 5);
         maxLength(path.email, 100);
-        const allowedEmailPattern = this.profileInfo.allowedEmailPattern;
-        if (allowedEmailPattern) {
-            pattern(path.email, new RegExp(`^(?:${allowedEmailPattern})$`));
+        if (this.profileInfo.allowedEmailPattern) {
+            // With a restriction, the server alone judges the address. The check only runs once the other validators passed, and a failed request does not block the
+            // form, because the decision is made again when the settings are saved. The address the account already has is not asked about: the server only checks an
+            // address that changes, so a person whose address predates the restriction can still save the name.
+            validateHttp<string, EmailAllowedResponse>(path.email, {
+                request: ({ value }) => ({
+                    url: EMAIL_ALLOWED_URL,
+                    method: 'POST',
+                    body: { email: value() },
+                    context: emailAllowedRequestContext(),
+                    timeout: EMAIL_ALLOWED_TIMEOUT_MS,
+                }),
+                debounce: EMAIL_ALLOWED_DEBOUNCE_MS,
+                when: ({ value }) => value().toLowerCase() !== (this.accountService.userIdentity()?.email ?? '').toLowerCase(),
+                onSuccess: (response) => (response.allowed ? undefined : { kind: 'emailNotAllowed' }),
+                onError: () => undefined,
+            });
         } else {
             email(path.email);
         }
@@ -99,7 +116,7 @@ export class AccountSettingsDialogComponent {
 
     saveSettings(): void {
         const user = this.accountService.userIdentity();
-        if (!user || this.settingsForm().invalid() || !this.settingsChanged()) {
+        if (!user || this.settingsForm().invalid() || this.settingsForm().pending() || !this.settingsChanged()) {
             return;
         }
 

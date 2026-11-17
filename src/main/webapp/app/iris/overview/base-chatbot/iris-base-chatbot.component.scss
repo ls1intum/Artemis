@@ -7,12 +7,13 @@ $iris-border-radius-lg: 0.5rem; // 8px — cards, menus, text areas
 // z-index: 1    — scroll-to-bottom button, sticky sidebar headers
 // z-index: 10   — chat header (sits above messages)
 
-@mixin custom-scrollbar($width: 6px) {
+.chat-container .chat-body .messages,
+.chat-history-list {
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
 
     &::-webkit-scrollbar {
-        width: $width;
+        width: var(--iris-scrollbar-width, 6px);
     }
 
     &::-webkit-scrollbar-thumb {
@@ -375,8 +376,6 @@ pre {
             overflow-x: hidden;
             overflow-y: auto;
 
-            @include custom-scrollbar(6px);
-
             > div:first-child {
                 margin-top: 24px;
             }
@@ -613,7 +612,7 @@ pre {
         min-height: 0;
         overflow-y: auto;
 
-        @include custom-scrollbar(4px);
+        --iris-scrollbar-width: 4px;
     }
 
     &-label p {
@@ -653,7 +652,7 @@ pre {
     }
 }
 
-.p-chat {
+.iris-chat-panel {
     background-color: var(--iris-tertiary-background);
     color: var(--body-color);
     border-radius: $iris-border-radius-sm;

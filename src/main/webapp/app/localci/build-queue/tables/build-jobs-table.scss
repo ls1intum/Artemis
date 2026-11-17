@@ -6,20 +6,6 @@
     min-height: 300px;
     max-height: 800px;
     overflow-y: auto;
-
-    .table-responsive {
-        overflow-x: visible;
-    }
-
-    .table {
-        width: max-content;
-        table-layout: auto;
-
-        th {
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-    }
 }
 
 // Tiny columns (48px width) - used for icons, checkboxes, small actions
@@ -89,7 +75,6 @@
     // Ensure interactive elements (buttons, links, result badges) appear above the stretched link
     a:not(.stretched-row-link),
     button,
-    .btn,
     jhi-result {
         position: relative;
         z-index: 2;

@@ -1,7 +1,7 @@
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, output, signal, viewChild } from '@angular/core';
-import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -26,6 +26,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 
+export interface ExerciseFilterModalData {
+    sidebarData: SidebarData | undefined;
+    exerciseFilters: ExerciseFilterOptions | undefined;
+}
+
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
@@ -45,6 +50,7 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 })
 export class ExerciseFilterModalComponent implements OnInit {
     private activeModal = inject(TumAetUiDialogRef);
+    private readonly config = inject<TumAetUiDialogConfig<ExerciseFilterModalData>>(TumAetUiDialogConfig);
 
     protected readonly faFilter = faFilter;
 
@@ -68,7 +74,7 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.searchModel.set(value);
     }
 
-    sidebarData?: SidebarData;
+    sidebarData = this.config.data?.sidebarData;
 
     categoryFilter?: FilterOption<ExerciseCategoryFilterOption>;
     readonly typeFilter = signal<FilterOption<ExerciseTypeFilterOption> | undefined>(undefined);
@@ -93,7 +99,7 @@ export class ExerciseFilterModalComponent implements OnInit {
         this._achievedScore.set(value);
     }
 
-    exerciseFilters?: ExerciseFilterOptions;
+    exerciseFilters = this.config.data?.exerciseFilters;
 
     ngOnInit() {
         this.categoryFilter = this.exerciseFilters?.categoryFilter;

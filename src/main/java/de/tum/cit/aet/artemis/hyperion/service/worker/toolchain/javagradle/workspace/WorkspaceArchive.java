@@ -23,6 +23,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.runtime.workspace.BinaryContent;
 
 /**
  * Transfers workspace files in bounded tar archives, avoiding shell quoting and exec-output limits.

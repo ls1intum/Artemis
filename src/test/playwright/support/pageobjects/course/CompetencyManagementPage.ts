@@ -23,7 +23,8 @@ export class CompetencyManagementPage {
             await this.page.reload();
             await responsePromise;
         }
-        const closeButton = this.page.locator('#close-button');
+        // The explanation dialog that opens on the first visit.
+        const closeButton = this.page.getByTestId('close-button');
         if (await closeButton.isVisible()) {
             await closeButton.click();
         }

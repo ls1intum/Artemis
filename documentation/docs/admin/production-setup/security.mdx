@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-15
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -429,6 +429,19 @@ To allow users to clone their programming exercises via SSH in the integrated co
 
 Follow the next steps to create and manage SSH key pairs, distribute them across multiple nodes via Ansible, configure the system to use these keys, and adapt Nginx to enable SSH routing.
 
+### Connection and push limits
+
+Each LocalVC node allows up to 128 simultaneous SSH sessions per client IP address. Set
+`artemis.version-control.ssh-max-sessions-per-address` to change this limit; a value of zero or less
+disables it. Clients behind the same campus gateway share an allowance. Behind a load balancer,
+configure [trusted PROXY protocol sources](#build-agent-authentication) so the limit uses the original
+client address instead of grouping every connection under the load balancer's address.
+
+LocalVC accepts at most 100 MiB of packed data per push and 20 MiB per Git object over HTTP or SSH.
+The objects of a rejected push are discarded immediately. A server restart can leave temporary
+`incoming-*` directories inside bare repositories. On nodes with the `scheduling` and `localvc`
+profiles, the cleanup job removes directories older than one day at 04:15 server time.
+
 
 ### Generate Key Pairs
 
@@ -536,9 +549,14 @@ artemis:
     authentication-requests-per-minute: 30
     git-authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    email-address-check-requests-per-minute: 300
     failed-login-requests-per-minute: 10
     client-error-report-requests-per-minute: 60
     service-credential-failure-requests-per-minute: 30
+    apollon-conversion-requests-per-minute: 10 # per signed-in user
+    quiz-batch-join-requests-per-minute: 10 # per signed-in user
+    programming-build-trigger-requests-per-minute: 10 # per signed-in user
+    course-request-requests-per-minute: 5 # per signed-in user
 ```
 
 ### Where It Is Enforced
@@ -548,6 +566,8 @@ artemis:
 - Password reset (request reset link + actual password change)
 - Login options lookup (the identifier step of the login form, in its own bucket so that consuming it does not
   reduce the number of logins a shared address can perform)
+- Email address check (the lookup that the registration form and the account settings send while an address is typed, in its own bucket so that typing does not use up the
+  allowance of registration itself)
 - Username/password login
 - Failed username/password logins of one account. Every wrong password, and every login name that does not exist, spends a token of the login name that was tried,
   independent of the client address, and a login name whose budget is empty is answered with **429** before its password is checked. The budget is `failed-login-requests-per-minute`
@@ -564,6 +584,7 @@ artemis:
   With a login limit of your own, the git limit is a separate 30 on top of it.
   Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
+- Requests of signed-in users that start a comparatively expensive operation, counted per user instead of per client address, each in a bucket of its own: the conversion of a modeling diagram to a PDF document (`apollon-conversion-requests-per-minute`), joining a quiz batch with its password (`quiz-batch-join-requests-per-minute`, every attempt counts), the manual build of a programming exercise participation (`programming-build-trigger-requests-per-minute`) and sending a course request (`course-request-requests-per-minute`)
 - Failed checks of the shared secrets that Athena, Pyris and the sharing platform present to Artemis, in a bucket of their own, `service-credential-failure-requests-per-minute`. Only a failed check spends a token, so a service with the right secret is never limited. Once an address has used up its tokens, Artemis refuses its further requests with 429 without comparing the secret.
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.

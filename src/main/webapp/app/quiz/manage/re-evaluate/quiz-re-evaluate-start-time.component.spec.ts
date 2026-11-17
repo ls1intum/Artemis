@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
@@ -41,7 +41,7 @@ describe('QuizReEvaluateComponent start time', () => {
 
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(QuizExerciseService, { find: () => of(quizExercise) }),
                 { provide: ActivatedRoute, useValue: { snapshot, params: of(snapshot.params), queryParams: of(snapshot.queryParams) } },
                 { provide: TranslateService, useClass: MockTranslateService },

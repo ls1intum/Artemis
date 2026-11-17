@@ -10,9 +10,15 @@
             <th [tumAetUiSortableColumn]="'buildStatus'" class="finish-jobs-column-status">
                 <span jhiTranslate="artemisApp.buildQueue.buildJob.status"></span>
             </th>
-            <th [tumAetUiSortableColumn]="'buildAgentAddress'" class="finish-jobs-column-strings">
-                <span jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
-            </th>
+            @if (isAdminView()) {
+                <th [tumAetUiSortableColumn]="'buildAgentAddress'" class="finish-jobs-column-strings">
+                    <span jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
+                </th>
+            } @else {
+                <th class="finish-jobs-column-strings">
+                    <span jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
+                </th>
+            }
             @if (showCourseId()) {
                 <th [tumAetUiSortableColumn]="'courseId'" class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
@@ -82,7 +88,7 @@
                             {{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}
                         </a>
                     } @else {
-                        <span>{{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}</span>
+                        <span>{{ finishedBuildJob.buildAgentDisplayName ?? getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}</span>
                     }
                 </td>
                 @if (showCourseId()) {

@@ -72,11 +72,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java25-3"
+                    default: "ls1tum/artemis-maven-template:java25-5"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.1"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -93,13 +93,13 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-assembler-docker:v1.0.0"
                 swift:
                     # possible overrides: xcode
-                    default: "ls1tum/artemis-swift-swiftlint-docker:swift5.9.2"
+                    default: "ghcr.io/ls1intum/artemis-swift-swiftlint-docker:v1.1.0"
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
                 rust:
-                    default: "ghcr.io/ls1intum/artemis-rust-docker:v1.2.0"
+                    default: "ghcr.io/ls1intum/artemis-rust-docker:v1.2.1"
                 javascript:
-                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.0"
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.1"
                 r:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.2.0"
                 bash:
@@ -109,7 +109,7 @@ artemis:
                 c_sharp:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.1.0"
                 typescript:
-                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.0"
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.1"
                 go:
                     default: "ghcr.io/ls1intum/artemis-go-docker:v1.1.0"
                 matlab:

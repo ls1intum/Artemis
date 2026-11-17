@@ -57,7 +57,7 @@
 
     <div class="flex flex-col h-full">
         @if (rangeFilter()) {
-            <h4 class="flex items-center gap-3">
+            <h4 class="flex items-center gap-4!">
                 <span>
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>

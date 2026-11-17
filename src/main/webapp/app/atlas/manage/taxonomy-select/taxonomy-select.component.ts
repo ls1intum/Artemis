@@ -1,20 +1,24 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SelectModule } from 'primeng/select';
 
 interface TaxonomyOption {
     value: CompetencyTaxonomy;
-    indent: string;
+    label: string;
 }
 
 @Component({
     selector: 'jhi-taxonomy-select',
     templateUrl: './taxonomy-select.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, SelectModule],
+    imports: [FormsModule, ReactiveFormsModule, TumAetUiSelectComponent],
 })
 export class TaxonomySelectComponent {
+    private readonly translateService = inject(TranslateService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+
     /**
      * id given of the select, to be referenced by labels (for)
      */
@@ -26,11 +30,14 @@ export class TaxonomySelectComponent {
     form = input.required<FormControl>();
 
     /**
-     * Options for the select, with increasing indentation per taxonomy entry.
+     * Options for the select: the translated taxonomy followed by its keywords, rebuilt when the language changes.
      * @protected
      */
-    protected readonly taxonomyOptions: TaxonomyOption[] = Object.values(CompetencyTaxonomy).map((value, i) => ({
-        value,
-        indent: '\xA0'.repeat(i),
-    }));
+    protected readonly taxonomyOptions = computed<TaxonomyOption[]>(() => {
+        this.languageChange();
+        return Object.values(CompetencyTaxonomy).map((value) => ({
+            value,
+            label: `${this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + value)} (${this.translateService.instant('artemisApp.courseCompetency.keywords.' + value)})`,
+        }));
+    });
 }

@@ -1,8 +1,8 @@
-<div class="split-pane-header" ngbDropdown>
+<div class="split-pane-header">
     <div
         class="split-pane-header-top"
-        data-toggle="dropdown"
-        [ngClass]="{ active: showFiles(), clickable: hasFiles() }"
+        [class.active]="showFiles()"
+        [class.clickable]="hasFiles()"
         (click)="toggleShowFiles(true)"
         [attr.aria-expanded]="hasFiles() ? showFiles() : null"
         #keyboardAction2
@@ -25,10 +25,9 @@
             @for (file of files(); track file; let idx = $index) {
                 <li
                     class="split-pane-header-file"
-                    ngbDropdownItem
                     (mouseenter)="triggerMouseEnter(file, idx)"
                     (click)="handleFileSelect(file, idx, true)"
-                    [ngClass]="{ hover: idx === hoveredFileIndex() }"
+                    [class.hover]="idx === hoveredFileIndex()"
                     #keyboardAction14
                     role="button"
                     tabindex="0"

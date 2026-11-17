@@ -213,6 +213,45 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatIsNotValid() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is not a valid");
+    }
+
+    @Test
+    void validateBuildConfigSize_ignoresABranchRegexWhileBranchingIsNotAllowed() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumnEvenWithoutBranching() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumn() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
     void validateBuildConfigSize_acceptsAConfigurationWithinTheLimits() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
@@ -325,6 +364,66 @@ class ProgrammingExerciseValidationServiceTest {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW, NOW.plusDays(1))))
                 .withMessageContaining("exam exercises");
         assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatCannotBeCompiled() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .satisfies(e -> assertThat(e.getErrorKey()).isEqualTo("branchRegexInvalid"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "(?:^){2147483647}", "(?x)(?:^){2147483647 }", "(a+)+", "(a|aa)+", "(?=a)b", "(a)\\1", "a*?", "\\p{Alpha}", "a{1001}", "[a&&b]", "(^|^)", "(a?|b*)",
+            "(x{0}|y{0})" })
+    void validateBuildConfigSize_rejectsABranchRegexWithSyntaxThatIsNotSupported(String regex) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex(regex);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .satisfies(e -> assertThat(e.getErrorKey()).isEqualTo("branchRegexNotSupported"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { ".*", "feature/.*", "^(feature|bugfix)/[a-z0-9-]+$", "[a-z]{3,10}-\\d{2}" })
+    void validateBuildConfigSize_acceptsTypicalBranchRegexes(String regex) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex(regex);
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_acceptsAnUnsupportedBranchRegexWhileBranchingIsDisabled() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("(a+)+");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatIsTooLong() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .satisfies(e -> assertThat(e.getErrorKey()).isEqualTo("branchRegexTooLong"));
+    }
+
+    @Test
+    void validateBuildConfigSize_acceptsAUsableBranchRegex() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/.*");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
     }
 
     private static DockerFlagsDTO flags(int cpuCount, int memory, int memorySwap) {

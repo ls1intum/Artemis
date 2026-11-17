@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -508,5 +510,86 @@ class LocalVCPrePushHookTest {
             assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
             assertThat(command.getMessage()).contains("limits for the number of files");
         }
+    }
+
+    @Test
+    void examineBeforeObjects_rejectsABranchThatIsNotAllowedWithoutLookingAtTheObjects() throws Exception {
+        when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.BRANCHING_DISABLED);
+        // the commit does not exist in the repository: the commands alone decide
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "feature");
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    @Test
+    void examineBeforeObjects_rejectsARefThatIsNotABranch() {
+        ObjectId id = ObjectId.fromString("0123456789012345678901234567890123456789");
+        for (String refName : List.of("refs/tags/v1", "refs/notes/x", "refs/x", "HEAD", "refs/heads/")) {
+            ReceiveCommand command = receive(id, refName);
+
+            hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+            assertThat(command.getResult()).as(refName).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).as(refName).isEqualTo("You can only push to a branch.");
+        }
+    }
+
+    @Test
+    void examineBeforeObjects_doesNotEvaluateTheBranchExpressionForAPushToTheDefaultBranch() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+        verify(localVCServletService, never()).isBranchNameAllowedForRepository(any(), anyString());
+    }
+
+    @Test
+    void examineBeforeObjects_acceptsTheDefaultBranchWithoutLookingAtTheObjects() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+        assertThat(command.getResult()).as("the content is judged later, when the objects are there").isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void examineBeforeObjects_rejectsEveryCommandOfAPushOfSeveralRefs() {
+        ReceiveCommand first = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+        ReceiveCommand second = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "other");
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(first, second));
+
+        assertThat(List.of(first, second)).allSatisfy(command -> assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON));
+    }
+
+    @Test
+    void examineBeforeObjects_withoutCommandsDoesNothing() {
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of());
+    }
+
+    @Test
+    void examineBeforeObjects_leavesACommandThatIsRejectedAlreadyAsItIs() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "rejected earlier");
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+        assertThat(command.getMessage()).isEqualTo("rejected earlier");
+    }
+
+    @Test
+    void examineBeforeObjects_runningTwiceGivesTheSameResult() {
+        when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "feature");
+
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        String message = command.getMessage();
+        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo(message);
     }
 }

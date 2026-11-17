@@ -1,6 +1,6 @@
 @if (visible()) {
     <tumaet-ui-dialog [(visible)]="visible" [header]="headerKey() | artemisTranslate" size="large">
-        <tumaet-ui-tabs class="mb-4" [value]="activeTab()" (valueChange)="selectTab($event)" data-testid="exercise-import-tabs">
+        <tumaet-ui-tabs class="mb-6!" [value]="activeTab()" (valueChange)="selectTab($event)" data-testid="exercise-import-tabs">
             <tumaet-ui-tab-list>
                 <tumaet-ui-tab value="existing">
                     <span jhiTranslate="artemisApp.exercise.import.tabTitle"></span>

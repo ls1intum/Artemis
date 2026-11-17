@@ -20,12 +20,18 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { Tab, TabList, Tabs } from 'primeng/tabs';
-import { Popover } from 'primeng/popover';
-import { Tooltip } from 'primeng/tooltip';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
+import {
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabsComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
 import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
 import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
@@ -55,7 +61,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Tag } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { FileUploadResponse, FileUploaderService } from 'app/foundation/service/file-uploader.service';
@@ -116,7 +121,22 @@ const TAB_VISUAL_ID = 'editor_visual';
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [Tabs, TabList, Tab, TranslateDirective, NgClass, MonacoEditorComponent, FaIconComponent, Tooltip, NgTemplateOutlet, Popover, CdkDrag, ArtemisTranslatePipe, Tag],
+    imports: [
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TranslateDirective,
+        NgClass,
+        MonacoEditorComponent,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        NgTemplateOutlet,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        CdkDrag,
+        ArtemisTranslatePipe,
+        TumAetUiTagComponent,
+    ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
@@ -933,6 +953,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (colorName) {
             this.colorAction()?.executeInCurrentEditor({ color: colorName });
         }
+    }
+
+    /**
+     * Runs the action that was chosen in a toolbar popover and closes the popover. Once it is gone, the popover hands
+     * focus back to the button that opened it, which would override the focus the action gave the editor, so the
+     * editor takes focus again after that. Dismissing the popover without a choice keeps the focus on the button.
+     * @param popover The popover that contains the chosen item.
+     * @param run Applies the chosen item to the editor.
+     */
+    protected runFromPopover(popover: TumAetUiPopoverComponent, run: () => void): void {
+        if (popover.isOpen()) {
+            const subscription = popover.closed.subscribe(() => {
+                subscription.unsubscribe();
+                this.monacoEditor()?.focus();
+            });
+        }
+        run();
+        popover.close();
     }
 
     /**

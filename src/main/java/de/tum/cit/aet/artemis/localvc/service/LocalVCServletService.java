@@ -29,6 +29,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -503,6 +506,28 @@ public class LocalVCServletService {
         return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
     }
 
+    /** The longest branch name that is matched against the branch expression of an exercise. */
+    private static final int MAX_BRANCH_NAME_LENGTH = 255;
+
+    private static final int MAX_COMPILED_BRANCH_REGEXES = 1000;
+
+    /** The compiled expression, or empty if the expression is not supported or not valid. The verdict is kept, so that it is logged once per expression. */
+    private static final Cache<String, Optional<Pattern>> COMPILED_BRANCH_REGEXES = Caffeine.newBuilder().maximumSize(MAX_COMPILED_BRANCH_REGEXES).build();
+
+    private static Optional<Pattern> compileBranchRegex(String branchRegex) {
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            log.warn("The branch regex '{}' of an exercise uses syntax that is not supported and matches no branch name", branchRegex);
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Pattern.compile(branchRegex));
+        }
+        catch (PatternSyntaxException e) {
+            log.warn("The branch regex '{}' of an exercise is not a valid regular expression and matches no branch name", branchRegex);
+            return Optional.empty();
+        }
+    }
+
     public static enum BranchingStatus {
         BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
     }
@@ -524,15 +549,18 @@ public class LocalVCServletService {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
-        Pattern pattern;
-        try {
-            pattern = Pattern.compile(buildConfig.getBranchRegex());
-        }
-        catch (PatternSyntaxException e) {
+        if (branchName.length() > MAX_BRANCH_NAME_LENGTH) {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
         }
 
-        return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        // The expression is checked and compiled once and then reused by the following pushes
+        String branchRegex = buildConfig.getBranchRegex();
+        Optional<Pattern> pattern = COMPILED_BRANCH_REGEXES.get(branchRegex, LocalVCServletService::compileBranchRegex);
+        if (pattern.isEmpty()) {
+            return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        }
+
+        return TimeBoundedRegexMatcher.matches(pattern.get(), branchName) ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {

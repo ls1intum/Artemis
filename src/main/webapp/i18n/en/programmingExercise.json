@@ -165,7 +165,10 @@
             "script": "Build script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
-                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
+                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB.",
+                "branchRegexTooLong": "The branch regex is too long. The maximum allowed length is 128 characters.",
+                "branchRegexInvalid": "The branch regex is not a valid regular expression.",
+                "branchRegexNotSupported": "The branch regex uses syntax that is not supported. Use literal characters, classes such as [a-z0-9-], groups with alternatives, the anchors ^ and $, and the quantifiers * + ? and counted repetitions with counts up to 1000. A repeated group may not contain alternatives, quantifiers or anchors. Every alternative inside a group must require at least one character."
             },
             "buildPhasesEditor": {
                 "title": "Build Phases",

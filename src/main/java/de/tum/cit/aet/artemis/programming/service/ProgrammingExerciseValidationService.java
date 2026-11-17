@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.BranchRegexSyntax;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -50,6 +52,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
+
+    /** The branch regex is stored in a column of this length. */
+    private static final int MAX_BRANCH_REGEX_LENGTH = 128;
 
     /** A run of whitespace, which a project key may not contain. */
     private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
@@ -341,7 +346,7 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
-     * Validates that the build config text fields do not exceed their maximum allowed length.
+     * Validates that the build config text fields do not exceed their maximum allowed length and that the branch expression is a valid regular expression.
      * The limits are character limits (see {@link String#length()}), not byte limits.
      *
      * @param buildConfig the build configuration to validate, or {@code null} when the request carries none
@@ -360,6 +365,31 @@ public class ProgrammingExerciseValidationService {
         String dockerFlags = buildConfig.getDockerFlags();
         if (dockerFlags != null && dockerFlags.length() > MAX_DOCKER_FLAGS_LENGTH) {
             throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
+        }
+
+        // The length is always checked, as the value is stored. The syntax is only checked when branching is allowed, as the regex is only used, and only editable, then:
+        // an exercise that was saved earlier with an unusable value stays editable
+        validateBranchRegex(buildConfig.getBranchRegex(), buildConfig.isAllowBranching());
+    }
+
+    private static void validateBranchRegex(@Nullable String branchRegex, boolean checkSyntax) {
+        if (branchRegex == null) {
+            return;
+        }
+        if (branchRegex.length() > MAX_BRANCH_REGEX_LENGTH) {
+            throw new BadRequestAlertException("The branch regex is too long. Max " + MAX_BRANCH_REGEX_LENGTH + " characters", "Exercise", "branchRegexTooLong");
+        }
+        if (!checkSyntax) {
+            return;
+        }
+        try {
+            Pattern.compile(branchRegex);
+        }
+        catch (PatternSyntaxException e) {
+            throw new BadRequestAlertException("The branch regex is not a valid regular expression", "Exercise", "branchRegexInvalid");
+        }
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            throw new BadRequestAlertException("The branch regex uses syntax that is not supported. " + BranchRegexSyntax.DESCRIPTION, "Exercise", "branchRegexNotSupported");
         }
     }
 

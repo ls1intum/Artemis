@@ -4,7 +4,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 @Directive({
     selector: '[jhiFeatureToggleHide]',
     host: {
-        '[class.d-none]': 'hidden()',
+        '[style.display]': 'hidden() ? "none" : null',
     },
 })
 export class FeatureToggleHideDirective {
