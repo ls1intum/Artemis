@@ -6,7 +6,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { isRealExam, testExamSimulationEndDate } from 'app/exam/overview/exam.utils';
+import { isRealExam, testExamSupervisedSessionEndDate } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
@@ -311,8 +311,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return true;
         }
 
-        const simulationEndDate = testExamSimulationEndDate(exam);
-        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || !now.isBefore(simulationEndDate)) {
+        const supervisedSessionEndDate = testExamSupervisedSessionEndDate(exam);
+        if (exam?.examMode !== ExamMode.TEST_WITH_SUPERVISED_SESSION || !supervisedSessionEndDate || !now.isBefore(supervisedSessionEndDate)) {
             return false;
         }
 
@@ -529,7 +529,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             if (!!this.testRunId() || this.testExam()) {
                 const testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
                 this.testStartTime.set(testStartTime);
-                const adjustedTestStartTime = this.isSimulationAttempt(testStartTime) ? this.exam().startDate! : testStartTime;
+                const adjustedTestStartTime = this.isSupervisedSessionAttempt(testStartTime) ? this.exam().startDate! : testStartTime;
                 this.initIndividualEndDates(adjustedTestStartTime);
             } else {
                 this.initIndividualEndDates(this.exam().startDate!);
@@ -797,7 +797,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!isRealExam(this.exam())) {
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
                 const startedDate = dayjs(this.studentExam().startedDate);
-                const relevantStartDate = this.isSimulationAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
+                const relevantStartDate = this.isSupervisedSessionAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
                 individualStudentEndDate = relevantStartDate.add(this.studentExam().workingTime ?? 0, 'seconds');
             } else {
                 return false;
@@ -1364,19 +1364,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
-    private isSimulationAttempt(customStartDate: dayjs.Dayjs): boolean {
+    private isSupervisedSessionAttempt(customStartDate: dayjs.Dayjs): boolean {
         const exam = this.exam();
         const studentExam = this.studentExam();
         const actualExam = exam ?? studentExam.exam;
-        if (!actualExam || actualExam.examMode !== ExamMode.TEST_WITH_SIMULATION || studentExam.testRun) {
+        if (!actualExam || actualExam.examMode !== ExamMode.TEST_WITH_SUPERVISED_SESSION || studentExam.testRun) {
             return false;
         }
         const startedDate = customStartDate ?? studentExam.startedDate;
         if (!startedDate) {
             return false;
         }
-        const simulationEndDate = testExamSimulationEndDate(actualExam);
-        return !!simulationEndDate && startedDate.isBefore(simulationEndDate);
+        const supervisedSessionEndDate = testExamSupervisedSessionEndDate(actualExam);
+        return !!supervisedSessionEndDate && startedDate.isBefore(supervisedSessionEndDate);
     }
 
     /**

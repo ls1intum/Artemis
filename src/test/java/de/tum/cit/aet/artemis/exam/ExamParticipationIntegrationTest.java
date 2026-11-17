@@ -384,9 +384,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @ParameterizedTest
     @ValueSource(strings = { "generate-student-exams", "generate-missing-student-exams" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGenerateStudentExams_testWithSimulation_rejectedAfterStart(String endpoint) throws Exception {
+    void testGenerateStudentExams_testWithSupervisedSession_rejectedAfterStart(String endpoint) throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
-        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         exam.setStartDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(3600);
         exam.setEndDate(ZonedDateTime.now().plusHours(3));

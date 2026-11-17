@@ -446,14 +446,14 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves a test Exam with simulation without ExerciseGroups and Exercises.
+     * Creates and saves a practice Exam with a supervised session without ExerciseGroups and Exercises.
      *
      * @param course The Course to which the Exam should be added
      * @return The newly created Exam
      */
-    public Exam addTestExamWithSimulation(Course course) {
+    public Exam addTestExamWithSupervisedSession(Course course) {
         Exam exam = ExamFactory.generateTestExam(course);
-        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
         exam.setWorkingTime(6000); // 100 minutes working time
         return examRepository.save(exam);

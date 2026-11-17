@@ -25,8 +25,8 @@
                                     ' (' +
                                     ((isRealExam(exam)
                                         ? 'artemisApp.examManagement.testExam.realExam'
-                                        : exam.examMode === 'TEST_WITH_SIMULATION'
-                                          ? 'artemisApp.examManagement.testExam.testExamWithSimulation'
+                                        : exam.examMode === 'TEST_WITH_SUPERVISED_SESSION'
+                                          ? 'artemisApp.examManagement.testExam.testExamWithSupervisedSession'
                                           : 'artemisApp.examManagement.testExam.testExam'
                                     ) | artemisTranslate) +
                                     ')'
@@ -39,7 +39,7 @@
                                     } @else if (exam.examMode === ExamMode.TEST) {
                                         <fa-icon [icon]="faVial" [tumAetUiTooltip]="'artemisApp.examManagement.testExam.testExam' | artemisTranslate" />
                                     } @else {
-                                        <fa-icon [icon]="faFlaskVial" [tumAetUiTooltip]="'artemisApp.examManagement.testExam.testExamWithSimulation' | artemisTranslate" />
+                                        <fa-icon [icon]="faFlaskVial" [tumAetUiTooltip]="'artemisApp.examManagement.testExam.testExamWithSupervisedSession' | artemisTranslate" />
                                     }
                                     <span class="truncate font-medium">{{ exam.title }}</span>
                                 </div>

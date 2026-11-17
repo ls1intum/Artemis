@@ -654,49 +654,49 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testStartExercises_testExamWithSimulation_noDuplicateParticipations() throws Exception {
-        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
-        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
-        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().plusHours(1));
-        testExamWithSimulation.setWorkingTime(3600);
-        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
-        testExamWithSimulation.setExamMaxPoints(19);
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+    void testStartExercises_testExamWithSupervisedSession_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSupervisedSession = examUtilService.addTestExam(course1);
+        testExamWithSupervisedSession = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSupervisedSession, false, true);
+        testExamWithSupervisedSession.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        testExamWithSupervisedSession.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().plusHours(1));
+        testExamWithSupervisedSession.setWorkingTime(3600);
+        testExamWithSupervisedSession.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSupervisedSession.setExamMaxPoints(19);
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
         // Register student to exam
         var examUser = new de.tum.cit.aet.artemis.exam.domain.ExamUser();
         examUser.setUser(student1);
-        examUser.setExam(testExamWithSimulation);
+        examUser.setExam(testExamWithSupervisedSession);
         examUserRepository.save(examUser);
 
         // Generate student exams
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
-                null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/generate-missing-student-exams", null,
+                HttpStatus.OK, null);
 
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
-        // Start exercises for the simulation exam for the first time
-        int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
-        assertThat(firstGenerated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+        // Start exercises for the supervised session exam for the first time
+        int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSupervisedSession, course1);
+        assertThat(firstGenerated).isEqualTo(testExamWithSupervisedSession.getExerciseGroups().size());
 
-        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSupervisedSession.getId(), student1.getId()).orElseThrow();
         var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
-        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSupervisedSession.getExerciseGroups().size());
 
         Long participationId = studentExamWithParticipations.getStudentParticipations().get(0).getId();
         Optional<Boolean> submitted = studentExamRepository.isSubmitted(participationId);
         assertThat(submitted).isPresent();
 
-        // Start exercises for the simulation exam a second time, this should reuse participations
-        int secondGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        // Start exercises for the supervised session exam a second time, this should reuse participations
+        int secondGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSupervisedSession, course1);
         assertThat(secondGenerated).isZero();
 
         // Verify that the participations were not lost
         var studentExamWithParticipationsAfterSecondRun = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
-        assertThat(studentExamWithParticipationsAfterSecondRun.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+        assertThat(studentExamWithParticipationsAfterSecondRun.getStudentParticipations()).hasSize(testExamWithSupervisedSession.getExerciseGroups().size());
 
         Optional<Boolean> submittedAfterSecondRun = studentExamRepository.isSubmitted(participationId);
         assertThat(submittedAfterSecondRun).isPresent();
@@ -789,47 +789,48 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGetStudentExamForConduction_preparedSimulationExam_noDuplicateParticipations() throws Exception {
-        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
-        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
-        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().plusHours(1));
-        testExamWithSimulation.setWorkingTime(3600);
-        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
-        testExamWithSimulation.setExamMaxPoints(19);
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+    void testGetStudentExamForConduction_preparedSupervisedSessionExam_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSupervisedSession = examUtilService.addTestExam(course1);
+        testExamWithSupervisedSession = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSupervisedSession, false, true);
+        testExamWithSupervisedSession.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        testExamWithSupervisedSession.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().plusHours(1));
+        testExamWithSupervisedSession.setWorkingTime(3600);
+        testExamWithSupervisedSession.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSupervisedSession.setExamMaxPoints(19);
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
         // Register student to exam
         var examUser = new ExamUser();
         examUser.setUser(student1);
-        examUser.setExam(testExamWithSimulation);
+        examUser.setExam(testExamWithSupervisedSession);
         examUserRepository.save(examUser);
 
         // Generate student exams
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
-                null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/generate-missing-student-exams", null,
+                HttpStatus.OK, null);
 
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
-        // Prepare the simulation exam (this creates participations)
-        int generated = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
-        assertThat(generated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+        // Prepare the supervised session exam (this creates participations)
+        int generated = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSupervisedSession, course1);
+        assertThat(generated).isEqualTo(testExamWithSupervisedSession.getExerciseGroups().size());
 
-        // Fast-forward time to cross into practice phase (now >= simulationEndDate)
-        testExamWithSimulation.setWorkingTime(60); // 1 minute working time -> simulation ended 9 mins ago
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+        // Fast-forward time to cross into practice phase (now >= supervisedSessionEndDate)
+        testExamWithSupervisedSession.setWorkingTime(60); // 1 minute working time -> supervised session ended 9 mins ago
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
-        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSupervisedSession.getId(), student1.getId()).orElseThrow();
 
         // Switch to student user
         userUtilService.changeUser(TEST_PREFIX + "student1");
         final HttpHeaders headers = getHttpHeadersForExamSession();
 
         // Cross into practice: conduction is called
-        var response = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
-                HttpStatus.OK, StudentExam.class, headers);
+        var response = request.get(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class, headers);
 
         // Assert that the student exam is started and we don't have duplicate participations (1 per exercise)
         assertThat(response.isStarted()).isTrue();
@@ -849,41 +850,41 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // Validate in DB
         var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
-        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSupervisedSession.getExerciseGroups().size());
 
-        deleteExamWithInstructor(testExamWithSimulation);
+        deleteExamWithInstructor(testExamWithSupervisedSession);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStudentExamForConduction_unpreparedSupervisedSession_linksParticipationsAndSurvivesReload() throws Exception {
-        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
-        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
-        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().plusHours(1));
-        testExamWithSimulation.setWorkingTime(3600);
-        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(3));
-        testExamWithSimulation.setExamMaxPoints(19);
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+        Exam testExamWithSupervisedSession = examUtilService.addTestExam(course1);
+        testExamWithSupervisedSession = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSupervisedSession, false, true);
+        testExamWithSupervisedSession.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        testExamWithSupervisedSession.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().plusHours(1));
+        testExamWithSupervisedSession.setWorkingTime(3600);
+        testExamWithSupervisedSession.setEndDate(ZonedDateTime.now().plusHours(3));
+        testExamWithSupervisedSession.setExamMaxPoints(19);
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
         var examUser = new ExamUser();
         examUser.setUser(student1);
-        examUser.setExam(testExamWithSimulation);
+        examUser.setExam(testExamWithSupervisedSession);
         examUserRepository.save(examUser);
 
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
-                null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/generate-missing-student-exams", null,
+                HttpStatus.OK, null);
 
         // The supervised session is running, but the exercises were never prepared in bulk
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
-        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSupervisedSession.getId(), student1.getId()).orElseThrow();
         assertThat(studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId()).getStudentParticipations()).isEmpty();
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
         final HttpHeaders headers = getHttpHeadersForExamSession();
-        String conductionUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExam.getId() + "/conduction";
+        String conductionUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/student-exams/" + studentExam.getId() + "/conduction";
 
         var response = request.get(conductionUrl, HttpStatus.OK, StudentExam.class, headers);
         assertThat(response.isStarted()).isTrue();
@@ -900,7 +901,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 .extracting(participation -> participation.getId())
                 .containsExactlyInAnyOrderElementsOf(linkedAfterStart.stream().map(participation -> participation.getId()).toList());
 
-        deleteExamWithInstructor(testExamWithSimulation);
+        deleteExamWithInstructor(testExamWithSupervisedSession);
     }
 
     private void assertOneParticipationPerExercise(StudentExam response) {
@@ -4570,76 +4571,76 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testConductionOfTestExamWithSimulationUsesFixedSimulationEndDate() throws Exception {
-        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
-        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
-        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        testExamWithSimulation.setExamMaxPoints(19);
-        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
-        testExamWithSimulation.setWorkingTime(3600);
-        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+    void testConductionOfTestExamWithSupervisedSessionUsesFixedSupervisedSessionEndDate() throws Exception {
+        Exam testExamWithSupervisedSession = examUtilService.addTestExam(course1);
+        testExamWithSupervisedSession = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSupervisedSession, false, true);
+        testExamWithSupervisedSession.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        testExamWithSupervisedSession.setExamMaxPoints(19);
+        testExamWithSupervisedSession.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSupervisedSession.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSupervisedSession.setWorkingTime(3600);
+        testExamWithSupervisedSession.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
         // Register student to exam
         var examUser = new ExamUser();
         examUser.setUser(student1);
-        examUser.setExam(testExamWithSimulation);
+        examUser.setExam(testExamWithSupervisedSession);
         examUserRepository.save(examUser);
-        testExamWithSimulation.addExamUser(examUser);
-        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+        testExamWithSupervisedSession.addExamUser(examUser);
+        testExamWithSupervisedSession = examRepository.save(testExamWithSupervisedSession);
 
-        // Add pre-generated student exam for the active simulation phase
-        examUtilService.addStudentExamForTestExam(testExamWithSimulation, student1);
+        // Add pre-generated student exam for the active supervised session
+        examUtilService.addStudentExamForTestExam(testExamWithSupervisedSession, student1);
 
-        StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/own-student-exam", HttpStatus.OK,
-                StudentExam.class);
-
-        StudentExam studentExamForConduction = request.get(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction",
+        StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/own-student-exam",
                 HttpStatus.OK, StudentExam.class);
 
-        assertThat(studentExamForConduction.getWorkingTime()).isEqualTo(testExamWithSimulation.getWorkingTime());
-        assertThat(studentExamForConduction.getIndividualEndDate()).isCloseTo(testExamWithSimulation.getStartDate().plusSeconds(testExamWithSimulation.getWorkingTime()),
-                within(10, ChronoUnit.SECONDS));
+        StudentExam studentExamForConduction = request.get(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        assertThat(studentExamForConduction.getWorkingTime()).isEqualTo(testExamWithSupervisedSession.getWorkingTime());
+        assertThat(studentExamForConduction.getIndividualEndDate())
+                .isCloseTo(testExamWithSupervisedSession.getStartDate().plusSeconds(testExamWithSupervisedSession.getWorkingTime()), within(10, ChronoUnit.SECONDS));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testConductionOfTestExamWithSimulationPracticeAttemptBoundary() {
-        Exam testExamWithSimulation = new Exam();
-        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+    void testConductionOfTestExamWithSupervisedSessionPracticeAttemptBoundary() {
+        Exam testExamWithSupervisedSession = new Exam();
+        testExamWithSupervisedSession.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         ZonedDateTime startDate = ZonedDateTime.now().minusMinutes(10);
-        testExamWithSimulation.setStartDate(startDate);
+        testExamWithSupervisedSession.setStartDate(startDate);
         int workingTime = 3600;
-        testExamWithSimulation.setWorkingTime(workingTime);
+        testExamWithSupervisedSession.setWorkingTime(workingTime);
 
-        // Simulation end date is startDate + workingTime
-        ZonedDateTime simulationEndDate = testExamWithSimulation.getSimulationEndDate();
+        // Supervised session end date is startDate + workingTime
+        ZonedDateTime supervisedSessionEndDate = testExamWithSupervisedSession.getSupervisedSessionEndDate();
 
-        // 1. Started exactly at simulationEndDate
+        // 1. Started exactly at supervisedSessionEndDate
         StudentExam studentExamAtBoundary = new StudentExam();
-        studentExamAtBoundary.setExam(testExamWithSimulation);
+        studentExamAtBoundary.setExam(testExamWithSupervisedSession);
         studentExamAtBoundary.setWorkingTime(workingTime);
-        studentExamAtBoundary.setStartedAndStartDate(simulationEndDate);
+        studentExamAtBoundary.setStartedAndStartDate(supervisedSessionEndDate);
 
-        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(simulationEndDate.plusSeconds(workingTime));
+        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(supervisedSessionEndDate.plusSeconds(workingTime));
 
-        // 2. Started strictly after simulationEndDate
+        // 2. Started strictly after supervisedSessionEndDate
         StudentExam studentExamAfterBoundary = new StudentExam();
-        studentExamAfterBoundary.setExam(testExamWithSimulation);
+        studentExamAfterBoundary.setExam(testExamWithSupervisedSession);
         studentExamAfterBoundary.setWorkingTime(workingTime);
-        ZonedDateTime afterSimulationEndDate = simulationEndDate.plusSeconds(1);
-        studentExamAfterBoundary.setStartedAndStartDate(afterSimulationEndDate);
+        ZonedDateTime afterSupervisedSessionEndDate = supervisedSessionEndDate.plusSeconds(1);
+        studentExamAfterBoundary.setStartedAndStartDate(afterSupervisedSessionEndDate);
 
-        assertThat(studentExamAfterBoundary.getIndividualEndDate()).isEqualTo(afterSimulationEndDate.plusSeconds(workingTime));
+        assertThat(studentExamAfterBoundary.getIndividualEndDate()).isEqualTo(afterSupervisedSessionEndDate.plusSeconds(workingTime));
 
-        // 3. Started strictly before simulationEndDate
+        // 3. Started strictly before supervisedSessionEndDate
         StudentExam studentExamBeforeBoundary = new StudentExam();
-        studentExamBeforeBoundary.setExam(testExamWithSimulation);
+        studentExamBeforeBoundary.setExam(testExamWithSupervisedSession);
         studentExamBeforeBoundary.setWorkingTime(workingTime);
-        ZonedDateTime beforeSimulationEndDate = simulationEndDate.minusSeconds(1);
-        studentExamBeforeBoundary.setStartedAndStartDate(beforeSimulationEndDate);
+        ZonedDateTime beforeSupervisedSessionEndDate = supervisedSessionEndDate.minusSeconds(1);
+        studentExamBeforeBoundary.setStartedAndStartDate(beforeSupervisedSessionEndDate);
 
         assertThat(studentExamBeforeBoundary.getIndividualEndDate()).isEqualTo(startDate.plusSeconds(workingTime));
     }

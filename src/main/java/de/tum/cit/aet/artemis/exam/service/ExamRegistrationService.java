@@ -309,7 +309,7 @@ public class ExamRegistrationService {
         examUserService.deleteAvailableExamUserImages(registeredExamUser);
 
         // The student exam(s) might already be generated, then we need to delete them.
-        // In test exams with simulation, a student can have multiple attempts, so we must handle a list.
+        // In practice exams with a supervised session, a student can have multiple attempts, so we must handle a list.
         List<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());

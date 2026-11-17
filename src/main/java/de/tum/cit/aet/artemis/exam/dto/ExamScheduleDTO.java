@@ -25,17 +25,17 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 public record ExamScheduleDTO(ZonedDateTime startDate, ZonedDateTime endDate, @Nullable Integer gracePeriod, ExamMode examMode, int workingTime) {
 
     /**
-     * @return the end of the scheduled simulation phase
+     * @return the end of the scheduled supervised session
      */
-    public ZonedDateTime simulationEndDate() {
-        return Exam.simulationEndDate(startDate, workingTime);
+    public ZonedDateTime supervisedSessionEndDate() {
+        return Exam.supervisedSessionEndDate(startDate, workingTime);
     }
 
     /**
      * @param now the time to check
-     * @return true if this is a test exam or the simulation phase has ended
+     * @return true if this is a test exam or the supervised session has ended
      */
     public boolean isTestOrPractice(ZonedDateTime now) {
-        return Exam.isTestOrPractice(examMode, simulationEndDate(), now);
+        return Exam.isTestOrPractice(examMode, supervisedSessionEndDate(), now);
     }
 }

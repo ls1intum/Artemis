@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  *
  * @param id          the id of the exam
  * @param title       the title of the exam
- * @param examMode    the mode of the exam (REAL, TEST, or TEST_WITH_SIMULATION)
+ * @param examMode    the mode of the exam (REAL, TEST, or TEST_WITH_SUPERVISED_SESSION)
  * @param course      the (slim) course the exam belongs to
  * @param visibleDate the date from which the exam is visible to students
  * @param startDate   the date from which students can start the exam

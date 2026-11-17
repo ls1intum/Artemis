@@ -1179,7 +1179,7 @@ public class ExamResource {
         // and, through its eager user association, a select per student on top.
         final Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        if (exam.getExamMode() == ExamMode.TEST || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && !ZonedDateTime.now().isBefore(exam.getStartDate())) {
+        if (exam.getExamMode() == ExamMode.TEST || exam.getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION && !ZonedDateTime.now().isBefore(exam.getStartDate())) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
         }
 

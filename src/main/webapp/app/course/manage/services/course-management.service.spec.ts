@@ -1050,7 +1050,7 @@ describe('Course DTO adapter boundary', () => {
                     title: 'Exam without points',
                     startDate: '2026-01-01T00:00:00Z',
                     endDate: '2026-01-01T02:00:00Z',
-                    examMode: ExamMode.TEST_WITH_SIMULATION,
+                    examMode: ExamMode.TEST_WITH_SUPERVISED_SESSION,
                     course: { id: 5, title: 'Course' },
                 },
             ],
@@ -1059,7 +1059,7 @@ describe('Course DTO adapter boundary', () => {
         const result = coursesForDashboardFromDTO(dto);
 
         expect(result.activeExams?.[0].examMode).toBe(ExamMode.REAL);
-        expect(result.activeExams?.[1].examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
+        expect(result.activeExams?.[1].examMode).toBe(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         expect(result.activeExams?.[0].examMaxPoints).toBe(20);
         expect(result.activeExams?.[1].examMaxPoints).toBeUndefined();
     });

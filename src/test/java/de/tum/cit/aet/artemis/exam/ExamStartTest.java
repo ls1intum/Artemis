@@ -161,8 +161,8 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testStartExercisesForSimulationExamWithTextExercise() throws Exception {
-        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+    void testStartExercisesForSupervisedSessionExamWithTextExercise() throws Exception {
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
         examRepository.save(exam);
 

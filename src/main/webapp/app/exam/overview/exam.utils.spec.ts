@@ -69,9 +69,9 @@ describe('ExamUtils', () => {
             expect(examWorkingTime(exam)).toBe(1800);
         });
 
-        it('should return explicit working time for TEST_WITH_SIMULATION exam', () => {
+        it('should return explicit working time for TEST_WITH_SUPERVISED_SESSION exam', () => {
             const exam = {
-                examMode: ExamMode.TEST_WITH_SIMULATION,
+                examMode: ExamMode.TEST_WITH_SUPERVISED_SESSION,
                 startDate: dayjs().add(1, 'hour'),
                 endDate: dayjs().add(4, 'hours'),
                 workingTime: 3600, // Should use explicit working time

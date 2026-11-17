@@ -483,7 +483,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationActiveReturnsExistingAttempt() {
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionActiveReturnsExistingAttempt() {
         configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
 
         StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
@@ -493,7 +493,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationActiveGeneratesNewAttemptIfRegistered() {
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionActiveGeneratesNewAttemptIfRegistered() {
         studentExamRepository.delete(studentExamForTestExam1);
         configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
 
@@ -504,7 +504,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER") // student2 is typically not registered
-    void testGetOrCreateStudentExamElseThrow_simulationActiveThrowsIfNotRegistered() {
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionActiveThrowsIfNotRegistered() {
         configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
 
         // student2 is not registered for testExam1
@@ -514,7 +514,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeCreatesNewAttemptAfterPracticeStart() {
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionAndPracticeCreatesNewAttemptAfterPracticeStart() {
         configureTestExam(testExam1, ZonedDateTime.now().minusHours(2), 1800, 180, true, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
@@ -523,12 +523,12 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
     }
 
-    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean testExamWithSimulation, ZonedDateTime endDate) {
+    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean testExamWithSupervisedSession, ZonedDateTime endDate) {
         exam.setVisibleDate(startDate.minusMinutes(10));
         exam.setStartDate(startDate);
         exam.setWorkingTime(workingTime);
         exam.setGracePeriod(gracePeriod);
-        exam.setExamMode(testExamWithSimulation ? ExamMode.TEST_WITH_SIMULATION : ExamMode.TEST);
+        exam.setExamMode(testExamWithSupervisedSession ? ExamMode.TEST_WITH_SUPERVISED_SESSION : ExamMode.TEST);
         exam.setEndDate(endDate);
         examRepository.save(exam);
     }

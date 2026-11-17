@@ -79,9 +79,9 @@ describe('UpcomingExamsAndExercisesComponent', () => {
         it('should render correct exam mode badges', () => {
             const realExam = { id: 1, title: 'Real Exam', examMode: 'REAL' } as Exam;
             const testExam = { id: 2, title: 'Test Exam', examMode: 'TEST' } as Exam;
-            const simulationExam = { id: 3, title: 'Simulation Exam', examMode: 'TEST_WITH_SIMULATION' } as Exam;
+            const supervisedSessionExam = { id: 3, title: 'Supervised Session Exam', examMode: 'TEST_WITH_SUPERVISED_SESSION' } as Exam;
 
-            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of(new HttpResponse({ body: [realExam, testExam, simulationExam] })));
+            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of(new HttpResponse({ body: [realExam, testExam, supervisedSessionExam] })));
 
             component.ngOnInit();
             fixture.detectChanges();
@@ -92,7 +92,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
             // Verify the badges render the correct translation keys
             expect(badges[0].textContent).toContain('artemisApp.examManagement.testExam.realExam');
             expect(badges[1].textContent).toContain('artemisApp.examManagement.testExam.testExam');
-            expect(badges[2].textContent).toContain('artemisApp.examManagement.testExam.testExamWithSimulation');
+            expect(badges[2].textContent).toContain('artemisApp.examManagement.testExam.testExamWithSupervisedSession');
         });
     });
 });

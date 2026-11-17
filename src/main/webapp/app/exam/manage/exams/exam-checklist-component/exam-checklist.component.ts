@@ -75,7 +75,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     readonly totalPoints = signal(false);
     readonly hasOptionalExercises = signal(false);
     readonly countMandatoryExercises = signal(0);
-    // when it is a test exam or a simulation and test exam and the simulation phase is over
+    // when it is a test exam or a practice exam with a supervised session and the supervised session is over
     readonly isActingAsTestExam = signal<boolean>(undefined!);
     readonly isRealExam = signal<boolean>(undefined!);
     readonly isEvaluatingQuizExercises = signal(false);

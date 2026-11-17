@@ -47,14 +47,14 @@ class GitRepositoryAccessCourseResolutionIntegrationTest extends AbstractProgram
     }
 
     @Test
-    void accessProjectionPreservesSimulationExamMode() {
+    void accessProjectionPreservesSupervisedSessionExamMode() {
         Exam exam = examExercise.getExerciseGroup().getExam();
-        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         examRepository.save(exam);
 
         GitRepositoryAccessDTO projection = programmingExerciseRepository.findAccessProjectionByProjectKey(examExercise.getProjectKey()).getFirst();
 
-        assertThat(projection.examMode()).isEqualTo(ExamMode.TEST_WITH_SIMULATION);
+        assertThat(projection.examMode()).isEqualTo(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         assertThat(projection.examMode()).isEqualTo(GitRepositoryAccessDTO.of(examExercise).examMode());
         assertThat(projection.isTestExamExercise()).isTrue();
     }

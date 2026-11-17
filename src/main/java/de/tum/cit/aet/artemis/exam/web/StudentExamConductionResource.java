@@ -239,14 +239,14 @@ public class StudentExamConductionResource {
         // The supervised session of a practice exam is conducted like a real exam, but its participations are linked to the student exam like those of
         // a practice attempt. Participations that the bulk preparation did not create therefore have to be set up and linked here as well, otherwise
         // the conduction, the programming authorization and the summary would not find them.
-        boolean isSupervisedSession = studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SIMULATION && !studentExam.getExam().isTestOrPractice(now());
+        boolean isSupervisedSession = studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION && !studentExam.getExam().isTestOrPractice(now());
         if ((studentExam.getExam().isTestOrPractice(now()) || isSupervisedSession) && !studentExam.isTestRun()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-                // For test exam with simulation it can happen that the student has not started their
-                // prepared (simulation) attempt and therefore the participations are already prepared
+                // For practice exams with a supervised session it can happen that the student has not started their
+                // prepared (supervised session) attempt and therefore the participations are already prepared
                 boolean isFullyPrepared = false;
-                if (studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SIMULATION) {
+                if (studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION) {
                     var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
                     isFullyPrepared = studentExamWithParticipations.getStudentParticipations().size() == studentExam.getExercises().size();
                 }

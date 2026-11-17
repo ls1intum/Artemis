@@ -115,5 +115,5 @@ export type ExerciseCommit = {
 export enum ExamMode {
     REAL = 'REAL',
     TEST = 'TEST',
-    TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',
+    TEST_WITH_SUPERVISED_SESSION = 'TEST_WITH_SUPERVISED_SESSION',
 }

@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * @param endDate       when the exam ends
  * @param workingTime   the working time in seconds, shown on the card
  * @param examMaxPoints the attainable points, shown on the card
- * @param examMode      the mode of the exam (REAL, TEST, or TEST_WITH_SIMULATION)
+ * @param examMode      the mode of the exam (REAL, TEST, or TEST_WITH_SUPERVISED_SESSION)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamForOverviewDTO(long id, String title, String moduleNumber, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, int workingTime,

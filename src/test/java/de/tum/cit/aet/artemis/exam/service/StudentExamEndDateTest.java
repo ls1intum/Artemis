@@ -43,12 +43,14 @@ class StudentExamEndDateTest {
 
     @Test
     void supervisedSessionUsesExamStartDateAndPracticeAttemptsUseStartedDate() {
-        var simulationEnd = EXAM_START.plusSeconds(3600);
+        var supervisedSessionEnd = EXAM_START.plusSeconds(3600);
 
-        var supervised = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST_WITH_SIMULATION, simulationEnd, EXAM_START, 30, EXAM_START.plusSeconds(60), 3600);
-        var practice = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST_WITH_SIMULATION, simulationEnd, EXAM_START, 30, simulationEnd.plusSeconds(60), 3600);
+        var supervised = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST_WITH_SUPERVISED_SESSION, supervisedSessionEnd, EXAM_START, 30, EXAM_START.plusSeconds(60),
+                3600);
+        var practice = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST_WITH_SUPERVISED_SESSION, supervisedSessionEnd, EXAM_START, 30,
+                supervisedSessionEnd.plusSeconds(60), 3600);
 
         assertThat(supervised.toInstant()).isEqualTo(EXAM_START.plusSeconds(3630).toInstant());
-        assertThat(practice.toInstant()).isEqualTo(simulationEnd.plusSeconds(60 + 3630).toInstant());
+        assertThat(practice.toInstant()).isEqualTo(supervisedSessionEnd.plusSeconds(60 + 3630).toInstant());
     }
 }

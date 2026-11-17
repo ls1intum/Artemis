@@ -539,38 +539,38 @@ public class Exam extends DomainObject {
      * Student exams and exercises are prepared when the user starts the exam.
      *
      * @param now the current time
-     * @return true if is a test exam or a test exam with simulation and the simulation is over
+     * @return true if is a test exam or a test exam with a supervised session and the supervised session is over
      */
     @JsonIgnore
     public boolean isTestOrPractice(ZonedDateTime now) {
-        return isTestOrPractice(examMode, getSimulationEndDate(), now);
+        return isTestOrPractice(examMode, getSupervisedSessionEndDate(), now);
     }
 
     /**
      * Checks whether an exam mode behaves like a test exam at the given time.
      *
-     * @param examMode          the configured exam mode
-     * @param simulationEndDate the end of the simulation phase
-     * @param now               the time to check
-     * @return true if this is a test exam or the simulation phase has ended
+     * @param examMode                 the configured exam mode
+     * @param supervisedSessionEndDate the end of the supervised session
+     * @param now                      the time to check
+     * @return true if this is a test exam or the supervised session has ended
      */
-    public static boolean isTestOrPractice(ExamMode examMode, ZonedDateTime simulationEndDate, ZonedDateTime now) {
-        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && !now.isBefore(simulationEndDate);
+    public static boolean isTestOrPractice(ExamMode examMode, ZonedDateTime supervisedSessionEndDate, ZonedDateTime now) {
+        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SUPERVISED_SESSION && !now.isBefore(supervisedSessionEndDate);
     }
 
     @JsonIgnore
-    public ZonedDateTime getSimulationEndDate() {
-        return simulationEndDate(startDate, workingTime);
+    public ZonedDateTime getSupervisedSessionEndDate() {
+        return supervisedSessionEndDate(startDate, workingTime);
     }
 
     /**
-     * Calculates the end of a test exam's simulation phase.
+     * Calculates the end of a test exam's supervised session.
      *
-     * @param startDate   the start of the simulation phase
+     * @param startDate   the start of the supervised session
      * @param workingTime the configured working time in seconds
-     * @return the end of the simulation phase
+     * @return the end of the supervised session
      */
-    public static ZonedDateTime simulationEndDate(ZonedDateTime startDate, int workingTime) {
+    public static ZonedDateTime supervisedSessionEndDate(ZonedDateTime startDate, int workingTime) {
         return startDate.plusSeconds(workingTime);
     }
 

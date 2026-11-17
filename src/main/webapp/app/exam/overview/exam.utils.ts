@@ -123,32 +123,32 @@ export function isExamSummaryPublished(isTestRun: boolean, exam: Exam | undefine
 
 /**
  * Checks if the given exam is acting as a test exam.
- * This is the case if the exam mode is TEST, or if the exam mode is TEST_WITH_SIMULATION and its
- * simulation phase has already ended (i.e. the exam has entered the practice phase).
+ * This is the case if the exam mode is TEST, or if the exam mode is TEST_WITH_SUPERVISED_SESSION and its
+ * supervised session has already ended (i.e. the exam has entered the practice phase).
  *
  * @param exam The exam to check, which might be undefined.
  * @returns True if the exam acts as a test exam, false otherwise.
  */
 export function isActingAsTestExam(exam?: Exam) {
-    return exam?.examMode === ExamMode.TEST || isAfterSimulationPhase(exam);
+    return exam?.examMode === ExamMode.TEST || isAfterSupervisedSession(exam);
 }
 
-function isAfterSimulationPhase(exam?: Exam): boolean {
-    const simulationEndDate = testExamSimulationEndDate(exam);
-    if (!simulationEndDate) {
+function isAfterSupervisedSession(exam?: Exam): boolean {
+    const supervisedSessionEndDate = testExamSupervisedSessionEndDate(exam);
+    if (!supervisedSessionEndDate) {
         return false;
     }
-    return !dayjs().isBefore(simulationEndDate);
+    return !dayjs().isBefore(supervisedSessionEndDate);
 }
 
 /**
- * Calculates the simulation end date for a test exam.
+ * Calculates the supervised session end date for a test exam.
  *
- * @param exam The exam to calculate the simulation end date for.
- * @returns The simulation end date as a Dayjs object, or undefined if it cannot be calculated.
+ * @param exam The exam to calculate the supervised session end date for.
+ * @returns The supervised session end date as a Dayjs object, or undefined if it cannot be calculated.
  */
-export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined {
-    if (!(exam?.examMode === ExamMode.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
+export function testExamSupervisedSessionEndDate(exam?: Exam): dayjs.Dayjs | undefined {
+    if (!(exam?.examMode === ExamMode.TEST_WITH_SUPERVISED_SESSION) || !exam?.startDate || exam.workingTime === undefined) {
         return undefined;
     }
     return dayjs(exam.startDate).add(exam.workingTime, 'seconds');

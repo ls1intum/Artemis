@@ -372,9 +372,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGenerateStudentExamsForSimulationExam() throws Exception {
+    void testGenerateStudentExamsForSupervisedSessionExam() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
-        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
 
         generateStudentExams(exam);
 
@@ -398,9 +398,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGenerateMissingStudentExamsForSimulationExam() throws Exception {
+    void testGenerateMissingStudentExamsForSupervisedSessionExam() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
-        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
 
         generateStudentExams(exam);
 
@@ -1261,9 +1261,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testUpdateExamWorkingTime_testWithSimulation_failsWithWorkingTimeTooLow() throws Exception {
+    void testUpdateExamWorkingTime_testWithSupervisedSession_failsWithWorkingTimeTooLow() throws Exception {
         Exam testExam = ExamFactory.generateTestExam(course1);
-        testExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         testExam = examRepository.save(testExam);
 
         int workingTimeChange = -3000;
@@ -1683,10 +1683,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         testExam.setExamMode(ExamMode.TEST);
         examRepository.save(testExam);
 
-        // Add a TEST_WITH_SIMULATION exam. Test exams are visible to all students in the course.
-        Exam simulationExam = examUtilService.addExam(course);
-        simulationExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        examRepository.save(simulationExam);
+        // Add a TEST_WITH_SUPERVISED_SESSION exam. Test exams are visible to all students in the course.
+        Exam supervisedSessionExam = examUtilService.addExam(course);
+        supervisedSessionExam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        examRepository.save(supervisedSessionExam);
 
         var exams = request.getSet("/api/exam/courses/" + course.getId() + "/exams-for-overview", HttpStatus.OK, ExamForOverviewDTO.class);
 
@@ -1698,20 +1698,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamForOverviewDTO returnedTestExam = exams.stream().filter(e -> e.id() == testExam.getId()).findFirst().orElseThrow();
         assertThat(returnedTestExam.examMode()).isEqualTo(ExamMode.TEST);
 
-        ExamForOverviewDTO returnedSimulationExam = exams.stream().filter(e -> e.id() == simulationExam.getId()).findFirst().orElseThrow();
-        assertThat(returnedSimulationExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SIMULATION);
+        ExamForOverviewDTO returnedSupervisedSessionExam = exams.stream().filter(e -> e.id() == supervisedSessionExam.getId()).findFirst().orElseThrow();
+        assertThat(returnedSupervisedSessionExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SUPERVISED_SESSION);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        // Create TEST and TEST_WITH_SIMULATION exams to verify all three modes render properly in the admin overview.
+        // Create TEST and TEST_WITH_SUPERVISED_SESSION exams to verify all three modes render properly in the admin overview.
         Exam testExam = examUtilService.addExam(course1);
         testExam.setExamMode(ExamMode.TEST);
         examRepository.save(testExam);
-        Exam simulationExam = examUtilService.addExam(course1);
-        simulationExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        examRepository.save(simulationExam);
+        Exam supervisedSessionExam = examUtilService.addExam(course1);
+        supervisedSessionExam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        examRepository.save(supervisedSessionExam);
 
         // Two queries: one resolving the authenticated admin against the database, which @EnforceAdmin does on every
         // admin request, and one for the exams (the course is fetch-joined). Without the join, each exam row would
@@ -1741,8 +1741,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         UpcomingExamDTO createdTestExam = exams.stream().filter(exam -> exam.id().equals(testExam.getId())).findFirst().orElseThrow();
         assertThat(createdTestExam.examMode()).isEqualTo(ExamMode.TEST);
-        UpcomingExamDTO createdSimulationExam = exams.stream().filter(exam -> exam.id().equals(simulationExam.getId())).findFirst().orElseThrow();
-        assertThat(createdSimulationExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SIMULATION);
+        UpcomingExamDTO createdSupervisedSessionExam = exams.stream().filter(exam -> exam.id().equals(supervisedSessionExam.getId())).findFirst().orElseThrow();
+        assertThat(createdSupervisedSessionExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SUPERVISED_SESSION);
     }
 
     @Test

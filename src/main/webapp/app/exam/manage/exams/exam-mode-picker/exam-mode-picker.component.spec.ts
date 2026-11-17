@@ -55,12 +55,12 @@ describe('ExamModePickerComponent', () => {
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
     });
 
-    it('should set exam mode TEST_WITH_SIMULATION', () => {
+    it('should set exam mode TEST_WITH_SUPERVISED_SESSION', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
+        component.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
@@ -84,7 +84,7 @@ describe('ExamModePickerComponent', () => {
         expect(component.hasSupervisedSession()).toBe(false);
 
         component.setSupervisedSession(true);
-        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
+        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         expect(component.hasSupervisedSession()).toBe(true);
 
         component.setSupervisedSession(false);
@@ -93,11 +93,11 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should keep the supervised session when the practice exam is selected again', () => {
-        fixture.componentRef.setInput('exam', { id: 2, examMode: ExamMode.TEST_WITH_SIMULATION });
+        fixture.componentRef.setInput('exam', { id: 2, examMode: ExamMode.TEST_WITH_SUPERVISED_SESSION });
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.selectPracticeExam();
-        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
+        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SUPERVISED_SESSION);
     });
 
     it('should not change the supervised session when the input is disabled', () => {

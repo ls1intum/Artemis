@@ -417,22 +417,22 @@ describe('ExamParticipationComponent', () => {
         expect(comp.noStudentExamMessageKey()).toBe('artemisApp.examParticipation.testExamConcluded');
     });
 
-    it('should not request a new student exam when the submitted simulation attempt is clicked through the actual test exam', () => {
+    it('should not request a new student exam when the submitted supervised session attempt is clicked through the actual test exam', () => {
         const exam = new Exam();
         exam.id = 2;
-        exam.examMode = ExamMode.TEST_WITH_SIMULATION;
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
         exam.startDate = dayjs().subtract(10, 'minutes').toISOString() as any;
         exam.workingTime = 3600;
         exam.endDate = dayjs().add(2, 'hours');
-        const simulationAttempt = new StudentExam();
-        simulationAttempt.exam = exam;
-        simulationAttempt.startedDate = dayjs().subtract(5, 'minutes');
-        simulationAttempt.submitted = true;
+        const supervisedSessionAttempt = new StudentExam();
+        supervisedSessionAttempt.exam = exam;
+        supervisedSessionAttempt.startedDate = dayjs().subtract(5, 'minutes');
+        supervisedSessionAttempt.submitted = true;
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
         vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
-        examParticipationService.testStudentExams.set([simulationAttempt]);
+        examParticipationService.testStudentExams.set([supervisedSessionAttempt]);
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
 
         comp.ngOnInit();
@@ -443,10 +443,10 @@ describe('ExamParticipationComponent', () => {
         expect(comp.noStudentExamMessageKey()).toBe('artemisApp.examParticipation.testExamAttemptUsedPracticeOpens');
     });
 
-    it('should request a new student exam for an active test exam with simulation without existing attempts', () => {
+    it('should request a new student exam for an active practice exam with a supervised session without existing attempts', () => {
         const exam = new Exam();
         exam.id = 2;
-        exam.examMode = ExamMode.TEST_WITH_SIMULATION;
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
         exam.startDate = dayjs().subtract(10, 'minutes');
         exam.workingTime = 3600;
         exam.endDate = dayjs().add(2, 'hours');
@@ -652,8 +652,8 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).toBe(true);
         expect(secondSubmission.submitted).toBe(false);
 
-        const simulationEndDate = studentExam.exam?.startDate?.add(studentExam.exam.workingTime!, 'seconds');
-        if (studentExam.exam?.examMode === ExamMode.TEST_WITH_SIMULATION && studentExam.startedDate && studentExam.startedDate.isBefore(simulationEndDate!)) {
+        const supervisedSessionEndDate = studentExam.exam?.startDate?.add(studentExam.exam.workingTime!, 'seconds');
+        if (studentExam.exam?.examMode === ExamMode.TEST_WITH_SUPERVISED_SESSION && studentExam.startedDate && studentExam.startedDate.isBefore(supervisedSessionEndDate!)) {
             expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
         } else if (studentExam.testRun || (studentExam.exam?.examMode !== undefined && studentExam.exam.examMode !== ExamMode.REAL)) {
             expect(comp.individualStudentEndDate()).toEqual(comp.testStartTime()!.add(studentExam.workingTime!, 'seconds'));
@@ -688,10 +688,10 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    it('should initialize test exam with simulation using the fixed simulation end date', () => {
+    it('should initialize practice exam with a supervised session using the fixed supervised session end date', () => {
         const studentExam = new StudentExam();
         const exam = new Exam();
-        exam.examMode = ExamMode.TEST_WITH_SIMULATION;
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
         exam.startDate = dayjs().subtract(10, 'minutes');
         exam.workingTime = 3600;
         studentExam.exam = exam;
@@ -705,10 +705,10 @@ describe('ExamParticipationComponent', () => {
         expect(comp.individualStudentEndDate()).toEqual(exam.startDate.add(exam.workingTime, 'seconds'));
     });
 
-    it('should initialize test exam with simulation practice attempt using the attempt start date', () => {
+    it('should initialize practice exam with a supervised session practice attempt using the attempt start date', () => {
         const studentExam = new StudentExam();
         const exam = new Exam();
-        exam.examMode = ExamMode.TEST_WITH_SIMULATION;
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
         exam.startDate = dayjs().subtract(2, 'hours');
         exam.workingTime = 3600;
         studentExam.exam = exam;
@@ -2859,11 +2859,11 @@ describe('ExamParticipationComponent', () => {
 
         expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
 
-        // Case test exam with simulation during simulation phase
+        // Case practice exam with a supervised session during the supervised session
         now = dayjs();
         comp.studentExam().workingTime = 3600;
         comp.studentExam().testRun = false;
-        comp.exam().examMode = ExamMode.TEST_WITH_SIMULATION;
+        comp.exam().examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
         comp.exam().workingTime = 3600;
         comp.exam().gracePeriod = 1;
         comp.exam().startDate = now.subtract(10, 'minutes');

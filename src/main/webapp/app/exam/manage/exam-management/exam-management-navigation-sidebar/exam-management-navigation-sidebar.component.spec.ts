@@ -300,9 +300,9 @@ describe('ExamManagementNavigationSidebarComponent', () => {
             expect(actualSubpages).toEqual(expectedTestExamSubpages);
         });
 
-        it('should display the simulation icon for a test exam with simulation', () => {
+        it('should display the supervised session icon for a practice exam with a supervised session', () => {
             fixture.componentRef.setInput('course', { id: 1 } as Course);
-            fixture.componentRef.setInput('exams', [{ id: 1, title: 'Simulation Exam', examMode: ExamMode.TEST_WITH_SIMULATION } as Exam]);
+            fixture.componentRef.setInput('exams', [{ id: 1, title: 'Supervised Session Exam', examMode: ExamMode.TEST_WITH_SUPERVISED_SESSION } as Exam]);
             fixture.detectChanges();
 
             const icon = fixture.debugElement.query(By.css('[tumAetUiPanelHeader] fa-icon'));

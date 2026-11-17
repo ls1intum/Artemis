@@ -94,11 +94,11 @@ export class CourseExamsComponent implements SidebarView {
     readonly isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     readonly testStudentExamsLoaded = signal(false);
-    // Simulation test exams need their attempt list before the participation component decides whether to request another attempt.
+    // Practice exams with a supervised session need their attempt list before the participation component decides whether to request another attempt.
     readonly canRenderSelectedExam = computed(() => {
         const selectedExamId = Number(this.childParams()['examId']);
         const selectedExam = this.exams()?.find((exam) => exam.id === selectedExamId);
-        return selectedExam?.examMode !== ExamMode.TEST_WITH_SIMULATION || this.testStudentExamsLoaded();
+        return selectedExam?.examMode !== ExamMode.TEST_WITH_SUPERVISED_SESSION || this.testStudentExamsLoaded();
     });
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;

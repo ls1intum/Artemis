@@ -7,7 +7,7 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 /**
  * Lets instructors choose between an exam and a practice exam. A practice exam can optionally start with a supervised session
- * (stored as {@link ExamMode.TEST_WITH_SIMULATION}), which behaves like a real exam from the start date for the working time.
+ * (stored as {@link ExamMode.TEST_WITH_SUPERVISED_SESSION}), which behaves like a real exam from the start date for the working time.
  */
 @Component({
     selector: 'jhi-exam-mode-picker',
@@ -27,7 +27,7 @@ export class ExamModePickerComponent {
     }
 
     hasSupervisedSession(): boolean {
-        return this.exam().examMode === ExamMode.TEST_WITH_SIMULATION;
+        return this.exam().examMode === ExamMode.TEST_WITH_SUPERVISED_SESSION;
     }
 
     /**
@@ -44,7 +44,7 @@ export class ExamModePickerComponent {
      * @param enabled whether the practice exam should start with a supervised session
      */
     setSupervisedSession(enabled: boolean) {
-        this.setExamMode(enabled ? ExamMode.TEST_WITH_SIMULATION : ExamMode.TEST);
+        this.setExamMode(enabled ? ExamMode.TEST_WITH_SUPERVISED_SESSION : ExamMode.TEST);
     }
 
     /**

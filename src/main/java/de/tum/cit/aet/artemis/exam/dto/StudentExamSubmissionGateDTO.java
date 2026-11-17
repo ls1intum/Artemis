@@ -59,9 +59,9 @@ public record StudentExamSubmissionGateDTO(long studentExamId, Boolean submitted
      */
     public ZonedDateTime individualEndDate(ExamScheduleDTO examSchedule, boolean withGracePeriod) {
         if (withGracePeriod) {
-            return StudentExam.individualEndDateWithGracePeriod(examSchedule.examMode(), examSchedule.simulationEndDate(), examSchedule.startDate(), examSchedule.gracePeriod(),
-                    startedDate, workingTime);
+            return StudentExam.individualEndDateWithGracePeriod(examSchedule.examMode(), examSchedule.supervisedSessionEndDate(), examSchedule.startDate(),
+                    examSchedule.gracePeriod(), startedDate, workingTime);
         }
-        return StudentExam.individualEndDate(examSchedule.examMode(), examSchedule.simulationEndDate(), examSchedule.startDate(), startedDate, workingTime);
+        return StudentExam.individualEndDate(examSchedule.examMode(), examSchedule.supervisedSessionEndDate(), examSchedule.startDate(), startedDate, workingTime);
     }
 }

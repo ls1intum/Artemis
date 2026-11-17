@@ -46,12 +46,12 @@ describe('ExamModeBadgeComponent', () => {
         expect(icon).not.toBeNull();
         expect(icon.componentInstance.icon()).toBe(faGraduationCap);
     });
-    it('should display the simulation label with the simulation icon', () => {
-        fixture.componentRef.setInput('examMode', ExamMode.TEST_WITH_SIMULATION);
+    it('should display the supervised session label with the supervised session icon', () => {
+        fixture.componentRef.setInput('examMode', ExamMode.TEST_WITH_SUPERVISED_SESSION);
         fixture.detectChanges();
 
         const tag = fixture.debugElement.query(By.css('[data-testid="exam-mode-tag"]'));
-        expect(tag.nativeElement.textContent).toContain('artemisApp.examManagement.testExam.testExamWithSimulation');
+        expect(tag.nativeElement.textContent).toContain('artemisApp.examManagement.testExam.testExamWithSupervisedSession');
         expect(fixture.debugElement.query(By.css('fa-icon')).componentInstance.icon()).toBe(faFlaskVial);
     });
 });
