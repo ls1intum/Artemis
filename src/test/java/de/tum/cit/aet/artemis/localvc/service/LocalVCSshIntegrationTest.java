@@ -377,6 +377,17 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
             assertThat(awaitAccessLog(participation.getId(), 5)).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE,
                     RepositoryActionType.PUSH, RepositoryActionType.CLONE, RepositoryActionType.PUSH, RepositoryActionType.PULL);
+
+            // Fetching and pushing again moves nothing, which is still an access to the repository and is written, with the newest commit as it is now.
+            clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            var afterFetch = awaitAccessLog(participation.getId(), 6);
+            assertThat(afterFetch.getLast().getRepositoryActionType()).isEqualTo(RepositoryActionType.READ);
+            assertThat(afterFetch.getLast().getCommitHash()).as("the newest commit is the one the previous pull received").isEqualTo(afterFetch.get(4).getCommitHash());
+            clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            var afterPush = awaitAccessLog(participation.getId(), 7);
+            assertThat(afterPush.getLast().getRepositoryActionType()).isEqualTo(RepositoryActionType.WRITE);
+            assertThat(afterPush.getLast().getUser().getId()).isEqualTo(instructor.getId());
         }
     }
 

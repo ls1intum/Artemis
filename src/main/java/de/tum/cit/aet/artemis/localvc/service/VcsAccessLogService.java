@@ -86,7 +86,7 @@ public class VcsAccessLogService {
 
         // The name column is NOT NULL and is what identifies the accessor in the audit UI, so it carries both parts.
         // The email column is likewise NOT NULL and has nothing meaningful to hold for an agent.
-        String accessor = "Build agent " + buildAgentName + " (build job " + buildJobId + ")";
+        String accessor = VcsAccessLog.BUILD_AGENT_ACCESSOR_PREFIX + buildAgentName + " (build job " + buildJobId + ")";
         if (accessor.length() > ACCESSOR_NAME_MAX_LENGTH) {
             // The column is varchar(100); a long agent short name must not turn an audit entry into a failed insert
             accessor = accessor.substring(0, ACCESSOR_NAME_MAX_LENGTH);

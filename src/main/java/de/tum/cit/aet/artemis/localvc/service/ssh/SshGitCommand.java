@@ -207,9 +207,13 @@ public class SshGitCommand extends GitPackCommand {
                     }
                 }
                 finally {
-                    // The command is over, so everything about it is known. Each of these writes only if the command was a fetch that sent data or a push that brought commands.
-                    accessLogRecorder.recordFetch(accessLogSubject, audit);
-                    accessLogRecorder.recordPush(accessLogSubject, audit);
+                    // The command is over, so everything about it is known, and it is one access whatever it moved.
+                    if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
+                        accessLogRecorder.recordFetchSSH(accessLogSubject, audit, repository);
+                    }
+                    else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
+                        accessLogRecorder.recordPushSSH(accessLogSubject, audit, repository);
+                    }
                 }
             }
 

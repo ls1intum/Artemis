@@ -23,6 +23,8 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
+import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -387,6 +389,19 @@ class LocalVCAccessLogRecorderServiceTest {
         doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
 
         assertThatCode(() -> accessLogRecorder.recordPushHTTPS(request)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void anSshFetchThatMovedNoDataIsAReadAndAnSshPushWithoutCommandsIsAWrite() throws Exception {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        try (var repository = new InMemoryRepository(new DfsRepositoryDescription("empty"))) {
+            accessLogRecorder.recordFetchSSH(subject, new GitOperationAudit(), repository);
+            accessLogRecorder.recordPushSSH(subject, new GitOperationAudit(), repository);
+        }
+
+        verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.READ, AuthenticationMechanism.SSH, "", "10.0.0.2");
+        verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.WRITE, AuthenticationMechanism.SSH, "", "10.0.0.2");
+        verifyNoMoreInteractions(vcsAccessLogService);
     }
 
     @Test

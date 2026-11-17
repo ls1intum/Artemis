@@ -11,6 +11,7 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,6 +172,37 @@ public class LocalVCAccessLogRecorderService {
         else {
             write(subject, RepositoryActionType.PUSH_FAIL, audit.getCommitHashBeforePush());
         }
+    }
+
+    /**
+     * Writes the entry of an SSH command that fetched: a clone or pull if data was sent, otherwise a read. Over SSH one command is one operation, so a fetch that moves no
+     * data, because the client is up to date, or that only lists the references, is still an access and is written.
+     *
+     * @param subject    who fetched from which repository, null if that is unknown
+     * @param audit      what the hooks learned about the fetch
+     * @param repository the repository of the command, which says what the newest commit was
+     */
+    public void recordFetchSSH(@Nullable AccessLogSubject subject, GitOperationAudit audit, Repository repository) {
+        if (subject != null && !audit.isPackSent()) {
+            write(subject, RepositoryActionType.READ, LocalVCFetchPreUploadHook.headCommitOf(repository));
+            return;
+        }
+        recordFetch(subject, audit);
+    }
+
+    /**
+     * Writes the entry of an SSH command that pushed: a push or failed push if it brought commands, otherwise a write. A push that has nothing new is still an access.
+     *
+     * @param subject    who pushed to which repository, null if that is unknown
+     * @param audit      what the hooks learned about the push
+     * @param repository the repository of the command, which says what the newest commit is
+     */
+    public void recordPushSSH(@Nullable AccessLogSubject subject, GitOperationAudit audit, Repository repository) {
+        if (subject != null && !audit.isPushReceived()) {
+            write(subject, RepositoryActionType.WRITE, LocalVCFetchPreUploadHook.headCommitOf(repository));
+            return;
+        }
+        recordPush(subject, audit);
     }
 
     private void write(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash) {

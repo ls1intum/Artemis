@@ -26,6 +26,11 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class VcsAccessLog extends DomainObject {
 
+    /**
+     * How the name of an access by a build agent starts. The agent authenticates as a build job, not as a person, so the entry has no user and the name identifies the accessor.
+     */
+    public static final String BUILD_AGENT_ACCESSOR_PREFIX = "Build agent ";
+
     @ManyToOne
     private User user;
 
