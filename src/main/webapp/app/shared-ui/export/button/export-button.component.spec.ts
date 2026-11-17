@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Subject } from 'rxjs';
 import { CsvExportOptions, ExportDialogCloseResult } from 'app/shared-ui/export/modal/export-modal.component';
 import { vi } from 'vitest';
@@ -13,7 +13,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 describe('ExportButtonComponent', () => {
     let fixture: ComponentFixture<ExportButtonComponent>;
     let comp: ExportButtonComponent;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let dialogClose: Subject<ExportDialogCloseResult>;
 
     beforeEach(async () => {
@@ -21,14 +21,14 @@ describe('ExportButtonComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExportButtonComponent],
             providers: [
-                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue({ onClose: dialogClose } as unknown as DynamicDialogRef) } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn().mockReturnValue({ onClose: dialogClose } as unknown as TumAetUiDialogRef) } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExportButtonComponent);
         comp = fixture.componentInstance;
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
     });
 
     afterEach(() => {

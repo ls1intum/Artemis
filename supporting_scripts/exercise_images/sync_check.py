@@ -6,7 +6,9 @@ the image repository, so the template project the image was built from can be re
 the versions compared without resolving a single dependency.
 """
 
+import json
 import re
+import tomllib
 import time
 import urllib.error
 import urllib.request
@@ -48,6 +50,27 @@ SOURCES = {
         Source("kotlin/test/maven/projectTemplate/pom.xml", "pom.xml"),
         Source("kotlin/test/stagePom.xml", "pom.xml"),
     ],
+    # The templates pin the dependencies in their lock files. The test crate builds the assignment as a path dependency, so the
+    # assignment's own lock file only matters for the static code analysis, which runs cargo in the assignment directory.
+    "rust": [
+        Source("rust/test/Cargo.lock", "Cargo.lock"),
+        Source("rust/test/rust_template_test_macros/Cargo.lock", "rust_template_test_macros/Cargo.lock"),
+        Source("rust/exercise/Cargo.lock", "assignment/Cargo.lock"),
+        Source("rust/solution/Cargo.lock", "assignment/Cargo.lock"),
+    ],
+    # The image caches the npm packages of the test projects (regular and with static code analysis) of both languages. The test
+    # project builds the assignment as an npm workspace, so its lock file also pins the dependencies of the assignment.
+    "javascript": [
+        Source("javascript/test/package-lock.json", "vitest/javascript/package-lock.json"),
+        Source("javascript/staticCodeAnalysis/test/package-lock.json", "vitest/javascript/staticCodeAnalysis/package-lock.json"),
+    ],
+    "typescript": [
+        Source("typescript/test/package-lock.json", "vitest/typescript/package-lock.json"),
+        Source("typescript/staticCodeAnalysis/test/package-lock.json", "vitest/typescript/staticCodeAnalysis/package-lock.json"),
+    ],
+    # The template pins no Package.resolved. The image holds the clones of the dependencies in the cache of SwiftPM, which finds any
+    # version a requirement allows in them, so the declared packages and requirements have to be the same.
+    "swift": [Source("swift/test/Package.swift", "Package.swift")],
 }
 
 
@@ -124,7 +147,64 @@ def wrapper_versions(text: str) -> Versions:
     return {"gradle-wrapper": {found.group(1)}} if found else {}
 
 
+def cargo_lock_versions(text: str) -> Versions:
+    """Versions of the crates a ``Cargo.lock`` resolves from a registry or a repository, by crate name. Path crates are built, not downloaded.
+
+    The same version of a crate from a repository can come from another commit, so its source with the locked commit is part of the value.
+    """
+    versions: Versions = {}
+    for package in tomllib.loads(text).get("package", []):
+        source = package.get("source")
+        if source:
+            versions.setdefault(package["name"], set()).add(f"{package['version']} ({source})" if source.startswith("git+") else package["version"])
+    return versions
+
+
+def swift_package_versions(text: str) -> Versions:
+    """The package dependencies a ``Package.swift`` declares with their requirement, by repository URL."""
+    code = "\n".join(re.sub(r"(^|\s)//.*$", "", line) for line in text.splitlines())
+    versions: Versions = {}
+    for start in re.finditer(r"\.package\(", code):
+        depth, position = 1, start.end()
+        while depth and position < len(code):
+            depth += {"(": 1, ")": -1}.get(code[position], 0)
+            position += 1
+        declaration = code[start.end() : position - 1]
+        url = re.search(r"""url:\s*"([^"]+)"\s*,?""", declaration)
+        if url:
+            requirement = " ".join(declaration[url.end() :].split())
+            versions.setdefault(url.group(1).removesuffix(".git"), set()).add(requirement or "any version")
+    return versions
+
+
+def npm_lock_versions(text: str) -> Versions:
+    """Versions of the packages an npm ``package-lock.json`` installs, by package name. Workspaces and links are not downloaded.
+
+    The same version of a package from a repository can come from another commit, so its source with the locked commit is part of the value.
+    """
+    versions: Versions = {}
+    for path, package in json.loads(text).get("packages", {}).items():
+        if "node_modules" not in path.split("/") or package.get("link"):
+            continue
+        resolved = package.get("resolved", "")
+        if resolved.startswith("git+"):
+            # the manifest of a package from a repository does not have to declare a version
+            version = f"{package.get('version', '')} ({resolved})".strip()
+        elif "version" in package:
+            version = package["version"]
+        else:
+            continue
+        versions.setdefault(path.rpartition("node_modules/")[2], set()).add(version)
+    return versions
+
+
 def versions_of(file_name: str, text: str, properties: dict[str, str] | None = None) -> Versions:
+    if file_name.endswith("Cargo.lock"):
+        return cargo_lock_versions(text)
+    if file_name.endswith("package-lock.json"):
+        return npm_lock_versions(text)
+    if file_name.endswith("Package.swift"):
+        return swift_package_versions(text)
     if file_name.endswith(".xml"):
         return maven_versions(text)
     if file_name.endswith(".properties"):
@@ -171,7 +251,7 @@ def check_language(language: str, image: str, templates_dir: Path = TEMPLATES_DI
     source = IMAGE_SOURCES.get(name)
     if source is None:
         return [f"No source repository is configured for image {image}"]
-    base_url = f"https://raw.githubusercontent.com/{source.github_repository}/{tag}/{source.template_directory}"
+    base_url = "/".join(part for part in ("https://raw.githubusercontent.com", source.github_repository, tag, source.template_directory) if part)
     image_files: dict[str, Versions] = {}
     problems = []
     try:

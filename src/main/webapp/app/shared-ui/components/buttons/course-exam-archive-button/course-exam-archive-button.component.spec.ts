@@ -28,7 +28,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('Course Exam Archive Button Component', () => {
     let comp: CourseExamArchiveButtonComponent;
@@ -54,7 +54,7 @@ describe('Course Exam Archive Button Component', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn(), close: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn(), close: vi.fn() } },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -219,7 +219,7 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should display warning and reload course on archive complete with warnings', () => {
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
 
             vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
             const openDialogSpy = vi.spyOn(dialogService, 'open');
@@ -312,10 +312,26 @@ describe('Course Exam Archive Button Component', () => {
         fixture.detectChanges();
         const warning = new Subject<string>();
         const overwrite = new Subject<string>();
-        const dialog = TestBed.inject(DialogService);
+        const dialog = TestBed.inject(TumAetUiDialogService);
         vi.mocked(dialog.open)
-            .mockReturnValueOnce(Object.assign(new DynamicDialogRef(), { onClose: warning }))
-            .mockReturnValueOnce(Object.assign(new DynamicDialogRef(), { onClose: overwrite }));
+            .mockReturnValueOnce(
+                Object.assign(
+                    new TumAetUiDialogRef(
+                        () => {},
+                        () => {},
+                    ),
+                    { onClose: warning },
+                ),
+            )
+            .mockReturnValueOnce(
+                Object.assign(
+                    new TumAetUiDialogRef(
+                        () => {},
+                        () => {},
+                    ),
+                    { onClose: overwrite },
+                ),
+            );
         const archive = vi.spyOn(courseManagementService, 'archiveCourse').mockReturnValue(of(new HttpResponse<void>()));
         comp.openArchiveWarningDialog();
         warning.next('archive-confirm');
