@@ -75,6 +75,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     private destroyed = false;
     private originElement?: HTMLElement;
     private hoverCloseTimer?: ReturnType<typeof setTimeout>;
+    private pointerOverPanel = false;
     /** Set while this popover hands focus back to its trigger, which must not count as focusing it anew. */
     private returningFocus = false;
     /** Whether the open popover blocks the page behind it. Fixed while open, so the panel does not change under the user. */
@@ -95,6 +96,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         const modal = this.openOn() === 'click';
         this.isModal.set(modal);
         this.originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
+        this.pointerOverPanel = false;
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, this.placement(), { hasBackdrop: modal, alignment: this.alignment() });
         this.appliedPlacement.set(this.placement());
         // CDK may emit the flipped position synchronously while attaching, so this is subscribed before the portal.
@@ -192,7 +194,13 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     scheduleHoverClose(): void {
         this.cancelHoverClose();
         if (this.isOpen()) {
-            this.hoverCloseTimer = setTimeout(() => this.close(), HOVER_CLOSE_DELAY_MS);
+            this.hoverCloseTimer = setTimeout(() => {
+                // A control of the panel that holds keyboard focus keeps the popover: closing would remove the focused
+                // element. It closes once the focus has left the panel as well.
+                if (!this.panelHoldsFocus()) {
+                    this.close();
+                }
+            }, HOVER_CLOSE_DELAY_MS);
         }
     }
 
@@ -207,10 +215,12 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     }
 
     protected onPanelPointerEnter(): void {
+        this.pointerOverPanel = true;
         this.cancelHoverClose();
     }
 
     protected onPanelPointerLeave(): void {
+        this.pointerOverPanel = false;
         if (!this.isModal()) {
             this.scheduleHoverClose();
         }
@@ -221,7 +231,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     }
 
     protected onPanelFocusOut(): void {
-        if (!this.isModal()) {
+        if (!this.isModal() && !this.pointerOverPanel) {
             this.scheduleHoverClose();
         }
     }
@@ -262,6 +272,10 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         this.returningFocus = true;
         this.originElement?.focus();
         this.returningFocus = false;
+    }
+
+    private panelHoldsFocus(): boolean {
+        return !!this.panelElement()?.contains(this.document.activeElement);
     }
 
     private cancelHoverClose(): void {

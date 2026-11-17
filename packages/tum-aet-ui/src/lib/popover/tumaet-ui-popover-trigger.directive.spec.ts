@@ -161,6 +161,34 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 
+    it('stays open while a control of the panel has keyboard focus, although the pointer left', () => {
+        hover();
+        panel()!.dispatchEvent(new Event('pointerenter'));
+        inPanel('first').focus();
+
+        panel()!.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+        expect(document.activeElement).toBe(inPanel('first'));
+
+        fixture.nativeElement.querySelector('[data-testid="next"]').focus();
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('stays open when focus leaves the panel while the pointer is still over it', () => {
+        hover();
+        panel()!.dispatchEvent(new Event('pointerenter'));
+        inPanel('first').focus();
+
+        fixture.nativeElement.querySelector('[data-testid="next"]').focus();
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+    });
+
     it('closes on a click elsewhere, but not on a click inside the panel', () => {
         hover();
 
