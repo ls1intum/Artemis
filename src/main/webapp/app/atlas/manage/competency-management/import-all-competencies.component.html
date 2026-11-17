@@ -1,12 +1,6 @@
-<form class="d-flex flex-column h-100">
-    @if (!isOpenedAsDialog) {
-        <div class="modal-header">
-            <h4 class="modal-title" [jhiTranslate]="'artemisApp.' + competencyType() + '.importAll.title'"></h4>
-            <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
-        </div>
-    }
-    <div class="modal-body d-flex flex-column flex-grow-1 overflow-hidden">
-        <tumaet-ui-table-layout fill [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
+<form>
+    <div>
+        <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
             <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <input
                     tumAetUiInput

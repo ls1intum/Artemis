@@ -59,10 +59,7 @@
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/shared-ui/components/buttons/button';
 @source './app/shared-ui/table-view';
-@source './app/atlas/shared/standardized-competencies';
-@source './app/atlas/shared/competency-selection';
 @source './app/shared-ui/form/title-channel-name';
-@source './app/atlas/manage/import-standardized-competencies';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/programming/manage/detail';
 @source './app/programming/manage/vcs-repository-access-log-view';
@@ -71,10 +68,8 @@
 @source './app/quiz/manage/detail';
 @source './app/quiz/manage/manage-buttons';
 @source './app/quiz/manage/lifecyle-buttons';
-@source './app/text/manage/detail';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
-@source './app/editor/markdown-editor';
 @source './app/communication/message-editor';
 @source './app/communication/posting-markdown-editor';
 @source './app/course/request';
@@ -92,11 +87,6 @@
 @source './app/shared-ui/information-box';
 @source './app/shared-ui/detail-overview-list';
 @source './app/course/shared/course-sidebar-toggle-button';
-@source './app/atlas/shared/competency-contribution';
-@source './app/atlas/manage/competency-management';
-@source './app/atlas/manage/import';
-@source './app/atlas/manage/import-list';
-@source './app/atlas/manage/learning-paths-table';
 @source './app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members';
 @source './app/course/manage/course-lti-configuration';
 @source './app/course/manage/course-material-import';
@@ -110,9 +100,6 @@
 @source './app/quiz/manage/list-edit-existing';
 @source './app/quiz/overview/course-training/course-training-quiz/leaderboard';
 @source './app/shared-ui/form/form-footer';
-@source './app/text/manage/tutor-effort';
-@source './app/atlas/manage/orchestration-trigger';
-@source './app/atlas/shared/orchestration-result-dialog';
 @source './app/core/feature-overview';
 @source './app/core/layouts/footer';
 @source './app/course/overview/setup-passkey-modal';
@@ -130,7 +117,6 @@
 @source './app/communication/saved-posting-banner';
 @source './app/quiz/manage/statistics/question-statistics-chart';
 @source './app/course/manage/update';
-@source './app/text/overview/text-editor';
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/programming/shared/build-window-notice';
 @source './app/programming/manage/update/update-components/build-time-window';
@@ -246,12 +232,6 @@
 }
 
 /* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/atlas/manage/competency-management/competency-management-table.component.html';
-@source './app/atlas/manage/competency-management/competency-management.component.html';
-@source './app/atlas/manage/competency-management/import-all-competencies.component.html';
-@source './app/atlas/manage/generate-competencies/competency-recommendation-detail.component.html';
-@source './app/atlas/manage/import/import-course-competencies.component.html';
-@source './app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component.html';
 @source './app/communication/answer-post/answer-post.component.html';
 @source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
 @source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
@@ -282,14 +262,17 @@
 @source './app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component.html';
 @source './app/shared-ui/export/modal/export-modal.component.html';
 @source './app/shared-ui/form/form-footer/form-footer.component.html';
-@source './app/text/manage/example-text-submission/example-text-submission.component.html';
 
 /* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
 @source './app/account';
 @source './app/admin';
 @source './app/aiworker';
 @source './app/assessment';
+@source './app/atlas';
 @source './app/calendar';
+@source './app/core/alert';
+@source './app/core/navbar/global-search/components/modal';
+@source './app/editor';
 @source './app/exam';
 @source './app/exercise';
 @source './app/fileupload';
@@ -306,9 +289,8 @@
 @source './app/plagiarism';
 @source './app/presentation';
 @source './app/shared';
+@source './app/shared-ui/user-registration-modal';
 @source './app/sharing';
+@source './app/text';
 @source './app/tutorialgroup';
 @source './app/videosource';
-@source './app/core/alert';
-@source './app/shared-ui/user-registration-modal';
-@source './app/core/navbar/global-search/components/modal';

@@ -1,3 +1,4 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -84,6 +85,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
         PointsInputComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit {

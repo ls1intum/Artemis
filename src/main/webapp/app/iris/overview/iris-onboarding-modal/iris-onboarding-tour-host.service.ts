@@ -7,8 +7,8 @@ import { IrisOnboardingRef } from './iris-onboarding-ref';
  * Mounts the Iris onboarding tour at the end of the document.
  *
  * Only the welcome screen is a modal dialog. The numbered steps draw their own spotlight, and the user has to click the
- * chat beneath them, so a modal shell around the entire tour would block the very elements the tour points at. Like the PrimeNG
- * dialog it replaces, the tour belongs to the application and stays until it closes itself.
+ * chat beneath them, so a modal shell around the entire tour would block the very elements the tour points at. Like the dialog
+ * it replaces, the tour belongs to the application and stays until it closes itself.
  */
 @Service()
 export class IrisOnboardingTourHost {
