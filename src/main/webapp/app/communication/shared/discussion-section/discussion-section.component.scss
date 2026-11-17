@@ -16,36 +16,29 @@ $discussion-section-card-min-width: 370px;
 .expanded-discussion {
     width: calc(var(--spacing-divider) + #{$discussion-section-card-min-width});
 
-    .card {
+    .discussion-card {
+        display: flex;
+        flex-direction: column;
         width: inherit;
         min-width: $discussion-section-card-min-width;
-        border: 2px solid var(--bs-border-color);
+        border: 2px solid var(--tumaet-ui-border-color);
+        border-radius: var(--tumaet-ui-radius-sm);
+        background-color: var(--tumaet-ui-content-background);
 
-        .card-header {
+        .discussion-card-header {
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            padding: 10px 15px;
             border-radius: 0.25em 0.25em 0 0;
             background-color: transparent;
-            border-bottom: 2px solid var(--bs-border-color);
-
-            .card-title {
-                display: flex;
-            }
-
-            .row > .col-auto:last-child {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
+            border-bottom: 2px solid var(--tumaet-ui-border-color);
         }
 
-        .card-body {
-            .items-container {
-                max-height: 700px;
-                overflow-y: auto;
-            }
+        .items-container {
+            max-height: 700px;
+            overflow-y: auto;
         }
     }
 }
@@ -54,7 +47,7 @@ $discussion-section-card-min-width: 370px;
     width: 38px;
     justify-content: start;
     flex-flow: column nowrap;
-    border: 2px solid $border-color;
+    border: 2px solid var(--tumaet-ui-border-color);
     border-radius: 0.25em 0 0 0.25em;
 
     // No divider is rendered while collapsed, so the bar keeps the distance a divider has.
@@ -89,7 +82,7 @@ $discussion-section-card-min-width: 370px;
             display: none;
         }
 
-        .card {
+        .discussion-card {
             width: inherit;
             min-width: $discussion-section-card-min-width-sm;
         }
