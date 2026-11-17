@@ -60,11 +60,13 @@
         <div class="p-4!" [hidden]="isCollapsed()" formGroupName="competency">
             <div class="mb-4!">
                 <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
+                <!-- The kit input keeps only a static id; tumAetUiInputId hands it the bound one, and the plain id shows the label association in the template. -->
                 <input
                     type="text"
                     tumAetUiInput
                     class="block w-full"
                     id="title-{{ index() }}"
+                    [tumAetUiInputId]="'title-' + index()"
                     formControlName="title"
                     [tumAetUiInputInvalid]="!!titleControl()?.invalid && (!!titleControl()?.dirty || !!titleControl()?.touched)"
                 />
