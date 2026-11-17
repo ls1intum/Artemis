@@ -88,7 +88,7 @@ class ImagesTest(unittest.TestCase):
             with self.subTest(image=image), self.assertRaises(ValueError):
                 split_image(image)
 
-    def test_default_images_of_java_and_kotlin_have_a_source_repository(self):
+    def test_default_images_of_the_checked_languages_have_a_source_repository(self):
         images = configured_images()
         for language in sync_check.SOURCES:
             name, _ = split_image(images[language]["default"])
@@ -172,6 +172,61 @@ class OfflineTest(unittest.TestCase):
         self.assertIn("--network", command)
 
 
+class VerifyLogTest(unittest.TestCase):
+    """What ``offline.verify`` reports from the log of a build, without running Docker."""
+
+    def _verify(self, log_text: str, returncode: int) -> offline.Result:
+        def run(command, stdout, **_):
+            stdout.write(log_text)
+            return subprocess.CompletedProcess(command, returncode)
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run):
+            return offline.verify(TEMPLATES_DIR, assembly.Variant("rust", None), "image:1", Path(directory))
+
+    def test_a_cargo_download_failure_is_named(self):
+        result = self._verify("   Updating crates.io index\nerror: failed to get `chrono` as a dependency of package `x`\n\nCaused by:\n  download failed\n", 101)
+        self.assertFalse(result.passed)
+        self.assertEqual(result.missing, ["failed to get `chrono` as a dependency of package `x`"])
+
+    def test_a_failure_without_a_known_pattern_reports_the_log_tail(self):
+        log = "\n".join(f"line {number}" for number in range(10)) + "\n"
+        result = self._verify(log, 1)
+        self.assertEqual(result.missing, [f"line {number}" for number in range(5, 10)])
+
+    def _verify_attempts(self, *attempts: tuple[str, int]) -> tuple[offline.Result, int]:
+        remaining = list(attempts)
+
+        def run(command, stdout, **_):
+            log_text, returncode = remaining.pop(0)
+            stdout.write(log_text)
+            return subprocess.CompletedProcess(command, returncode)
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run):
+            return offline.verify(TEMPLATES_DIR, assembly.Variant("swift", "plain"), "image:1", Path(directory)), len(remaining)
+
+    FLAKE = "<unknown>:0: error: module 'SwiftShims' is defined in both 'a.pcm' and 'b.pcm'\n"
+
+    def test_a_known_intermittent_compiler_error_is_built_once_more(self):
+        result, unused = self._verify_attempts((self.FLAKE, 1), ("Build complete\n", 0))
+        self.assertTrue(result.passed)
+        self.assertEqual((result.attempts, unused), (2, 0))
+
+    def test_the_known_compiler_error_is_not_retried_forever(self):
+        result, unused = self._verify_attempts((self.FLAKE, 1), (self.FLAKE, 1))
+        self.assertFalse(result.passed)
+        self.assertEqual((result.attempts, unused), (2, 0))
+
+    def test_any_other_failure_is_not_retried(self):
+        result, unused = self._verify_attempts(("error: failed to get `rand` as a dependency\n", 101), ("Build complete\n", 0))
+        self.assertFalse(result.passed)
+        self.assertEqual((result.attempts, unused), (1, 1))
+
+    def test_a_passing_build_reports_nothing(self):
+        result = self._verify("Compiling\n", 0)
+        self.assertTrue(result.passed)
+        self.assertEqual(result.missing, [])
+
+
 class AssemblyTest(unittest.TestCase):
     def test_sections_are_kept_or_dropped(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -192,16 +247,34 @@ class AssemblyTest(unittest.TestCase):
                 target = Path(directory) / "testing-dir"
                 assembly.assemble(TEMPLATES_DIR, variant, target)
                 package_folder = Path(*assembly.PACKAGE_NAME.split("."))
-                self.assertTrue((target / ("assignment/src") / package_folder).is_dir())
                 for file in target.rglob("*"):
-                    if file.is_file() and file.suffix in (".xml", ".gradle", ".java", ".kt", ".json", ".yaml", ".properties"):
+                    self.assertNotIn("${", file.name, f"{file.relative_to(target)} has a leftover placeholder in its name")
+                    if file.is_file() and file.suffix in (".xml", ".gradle", ".java", ".kt", ".json", ".yaml", ".properties", ".swift", ".rs"):
                         self.assertIsNone(marker.search(file.read_text(encoding="utf-8")), f"{file.relative_to(target)} has a leftover placeholder")
+                if not variant.is_jvm:
+                    self.assertTrue((target / "assignment").is_dir())
+                    continue
+                self.assertTrue((target / ("assignment/src") / package_folder).is_dir())
                 if variant.sequential:
                     for stage in assembly.BUILD_STAGES:
                         self.assertTrue((target / stage / "test" / package_folder).is_dir())
                 else:
                     self.assertTrue((target / "test" / package_folder).is_dir())
                 self.assertEqual((target / "staticCodeAnalysisConfig").is_dir(), variant.static_code_analysis and not variant.sequential)
+
+    def test_rust_and_swift_repositories_keep_the_template_layout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rust = Path(directory) / "rust"
+            assembly.assemble(TEMPLATES_DIR, assembly.Variant("rust", None), rust)
+            self.assertIn('path = "assignment"', (rust / "Cargo.toml").read_text(encoding="utf-8"))
+            self.assertIn('"assignment/src"', (rust / "build.rs").read_text(encoding="utf-8"))
+            self.assertTrue((rust / "assignment" / "Cargo.lock").is_file())
+            swift = Path(directory) / "swift"
+            assembly.assemble(TEMPLATES_DIR, assembly.Variant("swift", "plain"), swift)
+            self.assertTrue((swift / "Tests" / "SortingExampleTests" / "ClassTest.swift").is_file())
+            self.assertTrue((swift / "assignment" / "Sources" / "SortingExampleLib").is_dir())
+            self.assertIn('name: "SortingExample"', (swift / "Package.swift").read_text(encoding="utf-8"))
+            self.assertTrue((swift / ".swiftlint.yml").is_file())
 
     def test_variant_names_are_unique(self):
         names = [variant.name for variant in assembly.VARIANTS]
@@ -312,6 +385,133 @@ class SyncCheckTest(unittest.TestCase):
         problems = sync_check.check_language("kotlin", "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.1", fetch=self._fetch(stale))
         expected = f"com.google.guava:guava {current} differs from the image (0.0.0-stale)"
         self.assertTrue(any(expected in problem for problem in problems), problems)
+
+
+CARGO_LOCK = """\
+version = 4
+
+[[package]]
+name = "rand"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abc"
+
+[[package]]
+name = "rust-template-exercise"
+version = "0.1.0"
+dependencies = ["rand"]
+"""
+
+
+class CargoLockTest(unittest.TestCase):
+    def test_only_crates_from_a_registry_are_compared(self):
+        self.assertEqual(sync_check.versions_of("Cargo.lock", CARGO_LOCK), {"rand": {"0.9.4"}})
+
+    def test_a_crate_from_a_repository_is_compared_with_its_locked_commit(self):
+        lock = '[[package]]\nname = "tool"\nversion = "1.0.0"\nsource = "git+https://example.com/tool.git?tag=v1#{commit}"\n'
+        template = sync_check.versions_of("Cargo.lock", lock.format(commit="a" * 40))
+        image = sync_check.versions_of("Cargo.lock", lock.format(commit="b" * 40))
+        problems = sync_check.compare(template, image)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertTrue(problems[0].startswith("tool 1.0.0 (git+https://example.com/tool.git?tag=v1#aaaa"), problems)
+        self.assertEqual(sync_check.compare(template, template), [])
+
+    def _fetch(self, image_lock: str, requested: list[str]):
+        def fetch(url: str) -> str:
+            requested.append(url)
+            return image_lock
+
+        return fetch
+
+    def test_every_lock_file_of_the_templates_is_read_from_the_image_tag(self):
+        requested: list[str] = []
+        for entry in sync_check.SOURCES["rust"]:
+            template = sync_check.cargo_lock_versions((TEMPLATES_DIR / entry.template_file).read_text(encoding="utf-8"))
+            self.assertTrue(template, f"{entry.template_file} has no crate from a registry")
+        image_lock = "\n".join(
+            f'[[package]]\nname = "{name}"\nversion = "{version}"\nsource = "registry+x"\n'
+            for entry in sync_check.SOURCES["rust"]
+            for name, versions in sync_check.cargo_lock_versions((TEMPLATES_DIR / entry.template_file).read_text(encoding="utf-8")).items()
+            for version in versions
+        )
+        problems = sync_check.check_language("rust", "ghcr.io/ls1intum/artemis-rust-docker:v1.2.0", fetch=self._fetch(image_lock, requested))
+        self.assertEqual(problems, [])
+        self.assertIn("https://raw.githubusercontent.com/ls1intum/artemis-rust-docker/v1.2.0/test/assignment/Cargo.lock", requested)
+        self.assertIn("https://raw.githubusercontent.com/ls1intum/artemis-rust-docker/v1.2.0/test/Cargo.lock", requested)
+
+    def test_a_crate_version_the_image_does_not_hold_is_reported(self):
+        stale = '[[package]]\nname = "rand"\nversion = "0.8.5"\nsource = "registry+x"\n'
+        problems = sync_check.check_language("rust", "ghcr.io/ls1intum/artemis-rust-docker:v1.2.0", fetch=self._fetch(stale, []))
+        self.assertTrue(any(problem.startswith("rust/solution/Cargo.lock: rand ") and "differs from the image (0.8.5)" in problem for problem in problems), problems)
+
+
+NPM_LOCK = """\
+{"lockfileVersion": 3, "packages": {
+  "": {"name": "artemis-test"},
+  "assignment": {"name": "assignment", "version": "1.0.0", "devDependencies": {"@types/node": "^20"}},
+  "node_modules/assignment": {"resolved": "assignment", "link": true},
+  "node_modules/@types/node": {"version": "20.19.43"},
+  "node_modules/a/node_modules/minimatch": {"version": "3.1.5"},
+  "node_modules/minimatch": {"version": "10.2.6"}
+}}
+"""
+
+SWIFT_PACKAGE = """\
+// swift-tools-version:5.2
+let package = Package(
+    dependencies: [
+        // .package(url: "https://example.com/commented.git", from: "9.0.0"),
+        .package(name: "SwiftTestReporter", url: "https://github.com/allegro/swift-junit.git", from: "2.0.0"),
+        .package(url: "https://github.com/yanagiba/swift-ast.git",
+                 exact: "0.19.9"),
+    ],
+    targets: [.target(name: "Lib")]
+)
+"""
+
+
+class NpmAndSwiftTest(unittest.TestCase):
+    def test_npm_lock_lists_installed_packages_without_workspaces_and_links(self):
+        self.assertEqual(
+            sync_check.versions_of("package-lock.json", NPM_LOCK),
+            {"@types/node": {"20.19.43"}, "minimatch": {"3.1.5", "10.2.6"}},
+        )
+
+    def test_a_package_from_a_repository_is_compared_with_its_locked_commit(self):
+        lock = '{{"packages": {{"node_modules/tool": {{"version": "1.0.0", "resolved": "git+ssh://git@example.com/tool.git#{commit}"}}}}}}'
+        template = sync_check.versions_of("package-lock.json", lock.format(commit="a" * 40))
+        image = sync_check.versions_of("package-lock.json", lock.format(commit="b" * 40))
+        self.assertEqual(len(sync_check.compare(template, image)), 1)
+        self.assertEqual(sync_check.compare(template, template), [])
+        unversioned = '{{"packages": {{"node_modules/tool": {{"resolved": "git+ssh://git@example.com/tool.git#{commit}"}}}}}}'
+        self.assertEqual(len(sync_check.compare(sync_check.versions_of("package-lock.json", unversioned.format(commit="a" * 40)), sync_check.versions_of("package-lock.json", unversioned.format(commit="b" * 40)))), 1)
+        self.assertEqual(sync_check.versions_of("package-lock.json", '{"packages": {"node_modules/tool": {"resolved": "https://registry.npmjs.org/tool.tgz"}}}'), {})
+        registry = '{"packages": {"node_modules/tool": {"version": "1.0.0", "resolved": "https://registry.npmjs.org/tool/-/tool-1.0.0.tgz"}}}'
+        self.assertEqual(sync_check.versions_of("package-lock.json", registry), {"tool": {"1.0.0"}})
+
+    def test_a_typescript_package_the_image_lacks_is_reported(self):
+        stale = '{"packages": {"node_modules/minimatch": {"version": "10.2.6"}}}'
+        problems = sync_check.compare(sync_check.versions_of("package-lock.json", NPM_LOCK), sync_check.versions_of("package-lock.json", stale))
+        self.assertEqual(problems, ["@types/node 20.19.43 is not in the image", "minimatch 3.1.5 differs from the image (10.2.6)"])
+
+    def test_swift_dependencies_are_compared_by_repository_and_requirement(self):
+        declared = sync_check.versions_of("Package.swift", SWIFT_PACKAGE)
+        self.assertEqual(declared, {"https://github.com/allegro/swift-junit": {'from: "2.0.0"'}, "https://github.com/yanagiba/swift-ast": {'exact: "0.19.9"'}})
+        raised = SWIFT_PACKAGE.replace('from: "2.0.0"', 'from: "2.1.0"')
+        self.assertEqual(
+            sync_check.compare(sync_check.versions_of("Package.swift", raised), declared),
+            ['https://github.com/allegro/swift-junit from: "2.1.0" differs from the image (from: "2.0.0")'],
+        )
+
+    def test_image_files_of_repositories_with_several_projects_are_read_from_the_repository_root(self):
+        requested: list[str] = []
+
+        def fetch(url: str) -> str:
+            requested.append(url)
+            return '{"packages": {}}'
+
+        sync_check.check_language("javascript", "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.0", fetch=fetch)
+        self.assertIn("https://raw.githubusercontent.com/ls1intum/artemis-javascript-docker/v1.2.0/vitest/javascript/package-lock.json", requested)
 
 
 class FetchFailureTest(unittest.TestCase):

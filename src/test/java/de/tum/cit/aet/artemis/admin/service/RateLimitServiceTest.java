@@ -14,14 +14,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -33,6 +41,7 @@ import io.github.bucket4j.distributed.BucketProxy;
 import io.github.bucket4j.grid.hazelcast.HazelcastProxyManager;
 
 @ExtendWith(MockitoExtension.class)
+@Isolated("Captures rejection logs without concurrent Spring logging reconfiguration")
 class RateLimitServiceTest {
 
     @Mock
@@ -148,6 +157,39 @@ class RateLimitServiceTest {
 
         assertThatThrownBy(() -> rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT))
                 .isInstanceOf(RateLimitExceededException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "user:attacker\r\nFORGED LOG ENTRY", "user:normal-login", "opaque-key\r\nFORGED LOG ENTRY" })
+    void budgetRejectionDoesNotLogUntrustedKeys(String key) {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        when(configurationService.getEffectiveRpm(RateLimitType.FAILED_LOGIN)).thenReturn(5);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(false);
+        when(consumptionProbe.getNanosToWaitForRefill()).thenReturn(30_000_000_000L);
+        Logger logger = (Logger) LoggerFactory.getLogger(RateLimitService.class);
+        Level previousLevel = logger.getLevel();
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(appender);
+        try {
+            assertThatThrownBy(() -> rateLimitService.enforceBudget(key, RateLimitType.FAILED_LOGIN)).isInstanceOf(RateLimitExceededException.class);
+
+            assertThat(appender.list).hasSize(1);
+            assertThat(appender.list.getFirst().getFormattedMessage()).contains(RateLimitType.FAILED_LOGIN.name(), "30").doesNotContain(key, "\r", "\n");
+            ArgumentCaptor<String> bucketKey = ArgumentCaptor.forClass(String.class);
+            verify(proxyManager).getProxy(bucketKey.capture(), any());
+            assertThat(bucketKey.getValue()).contains(key);
+            verify(bucketProxy).tryConsumeAndReturnRemaining(1);
+        }
+        finally {
+            logger.detachAppender(appender);
+            logger.setLevel(previousLevel);
+            appender.stop();
+        }
     }
 
     @Test
