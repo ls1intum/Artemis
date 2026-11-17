@@ -47,7 +47,6 @@ import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
