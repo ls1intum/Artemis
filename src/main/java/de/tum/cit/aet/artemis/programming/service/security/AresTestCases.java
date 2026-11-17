@@ -39,6 +39,9 @@ final class AresTestCases {
     private static final Pattern IDENTIFIER_BEFORE_PARENTHESIS = Pattern
             .compile("(?<!\\p{javaJavaIdentifierPart})(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*\\(");
 
+    /** The start of a nested type declaration. A record names its components in parentheses after its name, which would otherwise look like a method. */
+    private static final Pattern TYPE_DECLARATION = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:class|interface|enum|record)\\s+\\p{javaJavaIdentifierStart}");
+
     private static final Set<String> NOT_METHOD_NAMES = Set.of("if", "for", "while", "switch", "catch", "synchronized", "return", "new");
 
     private AresTestCases() {
@@ -152,7 +155,11 @@ final class AresTestCases {
                 position = skipArguments(masked, skipWhitespace(masked, name.end()));
                 continue;
             }
-            // Transparent bounds let the look-behind see the character before the region, so no match starts inside an identifier.
+            // The annotation is on a nested type, not on a method. Transparent bounds let the look-behinds see the character before the region, so no match
+            // starts inside an identifier.
+            if (TYPE_DECLARATION.matcher(masked).region(position, masked.length()).useTransparentBounds(true).lookingAt()) {
+                return null;
+            }
             Matcher method = IDENTIFIER_BEFORE_PARENTHESIS.matcher(masked).region(position, masked.length()).useTransparentBounds(true);
             if (method.lookingAt()) {
                 return NOT_METHOD_NAMES.contains(method.group(1)) ? null : method.toMatchResult();

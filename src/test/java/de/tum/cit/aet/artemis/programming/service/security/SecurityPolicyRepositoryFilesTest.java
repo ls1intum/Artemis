@@ -341,7 +341,9 @@ class SecurityPolicyRepositoryFilesTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "class SortingTest {|    @de.tum.cit.ase.ares.api.Policy\n    private int size;\n}",
-            "class SortingTest {|    @Test\n    void runs() {\n    }\n\n" + "    @de.tum.cit.ase.ares.api.Policy\n    static class Nested {\n    }\n}" })
+            "class SortingTest {|    @Test\n    void runs() {\n    }\n\n" + "    @de.tum.cit.ase.ares.api.Policy\n    static class Nested {\n    }\n}",
+            // A record names its components in parentheses after its name, like the parameters of a method.
+            "class SortingTest {|    @Test\n    void runs() {\n    }\n\n" + "    @de.tum.cit.ase.ares.api.Policy(\"Stress.yaml\")\n    record Data(int size) {\n    }\n}" })
     void policiesOnFieldsAndNestedTypesAreUnsupported(String classAndBody) throws IOException {
         writeBuildFile();
         String[] parts = classAndBody.split("\\|");
