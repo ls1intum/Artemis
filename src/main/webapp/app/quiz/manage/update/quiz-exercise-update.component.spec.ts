@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -32,7 +32,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -41,7 +41,6 @@ import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 
@@ -156,7 +155,6 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = async (testRoute?: ActivatedRoute) => {
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(ShortAnswerQuestionUtil),
@@ -1944,14 +1942,12 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('validateItemLimit', () => {
-            let dialogService: DialogService;
+            let confirmationService: TumAetUiConfirmationService;
             let saveSpy: any;
-            let dialogOpenSpy: any;
 
             beforeEach(() => {
-                dialogService = TestBed.inject(DialogService);
+                confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
                 saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
-                dialogOpenSpy = vi.spyOn(dialogService, 'open');
                 comp.quizExercise.set(quizExercise);
             });
 
@@ -1961,45 +1957,38 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).not.toHaveBeenCalled();
+                expect(confirmationService.request(undefined)).toBeUndefined();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open dialog and save if confirmed when limit is exceeded', () => {
+            it('should ask for confirmation and save if confirmed when the limit is exceeded', () => {
                 vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
-                const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).toHaveBeenCalledExactlyOnceWith(
-                    GenericConfirmationDialogComponent,
-                    // The second-layer confirmation dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+                const request = confirmationService.request(undefined);
+                expect(request).toEqual(
                     expect.objectContaining({
-                        width: '40rem',
-                        breakpoints: { '768px': '95vw' },
-                        data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }),
+                        header: 'artemisApp.quizWarning.title',
+                        acceptLabel: 'artemisApp.quizWarning.confirmButton',
+                        rejectLabel: 'entity.action.cancel',
                     }),
                 );
+                expect(saveSpy).not.toHaveBeenCalled();
 
-                // confirm
-                onClose.next(true);
+                request!.accept();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open dialog and NOT save if cancelled', () => {
+            it('should ask for confirmation and NOT save if cancelled', () => {
                 vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
-
-                const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).toHaveBeenCalled();
+                const request = confirmationService.request(undefined);
+                expect(request).toBeDefined();
 
-                // dismiss
-                onClose.next(undefined);
+                request!.reject?.();
                 expect(saveSpy).not.toHaveBeenCalled();
             });
         });

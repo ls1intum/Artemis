@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the Java and Kotlin exercise templates in their default images without network access.
+"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript and Swift in their default images without network access.
 
 Assembles the test and assignment repositories like the server does, runs the build phases of
 ``src/main/resources/templates/phases`` in the image configured in ``application.yml`` and fails when a build needs
@@ -58,6 +58,8 @@ def main() -> int:
         print(f"::group::{variant.name} in {image}", flush=True)
         result = verify(TEMPLATES_DIR, variant, image, work_dir, args.platform)
         print(f"{'PASSED' if result.passed else 'FAILED'}: {variant.name} ({result.log})", flush=True)
+        if result.attempts > 1:
+            print(f"::warning title=Known compiler failure::{variant.name} was built twice, the first build failed with a known intermittent compiler error", flush=True)
         if not result.passed:
             failed += 1
             for line in result.missing[:20] or ["see the log for the failing phase"]:

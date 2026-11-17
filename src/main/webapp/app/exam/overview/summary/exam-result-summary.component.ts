@@ -1,4 +1,4 @@
-import { EMPTY, Subscription, catchError, defer, expand, map, of, retry, switchMap, throwError, timer } from 'rxjs';
+import { EMPTY, Subscription, catchError, defer, expand, filter, interval, map, of, retry, switchMap, take, takeWhile, throwError, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -166,6 +166,7 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly managementGradeInfo = input<StudentExamWithGradeDTO>();
     readonly isSidebarCollapsed = input(false);
     readonly toggleSidebar = output<void>();
+    readonly refreshSummary = output<void>();
 
     readonly courseId = signal<number>(undefined!);
 
@@ -287,6 +288,29 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.isBeforeStudentReviewEnd.set(this.getIsBeforeStudentReviewEnd());
         this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
+        this.watchPublicationAndReviewDates();
+    }
+
+    private watchPublicationAndReviewDates(): void {
+        if (this.instructorView() || this.isTestRun() || this.isTestExam) {
+            return;
+        }
+        const studentExamId = this.studentExam().id;
+        const published = this.resultsArePublished;
+        const reviewStarted = this.getIsAfterStudentReviewStart();
+        const beforeReviewEnd = this.getIsBeforeStudentReviewEnd();
+        // The server withholds exercise results before publication. Reload the full authorized
+        // summary at each deadline instead of only fetching totals or re-rendering cached data.
+        interval(1000)
+            .pipe(
+                takeWhile(() => this.studentExam().id === studentExamId),
+                filter(
+                    () => this.resultsArePublished !== published || this.getIsAfterStudentReviewStart() !== reviewStarted || this.getIsBeforeStudentReviewEnd() !== beforeReviewEnd,
+                ),
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.refreshSummary.emit());
     }
 
     get resultsArePublished(): boolean {
@@ -300,7 +324,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         const studentExam = this.studentExam();
         if (studentExam?.exam?.publishResultsDate) {
-            return dayjs(studentExam.exam.publishResultsDate).isBefore(dayjs());
+            return dayjs(studentExam.exam.publishResultsDate).isBefore(this.serverDateService.now());
         }
 
         return false;

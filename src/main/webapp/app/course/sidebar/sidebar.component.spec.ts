@@ -331,6 +331,10 @@ describe('SidebarComponent', () => {
                 showHeader: false,
                 ariaLabel: 'artemisApp.courseOverview.exerciseFilter.modalTitle',
                 dismissableMask: false,
+                data: {
+                    sidebarData: component.sidebarDataBeforeFiltering(),
+                    exerciseFilters: component.exerciseFilters(),
+                },
             });
         });
     });

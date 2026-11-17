@@ -205,7 +205,7 @@ describe('ExamDetailComponent', () => {
             fixture.detectChanges();
 
             const link = element().querySelector(plagiarismCasesLink) as HTMLElement;
-            expect(link.closest('jhi-feature-overlay')!.querySelector('.pe-none')).toBeNull();
+            expect(link.closest('jhi-feature-overlay')!.querySelector('.pointer-events-none')).toBeNull();
             link.click();
             await fixture.whenStable();
 
@@ -216,7 +216,7 @@ describe('ExamDetailComponent', () => {
             fixture.detectChanges();
 
             const link = element().querySelector(plagiarismCasesLink)!;
-            expect(link.closest('jhi-feature-overlay')!.querySelector('.pe-none.opacity-50')).not.toBeNull();
+            expect(link.closest('jhi-feature-overlay')!.querySelector('.pointer-events-none.opacity-50')).not.toBeNull();
         });
 
         it.each([

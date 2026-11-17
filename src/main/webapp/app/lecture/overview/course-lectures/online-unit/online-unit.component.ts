@@ -19,9 +19,22 @@ export class OnlineUnitComponent extends LectureUnitDirective<OnlineUnit> {
     handleIsolatedView() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        if (this.lectureUnit().source) {
-            window.open(this.lectureUnit().source, '_blank');
+        const source = this.lectureUnit().source;
+        if (source && OnlineUnitComponent.isWebAddress(source)) {
+            window.open(source, '_blank');
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+        }
+    }
+
+    /**
+     * Only addresses of web pages are opened, so that a source with another scheme, for example a script, is never opened.
+     */
+    private static isWebAddress(source: string): boolean {
+        try {
+            const protocol = new URL(source).protocol;
+            return protocol === 'http:' || protocol === 'https:';
+        } catch {
+            return false;
         }
     }
 }
