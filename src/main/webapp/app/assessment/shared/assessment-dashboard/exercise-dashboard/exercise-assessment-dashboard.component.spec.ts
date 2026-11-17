@@ -347,29 +347,26 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="test-run-instructions"]')).not.toBeNull();
     });
 
-    it('should exclude unfinished test runs from the real exam progress split', () => {
+    it.each([false, true])('should use the server exam lock total without an assessor in the response, including testRun=%s', (testRun) => {
         comp.isExamMode.set(true);
         comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
         comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
         comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([new DueDateStat()]);
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
         const participation = new StudentParticipation();
-        participation.testRun = true;
+        participation.testRun = testRun;
         const result = new Result();
         result.correctionRound = 0;
-        result.assessor = new User();
-        result.assessor.id = 1;
         const draft = new ModelingSubmission();
         draft.id = 1;
         draft.participation = participation;
         draft.results = [result];
         comp.assessedSubmissionsByRound.set([[draft]]);
-        expect(comp.inProgressAssessments()).toBe(0);
-        expect(comp.openAssessments()).toBe(2);
-        participation.testRun = false;
-        comp.assessedSubmissionsByRound.set([[draft]]);
+
         expect(comp.inProgressAssessments()).toBe(1);
         expect(comp.openAssessments()).toBe(1);
+
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 2 }));
         comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 })]);
         expect(comp.inProgressAssessments()).toBe(2);
         expect(comp.openAssessments()).toBe(0);

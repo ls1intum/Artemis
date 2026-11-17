@@ -1,4 +1,3 @@
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentProgressComponent } from '../assessment-progress.component';
 import {
     TumAetUiButtonComponent,
@@ -274,21 +273,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         if (this.showsComplaintProgress()) {
             return 0;
         }
-        let locks = this.statsForDashboard().totalNumberOfAssessmentLocks;
-        if (this.isExamMode()) {
-            const otherTutorLocks = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound().reduce((total, round) => total + round.inTime, 0);
-            const ownLocks = this.assessedSubmissionsByRound().reduce(
-                (total, submissions, correctionRound) =>
-                    total +
-                    submissions.filter((submission) => {
-                        const result = getSubmissionResultByCorrectionRound(submission, correctionRound);
-                        return !(submission.participation as StudentParticipation)?.testRun && !!result?.assessor && !result.completionDate;
-                    }).length,
-                0,
-            );
-            locks = otherTutorLocks + ownLocks;
-        }
-        return Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), locks);
+        // Use the server total, including test runs, for both course and exam exercises.
+        return Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks);
     });
     readonly openAssessments = computed(() => Math.max(0, this.totalAssessmentSlots() - this.completedAssessments() - this.inProgressAssessments()));
     readonly assessedPercentage = computed(() =>
