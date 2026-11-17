@@ -237,7 +237,7 @@ describe('ExamChecklistComponent', () => {
             { description: 'already generated on the coverpage', initialGenerated: 1, generatedAfterStart: 1 },
             { description: 'created after the initial statistics', initialGenerated: 0, generatedAfterStart: 2 },
         ])('should use the authoritative total for a test exam $description', ({ initialGenerated, generatedAfterStart }) => {
-            setUp({ testExam: true }, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0 });
+            setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0 });
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
             examChecklistComponentFixture.detectChanges();
             expect(component.numberOfGeneratedStudentExams()).toBe(initialGenerated);
@@ -253,7 +253,7 @@ describe('ExamChecklistComponent', () => {
         });
 
         it('should retain the initial nonzero baseline while start events arrive', () => {
-            setUp({ testExam: true });
+            setUp({ examMode: ExamMode.TEST });
             const initial = new Subject<ExamChecklist>();
             const refreshedCounts = new Subject<ExamConductionCounts>();
             const fetchCounts = vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(refreshedCounts);
@@ -278,7 +278,7 @@ describe('ExamChecklistComponent', () => {
         });
 
         it('should cancel stale counts and unsubscribe on exam change and destroy', () => {
-            setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+            setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
             const previous = new Subject<ExamConductionCounts>();
             const current = new Subject<ExamConductionCounts>();
             vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValueOnce(previous).mockReturnValue(current);
@@ -305,7 +305,7 @@ describe('ExamChecklistComponent', () => {
         it('should coalesce overlapping starts without repeating the full checklist', () => {
             vi.useFakeTimers();
             try {
-                setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+                setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
                 const baseline = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
                 vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(baseline));
                 const first = new Subject<ExamConductionCounts>();
@@ -337,7 +337,7 @@ describe('ExamChecklistComponent', () => {
 
         it('should keep the number of generated student exams of a regular exam when a student starts', () => {
             // the student exams of a regular exam exist before anybody starts, so a start does not create one
-            setUp({ testExam: false }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3 });
+            setUp({ examMode: ExamMode.REAL }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3 });
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
             examChecklistComponentFixture.detectChanges();
 
