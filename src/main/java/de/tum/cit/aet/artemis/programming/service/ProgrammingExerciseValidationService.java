@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.BranchRegexSyntax;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -386,6 +387,9 @@ public class ProgrammingExerciseValidationService {
         }
         catch (PatternSyntaxException e) {
             throw new BadRequestAlertException("The branch regex is not a valid regular expression", "Exercise", "branchRegexInvalid");
+        }
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            throw new BadRequestAlertException("The branch regex uses syntax that is not supported. " + BranchRegexSyntax.DESCRIPTION, "Exercise", "branchRegexNotSupported");
         }
     }
 

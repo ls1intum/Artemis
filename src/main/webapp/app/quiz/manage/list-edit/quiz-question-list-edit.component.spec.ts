@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { CommonModule } from '@angular/common';
@@ -36,7 +36,7 @@ describe('QuizQuestionListEditComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DialogService), provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(TumAetUiDialogService), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
@@ -55,8 +55,8 @@ describe('QuizQuestionListEditComponent', () => {
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
-    it('should open the Apollon import dialog with responsive breakpoints that keep it within the viewport', async () => {
-        const dialogService = TestBed.inject(DialogService);
+    it('should open the Apollon import dialog without a header and pass the course id', async () => {
+        const dialogService = TestBed.inject(TumAetUiDialogService);
         const openSpy = vi.spyOn(dialogService, 'open');
 
         await component.importApollonDragAndDropQuestion();
@@ -64,8 +64,11 @@ describe('QuizQuestionListEditComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
-                width: '80rem',
-                breakpoints: { '1400px': '75vw', '1200px': '85vw', '992px': '95vw' },
+                size: 'large',
+                contentPadding: 'none',
+                showHeader: false,
+                ariaLabel: 'artemisApp.quizExercise.addApollonDragAndDropQuestion',
+                data: { courseId: component.courseId() },
             }),
         );
     });

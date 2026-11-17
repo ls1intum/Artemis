@@ -2,7 +2,6 @@ import { vi } from 'vitest';
 import { ApplicationRef, Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Logger, compile } from 'sass';
-import { PrimeNG } from 'primeng/config';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -13,7 +12,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const THEME_STYLES = 'src/main/webapp/content/scss/themes/theme-default.scss';
-const BOOTSTRAP_MODAL_Z_INDEX = 1055;
+// Default modal layers of the dialogs that modules not yet on TUM AET UI still open.
+const LEGACY_MODAL_Z_INDEX = 1100;
+const LEGACY_MODAL_BACKDROP_Z_INDEX = 1055;
 const ALERT_OVERLAY_Z_INDEX = 100000;
 const deleteData: DeleteDialogData = {
     entityTitle: 'presentation',
@@ -91,8 +92,8 @@ describe('DeleteDialogService layering', () => {
 
     it('keeps the shared dialog and calendar container above legacy dialogs', () => {
         const containerZIndex = compileOverlayContainerZIndex();
-        expect(containerZIndex).toBeGreaterThan(TestBed.inject(PrimeNG).zIndex.modal + 2);
-        expect(containerZIndex).toBeGreaterThan(BOOTSTRAP_MODAL_Z_INDEX);
+        expect(containerZIndex).toBeGreaterThan(LEGACY_MODAL_Z_INDEX + 2);
+        expect(containerZIndex).toBeGreaterThan(LEGACY_MODAL_BACKDROP_Z_INDEX);
     });
 
     it('keeps confirmations below the alert overlay so a failed operation remains readable', () => {

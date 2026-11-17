@@ -59,7 +59,7 @@ export class ExamScoresPage {
         const dialog = this.page.getByRole('dialog');
         await dialog.getByRole('tab', { name: 'CSV' }).click();
         const download = this.page.waitForEvent('download');
-        await dialog.locator('#finish-button').click();
+        await dialog.getByTestId('export-finish-button').click();
         return fs.readFileSync(await (await download).path(), 'utf-8');
     }
 

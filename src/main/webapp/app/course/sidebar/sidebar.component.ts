@@ -14,7 +14,7 @@ import {
     getExerciseDifficultyFilterOptions,
     getExerciseTypeFilterOptions,
 } from 'app/course/sidebar/sidebar.helper';
-import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterModalComponent, ExerciseFilterModalData } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -221,15 +221,16 @@ export class SidebarComponent implements OnDestroy {
             this.sidebarDataBeforeFiltering.set(deepClone(this.sidebarDataInternal()));
         }
 
-        this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
+        this.modalRef = this.modalService.open<ExerciseFilterModalComponent, unknown, ExerciseFilterModalData>(ExerciseFilterModalComponent, {
             size: 'large',
             showHeader: false,
             ariaLabel: this.translateService.instant('artemisApp.courseOverview.exerciseFilter.modalTitle'),
             dismissableMask: false,
+            data: {
+                sidebarData: deepClone(this.sidebarDataBeforeFiltering()),
+                exerciseFilters: deepClone(this.exerciseFilters()),
+            },
         });
-
-        this.modalRef.componentInstance.sidebarData = deepClone(this.sidebarDataBeforeFiltering());
-        this.modalRef.componentInstance.exerciseFilters = deepClone(this.exerciseFilters());
 
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarDataInternal.set(exerciseFilterResults.filteredSidebarData!);
