@@ -59,6 +59,46 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     Page<QuizQuestionPoolItem> findPageForCourse(@Param("courseId") long courseId, @Param("competencyId") @Nullable Long competencyId, Pageable pageable);
 
     /**
+     * Finds all items of a course that are eligible for adaptive practice quizzing.
+     * An item is eligible when it has been filtered and accepted, not excluded by instructor,
+     * and has a generated question.
+     *
+     * @param courseId the course ID
+     * @return the list of practice-eligible pool items
+     */
+    @Query("""
+            SELECT item
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId
+                AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
+                AND item.accepted = TRUE
+                AND item.reviewState != de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.EXCLUDED
+                AND item.question IS NOT NULL
+            ORDER BY item.competencyId, item.difficulty, item.itemIndex
+            """)
+    List<QuizQuestionPoolItem> findAllPracticeEligibleByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Finds all items of a competency in a course that are eligible for adaptive practice quizzing.
+     *
+     * @param courseId     the course ID
+     * @param competencyId the competency ID
+     * @return the list of practice-eligible pool items
+     */
+    @Query("""
+            SELECT item
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId
+                AND item.competencyId = :competencyId
+                AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
+                AND item.accepted = TRUE
+                AND item.reviewState != de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.EXCLUDED
+                AND item.question IS NOT NULL
+            ORDER BY item.difficulty, item.itemIndex
+            """)
+    List<QuizQuestionPoolItem> findAllPracticeEligibleByCourseIdAndCompetencyId(@Param("courseId") long courseId, @Param("competencyId") long competencyId);
+
+    /**
      * Returns one page of the items flagged for review, those awaiting a decision first and then in pool order.
      *
      * @param courseId the course

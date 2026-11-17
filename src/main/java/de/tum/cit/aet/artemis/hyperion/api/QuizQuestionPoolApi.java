@@ -1,0 +1,63 @@
+package de.tum.cit.aet.artemis.hyperion.api;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Controller;
+
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+
+/**
+ * Cross-module API providing access to the Hyperion AI Quiz Question Pool for external modules like Atlas.
+ */
+@Controller
+@Lazy
+@Profile(PROFILE_CORE)
+@Conditional(HyperionEnabled.class)
+public class QuizQuestionPoolApi implements AbstractApi {
+
+    private final QuizQuestionPoolItemRepository itemRepository;
+
+    public QuizQuestionPoolApi(QuizQuestionPoolItemRepository itemRepository) {
+        this.itemRepository = itemRepository;
+    }
+
+    /**
+     * Finds all items in a course's quiz question pool that are eligible for adaptive practice quizzing.
+     *
+     * @param courseId the ID of the course
+     * @return the list of eligible quiz question pool items
+     */
+    public List<QuizQuestionPoolItem> getPracticeEligibleQuestions(long courseId) {
+        return itemRepository.findAllPracticeEligibleByCourseId(courseId);
+    }
+
+    /**
+     * Finds all items for a specific competency in a course that are eligible for adaptive practice quizzing.
+     *
+     * @param courseId     the ID of the course
+     * @param competencyId the ID of the competency
+     * @return the list of eligible quiz question pool items
+     */
+    public List<QuizQuestionPoolItem> getPracticeEligibleQuestionsForCompetency(long courseId, long competencyId) {
+        return itemRepository.findAllPracticeEligibleByCourseIdAndCompetencyId(courseId, competencyId);
+    }
+
+    /**
+     * Finds a single pool item by its ID.
+     *
+     * @param itemId the ID of the pool item
+     * @return an optional containing the pool item if found
+     */
+    public Optional<QuizQuestionPoolItem> findById(long itemId) {
+        return itemRepository.findById(itemId);
+    }
+}
