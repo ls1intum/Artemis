@@ -10,10 +10,11 @@
   script: |-
     cd ${studentParentWorkingDirectoryName}
     status=0
-    # Swift Testing appends -swift-testing to the name of the xUnit file. XCTest, which exercises created before the Swift Testing
-    # templates still use, writes tests.xml.
-    swift test --filter 'AttributeTest|ClassTest|MethodTest' --xunit-output tests.xml || status=$?
-    if [ -e tests-swift-testing.xml ]; then mv tests-swift-testing.xml structural-tests.xml; fi
+    # Swift Testing appends -swift-testing to the name of the xUnit file, so its results are in xunit-swift-testing.xml.
+    # Exercises created before the Swift Testing templates use XCTest with SwiftTestReporter, which writes tests.xml with the failure messages.
+    # The xUnit file of SwiftPM has another name, because it would replace that report and lose the messages.
+    swift test --filter 'AttributeTest|ClassTest|MethodTest' --xunit-output xunit.xml || status=$?
+    if [ -e xunit-swift-testing.xml ]; then mv xunit-swift-testing.xml structural-tests.xml; fi
     if [ -e tests.xml ]; then mv tests.xml structural-tests-xctest.xml; fi
     exit $status
   resultPaths:
@@ -23,8 +24,8 @@
   script: |-
     cd ${studentParentWorkingDirectoryName}
     status=0
-    swift test --filter 'SortingExampleBehaviorTest' --xunit-output tests.xml || status=$?
-    if [ -e tests-swift-testing.xml ]; then mv tests-swift-testing.xml behavior-tests.xml; fi
+    swift test --filter 'SortingExampleBehaviorTest' --xunit-output xunit.xml || status=$?
+    if [ -e xunit-swift-testing.xml ]; then mv xunit-swift-testing.xml behavior-tests.xml; fi
     if [ -e tests.xml ]; then mv tests.xml behavior-tests-xctest.xml; fi
     exit $status
   resultPaths:

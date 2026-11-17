@@ -120,7 +120,7 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
             var test = phases.stream().filter(phase -> phase.name().equals("test")).findFirst().orElseThrow();
             assertThat(test.resultPaths()).hasSize(2);
             assertThat(test.resultPaths().get(0)).endsWith("/tests.xml");
-            assertThat(test.resultPaths().get(1)).endsWith("/tests-swift-testing.xml");
+            assertThat(test.resultPaths().get(1)).endsWith("/xunit-swift-testing.xml");
         }
     }
 
@@ -131,7 +131,7 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
         for (String stage : List.of("structural", "behavior")) {
             var phase = phases.stream().filter(candidate -> candidate.name().equals(stage + "_tests")).findFirst().orElseThrow();
             // each report is renamed only if it exists, because a test repository has the tests of one framework only
-            assertThat(phase.script()).contains("if [ -e tests-swift-testing.xml ]; then mv tests-swift-testing.xml " + stage + "-tests.xml; fi")
+            assertThat(phase.script()).contains("if [ -e xunit-swift-testing.xml ]; then mv xunit-swift-testing.xml " + stage + "-tests.xml; fi")
                     .contains("if [ -e tests.xml ]; then mv tests.xml " + stage + "-tests-xctest.xml; fi");
             assertThat(phase.resultPaths()).hasSize(2);
             assertThat(phase.resultPaths().get(0)).endsWith("/" + stage + "-tests.xml");

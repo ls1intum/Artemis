@@ -49,12 +49,14 @@ private void test() {
         swift build
 
         # swift test: a failing test is part of the report and does not fail the stage, a run that ended abnormally does.
-        # Swift Testing appends -swift-testing to the name of the xUnit file and XCTest, which older exercises still use, writes tests.xml.
+        # Swift Testing appends -swift-testing to the name of the xUnit file, so its results are in xunit-swift-testing.xml. XCTest with
+        # SwiftTestReporter, which older exercises still use, writes tests.xml with the failure messages. The xUnit file of SwiftPM has another
+        # name, because it would replace that report and lose the messages.
         # Both frameworks write the closing tag when the run ends, so a report without it comes from an interrupted run.
         status=0
-        swift test --xunit-output tests.xml || status=$?
+        swift test --xunit-output xunit.xml || status=$?
         reports=0
-        for report in tests.xml tests-swift-testing.xml
+        for report in tests.xml xunit-swift-testing.xml
         do
             if [ -e "$report" ]
             then
@@ -100,7 +102,7 @@ void postBuildTasks() {
     sh '''
     rm -rf results
     mkdir results
-    for report in tests.xml tests-swift-testing.xml
+    for report in tests.xml xunit-swift-testing.xml
     do
         # an incomplete report comes from an interrupted run and is not passed on
         if [ -e "assignment/$report" ] && grep -q '</testsuites>' "assignment/$report"

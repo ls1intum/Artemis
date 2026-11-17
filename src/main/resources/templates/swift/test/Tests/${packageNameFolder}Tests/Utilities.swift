@@ -17,7 +17,7 @@ struct SourceFileStructure {
 }
 
 /// Walks the syntax tree of a source file and collects its types with their own members.
-/// A function or property that is declared inside of another function or property is local and is not collected.
+/// A function or property that is declared inside of a function, property, initializer, deinitializer or subscript is local and is not collected.
 private final class StructureCollector: SyntaxVisitor {
     var structure = SourceFileStructure()
 
@@ -108,7 +108,21 @@ private final class StructureCollector: SyntaxVisitor {
                 record { $0.attributes.insert(identifier.identifier.text) }
             }
         }
+        // what an accessor or the initial value declares is local
         return .skipChildren
+    }
+
+    // The bodies of initializers, deinitializers and subscripts declare only local names, like the bodies of functions.
+    override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
+        .skipChildren
+    }
+
+    override func visit(_ node: DeinitializerDeclSyntax) -> SyntaxVisitorContinueKind {
+        .skipChildren
+    }
+
+    override func visit(_ node: SubscriptDeclSyntax) -> SyntaxVisitorContinueKind {
+        .skipChildren
     }
 }
 
