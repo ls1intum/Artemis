@@ -335,6 +335,7 @@
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",
         "examTimes": "Ungültige Klausurzeiten: Bitte stelle sicher, dass das Sichtbarkeitsdatum vor dem Startdatum liegt, das Startdatum vor dem Enddatum liegt und das Veröffentlichungsdatum der Beispiellösung (falls gesetzt) nach dem Enddatum liegt.",
+        "supervisedSessionStarted": "Das Startdatum einer betreuten Sitzung kann nicht mehr geändert werden, sobald Studierende sie betreten können.",
         "supervisedSessionEnded": "Das Startdatum und die Arbeitszeit können nach dem Ende der betreuten Sitzung nicht mehr geändert werden, weil sich sonst ändern würde, welche Versuche als betreut zählen.",
         "supervisedSessionAttemptStarted": "Die betreute Sitzung kann nicht vor einem bereits begonnenen Versuch enden.",
         "negativePoints": "Die maximale Punktzahl einer Klausur muss größer als 0 sein.",

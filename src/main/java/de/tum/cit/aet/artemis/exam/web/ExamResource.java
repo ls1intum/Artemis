@@ -327,6 +327,7 @@ public class ExamResource {
 
         // Apply DTO values to the managed entity
         examUpdateDTO.applyTo(originalExam);
+        examDateService.checkSupervisedSessionStartChangeAllowedElseThrow(originalExam.getExamMode(), originalStartDate, originalExam.getStartDate(), now());
         if (originalStartDate != null && originalExam.getStartDate() != null) {
             examDateService.checkSupervisedSessionEndChangeAllowedElseThrow(originalExam.getId(), originalExam.getExamMode(),
                     Exam.supervisedSessionEndDate(originalStartDate, originalExamDuration), originalExam.getSupervisedSessionEndDate(), now());

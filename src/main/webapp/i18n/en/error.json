@@ -335,6 +335,7 @@
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
         "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
+        "supervisedSessionStarted": "The start date of a supervised session cannot be changed once students can enter it.",
         "supervisedSessionEnded": "The start date and the working time cannot be changed after the supervised session has ended, because this would change which attempts count as supervised.",
         "supervisedSessionAttemptStarted": "The supervised session cannot end before an attempt that was already started.",
         "negativePoints": "The maximum points for an exam must be greater than 0.",

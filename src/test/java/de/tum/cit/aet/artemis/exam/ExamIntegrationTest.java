@@ -1337,6 +1337,33 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_supervisedSession_startDateIsLockedOnceStudentsCanEnter() throws Exception {
+        // The session is running: moving the start date would change the deadline of the supervised attempts without telling the clients
+        Exam runningExam = saveSupervisedSessionExam(now().minusMinutes(10), now().plusMinutes(70));
+        ZonedDateTime originalStart = runningExam.getStartDate();
+        runningExam.setStartDate(originalStart.plusMinutes(5));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(runningExam), HttpStatus.BAD_REQUEST);
+        assertThat(examRepository.findByIdElseThrow(runningExam.getId()).getStartDate()).isCloseTo(originalStart, within(1, ChronoUnit.SECONDS));
+
+        // The conduction window opens shortly before the start
+        Exam openingExam = saveSupervisedSessionExam(now().plusMinutes(5), now().plusMinutes(100));
+        openingExam.setStartDate(openingExam.getStartDate().plusMinutes(5));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(openingExam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_supervisedSession_startDateCanBeChangedLongBeforeTheStart() throws Exception {
+        Exam futureExam = saveSupervisedSessionExam(now().plusDays(3), now().plusDays(3).plusHours(2));
+        ZonedDateTime newStart = futureExam.getStartDate().plusMinutes(30);
+        futureExam.setVisibleDate(newStart.minusMinutes(5));
+        futureExam.setStartDate(newStart);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(futureExam), Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getStartDate()).isCloseTo(newStart, within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_realExam() throws Exception {
         Exam realExam = examRepository.findByIdElseThrow(exam1.getId());
         StudentExam studentExam = examUtilService.addStudentExam(realExam);

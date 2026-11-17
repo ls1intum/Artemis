@@ -197,6 +197,30 @@ public class ExamDateService {
     }
 
     /**
+     * Guards the start date of a supervised session against changes once students can conduct it.
+     * <p>
+     * A supervised session behaves like a real exam: the deadline of its attempts is derived from the start date of the
+     * exam. Unlike for real exams, a changed start date is not pushed to the clients of conducting students, so they would
+     * keep working towards the old deadline while the server enforces the new one. Therefore the start date can only be
+     * changed until the students are allowed to enter the session.
+     *
+     * @param examMode          the mode of the exam, other modes are not checked
+     * @param originalStartDate the start date before the change
+     * @param newStartDate      the start date after the change
+     * @param now               the current time
+     * @throws BadRequestAlertException if the start date changes after the conduction of the supervised session opened
+     */
+    public void checkSupervisedSessionStartChangeAllowedElseThrow(ExamMode examMode, ZonedDateTime originalStartDate, ZonedDateTime newStartDate, ZonedDateTime now) {
+        if (examMode != ExamMode.TEST_WITH_SUPERVISED_SESSION || originalStartDate == null || newStartDate == null
+                || ExamDateUtil.truncatedComparator().compare(originalStartDate, newStartDate) == 0) {
+            return;
+        }
+        if (now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES))) {
+            throw new BadRequestAlertException("The start date of a supervised session cannot be changed once students can enter it.", "exam", "supervisedSessionStarted");
+        }
+    }
+
+    /**
      * Guards the end of a supervised session against changes that would reclassify attempts that already exist.
      * <p>
      * The end of the supervised session is derived from the start date and the working time of the exam, and it decides
