@@ -28,7 +28,7 @@
                 type="text"
                 tumAetUiInput
                 [tumAetUiInputInvalid]="!!field_title.invalid && (field_title.dirty || field_title.touched)"
-                [tumAetUiInputDescribedBy]="field_title.control.errors?.disallowedValue ? titleErrorId : undefined"
+                [tumAetUiInputDescribedBy]="titleValidationMessage() || field_title.control.errors?.disallowedValue ? titleErrorId : undefined"
                 class="w-full"
                 name="title"
                 id="field_title"
@@ -37,7 +37,15 @@
                 notIncludedIn
                 [disallowedValues]="alreadyUsedTitles()"
             />
-            @if (field_title?.control?.errors?.disallowedValue) {
+            @if (titleValidationMessage()) {
+                <div
+                    [id]="titleErrorId"
+                    class="mt-1 block text-sm text-state-danger"
+                    role="alert"
+                    data-testid="title-validation-message"
+                    [jhiTranslate]="titleValidationMessage()!"
+                ></div>
+            } @else if (field_title?.control?.errors?.disallowedValue) {
                 <div [id]="titleErrorId" role="alert" class="mt-1 text-state-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
             }
         </div>
@@ -68,6 +76,7 @@
                 type="text"
                 tumAetUiInput
                 [tumAetUiInputInvalid]="!!field_channel_name.invalid && (field_channel_name.dirty || field_channel_name.touched)"
+                [tumAetUiInputDescribedBy]="channelNameValidationMessage() ? channelNameErrorId : undefined"
                 class="w-full"
                 name="channelName"
                 id="field_channel_name"
@@ -75,6 +84,15 @@
                 (ngModelChange)="formatChannelName($event)"
                 maxlength="30"
             />
+            @if (channelNameValidationMessage()) {
+                <div
+                    [id]="channelNameErrorId"
+                    class="mt-1 block text-sm text-state-danger"
+                    role="alert"
+                    data-testid="channel-name-validation-message"
+                    [jhiTranslate]="channelNameValidationMessage()!"
+                ></div>
+            }
         </div>
     }
 </div>

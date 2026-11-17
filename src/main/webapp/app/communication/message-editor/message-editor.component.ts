@@ -361,6 +361,7 @@ export class MessageEditorComponent {
     /** Handles editing shortcuts and completion acceptance before allowing the parent form's send shortcut to run. */
     protected keydown(event: KeyboardEvent): void {
         // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of that confirmation
         if (event.isComposing || this.composing || event.keyCode === 229) {
             event.stopPropagation();
             return;
@@ -647,6 +648,7 @@ export class MessageEditorComponent {
     /** Validates the destination before updating the captured link or selection and prevents form submission. */
     protected saveLink(event?: Event): void {
         event?.stopPropagation();
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of an IME confirmation in Safari
         if (event instanceof KeyboardEvent && (this.linkComposing() || event.isComposing || event.keyCode === 229)) return;
         event?.preventDefault();
         const url = normalizeMessageLink(this.linkUrl());

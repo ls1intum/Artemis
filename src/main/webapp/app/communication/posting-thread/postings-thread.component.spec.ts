@@ -26,7 +26,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('PostingThreadComponent', () => {
     let fixture: ComponentFixture<PostingThreadComponent>;
@@ -46,7 +46,7 @@ describe('PostingThreadComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
             ],
             imports: [
                 PostingThreadComponent,
