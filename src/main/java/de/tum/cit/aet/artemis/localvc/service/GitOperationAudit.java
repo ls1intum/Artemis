@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
+import java.time.ZonedDateTime;
+
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -22,6 +24,8 @@ public final class GitOperationAudit {
     private boolean accessed;
 
     private @Nullable String commitHashWhenAccessed;
+
+    private @Nullable ZonedDateTime accessedAt;
 
     private boolean pushReceived;
 
@@ -55,10 +59,13 @@ public final class GitOperationAudit {
      * if nothing follows it, all there is of one that is up to date.
      *
      * @param commitHash the newest commit of the repository, null if it has none
+     * @param accessedAt when the request started, which is before its response could reach the client. The entry is written after the response, and the next request of the
+     *                       operation can be written before it, so the entry carries this time.
      */
-    public void onAccessed(@Nullable String commitHash) {
+    public void onAccessed(@Nullable String commitHash, ZonedDateTime accessedAt) {
         this.accessed = true;
         this.commitHashWhenAccessed = commitHash;
+        this.accessedAt = accessedAt;
     }
 
     /**
@@ -116,6 +123,13 @@ public final class GitOperationAudit {
      */
     public @Nullable String getCommitHashWhenAccessed() {
         return commitHashWhenAccessed;
+    }
+
+    /**
+     * @return when the request that reached the repository started, null if no request did
+     */
+    public @Nullable ZonedDateTime getAccessedAt() {
+        return accessedAt;
     }
 
     /**

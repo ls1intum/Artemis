@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -79,9 +80,11 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         if (!"POST".equals(servletRequest.getMethod())) {
             // The request that advertises the references is the first of every push, and all there is of one that has nothing new.
             String commitHashBefore = LocalVCAccessLogRecorderService.headCommitOf(servletRequest);
+            // The entry is written after the response was sent, so it carries the time of the request, not the time of the write
+            ZonedDateTime requestStarted = ZonedDateTime.now();
             filterChain.doFilter(servletRequest, servletResponse);
             if (servletResponse.getStatus() < HttpServletResponse.SC_BAD_REQUEST) {
-                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore);
+                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore, requestStarted);
                 accessLogRecorder.recordPushHTTPS(servletRequest);
             }
             return;

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -27,6 +28,9 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * A failed push takes away an advertisement only if the repository was reached, which is when the entry carries the commit that the repository had. An attempt that was refused
  * before the references were advertised, because of the credentials or the authorization, is stored without a commit and is an access of its own, so it must not hide the
  * advertisement of an earlier push that was up to date.
+ * <p>
+ * The entries are joined by the times of the accesses, not by the order in which they were stored: the entry of an advertisement is written after its response was sent, so
+ * the transfer that the client started next can be stored before it.
  * <p>
  * Entries that are interchangeable cannot be told apart, and they do not need to be: with several operations at the same moment from the same user, address and mechanism, each
  * transfer takes away one advertisement, so the count of what is shown is right even if it is not known which advertisement belonged to which transfer. Stored entries are never
@@ -58,13 +62,16 @@ public final class VcsAccessLogOperations {
      * Removes the advertisements that belong to an operation that moved data. The entries are read once: the advertisements that no transfer has taken yet are kept per key, the
      * newest of them on top, so the time that this takes grows with the number of entries and not with the number of pairs among them.
      *
-     * @param entries the stored entries of one repository, oldest first
+     * @param entries the stored entries of one repository, in the order in which they were stored
      * @return the entries that are operations or accesses of their own, in the same order
      */
     public static List<VcsAccessLog> oneEntryPerOperation(List<VcsAccessLog> entries) {
         Map<AdvertisementKey, Deque<VcsAccessLog>> untaken = new HashMap<>();
         Set<VcsAccessLog> advertisementsOfTransfers = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (VcsAccessLog entry : entries) {
+        // An advertisement can be stored after the transfer that follows it, so the entries are read in the order of their times. Entries of the same time keep their order.
+        List<VcsAccessLog> byTime = new ArrayList<>(entries);
+        byTime.sort(Comparator.comparing(VcsAccessLog::getTimestamp, Comparator.nullsFirst(Comparator.naturalOrder())));
+        for (VcsAccessLog entry : byTime) {
             if (entry.getUser() == null || !HTTPS_MECHANISMS.contains(entry.getAuthenticationMechanism())) {
                 continue;
             }

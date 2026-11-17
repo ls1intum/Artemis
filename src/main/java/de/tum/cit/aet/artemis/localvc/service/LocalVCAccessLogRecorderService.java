@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractU
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -130,7 +131,7 @@ public class LocalVCAccessLogRecorderService {
         var subject = subjectOf(request);
         var audit = auditOf(request);
         if (subject != null && !audit.isPackSent() && audit.isAccessed()) {
-            write(subject, RepositoryActionType.READ, audit.getCommitHashWhenAccessed());
+            write(subject, RepositoryActionType.READ, audit.getCommitHashWhenAccessed(), audit.getAccessedAt());
             return;
         }
         recordFetch(subject, audit);
@@ -145,7 +146,7 @@ public class LocalVCAccessLogRecorderService {
         var subject = subjectOf(request);
         var audit = auditOf(request);
         if (subject != null && !audit.isPushReceived() && audit.isAccessed()) {
-            write(subject, RepositoryActionType.WRITE, audit.getCommitHashWhenAccessed());
+            write(subject, RepositoryActionType.WRITE, audit.getCommitHashWhenAccessed(), audit.getAccessedAt());
             return;
         }
         recordPush(subject, audit);
@@ -237,12 +238,26 @@ public class LocalVCAccessLogRecorderService {
     }
 
     private void write(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash) {
+        write(subject, action, commitHash, null);
+    }
+
+    /**
+     * Writes an entry. The entry of an advertisement carries the time of its request: it is written after the response was sent, and the next request of the same operation can be
+     * written before it, which the log reads by the times of the entries.
+     */
+    private void write(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash, @Nullable ZonedDateTime accessedAt) {
         if (vcsAccessLogService.isEmpty()) {
             return;
         }
         try {
-            vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
-                    subject.ipAddress());
+            if (accessedAt == null) {
+                vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
+                        subject.ipAddress());
+            }
+            else {
+                vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
+                        subject.ipAddress(), accessedAt);
+            }
         }
         catch (RuntimeException e) {
             // The operation has happened and its response must not change for it, so a failure to describe it is only reported.

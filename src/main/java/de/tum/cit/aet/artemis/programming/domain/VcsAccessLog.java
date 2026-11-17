@@ -64,6 +64,15 @@ public class VcsAccessLog extends DomainObject {
 
     public VcsAccessLog(User user, Participation participation, String name, String email, RepositoryActionType repositoryActionType,
             AuthenticationMechanism authenticationMechanism, String commitHash, String ipAddress) {
+        this(user, participation, name, email, repositoryActionType, authenticationMechanism, commitHash, ipAddress, ZonedDateTime.now());
+    }
+
+    /**
+     * Creates an entry for an access that happened at the given time, which is earlier than the time at which the entry is created if it is written after the response of the
+     * request was sent.
+     */
+    public VcsAccessLog(User user, Participation participation, String name, String email, RepositoryActionType repositoryActionType,
+            AuthenticationMechanism authenticationMechanism, String commitHash, String ipAddress, ZonedDateTime timestamp) {
         this.user = user;
         this.participation = participation;
         this.name = name;
@@ -72,7 +81,7 @@ public class VcsAccessLog extends DomainObject {
         this.authenticationMechanism = authenticationMechanism;
         this.commitHash = commitHash;
         this.ipAddress = ipAddress;
-        this.timestamp = ZonedDateTime.now();
+        this.timestamp = timestamp;
     }
 
     public VcsAccessLog() {

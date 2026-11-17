@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -250,18 +251,26 @@ class LocalVCAccessLogRecorderServiceTest {
         verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), action, mechanism, commitHash, "10.0.0.1");
     }
 
+    /**
+     * The entry of an advertisement is written after its response was sent, so it carries the time at which its request started and the next request of the operation cannot
+     * be stored before it in the log.
+     */
     @Test
     void anAdvertisementThatTheRepositoryAnsweredIsAReadForAFetchAndAWriteForAPush() {
+        var fetchStarted = ZonedDateTime.parse("2026-11-17T10:00:00Z");
+        var pushStarted = ZonedDateTime.parse("2026-11-17T10:05:00Z");
         var fetchAdvertisement = authorizedRequest("GET", AuthenticationMechanism.PASSWORD);
-        accessLogRecorder.auditOf(fetchAdvertisement).onAccessed("head");
+        accessLogRecorder.auditOf(fetchAdvertisement).onAccessed("head", fetchStarted);
         var pushAdvertisement = authorizedRequest("GET", AuthenticationMechanism.PASSWORD);
-        accessLogRecorder.auditOf(pushAdvertisement).onAccessed("head");
+        accessLogRecorder.auditOf(pushAdvertisement).onAccessed("head", pushStarted);
 
         accessLogRecorder.recordFetchHTTPS(fetchAdvertisement);
         accessLogRecorder.recordPushHTTPS(pushAdvertisement);
 
-        verifyEntry(RepositoryActionType.READ, AuthenticationMechanism.PASSWORD, "head");
-        verifyEntry(RepositoryActionType.WRITE, AuthenticationMechanism.PASSWORD, "head");
+        verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.READ, AuthenticationMechanism.PASSWORD, "head", "10.0.0.1",
+                fetchStarted);
+        verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.WRITE, AuthenticationMechanism.PASSWORD, "head", "10.0.0.1",
+                pushStarted);
         verifyNoMoreInteractions(vcsAccessLogService);
     }
 

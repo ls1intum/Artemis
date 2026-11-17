@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -83,13 +84,15 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         // The request that advertises the references is the first of every fetch, and all there is of one that is up to date.
         boolean advertisement = "GET".equals(servletRequest.getMethod());
         String commitHashBefore = advertisement ? LocalVCAccessLogRecorderService.headCommitOf(servletRequest) : null;
+        // The entry of the advertisement is written after its response was sent, so it carries the time of the request, not the time of the write
+        ZonedDateTime requestStarted = ZonedDateTime.now();
         // stays true if doFilter throws, so a fetch that blew up is not counted as a success
         boolean failed = true;
         try {
             filterChain.doFilter(servletRequest, servletResponse);
             failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
             if (advertisement && !failed) {
-                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore);
+                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore, requestStarted);
             }
         }
         finally {

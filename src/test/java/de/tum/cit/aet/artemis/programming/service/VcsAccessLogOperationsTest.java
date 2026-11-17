@@ -190,6 +190,36 @@ class VcsAccessLogOperationsTest {
         }
     }
 
+    /**
+     * The entry of an advertisement is written after its response was sent, so the transfer that the client started next can be stored before it. The two are joined by their
+     * times, and not by the order in which they were stored.
+     */
+    @Test
+    void aTransferThatWasStoredBeforeItsAdvertisementIsStillJoinedToIt() {
+        var clone = add(alice, RepositoryActionType.CLONE, 1);
+        var advertisement = add(alice, RepositoryActionType.READ, 0);
+
+        var shown = VcsAccessLogOperations.oneEntryPerOperation(log);
+
+        assertThat(shown).containsExactly(clone).doesNotContain(advertisement);
+    }
+
+    @Test
+    void anAdvertisementStoredLateDoesNotTakeAwayAPushThatCameBeforeIt() {
+        var earlierPush = add(alice, RepositoryActionType.PUSH, 0);
+        var laterAdvertisement = add(alice, RepositoryActionType.WRITE, 60);
+
+        assertThat(VcsAccessLogOperations.oneEntryPerOperation(log)).containsExactly(earlierPush, laterAdvertisement);
+    }
+
+    @Test
+    void entriesThatWereStoredOutOfOrderAreShownInTheOrderInWhichTheyWereStored() {
+        var transfer = add(alice, RepositoryActionType.PULL, 5);
+        var access = add(bob, RepositoryActionType.READ, 1);
+
+        assertThat(VcsAccessLogOperations.oneEntryPerOperation(log)).containsExactly(transfer, access);
+    }
+
     @Test
     void theStoredEntriesAreNotChanged() {
         add(alice, RepositoryActionType.READ, 0);

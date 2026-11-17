@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
@@ -111,11 +112,30 @@ public class VcsAccessLogService {
      */
     public VcsAccessLog createAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
             String ipAddress) {
+        return createAccessLog(user, participationId, actionType, authenticationMechanism, commitHash, ipAddress, ZonedDateTime.now());
+    }
+
+    /**
+     * Stores an entry for an access that happened at the given time. The entry of a request that advertises the references is written after its response was sent, so it carries
+     * the time of the request: the next request of the same operation can be answered and written before it, and the log joins the two by their times.
+     *
+     * @param user                    The user accessing the repository
+     * @param participationId         The id of the participation which owns the repository
+     * @param actionType              The action: a read or a write that moved no data, or a clone, pull or push, or a failed one
+     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
+     * @param commitHash              The commit hash that belongs to the action
+     * @param ipAddress               The ip address of the user accessing the repository
+     * @param timestamp               When the access happened
+     * @return the stored entry
+     */
+    public VcsAccessLog createAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
+            String ipAddress, ZonedDateTime timestamp) {
         log.debug("Storing access operation for user {}", user.getLogin());
 
         // The entry only references the participation, so the reference is enough and nothing is loaded.
         Participation participation = participationRepository.getReferenceById(participationId);
-        return vcsAccessLogRepository.save(new VcsAccessLog(user, participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress));
+        return vcsAccessLogRepository
+                .save(new VcsAccessLog(user, participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress, timestamp));
     }
 
     /**
