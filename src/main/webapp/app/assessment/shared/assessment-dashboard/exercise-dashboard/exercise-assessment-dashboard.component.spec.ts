@@ -323,7 +323,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
     });
 
-    it('should separate completed, locked and open assessment slots, including multiple correction rounds', () => {
+    it('should separate course assessment states and keep exam remaining slots independent of locks', () => {
         comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 4, late: 1 }));
         comp.totalNumberOfAssessments.set(2);
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
@@ -335,7 +335,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 2 }), new DueDateStat()]);
         comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 }), new DueDateStat()]);
         expect(comp.totalAssessmentSlots()).toBe(10);
-        expect(comp.openAssessments()).toBe(7);
+        expect(comp.openAssessments()).toBe(8);
         expect(comp.assessedPercentage()).toBe(20);
     });
 
@@ -347,7 +347,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="test-run-instructions"]')).not.toBeNull();
     });
 
-    it.each([false, true])('should use the server exam lock total without an assessor in the response, including testRun=%s', (testRun) => {
+    it.each([false, true])('should ignore exam locks and missing assessors when counting remaining work, including testRun=%s', (testRun) => {
         comp.isExamMode.set(true);
         comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
         comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
@@ -363,13 +363,27 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         draft.results = [result];
         comp.assessedSubmissionsByRound.set([[draft]]);
 
-        expect(comp.inProgressAssessments()).toBe(1);
-        expect(comp.openAssessments()).toBe(1);
+        expect(comp.inProgressAssessments()).toBe(0);
+        expect(comp.openAssessments()).toBe(2);
 
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 2 }));
         comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 })]);
-        expect(comp.inProgressAssessments()).toBe(2);
-        expect(comp.openAssessments()).toBe(0);
+        expect(comp.inProgressAssessments()).toBe(0);
+        expect(comp.openAssessments()).toBe(2);
+    });
+
+    it.each([false, true])('should show the in-progress category only for ordinary exercises (exam=%s)', (examMode) => {
+        fixture.detectChanges();
+        comp.isExamMode.set(examMode);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
+        comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
+        fixture.detectChanges();
+
+        const progress: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-assessment-progress"]');
+        expect(progress.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.inProgress"]') !== null).toBe(!examMode);
+        expect(progress.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.remaining"]') !== null).toBe(examMode);
+        expect(progress.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.open"]') !== null).toBe(!examMode);
     });
 
     it('should render completed correction rounds in the exam assessment information row', () => {

@@ -9,6 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class AssessmentProgressComponent {
+    readonly showInProgress = input(true);
     readonly completed = input.required<number>();
     readonly total = input.required<number>();
     readonly assessedPercentage = input.required<number>();

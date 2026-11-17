@@ -270,10 +270,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         return this.assessmentInformationTotal();
     });
     readonly inProgressAssessments = computed(() => {
-        if (this.showsComplaintProgress()) {
+        if (this.isExamMode() || this.showsComplaintProgress()) {
             return 0;
         }
-        // Use the server total, including test runs, for both course and exam exercises.
         return Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks);
     });
     readonly openAssessments = computed(() => Math.max(0, this.totalAssessmentSlots() - this.completedAssessments() - this.inProgressAssessments()));

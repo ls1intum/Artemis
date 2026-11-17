@@ -45,6 +45,7 @@
                 <tumaet-ui-panel class="min-w-0" data-testid="exercise-assessment-progress">
                     <span tumAetUiPanelHeader class="text-base font-semibold text-text" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
                     <jhi-assessment-progress
+                        [showInProgress]="!isExamMode()"
                         [completed]="completedAssessments()"
                         [total]="totalAssessmentSlots()"
                         [assessedPercentage]="assessedPercentage()"
