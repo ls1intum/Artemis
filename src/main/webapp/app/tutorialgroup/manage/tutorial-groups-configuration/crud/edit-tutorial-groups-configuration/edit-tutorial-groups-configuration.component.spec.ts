@@ -134,7 +134,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('preserves existing free periods in the update request', () => {
-        const freePeriods = [{ id: 7, reason: 'Holiday' }];
+        const freePeriods = [{ id: 7, reason: 'Holiday', start: '2026-12-24T00:00:00Z', end: '2026-12-25T00:00:00Z' }];
         component.tutorialGroupsConfiguration.tutorialGroupFreePeriods = freePeriods;
         const update = vi.spyOn(configurationService, 'update').mockReturnValue(of(exampleConfiguration));
         const formData = tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration);

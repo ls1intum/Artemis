@@ -17,7 +17,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
@@ -325,7 +324,9 @@ describe('BuildQueueComponent', () => {
         fixture.detectChanges();
         component.searchTerm = 'overview search';
         component.isLoading.set(true);
-        component.finishedBuildJobFilter.set(cloneWith(filterOptionsEmpty, { numberOfAppliedFilters: 2 }));
+        const appliedFilters = new FinishedBuildJobFilter();
+        appliedFilters.numberOfAppliedFilters = 2;
+        component.finishedBuildJobFilter.set(appliedFilters);
         fixture.detectChanges();
         const toolbar = fixture.debugElement.query(By.directive(FinishedBuildsToolbarComponent)).componentInstance as FinishedBuildsToolbarComponent;
         expect(toolbar.searchTerm()).toBe('overview search');
