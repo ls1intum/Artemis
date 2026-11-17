@@ -27,4 +27,12 @@ public @interface LimitRequestsPerMinute {
      * @return the rate limit type
      */
     RateLimitType type() default RateLimitType.AUTHENTICATION;
+
+    /**
+     * Whether the limit is counted for the signed-in user instead of the client address. A request without a signed-in user is counted for its client address.
+     * Use it for an endpoint that signed-in users call, as many users can share one address, for example in a lecture hall behind one network address.
+     *
+     * @return true if the limit applies per user
+     */
+    boolean perUser() default false;
 }

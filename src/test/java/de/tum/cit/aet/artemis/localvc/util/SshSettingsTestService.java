@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +21,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
+import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
@@ -118,6 +122,55 @@ public class SshSettingsTestService {
 
         request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
         request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // Test
+    public void duplicateKeyOfAnotherUserGetsTheSameAnswerAsOwnDuplicate() throws Exception {
+        User user = userTestRepository.getUser();
+        var otherUser = userTestRepository.getUserByLoginElseThrow(user.getLogin().replace("student1", "tutor1"));
+        var keyOfOtherUser = createNewValidSSHKey(otherUser, sshKey1);
+        keyOfOtherUser.setKeyHash(HashUtils.getSha512Fingerprint(AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshKey1).resolvePublicKey(null, null, null)));
+        keyOfOtherUser.setCreationDate(ZonedDateTime.now());
+        userSshPublicKeyRepository.save(keyOfOtherUser);
+
+        var answerForKeyOfOtherUser = request.postWithoutResponseBody(requestPrefix + "public-keys", createNewValidSSHKey(user, sshKey1), HttpStatus.BAD_REQUEST, null);
+        request.postWithResponseBody(requestPrefix + "public-keys", createNewValidSSHKey(user, sshKey2), String.class, HttpStatus.OK);
+        var answerForOwnKey = request.postWithoutResponseBody(requestPrefix + "public-keys", createNewValidSSHKey(user, sshKey2), HttpStatus.BAD_REQUEST, null);
+
+        assertThat(answerForKeyOfOtherUser.getContentAsString()).contains("keyNotAccepted").doesNotContain("already");
+        assertThat(answerForOwnKey.getContentAsString()).contains("keyNotAccepted").doesNotContain("already");
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
+    }
+
+    // Test
+    public void failToAddKeyWithExpiryDateInThePast() throws Exception {
+        User user = userTestRepository.getUser();
+        var expiredKey = createNewValidSSHKey(user, sshKey1);
+        expiredKey.setExpiryDate(ZonedDateTime.now().minusDays(1));
+
+        var answer = request.postWithoutResponseBody(requestPrefix + "public-keys", expiredKey, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(answer.getContentAsString()).contains("keyExpiryDateInPast");
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+
+        expiredKey.setExpiryDate(ZonedDateTime.now().plusDays(1));
+        request.postWithResponseBody(requestPrefix + "public-keys", expiredKey, String.class, HttpStatus.OK);
+    }
+
+    // Test
+    public void failToAddMoreKeysThanTheLimit() throws Exception {
+        User user = userTestRepository.getUser();
+        for (int i = 0; i < UserSshPublicKeyService.MAX_KEYS_PER_USER; i++) {
+            var key = createNewValidSSHKey(user, sshKey2);
+            key.setKeyHash("limit-test-hash-" + i);
+            key.setCreationDate(ZonedDateTime.now());
+            userSshPublicKeyRepository.save(key);
+        }
+
+        var answer = request.postWithoutResponseBody(requestPrefix + "public-keys", createNewValidSSHKey(user, sshKey1), HttpStatus.BAD_REQUEST, null);
+
+        assertThat(answer.getContentAsString()).contains("tooManyKeys");
+        assertThat(userSshPublicKeyRepository.countByUserId(user.getId())).isEqualTo(UserSshPublicKeyService.MAX_KEYS_PER_USER);
     }
 
     // Test

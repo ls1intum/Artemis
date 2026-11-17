@@ -1,10 +1,11 @@
 import { Component, input } from '@angular/core';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-card-wrapper',
     templateUrl: './card-wrapper.component.html',
-    imports: [TranslateDirective],
+    imports: [TumAetUiCardComponent, ArtemisTranslatePipe],
 })
 export class CardWrapperComponent {
     title = input.required<string>();
