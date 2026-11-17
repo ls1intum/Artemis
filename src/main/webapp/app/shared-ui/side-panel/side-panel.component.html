@@ -1,10 +1,10 @@
 <div class="panel-wrapper">
     @if (panelDescriptionHeader() !== undefined) {
-        <div class="row g-0 panel-header">
-            <div class="col-7">
+        <div class="flex panel-header">
+            <div class="w-7/12 shrink-0">
                 {{ panelHeader() }}
             </div>
-            <div class="col-5" style="margin-left: -3px">
+            <div class="w-5/12 shrink-0" style="margin-left: -3px">
                 {{ panelDescriptionHeader()! }}
             </div>
         </div>

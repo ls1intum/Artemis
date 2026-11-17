@@ -16,12 +16,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ApollonModelData, hasQuizRelevantElements, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
-import { DialogService } from 'primeng/dynamicdialog';
 import { parseJson } from 'app/foundation/util/json.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiInputDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
@@ -45,7 +44,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private apollonDiagramService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private elementRef = inject(ElementRef);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');

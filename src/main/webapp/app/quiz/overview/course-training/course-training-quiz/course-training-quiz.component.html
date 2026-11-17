@@ -1,29 +1,25 @@
 <div>
     @if (questionsLoaded()) {
         @if (!isRated()) {
-            <p-dialog
+            <tumaet-ui-dialog
                 [visible]="showUnratedConfirmation()"
                 (visibleChange)="showUnratedConfirmation.set($event)"
-                [modal]="true"
                 [closable]="false"
-                [draggable]="false"
-                [style]="{ width: '450px' }"
+                [closeOnEscape]="false"
+                size="small"
+                [header]="'artemisApp.quizQuestion.unratedConfirmationTitle' | artemisTranslate"
             >
-                <ng-template #header>
-                    <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
-                </ng-template>
-
                 <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
 
                 <ng-template #footer>
-                    <p-button (onClick)="cancelUnratedPractice()" severity="secondary">
+                    <button tumAetUiButton type="button" severity="secondary" (click)="cancelUnratedPractice()">
                         <span jhiTranslate="global.generic.no"></span>
-                    </p-button>
-                    <p-button (onClick)="confirmUnratedPractice()">
+                    </button>
+                    <button tumAetUiButton type="button" (click)="confirmUnratedPractice()">
                         <span jhiTranslate="global.generic.yes"></span>
-                    </p-button>
+                    </button>
                 </ng-template>
-            </p-dialog>
+            </tumaet-ui-dialog>
         }
 
         @if (currentQuestion(); as question) {

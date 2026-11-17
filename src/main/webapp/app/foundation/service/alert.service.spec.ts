@@ -471,6 +471,30 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe(expected);
     });
 
+    it.each([
+        { language: 'en', errors: englishErrors },
+        { language: 'de', errors: germanErrors },
+    ])('should translate branch-pattern errors in $language', ({ language, errors }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(errors.error.branchRegexNotSupported);
+        expect(renderedMessage.textContent).not.toBe('English server fallback');
+    });
+
     it('should display an alert on status 400 for error headers', () => {
         // GIVEN
         const response = new HttpErrorResponse({
