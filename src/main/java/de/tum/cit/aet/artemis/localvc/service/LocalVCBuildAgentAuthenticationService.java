@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -266,6 +267,10 @@ public class LocalVCBuildAgentAuthenticationService {
                 saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, matchingBuildJob.id(), peerIpAddress, AuthenticationMechanism.BUILD_JOB_TOKEN);
             }
             return true;
+        }
+        catch (DataAccessException e) {
+            log.warn("Could not authenticate the request as a build agent clone because the database could not be read: {}", e.getMessage());
+            return false;
         }
         catch (Exception e) {
             // Anything unexpected here means this is not a valid build agent clone. Fall through rather than reject,
