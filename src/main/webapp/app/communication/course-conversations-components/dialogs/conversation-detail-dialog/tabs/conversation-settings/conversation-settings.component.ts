@@ -2,11 +2,12 @@ import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@an
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import type { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective, TumAetUiDialogService } from '@tumaet/ui-angular';
+import type { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faBoxArchive, faBoxOpen, faHashtag, faLock, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -29,11 +30,11 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-conversation-settings',
     templateUrl: './conversation-settings.component.html',
-    styleUrls: ['./conversation-settings.component.scss'],
-    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent],
+    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent, TumAetUiButtonDirective],
 })
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
     private alertService = inject(AlertService);
@@ -157,8 +158,8 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
-    private openModal(ref: DynamicDialogRef | null, callback: () => void) {
-        ref?.onClose
+    private openModal(ref: TumAetUiDialogRef, callback: () => void) {
+        ref.onClose
             .pipe(
                 filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
@@ -170,6 +171,8 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         return this.dialogService.open(
             GenericConfirmationDialogComponent,
             cloneWith(defaultSecondLayerDialogOptions, {
+                ariaLabel: this.translateService.instant(keys.titleKey, { channelName: channel.name }),
+                autoFocus: 'first-tabbable',
                 data: {
                     translationParameters: { channelName: channel.name },
                     translationKeys: keys,

@@ -1,8 +1,8 @@
 <div>
-    <div class="faq-container">
+    <div class="box-border flex w-full items-center justify-between">
         <h5 class="markdown-preview mb-0">{{ faq().questionTitle }}</h5>
 
-        <div class="badge-container">
+        <div class="ml-auto flex">
             @for (category of faq().categories; track category) {
                 <jhi-custom-exercise-category-badge [category]="category" class="mt-2 ms-1" />
             }
