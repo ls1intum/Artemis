@@ -277,6 +277,28 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
     }
 
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
+    void testGetAttendanceCheckerInformationOmitsEmail() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 3);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+        for (ExamUser examUser : examUserRepository.findAllByExamId(exam1.getId())) {
+            examUser.setSigningImagePath("/api/core/files/exam/signature.png");
+            examUserRepository.save(examUser);
+        }
+
+        var information = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK, Map.class);
+
+        var students = (List<Map<String, Object>>) information.get("examUsersWithExamRoomAndSeat");
+        assertThat(students).hasSize(3).allSatisfy(student -> {
+            assertThat(student).doesNotContainKey("email");
+            assertThat(student).containsEntry("signingImagePath", "/api/core/files/exam/signature.png");
+            assertThat(student).containsKeys("login", "firstName", "plannedLocation");
+        });
+    }
+
     void distributeStudentsLegacyWay(int numberOfStudents) {
         for (int i = 1; i <= numberOfStudents; i++) {
             String login = TEST_PREFIX + "student" + i;

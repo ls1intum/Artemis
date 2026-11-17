@@ -404,7 +404,7 @@ describe('ExamChecklistComponent', () => {
 
         it.each([
             { plagiarismActive: true, disabledClasses: [] as string[] },
-            { plagiarismActive: false, disabledClasses: ['pe-none', 'opacity-50'] },
+            { plagiarismActive: false, disabledClasses: ['pointer-events-none', 'opacity-50'] },
         ])('should only enable the plagiarism cases link when the plagiarism module is active (active: $plagiarismActive)', ({ plagiarismActive, disabledClasses }) => {
             const element = render({ plagiarismActive });
 
@@ -414,7 +414,7 @@ describe('ExamChecklistComponent', () => {
             expect(overlay).not.toBeNull();
             // the overlay keeps the link in the DOM and only disables it through its wrapper classes
             const wrapper = link.parentElement!;
-            expect(Array.from(wrapper.classList).filter((cssClass) => ['pe-none', 'opacity-50'].includes(cssClass))).toEqual(disabledClasses);
+            expect(Array.from(wrapper.classList).filter((cssClass) => ['pointer-events-none', 'opacity-50'].includes(cssClass))).toEqual(disabledClasses);
             // the other steps are never disabled by the plagiarism module
             const assessmentOverlay = element.querySelector(assessmentDashboardLink)!.closest('jhi-feature-overlay');
             expect(assessmentOverlay).toBeNull();
