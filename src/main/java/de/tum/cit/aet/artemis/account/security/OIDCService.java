@@ -101,8 +101,14 @@ public class OIDCService extends OidcUserService {
             }
         }
         else {
-            // Update user information and store changes if necessary
             actualUser = localUser.get();
+            if (actualUser.isInternal()) {
+                // An internal account has a password of its own in Artemis and is not linked to the identity provider, so the provider does not sign in to it.
+                // Accounts that were provisioned as internal accounts are covered by the upgrade guide.
+                log.warn("OIDC authentication rejected: the account '{}' is an internal account.", username);
+                throw new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "The account is managed by Artemis and cannot sign in through the identity provider.");
+            }
+            // Update user information and store changes if necessary
             boolean isUpdated = applyProfileClaims(actualUser, oidcUser);
             boolean isMatriculationNumberUpdated = updateMatriculationNumberIfChanged(actualUser, oidcUser.getAttribute(matriculationClaimKey));
             if (isUpdated || isMatriculationNumberUpdated) {

@@ -490,6 +490,23 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcLogin_isRefusedForAnInternalAccount() {
+        User user = new User();
+        user.setLogin(STUDENT_NAME);
+        user.setActivated(true);
+        user.setEmail(STUDENT_NAME + "@other.domain.invalid");
+        // an account that Artemis manages is internal by default
+        user.setInternal(true);
+        userTestRepository.save(user);
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class).isThrownBy(() -> oidcService.loadUser(mockUserRequest))
+                .matches(ex -> "internal_account".equals(ex.getError().getErrorCode()));
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isNotEqualTo("FirstName");
+    }
+
+    @Test
     void testOidcLogin_failsForDeactivatedUser() {
         assertStudentNotExists();
         createUser(STUDENT_NAME + "@artemis.local");
@@ -675,6 +692,8 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
         user.setEmail(identifyingEmail);
+        // an account that the identity provider manages
+        user.setInternal(false);
         userTestRepository.save(user);
     }
 

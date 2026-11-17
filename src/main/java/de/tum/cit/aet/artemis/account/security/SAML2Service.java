@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -133,6 +134,12 @@ public class SAML2Service {
             Map<String, Object> accountCreationDetails = new HashMap<>(details);
             accountCreationDetails.put("user", user.get().getLogin());
             auditEventRepository.add(new AuditEvent(Instant.now(), SYSTEM_ACCOUNT, "SAML2_ACCOUNT_CREATE", accountCreationDetails));
+        }
+        else if (user.get().isInternal()) {
+            // An internal account has a password of its own in Artemis and is not linked to the identity provider, so the provider does not sign in to it.
+            // Accounts that were provisioned as internal accounts are covered by the upgrade guide.
+            log.warn("SAML2 login of {} refused: the account is an internal account", username);
+            throw new AccessForbiddenException("The account is managed by Artemis and cannot sign in through the identity provider.");
         }
         else if (saml2syncUserData.isPresent() && Boolean.TRUE.equals(saml2syncUserData.get())) {
             syncUserDataFromSaml2(assertion, user.get());

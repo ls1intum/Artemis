@@ -253,13 +253,27 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
         request.postWithoutResponseBody("/api/core/public/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
-        // Check SAML Login afterwards ..
-
+        // The account is internal now, so the identity provider can no longer sign in to it
         TestSecurityContextHolder.clearContext();
-        // Mock existing SAML2 Auth
         mockSAMLAuthentication();
-        // Test whether authorizeSAML2 generates a valid token
-        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void testSaml2LoginIsRefusedForAnInternalAccount() throws Exception {
+        User existingUser = new User();
+        existingUser.setLogin(STUDENT_NAME);
+        existingUser.setActivated(true);
+        existingUser.setEmail(STUDENT_NAME + "@other.domain.invalid");
+        // an account that Artemis manages is internal by default
+        existingUser.setInternal(true);
+        userTestRepository.save(existingUser);
+
+        mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER));
+        var response = request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN, new HttpHeaders());
+
+        assertThat(response.getCookie("jwt")).isNull();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).isInternal()).isTrue();
     }
 
     /**
@@ -307,6 +321,8 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
         user.setEmail(identifyingEmail);
+        // an account that the identity provider manages
+        user.setInternal(false);
         userTestRepository.save(user);
     }
 

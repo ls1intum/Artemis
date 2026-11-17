@@ -203,6 +203,11 @@ Artemis takes the address of a client from the address that Tomcat resolved for 
 Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
 share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
 
+### 10.8: Identity Provider Sign-In and Internal Accounts
+
+A sign-in through SAML2 or OIDC works only for an external account. If the login that the identity provider asserts belongs to an internal account, Artemis refuses the sign-in and does not change the account: SAML2 answers `403`, and OIDC returns to the sign-in page with an error. LDAP has always behaved this way. Before, such a sign-in was accepted for the account with the same login.
+**Check accounts that were provisioned through SAML2 before 9.9.** They are stored as internal accounts, and their owners are refused until the internal flag is cleared, as described in [9.9: Accounts Provisioned Through SAML2](#99-accounts-provisioned-through-saml2). Clear the flag for these accounts before you upgrade.
+
 ### 10.8: Token in the Login Response
 
 The response of `POST /api/core/public/authenticate` carries the session token in its cookie. It repeats the token in the `access_token` field of the body only if the request asks for it with `includeToken=true`, or if it sends a tool type (`tool=SCORPIO`), which is the documented way for tools to get their token. The Artemis web application reads the cookie and is not affected.
