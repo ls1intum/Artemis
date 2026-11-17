@@ -101,6 +101,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
@@ -934,6 +935,22 @@ public class ExamResource {
     public ResponseEntity<ExamChecklistDTO> getExamStatisticsForInstructor(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return getExamStatistics(examId, true);
+    }
+
+    /**
+     * Returns only the conduction counts, without loading exercises or assessment and complaint statistics.
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam whose counts are requested
+     * @return the generated, started and submitted student exam counts, excluding test runs
+     */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/{courseId}/exams/{examId}/statistics/conduction")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<ExamConductionCountsDTO> getExamConductionCounts(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return ResponseEntity.ok(examService.getConductionCounts(examId));
     }
 
     private ResponseEntity<ExamChecklistDTO> getExamStatistics(Long examId, boolean instructorAudience) {

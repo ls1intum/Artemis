@@ -1,3 +1,4 @@
+import { ExamConductionCountsState } from './exam-conduction-counts-state';
 import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -86,8 +87,10 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     readonly isExamOver = signal(false);
     longestWorkingTime?: number;
 
-    readonly numberOfSubmitted = signal(0);
-    readonly numberOfStarted = signal(0);
+    private readonly conductionCounts = new ExamConductionCountsState((exam) => this.examChecklistService.getExamConductionCounts(exam));
+    readonly numberOfSubmitted = this.conductionCounts.numberOfSubmitted;
+    readonly numberOfStarted = this.conductionCounts.numberOfStarted;
+    readonly numberOfGeneratedStudentExams = this.conductionCounts.numberOfGeneratedStudentExams;
 
     readonly disabledExercises = signal<Exercise[]>([]);
     readonly plagiarismEnabled = signal(false);
@@ -106,12 +109,9 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
+    private statisticsSubscription?: Subscription;
 
     ngOnInit() {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((value) => value + 1));
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((value) => value + 1));
         const exam = this.exam();
         if (exam?.course?.id && exam?.id) {
             this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
@@ -137,26 +137,39 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         this.allGroupsContainExercise.set(this.examChecklistService.checkEachGroupContainsExercise(this.exam()));
         this.countMandatoryExercises.set(this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0);
         this.hasOptionalExercises.set(this.countMandatoryExercises() < (this.exam().exerciseGroups?.length ?? 0));
-        this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
-            this.examChecklist.set(examStats);
-            const exam = this.exam();
-            this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
-            this.numberOfStarted.set(examStats.numberOfExamsStarted);
-            this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
-            if (this.isExamOver()) {
-                if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
-                    const lastAssessmentFinished = examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
-                    this.existsUnfinishedAssessments.set(lastAssessmentFinished !== examStats.numberOfTotalParticipationsForAssessment);
+        const exam = this.exam();
+        this.statisticsSubscription?.unsubscribe();
+        this.submittedSubscription?.unsubscribe();
+        this.startedSubscription?.unsubscribe();
+        this.conductionCounts.reset(exam);
+        this.submittedSubscription = this.websocketService.subscribe<void>(this.examChecklistService.getSubmittedTopic(exam)).subscribe(() => this.conductionCounts.submitted());
+        this.startedSubscription = this.websocketService.subscribe<void>(this.examChecklistService.getStartedTopic(exam)).subscribe(() => this.conductionCounts.started());
+        this.statisticsSubscription = this.examChecklistService.getExamStatistics(exam).subscribe({
+            next: (examStats) => {
+                if (this.exam() !== exam) {
+                    return;
                 }
-            }
-            this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes);
-            this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises);
+                this.examChecklist.set(examStats);
+                this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
+                this.conductionCounts.initialize(examStats);
+                if (this.isExamOver()) {
+                    if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
+                        const lastAssessmentFinished = examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
+                        this.existsUnfinishedAssessments.set(lastAssessmentFinished !== examStats.numberOfTotalParticipationsForAssessment);
+                    }
+                }
+                this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes);
+                this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises);
+            },
+            error: () => this.conductionCounts.initialize(),
         });
     }
 
     ngOnDestroy(): void {
         this.submittedSubscription?.unsubscribe();
         this.startedSubscription?.unsubscribe();
+        this.statisticsSubscription?.unsubscribe();
+        this.conductionCounts.destroy();
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }

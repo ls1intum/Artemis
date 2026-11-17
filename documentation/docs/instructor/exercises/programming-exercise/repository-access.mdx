@@ -5,16 +5,15 @@ sidebar_label: Repository Access Configuration
 last_reviewed: 2026-11-06
 ---
 
-import Callout from "../../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../../../src/components/Image/Image";
+import Callout from '../../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../../../src/components/Image/Image';
 import accessLogDesktopLight from '../assets/programming/vcs-access-log-desktop-light.webp';
 import accessLogDesktopDark from '../assets/programming/vcs-access-log-desktop-dark.webp';
 import accessLogMobileLight from '../assets/programming/vcs-access-log-mobile-light.webp';
 import accessLogMobileDark from '../assets/programming/vcs-access-log-mobile-dark.webp';
 
 Who may read or write which repository depends on three things: the kind of repository, the role of the user, and where you are in the exercise timeline. The tables below spell out every combination, and the last section covers how to see who actually accessed a repository.
-
 
 If you are a student looking for repository access information, see the [student documentation on integrated code lifecycle setup](/student/tools-reference/integrated-code-lifecycle).
 
@@ -23,7 +22,7 @@ The following sections explain repository types and access rights for different 
 ## Repository Types
 
 | Repository Type               | Description                                                                                                  |
-|-------------------------------|--------------------------------------------------------------------------------------------------------------|
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Base                          | Repositories set up during exercise creation (template, solution, tests, auxiliary repositories)             |
 | Student Assignment            | Student's assignment repository copied from template. Includes team assignments                              |
 | Teaching Assistant Assignment | Assignment repository created by a Teaching Assistant for themselves                                         |
@@ -36,7 +35,7 @@ The following sections explain repository types and access rights for different 
 ## User Roles
 
 | Role               | Description       |
-|--------------------|-------------------|
+| ------------------ | ----------------- |
 | Student            | Course student    |
 | Teaching Assistant | Course tutor      |
 | Editor             | Course editor     |
@@ -44,7 +43,7 @@ The following sections explain repository types and access rights for different 
 
 <Callout variant={CalloutVariant.info}>
 
-  Editors and instructors have the same access rights in the table below.
+Editors and instructors have the same access rights in the table below.
 
 </Callout>
 
@@ -56,7 +55,7 @@ The following sections explain repository types and access rights for different 
 
 <Callout variant={CalloutVariant.info}>
 
-  For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).
+For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).
 
 </Callout>
 
@@ -66,7 +65,7 @@ The following sections explain repository types and access rights for different 
 ## Access Rights Table
 
 | Repository Type               | Role               | Time Period  | Access |
-|-------------------------------|--------------------|--------------|--------|
+| ----------------------------- | ------------------ | ------------ | ------ |
 | Base                          | Student            | all          | none   |
 |                               | Teaching Assistant | all          | R      |
 |                               | Instructor         | all          | R/W    |
@@ -118,7 +117,7 @@ The following sections explain repository types and access rights for different 
 
 <Callout variant={CalloutVariant.info}>
 
-  Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.
+Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.
 
 </Callout>
 
@@ -128,27 +127,47 @@ Artemis records every fetch and push to a repository, which is useful when you n
 
 Open the repository from **Course Management** and click **Open Access Log**. Each entry shows:
 
-| Column | Meaning |
-|--------|---------|
-| User Id | The internal id of the account that accessed the repository |
-| Author | The name and email of the Artemis account, not the author on the Git commit. For an access by a build agent it names the agent and job instead |
-| Action Type | Whether the access was a read (clone or fetch) or a write (push) |
-| Access Type | How the user authenticated, for example over HTTPS with a token, or over SSH with a key |
-| Commit Hash | The commit involved, for write accesses |
-| Timestamp | When the access happened |
+| Column      | Meaning                                                                                                                                                                                                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User Id     | The internal id of the account that accessed the repository                                                                                                                                                                                                                               |
+| Author      | The name and email of the Artemis account, not the author on the Git commit. For an access by a build agent it names the agent and job instead                                                                                                                                            |
+| Action Type | Clone, pull (a fetch of an existing clone), or push for an operation that transferred data. Read or write for an access that transferred nothing, such as a fetch that is up to date. A rejected attempt is shown as a failed clone or push                                               |
+| Access Type | How the user authenticated, for example over HTTPS with a token, or over SSH with a key                                                                                                                                                                                                   |
+| Commit Hash | For a push, the commit that was pushed. For a clone or pull, the newest commit of the repository when the data was sent. For a failed push, the commit the repository still has, or empty if the attempt was refused before the repository was reached. For a failed clone or pull, empty |
+| Timestamp   | When the access happened                                                                                                                                                                                                                                                                  |
+
+Every access to a repository is exactly one entry, whether it runs over HTTPS or over SSH, and an entry is never changed afterwards. It is written when the operation is over, so it holds everything known by then:
+
+- A fetch that transferred data is a **clone** if the client had nothing yet and a **pull** otherwise.
+- A push is a **push** with the pushed commit if the repository accepted it. If the server refused it, for example because it went to a branch that is not allowed, it is a **failed push** with the commit the repository still has. An accepted push keeps its commit even if Artemis then creates no submission from it, as for a push to another branch. The log shows what reached the repository, not what was graded.
+- An attempt that was rejected is a **failed clone** or **failed push**: credentials that do not hold, an account that is not active, a participant who may not access the repository, or the use of an offline IDE where it is not allowed. It names the account that was tried and the repository.
+
+An access that transferred nothing is recorded too, because somebody reached the repository: a fetch that is up to date, a push with nothing new, and listing the references of a repository are a **read** or a **write** with the newest commit of the repository. Over HTTPS the first request of every operation, which carries no credentials because git waits to be asked for them, is not an access. The log is not a record of every request to the server: an attempt can only be attributed to an account and repository if both can be identified, so a wrong user name, a rejection by the rate limit, and an SSH key that is not accepted, which happens before the repository is named, leave no entry.
+
+Build agents clone the repository for every build job, over HTTPS with the token of the job or over SSH with their key, and each clone records one **pull** entry that names the agent and job. These entries are hidden by default, because the log is usually read to see what people did. Switch on **Include build agent access** above the table to see them.
 
 The log shows the newest accesses first. Click a column heading to sort by user, author, action, access type, or timestamp. Use the search field above the table to find entries by user, author, action, access type, commit hash, or date. Search dates in `YYYY-MM-DD` format using your local calendar date.
 
 Use the pagination controls below the table to change pages or the number of entries per page. The column headings and pagination remain visible while the entries scroll. On narrow screens, scroll the table horizontally to reach the remaining columns.
 
-<Image src={accessLogDesktopLight} alt="VCS access log with global search, sortable columns, and pagination" size={ImageSize.large} caption="Repository access log in the light theme" />
+<Image
+    src={accessLogDesktopLight}
+    alt="VCS access log with global search, sortable columns, and pagination"
+    size={ImageSize.large}
+    caption="Repository access log in the light theme"
+/>
 
 <details>
 <summary>Dark theme and narrow-screen examples</summary>
 
 <Image src={accessLogDesktopDark} alt="VCS access log in the dark theme" size={ImageSize.large} caption="Repository access log in the dark theme" />
 
-<Image src={accessLogMobileLight} alt="VCS access log on a narrow screen in the light theme" size={ImageSize.large} caption="On a narrow screen, scroll the table horizontally while pagination remains visible" />
+<Image
+    src={accessLogMobileLight}
+    alt="VCS access log on a narrow screen in the light theme"
+    size={ImageSize.large}
+    caption="On a narrow screen, scroll the table horizontally while pagination remains visible"
+/>
 
 <Image src={accessLogMobileDark} alt="VCS access log on a narrow screen in the dark theme" size={ImageSize.large} caption="Narrow-screen repository access log in the dark theme" />
 
@@ -156,7 +175,7 @@ Use the pagination controls below the table to change pages or the number of ent
 
 <Callout variant={CalloutVariant.info}>
 
-  The button is only shown to instructors, only when you opened the repository from Course Management, and not for the test repository. It requires [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle), because Artemis can only log accesses to repositories it hosts itself.
+The button is only shown to instructors, only when you opened the repository from Course Management, and not for the test repository. It requires [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle), because Artemis can only log accesses to repositories it hosts itself.
 
 </Callout>
 

@@ -131,7 +131,7 @@
                             {{ 'artemisApp.examStatus.conduction.' + (!isRealExam() ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
                             :
                             {{ numberOfStarted() }}
-                            ({{ numberOfGeneratedStudentExams() > 0 ? round((numberOfStarted() * 100) / examChecklist().numberOfGeneratedStudentExams!, 1) : 0 }}
+                            ({{ numberOfGeneratedStudentExams() > 0 ? round((numberOfStarted() * 100) / numberOfGeneratedStudentExams(), 1) : 0 }}
                             %)
                         </span>
                     </li>

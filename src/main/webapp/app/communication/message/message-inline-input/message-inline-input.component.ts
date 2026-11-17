@@ -3,7 +3,6 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostContentValidationPattern } from 'app/communication/communication.util';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -12,19 +11,24 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { DraftMessageInputDirective } from '../draft-message-input.directive';
 import { Subscription } from 'rxjs';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-message-inline-input',
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
 })
 export class MessageInlineInputComponent extends DraftMessageInputDirective<Post | AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
 
     course = input<Course>();
     activeConversation = input<ConversationDTO>();
+
+    protected readonly faCircleNotch = faCircleNotch;
 
     private readonly DRAFT_KEY_PREFIX = 'message_draft_';
     private currentUserId: number | undefined;

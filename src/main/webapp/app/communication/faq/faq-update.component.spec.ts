@@ -250,6 +250,30 @@ describe('FaqUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
     });
 
+    it('should render the labelled fields and the cancel and save buttons', () => {
+        faqUpdateComponent.faq = { questionTitle: 'title', questionAnswer: 'answer', course: { id: 1, title: 'Course' } } as Faq;
+        faqUpdateComponent.validate();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        const element: HTMLElement = faqUpdateComponentFixture.nativeElement;
+
+        expect(element.querySelector('#jhi-faq-heading')).not.toBeNull();
+        expect(element.querySelector('label[for="field_title"]')).not.toBeNull();
+        expect(element.querySelector('#field_title')).not.toBeNull();
+        expect(element.querySelector('#field_description')).not.toBeNull();
+        expect(element.querySelector<HTMLInputElement>('#field_course')!.disabled).toBe(true);
+
+        const save = element.querySelector<HTMLButtonElement>('#save-entity')!;
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+        faqUpdateComponent.isSaving.set(true);
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        expect(save.disabled).toBe(true);
+
+        const previousState = vi.spyOn(faqUpdateComponent, 'previousState').mockImplementation(() => {});
+        element.querySelector<HTMLButtonElement>('#cancel-save')!.click();
+        expect(previousState).toHaveBeenCalledOnce();
+    });
+
     it('should update categories', () => {
         const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
@@ -291,6 +292,23 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.testRun = FALSE
             """)
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
+
+    /**
+     * Counts conduction progress in one database snapshot, treating an unset test-run flag as a regular attempt.
+     *
+     * @param examId the exam whose attempts are counted
+     * @return generated, started and submitted counts, excluding only explicit test runs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO(
+                COUNT(se),
+                COUNT(CASE WHEN se.started = TRUE THEN 1 ELSE NULL END),
+                COUNT(CASE WHEN se.submitted = TRUE THEN 1 ELSE NULL END))
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND (se.testRun = FALSE OR se.testRun IS NULL)
+            """)
+    ExamConductionCountsDTO countConductionByExamId(@Param("examId") long examId);
 
     /**
      * Finds all student exams for a user with basic exercise data.

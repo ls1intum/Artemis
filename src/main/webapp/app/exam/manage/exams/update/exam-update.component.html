@@ -14,7 +14,7 @@
                 }
             </div>
             <!-- Section exam configuration -->
-            <div class="mb-4!">
+            <div class="mb-6!">
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration"></h5>
                 <jhi-title-channel-name
                     [(title)]="exam.title"
@@ -23,13 +23,9 @@
                     [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
+                    [titleValidationMessage]="!exam.title?.trim() ? 'artemisApp.examManagement.titleMissingOrNotValid' : undefined"
+                    [channelNameValidationMessage]="isChannelNameMissing ? 'error.examChannelNameMissing' : undefined"
                 />
-                @if (!exam.title?.trim()) {
-                    <div class="mt-1 block text-sm text-state-danger" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
-                }
-                @if (isChannelNameMissing) {
-                    <div class="mt-1 block text-sm text-state-danger" data-testid="channel-name-validation-message" jhiTranslate="error.examChannelNameMissing"></div>
-                }
             </div>
             <div class="mb-6!">
                 <div>

@@ -9,8 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,8 +29,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -42,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -63,6 +72,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskTestRepository;
+
+    @Autowired
+    private CompetencyRepository competencyRepository;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
 
     @BeforeEach
     void setUp() {
@@ -371,6 +395,64 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
         assertThat(toBeImported.getId()).isNull();
         assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeImport);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_deletedSelectedCompetencyLeavesNoRows(boolean competencyFromAnotherCourse) {
+        var selected = competencyUtilService.createCompetency(competencyFromAnotherCourse ? programmingExercise.getCourseViaExerciseGroupOrCourseMember() : additionalEmptyCourse);
+        var valid = competencyUtilService.createCompetency(additionalEmptyCourse);
+        var policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(5);
+        policy.setActive(true);
+        var destination = createToBeImportedWithSubmissionPolicy(policy);
+        destination.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(valid, destination, 1), new CompetencyExerciseLink(selected, destination, 2))));
+        competencyRepository.deleteById(selected.getId());
+        long exercisesBefore = programmingExerciseRepository.count();
+        long buildConfigsBefore = programmingExerciseBuildConfigRepository.count();
+        long teamConfigsBefore = teamAssignmentConfigRepository.count();
+        long plagiarismConfigsBefore = plagiarismDetectionConfigRepository.count();
+        long policiesBefore = submissionPolicyRepository.count();
+        long linksBefore = competencyExerciseLinkRepository.count();
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), destination, null));
+
+        assertThat(programmingExerciseRepository.count()).as("no incomplete exercise").isEqualTo(exercisesBefore);
+        assertThat(programmingExerciseBuildConfigRepository.count()).as("no build configuration").isEqualTo(buildConfigsBefore);
+        assertThat(teamAssignmentConfigRepository.count()).as("no team configuration").isEqualTo(teamConfigsBefore);
+        assertThat(plagiarismDetectionConfigRepository.count()).as("no plagiarism configuration").isEqualTo(plagiarismConfigsBefore);
+        assertThat(submissionPolicyRepository.count()).as("no submission policy").isEqualTo(policiesBefore);
+        assertThat(competencyExerciseLinkRepository.count()).as("no partial competency links").isEqualTo(linksBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_keepsSelectedTargetLinksAndSkipsOtherCourses() {
+        var sourceCompetency = competencyUtilService.createCompetency(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        var sourceLink = competencyExerciseLinkRepository.save(new CompetencyExerciseLink(sourceCompetency, programmingExercise, 1));
+        programmingExercise.setCompetencyLinks(new HashSet<>(Set.of(sourceLink)));
+        var otherCourseCompetency = competencyUtilService.createCompetency(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        var selected = competencyUtilService.createCompetency(additionalEmptyCourse);
+        var secondSelected = competencyUtilService.createCompetency(additionalEmptyCourse);
+        var destination = createToBeImported();
+        var inferredLink = new CompetencyExerciseLink(selected, destination, 2.5);
+        inferredLink.setGeneratedByAi(true);
+        destination.setCompetencyLinks(new HashSet<>(
+                Set.of(inferredLink, new CompetencyExerciseLink(secondSelected, destination, 0.5), new CompetencyExerciseLink(otherCourseCompetency, destination, 3))));
+
+        var imported = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), destination, null);
+
+        var links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(imported.getId());
+        assertThat(links).extracting(link -> link.getCompetency().getId()).containsExactlyInAnyOrder(selected.getId(), secondSelected.getId());
+        assertThat(links).allSatisfy(link -> {
+            assertThat(link.getExercise().getId()).isEqualTo(imported.getId());
+            assertThat(link.getWeight()).isEqualTo(link.getCompetency().getId().equals(selected.getId()) ? 2.5 : 0.5);
+            assertThat(link.isGeneratedByAi()).isEqualTo(link.getCompetency().getId().equals(selected.getId()));
+        });
+        assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(programmingExercise.getId())).singleElement()
+                .satisfies(link -> assertThat(link.getCompetency().getId()).isEqualTo(sourceCompetency.getId()));
     }
 
     @Test
