@@ -757,13 +757,19 @@ public class StudentExamService {
                         .map(Exercise::getId).collect(Collectors.toSet());
                 return CompletableFuture.runAsync(() -> {
                     List<StudentParticipation> localParticipations = new ArrayList<>();
-                    setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, createNewParticipations, false, startedExerciseIds, localParticipations, true);
-                    if (testExam && !localParticipations.isEmpty()) {
-                        var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExamId);
-                        freshStudentExam.getStudentParticipations().addAll(localParticipations);
-                        studentExamRepository.save(freshStudentExam);
+                    try {
+                        setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, createNewParticipations, false, startedExerciseIds, localParticipations, true);
                     }
-                    generatedParticipations.addAll(localParticipations);
+                    finally {
+                        // Also link the participations that were set up before a later exercise failed. A retry skips those already initialized
+                        // exercises, so they would otherwise never be linked to the student exam and be missing during the conduction.
+                        if (testExam && !localParticipations.isEmpty()) {
+                            var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExamId);
+                            freshStudentExam.getStudentParticipations().addAll(localParticipations);
+                            studentExamRepository.save(freshStudentExam);
+                        }
+                        generatedParticipations.addAll(localParticipations);
+                    }
                 }, threadPool).thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                         generatedParticipations.size(), startedAt, lock)).exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);

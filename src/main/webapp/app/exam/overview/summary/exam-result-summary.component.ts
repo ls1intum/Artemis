@@ -293,7 +293,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private watchPublicationAndReviewDates(): void {
-        if (this.instructorView() || this.isTestRun() || this.isTestExam) {
+        if (this.instructorView() || this.isTestRun() || !this.isRealExam()) {
             return;
         }
         const studentExamId = this.studentExam().id;
