@@ -286,12 +286,41 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?includeToken=true", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
 
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
         assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
+    }
+
+    @Test
+    void testLoginResponseBodyHasNoTokenUnlessRequested() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+
+        assertThat(response.getCookie("jwt")).isNotNull();
+        assertThat(response.getContentAsString()).doesNotContain("access_token");
+    }
+
+    @Test
+    void testLoginResponseBodyHasTheTokenForAToolRequest() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?tool=SCORPIO", loginVM, HttpStatus.OK, httpHeaders);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        assertThat(responseBody.get("access_token")).isNotNull();
     }
 
     /**

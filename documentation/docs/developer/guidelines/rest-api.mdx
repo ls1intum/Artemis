@@ -2,7 +2,7 @@
 id: rest-api
 title: REST API Guidelines
 sidebar_label: REST API Guidelines
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-17
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -818,7 +818,7 @@ public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId")
 
 **How to Get Tool Tokens:**
 1. Verify the tool type is defined in `ToolTokenType.java`
-2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`
+2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`. The response carries the token in the `access_token` field of its body and in the cookie. A login without `tool` answers with the cookie only; a client that cannot read cookies adds `includeToken=true`.
 
 ### Endpoints That Create a Credential
 

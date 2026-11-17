@@ -92,12 +92,13 @@ public class PublicUserJwtResource {
     /**
      * Authenticate a User with username and password. This method is used for the login of users via the Artemis web application.
      *
-     * @param loginVM   user credentials View Mode
-     * @param userAgent User Agent string from the request header, used to identify the client environment
-     * @param tool      optional Tool Token Type to define the scope of the token
-     * @param request   HTTP request object, used to get the client environment information
-     * @param response  HTTP response object, used to set the JWT cookie
-     * @return if successful a map with the access_token information and status 200 (ok). Every credential that the
+     * @param loginVM      user credentials View Mode
+     * @param userAgent    User Agent string from the request header, used to identify the client environment
+     * @param tool         optional Tool Token Type to define the scope of the token
+     * @param includeToken whether the response body carries the token as well, which a client that cannot read the cookie asks for; a request with a tool type always does
+     * @param request      HTTP request object, used to get the client environment information
+     * @param response     HTTP response object, used to set the JWT cookie
+     * @return if successful status 200 (ok) with the cookie and, if the token is requested, a map with the access_token information. Every credential that the
      *         authentication manager refuses answers an empty body with status 401 (unauthorized) - the same status for all
      *         of them, so that the response does not say which check refused. A malformed request still answers 400 and an
      *         exhausted rate limit 429, both before the credentials are looked at. The rate limit also holds for one login name: once it has had
@@ -109,7 +110,8 @@ public class PublicUserJwtResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
     public ResponseEntity<Map<String, String>> authenticate(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
-            @RequestParam(name = "tool", required = false) @Nullable ToolTokenType tool, HttpServletRequest request, HttpServletResponse response) {
+            @RequestParam(name = "tool", required = false) @Nullable ToolTokenType tool, @RequestParam(name = "includeToken", defaultValue = "false") boolean includeToken,
+            HttpServletRequest request, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -133,7 +135,8 @@ public class PublicUserJwtResource {
             // The resolved login rather than what was typed: a login with an email address or an alias of it would not find the user again
             artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
-            return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
+            // The web client works with the cookie, so the token is not repeated in the body unless a client asks for it
+            return ResponseEntity.ok(includeToken || tool != null ? Map.of("access_token", responseCookie.getValue()) : Map.of());
         }
         catch (BadCredentialsException ex) {
             // The message is logged as well: the providers raise this for more than a wrong password - a bot account is
