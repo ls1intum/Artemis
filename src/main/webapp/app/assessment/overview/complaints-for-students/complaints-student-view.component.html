@@ -23,6 +23,7 @@
                     <button
                         type="button"
                         id="complain"
+                        data-testid="complain"
                         tumAetUiButton
                         size="small"
                         [class.not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
