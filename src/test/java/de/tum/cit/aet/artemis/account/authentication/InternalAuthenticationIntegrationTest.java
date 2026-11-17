@@ -291,7 +291,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
-        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
+        String accessToken = responseBody.get("access_token").toString();
+        assertThat(accessToken).isEqualTo(response.getCookie("jwt").getValue());
+        assertThat(tokenProvider.validateTokenForAuthority(accessToken, null)).isTrue();
+        assertThat(tokenProvider.getAuthentication(accessToken).getName()).isEqualTo(USERNAME);
     }
 
     @Test
@@ -320,7 +323,11 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
-        assertThat(responseBody.get("access_token")).isNotNull();
+        String accessToken = String.valueOf(responseBody.get("access_token"));
+        assertThat(accessToken).isEqualTo(response.getCookie("jwt").getValue());
+        assertThat(tokenProvider.validateTokenForAuthority(accessToken, null)).isTrue();
+        assertThat(tokenProvider.getAuthentication(accessToken).getName()).isEqualTo(USERNAME);
+        assertThat(tokenProvider.getTools(accessToken)).isEqualTo(ToolTokenType.SCORPIO);
     }
 
     /**
