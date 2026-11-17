@@ -1,5 +1,8 @@
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
@@ -54,6 +57,9 @@ type ExampleSubmissionResponseType = EntityResponseType;
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
     ],
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
@@ -63,6 +69,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private tutorParticipationService = inject(TutorParticipationService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private exerciseService = inject(ExerciseService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
     readonly isNewSubmission = signal(false);
     areNewAssessments = true;
@@ -93,6 +102,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     UIStates = UIStates;
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;
+
+    protected readonly trainingModeOptions = computed(() => {
+        this.languageChange();
+        return [
+            { label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.readAndConfirm'), value: ExampleSubmissionMode.READ_AND_CONFIRM },
+            { label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.assessCorrectly'), value: ExampleSubmissionMode.ASSESS_CORRECTLY },
+        ];
+    });
     readonly referencedBlocksInExampleSubmission = signal<string[]>([]);
 
     // Icons

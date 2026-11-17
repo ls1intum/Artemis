@@ -6,14 +6,13 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { MultipleChoiceVisualQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/visual-question/multiple-choice-visual-question.component';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('QuizVisualEditorComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceVisualQuestionComponent>;
@@ -21,7 +20,7 @@ describe('QuizVisualEditorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), FaIconComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MultipleChoiceVisualQuestionComponent, FaIconComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
                 MockProvider(CourseManagementService),

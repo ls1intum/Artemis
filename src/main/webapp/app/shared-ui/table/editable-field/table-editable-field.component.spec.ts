@@ -9,7 +9,7 @@ describe('TableEditableFieldComponent', () => {
     let fixture: ComponentFixture<TableEditableFieldComponent>;
     let debugElement: DebugElement;
 
-    const tableInputValue = '.table-editable-field__input';
+    const tableInputValue = '[data-testid="table-editable-field-input"]';
 
     beforeEach(() => {
         return TestBed.configureTestingModule({})

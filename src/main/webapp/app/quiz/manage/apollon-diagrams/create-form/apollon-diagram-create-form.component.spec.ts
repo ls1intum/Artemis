@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,12 +17,12 @@ import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
     let apollonDiagramService: ApollonDiagramService;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let fixture: ComponentFixture<ApollonDiagramCreateFormComponent>;
 
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 123);
-    const dialogRefMock = { close: vi.fn() } as unknown as DynamicDialogRef;
-    const dialogConfigMock = { data: { apollonDiagram: diagram } } as DynamicDialogConfig;
+    const dialogRefMock = { close: vi.fn() } as unknown as TumAetUiDialogRef;
+    const dialogConfigMock = new TumAetUiDialogConfig({ data: { apollonDiagram: diagram } });
 
     beforeEach(async () => {
         diagram.id = 1;
@@ -33,8 +33,8 @@ describe('ApollonDiagramCreateForm Component', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ApollonDiagramService,
-                { provide: DynamicDialogRef, useValue: dialogRefMock },
-                { provide: DynamicDialogConfig, useValue: dialogConfigMock },
+                { provide: TumAetUiDialogRef, useValue: dialogRefMock },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfigMock },
                 SessionStorageService,
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -46,7 +46,7 @@ describe('ApollonDiagramCreateForm Component', () => {
 
         fixture = TestBed.createComponent(ApollonDiagramCreateFormComponent);
         apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-        dialogRef = fixture.debugElement.injector.get(DynamicDialogRef);
+        dialogRef = fixture.debugElement.injector.get(TumAetUiDialogRef);
     });
 
     afterEach(() => {

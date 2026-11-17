@@ -27,8 +27,8 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.6rem 0.85rem;
-    background: var(--overview-card-nested-bg, var(--bs-tertiary-bg));
-    border-bottom: 1px solid var(--bs-border-color);
+    background: var(--overview-card-nested-bg, var(--tumaet-ui-highlight-background));
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
     flex-wrap: wrap;
 }
 
@@ -57,17 +57,6 @@
     flex-shrink: 0;
 }
 
-.question-options.row {
-    margin-left: 0;
-    margin-right: 0;
-    justify-content: flex-start;
-
-    .row {
-        margin-left: 0;
-        margin-right: 0;
-    }
-}
-
 .question-card-body {
     padding: 0.6rem 0.85rem;
 }
@@ -91,8 +80,7 @@
     justify-content: space-between;
     width: 100%;
 
-    input,
-    .input-group-btn {
+    input {
         display: inline-block;
         width: 1rem;
     }
@@ -105,20 +93,6 @@
         display: inline-block;
     }
 
-    .input-group > input {
-        height: 100%;
-    }
-
-    .form-group {
-        display: flex;
-        align-items: center;
-        margin: 0 5px 15px;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
-
     .background-file {
         display: flex;
     }
@@ -129,30 +103,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    .form-control,
-    .input-group-btn {
-        width: auto;
-    }
-
-    .form-group {
-        display: flex;
-        align-items: center;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
-
-    .invalid-reasons-tooltip .tooltip-inner {
-        text-align: left;
-        max-width: 300px;
-
-        p {
-            margin: 4px 0;
-            padding: 4px;
-        }
-    }
 
     #remaining-time {
         text-align: center;
@@ -172,19 +122,19 @@
     #quiz-score {
         text-align: center;
         font-weight: bold;
-        color: green;
+        color: var(--success);
 
         &.incorrect {
-            color: black;
+            color: var(--tumaet-ui-text-color);
         }
     }
 
     .time-warning {
-        color: orange;
+        color: var(--warning);
     }
 
     .time-critical {
-        color: red;
+        color: var(--danger);
     }
 
     .connection-status-quiz {
