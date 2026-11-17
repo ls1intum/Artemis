@@ -8,6 +8,7 @@ last_reviewed: 2026-11-16
 import Callout from '../../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 import Image, { ImageSize } from '../../../src/components/Image/Image';
+import examMode from './assets/exam_mode_practice.png';
 import examConfiguration from './assets/exam_configuration.png';
 import examConduction from './assets/exam_conduction.png';
 import examExercises from './assets/exam_exercises.png';
@@ -49,6 +50,13 @@ Choose the start date so that the session falls into the lecture or the lab in w
 the supervised session are assessed automatically like all attempts of a practice exam, and students see their result
 right after they submit.
 
+<Image
+    src={examMode}
+    alt="Mode picker with Practice Exam selected and the option Start with a supervised session"
+    size={ImageSize.medium}
+    caption="Mode picker with a practice exam selected"
+/>
+
 ## Fill In the Creation Form
 
 The form is divided into the sections below, in this order. Only the exam title and the three conduction dates are
@@ -65,7 +73,7 @@ what the [Exam Participation Checker](/instructor/exams/participation-checker) a
 
 <Image
     src={examConfiguration}
-    alt="Exam Configuration fields of the exam creation form: mode, attendance check, examiner, module number and course name"
+    alt="Exam Configuration fields of the exam creation form: attendance check, examiner, module number and course name"
     size={ImageSize.large}
     caption="Exam Configuration"
 />

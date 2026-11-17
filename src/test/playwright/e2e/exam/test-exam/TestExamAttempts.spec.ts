@@ -131,7 +131,7 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
 
         await login(studentOne);
         const attempt = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/own-student-exam`);
-        expect(attempt.status()).toBe(400);
+        expect(attempt.status()).toBe(403);
         expect((await attempt.json()).errorKey).toBe('examHasAlreadyEnded');
         expect(await examAPIRequests.getOwnTestExamAttempts(exam), 'no attempt was created').toHaveLength(0);
 

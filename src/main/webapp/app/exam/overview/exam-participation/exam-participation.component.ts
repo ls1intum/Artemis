@@ -1069,8 +1069,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to initialize
      */
     private initializeExercise(exercise: Exercise) {
-        this.activeExamPage().isOverviewPage = false;
-        this.activeExamPage().exercise = exercise;
+        // Replace the page instead of mutating it, so computed values derived from the active page are invalidated
+        this.activeExamPage.set(this.createExamPage(false, exercise));
         // set current exercise Index
         this.exerciseIndex.set(this.studentExam().exercises!.findIndex((exercise1) => exercise1.id === exercise.id));
 
@@ -1096,9 +1096,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private initializeOverviewPage() {
-        this.activeExamPage().isOverviewPage = true;
-        this.activeExamPage().exercise = undefined;
+        this.activeExamPage.set(this.createExamPage(true));
         this.exerciseIndex.set(-1);
+    }
+
+    private createExamPage(isOverviewPage: boolean, exercise?: Exercise): ExamPage {
+        const page = new ExamPage();
+        page.isOverviewPage = isOverviewPage;
+        page.exercise = exercise;
+        return page;
     }
 
     /** Retries the active exercise with the same activation and programming submission setup as its initial start. */

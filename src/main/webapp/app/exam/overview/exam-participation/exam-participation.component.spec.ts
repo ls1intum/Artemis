@@ -1809,6 +1809,32 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('onPageChange', () => {
+        it('should update the submission status message when switching between overview, programming and text pages', () => {
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 15;
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 42;
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().exercises = [textExercise, programmingExercise];
+            comp.pageComponentVisited.set([false, false]);
+            comp.exam.set(new Exam());
+            vi.spyOn(comp, 'triggerSave').mockImplementation(() => {});
+            vi.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
+            vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(of(undefined as any));
+
+            comp.onPageChange({ overViewChange: true, forceSave: false });
+            expect(comp.isProgrammingExercise()).toBe(false);
+            expect(comp.connectionStatusTranslationKey()).toBe('artemisApp.examParticipation.connected');
+
+            comp.onPageChange({ overViewChange: false, exercise: programmingExercise, forceSave: false });
+            expect(comp.isProgrammingExercise()).toBe(true);
+            expect(comp.connectionStatusTranslationKey()).toBe('artemisApp.examParticipation.ideConnected');
+
+            comp.onPageChange({ overViewChange: false, exercise: textExercise, forceSave: false });
+            expect(comp.isProgrammingExercise()).toBe(false);
+            expect(comp.connectionStatusTranslationKey()).toBe('artemisApp.examParticipation.connected');
+        });
+
         it('should trigger save and initialize exercise when exercise changed', () => {
             comp.exerciseIndex.set(0);
             const exercise1 = new TextExercise(new Course(), undefined);

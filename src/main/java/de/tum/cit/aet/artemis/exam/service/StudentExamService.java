@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.util.SubmissionComparisonUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -327,7 +326,7 @@ public class StudentExamService {
     private void saveSubmissionModelingExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
         ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
-        if (!SubmissionComparisonUtil.isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
+        if (!ExamSubmissionService.isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
             modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class)).save(modelingSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
@@ -336,7 +335,7 @@ public class StudentExamService {
     private void saveSubmissionTextExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
-        if (!SubmissionComparisonUtil.isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
+        if (!ExamSubmissionService.isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
             textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).saveTextSubmission(textSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
@@ -360,7 +359,7 @@ public class StudentExamService {
         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
-        if (!SubmissionComparisonUtil.isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
+        if (!ExamSubmissionService.isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
             // The answers of the hand-in come without ids, and the database allows one answer per question: they are written to the rows of the stored answers,
             // which were loaded above for the comparison. Only the answers of the submission that is saved count, so that an answer can never be moved to another one.
             Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
