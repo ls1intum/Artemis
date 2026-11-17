@@ -74,9 +74,8 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             return;
         }
         catch (AuthenticationException e) {
-            // intercept failed authentication to log it in the VCS access log
+            // the failed attempt itself was written to the VCS access log where the credentials were checked
             log.warn("LocalVC fetch authentication failed for {} ({}: {})", servletRequest.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
-            accessLogRecorder.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
             throw e;
         }
 
@@ -89,6 +88,8 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         }
         finally {
             usageTrackingService.recordFetch(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+            // the fetch is over, so everything about it is known: it is written only if it sent data
+            accessLogRecorder.recordFetchHTTPS(servletRequest);
         }
     }
 }

@@ -216,7 +216,17 @@ public class LocalVCServletService {
         // the requests that never need it (a staff token, a failed credential) still do not pay for it.
         Supplier<ProgrammingExerciseParticipation> participationForRepository = participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exercise.exerciseId());
 
-        var authenticated = authenticateUser(request, authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        AuthenticatedUser authenticated;
+        try {
+            authenticated = authenticateUser(request, authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        }
+        catch (LocalVCAuthException | AuthenticationException e) {
+            // A request without a password is the first request of an operation, because git waits to be asked, and is no attempt. Every other rejection of the credentials is.
+            if (!(e instanceof LocalVCAuthException authException && authException.isExpectedDuringHandshake())) {
+                accessLogRecorder.recordFailedAuthenticationHTTPS(request, localVCRepositoryUri, repositoryAction);
+            }
+            throw e;
+        }
         User user = authenticated.user();
         request.setAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE, authenticated.mechanism());
 
@@ -225,13 +235,16 @@ public class LocalVCServletService {
             repositoryAccessService.checkHasAccessToOfflineIDEElseThrow(exercise, user);
         }
         catch (AccessForbiddenException e) {
+            log.warn("User {} may not use an offline IDE for the repository {}", user.getLogin(), localVCRepositoryUri);
+            saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise.exerciseId(), localVCRepositoryUri, user, repositoryAction);
             throw new LocalVCForbiddenException(e);
         }
 
         try {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
-            // An advertisement and its transfer have no shared operation id. Each request retains its own audit row for its hooks.
-            accessLogRecorder.saveVcsAccessLogForHTTPS(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation, authenticated.mechanism());
+            // The operation is written once, by the filter, when it is over. The requests of one operation have nothing in common that would let one find the entry of
+            // another, so here only who this request is for is remembered.
+            accessLogRecorder.rememberSubjectHTTPS(request, user, optionalParticipation, authenticated.mechanism());
         }
         catch (LocalVCForbiddenException e) {
             log.warn("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
@@ -267,7 +280,7 @@ public class LocalVCServletService {
             var authenticationMechanism = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(context, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             var ipAddress = context.getIpAddress();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.getId(), action, authenticationMechanism, commitHash, ipAddress));
         }
         catch (Exception e) {
             log.warn("Failed to save VCS access log for failed access attempt by user {} to repository {}: {}", user.getLogin(), localVCRepositoryUri, e.getMessage());

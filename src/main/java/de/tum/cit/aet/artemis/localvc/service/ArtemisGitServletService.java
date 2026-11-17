@@ -113,7 +113,7 @@ public class ArtemisGitServletService extends GitServlet {
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
         this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, accessLogRecorder, usageTrackingService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, pushProcessingService, usageTrackingService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, accessLogRecorder, pushProcessingService, usageTrackingService));
 
         this.setReceivePackFactory((request, repository) -> {
             // we only need the hooks and the separate place for the objects of a push for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
@@ -128,7 +128,8 @@ public class ArtemisGitServletService extends GitServlet {
                 throw new ServiceNotAuthorizedException("Could not resolve the authenticated LocalVC push user", e);
             }
             // The hook prevents illegal actions on push (delete branch, rename branch, force push), and examines the content of the push.
-            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user);
+            GitOperationAudit audit = accessLogRecorder.auditOf(request);
+            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user, audit);
             final ReceivePack receivePack;
             try {
                 // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
@@ -141,7 +142,7 @@ public class ArtemisGitServletService extends GitServlet {
             receivePack.setPreReceiveHook(prePushHook);
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, user,
-                    () -> localVCServletService.getAuthenticationMechanism(request), commitHash -> accessLogRecorder.completePushAccessLogHTTPS(request, commitHash)));
+                    () -> localVCServletService.getAuthenticationMechanism(request), audit::onPushAccepted));
             return receivePack;
         });
 
@@ -149,8 +150,8 @@ public class ArtemisGitServletService extends GitServlet {
             UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
             // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
             if (isAuthorizedPostRequest(request)) {
-                // Add the custom pre-upload hook, to distinguish between clone and pull operations
-                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(accessLogRecorder, request));
+                // Add the custom pre-upload hook, which tells the audit whether data is sent and whether the client is cloning or pulling
+                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(accessLogRecorder.auditOf(request)));
             }
             return uploadPack;
         });

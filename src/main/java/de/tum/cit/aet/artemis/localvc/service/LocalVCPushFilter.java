@@ -34,12 +34,16 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCAccessLogRecorderService accessLogRecorder;
+
     private final LocalVCPushProcessingService pushProcessingService;
 
     private final LocalVCUsageTrackingService usageTrackingService;
 
-    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService, LocalVCUsageTrackingService usageTrackingService) {
+    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCAccessLogRecorderService accessLogRecorder, LocalVCPushProcessingService pushProcessingService,
+            LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.accessLogRecorder = accessLogRecorder;
         this.pushProcessingService = pushProcessingService;
         this.usageTrackingService = usageTrackingService;
     }
@@ -95,6 +99,8 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
         finally {
             usageTrackingService.recordPush(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+            // the push is over, so everything about it is known: it is written only if it brought commands
+            accessLogRecorder.recordPushHTTPS(servletRequest);
         }
     }
 }

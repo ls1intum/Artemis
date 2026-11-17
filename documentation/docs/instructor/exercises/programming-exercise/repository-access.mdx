@@ -132,18 +132,20 @@ Open the repository from **Course Management** and click **Open Access Log**. Ea
 |--------|---------|
 | User Id | The internal id of the account that accessed the repository |
 | Author | The name and email of the Artemis account, not the author on the Git commit. For an access by a build agent it names the agent and job instead |
-| Action Type | Clone, pull (a fetch of an existing clone), or push for a data transfer. Read and write entries record authorized user HTTPS repository advertisements. Some authentication or authorization rejections are recorded as a failed clone or push; see the limitations below |
+| Action Type | Clone, pull (a fetch of an existing clone), or push for an operation that transferred data. A rejected attempt is shown as a failed clone or push |
 | Access Type | How the user authenticated, for example over HTTPS with a token, or over SSH with a key |
-| Commit Hash | For an accepted push, the commit that was pushed. Otherwise, the newest repository commit when available. Failed HTTPS authentication entries can have an empty hash because no repository commit was recorded |
+| Commit Hash | For a push, the commit that was pushed. For a clone or pull, the newest commit of the repository when the data was sent. For a failed push, the commit the repository still has. For a failed clone or pull, empty |
 | Timestamp | When the access happened |
 
-For ordinary user access over HTTPS, the initial request advertises the repository references and writes a **read** or **write** entry. A subsequent data transfer writes its own **clone**, **pull**, or **push** entry. Git does not identify which advertisement belongs to which transfer, so these entries remain separate. An operation that needs no transfer, such as an up-to-date fetch or push, may have only an advertisement entry. Over SSH, each authorized user command writes one entry, including commands that transfer nothing. Each transfer or command refines only its own entry, even when several operations overlap.
+Every clone, pull, and push is recorded as exactly one entry, whether it runs over HTTPS or over SSH, and an entry is never changed afterwards. It is written when the operation is over, so it holds everything known by then:
 
-An HTTPS build-agent clone authenticated with a build-job token instead records one **pull** entry at the advertisement, identifying the agent and job. Its transfer does not create another entry or relabel it as a clone.
+- A fetch that transferred data is a **clone** if the client had nothing yet and a **pull** otherwise.
+- A push is a **push** with the pushed commit if the repository accepted it. If the server refused it, for example because it went to a branch that is not allowed, it is a **failed push** with the commit the repository still has. An accepted push keeps its commit even if Artemis then creates no submission from it, as for a push to another branch. The log shows what reached the repository, not what was graded.
+- An attempt that was rejected is a **failed clone** or **failed push**: credentials that do not hold, an account that is not active, a participant who may not access the repository, or the use of an offline IDE where it is not allowed. It names the account that was tried and the repository.
 
-The log is not a complete record of rejected attempts. A rejection before failed-access logging, such as disabled offline IDE access, can leave no entry. Failed HTTPS fetch authentication can be attributed only when the account and participation can be identified, and its recorded commit hash is empty. An absent entry therefore does not establish that no attempt occurred.
+Some git commands move no data and are not operations of their own, so they leave no entry: a fetch that is up to date, a push with nothing new, listing the references of a repository, and the first request of every operation, which carries no credentials because git waits to be asked for them. The log is therefore a record of what was transferred, and of attempts that were rejected. It is not a record of every request to the server: an attempt can only be attributed to an account and repository if both can be identified, so a wrong user name, a rejection by the rate limit, and an SSH key that is not accepted, which happens before the repository is named, leave no entry.
 
-A push whose repository update is rejected retains the commit hash from before the push. An accepted update records the pushed hash, even if Artemis does not grade it or submission processing fails afterwards. For example, a push to another branch can save changes without creating a graded submission. The access log records repository access and accepted changes; it does not establish that a submission was graded.
+An HTTPS build-agent clone authenticated with a build-job token records one **pull** entry, identifying the agent and job.
 
 The log shows the newest accesses first. Click a column heading to sort by user, author, action, access type, or timestamp. Use the search field above the table to find entries by user, author, action, access type, commit hash, or date. Search dates in `YYYY-MM-DD` format using your local calendar date.
 

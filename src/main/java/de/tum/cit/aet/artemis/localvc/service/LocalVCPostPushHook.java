@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 
@@ -47,21 +46,18 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     /**
      * Creates the hook of a push over SSH, which reads what the command cached in the session when it was authorized.
      *
-     * @param accessLogRecorder writes the commit hash of the push to the access log entry the command started
+     * @param audit collects the commit of the push for the access log entry of the command
      */
     public LocalVCPostPushHook(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService,
-            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, ServerSession serverSession, @NonNull User user,
-            LocalVCAccessLogRecorderService accessLogRecorder) {
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, ServerSession serverSession, @NonNull User user, GitOperationAudit audit) {
         this.localVCServletService = localVCServletService;
         this.pushProcessingService = pushProcessingService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
-        // Read now and not when the push arrives, so the entry is the one of this command whatever the session does in the meantime
-        VcsAccessLog vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         this.user = user;
         this.authenticationMechanism = () -> AuthenticationMechanism.SSH;
-        this.pushedCommitRecorder = commitHash -> accessLogRecorder.completePushAccessLog(vcsAccessLog, commitHash);
+        this.pushedCommitRecorder = audit::onPushAccepted;
     }
 
     /**
@@ -69,7 +65,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
      *
      * @param authenticationMechanism reads how the push authenticated. JGit creates the hook before the push filter authorizes the request, so the value is only read when the hook
      *                                    runs.
-     * @param pushedCommitRecorder    writes the commit hash of the push to its access log entry, which is found through the request that was authorized
+     * @param pushedCommitRecorder    passes the commit hash of the accepted push to the audit of the request
      */
     public LocalVCPostPushHook(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService,
             PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, @NonNull User user, Supplier<AuthenticationMechanism> authenticationMechanism,

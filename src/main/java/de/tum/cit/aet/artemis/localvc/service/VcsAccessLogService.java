@@ -45,20 +45,20 @@ public class VcsAccessLogService {
     /**
      * Creates a vcs access log entry in the background and stores it to the database.
      * <p>
-     * For an entry that nothing amends afterwards, such as the record of a rejected request. An entry that a later step of the operation has to find is written with
-     * {@link #createAccessLog}.
+     * For the record of a rejected attempt, which nothing waits for. The participation is passed by id: the entry only references it, and an entity or a proxy that is
+     * handed to another thread cannot be read there, not even to be logged.
      *
      * @param user                    The user accessing the repository
-     * @param participation           The participation which owns the repository
+     * @param participationId         The id of the participation which owns the repository
      * @param actionType              The action type, for example a failed clone or push
      * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
      */
     @Async("vcsAccessLogExecutor")
-    public void saveAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
-            String commitHash, String ipAddress) {
-        createAccessLog(user, participation, actionType, authenticationMechanism, commitHash, ipAddress);
+    public void saveAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
+            String ipAddress) {
+        createAccessLog(user, participationId, actionType, authenticationMechanism, commitHash, ipAddress);
     }
 
     /**
@@ -96,33 +96,26 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Creates a vcs access log entry and returns the stored entry for the caller to retain and refine.
+     * Creates a vcs access log entry and stores it before returning.
      * <p>
-     * The caller retains the returned entry for its own hooks, without looking up another request's entry. A failure must not fail the Git operation.
+     * An entry is written once, when the operation is over and everything about it is known, and is never changed afterwards. A failure to write it must not fail the Git
+     * operation, so the callers catch it.
      *
      * @param user                    The user accessing the repository
-     * @param participation           The participation which owns the repository
-     * @param actionType              The request or command action; a transfer starts as {@code PULL} or {@code PUSH}
+     * @param participationId         The id of the participation which owns the repository
+     * @param actionType              The action: a clone, pull or push, or a failed one
      * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
-     * @param commitHash              The latest commit hash
+     * @param commitHash              The commit hash that belongs to the action
      * @param ipAddress               The ip address of the user accessing the repository
-     * @return the stored entry, with its id
+     * @return the stored entry
      */
-    public VcsAccessLog createAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
-            String commitHash, String ipAddress) {
-        log.debug("Storing access operation for user {}", user);
+    public VcsAccessLog createAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
+            String ipAddress) {
+        log.debug("Storing access operation for user {}", user.getLogin());
 
-        return vcsAccessLogRepository
-                .save(new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress));
-    }
-
-    /**
-     * Stores the changes to an entry that {@link #createAccessLog} returned, before returning.
-     *
-     * @param vcsAccessLog the entry to store
-     */
-    public void updateAccessLog(VcsAccessLog vcsAccessLog) {
-        vcsAccessLogRepository.save(vcsAccessLog);
+        // The entry only references the participation, so the reference is enough and nothing is loaded.
+        Participation participation = participationRepository.getReferenceById(participationId);
+        return vcsAccessLogRepository.save(new VcsAccessLog(user, participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress));
     }
 
     /**

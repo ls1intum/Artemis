@@ -216,7 +216,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var user = userTestRepository.getUser();
 
-        var created = vcsAccessLogService.orElseThrow().createAccessLog(user, participation, RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "hash", "10.0.0.1");
+        var created = vcsAccessLogService.orElseThrow().createAccessLog(user, participation.getId(), RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "hash", "10.0.0.1");
 
         assertThat(created.getId()).isNotNull();
         assertThat(reload(created).getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);

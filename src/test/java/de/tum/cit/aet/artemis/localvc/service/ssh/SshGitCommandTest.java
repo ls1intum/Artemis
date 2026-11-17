@@ -31,13 +31,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.localvc.service.AccessLogSubject;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 class SshGitCommandTest {
@@ -102,9 +103,9 @@ class SshGitCommandTest {
             participationCaptured.set(true);
             return new ProgrammingExerciseStudentParticipation();
         });
-        when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenAnswer(_ -> {
+        when(session.getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY)).thenAnswer(_ -> {
             entryCaptured.set(true);
-            return new VcsAccessLog();
+            return new AccessLogSubject(new User(), 1L, AuthenticationMechanism.SSH, "127.0.0.1");
         });
         when(pushProcessingService.claimProgrammingExerciseMutation(any(Repository.class), same(exercise))).thenAnswer(_ -> {
             // A later command may replace session state while this call waits for the exercise's mutation lease.

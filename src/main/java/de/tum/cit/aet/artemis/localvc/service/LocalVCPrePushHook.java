@@ -28,15 +28,26 @@ import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
  * successful).
  */
-public record LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) implements PreReceiveHook {
+public record LocalVCPrePushHook(LocalVCServletService localVCServletService, User user, GitOperationAudit audit) implements PreReceiveHook {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
     private static final String BRANCH_CHECK_ERROR = "An error occurred while checking the branch.";
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user, GitOperationAudit audit) {
         this.localVCServletService = localVCServletService;
         this.user = user;
+        this.audit = audit;
+    }
+
+    /**
+     * Creates a hook that does not report to an audit, for a caller that has no access log entry to write.
+     *
+     * @param localVCServletService the service that answers the questions about the repository
+     * @param user                  the user who pushes
+     */
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
+        this(localVCServletService, user, new GitOperationAudit());
     }
 
     private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
@@ -68,6 +79,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
      */
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        markPushReceived(receivePack);
         examine(receivePack, commands);
         // JGit passes only the commands that it did not reject itself, so these alone cannot tell: a push whose only command JGit rejected passes none. The objects are stored
         // only for a push that has commands, all of which, also those that JGit rejected on its own, are still to be applied.
@@ -94,6 +106,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         if (commands.isEmpty()) {
             return;
         }
+        markPushReceived(receivePack);
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
         // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
         // the remaining refs through without any of the checks below.
@@ -155,6 +168,18 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
+        }
+    }
+
+    /**
+     * Tells the audit that the push brought commands, so that it is an operation and not only the announcement of one. This is the first moment that every push with commands
+     * reaches, and it is before the push changes anything, so the commit that is read is the one a rejected push leaves in the repository.
+     *
+     * @param receivePack the process handling the current receive
+     */
+    private void markPushReceived(ReceivePack receivePack) {
+        if (!receivePack.getAllCommands().isEmpty()) {
+            audit.onPushReceived(LocalVCFetchPreUploadHook.headCommitOf(receivePack.getRepository()));
         }
     }
 

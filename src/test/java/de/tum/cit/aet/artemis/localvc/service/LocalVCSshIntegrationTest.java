@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,6 +16,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -256,11 +258,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             assertThat(outputStream).isNotNull();
             assertThat(outputStream.size()).isGreaterThan(0); // Assuming the command produces some output
 
-            // 3. Verify cacheAttributesInSshSession stored data in the session during receive-pack execution
-            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
-            assertThat(cachedAccessLog).as("cacheAttributesInSshSession should cache access log for template repo").isNotNull();
-            assertThat(cachedAccessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
-            assertThat(cachedAccessLog.getUser().getLogin()).isEqualTo(user.getLogin());
+            // 3. Verify cacheAttributesInSshSession stored who the command is for in the session during receive-pack execution
+            var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+            assertThat(cachedSubject).as("cacheAttributesInSshSession should cache the subject of the access log for the template repo").isNotNull();
+            assertThat(cachedSubject.mechanism()).isEqualTo(AuthenticationMechanism.SSH);
+            assertThat(cachedSubject.user().getLogin()).isEqualTo(user.getLogin());
         }
     }
 
@@ -324,8 +326,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             assertThat(serverSession.isOpen()).isTrue();
 
             // When participation is absent, cacheAttributesInSshSession should NOT cache anything
-            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
-            assertThat(cachedAccessLog).as("No VCS access log should be cached when participation is absent").isNull();
+            var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+            assertThat(cachedSubject).as("No subject of the VCS access log should be cached when participation is absent").isNull();
             var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
             assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
         }
@@ -346,7 +348,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
         try (Git clone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("clone").toFile())
                 .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
-            assertThat(vcsAccessLogRepository.findAllByParticipationId(participation.getId())).singleElement().satisfies(entry -> {
+            // The entry is written when the command is over, which is just after the client has its answer, so the test waits for it.
+            assertThat(awaitAccessLog(participation.getId(), 1)).singleElement().satisfies(entry -> {
                 assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
                 assertThat(entry.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
                 assertThat(entry.getUser().getId()).isEqualTo(instructor.getId());
@@ -356,19 +359,37 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
                     .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
 
-            var entries = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            var entries = awaitAccessLog(participation.getId(), 2);
             assertThat(entries).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE, RepositoryActionType.PUSH);
             assertThat(entries.getLast().getCommitHash()).as("the push carries the commit it delivered").isEqualTo(commit);
             assertThat(entries.getLast().getUser().getId()).isEqualTo(instructor.getId());
 
-            // the clone is up to date, so this fetch has nothing to transfer. JGit may open a second connection of its own to follow tags, and the server sees each connection
-            // as a fetch of its own, so there are one or two entries.
+            // A commit that arrives from elsewhere is transferred by the next fetch, which is a pull, once, whatever number of connections JGit opens.
+            try (Git otherClone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("other-clone").toFile())
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
+                awaitAccessLog(participation.getId(), 3);
+                localVCLocalCITestService.commitFile(tempDir.resolve("other-clone"), otherClone, "pushed-from-elsewhere.txt");
+                otherClone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                        .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            }
+            awaitAccessLog(participation.getId(), 4);
             clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
 
-            var kindsAfterTheFetch = vcsAccessLogRepository.findAllByParticipationId(participation.getId()).stream().map(VcsAccessLog::getRepositoryActionType).toList();
-            assertThat(kindsAfterTheFetch).startsWith(RepositoryActionType.CLONE, RepositoryActionType.PUSH).hasSizeBetween(3, 4);
-            assertThat(kindsAfterTheFetch.subList(2, kindsAfterTheFetch.size())).containsOnly(RepositoryActionType.PULL);
+            assertThat(awaitAccessLog(participation.getId(), 5)).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE,
+                    RepositoryActionType.PUSH, RepositoryActionType.CLONE, RepositoryActionType.PUSH, RepositoryActionType.PULL);
         }
+    }
+
+    /**
+     * The entries that people caused. A build agent that clones for the build job of a push writes an entry of its own, with no user, at a moment nobody controls.
+     */
+    private List<VcsAccessLog> accessLogOfPeople(long participationId) {
+        return vcsAccessLogRepository.findAllByParticipationId(participationId).stream().filter(entry -> entry.getUser() != null).toList();
+    }
+
+    private List<VcsAccessLog> awaitAccessLog(long participationId, int count) {
+        await().atMost(Duration.ofSeconds(10)).until(() -> accessLogOfPeople(participationId).size() >= count);
+        return accessLogOfPeople(participationId);
     }
 
     private static SshdSessionFactory sshSessionFactory(KeyPair keyPair, Path sshHome) {

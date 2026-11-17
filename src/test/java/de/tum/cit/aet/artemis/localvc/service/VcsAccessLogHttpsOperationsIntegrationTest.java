@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +21,8 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
- * The VCS access log over HTTPS retains separate advertisement and transfer entries; a transfer never changes the entry of another request.
+ * The VCS access log over HTTPS writes one entry per operation, when the operation is over, and never changes it afterwards.
  * <p>
  * The tests run real JGit clients against the embedded LocalVC server, so they go through the handshake request and the data transfer request of every operation.
  */
@@ -126,6 +130,21 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
         return assignmentRepository.workingCopy().getRepository().resolve("HEAD").name();
     }
 
+    /**
+     * The entry is written when the operation is over, which is just after the client has its answer, so the tests wait for it.
+     */
+    private List<VcsAccessLog> awaitEntries(int count) {
+        await().atMost(Duration.ofSeconds(10)).until(() -> entries().size() >= count);
+        return entries();
+    }
+
+    /**
+     * Nothing is written for an operation that moves no data. There is no event to wait for, so the log has to stay as it is for a moment.
+     */
+    private void assertNoMoreEntriesThan(int count) {
+        await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(entries()).hasSize(count));
+    }
+
     private List<VcsAccessLog> entries() {
         return vcsAccessLogRepository.findAllByParticipationId(participation.getId()).stream()
                 .filter(entry -> entry.getUser() != null && student1Login.equals(entry.getUser().getLogin())).toList();
@@ -134,63 +153,70 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
     private MockHttpServletRequest authorizedRequest(String method, RepositoryActionType action, AuthenticationMechanism mechanism) {
         var request = new MockHttpServletRequest(method,
                 "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/" + (method.equals("GET") ? "info/refs" : "git-upload-pack"));
-        var repositoryUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug));
-        accessLogRecorder.saveVcsAccessLogForHTTPS(request, repositoryUri, userUtilService.getUserByLogin(student1Login), action, Optional.of(participation), mechanism);
+        accessLogRecorder.rememberSubjectHTTPS(request, userUtilService.getUserByLogin(student1Login), Optional.of(participation), mechanism);
         return request;
     }
 
+    private static List<Object> kindAndHash(VcsAccessLog entry) {
+        return List.of(entry.getRepositoryActionType(), entry.getCommitHash());
+    }
+
+    /**
+     * Operations that overlap end in another order than they began, and the entries of other transports and of build agents are around them. Every request owns what its hooks
+     * learned, so each operation is written for itself, whatever the others do.
+     */
     @ParameterizedTest
     @EnumSource(value = AuthenticationMechanism.class, names = { "PASSWORD", "PARTICIPATION_VCS_ACCESS_TOKEN", "USER_VCS_ACCESS_TOKEN", "REPOSITORY_VCS_ACCESS_TOKEN" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void overlappingCloneAndPullTransfersPersistTheirOwnActions(AuthenticationMechanism mechanism) {
-        authorizedRequest("GET", RepositoryActionType.READ, mechanism);
-        authorizedRequest("GET", RepositoryActionType.READ, mechanism);
-        var clone = authorizedRequest("POST", RepositoryActionType.READ, mechanism);
+    void overlappingOperationsEachWriteTheirOwnEntry(AuthenticationMechanism mechanism) {
+        var advertisement = authorizedRequest("GET", RepositoryActionType.READ, mechanism);
+        var cloneOne = authorizedRequest("POST", RepositoryActionType.READ, mechanism);
+        var cloneTwo = authorizedRequest("POST", RepositoryActionType.READ, mechanism);
         var pull = authorizedRequest("POST", RepositoryActionType.READ, mechanism);
+        var acceptedPush = authorizedRequest("POST", RepositoryActionType.WRITE, mechanism);
+        var rejectedPush = authorizedRequest("POST", RepositoryActionType.WRITE, mechanism);
+        var pushWithoutCommands = authorizedRequest("POST", RepositoryActionType.WRITE, mechanism);
         var user = userUtilService.getUserByLogin(student1Login);
-        var sshPull = vcsAccessLogService.createAccessLog(user, participation, RepositoryActionType.PULL, AuthenticationMechanism.SSH, "ssh-head", "10.0.0.2");
+        var sshPull = vcsAccessLogService.createAccessLog(user, participation.getId(), RepositoryActionType.PULL, AuthenticationMechanism.SSH, "ssh-head", "10.0.0.2");
         var agentPull = vcsAccessLogRepository
                 .save(new VcsAccessLog(null, participation, "Build agent", "", RepositoryActionType.PULL, AuthenticationMechanism.BUILD_JOB_TOKEN, "agent-head", "10.0.0.3"));
 
-        accessLogRecorder.markFetchAsCloneHTTPS(clone, 0);
-        accessLogRecorder.markFetchAsCloneHTTPS(pull, 3);
+        accessLogRecorder.auditOf(cloneOne).onBeginNegotiateRound(0);
+        accessLogRecorder.auditOf(cloneOne).onPackSent("head-one");
+        accessLogRecorder.auditOf(cloneTwo).onBeginNegotiateRound(0);
+        accessLogRecorder.auditOf(cloneTwo).onPackSent("head-two");
+        accessLogRecorder.auditOf(pull).onBeginNegotiateRound(3);
+        accessLogRecorder.auditOf(pull).onPackSent("head-three");
+        accessLogRecorder.auditOf(acceptedPush).onPushReceived("before-accepted");
+        accessLogRecorder.auditOf(acceptedPush).onPushAccepted("pushed");
+        accessLogRecorder.auditOf(rejectedPush).onPushReceived("before-rejected");
 
-        assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.READ, RepositoryActionType.READ, RepositoryActionType.CLONE,
-                RepositoryActionType.PULL, RepositoryActionType.PULL);
-        assertThat(entries().subList(0, 4)).extracting(VcsAccessLog::getAuthenticationMechanism).containsOnly(mechanism);
-        assertThat(vcsAccessLogRepository.findById(sshPull.getId()).orElseThrow().getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
-        assertThat(vcsAccessLogRepository.findById(agentPull.getId()).orElseThrow().getRepositoryActionType()).isEqualTo(RepositoryActionType.PULL);
-    }
+        // they end in another order than they began
+        accessLogRecorder.recordFetchHTTPS(pull);
+        accessLogRecorder.recordFetchHTTPS(cloneTwo);
+        accessLogRecorder.recordPushHTTPS(acceptedPush);
+        accessLogRecorder.recordFetchHTTPS(advertisement);
+        accessLogRecorder.recordPushHTTPS(rejectedPush);
+        accessLogRecorder.recordPushHTTPS(pushWithoutCommands);
+        accessLogRecorder.recordFetchHTTPS(cloneOne);
 
-    @ParameterizedTest
-    @EnumSource(value = AuthenticationMechanism.class, names = { "PASSWORD", "PARTICIPATION_VCS_ACCESS_TOKEN", "USER_VCS_ACCESS_TOKEN", "REPOSITORY_VCS_ACCESS_TOKEN" })
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void overlappingPushTransfersPersistOnlyTheirOwnAcceptedHashes(AuthenticationMechanism mechanism) throws Exception {
-        String before = headOfTheRepository();
-        authorizedRequest("GET", RepositoryActionType.WRITE, mechanism);
-        authorizedRequest("GET", RepositoryActionType.WRITE, mechanism);
-        var first = authorizedRequest("POST", RepositoryActionType.WRITE, mechanism);
-        var second = authorizedRequest("POST", RepositoryActionType.WRITE, mechanism);
-        var sshPush = vcsAccessLogService.createAccessLog(userUtilService.getUserByLogin(student1Login), participation, RepositoryActionType.PUSH, AuthenticationMechanism.SSH,
-                "ssh-before", "10.0.0.2");
-
-        accessLogRecorder.completePushAccessLogHTTPS(first, "first-pushed");
-
-        assertThat(entries()).extracting(VcsAccessLog::getCommitHash).containsExactly(before, before, "first-pushed", before, "ssh-before");
-        accessLogRecorder.completePushAccessLogHTTPS(second, "second-pushed");
-        assertThat(entries()).extracting(VcsAccessLog::getCommitHash).containsExactly(before, before, "first-pushed", "second-pushed", "ssh-before");
-        assertThat(entries().subList(0, 4)).extracting(VcsAccessLog::getAuthenticationMechanism).containsOnly(mechanism);
-        assertThat(vcsAccessLogRepository.findById(sshPush.getId()).orElseThrow().getCommitHash()).isEqualTo("ssh-before");
+        var written = entries().stream().filter(entry -> entry.getAuthenticationMechanism() == mechanism).toList();
+        assertThat(written).extracting(VcsAccessLogHttpsOperationsIntegrationTest::kindAndHash).containsExactly(List.of(RepositoryActionType.PULL, "head-three"),
+                List.of(RepositoryActionType.CLONE, "head-two"), List.of(RepositoryActionType.PUSH, "pushed"), List.of(RepositoryActionType.PUSH_FAIL, "before-rejected"),
+                List.of(RepositoryActionType.CLONE, "head-one"));
+        assertThat(vcsAccessLogRepository.findById(sshPull.getId()).orElseThrow()).extracting(VcsAccessLog::getRepositoryActionType, VcsAccessLog::getCommitHash)
+                .containsExactly(RepositoryActionType.PULL, "ssh-head");
+        assertThat(vcsAccessLogRepository.findById(agentPull.getId()).orElseThrow()).extracting(VcsAccessLog::getRepositoryActionType, VcsAccessLog::getCommitHash)
+                .containsExactly(RepositoryActionType.PULL, "agent-head");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aCloneLogsItsAdvertisementAndItsCloneTransfer() throws Exception {
+    void aCloneIsLoggedOnceAsAClone() throws Exception {
         String head = headOfTheRepository();
 
         try (Git _ = cloneOverHttps()) {
-            assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.READ, RepositoryActionType.CLONE);
-            assertThat(entries().getLast()).satisfies(entry -> {
+            assertThat(awaitEntries(1)).singleElement().satisfies(entry -> {
                 assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
                 assertThat(entry.getUser().getLogin()).isEqualTo(student1Login);
                 assertThat(entry.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
@@ -201,11 +227,10 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aPushLogsItsAdvertisementAndTheCommitThatWasPushed() throws Exception {
+    void aPushIsLoggedOnceWithTheCommitThatWasPushed() throws Exception {
         String commit = pushNewCommit();
 
-        assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.WRITE, RepositoryActionType.PUSH);
-        assertThat(entries().getLast()).satisfies(entry -> {
+        assertThat(awaitEntries(1)).singleElement().satisfies(entry -> {
             assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
             assertThat(entry.getUser().getLogin()).isEqualTo(student1Login);
             assertThat(entry.getCommitHash()).isEqualTo(commit);
@@ -214,57 +239,114 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aFetchOfNewCommitsIsLoggedAsAPull() throws Exception {
+    void aFetchOfNewCommitsIsLoggedOnceAsAPull() throws Exception {
         try (Git clone = cloneOverHttps()) {
             String pushed = pushNewCommit();
+            awaitEntries(2);
 
             localVCLocalCITestService.testFetchSuccessful(clone, student1Login, projectKey1, assignmentRepositorySlug);
 
-            assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.READ, RepositoryActionType.CLONE,
-                    RepositoryActionType.WRITE, RepositoryActionType.PUSH, RepositoryActionType.READ, RepositoryActionType.PULL);
+            assertThat(awaitEntries(3)).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE, RepositoryActionType.PUSH,
+                    RepositoryActionType.PULL);
             assertThat(entries().getLast().getCommitHash()).isEqualTo(pushed);
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aFetchWithNothingToTransferRetainsItsReadAdvertisement() throws Exception {
+    void aFetchWithNothingToTransferIsNoOperation() throws Exception {
         try (Git clone = cloneOverHttps()) {
+            awaitEntries(1);
             localVCLocalCITestService.testFetchSuccessful(clone, student1Login, projectKey1, assignmentRepositorySlug);
 
-            assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.READ, RepositoryActionType.CLONE,
-                    RepositoryActionType.READ);
+            assertNoMoreEntriesThan(1);
+            assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE);
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aPushWithNothingToTransferRetainsItsWriteAdvertisement() throws Exception {
-        String before = headOfTheRepository();
-
+    void aPushWithNothingToTransferIsNoOperation() throws Exception {
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
-        assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.WRITE);
-        assertThat(entries().getFirst().getCommitHash()).isEqualTo(before);
+        assertNoMoreEntriesThan(0);
     }
 
     /**
-     * Operations in a row retain their advertisements and transfers without modifying an earlier request.
+     * A push that the server refuses brought commands, so it is an operation, but not a push of the commit: it is a failed push, with the commit that the repository still has.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void aPushThatIsRefusedIsLoggedOnceAsAFailedPushWithTheCommitFromBefore() throws Exception {
+        String before = headOfTheRepository();
+        assignmentRepository.workingCopy().checkout().setCreateBranch(true).setName("a-branch-that-is-not-allowed").call();
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "refused.txt");
+
+        pushRefusedBranch();
+
+        assertThat(awaitEntries(1)).singleElement().satisfies(entry -> {
+            assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH_FAIL);
+            assertThat(entry.getCommitHash()).isEqualTo(before);
+        });
+    }
+
+    private void pushRefusedBranch() throws Exception {
+        // the server answers this push with a refusal of the branch, which JGit reports as a rejected ref update rather than as an exception
+        var results = assignmentRepository.workingCopy().push().setRemote(localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug))
+                .setCredentialsProvider(LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI).setRefSpecs(new RefSpec("refs/heads/a-branch-that-is-not-allowed")).call();
+        assertThat(results).flatExtracting(result -> result.getRemoteUpdates()).extracting(update -> update.getStatus()).containsOnly(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+    }
+
+    /**
+     * Credentials that do not hold are a failed attempt of the user they name, once, whatever kind of operation it was. The first request of every operation carries no
+     * credentials at all and is no attempt.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void aFetchAndAPushWithAWrongPasswordAreLoggedOnceEachAsFailedAttempts() throws Exception {
+        try (Git clone = cloneOverHttps()) {
+            vcsAccessLogRepository.deleteAll();
+
+            localVCLocalCITestService.testFetchReturnsError(clone, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, "wrong-password", projectKey1, assignmentRepositorySlug,
+                    NOT_AUTHORIZED);
+
+            assertThat(awaitEntries(2)).extracting(VcsAccessLog::getRepositoryActionType).containsExactlyInAnyOrder(RepositoryActionType.CLONE_FAIL,
+                    RepositoryActionType.PUSH_FAIL);
+            assertThat(entries()).extracting(VcsAccessLog::getAuthenticationMechanism).containsOnly(AuthenticationMechanism.PASSWORD);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void aFetchWithoutAnyPasswordIsNoAttempt() throws Exception {
+        try (Git clone = cloneOverHttps()) {
+            vcsAccessLogRepository.deleteAll();
+
+            localVCLocalCITestService.testFetchReturnsError(clone, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+
+            assertNoMoreEntriesThan(0);
+        }
+    }
+
+    /**
+     * Operations in a row each write one entry of their own, and none of them changes an earlier one.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void severalOperationsInARowKeepTheirOwnEntries() throws Exception {
-        String initialHead = headOfTheRepository();
         String firstCommit = pushNewCommit();
+        awaitEntries(1);
         try (Git clone = cloneOverHttps()) {
+            awaitEntries(2);
             String secondCommit = pushNewCommit();
+            awaitEntries(3);
             localVCLocalCITestService.testFetchSuccessful(clone, student1Login, projectKey1, assignmentRepositorySlug);
+            awaitEntries(4);
             try (Git _ = cloneOverHttps()) {
-                assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.WRITE, RepositoryActionType.PUSH,
-                        RepositoryActionType.READ, RepositoryActionType.CLONE, RepositoryActionType.WRITE, RepositoryActionType.PUSH, RepositoryActionType.READ,
-                        RepositoryActionType.PULL, RepositoryActionType.READ, RepositoryActionType.CLONE);
-                assertThat(entries()).extracting(VcsAccessLog::getCommitHash).containsExactly(initialHead, firstCommit, firstCommit, firstCommit, firstCommit, secondCommit,
-                        secondCommit, secondCommit, secondCommit, secondCommit);
+                assertThat(awaitEntries(5)).extracting(VcsAccessLogHttpsOperationsIntegrationTest::kindAndHash).containsExactly(List.of(RepositoryActionType.PUSH, firstCommit),
+                        List.of(RepositoryActionType.CLONE, firstCommit), List.of(RepositoryActionType.PUSH, secondCommit), List.of(RepositoryActionType.PULL, secondCommit),
+                        List.of(RepositoryActionType.CLONE, secondCommit));
             }
         }
     }

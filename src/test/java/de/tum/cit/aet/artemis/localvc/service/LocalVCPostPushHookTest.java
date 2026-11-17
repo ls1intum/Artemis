@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 
 class LocalVCPostPushHookTest {
@@ -43,8 +42,6 @@ class LocalVCPostPushHookTest {
     private final LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
 
     private final PasswordAuthenticationNoticeService noticeService = mock(PasswordAuthenticationNoticeService.class);
-
-    private final LocalVCAccessLogRecorderService accessLogRecorder = mock(LocalVCAccessLogRecorderService.class);
 
     private final ReceivePack receivePack = mock(ReceivePack.class);
 
@@ -115,9 +112,9 @@ class LocalVCPostPushHookTest {
         User user = new User();
         var participation = new ProgrammingExerciseStudentParticipation();
         var exercise = new ProgrammingExercise();
-        ServerSession session = sessionWith(participation, exercise, null);
+        ServerSession session = sessionWith(participation, exercise);
 
-        new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, session, user, accessLogRecorder).onPostReceive(receivePack, List.of(update));
+        new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, session, user, new GitOperationAudit()).onPostReceive(receivePack, List.of(update));
 
         verify(pushProcessingService).processNewPush(NEW_ID.name(), repository, user, Optional.of(exercise), Optional.of(participation));
     }
@@ -166,39 +163,21 @@ class LocalVCPostPushHookTest {
     }
 
     @Test
-    void theCommitOfAPushOverSshIsRecordedOnTheEntryOfTheCommand() {
+    void theCommitOfAPushOverSshIsHandedToTheAuditOfTheCommand() {
         ReceiveCommand update = new ReceiveCommand(OLD_ID, NEW_ID, "refs/heads/main");
         when(receivePack.getRepository()).thenReturn(mock(Repository.class));
-        var entry = new VcsAccessLog();
-        ServerSession session = sessionWith(new ProgrammingExerciseStudentParticipation(), new ProgrammingExercise(), entry);
+        ServerSession session = sessionWith(new ProgrammingExerciseStudentParticipation(), new ProgrammingExercise());
+        var audit = new GitOperationAudit();
 
-        new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, session, new User(), accessLogRecorder).onPostReceive(receivePack, List.of(update));
+        new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, session, new User(), audit).onPostReceive(receivePack, List.of(update));
 
-        verify(accessLogRecorder).completePushAccessLog(entry, NEW_ID.name());
+        assertThat(audit.getPushedCommitHash()).isEqualTo(NEW_ID.name());
     }
 
-    @Test
-    void theEntryOfTheCommandIsReadWhenTheHookIsCreated() {
-        ReceiveCommand update = new ReceiveCommand(OLD_ID, NEW_ID, "refs/heads/main");
-        when(receivePack.getRepository()).thenReturn(mock(Repository.class));
-        var entryOfThisCommand = new VcsAccessLog();
-        var entryOfAnotherCommand = new VcsAccessLog();
-        ServerSession session = sessionWith(new ProgrammingExerciseStudentParticipation(), new ProgrammingExercise(), entryOfThisCommand);
-        var hook = new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, session, new User(), accessLogRecorder);
-
-        // Another command of the same connection resolves its repository while this push is still being received.
-        when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenReturn(entryOfAnotherCommand);
-        hook.onPostReceive(receivePack, List.of(update));
-
-        verify(accessLogRecorder).completePushAccessLog(entryOfThisCommand, NEW_ID.name());
-        verify(accessLogRecorder, never()).completePushAccessLog(entryOfAnotherCommand, NEW_ID.name());
-    }
-
-    private ServerSession sessionWith(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise, VcsAccessLog accessLog) {
+    private ServerSession sessionWith(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
         ServerSession session = mock(ServerSession.class);
         when(session.getAttribute(SshConstants.PARTICIPATION_KEY)).thenReturn(participation);
         when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
-        when(session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY)).thenReturn(accessLog);
         return session;
     }
 }
