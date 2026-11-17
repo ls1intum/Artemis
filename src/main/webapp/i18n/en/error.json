@@ -1,5 +1,6 @@
 {
     "error": {
+        "branchRegexNotSupported": "The branch regex uses syntax that is not supported. Use literal characters, classes such as [a-z0-9-], groups with alternatives, the anchors ^ and $, and the quantifiers * + ? and counted repetitions with counts up to 1000. A repeated group may not contain alternatives, quantifiers or anchors. Every alternative inside a group must require at least one character.",
         "stagedContentNotAllowed": {
             "unreadable": "The staged repository content could not be checked. Try again.",
             "tooManyEntries": "The repository exceeds the limit of {{ limit }} files and directories. Remove entries and commit again.",
