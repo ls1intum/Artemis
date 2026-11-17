@@ -9,7 +9,6 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from 'test/helpers/mocks/service/mock-view-container-ref.service';
@@ -29,7 +28,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 AnswerPostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(PostingMarkdownEditorComponent),
-                MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
             providers: [FormBuilder, { provide: CommunicationService, useClass: MockCommunicationService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],

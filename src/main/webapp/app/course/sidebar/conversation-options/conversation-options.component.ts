@@ -10,7 +10,8 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -37,7 +38,8 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);
     private communicationService = inject(CommunicationService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
 
     private ngUnsubscribe = new Subject<void>();
 
@@ -122,17 +124,19 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
+        const conversation = this.conversation();
         const ref = this.dialogService.open(
             ConversationDetailDialogComponent,
             cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.conversationService.getConversationName(conversation, true) || this.translateService.instant('artemisApp.dialogs.conversationDetail.tabs.settings'),
                 data: {
                     course: this.course,
-                    activeConversation: this.conversation(),
+                    activeConversation: conversation,
                     selectedTab: ConversationDetailTabs.SETTINGS,
                 },
             }),
         );
-        ref?.onClose
+        ref.onClose
             .pipe(
                 filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),

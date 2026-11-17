@@ -1,6 +1,3 @@
-@import 'bootstrap/scss/functions';
-@import 'bootstrap/scss/variables';
-@import 'bootstrap/scss/mixins';
 @import '../communication.component';
 
 // CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
@@ -87,21 +84,15 @@
 
 @keyframes highlight-fade {
     0% {
-        background-color: rgba($primary, 0.25);
+        background-color: color-mix(in srgb, var(--primary) 25%, transparent);
     }
 
     70% {
-        background-color: rgba($primary, 0.15);
+        background-color: color-mix(in srgb, var(--primary) 15%, transparent);
     }
 
     100% {
         background-color: transparent;
-    }
-}
-
-@include media-breakpoint-down(sm) {
-    .answer-post-content-margin {
-        padding-left: 0.5rem;
     }
 }
 
@@ -134,7 +125,7 @@
     transition: background-color 0.2s ease-in-out;
 
     &.is-saved {
-        background-color: rgba($primary, 0.1);
+        background-color: color-mix(in srgb, var(--primary) 10%, transparent);
     }
 }
 
