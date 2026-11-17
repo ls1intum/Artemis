@@ -73,6 +73,16 @@
                     #subscriptionPopover
                 />
             </div>
+        } @else if (currentCourseId && subscriptionTokenLoadFailed()) {
+            <button
+                type="button"
+                data-testid="retry-subscription-button"
+                tumAetUiButton
+                size="small"
+                variant="outlined"
+                (click)="retryLoadingSubscriptionToken()"
+                jhiTranslate="artemisApp.calendar.retrySubscriptionButtonLabel"
+            ></button>
         }
         <button type="button" id="today-button" tumAetUiButton size="small" variant="outlined" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <tumaet-ui-button-group>

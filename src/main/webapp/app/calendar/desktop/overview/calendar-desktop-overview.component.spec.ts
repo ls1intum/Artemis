@@ -43,6 +43,8 @@ describe('CalendarDesktopOverviewComponent', () => {
         loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
         subscriptionToken: signal('testToken'),
         subscriptionTokenRotating: signal(false),
+        subscriptionTokenLoadFailed: signal(false),
+        reloadSubscriptionToken: vi.fn(),
         loadSubscriptionToken: vi.fn().mockReturnValue(of([])),
         includedEventFilterOptions: signal([
             CalendarEventFilterOption.LectureEvents,
@@ -257,5 +259,22 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
 
         expect(openSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should offer to read the subscription token again instead of the subscribe button when it could not be loaded', () => {
+        calendarServiceMock.subscriptionToken.set(undefined as unknown as string);
+        calendarServiceMock.subscriptionTokenLoadFailed.set(true);
+        try {
+            const { element: actions } = renderProjected('actions');
+
+            expect(actions.query(By.css('[data-testid="subscribe-button"]'))).toBeNull();
+            const retryButton = actions.query(By.css('[data-testid="retry-subscription-button"]')).nativeElement;
+            retryButton.click();
+
+            expect(calendarServiceMock.reloadSubscriptionToken).toHaveBeenCalledOnce();
+        } finally {
+            calendarServiceMock.subscriptionToken.set('testToken');
+            calendarServiceMock.subscriptionTokenLoadFailed.set(false);
+        }
     });
 });

@@ -1,5 +1,5 @@
 import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
-import { EMPTY, Observable, Subscription, catchError, defer, finalize, map, throwError } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, concat, defer, finalize, ignoreElements, map, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -28,6 +28,9 @@ export class CalendarService implements OnDestroy {
     private readonly rotatingSubscriptionToken = signal(false);
     /** Whether a replacement of the subscription token is running, during which the current token must not be offered. */
     readonly subscriptionTokenRotating = this.rotatingSubscriptionToken.asReadonly();
+    private readonly subscriptionTokenLoadFailedSignal = signal(false);
+    /** Whether the subscription token could not be read, in which case the user can try again. */
+    readonly subscriptionTokenLoadFailed = this.subscriptionTokenLoadFailedSignal.asReadonly();
 
     subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
     eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
@@ -89,6 +92,7 @@ export class CalendarService implements OnDestroy {
         this.currentCourseId = undefined;
         this.firstDayOfCurrentMonth = undefined;
         this.currentSubscriptionToken.set(undefined);
+        this.subscriptionTokenLoadFailedSignal.set(false);
         this.currentEventMap.set(new Map());
         this.includedEventFilterOptions.set(this.eventFilterOptions);
     }
@@ -165,9 +169,16 @@ export class CalendarService implements OnDestroy {
                         this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
                     }
                     if (this.mayHaveReplacedTheToken(error)) {
-                        // the server may have replaced the token without the answer arriving, so the cached one is unknown until it is read again
+                        // The server may have replaced the token without the answer arriving, so the cached one is unknown until it is read again. The reading belongs to this
+                        // operation, so no other replacement can start before it ends and its result cannot overwrite a later token.
                         this.currentSubscriptionToken.set(undefined);
-                        this.loadSubscriptionToken();
+                        return concat(
+                            this.readSubscriptionToken().pipe(
+                                catchError(() => EMPTY),
+                                ignoreElements(),
+                            ),
+                            throwError(() => error),
+                        );
                     }
                     return throwError(() => error);
                 }),
@@ -190,22 +201,34 @@ export class CalendarService implements OnDestroy {
         return !(error instanceof HttpErrorResponse) || error.status === 0 || error.status >= 500;
     }
 
+    /**
+     * Reads the subscription token again, which is the action of the user when it could not be loaded.
+     */
+    reloadSubscriptionToken(): void {
+        if (this.currentSubscriptionToken() === undefined && !this.activeRotation) {
+            this.loadSubscriptionToken();
+        }
+    }
+
     private loadSubscriptionToken() {
+        this.readSubscriptionToken().subscribe();
+    }
+
+    private readSubscriptionToken(): Observable<void> {
         const generation = this.stateGeneration;
-        this.apiService
-            .getCalendarEventSubscriptionToken()
-            .pipe(
-                map((token: string) => {
-                    if (this.stateGeneration !== generation) return;
-                    this.currentSubscriptionToken.set(token);
-                }),
-                catchError((error) => {
-                    if (this.stateGeneration !== generation) return throwError(() => error);
-                    this.alertService.addErrorAlert('artemisApp.calendar.tokenLoadingError');
-                    return throwError(() => error);
-                }),
-            )
-            .subscribe();
+        this.subscriptionTokenLoadFailedSignal.set(false);
+        return this.apiService.getCalendarEventSubscriptionToken().pipe(
+            map((token: string) => {
+                if (this.stateGeneration !== generation) return;
+                this.currentSubscriptionToken.set(token);
+            }),
+            catchError((error) => {
+                if (this.stateGeneration !== generation) return throwError(() => error);
+                this.subscriptionTokenLoadFailedSignal.set(true);
+                this.alertService.addErrorAlert('artemisApp.calendar.tokenLoadingError');
+                return throwError(() => error);
+            }),
+        );
     }
 
     private buildEventFilterOptions(): CalendarEventFilterOption[] {

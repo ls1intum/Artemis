@@ -27,6 +27,7 @@ export abstract class CalendarOverviewComponent {
 
     calendarSubscriptionToken = this.calendarService.subscriptionToken;
     subscriptionResetting = this.calendarService.subscriptionTokenRotating;
+    subscriptionTokenLoadFailed = this.calendarService.subscriptionTokenLoadFailed;
     courseId: Signal<number | undefined> = this.getCurrentCourseIdSignal();
     isLoading = signal<boolean>(false);
 
@@ -42,6 +43,11 @@ export abstract class CalendarOverviewComponent {
             .reselections(this.activatedRoute)
             .pipe(takeUntilDestroyed())
             .subscribe(() => this.loadEventsForCurrentMonth());
+    }
+
+    /** Reads the subscription token again after it could not be loaded. */
+    retryLoadingSubscriptionToken(): void {
+        this.calendarService.reloadSubscriptionToken();
     }
 
     /** Replaces the subscription link by a new one; the service reports a failure to the user. */

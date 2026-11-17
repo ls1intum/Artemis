@@ -26,6 +26,7 @@
             },
             "filterComponentPlaceholder": "Choose Event-Types",
             "subscribeButtonLabel": "Subscribe",
+            "retrySubscriptionButtonLabel": "Retry loading subscription",
             "todayButtonLabel": "Today",
             "previousButtonLabel": "Previous",
             "nextButtonLabel": "Next",

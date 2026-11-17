@@ -57,6 +57,18 @@
                     #subscriptionPopover
                 />
             </div>
+        } @else if (currentCourseId && subscriptionTokenLoadFailed()) {
+            <button
+                type="button"
+                data-testid="retry-subscription-button"
+                tumAetUiButton
+                size="small"
+                variant="outlined"
+                (click)="retryLoadingSubscriptionToken()"
+                [attr.aria-label]="'artemisApp.calendar.retrySubscriptionButtonLabel' | artemisTranslate"
+            >
+                <fa-icon [icon]="faArrowRotateRight" />
+            </button>
         }
         <button
             type="button"
