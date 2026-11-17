@@ -294,7 +294,18 @@ public class TokenProvider {
      */
     @Nullable
     public Authentication getAuthentication(String token) {
-        Claims claims = parseClaims(token);
+        return getAuthentication(token, parseClaims(token));
+    }
+
+    /**
+     * Same as {@link #getAuthentication(String)} for a token whose claims were already parsed and verified, so that the token is not parsed again.
+     *
+     * @param token  JWT Authorization Token
+     * @param claims the verified claims of the token
+     * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
+     */
+    @Nullable
+    Authentication getAuthentication(String token, Claims claims) {
         var authorityClaim = claims.get(AUTHORITIES_KEY);
         if (authorityClaim == null) {
             // leads to a 401 unauthorized error
@@ -374,7 +385,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.debug("Invalid JWT token: {} from source {}", authToken, source);
+        log.debug("Invalid JWT token from source {}", source);
         return false;
     }
 

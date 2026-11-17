@@ -86,6 +86,15 @@ This applies to both runners, to every exercise, and to the user of the image, i
 Check an image with `docker run --rm --cap-drop MKNOD --cap-drop SYS_CHROOT --cap-drop SETFCAP <image> <command>`, and add `--cap-drop AUDIT_WRITE --security-opt no-new-privileges` to test the restricted
 setting, before you rely on it for an exercise that uses tools like these.
 
+### Limiting the storage of a build
+
+By default, the writable layer of a build container has no size limit of its own, so a build can fill the disk of the build agent host up to the free space of the Docker data directory.
+Set `artemis.continuous-integration.container-storage-limit` on the build agents to limit it, for example `10g`. The value is a number with an optional unit `k`, `m` or `g` and an optional `b` (for example `10g`, `512MB` or `2048`); a plain number is read as bytes. Surrounding whitespace is ignored. A value that is not a size stops the start of the build agent, and the agent logs the limit at startup.
+Artemis passes it to Docker as the `size` storage option of the container. Leave it blank (the default) to keep the behavior without a limit.
+
+Docker applies this option only on storage drivers and file systems that support quotas, for example `overlay2` on an `xfs` file system mounted with `pquota`. On other setups Docker
+refuses to create the container, and every build on that agent fails, so test the setting on one agent first. The option applies to Docker only, not to Kubernetes.
+
 ## Network access
 
 Cloning the repositories and delivering the results happen on the build agent, outside the container. The network setting of the container
@@ -104,6 +113,8 @@ therefore only affects what the **build script and the student code** can reach.
 - Instructors select a network per exercise, from the list in `artemis.continuous-integration.container-flags-limit.allowed-custom-networks`.
   `none` disables the network completely, and is the default entry of that list. Other entries must exist on every build agent host.
   See [Custom Docker Networks](/admin/production-setup/programming-exercise-adjustments#custom-docker-networks).
+  A build agent checks the network of a build against its own copy of that list only if you set `container-flags-limit.allowed-custom-networks` on the agent. Then it refuses a build that requests another network,
+  except `none`, and the build fails with a message that names the network. A build whose exercise selects no network, and for which `container-defaults.network` is not set either, runs on the default network of Docker, which is named `bridge`. An agent with a list therefore refuses such a build unless the list contains `bridge`, so add `bridge` to the list of the agent if these builds are to run there. Such a refusal does not count towards the consecutive failures that pause the agent. The agent logs the enforced list at startup. If you do not set the list on the agent, the agent does not check the network, and the list on the core nodes decides alone. A list that is set but names no network (for example only blank entries) stops the start of the agent, so that a mistake does not switch the check off.
 - A common restriction for secret tests is a Docker network that only reaches your dependency mirror, combined with the mirror as the only source of dependencies.
 
 ## Container defaults
@@ -277,9 +288,10 @@ Set agent settings on the build agents and core settings on the core nodes, see 
 | --- | --- | --- | --- |
 | Default CPU, memory, swap and process limit of a build | `build.default-docker-flags` (a list of `flag` and `value` pairs: `--cpus`, `--memory`, `--memory-swap`, `--pids-limit`) | 2 CPUs, 2g, 2g, 1000 | Build agent |
 | Upper limits an exercise may request | `container-flags-limit.max-cpu-count`, `max-memory`, `max-memory-swap` | see `application-buildagent.yml` | Core and build agent |
-| Networks an instructor may select | `container-flags-limit.allowed-custom-networks` | `none` | Core and build agent |
+| Networks an instructor may select | `container-flags-limit.allowed-custom-networks` | `none` on the core nodes; unset on the build agents, which then do not check the network | Core and build agent |
 | Variables of every build container | `container-defaults.env` (a list of `KEY=value`) | none | Core |
 | Network of the builds that select none | `container-defaults.network` | blank, the default network of the runtime | Core |
+| Size limit of the writable layer of a build container | `container-storage-limit`, for example `10g` | blank, no limit | Build agent |
 | Default Docker image per language and project type | `build.images.<language>.default` and `build.images.<language>.<project type>` | Artemis images, see `application.yml` | Core |
 | Architecture of the images to pull | `image-architecture` | `amd64` | Build agent |
 | Build timeout | `build-timeout-seconds.min`, `default`, `max` | 10, 120, 240 | Core and build agent |

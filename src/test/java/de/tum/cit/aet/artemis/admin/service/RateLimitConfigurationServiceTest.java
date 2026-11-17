@@ -151,6 +151,28 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_PerUserTypes_UseTheCustomValueOrTheDefault() {
+        when(properties.getApollonConversionRequestsPerMinute()).thenReturn(3);
+        when(properties.getQuizBatchJoinRequestsPerMinute()).thenReturn(4);
+        when(properties.getProgrammingBuildTriggerRequestsPerMinute()).thenReturn(5);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.APOLLON_CONVERSION)).isEqualTo(3);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.QUIZ_BATCH_JOIN)).isEqualTo(4);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.PROGRAMMING_BUILD_TRIGGER)).isEqualTo(5);
+
+        when(properties.getApollonConversionRequestsPerMinute()).thenReturn(null);
+        when(properties.getQuizBatchJoinRequestsPerMinute()).thenReturn(null);
+        when(properties.getProgrammingBuildTriggerRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.APOLLON_CONVERSION)).isEqualTo(RateLimitType.APOLLON_CONVERSION.getDefaultRpm());
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.QUIZ_BATCH_JOIN)).isEqualTo(RateLimitType.QUIZ_BATCH_JOIN.getDefaultRpm());
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.PROGRAMMING_BUILD_TRIGGER)).isEqualTo(RateLimitType.PROGRAMMING_BUILD_TRIGGER.getDefaultRpm());
+
+        when(properties.getCourseRequestRequestsPerMinute()).thenReturn(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.COURSE_REQUEST)).isEqualTo(7);
+        when(properties.getCourseRequestRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.COURSE_REQUEST)).isEqualTo(RateLimitType.COURSE_REQUEST.getDefaultRpm());
+    }
+
+    @Test
     void testGetEffectiveRpm_EmailAddressCheck_UsesTheCustomValueOrTheDefault() {
         when(properties.getEmailAddressCheckRequestsPerMinute()).thenReturn(25);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.EMAIL_ADDRESS_CHECK)).isEqualTo(25);

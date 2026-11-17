@@ -1,8 +1,7 @@
 import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { DialogModule } from 'primeng/dialog';
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -32,7 +31,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         FaIconComponent,
         HelpIconComponent,
-        DialogModule,
+        TumAetUiDialogComponent,
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
         TumAetUiTableLayoutComponent,
