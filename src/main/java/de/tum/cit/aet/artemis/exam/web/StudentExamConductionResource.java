@@ -167,11 +167,13 @@ public class StudentExamConductionResource {
             throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
         }
 
-        if (!Boolean.TRUE.equals(studentExam.isStarted())) {
+        boolean newlyStarted = !Boolean.TRUE.equals(studentExam.isStarted());
+        prepareStudentExamForConduction(request, studentExam, audience);
+
+        // Preparation commits the started state through the repository before observers refresh their counts.
+        if (newlyStarted && !studentExam.isTestRun()) {
             websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_STARTED.at(examId), "");
         }
-
-        prepareStudentExamForConduction(request, studentExam, audience);
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 currentUser.getLogin());

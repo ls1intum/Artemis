@@ -8,7 +8,7 @@ import { ChangeDetectorRef, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Subject } from 'rxjs';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -27,7 +27,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConversationMembersComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { SelectModule } from 'primeng/select';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -42,19 +41,11 @@ examples.forEach((activeConversation) => {
         beforeEach(async () => {
             vi.useFakeTimers();
             TestBed.configureTestingModule({
-                imports: [
-                    ConversationMembersComponent,
-                    FormsModule,
-                    ReactiveFormsModule,
-                    FaIconComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockDirective(TranslateDirective),
-                    SelectModule,
-                ],
+                imports: [ConversationMembersComponent, FormsModule, ReactiveFormsModule, FaIconComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     provideHttpClient(),
                     provideHttpClientTesting(),
                     { provide: TranslateService, useClass: MockTranslateService },
@@ -172,17 +163,24 @@ examples.forEach((activeConversation) => {
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const mockDialogRef = {
                 onClose: new Subject().asObservable(),
                 close: vi.fn(),
             };
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as DynamicDialogRef);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as TumAetUiDialogRef);
 
             addUsersButton.click();
             vi.advanceTimersByTime(301);
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                ConversationAddUsersDialogComponent,
+                expect.objectContaining({
+                    ariaLabel: expect.any(String),
+                    autoFocus: 'first-tabbable',
+                    data: { course, activeConversation: component.activeConversation() },
+                }),
+            );
         });
 
         function expectSearchPerformed(expectedSearchTerm: string, expectedFilter: ConversationMemberSearchFilter = ConversationMemberSearchFilter.ALL) {

@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
@@ -1382,6 +1383,16 @@ public class ExamService {
             throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low", "Exam",
                     "artemisApp.exam.validation.tooFewMaxPoints");
         }
+    }
+
+    /**
+     * Retrieves only the conduction counts from a single database snapshot.
+     *
+     * @param examId the exam whose attempts should be counted
+     * @return generated, started and submitted counts, excluding test runs
+     */
+    public ExamConductionCountsDTO getConductionCounts(long examId) {
+        return studentExamRepository.countConductionByExamId(examId);
     }
 
     /**
