@@ -203,6 +203,10 @@ Artemis takes the address of a client from the address that Tomcat resolved for 
 Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
 share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
 
+### 10.8: Updating a Programming Exercise and Its Submission Policy
+
+`PUT /api/programming/programming-exercises` no longer changes the submission policy of the exercise, whether or not the request contains `submissionPolicy`. Before, a request without it removed the policy. Scripts and agents that added, changed or removed a policy through this request use the submission-policy endpoints of the exercise instead (`/api/programming/programming-exercises/{exerciseId}/submission-policy`). The Artemis web application is not affected, because the exercise form does not change the policy.
+
 ### 10.8: Identity Provider Sign-In and Internal Accounts
 
 A sign-in through SAML2 or OIDC works only for an external account. If the login that the identity provider asserts belongs to an internal account, Artemis refuses the sign-in and does not change the account: SAML2 answers `403`, and OIDC returns to the sign-in page with an error. LDAP has always behaved this way. Before, such a sign-in was accepted for the account with the same login.
