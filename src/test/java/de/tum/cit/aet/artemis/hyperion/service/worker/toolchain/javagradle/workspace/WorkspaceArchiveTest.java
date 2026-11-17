@@ -8,7 +8,9 @@ import static org.mockito.Mockito.mockStatic;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -172,6 +174,80 @@ class WorkspaceArchiveTest {
             textFiles.put("solution/" + i + ".txt", "");
         }
         WorkspaceArchive.buildFilesTarStream(textFiles, Map.of(), Set.of());
+    }
+
+    @Test
+    void buildFilesTarSharesTheEntryBudgetBetweenTextAndBinaryInputs() {
+        Map<String, String> textFiles = new LinkedHashMap<>();
+        for (int index = 0; index < maxArchiveEntries(); index++) {
+            textFiles.put("solution/" + index + ".txt", "");
+        }
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildFilesTarStream(textFiles, Map.of("solution/extra.bin", new byte[0]), Set.of()))
+                .withMessageContaining("more than " + maxArchiveEntries() + " entries");
+    }
+
+    @Test
+    void buildWorkspaceTarSharesTheEntryBudgetBetweenTextAndDirectories(@TempDir Path repo) throws Exception {
+        Files.writeString(repo.resolve("extra.txt"), "");
+        Map<String, String> textFiles = new LinkedHashMap<>();
+        for (int index = 0; index < maxArchiveEntries(); index++) {
+            textFiles.put("template/" + index + ".txt", "");
+        }
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(textFiles, Map.of("solution", repo)))
+                .withMessageContaining("more than " + maxArchiveEntries() + " entries");
+    }
+
+    @Test
+    void buildFilesTarSharesTheByteBudgetBetweenTextAndBinaryInputs() {
+        String text = "x".repeat((int) WorkspaceArchive.MAX_TOTAL_BYTES / 2);
+        byte[] binary = new byte[(int) WorkspaceArchive.MAX_TOTAL_BYTES / 2 + 1];
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildFilesTarStream(Map.of("solution/text.txt", text), Map.of("solution/data.bin", binary), Set.of()))
+                .withMessageContaining("total seed size exceeds").withMessageContaining("solution/data.bin");
+    }
+
+    @Test
+    void buildWorkspaceTarSharesTheByteBudgetBetweenTextAndDirectories(@TempDir Path repo) throws Exception {
+        String text = "x".repeat((int) WorkspaceArchive.MAX_TOTAL_BYTES / 2);
+        Files.write(repo.resolve("data.bin"), new byte[(int) WorkspaceArchive.MAX_TOTAL_BYTES / 2 + 1]);
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of("template/text.txt", text), Map.of("solution", repo)))
+                .withMessageContaining("total seed size exceeds").withMessageContaining("solution/data.bin");
+    }
+
+    @Test
+    void buildFilesTarPreservesBinaryContentAndExecutableModes() throws Exception {
+        byte[] binary = { 0, (byte) 0xff, 1 };
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(
+                WorkspaceArchive.buildFilesTarStream(Map.of("verify.sh", "#!/bin/sh\n"), Map.of("solution/data.bin", binary), Set.of("verify.sh", "solution/data.bin")))) {
+            assertThat(tar.getNextEntry().getName()).isEqualTo("verify.sh");
+            assertThat(tar.getCurrentEntry().getMode()).isEqualTo(0755);
+            assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("#!/bin/sh\n");
+            assertThat(tar.getNextEntry().getName()).isEqualTo("solution/data.bin");
+            assertThat(tar.getCurrentEntry().getMode()).isEqualTo(0755);
+            assertThat(tar.readAllBytes()).containsExactly(binary);
+            assertThat(tar.getNextEntry()).isNull();
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", "#!/bin/sh\n"), Map.of(), Set.of("verify.sh")))) {
+            assertThat(tar.getNextEntry().getMode()).isEqualTo(0755);
+        }
+    }
+
+    @Test
+    void buildWorkspaceTarConvertsDirectoryReadFailuresToUncheckedIo(@TempDir Path repo) throws Exception {
+        Path file = Files.writeString(repo.resolve("data.txt"), "data");
+        IOException failure = new IOException("read failed");
+        try (var files = mockStatic(Files.class, CALLS_REAL_METHODS)) {
+            files.when(() -> Files.newInputStream(file, LinkOption.NOFOLLOW_LINKS)).thenThrow(failure);
+
+            assertThatExceptionOfType(UncheckedIOException.class).isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("solution", repo))).withCause(failure);
+        }
     }
 
     @Test
