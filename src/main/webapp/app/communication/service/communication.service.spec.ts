@@ -857,6 +857,22 @@ describe('CommunicationService', () => {
             subscription.unsubscribe();
         });
 
+        it.each([
+            { name: 'its content', content: 'looking for Anna', authorName: 'Bob Builder', searchText: 'anna', expected: true },
+            { name: 'the name of its author', content: 'unrelated', authorName: 'Anna Schmidt', searchText: 'anna', expected: true },
+            { name: 'the surname of its author', content: 'unrelated', authorName: 'Anna Schmidt', searchText: ' SCHMIDT ', expected: true },
+            { name: 'neither its content nor its author', content: 'unrelated', authorName: 'Bob Builder', searchText: 'anna', expected: false },
+        ])('keeps a new message under a search for $name only if it matches: $expected', ({ content, authorName, searchText, expected }) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '0' }) })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], searchText, page: 0 }, true, conversation);
+            const created = { ...original, id: 9100, content, author: { ...communicationUser1, name: authorName } } as Post;
+
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: created });
+
+            expect(communicationService['cachedPosts'].some((post) => post.id === created.id)).toBe(expected);
+        });
+
         it('never publishes fewer posts than the snapshot exposes when an unrelated creation broadcast is delayed', () => {
             vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
             const first = { ...original, id: 710 };

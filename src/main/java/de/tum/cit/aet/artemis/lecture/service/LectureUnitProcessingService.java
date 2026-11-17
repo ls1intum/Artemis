@@ -321,15 +321,19 @@ public class LectureUnitProcessingService {
                 String slideText = pdfTextStripper.getText(currentPage);
 
                 if (isOutlineSlide(slideText)) {
-                    outlineCount++;
                     String[] lines = slideText.split("\r\n|\r|\n");
+                    int nextOutlineCount = outlineCount + 1;
+                    // The outline slide of the n-th unit names it after the n-th bullet point, which follows the footer and the heading. A slide that merely mentions the
+                    // word "Outline" lists fewer bullet points than that, so it is not the outline slide of another unit.
+                    int unitNameLine = nextOutlineCount + 1;
+                    if (unitNameLine < lines.length) {
+                        outlineCount = nextOutlineCount;
+                        String cleanedLine = UNSAFE_UNIT_NAME_CHARACTER.matcher(lines[unitNameLine]).replaceAll("");
+                        String unitName = LEADING_WHITESPACE.matcher(cleanedLine).replaceFirst("");
+                        outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
 
-                    // if it's the outline slide it will get the next bullet point as unit name.
-                    String cleanedLine = UNSAFE_UNIT_NAME_CHARACTER.matcher(lines[outlineCount + 1]).replaceAll("");
-                    String unitName = LEADING_WHITESPACE.matcher(cleanedLine).replaceFirst("");
-                    outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
-
-                    updatePreviousUnitEndPage(outlineCount, outlineMap, index);
+                        updatePreviousUnitEndPage(outlineCount, outlineMap, index);
+                    }
                 }
                 currentPage.close(); // make sure to close the document
                 index++;

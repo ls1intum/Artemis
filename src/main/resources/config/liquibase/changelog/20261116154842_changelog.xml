@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261116154842-01-build-job-agent-display-name" author="krusche">
+        <comment>Keep the safe agent name with the build history after an agent disconnects.
+            Nullable on purpose: older jobs have no recorded name and may resolve it from a currently known agent.</comment>
+        <addColumn tableName="build_job">
+            <column name="build_agent_display_name" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

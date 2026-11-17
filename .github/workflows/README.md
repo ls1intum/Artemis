@@ -39,6 +39,7 @@ ci.yml                                                            (single entry 
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
+├── exercise-images ── uses ci-exercise-images.yml (if has_exercise_images; the Java, Kotlin, Rust, JavaScript, TypeScript and Swift templates pin only versions their default image holds, compared without Docker or downloads)
 ├── helm            ── uses ci-helm.yml           (if has_helm; deployment/helm/artemis lints, renders in its variants and validates against the Kubernetes schemas, without a cluster)
 ├── docs-checks     ── uses ci-docs-checks.yml    (always; sidebars, paths, class names, properties and labels in the docs exist, review dates, diagrams match their generator; advises which pages a PR may have made wrong)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
@@ -370,6 +371,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
+| `nightly-exercise-images.yml` | Scheduled (daily, 05:00 UTC) and manually dispatchable offline build of the Java, Kotlin, Rust, JavaScript, TypeScript and Swift exercise templates in their default images (no network, so a missing dependency fails); opens a tracking issue on failure; not part of PR/push CI. |
 | `nightly-iris-e2e.yml`, `nightly-hyperion-e2e.yml` | Scheduled (daily, 02:00 and 04:00 UTC) and manually dispatchable E2E checks of the latest `develop` with a mocked LLM (Iris against the real Pyris service, Hyperion with a local mock); non-blocking monitoring, not part of PR/push CI. |
 | `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `docs-maintenance.yml` | Weekly `schedule:` cron (cannot live in a `workflow_call` child). Keeps one issue open for the pages that were not reviewed for a year and one for external links that no longer work, and closes them when the problem is gone. |
@@ -377,6 +379,10 @@ These workflows are intentionally NOT folded into the umbrella:
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
+
+The documentation maintenance link check resolves root-relative site URLs against the checked-out documentation
+root before filtering to external HTTP(S) links. Maintenance issue bodies stay below GitHub's limit; oversized
+reports link to the full workflow logs, which retain every finding. Transient external outages remain report findings.
 
 ## E2E image identity and readiness
 
@@ -387,6 +393,22 @@ The same image version carries both `pr-<number>` and `sha-<commit>` tags; delet
 can break CI still pulling it after a merge and remove images needed for later reproduction or
 redeployment.
 Registry deletion also does not reclaim Docker disk space on self-hosted runners.
+
+After stopping the dedicated E2E runner's containers, setup prunes unused images older
+than 24 hours carrying this repository's OCI source label. Exercise, browser and database
+images remain cached. Setup then checks the Docker data filesystem for the broker's
+10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. If space is
+low, it evicts unused default-builder cache until the reserve is met, retaining a
+512 MB cache floor. It then reads the filesystem statistics again against the same reserve.
+If space remains low, setup removes the age restriction for unused Artemis images carrying
+the same source label and checks space again. Images referenced by containers and the
+exercise, browser and database image caches remain protected. Recent application images
+are kept whenever the reserve is already met; a busy runner can otherwise accumulate
+more than a day's available space before the normal retention window expires.
+Persistent insufficient space or failed cleanup is a setup failure: reclaim space or expand the runner disk rather than
+raising the broker's disk limit or retrying websocket-dependent tests. Setup failures
+still run teardown, but do not require or classify reports from tests that never started;
+missing reports after test execution starts remain fatal.
 
 There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
 access, expanding the capabilities of repository jobs with package-write tokens across the shared
@@ -529,7 +551,7 @@ quality gate nor the source/exclusion contract with Codacy is weakened.
 
 ### Scope, coverage and runner cost
 
-Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 24, client dependencies, the TUM
+Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 26, client dependencies, the TUM
 AET UI package build and compiled Java bytecode. It skips the Angular application bundle and never
 reruns tests. Drafts, superseded revisions and changes entirely outside Sonar's source/configuration
 scope skip analysis. Unknown scope and the 3,000-file API limit expand validation. Draft promotion

@@ -9,7 +9,7 @@
 
 // Outlined chip: white body, a faint grey only on the facet (left) half, short facet/value divider.
 .tok {
-    --tok-accent: var(--bs-primary);
+    --tok-accent: var(--primary);
 
     display: inline-flex;
     align-items: stretch;
@@ -30,15 +30,15 @@
 
 // Family accents (border, icon, divider).
 .tok--type {
-    --tok-accent: var(--bs-primary);
+    --tok-accent: var(--primary);
 }
 
 .tok--course {
-    --tok-accent: var(--bs-info);
+    --tok-accent: var(--info);
 }
 
 .tok--exclude {
-    --tok-accent: var(--bs-danger);
+    --tok-accent: var(--danger);
 }
 
 // Left (facet) segment: a tiny hint of grey.
@@ -47,7 +47,7 @@
     align-items: center;
     gap: 0.3rem;
     padding: 0.34rem 0.4rem 0.34rem 0.5rem;
-    background: color-mix(in srgb, var(--bs-body-color) 2%, transparent);
+    background: color-mix(in srgb, var(--body-color) 2%, transparent);
 }
 
 // Short, centered vertical divider at the colon.
@@ -72,7 +72,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 400;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 
     &.tok-strike {
         text-decoration: line-through;
@@ -85,7 +85,7 @@
 }
 
 .tok-facet {
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     font-weight: 500;
 }
 
@@ -95,7 +95,7 @@
     justify-content: center;
     border: none;
     background: transparent;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     cursor: pointer;
     padding: 0 0.3rem;
     font-size: 0.72rem;
@@ -123,11 +123,11 @@
     width: 100%;
     font: inherit;
     padding: 0;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 
     &.op-active {
         color: transparent;
-        caret-color: var(--bs-body-color);
+        caret-color: var(--body-color);
     }
 }
 
@@ -140,7 +140,7 @@
     overflow: hidden;
     white-space: pre;
     font: inherit;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 // Single inline run so the coloured `facet:` prefix and the query text share one baseline
@@ -154,7 +154,7 @@
 // A value that matches no known type / course: not an error, just not a filter, so it carries the
 // spell-check idiom rather than error colour on the text itself.
 .op-unknown {
-    text-decoration: underline dotted var(--bs-danger) 1.5px;
+    text-decoration: underline dotted var(--danger) 1.5px;
     text-underline-offset: 3px;
 }
 
@@ -168,14 +168,14 @@
     border: 1px dashed var(--global-search-border-color);
     border-radius: 0.5rem;
     background: transparent;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     font-size: 0.85rem;
     cursor: pointer;
 
     &:hover:not(:disabled) {
         background: var(--global-search-item-hover-bg);
-        border-color: var(--bs-primary);
-        color: var(--bs-body-color);
+        border-color: var(--primary);
+        color: var(--body-color);
     }
 
     // Greyed out on the filter home screen: the filters it opens are already on screen, so there is nowhere
@@ -196,13 +196,13 @@
 
 // Operator colour classes, shared by the `facet:` prefix tag and the confirmed value.
 .op-type {
-    color: var(--bs-primary);
+    color: var(--primary);
 }
 
 .op-course {
-    color: var(--bs-info);
+    color: var(--info);
 }
 
 .op-exclude {
-    color: var(--bs-danger);
+    color: var(--danger);
 }

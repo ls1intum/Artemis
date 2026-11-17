@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -27,6 +28,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * A service class to create zip files
@@ -192,38 +195,97 @@ public class ZipFileService {
     }
 
     /**
-     * Extracts a zip file to a folder with the same name as the zip file
+     * The deepest nesting of zip files within zip files that is extracted. The zip file that is passed has depth 0.
+     */
+    public static final int MAX_EXTRACTION_DEPTH = 3;
+
+    /**
+     * The largest number of entries that are extracted from one zip file and the zip files within it.
+     */
+    public static final int MAX_EXTRACTION_ENTRIES = 100_000;
+
+    /**
+     * The largest size in bytes, counted while the entries are written, that is extracted from one zip file and the zip files within it (4 GiB).
+     */
+    public static final long MAX_EXTRACTION_BYTES = 4L * 1024 * 1024 * 1024;
+
+    /**
+     * Extracts a zip file to a folder with the same name as the zip file. Zip files within it are extracted recursively.
+     * The extraction is limited to {@link #MAX_EXTRACTION_DEPTH} levels of nested zip files, {@link #MAX_EXTRACTION_ENTRIES} entries and {@link #MAX_EXTRACTION_BYTES} bytes
+     * in total, which is far more than the zip files of an exported exercise contain.
      *
      * @param zipPath path to the zip file
-     * @throws IOException if an error occurred while extracting
+     * @throws IOException              if an error occurred while extracting
+     * @throws BadRequestAlertException if the zip file exceeds one of the limits
      */
     public void extractZipFileRecursively(Path zipPath) throws IOException {
+        extractZipFileRecursively(zipPath, 0, new ExtractionBudget());
+    }
+
+    private void extractZipFileRecursively(Path zipPath, int depth, ExtractionBudget budget) throws IOException {
+        if (depth > MAX_EXTRACTION_DEPTH) {
+            throw new BadRequestAlertException("The zip file contains zip files that are nested too deeply", "zipFile", "zipNestedTooDeeply");
+        }
         var dirToUnzip = Files.createDirectory(zipPath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(zipPath.toString())));
-        extractZipFile(zipPath, dirToUnzip);
+        extractZipFile(zipPath, dirToUnzip, budget);
         List<Path> zipFilesInDirList;
         try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FilenameUtils.getExtension(path.toString())))) {
             zipFilesInDirList = zipFilesInDir.toList();
         }
         for (Path path : zipFilesInDirList) {
-            extractZipFileRecursively(path);
+            extractZipFileRecursively(path, depth + 1, budget);
+        }
+    }
+
+    /**
+     * What is left of the limits of an extraction, shared by the zip file and the zip files within it.
+     */
+    private static final class ExtractionBudget {
+
+        private int entries;
+
+        private long bytes;
+
+        private void countEntry() {
+            if (++entries > MAX_EXTRACTION_ENTRIES) {
+                throw new BadRequestAlertException("The zip file contains too many entries", "zipFile", "zipTooManyEntries");
+            }
+        }
+
+        private void countBytes(int count) {
+            bytes += count;
+            if (bytes > MAX_EXTRACTION_BYTES) {
+                throw new BadRequestAlertException("The zip file is too large when extracted", "zipFile", "zipTooLarge");
+            }
         }
     }
 
     /**
      * Extracts all entries of a zip file into the target directory, preserving the directory structure. Entries that
      * would resolve outside the target directory (zip slip / path traversal) are rejected.
+     * The number of entries and the number of bytes that are written count against the budget, as the sizes that an entry declares cannot be trusted.
      *
      * @param zipPath   the zip file to extract
      * @param targetDir the directory to extract into (must already exist)
-     * @throws IOException if an entry escapes the target directory or extraction fails
+     * @param budget    the limits that the extraction has left
+     * @throws IOException              if an entry escapes the target directory or extraction fails
+     * @throws BadRequestAlertException if an entry has a name that is not a valid path or the archive exceeds the limits
      */
-    private static void extractZipFile(Path zipPath, Path targetDir) throws IOException {
+    private static void extractZipFile(Path zipPath, Path targetDir, ExtractionBudget budget) throws IOException {
         Path normalizedTarget = targetDir.toAbsolutePath().normalize();
         try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
             var entries = zipFile.entries();
+            byte[] buffer = new byte[8192];
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
-                Path resolved = normalizedTarget.resolve(entry.getName()).normalize();
+                budget.countEntry();
+                Path resolved;
+                try {
+                    resolved = normalizedTarget.resolve(entry.getName()).normalize();
+                }
+                catch (InvalidPathException e) {
+                    throw new BadRequestAlertException("The zip file contains an entry with an invalid name", "zipFile", "zipInvalidEntryName");
+                }
                 if (!resolved.startsWith(normalizedTarget)) {
                     throw new IOException("Blocked zip entry outside the target directory (zip slip): " + entry.getName());
                 }
@@ -231,10 +293,14 @@ public class ZipFileService {
                     Files.createDirectories(resolved);
                 }
                 else {
-                    try (var inputStream = zipFile.getInputStream(entry)) {
-                        // FileUtils.copyInputStreamToFile creates missing parent directories; java.nio Files.copy is
-                        // forbidden by ArchitectureTest.testFileWriteUsage precisely because it does not.
-                        FileUtils.copyInputStreamToFile(inputStream, resolved.toFile());
+                    // FileUtils.openOutputStream creates missing parent directories; java.nio Files.copy is
+                    // forbidden by ArchitectureTest.testFileWriteUsage precisely because it does not.
+                    try (var inputStream = zipFile.getInputStream(entry); var outputStream = FileUtils.openOutputStream(resolved.toFile())) {
+                        int read;
+                        while ((read = inputStream.read(buffer)) != -1) {
+                            budget.countBytes(read);
+                            outputStream.write(buffer, 0, read);
+                        }
                     }
                 }
             }

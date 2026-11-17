@@ -9,6 +9,7 @@ $iris-text-sm: 0.875rem;
 $iris-text-xs: 0.75rem;
 $iris-label: var(--iris-label-color);
 $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
+$iris-thumb: 20px;
 
 // Card-like surface shared by the content cards and the enable/disable toggle row.
 %iris-surface {
@@ -32,6 +33,18 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     transform: translate(-50%, -50%);
 }
 
+// The slider handle ("big tick"): a larger version of the small tick's dot, white with a primary-coloured ring.
+// A mixin because the WebKit and the Gecko thumb cannot share a selector list.
+@mixin iris-thumb {
+    box-sizing: border-box;
+    width: $iris-thumb;
+    height: $iris-thumb;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    background: var(--white);
+    cursor: pointer;
+}
+
 // Chat bubble shared between the user and Iris example messages.
 %iris-bubble {
     border-radius: 1rem;
@@ -43,15 +56,14 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 .iris-settings-content {
     max-width: 800px;
     margin: 0 auto;
+}
 
-    // PrimeNG's dark theme paints the tab list and panel area with its own
-    // surface token, which clashes with the page background here. The Iris
-    // cards already provide their own surfaces, so the tab chrome itself
-    // should be transparent in both themes.
-    ::ng-deep .p-tablist,
-    ::ng-deep .p-tabpanels {
-        background: transparent;
-    }
+// The tab panels are TUM AET UI components, whose hosts reset the font size to the kit base (1rem) and the line height
+// with it. The page keeps the application's base size (0.9rem, 1.5), which is what everything inside inherits.
+.iris-general-panel,
+.admin-section {
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 // Stacks the enable/disable toggle row and the revealed cards as flex children
@@ -79,16 +91,12 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 // Layout of a toggle next to its label. The switch keeps its intrinsic width
-// and the label takes what is left; without the shrink guard a long label
-// squeezes the switch until only part of the pill is drawn.
+// (`shrink-0` in the template) and the label takes what is left; without the
+// shrink guard a long label squeezes the switch until only part of the pill is drawn.
 %iris-toggle-layout {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-
-    > p-toggleswitch {
-        flex-shrink: 0;
-    }
 }
 
 // Card variant: a toggle row that stands on its own surface.
@@ -151,7 +159,12 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 }
 
-// Slider with clickable tick markers at the start, middle and end of the track
+// Slider with clickable tick markers at the start, middle and end of the track. The slider is a native range input: the kit
+// has no slider. It is drawn in three layers so its thumb travels exactly from the first to the last tick:
+//   1. the track and its filled part, drawn by the wrapper (`::before`, `::after`) from `--iris-slider-value` (0 to 100),
+//   2. the tick dots, and
+//   3. the transparent input with the thumb on top, wider than the wrapper by one thumb so the centre of the thumb, not
+//      its edge, sits on the ends of the track.
 .iris-slider-wrapper {
     position: relative;
     max-width: 80%;
@@ -160,19 +173,27 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     // Vertical room so the enlarged tick hit-area is not clipped
     padding: 0.5rem 0;
 
-    // PrimeNG 21: the slider root is `.p-slider` (no `-horizontal` variant
-    // class) and is the <p-slider> host element itself.
-    ::ng-deep .iris-slider.p-slider {
-        // Thin rounded track in a light grey
+    // Thin rounded track in a light grey, with the filled portion from the start up to the thumb
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
         height: 6px;
         border-radius: 999px;
-        background: var(--iris-accent-background);
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
 
-        // Filled portion from the start up to the handle
-        .p-slider-range {
-            background: var(--primary);
-            border-radius: 999px;
-        }
+    &::before {
+        right: 0;
+        background: var(--iris-accent-background);
+    }
+
+    &::after {
+        width: calc(var(--iris-slider-value, 0) * 1%);
+        background: var(--primary);
     }
 
     // Clickable tick: a 20px-square button (generous hit area) with a
@@ -188,7 +209,7 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
         background: transparent;
         transform: translate(-50%, -50%);
         cursor: pointer;
-        z-index: 2; // sit above the track + handle
+        z-index: 2; // sit above the track
         appearance: none;
 
         // The visible dot: white fill with a border-coloured ring
@@ -216,62 +237,79 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
         }
     }
 
-    // The slider handle ("big tick"): a larger version of the small tick's
-    // dot. PrimeNG draws the handle itself, so we strip its default skin and
-    // render the dot through the `&::before` pseudo-element, exactly like the
-    // small ticks (white fill with a primary-coloured ring).
-    ::ng-deep .p-slider-handle {
-        // `position` is set by PrimeNG; force `relative` so the ring
-        // pseudo-element anchors to the handle itself.
+    .iris-slider {
         position: relative;
-        width: 24px;
-        height: 24px;
-        background: transparent;
-        border: none;
         z-index: 3; // sit above the decorative ticks
+        display: block;
+        width: calc(100% + #{$iris-thumb});
+        height: 24px;
+        margin: 0 (-$iris-thumb * 0.5);
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+        appearance: none;
 
-        // The visible dot — same look as the small ticks, scaled up.
-        &::before {
-            @include iris-dot(20px, var(--primary));
+        &::-webkit-slider-runnable-track {
+            height: 24px;
+            background: transparent;
         }
 
-        // Expanding ring for the "pop" micro animation. A separate
-        // pseudo-element so we never touch PrimeNG's positioning transform
-        // on the handle itself. Centred on the handle so it stays a true
-        // concentric circle around the white core.
-        &::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            box-sizing: border-box;
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(1);
-            pointer-events: none;
+        &::-moz-range-track {
+            height: 24px;
+            background: transparent;
+        }
+
+        &::-webkit-slider-thumb {
+            @include iris-thumb;
+
+            margin-top: 2px; // centres the thumb in the 24px track
+            appearance: none;
+        }
+
+        &::-moz-range-thumb {
+            @include iris-thumb;
+        }
+
+        &:focus-visible {
+            outline: none;
+        }
+
+        &:focus-visible::-webkit-slider-thumb {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        &:focus-visible::-moz-range-thumb {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
     }
 
-    // When the pop class is active, replay the ring animation on the handle
-    &.handle-popping ::ng-deep .p-slider-handle::after {
+    // When the pop class is active, replay the ring animation on the thumb
+    &.handle-popping .iris-slider::-webkit-slider-thumb {
+        animation: iris-handle-pop 0.32s ease-out;
+    }
+
+    &.handle-popping .iris-slider::-moz-range-thumb {
         animation: iris-handle-pop 0.32s ease-out;
     }
 }
 
-// Brief expanding ring played on the slider handle when it lands on a tick.
-// Keeps the -50%/-50% translate so the ring stays concentric while it scales.
+// Brief expanding ring played on the slider thumb when it lands on a tick.
 @keyframes iris-handle-pop {
     0% {
-        opacity: 0.55;
-        transform: translate(-50%, -50%) scale(0.6);
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent);
     }
 
     100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.9);
+        box-shadow: 0 0 0 12px transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-slider-wrapper.handle-popping .iris-slider::-webkit-slider-thumb,
+    .iris-slider-wrapper.handle-popping .iris-slider::-moz-range-thumb {
+        animation: none;
     }
 }
 
@@ -411,51 +449,12 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     gap: 0.5rem;
 }
 
-.admin-section {
-    ::ng-deep .p-message-content {
-        color: var(--primary);
-    }
-
-    .iris-save-row {
-        margin-top: 1rem;
-    }
+.admin-section .iris-save-row {
+    margin-top: 1rem;
 }
 
 .iris-save-row {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-
-    button {
-        font-size: $iris-text-sm;
-
-        // PrimeNG's pButton inserts a leading <span class="p-button-icon">
-        // for the loading spinner. With `.p-button { gap: ... }` that empty
-        // span pushes the label visibly to the right, even after loading
-        // ends. Collapse the slot so the label sits flush against the
-        // button's normal padding.
-        ::ng-deep .p-button-icon:empty {
-            display: none;
-        }
-    }
-}
-
-// Additional Guidelines textarea: rounded, non-resizable, and (via pTextarea's
-// [autoResize]) it grows with the content. The growth is capped at max-height,
-// past which the textarea becomes scrollable instead of expanding further.
-.iris-guidelines-textarea {
-    // Fill the full width of the card rather than the intrinsic `cols` width
-    width: 100%;
-    border-radius: $iris-radius;
-    font-size: $iris-text-sm;
-
-    // Disable the manual drag handle — height is driven by autoResize
-    resize: none;
-
-    // Cap the auto-expansion; beyond this the textarea scrolls internally.
-    max-height: 14rem;
-
-    // autoResize sets `overflow: hidden` inline; re-enable scrolling once the
-    // content exceeds max-height so long input stays reachable.
-    overflow-y: auto !important;
 }

@@ -1,4 +1,5 @@
-<div [id]="'exercise-' + exercise()?.id">
+<!-- As a page of its own, the editor is framed like the other editors of the course management, which sit on a module surface with a gutter. -->
+<div [id]="'exercise-' + exercise()?.id" [class.module-bg]="fullPage()" [class.p-3]="fullPage()" [class.pt-1]="fullPage()">
     @if (loadingParticipation() || participationCouldNotBeFetched()) {
         <nav class="card">
             <div class="card-body">
@@ -66,19 +67,25 @@
                   [showUngradedResults]="true"
                   [showBadge]="true"
                   [participation]="participation()"
-                  [personalParticipation]="true"
+                  [personalParticipation]="!fullPage()"
                   (onParticipationChange)="receivedNewResult()"
                   [showProgressBar]="true"
                   [showProgressBarBorder]="true"
                   class="me-2"
                 />
               }
-              <jhi-programming-exercise-student-trigger-build-button
-                class="me-2"
-                [exercise]="exercise()"
-                [participation]="participation()"
-                [btnSize]="ButtonSize.MEDIUM"
-              />
+              @if (fullPage()) {
+                @if (exercise().isAtLeastInstructor) {
+                  <jhi-programming-exercise-instructor-trigger-build-button class="me-2" [exercise]="exercise()" [participation]="participation()" [btnSize]="ButtonSize.MEDIUM" />
+                }
+              } @else {
+                <jhi-programming-exercise-student-trigger-build-button
+                  class="me-2"
+                  [exercise]="exercise()"
+                  [participation]="participation()"
+                  [btnSize]="ButtonSize.MEDIUM"
+                />
+              }
             </div>
             <jhi-programming-exercise-instructions
                 [class.d-none]="lightweight()"
@@ -86,7 +93,7 @@
                 (onNoInstructionsAvailable)="showEditorInstructions = false"
                 [exercise]="exercise()"
                 [participation]="participation()"
-                [personalParticipation]="true"
+                [personalParticipation]="!fullPage()"
                 class="instructions-wrapper__content card-body p-0"
             />
         </jhi-code-editor-container>
