@@ -13,8 +13,10 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
@@ -53,6 +55,8 @@ public abstract class AbstractGitService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    protected final WorkingCopyLocks workingCopyLocks = WorkingCopyLocks.shared();
 
     protected AbstractGitService() {
         log.debug("file.encoding={}", Charset.defaultCharset().displayName());
@@ -181,8 +185,10 @@ public abstract class AbstractGitService {
             refUpdate.link("refs/heads/" + defaultBranch);
         }
 
-        if (changed) {
+        // The settings that Repository.getConfig() applies are already in memory, so setting them again above changes nothing, while the file may still hold other values
+        if (changed || repository.hasUnsavedConfigOverride()) {
             gitRepoConfig.save();
+            repository.markConfigOverrideSaved();
         }
     }
 
@@ -351,6 +357,26 @@ public abstract class AbstractGitService {
     }
 
     /**
+     * Clones a repository and checks it out without creating symbolic links. The clone does not check out, the setting is made in the configuration of the new repository, and the
+     * files are written afterwards, so that an entry that is a link becomes a plain file also in the first checkout.
+     *
+     * @param cloneCommand the prepared clone command
+     * @throws GitAPIException if the clone or the checkout fails
+     * @throws IOException     if the configuration cannot be written or the head cannot be read
+     */
+    protected static void cloneWithoutSymbolicLinks(CloneCommand cloneCommand) throws GitAPIException, IOException {
+        try (Git git = cloneCommand.setNoCheckout(true).call()) {
+            StoredConfig config = git.getRepository().getConfig();
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            config.save();
+            // a repository without a commit has nothing to check out
+            if (git.getRepository().resolve(Constants.HEAD) != null) {
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(Constants.HEAD).call();
+            }
+        }
+    }
+
+    /**
      * Retrieves the hash of the first commit in a bare Git repository whose commit message contains
      * a given search string. The method iterates commits in chronological order (oldest to newest)
      * to ensure that the earliest matching commit is returned.
@@ -506,6 +532,47 @@ public abstract class AbstractGitService {
         if (!foundTargetRef) {
             throw new TransportException("Push result did not contain an update for " + remoteRef);
         }
+    }
+
+    protected static Path workingCopyPath(Repository repo) {
+        return repo.isBare() ? repo.getDirectory().toPath() : repo.getWorkTree().toPath();
+    }
+
+    /**
+     * Stages all changes in the repository, including new, modified, and deleted files.
+     *
+     * <p>
+     * The method first updates the index for deleted files (using {@code setUpdate(true)})
+     * and then stages new or modified files. It returns {@code true} if any files were staged
+     * (i.e., if there were changes in the working tree that were added to the index),
+     * or {@code false} if the repository was already clean.
+     *
+     * <p>
+     * This operation is safe for both normal and bare repositories.
+     *
+     * @param repo the local {@link Repository} to stage changes in.
+     * @return {@code true} if any changes were staged, {@code false} if nothing changed.
+     * @throws GitAPIException if staging fails.
+     */
+    public boolean stageAllChanges(Repository repo) throws GitAPIException {
+        return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                // Check repository status before staging
+                Status preStatus = git.status().call();
+                boolean hasChanges = !preStatus.isClean();
+
+                if (hasChanges) {
+                    // Stage deleted files
+                    git.add().setUpdate(true).addFilepattern(".").call();
+
+                    // Stage new and modified files
+                    git.add().addFilepattern(".").call();
+                }
+
+                // Return true only if there were any changes to stage
+                return hasChanges;
+            }
+        });
     }
 
     /**
