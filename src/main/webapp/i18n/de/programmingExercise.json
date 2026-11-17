@@ -157,7 +157,9 @@
             "script": "Build Script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
-                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB.",
+                "branchRegexTooLong": "Der Branch-Regex ist zu lang. Die maximal zulässige Länge beträgt 128 Zeichen.",
+                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck."
             },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",

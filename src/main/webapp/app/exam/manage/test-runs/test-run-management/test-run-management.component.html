@@ -46,7 +46,7 @@
     <div class="pb-2.5">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
-    <tumaet-ui-message severity="warn" class="mb-4" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
+    <tumaet-ui-message severity="warn" class="mb-6!" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
     @if (testRuns()) {
         <tumaet-ui-table-layout
             [empty]="testRuns().length === 0 && !isLoading()"

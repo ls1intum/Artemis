@@ -151,6 +151,15 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_EmailAddressCheck_UsesTheCustomValueOrTheDefault() {
+        when(properties.getEmailAddressCheckRequestsPerMinute()).thenReturn(25);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.EMAIL_ADDRESS_CHECK)).isEqualTo(25);
+
+        when(properties.getEmailAddressCheckRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.EMAIL_ADDRESS_CHECK)).isEqualTo(RateLimitType.EMAIL_ADDRESS_CHECK.getDefaultRpm());
+    }
+
+    @Test
     void testGetEffectiveRpm_ClientErrorReport_UsesTheCustomValueOrTheDefault() {
         when(properties.getClientErrorReportRequestsPerMinute()).thenReturn(15);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).isEqualTo(15);

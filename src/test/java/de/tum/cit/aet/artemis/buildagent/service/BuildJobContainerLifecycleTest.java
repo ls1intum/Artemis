@@ -16,14 +16,22 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.DockerClient;
@@ -50,9 +58,13 @@ import com.github.dockerjava.api.model.StreamType;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 class BuildJobContainerLifecycleTest {
+
+    private static final String ALLOWED_NETWORKS_PROPERTY = "artemis.continuous-integration.container-flags-limit.allowed-custom-networks";
 
     private final BuildAgentConfiguration configuration = mock(BuildAgentConfiguration.class);
 
@@ -60,7 +72,7 @@ class BuildJobContainerLifecycleTest {
 
     private final BuildLogsMap logs = mock(BuildLogsMap.class);
 
-    private final BuildJobContainerService service = new BuildJobContainerService(configuration, logs);
+    private final BuildJobContainerService service = new BuildJobContainerService(configuration, logs, new TempFileUtilService());
 
     private final ListContainersCmd list = mock(ListContainersCmd.class, RETURNS_SELF);
 
@@ -75,6 +87,7 @@ class BuildJobContainerLifecycleTest {
         when(docker.createContainerCmd("image")).thenReturn(create);
         when(configuration.hostConfig())
                 .thenReturn(HostConfig.newHostConfig().withCpuPeriod(100000L).withCpuQuota(200000L).withMemory(1024L).withMemorySwap(2048L).withPidsLimit(100L));
+        when(configuration.applyStorageLimit(any(HostConfig.class))).thenCallRealMethod();
     }
 
     @Test
@@ -111,6 +124,137 @@ class BuildJobContainerLifecycleTest {
         assertThat(service.getIDOfRunningContainer("build")).isNull();
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t" })
+    void restrictiveNetworkListRejectsImplicitDockerBridge(String network) {
+        service.setEnvironment(new MockEnvironment().withProperty(ALLOWED_NETWORKS_PROPERTY, "mirror-only"));
+
+        assertThatThrownBy(() -> service.configureContainer("build", "image", "script", new DockerRunConfig(null, network, 0, 0, 0)))
+                .isInstanceOf(ContainerNetworkNotAllowedException.class).hasMessageContaining("bridge");
+        verify(docker, never()).createContainerCmd(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "host", "HOST", " host ", "container:other", "Container:other" })
+    void sharedNetworkNamespaceIsRejectedWithoutPausingTheAgent(String network) {
+        assertThatThrownBy(() -> service.configureContainer("build", "image", "script", new DockerRunConfig(null, network, 0, 0, 0)))
+                .isInstanceOf(ContainerNetworkNotAllowedException.class);
+        verify(docker, never()).createContainerCmd(any());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t" })
+    void listedDockerBridgeAllowsImplicitNetwork(String network) {
+        service.setEnvironment(new MockEnvironment().withProperty(ALLOWED_NETWORKS_PROPERTY, "bridge"));
+
+        service.configureContainer("build", "image", "script", new DockerRunConfig(null, network, 0, 0, 0));
+
+        verify(create).exec();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void unsetOrEmptyNetworkListAllowsCustomNetwork(String configuredNetworks) {
+        MockEnvironment environment = new MockEnvironment();
+        if (configuredNetworks != null) {
+            environment.withProperty(ALLOWED_NETWORKS_PROPERTY, configuredNetworks);
+        }
+        service.setEnvironment(environment);
+
+        service.configureContainer("build", "image", "script", new DockerRunConfig(null, "custom-network", 0, 0, 0));
+
+        var host = ArgumentCaptor.forClass(HostConfig.class);
+        verify(create).withHostConfig(host.capture());
+        assertThat(host.getValue().getNetworkMode()).isEqualTo("custom-network");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", " ", "\t" })
+    void networkListWithOnlyBlankEntriesFailsAtStartup(String entry) {
+        MockEnvironment environment = new MockEnvironment().withProperty(ALLOWED_NETWORKS_PROPERTY + "[0]", entry);
+
+        assertThatThrownBy(() -> service.setEnvironment(environment)).isInstanceOf(LocalCIException.class).hasMessageContaining(ALLOWED_NETWORKS_PROPERTY);
+    }
+
+    @Test
+    void restrictiveNetworkListAlwaysAllowsNone() {
+        service.setEnvironment(new MockEnvironment().withProperty(ALLOWED_NETWORKS_PROPERTY, "mirror-only"));
+
+        service.configureContainer("build", "image", "script", new DockerRunConfig(null, "none", 0, 0, 0));
+
+        var host = ArgumentCaptor.forClass(HostConfig.class);
+        verify(create).withHostConfig(host.capture());
+        assertThat(host.getValue().getNetworkMode()).isEqualTo("none");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "' mirror-only ', mirror-only", "' none ', none" })
+    void dockerReceivesTheNormalizedNetworkThatWasValidated(String requestedNetwork, String expectedNetwork) {
+        service.setEnvironment(new MockEnvironment().withProperty(ALLOWED_NETWORKS_PROPERTY, "mirror-only"));
+
+        service.configureContainer("build", "image", "script", new DockerRunConfig(null, requestedNetwork, 0, 0, 0));
+
+        var host = ArgumentCaptor.forClass(HostConfig.class);
+        verify(create).withHostConfig(host.capture());
+        assertThat(host.getValue().getNetworkMode()).isEqualTo(expectedNetwork);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void archiveKeepsContainedSymbolicLinksRelativeToTheirParent(boolean absoluteTarget, @TempDir Path workDir) throws Exception {
+        Path repository = Files.createDirectory(workDir.resolve("repository"));
+        BuildJobContainerService archiveService = new BuildJobContainerService(configuration, logs, new TempFileUtilService(workDir.resolve("archives")));
+        Path target = repository.resolve("target.txt");
+        FileUtils.writeStringToFile(target.toFile(), "content", StandardCharsets.UTF_8);
+        Path directory = Files.createDirectory(repository.resolve("nested"));
+        Files.createSymbolicLink(directory.resolve("link"), absoluteTarget ? target : Path.of("../target.txt"));
+
+        Path archive = ReflectionTestUtils.invokeMethod(archiveService, "createTarArchive", repository);
+        boolean found = false;
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(Files.newInputStream(archive))) {
+            TarArchiveEntry entry;
+            while ((entry = tar.getNextEntry()) != null) {
+                if (entry.getName().endsWith("/nested/link")) {
+                    found = true;
+                    assertThat(entry.isSymbolicLink()).isTrue();
+                    assertThat(entry.getLinkName()).isEqualTo("../target.txt");
+                }
+            }
+        }
+        finally {
+            Files.deleteIfExists(archive);
+        }
+        assertThat(found).as("the archive contains the symbolic link").isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void archiveKeepsSymbolicLinksToTheirOwnDirectory(boolean absoluteTarget, @TempDir Path workDir) throws Exception {
+        Path repository = Files.createDirectory(workDir.resolve("repository"));
+        Path directory = Files.createDirectory(repository.resolve("nested"));
+        Files.createSymbolicLink(directory.resolve("self"), absoluteTarget ? directory : Path.of("."));
+        BuildJobContainerService archiveService = new BuildJobContainerService(configuration, logs, new TempFileUtilService(workDir.resolve("archives")));
+
+        Path archive = ReflectionTestUtils.invokeMethod(archiveService, "createTarArchive", repository);
+        boolean found = false;
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(Files.newInputStream(archive))) {
+            TarArchiveEntry entry;
+            while ((entry = tar.getNextEntry()) != null) {
+                if (entry.getName().equals("repository/nested/self")) {
+                    found = true;
+                    assertThat(entry.isSymbolicLink()).isTrue();
+                    assertThat(entry.getLinkName()).isEqualTo(".");
+                }
+            }
+        }
+        finally {
+            Files.deleteIfExists(archive);
+        }
+        assertThat(found).as("the archive contains the symbolic link to its own directory").isTrue();
+    }
+
     @Test
     void lookupFiltersUnnamedContainersAndNonMatchingNames() {
         Container unnamed = container("unnamed", null, null);
@@ -125,6 +269,17 @@ class BuildJobContainerLifecycleTest {
         assertThat(service.getIDOfRunningContainer("build")).isNull();
         doThrow(new RuntimeException("Connection refused")).when(list).exec();
         assertThat(service.getIDOfRunningContainer("build")).isNull();
+    }
+
+    @Test
+    void stoppingAContainerThatDisappearsAfterLookupDoesNotFailCleanup() {
+        Container running = container("id", new String[] { "/build" }, "running");
+        when(list.exec()).thenReturn(List.of(running));
+        when(docker.execCreateCmd("id")).thenThrow(new NotFoundException("removed after lookup"));
+
+        assertThatCode(() -> service.stopContainer("build")).doesNotThrowAnyException();
+
+        verify(docker).execCreateCmd("id");
     }
 
     @ParameterizedTest
@@ -211,6 +366,28 @@ class BuildJobContainerLifecycleTest {
         else {
             verify(remove).exec();
             verify(kill, never()).exec();
+        }
+    }
+
+    @Test
+    void failedRemovalClosesCommandsAndPreservesCancellation() {
+        StopContainerCmd stop = mock(StopContainerCmd.class, RETURNS_SELF);
+        RemoveContainerCmd remove = mock(RemoveContainerCmd.class);
+        when(docker.stopContainerCmd("id")).thenReturn(stop);
+        when(stop.exec()).thenThrow(new NotModifiedException("already stopped"));
+        when(docker.removeContainerCmd("id")).thenReturn(remove);
+        when(remove.exec()).thenThrow(new IllegalStateException("daemon disconnected"));
+
+        Thread.currentThread().interrupt();
+        try {
+            assertThatCode(() -> service.stopUnresponsiveContainer("id")).doesNotThrowAnyException();
+            assertThat(Thread.currentThread().isInterrupted()).as("cancellation remains observable after failed cleanup").isTrue();
+            verify(remove).exec();
+            verify(remove).close();
+            verify(stop).close();
+        }
+        finally {
+            Thread.interrupted();
         }
     }
 

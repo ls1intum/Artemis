@@ -7,7 +7,7 @@
         }
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
             <div>
-                <tumaet-ui-form-field class="mb-3" controlId="login" required [invalid]="editForm.get('login')!.dirty && editForm.get('login')!.invalid">
+                <tumaet-ui-form-field class="mb-4!" controlId="login" required [invalid]="editForm.get('login')!.dirty && editForm.get('login')!.invalid">
                     <span id="login-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.login"></span>
                     <input
                         aria-labelledby="login-label"
@@ -36,7 +36,7 @@
                         }
                     </ng-container>
                 </tumaet-ui-form-field>
-                <tumaet-ui-form-field class="mb-3" controlId="firstName" required [invalid]="editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid">
+                <tumaet-ui-form-field class="mb-4!" controlId="firstName" required [invalid]="editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid">
                     <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.firstName"></span>
                     <input
                         aria-labelledby="firstName-label"
@@ -58,7 +58,7 @@
                         }
                     </ng-container>
                 </tumaet-ui-form-field>
-                <tumaet-ui-form-field class="mb-3" controlId="lastName" required [invalid]="editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid">
+                <tumaet-ui-form-field class="mb-4!" controlId="lastName" required [invalid]="editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid">
                     <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.lastName"></span>
                     <input
                         aria-labelledby="lastName-label"
@@ -104,7 +104,7 @@
 
                     @if (!useRandomPassword()) {
                         <tumaet-ui-form-field
-                            class="mb-3"
+                            class="mb-4!"
                             controlId="password"
                             [invalid]="(editForm.get('password')!.dirty || editForm.get('password')!.touched) && editForm.get('password')!.invalid"
                         >
@@ -139,7 +139,7 @@
                             </ng-container>
                         </tumaet-ui-form-field>
                         @if (user().id) {
-                            <div class="mb-3 flex items-center gap-2">
+                            <div class="mb-4! flex items-center gap-2">
                                 <tumaet-ui-checkbox
                                     inputId="revokeCredentials"
                                     name="revokeCredentials"
@@ -153,7 +153,7 @@
                         }
                     }
                 }
-                <div class="mb-3 flex flex-col gap-2">
+                <div class="mb-4! flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.organizations"></label>
                     <div class="flex flex-wrap gap-2">
                         @for (organization of user().organizations; track organization) {
@@ -166,7 +166,7 @@
                         </tumaet-ui-button>
                     </div>
                 </div>
-                <tumaet-ui-form-field class="mb-3" controlId="email" required [invalid]="editForm.get('email')!.dirty && editForm.get('email')!.invalid">
+                <tumaet-ui-form-field class="mb-4!" controlId="email" required [invalid]="editForm.get('email')!.dirty && editForm.get('email')!.invalid">
                     <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.email"></span>
                     <input
                         aria-labelledby="email-label"
@@ -195,7 +195,7 @@
                         }
                     </ng-container>
                 </tumaet-ui-form-field>
-                <tumaet-ui-form-field class="mb-3" controlId="visibleRegistrationNumber" [invalid]="editForm.get('visibleRegistrationNumber')!.invalid">
+                <tumaet-ui-form-field class="mb-4!" controlId="visibleRegistrationNumber" [invalid]="editForm.get('visibleRegistrationNumber')!.invalid">
                     <span id="visibleRegistrationNumber-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
                     <input
                         aria-labelledby="visibleRegistrationNumber-label"
@@ -213,27 +213,27 @@
                         }
                     </ng-container>
                 </tumaet-ui-form-field>
-                <div class="mb-3 flex items-center gap-2">
+                <div class="mb-4! flex items-center gap-2">
                     <tumaet-ui-checkbox inputId="activated" name="activated" formControlName="activated" />
                     <label for="activated" jhiTranslate="artemisApp.userManagement.activated"></label>
                 </div>
-                <div class="mb-3 flex items-center gap-2">
+                <div class="mb-4! flex items-center gap-2">
                     <tumaet-ui-checkbox inputId="isTestUser" name="isTestUser" formControlName="isTestUser" />
                     <label for="isTestUser" jhiTranslate="artemisApp.userManagement.isTestUser"></label>
                     <jhi-help-icon text="artemisApp.userManagement.isTestUserTooltip" />
                 </div>
                 @if (languages() && languages().length > 0) {
-                    <tumaet-ui-form-field class="mb-3" controlId="langKey">
+                    <tumaet-ui-form-field class="mb-4!" controlId="langKey">
                         <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.langKey"></span>
                         <tumaet-ui-select name="langKey" formControlName="langKey" class="w-full" [options]="languageOptions()" optionLabel="label" optionValue="value" />
                     </tumaet-ui-form-field>
                 }
-                <div class="mb-3 flex flex-col gap-2">
+                <div class="mb-4! flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.globalRoles"></label>
                     <div class="flex flex-wrap gap-2">
                         @for (authority of sortedAuthorities(); track authority) {
                             <label
-                                class="flex cursor-pointer select-none items-center gap-2 rounded-md border px-3 py-2"
+                                class="flex cursor-pointer select-none items-center gap-2 rounded-md border px-4! py-2"
                                 [class]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
                                 data-testid="global-role-item"
                             >
@@ -244,7 +244,7 @@
                     </div>
                 </div>
                 @if (persistedLogin(); as login) {
-                    <jhi-user-course-roles class="mb-3 block" editable [disabled]="isSaving()" [login]="login" />
+                    <jhi-user-course-roles class="mb-4! block" editable [disabled]="isSaving()" [login]="login" />
                 }
             </div>
             <div class="flex gap-2">

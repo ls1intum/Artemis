@@ -123,11 +123,11 @@
         width: 8px;
 
         &.confirmed {
-            background-color: green;
+            background-color: var(--tumaet-ui-state-success);
         }
 
         &.denied {
-            background-color: red;
+            background-color: var(--tumaet-ui-state-danger);
         }
     }
 

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
+import de.tum.cit.aet.artemis.localvc.service.QuarantinedReceivePack;
 
 /**
  * Custom Git command handler that integrates Artemis-specific
@@ -171,9 +172,11 @@ public class SshGitCommand extends GitPackCommand {
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
                         var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
                         try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
-                            ReceivePack receivePack = LocalVCReceivePackLimits.apply(new ReceivePack(repository));
+                            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user);
+                            // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
+                            ReceivePack receivePack = LocalVCReceivePackLimits.apply(QuarantinedReceivePack.create(repository, prePushHook::examineBeforeObjects));
 
-                            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                            receivePack.setPreReceiveHook(prePushHook);
                             receivePack.setPostReceiveHook(
                                     new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user));
 

@@ -52,6 +52,7 @@ api/hyperion-code-generation-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
+api/athena-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/global-search-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts

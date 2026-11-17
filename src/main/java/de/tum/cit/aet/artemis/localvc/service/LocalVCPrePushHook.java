@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -33,12 +32,12 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
+    private static final String BRANCH_CHECK_ERROR = "An error occurred while checking the branch.";
+
     public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
     }
-
-    private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
     private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
 
@@ -61,20 +60,40 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     private static final String TREE_LIMIT_MESSAGE = "The repository exceeds the limits for the number of files, the depth of the directories or the total size.";
 
     /**
-     * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
+     * Called by JGit after the objects of a push were received into the separate place of the push, and before the references are updated. An accepted push moves its objects
+     * into the repository here. The objects of a rejected push are removed with the place, so a rejected push leaves nothing behind.
      *
      * @param receivePack the process handling the current receive. Hooks may obtain details about the destination repository through this handle.
      * @param commands    ReceiveCommands that each correspond to a single ref update (e.g. update to a branch or a tag).
      */
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        examine(receivePack, commands);
+        // JGit passes only the commands that it did not reject itself, so these alone cannot tell: a push whose only command JGit rejected passes none. The objects are stored
+        // only for a push that has commands, all of which, also those that JGit rejected on its own, are still to be applied.
+        if (receivePack instanceof QuarantinedReceivePack quarantinedReceivePack && !commands.isEmpty()
+                && receivePack.getAllCommands().stream().allMatch(command -> command.getResult() == ReceiveCommand.Result.NOT_ATTEMPTED)) {
+            try {
+                quarantinedReceivePack.storeObjects();
+            }
+            catch (IOException e) {
+                log.warn("Could not store the objects of a push to {}", receivePack.getRepository().getDirectory(), e);
+                commands.forEach(command -> command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while storing the push."));
+            }
+        }
+    }
 
+    /**
+     * The checks that need only the commands of a push and not its objects. They run before the objects are read, so that a push that is refused for the name of its branch
+     * does not send its objects into the repository at all. A command that is rejected here is not applied.
+     *
+     * @param receivePack the process handling the current receive
+     * @param commands    the commands of the push
+     */
+    public void examineBeforeObjects(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         if (commands.isEmpty()) {
-            // E.g. no refs were updated during the push operation.
-            // Note: There is no command that we can set a REJECTED Result on so this will continue into the LocalVCPostPushHook and we have to return there again.
             return;
         }
-
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
         // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
         // the remaining refs through without any of the checks below.
@@ -82,9 +101,10 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             commands.forEach(multiRefCommand -> multiRefCommand.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push multiple refs at once."));
             return;
         }
-
         ReceiveCommand command = commands.iterator().next();
-
+        if (command.getResult() != ReceiveCommand.Result.NOT_ATTEMPTED) {
+            return;
+        }
         Repository repository = receivePack.getRepository();
 
         String defaultBranchName;
@@ -96,15 +116,20 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         }
         catch (LocalVCInternalException | IOException e) {
             log.warn("An error occurred while checking the default branch: {}", e.getMessage());
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
             return;
         }
 
         // If branching is allowed, reject pushes to anything other than branch names that match the branch regex
         // If branching is not allowed, reject pushes to anything other than the default branch
         String branchPath = command.getRefName();
-        if (!branchPath.equals("refs/heads/" + defaultBranchName)) {
-            String branchName = branchPath.substring("refs/heads/".length());
+        if (!branchPath.equals(Constants.R_HEADS + defaultBranchName)) {
+            // Only branches can be pushed: the checks below judge the name as the name of a branch
+            if (!branchPath.startsWith(Constants.R_HEADS) || branchPath.length() == Constants.R_HEADS.length()) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You can only push to a branch.");
+                return;
+            }
+            String branchName = branchPath.substring(Constants.R_HEADS.length());
             LocalVCServletService.BranchingStatus branchingStatus = localVCServletService.isBranchNameAllowedForRepository(repository, branchName);
             switch (branchingStatus) {
                 case BRANCHING_DISABLED -> {
@@ -121,14 +146,36 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             }
         }
 
-        try (Git git = new Git(repository)) {
-            // Prevent deletion of branches.
-            Ref ref = git.getRepository().exactRef(command.getRefName());
+        // Prevent deletion of branches.
+        try {
+            Ref ref = repository.exactRef(command.getRefName());
             if (ref != null && command.getNewId().equals(ObjectId.zeroId())) {
                 command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot delete a branch.");
-                return;
             }
+        }
+        catch (IOException e) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
+        }
+    }
 
+    private void examine(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+
+        if (commands.isEmpty()) {
+            // E.g. no refs were updated during the push operation.
+            // Note: There is no command that we can set a REJECTED Result on so this will continue into the LocalVCPostPushHook and we have to return there again.
+            return;
+        }
+
+        // The checks of the commands run again here, as a push that sent no objects does not reach the check before them
+        examineBeforeObjects(receivePack, commands);
+        if (commands.stream().anyMatch(command -> command.getResult() != ReceiveCommand.Result.NOT_ATTEMPTED)) {
+            return;
+        }
+
+        ReceiveCommand command = commands.iterator().next();
+        Repository repository = receivePack.getRepository();
+
+        try {
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
                 try {
@@ -146,7 +193,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(repository, command, localVCServletService.getMaxRepositorySizeBytes(repository));
         }
         catch (IOException e) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
         }
     }
 
@@ -211,7 +258,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 ObjectId objectId = treeWalk.getObjectId(0);
                 // Only the size is read, the content of the file is not loaded
                 long size = reader.getObjectSize(objectId, Constants.OBJ_BLOB);
-                if (size > MAX_BLOB_SIZE_BYTES) {
+                if (size > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
                             "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), size / (1024.0 * 1024.0)));
                     return;

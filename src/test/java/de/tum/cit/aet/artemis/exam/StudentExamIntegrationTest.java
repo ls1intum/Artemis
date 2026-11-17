@@ -677,6 +677,22 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetStudentExamForConduction_userNoLongerInCourse() throws Exception {
+        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
+        var studentExam = studentExams.getFirst();
+        var user = studentExam.getUser();
+        userUtilService.unenrollUserFromCourse(user, course2);
+        userUtilService.changeUser(user.getLogin());
+
+        request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
+                StudentExam.class, getHttpHeadersForExamSession());
+        assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isNotEqualTo(true);
+
+        deleteExamWithInstructor(exam1);
+    }
+
     private static HttpHeaders getHttpHeadersForExamSession() {
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");

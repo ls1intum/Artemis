@@ -127,11 +127,6 @@
     width: 20rem;
     text-align: right;
     transition: opacity 0.4s ease-in-out;
-
-    // Keep buttons circular
-    .btn.rounded-circle {
-        aspect-ratio: 1;
-    }
 }
 
 .course-notification-popup-overlay.is-expanded {

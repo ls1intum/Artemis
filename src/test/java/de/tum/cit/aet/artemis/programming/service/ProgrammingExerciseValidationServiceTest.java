@@ -213,6 +213,45 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatIsNotValid() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is not a valid");
+    }
+
+    @Test
+    void validateBuildConfigSize_ignoresABranchRegexWhileBranchingIsNotAllowed() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumnEvenWithoutBranching() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumn() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
     void validateBuildConfigSize_acceptsAConfigurationWithinTheLimits() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();

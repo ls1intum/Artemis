@@ -282,7 +282,7 @@ public class ExamUserResource {
     @ManualConfig
     public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid ExamStudentSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
-        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
