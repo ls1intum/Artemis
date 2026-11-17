@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
@@ -67,6 +68,13 @@ class HyperionQuizQuestionPoolModelServiceTest {
     @Test
     void constructor_keepsThePoolOnWhenTheModelsCannotBeListed() {
         when(responseSpec.body(HyperionQuizQuestionPoolModelService.ModelList.class)).thenThrow(new ResourceAccessException("Connection refused"));
+
+        assertThat(service(LOCAL_ENDPOINT, MODEL, MODEL, "", false).isConfigured()).isTrue();
+    }
+
+    @Test
+    void constructor_keepsThePoolOnWhenTheModelListHasAnInvalidContentType() {
+        when(responseSpec.body(HyperionQuizQuestionPoolModelService.ModelList.class)).thenThrow(new InvalidMediaTypeException("text/", "does not contain subtype after '/'"));
 
         assertThat(service(LOCAL_ENDPOINT, MODEL, MODEL, "", false).isConfigured()).isTrue();
     }
