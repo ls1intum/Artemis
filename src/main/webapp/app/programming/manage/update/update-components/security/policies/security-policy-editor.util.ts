@@ -483,6 +483,8 @@ export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): Ed
     for (const setting of changedFileSettings(oldBase, working)) {
         result = cloneWith(result, { [setting]: working[setting] });
     }
+    // Declarations an import changed on their own, e.g. pkg.Test#second instead of pkg.Test#first; the assignment below keeps those of declared classes.
+    result = cloneWith(result, { testClasses: applyListChanges(result.testClasses ?? [], listChanges(oldBase.testClasses ?? [], working.testClasses ?? [])) });
     const tests = withoutCoveredTestCases(applyListChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests)));
     const extraClasses = applyListChanges(fresh.baseExtraClasses, listChanges(policy.baseExtraClasses, policy.extraClasses));
     return withAssignment(cloneWith(fresh, { working: cloneWith(result, { policyPath: working.policyPath }), name: policy.name }), tests, extraClasses);

@@ -150,6 +150,11 @@ describe('security-policy-editor.util', () => {
         expect(summarizeChanges(imported).testClasses).toBe(2);
         expect(summarizeChanges(imported).total).toBe(2);
 
+        // A reload rebases the unsaved changes onto the committed file, also an unchanged one, and keeps the imported declaration.
+        const rebased = rebasePolicy(imported, file).working?.testClasses;
+        expect(rebased).toContain('de.example.SortingTest#second');
+        expect(rebased).not.toContain('de.example.SortingTest#first');
+
         const reassigned = withAssignment(policy, ['de.example.StressTest'], ['de.example.Helper']);
         expect(reassigned.working?.testClasses).toEqual(['de.example.Helper', 'de.example.StressTest']);
         expect(summarizeChanges(reassigned).testCases).toBe(2);
