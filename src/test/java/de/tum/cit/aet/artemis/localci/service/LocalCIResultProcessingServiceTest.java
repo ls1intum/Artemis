@@ -177,9 +177,13 @@ class LocalCIResultProcessingServiceTest {
 
     @BeforeEach
     void setUp() throws InterruptedException {
+        // the build groups and the saving of a finished job are real, so the multi-container paths are tested through the result processing
+        var finishedBuildJobService = new LocalCIFinishedBuildJobService(buildJobRepository, Optional.of(localCIQueueWebsocketService));
+        var buildGroupService = new LocalCIBuildGroupService(programmingExerciseGradingService, buildJobRepository, programmingExerciseRepository, participationRepository,
+                distributedDataAccessService, programmingExerciseDeletionService, Optional.of(localCIQueueWebsocketService), finishedBuildJobService);
         resultProcessingService = new LocalCIResultProcessingService(programmingExerciseGradingService, programmingMessagingService, buildJobRepository,
                 programmingExerciseRepository, participationRepository, programmingTriggerService, buildLogEntryService, programmingExerciseBuildStatisticsRepository,
-                distributedDataAccessService, programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService), programmingExerciseDeletionService);
+                distributedDataAccessService, programmingSubmissionMessagingService, programmingExerciseDeletionService, buildGroupService, finishedBuildJobService);
         // The production executor hands the work to a pool thread, which would make every assertion below a race. This one
         // runs the same task on the calling thread, so the test observes the finished work rather than polling for it.
         ReflectionTestUtils.setField(resultProcessingService, "resultProcessingExecutor", inlineExecutor());
@@ -617,9 +621,12 @@ class LocalCIResultProcessingServiceTest {
     @Test
     void twoResultsOfTheSameExerciseCanBeGradedConcurrently() throws Exception {
         var lifecycle = new ProgrammingExerciseDeletionService(null, null, null, Optional.empty(), null, null, null, Optional.empty(), new LocalDataProviderService());
+        var finishedBuildJobService = new LocalCIFinishedBuildJobService(buildJobRepository, Optional.of(localCIQueueWebsocketService));
+        var buildGroupService = new LocalCIBuildGroupService(programmingExerciseGradingService, buildJobRepository, programmingExerciseRepository, participationRepository,
+                distributedDataAccessService, lifecycle, Optional.of(localCIQueueWebsocketService), finishedBuildJobService);
         var service = new LocalCIResultProcessingService(programmingExerciseGradingService, programmingMessagingService, buildJobRepository, programmingExerciseRepository,
                 participationRepository, programmingTriggerService, buildLogEntryService, programmingExerciseBuildStatisticsRepository, distributedDataAccessService,
-                programmingSubmissionMessagingService, Optional.of(localCIQueueWebsocketService), lifecycle);
+                programmingSubmissionMessagingService, lifecycle, buildGroupService, finishedBuildJobService);
         var executor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         ReflectionTestUtils.setField(service, "resultProcessingExecutor", executor);
         withParticipation();
@@ -1128,7 +1135,7 @@ class LocalCIResultProcessingServiceTest {
         verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
         verify(programmingTriggerService, never()).triggerTemplateBuildAndNotifyUser(anyLong(), any(), any(), any());
         // the finalization, which deletes abandoned aggregates, runs under the participation's lock inside the group's
-        String participationLock = LocalCIResultProcessingService.participationLockKey(PARTICIPATION_ID);
+        String participationLock = LocalCIBuildGroupService.participationLockKey(PARTICIPATION_ID);
         InOrder order = inOrder(aggregationLocks, programmingExerciseGradingService);
         order.verify(aggregationLocks).lock("group-1");
         order.verify(aggregationLocks).lock(participationLock);
@@ -1447,7 +1454,7 @@ class LocalCIResultProcessingServiceTest {
         assertThat(saved.getValue().getResult()).isSameAs(aggregatedResult);
         verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
         // appending to an aggregate that a linked job already refers to needs no participation lock
-        verify(aggregationLocks, never()).lock(LocalCIResultProcessingService.participationLockKey(PARTICIPATION_ID));
+        verify(aggregationLocks, never()).lock(LocalCIBuildGroupService.participationLockKey(PARTICIPATION_ID));
     }
 
     @Test
@@ -1466,7 +1473,7 @@ class LocalCIResultProcessingServiceTest {
 
         // the container creates the aggregate and links its job under the participation's lock, which the cleanup of
         // abandoned aggregates in another group's finalization takes as well
-        String participationLock = LocalCIResultProcessingService.participationLockKey(PARTICIPATION_ID);
+        String participationLock = LocalCIBuildGroupService.participationLockKey(PARTICIPATION_ID);
         InOrder order = inOrder(aggregationLocks, programmingExerciseGradingService, buildJobRepository);
         order.verify(aggregationLocks).lock(participationLock);
         order.verify(programmingExerciseGradingService).appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull());

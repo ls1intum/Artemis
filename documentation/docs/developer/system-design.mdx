@@ -2,7 +2,7 @@
 id: system-design
 title: System Design
 sidebar_label: System Design
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-17
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -270,7 +270,7 @@ The items of one build share a build group, which consists of a group id, the nu
 A build plan with a single container creates a single item without a build group, so it is processed exactly like before.
 All jobs of a group are saved in the database before any of them is added to the job queue, because a group counts as complete once all of its jobs in the database have finished.
 
-The `LocalCIResultProcessingService` merges the results of a build group into one result.
+The `LocalCIResultProcessingService` hands the result of a container to the `LocalCIBuildGroupService`, which merges the results of a build group into one result.
 The first container that reports creates the aggregated result of the build, which stays in progress (it has no completion date) until every container of the group has finished.
 Every container appends its feedback to this result, keeping one feedback per test case: if several containers report the same test case, a failed outcome replaces a successful one.
 The last container that finishes finalizes the result using the `finalizeContainerResult` method of the `ProgrammingExerciseGradingService`.
@@ -286,7 +286,7 @@ If an older build finalizes after a newer one, it is discarded, so it overwrites
 Aggregated results that are still in progress although no running job will complete them are deleted by the next finalization on the same submission.
 
 A container can be lost, for example when its build agent crashes, or the finalization can fail after the last container reported.
-To recover from this, the `LocalCIMissingJobService` periodically calls the `finalizeCompletedBuildGroups` method of the `LocalCIResultProcessingService`, which finalizes build groups whose result is still in progress although none of their jobs is queued or running.
+To recover from this, the `LocalCIMissingJobService` periodically calls the `finalizeCompletedBuildGroups` method of the `LocalCIResultProcessingService`, which lets the `LocalCIBuildGroupService` finalize the build groups whose result is still in progress although none of their jobs is queued or running.
 A lost job is retried like the job of a single-container build: the retry runs the whole build again as a new group, and the group of the lost job is closed once the job is no longer retried.
 
 The `build_job` table stores the build group of a job (`build_group_id`), whether its container failed to build (`build_failed`), and whether its build script exited without errors and reported no failed test (`clean_run`).

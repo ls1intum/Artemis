@@ -585,7 +585,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         saveGroupJob("complete-1", "complete", participation, commitHash, BuildStatus.SUCCESSFUL, newer, false, submissionDate, 0);
 
         DistributedMap<String, Boolean> locks = distributedDataAccessService.getResultAggregationLockMap();
-        String participationLock = LocalCIResultProcessingService.participationLockKey(participation.getId());
+        String participationLock = LocalCIBuildGroupService.participationLockKey(participation.getId());
         SecurityContext securityContext = SecurityContextHolder.getContext();
         CountDownLatch locked = new CountDownLatch(1);
         CountDownLatch linkAllowed = new CountDownLatch(1);
@@ -640,7 +640,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         assertThat(buildJobRepository.findByBuildJobId("late-0")).map(BuildJob::getBuildStatus).as("a finished job stays finished").contains(BuildStatus.SUCCESSFUL);
         assertThat(buildJobRepository.findByBuildJobId("late-1")).map(BuildJob::getBuildStatus).as("a queued job starts building").contains(BuildStatus.BUILDING);
-        assertThat(buildJobRepository.findAllByBuildGroupId("late")).filteredOn(job -> LocalCIResultProcessingService.FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()))
+        assertThat(buildJobRepository.findAllByBuildGroupId("late")).filteredOn(job -> LocalCIBuildGroupService.FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()))
                 .hasSize(1);
     }
 
@@ -768,7 +768,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         job.setBuildSubmissionDate(submissionDate);
         job.setRetryCount(retryCount);
         // a job that reported did so minutes ago, which is longer than the grace period of the sweep
-        job.setBuildCompletionDate(LocalCIResultProcessingService.FINISHED_BUILD_STATUSES.contains(buildStatus) ? ZonedDateTime.now().minusMinutes(5) : null);
+        job.setBuildCompletionDate(LocalCIBuildGroupService.FINISHED_BUILD_STATUSES.contains(buildStatus) ? ZonedDateTime.now().minusMinutes(5) : null);
         buildJobRepository.save(job);
     }
 
@@ -796,7 +796,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         saveGroupJob("candidate-running-0", "candidate-running", participation, commitHash, BuildStatus.SUCCESSFUL, runningResult, false, now.minusMinutes(30), 0);
         saveGroupJob("candidate-running-1", "candidate-running", participation, commitHash, BuildStatus.BUILDING, null, false, now.minusMinutes(30), 0);
 
-        List<String> candidates = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(LocalCIResultProcessingService.FINISHED_BUILD_STATUSES, now.minusHours(1),
+        List<String> candidates = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(LocalCIBuildGroupService.FINISHED_BUILD_STATUSES, now.minusHours(1),
                 now, PageRequest.of(0, 50));
 
         assertThat(candidates).containsSubsequence("candidate-older", "candidate-newer").doesNotContain("candidate-running");

@@ -507,7 +507,7 @@ public class ProgrammingExerciseGradingService {
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
         // An older build that finalizes after a newer one is discarded before it gets here (see
-        // LocalCIResultProcessingService#finalizeIfGroupComplete), so this build may write the submission's state.
+        // LocalCIBuildGroupService#finalizeIfGroupComplete), so this build may write the submission's state.
         List<Result> resultsOfSubmission = aggregatedResult.getSubmission() == null ? List.of()
                 : submissionResultRepository.findAllBySubmissionIdOrderByIdDesc(aggregatedResult.getSubmission().getId());
         if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
@@ -584,7 +584,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Deletes the in-progress aggregated result of a multi-container build that a later build of the same submission
      * replaced: the build lost a container and was retried, or a newer build finalized first (see
-     * {@code LocalCIResultProcessingService}). The build's jobs lose their link through the foreign key.
+     * {@code LocalCIBuildGroupService}). The build's jobs lose their link through the foreign key.
      *
      * @param resultId the id of the aggregated result of the replaced build
      */
@@ -621,7 +621,7 @@ public class ProgrammingExerciseGradingService {
      * creating its aggregate and linking its job leaves one that nothing completes and that, whether it was created before
      * or after the finalized aggregate, could hide that result or the assessment it is merged into. The caller holds the
      * participation's lock, under which a running build creates its aggregate and links its job, so an aggregate in the
-     * making is never taken for an abandoned one (see LocalCIResultProcessingService).
+     * making is never taken for an abandoned one (see LocalCIBuildGroupService).
      *
      * @param resultsOfSubmission the submission's results
      * @param resultId            the id of the aggregated result being finalized
