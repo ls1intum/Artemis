@@ -98,16 +98,12 @@ public class OIDCService extends OidcUserService {
                 // In such case the account is already created so this value will be assigned
                 actualUser = userRepository.findOneWithAuthoritiesByLogin(username)
                         .orElseThrow(() -> new OAuth2AuthenticationException("Failed to resolve concurrent OIDC user provisioning"));
+                rejectInternalAccount(actualUser, username);
             }
         }
         else {
             actualUser = localUser.get();
-            if (actualUser.isInternal()) {
-                // An internal account has a password of its own in Artemis and is not linked to the identity provider, so the provider does not sign in to it.
-                // Accounts that were provisioned as internal accounts are covered by the upgrade guide.
-                log.warn("OIDC authentication rejected: the account '{}' is an internal account.", username);
-                throw new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "The account is managed by Artemis and cannot sign in through the identity provider.");
-            }
+            rejectInternalAccount(actualUser, username);
             // Update user information and store changes if necessary
             boolean isUpdated = applyProfileClaims(actualUser, oidcUser);
             boolean isMatriculationNumberUpdated = updateMatriculationNumberIfChanged(actualUser, oidcUser.getAttribute(matriculationClaimKey));
@@ -121,6 +117,21 @@ public class OIDCService extends OidcUserService {
             throw new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "User account is deactivated.");
         }
         return oidcUser;
+    }
+
+    /**
+     * Refuses the sign-in to an internal account. An internal account has a password of its own in Artemis and is not linked to the identity provider, so the provider does not
+     * sign in to it. Accounts that were provisioned as internal accounts are covered by the upgrade guide.
+     *
+     * @param user     the account that the asserted login belongs to
+     * @param username the asserted login, used for the log entry
+     * @throws OAuth2AuthenticationException if the account is internal
+     */
+    private void rejectInternalAccount(User user, String username) {
+        if (user.isInternal()) {
+            log.warn("OIDC authentication rejected: the account '{}' is an internal account.", username);
+            throw new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "The account is managed by Artemis and cannot sign in through the identity provider.");
+        }
     }
 
     /**

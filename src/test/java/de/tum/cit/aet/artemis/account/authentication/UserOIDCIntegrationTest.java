@@ -507,6 +507,25 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcLogin_isRefusedForAnInternalAccountThatAppearsDuringProvisioning() {
+        User user = new User();
+        user.setLogin(STUDENT_NAME);
+        user.setActivated(true);
+        user.setEmail(STUDENT_NAME + "@other.domain.invalid");
+        user.setInternal(true);
+        userTestRepository.save(user);
+        // the first lookup does not see the account yet, as if another request had created it right after, and the provisioning then fails on its login
+        UserRepository racingRepository = mock(UserRepository.class, AdditionalAnswers.delegatesTo(userTestRepository));
+        doReturn(Optional.empty()).doAnswer(invocation -> userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME)).when(racingRepository)
+                .findOneWithAuthoritiesByLogin(STUDENT_NAME);
+        OIDCService racingOidcService = createOidcService(racingRepository);
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class).isThrownBy(() -> racingOidcService.loadUser(mockUserRequest))
+                .matches(ex -> "internal_account".equals(ex.getError().getErrorCode()));
+    }
+
+    @Test
     void testOidcLogin_failsForDeactivatedUser() {
         assertStudentNotExists();
         createUser(STUDENT_NAME + "@artemis.local");
