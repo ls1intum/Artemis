@@ -26,6 +26,16 @@ describe('TumAetUiOverlayService', () => {
         }
     });
 
+    it('lines a panel above or below its origin up with the requested edge, and leaves a panel beside it centred', () => {
+        expect(service.positionStrategy(origin, 'bottom').positions.map((position) => position.overlayX)).toEqual(['center', 'center']);
+        const endAligned = service.positionStrategy(origin, 'bottom', 'end').positions;
+        expect(endAligned.map((position) => [position.originX, position.overlayX])).toEqual([
+            ['end', 'end'],
+            ['end', 'end'],
+        ]);
+        expect(service.positionStrategy(origin, 'right', 'end').positions.every((position) => position.overlayY === 'center')).toBe(true);
+    });
+
     it('creates a connected overlay that can attach and dispose', () => {
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
         expect(overlayRef).toBeTruthy();

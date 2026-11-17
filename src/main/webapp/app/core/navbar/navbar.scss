@@ -132,18 +132,14 @@ a:not(.tumaet-ui-btn, .tab-link):hover {
     }
 }
 
-.jh-menu-divider {
+.jh-menu-separator {
     margin: 0.5rem 0;
-    border-top: 1px solid var(--tumaet-ui-border-color);
 }
 
-.jh-menu-header {
-    padding: 0.5rem 1rem;
-    font-size: 0.7875rem;
-    font-weight: 500;
-    line-height: 1.2;
-    color: var(--tumaet-ui-muted-color);
-    white-space: nowrap;
+/* Aligns the group label with the entries, which are smaller here than the default of the menu component. */
+.jh-menu-group {
+    --tumaet-ui-menu-group-label-padding: 0.5rem 1rem;
+    --tumaet-ui-menu-group-label-font-size: 0.7875rem;
 }
 
 .jh-navbar {

@@ -7,7 +7,14 @@ import { filter, map, tap } from 'rxjs/operators';
 import { ConnectedPosition } from '@angular/cdk/overlay';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiMenuComponent,
+    TumAetUiMenuGroupComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuSeparatorComponent,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { User } from 'app/account/user/user.model';
 import {
     MODULE_FEATURE_ATLAS,
@@ -66,6 +73,8 @@ import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperi
         TumAetUiMenuTriggerDirective,
         RouterLinkActive,
         TumAetUiMenuComponent,
+        TumAetUiMenuGroupComponent,
+        TumAetUiMenuSeparatorComponent,
         FaIconComponent,
         TranslateDirective,
         TumAetUiMenuItemDirective,

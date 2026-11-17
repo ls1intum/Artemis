@@ -33,23 +33,20 @@ describe('ThemeSwitchComponent', () => {
     });
 
     afterEach(() => {
-        component.closePopover();
-        fixture.detectChanges();
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
-    it('theme toggles correctly', async () => {
-        vi.useFakeTimers();
+    const toggle = (): HTMLElement => fixture.nativeElement.querySelector('.toggle-popover-wrapper');
+    const popoverContent = () => document.getElementById('theme-switch-popover-content');
+
+    it('theme toggles correctly', () => {
         const applyThemePreferenceSpy = vi.spyOn(themeService, 'applyThemePreference');
 
-        component.toggleTheme();
+        toggle().click();
 
         expect(applyThemePreferenceSpy).toHaveBeenCalledWith(Theme.DARK);
-
         expect(component.isDarkTheme()).toBe(true);
-        await vi.advanceTimersByTimeAsync(250);
-        expect(component.isPopoverOpen()).toBe(true);
-        vi.useRealTimers();
     });
 
     it('os sync toggles correctly', () => {
@@ -65,51 +62,27 @@ describe('ThemeSwitchComponent', () => {
         expect(component.isSyncedWithOS()).toBe(true);
     });
 
-    it('opens and closes the popover', () => {
-        component.openPopover();
+    it('shows the popover while the toggle is hovered and keeps it open on a click on the toggle', () => {
+        expect(popoverContent()).toBeNull();
+
+        toggle().dispatchEvent(new Event('pointerenter'));
         fixture.detectChanges();
-        expect(document.getElementById('theme-switch-popover-content')).not.toBeNull();
-        component.closePopover();
+        expect(popoverContent()).not.toBeNull();
+        expect(toggle().getAttribute('aria-expanded')).toBe('true');
+
+        toggle().click();
         fixture.detectChanges();
-        expect(document.getElementById('theme-switch-popover-content')).toBeNull();
+        expect(toggle().getAttribute('aria-expanded')).toBe('true');
     });
 
-    it('closes on a click outside the popover', () => {
-        component.openPopover();
+    it('switches the sync with the operating system from the popover', async () => {
+        const applyThemePreferenceSpy = vi.spyOn(themeService, 'applyThemePreference');
+        toggle().dispatchEvent(new Event('focus'));
         fixture.detectChanges();
-        document.getElementById('theme-switch-popover-content')!.click();
-        expect(component.isPopoverOpen()).toBe(true);
-        document.body.click();
-        expect(component.isPopoverOpen()).toBe(false);
-    });
+        await fixture.whenStable();
 
-    it('moves the focus into the open popover on Tab and back to the toggle when leaving it', () => {
-        const toggle: HTMLElement = fixture.nativeElement.querySelector('.toggle-popover-wrapper');
-        const closedEvent = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true });
-        component.focusPopover(closedEvent);
-        expect(closedEvent.defaultPrevented).toBe(false);
+        popoverContent()!.querySelector<HTMLInputElement>('input')!.click();
 
-        component.openPopover();
-        fixture.detectChanges();
-        const openEvent = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true });
-        component.focusPopover(openEvent);
-        expect(openEvent.defaultPrevented).toBe(true);
-        expect(document.activeElement).toBe(document.querySelector('#theme-switch-popover-content input'));
-
-        const backEvent = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, cancelable: true });
-        component.leavePopover(backEvent, toggle);
-        expect(backEvent.defaultPrevented).toBe(true);
-        expect(component.isPopoverOpen()).toBe(false);
-        expect(document.activeElement).toBe(toggle);
-    });
-
-    it('closes on mouse leave after 250ms', async () => {
-        vi.useFakeTimers();
-        component.openPopover();
-        component.mouseLeave();
-        expect(component.isPopoverOpen()).toBe(true);
-        await vi.advanceTimersByTimeAsync(250);
-        expect(component.isPopoverOpen()).toBe(false);
-        vi.useRealTimers();
+        expect(applyThemePreferenceSpy).toHaveBeenCalledWith(Theme.LIGHT);
     });
 });

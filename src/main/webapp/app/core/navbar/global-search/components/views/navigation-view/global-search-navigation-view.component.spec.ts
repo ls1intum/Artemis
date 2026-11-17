@@ -436,7 +436,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should render loading state', () => {
                 fixture.componentRef.setInput('isLoading', true);
                 fixture.detectChanges();
-                const skeletons = fixture.nativeElement.querySelectorAll('.skeleton-block');
+                const skeletons = fixture.nativeElement.querySelectorAll('tumaet-ui-skeleton');
                 expect(skeletons.length).toBeGreaterThan(0);
             });
         });

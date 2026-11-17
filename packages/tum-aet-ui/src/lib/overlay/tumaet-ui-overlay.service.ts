@@ -4,8 +4,15 @@ import { Directionality } from '@angular/cdk/bidi';
 
 export type TumAetUiOverlayPlacement = 'top' | 'bottom' | 'left' | 'right';
 
+/**
+ * How a panel above or below its origin lines up with it: centred, or with its start or end edge on the origin's.
+ * A panel beside its origin (`left`, `right`) is always centred.
+ */
+export type TumAetUiOverlayAlignment = 'center' | 'start' | 'end';
+
 interface TumAetUiConnectedOverlayOptions {
     hasBackdrop?: boolean;
+    alignment?: TumAetUiOverlayAlignment;
     matchOriginWidth?: boolean;
 }
 
@@ -29,8 +36,15 @@ export class TumAetUiOverlayService {
     private readonly overlay = inject(Overlay);
     private readonly directionality = inject(Directionality);
 
-    positionStrategy(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumAetUiOverlayPlacement): FlexibleConnectedPositionStrategy {
-        const positions = placement === 'top' || placement === 'bottom' ? VERTICAL_POSITIONS[placement] : this.horizontalPositions(placement);
+    positionStrategy(
+        origin: ElementRef<HTMLElement> | HTMLElement,
+        placement: TumAetUiOverlayPlacement,
+        alignment: TumAetUiOverlayAlignment = 'center',
+    ): FlexibleConnectedPositionStrategy {
+        const positions =
+            placement === 'top' || placement === 'bottom'
+                ? VERTICAL_POSITIONS[placement].map((position): ConnectedPosition => ({ ...position, originX: alignment, overlayX: alignment }))
+                : this.horizontalPositions(placement);
         return this.overlay.position().flexibleConnectedTo(origin).withPositions(positions).withFlexibleDimensions(false).withPush(true).withViewportMargin(VIEWPORT_MARGIN);
     }
 
@@ -46,7 +60,7 @@ export class TumAetUiOverlayService {
         const originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
         const overlayRef = this.overlay.create({
             panelClass: 'tumaet-ui-overlay',
-            positionStrategy: this.positionStrategy(origin, placement),
+            positionStrategy: this.positionStrategy(origin, placement, options.alignment),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop: options.hasBackdrop ?? false,
             backdropClass: 'cdk-overlay-transparent-backdrop',

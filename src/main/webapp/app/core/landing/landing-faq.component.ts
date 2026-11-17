@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TumAetUiAccordionComponent, TumAetUiAccordionPanelComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 
@@ -8,7 +7,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
     selector: 'jhi-landing-faq',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent],
+    imports: [ArtemisTranslatePipe, TumAetUiAccordionComponent, TumAetUiAccordionPanelComponent],
     styles: `
         :host {
             display: block;
@@ -48,77 +47,25 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 
         .faq-content {
             width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
 
         .faq-panel {
+            --tumaet-ui-accordion-header-padding: 16px;
+            --tumaet-ui-accordion-content-padding: 0;
+            --tumaet-ui-accordion-icon-size: 14px;
+            --tumaet-ui-accordion-icon-color: var(--text-body-secondary);
+
             border: 0.75px solid var(--iris-accent-background);
             border-radius: 8px;
             background: var(--iris-secondary-background);
-            overflow: clip;
-        }
-
-        .faq-panel.is-open {
-            border-color: var(--primary);
-        }
-
-        .faq-question {
-            margin: 0;
-            font-size: inherit;
-        }
-
-        .faq-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            width: 100%;
-            padding: 16px;
             font-size: 18px;
             font-weight: 500;
             line-height: 1.5;
-            text-align: start;
             color: var(--body-color);
-            background: transparent;
-            border: none;
-            cursor: pointer;
         }
 
-        .faq-toggle:focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: -2px;
-        }
-
-        .faq-chevron {
-            flex-shrink: 0;
-            font-size: 14px;
-            color: var(--text-body-secondary);
-            transition: transform 0.2s ease;
-        }
-
-        .faq-panel.is-open .faq-chevron {
-            transform: rotate(180deg);
-        }
-
-        .faq-region {
-            display: grid;
-            grid-template-rows: 0fr;
-            visibility: hidden;
-            transition:
-                grid-template-rows 0.2s ease,
-                visibility 0.2s;
-        }
-
-        .faq-panel.is-open .faq-region {
-            grid-template-rows: 1fr;
-            visibility: visible;
-        }
-
-        .faq-region-inner {
-            min-height: 0;
-            overflow: hidden;
+        .faq-panel[data-expanded='true'] {
+            border-color: var(--primary);
         }
 
         .faq-answer {
@@ -129,13 +76,6 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
             color: var(--text-body-secondary);
             line-height: 1.6;
             font-family: inherit;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .faq-region,
-            .faq-chevron {
-                transition: none;
-            }
         }
 
         @media (max-width: 1200px) {
@@ -153,7 +93,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
                 font-size: 32px;
             }
 
-            .faq-toggle {
+            .faq-panel {
                 font-size: 16px;
             }
         }
@@ -164,43 +104,18 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
                 <span class="faq-label">{{ 'landing.faq.label' | artemisTranslate }}</span>
                 <h2 class="faq-title">{{ 'landing.faq.title' | artemisTranslate }}</h2>
             </div>
-            <div class="faq-content">
-                @for (item of faqItems; track item.questionKey; let i = $index) {
-                    <div class="faq-panel" [class.is-open]="openItem() === item.questionKey">
-                        <h3 class="faq-question">
-                            <button
-                                type="button"
-                                class="faq-toggle"
-                                [id]="'faq-toggle-' + i"
-                                [attr.aria-expanded]="openItem() === item.questionKey"
-                                [attr.aria-controls]="'faq-region-' + i"
-                                (click)="toggle(item.questionKey)"
-                            >
-                                <span>{{ item.questionKey | artemisTranslate }}</span>
-                                <fa-icon class="faq-chevron" [icon]="faChevronDown" />
-                            </button>
-                        </h3>
-                        <div class="faq-region" role="region" [id]="'faq-region-' + i" [attr.aria-labelledby]="'faq-toggle-' + i">
-                            <div class="faq-region-inner">
-                                <p class="faq-answer" [innerHTML]="formatAnswer(item.questionKey, item.answerKey | artemisTranslate)"></p>
-                            </div>
-                        </div>
-                    </div>
+            <tumaet-ui-accordion class="faq-content">
+                @for (item of faqItems; track item.questionKey) {
+                    <tumaet-ui-accordion-panel class="faq-panel" [header]="item.questionKey | artemisTranslate">
+                        <p class="faq-answer" [innerHTML]="formatAnswer(item.questionKey, item.answerKey | artemisTranslate)"></p>
+                    </tumaet-ui-accordion-panel>
                 }
-            </div>
+            </tumaet-ui-accordion>
         </section>
     `,
 })
 export class LandingFaqComponent {
-    protected readonly faChevronDown = faChevronDown;
-
     faqItems = FAQ_ITEMS;
-    /** Question key of the open entry; only one entry is open at a time. */
-    protected readonly openItem = signal<string | undefined>(undefined);
-
-    protected toggle(questionKey: string): void {
-        this.openItem.update((open) => (open === questionKey ? undefined : questionKey));
-    }
 
     /**
      * Wraps the docs URL in an anchor tag for the documentation FAQ answer.

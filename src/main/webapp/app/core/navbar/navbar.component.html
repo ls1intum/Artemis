@@ -95,9 +95,8 @@
                                 <span jhiTranslate="global.menu.admin.main"></span>
                             </a>
                         }
-                        <div class="jh-menu-divider" role="separator"></div>
-                        <div role="group" aria-labelledby="navbar-language-menu-header">
-                            <div class="jh-menu-header" id="navbar-language-menu-header" jhiTranslate="global.menu.language"></div>
+                        <tumaet-ui-menu-separator class="jh-menu-separator" />
+                        <tumaet-ui-menu-group class="jh-menu-group" [label]="'global.menu.language' | artemisTranslate">
                             @if (languages && languages.length > 1) {
                                 @for (language of languages; track language) {
                                     <button type="button" tumAetUiMenuItem class="jh-menu-item" [jhiActiveMenu]="language" (triggered)="changeLanguage(language); collapseNavbar()">
@@ -105,8 +104,8 @@
                                     </button>
                                 }
                             }
-                        </div>
-                        <div class="jh-menu-divider" role="separator"></div>
+                        </tumaet-ui-menu-group>
+                        <tumaet-ui-menu-separator class="jh-menu-separator" />
                         @if (passwordResetEnabled()) {
                             <a tumAetUiMenuItem class="jh-menu-item" routerLink="/account/password" routerLinkActive="active" (triggered)="collapseNavbar()">
                                 <fa-icon [icon]="faLock" [fixedWidth]="true" />

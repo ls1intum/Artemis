@@ -1,3 +1,4 @@
+import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -37,7 +38,7 @@ import { SEARCH_RESULTS_LISTBOX_ID, searchResultOptionDomId } from 'app/core/nav
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, ArtemisTranslatePipe, FaIconComponent],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiSkeletonComponent],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],

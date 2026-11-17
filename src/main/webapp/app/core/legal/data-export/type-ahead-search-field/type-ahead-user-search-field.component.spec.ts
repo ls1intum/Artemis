@@ -97,6 +97,18 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         expect(component.searchQueryTooShort()).toBe(true);
     });
 
+    it('should take over the value reported by the autocomplete', () => {
+        component.onValueChange('ge12');
+        expect(component.loginOrName()).toBe('ge12');
+
+        // A selected user is reduced to the login.
+        component.onValueChange({ login: 'ge12abc' } as User);
+        expect(component.loginOrName()).toBe('ge12abc');
+
+        component.onValueChange(undefined);
+        expect(component.loginOrName()).toBe('');
+    });
+
     it('should format the result correctly', () => {
         const user = { login: 'ge12abc', name: 'abc' } as User;
         expect(component.resultFormatter(user)).toBe('abc (ge12abc)');

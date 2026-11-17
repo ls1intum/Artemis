@@ -40,11 +40,210 @@ describe('TumAetUiPopoverTriggerDirective', () => {
         expect(button.getAttribute('aria-expanded')).toBe('true');
     });
 
+    it('ignores hover and focus, which only open a hover popover', () => {
+        button.dispatchEvent(new Event('pointerenter'));
+        button.dispatchEvent(new Event('focus'));
+        fixture.detectChanges();
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('toggles the popover closed on a second click', () => {
         button.click();
         fixture.detectChanges();
         button.click();
         fixture.detectChanges();
         expect(button.getAttribute('aria-expanded')).toBe('false');
+    });
+});
+
+@Component({
+    template: `
+        <button [tumAetUiPopoverTrigger]="pop" data-testid="trigger" (click)="clicks = clicks + 1">Theme</button>
+        <button data-testid="next">Next</button>
+        <tumaet-ui-popover #pop openOn="hover" ariaLabel="Theme options">
+            <button data-testid="first">First</button>
+            <button data-testid="last">Last</button>
+        </tumaet-ui-popover>
+    `,
+    imports: [TumAetUiPopoverTriggerDirective, TumAetUiPopoverComponent],
+})
+class HoverPopoverHostComponent {
+    clicks = 0;
+}
+
+describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
+    let fixture: ComponentFixture<HoverPopoverHostComponent>;
+    let trigger: HTMLButtonElement;
+
+    const panel = () => document.querySelector<HTMLElement>('[role="dialog"]');
+    const inPanel = (testId: string) => panel()!.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)!;
+    const isOpen = () => trigger.getAttribute('aria-expanded') === 'true';
+    const tab = (target: HTMLElement, shiftKey = false) => {
+        const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true });
+        target.dispatchEvent(event);
+        return event;
+    };
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [HoverPopoverHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(HoverPopoverHostComponent);
+        // Attached, so that focus can move between the trigger and the panel.
+        document.body.appendChild(fixture.nativeElement);
+        fixture.detectChanges();
+        trigger = fixture.nativeElement.querySelector('[data-testid="trigger"]');
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        fixture.nativeElement.remove();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    function hover(): void {
+        trigger.dispatchEvent(new Event('pointerenter'));
+        fixture.detectChanges();
+    }
+
+    it('opens when the pointer enters the trigger, without a backdrop and without claiming the page', () => {
+        hover();
+
+        expect(isOpen()).toBe(true);
+        expect(panel()!.getAttribute('aria-label')).toBe('Theme options');
+        expect(panel()!.hasAttribute('aria-modal')).toBe(false);
+        expect(document.querySelector('.cdk-overlay-backdrop')).toBeNull();
+        expect(panel()!.contains(document.activeElement)).toBe(false);
+    });
+
+    it('opens when the trigger receives keyboard focus', () => {
+        trigger.focus();
+        fixture.detectChanges();
+
+        expect(isOpen()).toBe(true);
+    });
+
+    it('leaves a click to the trigger and stays open', () => {
+        hover();
+
+        trigger.click();
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.clicks).toBe(1);
+        expect(isOpen()).toBe(true);
+    });
+
+    it('closes shortly after the pointer left the trigger', () => {
+        hover();
+
+        trigger.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(100);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        vi.advanceTimersByTime(200);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('stays open when the pointer moves from the trigger onto the panel', () => {
+        hover();
+
+        trigger.dispatchEvent(new Event('pointerleave'));
+        panel()!.dispatchEvent(new Event('pointerenter'));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        panel()!.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('closes on a click elsewhere, but not on a click inside the panel', () => {
+        hover();
+
+        inPanel('first').click();
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        document.body.click();
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('closes on Escape and opens again on the next hover', () => {
+        hover();
+
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+
+        hover();
+        expect(isOpen()).toBe(true);
+    });
+
+    it('hands the focus back to the trigger when Escape closes it from inside the panel', () => {
+        trigger.focus();
+        fixture.detectChanges();
+        inPanel('first').focus();
+
+        inPanel('first').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+
+        expect(isOpen()).toBe(false);
+        expect(document.activeElement).toBe(trigger);
+    });
+
+    it('moves focus from the trigger into the panel on Tab', () => {
+        trigger.focus();
+        fixture.detectChanges();
+
+        const event = tab(trigger);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(inPanel('first'));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+    });
+
+    it('keeps Tab inside the panel until its last control', () => {
+        trigger.focus();
+        fixture.detectChanges();
+        inPanel('first').focus();
+
+        const event = tab(inPanel('first'));
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(isOpen()).toBe(true);
+    });
+
+    it('closes on Tab from the last control and lets the browser continue after the trigger', () => {
+        trigger.focus();
+        fixture.detectChanges();
+        inPanel('last').focus();
+
+        const event = tab(inPanel('last'));
+        fixture.detectChanges();
+
+        // Not prevented: with the focus back on the trigger, the browser moves on to the element after it.
+        expect(event.defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(trigger);
+        expect(isOpen()).toBe(false);
+    });
+
+    it('returns to the trigger on Shift+Tab from the first control', () => {
+        trigger.focus();
+        fixture.detectChanges();
+        inPanel('first').focus();
+
+        const event = tab(inPanel('first'), true);
+        fixture.detectChanges();
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(trigger);
+        expect(isOpen()).toBe(false);
     });
 });
