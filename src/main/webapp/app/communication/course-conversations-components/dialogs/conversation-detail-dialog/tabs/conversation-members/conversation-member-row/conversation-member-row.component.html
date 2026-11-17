@@ -15,7 +15,7 @@
             }
             <a
                 (click)="userNameClicked()"
-                class="text-text"
+                class="text-text!"
                 [class.disabled]="isCurrentUser()"
                 [attr.aria-disabled]="isCurrentUser()"
                 #keyboardAction16
@@ -38,7 +38,7 @@
                 severity="secondary"
                 variant="outlined"
                 size="small"
-                class="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
+                class="opacity-0! group-hover:opacity-100! focus-visible:opacity-100! aria-expanded:opacity-100! [@media(hover:none)]:opacity-100!"
                 data-testid="member-actions-button"
                 [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
                 [tumAetUiMenuTrigger]="memberActionsMenu"
@@ -51,7 +51,7 @@
                         <button
                             type="button"
                             tumAetUiMenuItem
-                            class="remove-member text-state-danger"
+                            class="remove-member text-state-danger!"
                             (triggered)="openRemoveFromConversationDialog()"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser"
                         ></button>
@@ -60,7 +60,7 @@
                         <button
                             type="button"
                             tumAetUiMenuItem
-                            class="grant-moderator text-state-danger"
+                            class="grant-moderator text-state-danger!"
                             (triggered)="openGrantChannelModeratorRoleDialog()"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantModeratorRole"
                         ></button>
@@ -69,7 +69,7 @@
                         <button
                             type="button"
                             tumAetUiMenuItem
-                            class="revoke-moderator text-state-danger"
+                            class="revoke-moderator text-state-danger!"
                             (triggered)="openRevokeChannelModeratorRoleDialog()"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeModeratorRole"
                         ></button>
