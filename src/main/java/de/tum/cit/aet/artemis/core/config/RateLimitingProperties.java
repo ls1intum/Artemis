@@ -5,10 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.validation.constraints.Positive;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.validation.annotation.Validated;
 
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 
@@ -20,6 +23,7 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
  * and provides type-safe access to rate limiting settings.
  * </p>
  */
+@Validated
 @Profile(PROFILE_CORE)
 @Configuration
 @Lazy
@@ -49,114 +53,133 @@ public class RateLimitingProperties {
      * Requests per minute for public endpoints.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ACCOUNT_MANAGEMENT}.
      */
+    @Positive
     private Integer accountManagementRequestsPerMinute;
 
     /**
      * Requests per minute for login-related endpoints.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AUTHENTICATION}.
      */
+    @Positive
     private Integer authenticationRequestsPerMinute;
 
     /**
      * Requests per minute for the authentication of git operations over HTTP and SSH.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#GIT_AUTHENTICATION}.
      */
+    @Positive
     private Integer gitAuthenticationRequestsPerMinute;
 
     /**
      * Requests per minute for the unauthenticated login-options lookup.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#LOGIN_OPTIONS}.
      */
+    @Positive
     private Integer loginOptionsRequestsPerMinute;
 
     /**
      * Failed password logins per minute that one account tolerates before further logins for it are answered with 429.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#FAILED_LOGIN}.
      */
+    @Positive
     private Integer failedLoginRequestsPerMinute;
 
     /**
      * Requests per minute for the problem-statement rendering endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROBLEM_STATEMENT_RENDERING}.
      */
+    @Positive
     private Integer problemStatementRenderingRequestsPerMinute;
 
     /**
      * Requests per minute for the AI search pipeline endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AI_SEARCH_PIPELINE}.
      */
+    @Positive
     private Integer aiSearchPipelineRequestsPerMinute;
 
     /**
      * Requests per minute for the proactive struggle-intervention trigger endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#STRUGGLE_INTERVENTION}.
      */
+    @Positive
     private Integer struggleInterventionRequestsPerMinute;
 
     /**
      * Requests per minute for the slides-and-videos search endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CONTENT_SEARCH}.
      */
+    @Positive
     private Integer contentSearchRequestsPerMinute;
 
     /**
      * Requests per minute for the check whether an email address is allowed by the configured restriction.
      * If not specified, uses the default from {@link RateLimitType#EMAIL_ADDRESS_CHECK}.
      */
+    @Positive
     private Integer emailAddressCheckRequestsPerMinute;
 
     /**
      * Requests per minute for the build agent clone-token check on the git https path.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
      */
+    @Positive
     private Integer buildAgentCloneTokenRequestsPerMinute;
 
     /**
      * Requests per minute for the editor-facing online-resource metadata fetch.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ONLINE_RESOURCE_FETCH}.
      */
+    @Positive
     private Integer onlineResourceFetchRequestsPerMinute;
 
     /**
      * Requests per minute for client error reports of unauthenticated clients.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CLIENT_ERROR_REPORT}.
      */
+    @Positive
     private Integer clientErrorReportRequestsPerMinute;
 
     /**
      * Failed shared-secret checks per minute for the endpoints called by external services.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#SERVICE_CREDENTIAL_FAILURE}.
      */
+    @Positive
     private Integer serviceCredentialFailureRequestsPerMinute;
 
     /**
      * Requests per minute and user for the conversion of a modeling diagram to a PDF document.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#APOLLON_CONVERSION}.
      */
+    @Positive
     private Integer apollonConversionRequestsPerMinute;
 
     /**
      * Requests per minute and user for joining a quiz batch with its password.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#QUIZ_BATCH_JOIN}.
      */
+    @Positive
     private Integer quizBatchJoinRequestsPerMinute;
 
     /**
      * Requests per minute and user for the manual build of a programming exercise participation.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROGRAMMING_BUILD_TRIGGER}.
      */
+    @Positive
     private Integer programmingBuildTriggerRequestsPerMinute;
 
     /**
      * Requests per minute and user for sending a course request.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#COURSE_REQUEST}.
      */
+    @Positive
     private Integer courseRequestRequestsPerMinute;
 
     /**
      * Re-evaluations of all results of a programming exercise per minute and user.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#RE_EVALUATION}.
      */
+    @Positive
     private Integer reEvaluationRequestsPerMinute;
 
     public List<String> getExemptAddresses() {
