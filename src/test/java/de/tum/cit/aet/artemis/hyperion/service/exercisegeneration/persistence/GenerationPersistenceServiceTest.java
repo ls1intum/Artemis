@@ -145,7 +145,8 @@ class GenerationPersistenceServiceTest {
     void setUp() throws Exception {
         org.mockito.Mockito.when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
-        gitService = mock(GitService.class);
+        // The Git-tree regression calls real staging, which needs the constructor to initialize the working-copy locks.
+        gitService = mock(GitService.class, Mockito.withSettings().useConstructor());
         repositoryService = mock(RepositoryService.class);
         participationService = mock(ProgrammingExerciseParticipationService.class);
         continuousIntegrationTriggerService = mock(ContinuousIntegrationTriggerService.class);
