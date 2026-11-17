@@ -19,6 +19,7 @@ import { generateUuid } from 'app/foundation/util/crypto.utils';
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly titleErrorId = `title-error-${generateUuid()}`;
+    protected readonly channelNameErrorId = `channel-name-error-${generateUuid()}`;
 
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);
@@ -31,6 +32,9 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     emphasizeLabels = input<boolean>(false);
     minTitleLength = input<number>();
     maxTitleLength = input<number>();
+    /** Localized validation messages supplied by the containing form, rendered with their corresponding input. */
+    titleValidationMessage = input<string>();
+    channelNameValidationMessage = input<string>();
     initChannelName = input<boolean>(true);
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();

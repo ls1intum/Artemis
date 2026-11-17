@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
 import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForConductionDTO;
@@ -2025,6 +2026,76 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
         assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
         assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamConductionCounts() throws Exception {
+        StudentExam unopened = new StudentExam();
+        unopened.setExam(exam1);
+        unopened.setUser(student1);
+        unopened.setTestRun(false);
+        unopened.setSubmitted(null);
+        studentExamRepository.save(unopened);
+        StudentExam started = examUtilService.addStudentExamWithUser(exam1, student1);
+        started.setTestRun(false);
+        started.setStartedAndStartDate(now());
+        started.setSubmitted(true);
+        studentExamRepository.save(started);
+        StudentExam testRun = examUtilService.addStudentExamWithUser(exam1, student1);
+        testRun.setTestRun(true);
+        testRun.setStartedAndStartDate(now());
+        testRun.setSubmitted(true);
+        studentExamRepository.save(testRun);
+
+        StudentExam unsetTestRun = new StudentExam();
+        unsetTestRun.setExam(exam1);
+        unsetTestRun.setUser(student1);
+        unsetTestRun.setStartedAndStartDate(now());
+        unsetTestRun.setSubmitted(true);
+        studentExamRepository.save(unsetTestRun);
+
+        StudentExam unopenedWithUnsetTestRun = new StudentExam();
+        unopenedWithUnsetTestRun.setExam(exam1);
+        unopenedWithUnsetTestRun.setUser(student1);
+        studentExamRepository.save(unopenedWithUnsetTestRun);
+        StudentExam startedWithUnsetTestRun = new StudentExam();
+        startedWithUnsetTestRun.setExam(exam1);
+        startedWithUnsetTestRun.setUser(student1);
+        startedWithUnsetTestRun.setStartedAndStartDate(now());
+        startedWithUnsetTestRun.setSubmitted(false);
+        studentExamRepository.save(startedWithUnsetTestRun);
+
+        queryInterceptor.startQueryCount();
+        var counts = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics/conduction", HttpStatus.OK, ExamConductionCountsDTO.class);
+        assertThat(counts).isEqualTo(new ExamConductionCountsDTO(5, 3, 2));
+        assertThat(queryInterceptor.getStatements()).filteredOn(sql -> sql.contains("count(")).singleElement().satisfies(sql -> assertThat(sql).contains(" from student_exam "));
+        assertThat(queryInterceptor.getStatements()).noneMatch(sql -> sql.contains(" from complaint ") || sql.contains(" from result ") || sql.contains(" from participation ")
+                || sql.contains(" from exercise ") || sql.contains("initialization_state"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamConductionCounts_crossCourse() throws Exception {
+        request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/statistics/conduction", HttpStatus.CONFLICT, ExamConductionCountsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "USER")
+    void testGetExamConductionCounts_outsider() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics/conduction", HttpStatus.FORBIDDEN, ExamConductionCountsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamConductionCounts_tutor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics/conduction", HttpStatus.FORBIDDEN, ExamConductionCountsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamConductionCounts_student() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/statistics/conduction", HttpStatus.FORBIDDEN, ExamConductionCountsDTO.class);
     }
 
     @Test

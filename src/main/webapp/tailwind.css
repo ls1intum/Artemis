@@ -64,14 +64,11 @@
 @source './app/programming/shared/instructions-render/step-wizard';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
-@source './app/communication/message-editor';
-@source './app/communication/posting-markdown-editor';
 @source './app/course/request';
 @source './app/course/overview/course-statistics';
 @source './app/core/about-us';
 @source './app/core/usage-statistics';
 @source './app/course/shared/course-sidebar-toggle-button';
-@source './app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members';
 @source './app/course/manage/course-lti-configuration';
 @source './app/course/manage/course-material-import';
 @source './app/course/manage/course-scores';
@@ -87,10 +84,6 @@
 @source './app/course/overview/courses';
 @source './app/course/overview/course-registration';
 @source './app/course/sidebar';
-@source './app/communication/faq';
-@source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
-@source './app/communication/posting-create-edit-modal/post-create-edit-modal';
-@source './app/communication/saved-posting-banner';
 @source './app/course/manage/update';
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/programming/shared/build-window-notice';
@@ -212,8 +205,6 @@
 @source './app/course/overview/course-home/**/*.html';
 
 /* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/communication/answer-post/answer-post.component.html';
-@source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
 @source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
 @source './app/core/legal/data-export/data-export.component.html';
 @source './app/course/manage/control-center/athena-enabled/athena-enabled.component.html';
@@ -237,6 +228,7 @@
 @source './app/assessment';
 @source './app/atlas';
 @source './app/calendar';
+@source './app/communication';
 @source './app/core/alert';
 @source './app/core/navbar/global-search/components/modal';
 @source './app/editor';

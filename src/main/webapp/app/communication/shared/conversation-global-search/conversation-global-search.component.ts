@@ -15,7 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 
 export interface ConversationGlobalSearchConfig {
@@ -54,7 +54,17 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip, CourseSidebarToggleButtonComponent],
+    imports: [
+        FormsModule,
+        ButtonComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        ProfilePictureComponent,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiTagComponent,
+        CourseSidebarToggleButtonComponent,
+    ],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
@@ -75,6 +85,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     toggleSidebar = output<void>();
 
     readonly searchElement = viewChild<ElementRef>('searchInput');
+    // Only rendered while the search is active, and the scroll container of the suggestions.
+    private readonly suggestionsElement = viewChild<ElementRef<HTMLElement>>('suggestions');
 
     fullSearchTerm = '';
     readonly searchTermWithoutPrefix = signal('');
@@ -343,8 +355,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
         // Allow DOM to update before scrolling
         setTimeout(() => {
-            const dropdownContainer = document.querySelector('.autocomplete-dropdown') as HTMLElement;
-            const activeElement = document.querySelector('.dropdown-option.active') as HTMLElement;
+            const dropdownContainer = this.suggestionsElement()?.nativeElement;
+            const activeElement = dropdownContainer?.querySelector<HTMLElement>('.suggestion-option.active');
 
             if (dropdownContainer && activeElement) {
                 const containerRect = dropdownContainer.getBoundingClientRect();

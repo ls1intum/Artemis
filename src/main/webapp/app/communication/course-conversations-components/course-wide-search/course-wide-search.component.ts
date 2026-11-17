@@ -15,7 +15,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -27,7 +27,19 @@ import { UserPublicInfoDTO } from 'app/account/user/user.model';
     templateUrl: './course-wide-search.component.html',
     styleUrls: ['./course-wide-search.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
+    imports: [
+        NgClass,
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiTooltipDirective,
+        InfiniteScrollDirective,
+        PostingThreadComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
     private courseSidebarService = inject(CourseSidebarService);
