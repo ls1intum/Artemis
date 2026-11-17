@@ -63,12 +63,22 @@ public final class LinkPreviewUrlValidator {
         return true;
     }
 
+    /**
+     * Link previews are only retrieved from the ports of ordinary web servers.
+     *
+     * @param port the port of the URL, -1 if the URL does not specify one
+     * @return whether the port is the default port or one of the ports 80 and 443
+     */
+    private static boolean isAllowedPort(int port) {
+        return port == -1 || port == 80 || port == 443;
+    }
+
     private boolean isValidUri(URI uri) {
         String scheme = uri.getScheme();
         String host = uri.getHost();
         int port = uri.getPort();
 
-        return scheme != null && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && host != null && uri.getUserInfo() == null && port <= 65535
+        return scheme != null && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && host != null && uri.getUserInfo() == null && isAllowedPort(port)
                 && !isIpAddress(host) && isValidDomain(host);
     }
 

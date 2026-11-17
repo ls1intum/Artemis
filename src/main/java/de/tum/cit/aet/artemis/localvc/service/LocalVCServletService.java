@@ -511,7 +511,22 @@ public class LocalVCServletService {
 
     private static final int MAX_COMPILED_BRANCH_REGEXES = 1000;
 
-    private static final Cache<String, Pattern> COMPILED_BRANCH_REGEXES = Caffeine.newBuilder().maximumSize(MAX_COMPILED_BRANCH_REGEXES).build();
+    /** The compiled expression, or empty if the expression is not supported or not valid. The verdict is kept, so that it is logged once per expression. */
+    private static final Cache<String, Optional<Pattern>> COMPILED_BRANCH_REGEXES = Caffeine.newBuilder().maximumSize(MAX_COMPILED_BRANCH_REGEXES).build();
+
+    private static Optional<Pattern> compileBranchRegex(String branchRegex) {
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            log.warn("The branch regex '{}' of an exercise uses syntax that is not supported and matches no branch name", branchRegex);
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Pattern.compile(branchRegex));
+        }
+        catch (PatternSyntaxException e) {
+            log.warn("The branch regex '{}' of an exercise is not a valid regular expression and matches no branch name", branchRegex);
+            return Optional.empty();
+        }
+    }
 
     public static enum BranchingStatus {
         BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
@@ -538,20 +553,14 @@ public class LocalVCServletService {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
         }
 
-        // The expression is compiled once and then reused by the following pushes
+        // The expression is checked and compiled once and then reused by the following pushes
         String branchRegex = buildConfig.getBranchRegex();
-        Pattern pattern = COMPILED_BRANCH_REGEXES.getIfPresent(branchRegex);
-        if (pattern == null) {
-            try {
-                pattern = Pattern.compile(branchRegex);
-            }
-            catch (PatternSyntaxException e) {
-                return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
-            }
-            COMPILED_BRANCH_REGEXES.put(branchRegex, pattern);
+        Optional<Pattern> pattern = COMPILED_BRANCH_REGEXES.get(branchRegex, LocalVCServletService::compileBranchRegex);
+        if (pattern.isEmpty()) {
+            return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
         }
 
-        return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        return TimeBoundedRegexMatcher.matches(pattern.get(), branchName) ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {

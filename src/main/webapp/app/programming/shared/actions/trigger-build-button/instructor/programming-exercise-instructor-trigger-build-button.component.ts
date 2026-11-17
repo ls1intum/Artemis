@@ -4,7 +4,7 @@ import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-e
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 @Component({
@@ -14,7 +14,7 @@ import { SubmissionType } from 'app/exercise/shared/entities/submission/submissi
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
 
     faRedo = faRedo;
 
