@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -64,14 +65,14 @@ class LocalCIQueueWebsocketServiceTest {
     @Test
     void shouldSendAChangedFinishedJobAsAChangeAndToItsDetailTopicButNotAsAFurtherFinishedJob() {
         var finishedBuildJob = new FinishedBuildJobDTO("job-1", "job-1", "agent", 2L, COURSE_ID, 3L, BuildStatus.SUCCESSFUL, RepositoryType.USER, "repo", RepositoryType.USER,
-                SUBMISSION_DATE, SUBMISSION_DATE, SUBMISSION_DATE, "commit", null);
+                SUBMISSION_DATE, SUBMISSION_DATE, SUBMISSION_DATE, "commit", null, null);
 
         localCIQueueWebsocketService.sendChangedFinishedBuildJobOverWebsocket(finishedBuildJob);
 
         verify(localCIWebsocketMessagingService).sendFinishedBuildJobChange(finishedBuildJob);
-        verify(localCIWebsocketMessagingService).sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+        verify(localCIWebsocketMessagingService).sendFinishedBuildJobDetailUpdate(eq(finishedBuildJob), anyList());
         // the clients count every job announced as finished, so a changed job must not be announced again
-        verify(localCIWebsocketMessagingService, never()).sendFinishedBuildJobUpdate(any());
+        verify(localCIWebsocketMessagingService, never()).sendFinishedBuildJobUpdate(any(), any());
     }
 
     @Test
@@ -127,9 +128,9 @@ class LocalCIQueueWebsocketServiceTest {
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
         localCIQueueWebsocketService.broadcastPendingChanges();
 
-        ArgumentCaptor<List<BuildJobQueueItem>> forCourse = ArgumentCaptor.captor();
+        ArgumentCaptor<List<CourseBuildJobDTO>> forCourse = ArgumentCaptor.captor();
         verify(localCIWebsocketMessagingService).sendQueuedBuildJobsForCourse(eq(COURSE_ID), forCourse.capture());
-        Assertions.assertThat(forCourse.getValue()).extracting(BuildJobQueueItem::id).containsExactly("mine");
+        Assertions.assertThat(forCourse.getValue()).extracting(CourseBuildJobDTO::id).containsExactly("mine");
 
         ArgumentCaptor<List<BuildJobQueueItem>> forAdmin = ArgumentCaptor.captor();
         verify(localCIWebsocketMessagingService).sendQueuedBuildJobs(forAdmin.capture());

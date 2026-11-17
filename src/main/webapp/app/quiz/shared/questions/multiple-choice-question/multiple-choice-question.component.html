@@ -12,7 +12,7 @@
     </h4>
     <p [innerHTML]="renderedQuestion().text"></p>
     @if (question().invalid) {
-        <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+        <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     }
     @if (!isSingleChoice) {
         <h6 jhiTranslate="artemisApp.quizQuestion.allOptions"></h6>
@@ -25,7 +25,7 @@
                 <div [innerHTML]="renderedQuestion().hint"></div>
             </ng-template>
             @if (question().hint) {
-                <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
+                <span [tumAetUiTooltip]="renderedHint" tumAetUiTooltipPlacement="right">
                     <fa-icon [icon]="faQuestionCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                 </span>
@@ -35,7 +35,7 @@
                 <div [innerHTML]="renderedQuestion().explanation"></div>
             </ng-template>
             @if (question().explanation && showResult()) {
-                <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
+                <span [tumAetUiTooltip]="renderedExplanation" tumAetUiTooltipPlacement="right">
                     <fa-icon [icon]="faExclamationCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                 </span>
@@ -88,7 +88,7 @@
                                 <div [innerHTML]="renderedAnswerHint(i)"></div>
                             </ng-template>
                             @if (answerOption.hint) {
-                                <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave">
+                                <span [tumAetUiTooltip]="renderedAnswerOptionsHint" tumAetUiTooltipPlacement="right">
                                     <fa-icon [icon]="faQuestionCircle" />
                                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                                 </span>
@@ -128,7 +128,7 @@
                                 <div [innerHTML]="renderedQuestion().renderedSubElements![i].hint"></div>
                             </ng-template>
                             @if (answerOption.hint) {
-                                <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" triggers="mouseenter:mouseleave">
+                                <span [tumAetUiTooltip]="renderedAnswerOptionsHint2" tumAetUiTooltipPlacement="right">
                                     <fa-icon [icon]="faQuestionCircle" />
                                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                                 </span>
@@ -137,7 +137,7 @@
                                 <div [innerHTML]="renderedQuestion().renderedSubElements![i].explanation"></div>
                             </ng-template>
                             @if (answerOption.explanation) {
-                                <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" triggers="mouseenter:mouseleave">
+                                <span [tumAetUiTooltip]="renderedAnswerOptionsExplanation" tumAetUiTooltipPlacement="right">
                                     <fa-icon [icon]="faExclamationCircle" />
                                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                                 </span>
@@ -155,7 +155,7 @@
                             <span id="answer-option-{{ i }}-invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                         }
                         @if (answerOption.invalid || question().invalid) {
-                            <fa-icon ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}" [icon]="faQuestionCircle" />
+                            <fa-icon [tumAetUiTooltip]="'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate" [icon]="faQuestionCircle" />
                         }
                     </td>
                     @if (!forceSampleSolution()) {

@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
+import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenServiceFixture;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -96,7 +97,7 @@ class BuildJobCloneTokenAuthenticationTest {
         // The default for a caller with budget left; the tests that care set it to false explicitly
         when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
         buildAgentAuthenticationService = new LocalVCBuildAgentAuthenticationService(Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService),
-                Optional.of(new BuildJobCloneTokenService()), policyAllowingEverything(), rateLimitService, repositoryResolver(), Optional.empty(), null, null);
+                Optional.of(BuildJobCloneTokenServiceFixture.service()), policyAllowingEverything(), rateLimitService, repositoryResolver(), Optional.empty(), null, null);
 
         // Build the expected URIs the same way the production code derives them from the request path, rather than
         // hard-coding a format that LocalVCRepositoryUri could change
@@ -409,7 +410,7 @@ class BuildJobCloneTokenAuthenticationTest {
      */
     @Test
     void shouldRejectACredentialWithoutTheTokenPrefixBeforeAnyDistributedLookup() {
-        assertThat(new BuildJobCloneTokenService().generateCloneToken()).as("the prefix is load bearing: it is what lets a non-token credential be rejected locally")
+        assertThat(BuildJobCloneTokenServiceFixture.service().generateCloneToken()).as("the prefix is load bearing: it is what lets a non-token credential be rejected locally")
                 .startsWith(BuildJobCloneTokenService.CLONE_TOKEN_PREFIX);
 
         assertThat(authenticate(request(AGENT_NAME, "vcpat-a-users-access-token", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();

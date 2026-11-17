@@ -2,7 +2,7 @@
 id: builds-and-dependencies
 title: Builds and Dependency Management
 sidebar_label: Builds and Dependency Management
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-16
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -78,7 +78,8 @@ such as JUnit.
 
 There are currently docker containers for:
 
-- [Maven (Java and Kotlin)](https://github.com/ls1intum/artemis-maven-docker)
+- [Maven (Java)](https://github.com/ls1intum/artemis-maven-docker)
+- [Kotlin](https://github.com/ls1intum/artemis-kotlin-docker), published to `ghcr.io` when a release `vX.Y.Z` is created in its repository
 - [OCaml](https://github.com/ls1intum/artemis-ocaml-docker)
 - [Python](https://github.com/ls1intum/artemis-python-docker)
 - [C](https://github.com/ls1intum/artemis-c-docker)
@@ -89,8 +90,9 @@ There are currently docker containers for:
 
 ## Steps for Updating the Docker Builds used in Artemis
 
-Updating can only be done with access to the account on Docker Hub. If you need access,
-contact Stephan Krusche.
+For images published on Docker Hub, updating requires access to that account. If you need access,
+contact Stephan Krusche. Kotlin uses GitHub Container Registry instead; follow its tag-based release path
+in [Keeping the images in sync](#keeping-the-images-in-sync-with-the-templates) rather than the Docker Hub steps below.
 
 1. Update the dependencies via a pull request in the repository of the docker container.
    Each docker container has its own repository as listed above.
@@ -110,7 +112,56 @@ contact Stephan Krusche.
    - Create a new release with the button called "Draft release" and give it the same name as in step 4
 6. Wait for the build in Docker Hub of the newly created Tag
 7. Change the docker image used in Artemis to the newly created tag:
-   [application.yml](https://github.com/ls1intum/Artemis/blob/develop/src/main/resources/config/application.yml)
+   [application.yml](https://github.com/ls1intum/Artemis/blob/develop/src/main/resources/config/application.yml).
+   Do this in the same pull request that changes the templates, see the next section.
 8. If the used docker container should also be changed for already created exercises you have to change
    the build plan of that exercise
    - Change the docker image used by following this path: Configure Buildplan > Default Job > Docker > Docker Image
+
+## Keeping the images in sync with the templates
+
+The images of Java, Kotlin, Rust, JavaScript, TypeScript and Swift hold the dependencies of a copy of the test template in their repository.
+It has to pin the same versions as the test templates in `src/main/resources/templates`:
+
+| Language | Cached project in the image repository | What has to match the templates |
+| --- | --- | --- |
+| Java | `artemis-java-template` | Ares, AspectJ, Guava, the Maven plugins, the Gradle plugins and wrapper, the static code analysis tools |
+| Kotlin | `artemis-kotlin-template` | Ares, AspectJ, Kotlin, Guava, the Maven plugins |
+| Rust | `test` | the crates in `Cargo.lock` of the test project and of the assignment |
+| JavaScript, TypeScript | `vitest/javascript`, `vitest/typescript` (each with `staticCodeAnalysis`) | the packages in `package-lock.json`, including the ones of the assignment, which the test project builds as an npm workspace |
+| Swift | `test` | the packages and version requirements in `Package.swift` |
+
+A version that the image does not hold is downloaded by every build of every exercise (from Maven Central, crates.io, the npm registry or GitHub),
+which costs build time and runs into rate limits.
+
+Two checks keep both sides together without downloading any dependency in the pull request pipeline:
+
+- **Pull requests** run `python3 supporting_scripts/check_exercise_image_sync.py` (job `Exercise Images`) when the templates,
+  the build phases, the image configuration in `application.yml` or the check itself change. It reads the template project of the image
+  at the git tag of the configured image from its repository and fails for every version the templates pin that the image does not hold.
+  It needs no Docker and finishes in seconds.
+- **Every night** the workflow `Nightly Exercise Images` runs `python3 supporting_scripts/verify_exercise_images_offline.py`. It assembles
+  the test and assignment repositories like the server does, pulls the configured image and runs the build phases of
+  `src/main/resources/templates/phases` in a container without network access. A dependency that the image does not hold turns into a failed
+  build and a tracking issue. This catches what a version comparison cannot, for example a transitive dependency or a changed build phase.
+  You can run it locally for one language, e.g. `--language kotlin`. Add `--platform linux/amd64` for an image that is not published for your CPU
+  (the Kotlin and Rust images are only published for amd64, and the npm packages of the JavaScript and TypeScript image depend on the CPU).
+
+To change a version that is part of an image:
+
+1. Change the cached project in the repository of the image and merge it. Build the image locally and run the verification with
+   `--image <language>=<local image>` (for example `--image rust=my-image:test`) before you release.
+2. Release the image with a new tag:
+   - **Java:** follow the Docker Hub procedure above, using the same Git tag and Docker image tag.
+   - **Kotlin, Rust, JavaScript and TypeScript:** push a new `vX.Y.Z` Git tag to the repository of the image ([artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker), [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker), [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker); TypeScript uses the JavaScript image) and publish a GitHub release for that tag. The tag-push workflow publishes `ghcr.io/ls1intum/<repository>:vX.Y.Z`; wait for it to finish. No Docker Hub build rule is needed.
+   - **Swift:** push a new `vX.Y.Z` Git tag to [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) and publish a GitHub release for that tag. The workflow publishes the tag to `ghcr.io/ls1intum/artemis-swift-swiftlint-docker` and to Docker Hub.
+
+   In every case, keep the image tag identical to the Git tag: the version check reads the image's template files at that Git tag.
+3. Change the versions in the templates and the image tag in `application.yml` in one pull request in Artemis. The pull request check
+   fails as long as the tag in `application.yml` does not hold what the templates pin.
+
+The other languages are not checked yet or do not need it. The table in [Choose a Programming Language](/instructor/exercises/programming-exercise#supported-programming-languages) shows the status of every language. In short:
+
+- **Not needed**: the template pins nothing that its image has to cache. Python, C, C++, VHDL, assembler, OCaml, R, Bash and MATLAB use the standard library or tools the image installs. Go is the same: the test template imports only the standard library and the student module through a local `replace`, so `go test` fetches no module, which a one-off offline build confirmed (compile, tests and `golangci-lint` ran in the Go image without network access; the nightly workflow does not cover Go). Two things couple the Go template to its image without downloading a dependency: the `go` directive of `go.mod` must not be newer than the Go version of the image (otherwise Go downloads a toolchain), and `.golangci.yml` must match the major version of `golangci-lint` in the image.
+- **Not checked yet**: Ruby, Dart and C# cache a copy of the lock file of the template in the image (`bundler install`, `dart pub get`, `dotnet restore`). The same two checks apply to them: compare the lock files of the template with the copy in the image repository at the image tag, and build the template in the image without network access. A first comparison found differing lock files for Ruby. Haskell uses an external image that has not been assessed.
+- **Swift** pins no `Package.resolved`, so its check compares the declared packages and version requirements. The image resolves them once, and SwiftPM finds any version a requirement allows in the cached clones. The Xcode project type has no build phases for the build agents (`templates/phases/swift` only covers the plain project type), so there is nothing to check for it.

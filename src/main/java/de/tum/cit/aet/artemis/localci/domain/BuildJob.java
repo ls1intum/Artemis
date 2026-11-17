@@ -11,6 +11,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -52,6 +55,10 @@ public class BuildJob extends DomainObject {
 
     @Column(name = "build_agent_address")
     private String buildAgentAddress;
+
+    @Nullable
+    @Column(name = "build_agent_display_name")
+    private String buildAgentDisplayName;
 
     @Column(name = "build_submission_date")
     private ZonedDateTime buildSubmissionDate;
@@ -121,6 +128,11 @@ public class BuildJob extends DomainObject {
         this.participationId = queueItem.participationId();
         this.result = result;
         this.buildAgentAddress = queueItem.buildAgent().memberAddress();
+        String agentDisplayName = StringUtils.defaultIfBlank(queueItem.buildAgent().displayName(), queueItem.buildAgent().name());
+        if (agentDisplayName != null && agentDisplayName.codePointCount(0, agentDisplayName.length()) > 255) {
+            agentDisplayName = agentDisplayName.substring(0, agentDisplayName.offsetByCodePoints(0, 255));
+        }
+        this.buildAgentDisplayName = agentDisplayName;
         this.buildSubmissionDate = queueItem.jobTimingInfo().submissionDate();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
@@ -213,6 +225,11 @@ public class BuildJob extends DomainObject {
 
     public void setBuildAgentAddress(String buildAgentAddress) {
         this.buildAgentAddress = buildAgentAddress;
+    }
+
+    @Nullable
+    public String getBuildAgentDisplayName() {
+        return buildAgentDisplayName;
     }
 
     public ZonedDateTime getBuildSubmissionDate() {

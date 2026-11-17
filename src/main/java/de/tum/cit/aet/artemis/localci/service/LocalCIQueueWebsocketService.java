@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -141,7 +142,8 @@ public class LocalCIQueueWebsocketService {
             }
             for (Long courseId : courseIds) {
                 if (watched.contains(courseId)) {
-                    localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                    localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId,
+                            queuedJobs.stream().filter(job -> job.courseId() == courseId).map(CourseBuildJobDTO::of).toList());
                 }
             }
         }
@@ -168,7 +170,8 @@ public class LocalCIQueueWebsocketService {
             }
             for (Long courseId : courseIds) {
                 if (watched.contains(courseId)) {
-                    localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                    localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId,
+                            processingJobs.stream().filter(job -> job.courseId() == courseId).map(CourseBuildJobDTO::of).toList());
                 }
             }
         }
@@ -252,9 +255,10 @@ public class LocalCIQueueWebsocketService {
         if (finishedBuildJob == null) {
             return;
         }
-        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
+        var agents = distributedDataAccessService.getBuildAgentInformation();
+        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob, agents);
         // Also send to the individual build job topic for the build job detail page
-        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob, agents);
     }
 
     /**
@@ -267,7 +271,7 @@ public class LocalCIQueueWebsocketService {
             return;
         }
         localCIWebsocketMessagingService.sendFinishedBuildJobChange(finishedBuildJob);
-        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob, distributedDataAccessService.getBuildAgentInformation());
     }
 
     /**
