@@ -11,10 +11,12 @@
         </ng-container>
         <ng-container headerActions>
             @if (!isTestRun()) {
-                <a tumAetUiButton severity="secondary" variant="outlined" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
-                    <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
-                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
-                </a>
+                @if (canOpenExerciseDetails()) {
+                    <a tumAetUiButton severity="secondary" variant="outlined" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
+                        <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
+                    </a>
+                }
                 @if (canOfferManualAssessmentUpload()) {
                     <span [tumAetUiTooltip]="manualAssessmentUploadDisabledTooltip()">
                         <tumaet-ui-button

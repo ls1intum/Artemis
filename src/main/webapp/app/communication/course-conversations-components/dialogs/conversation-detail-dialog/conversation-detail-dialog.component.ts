@@ -5,10 +5,12 @@ import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { faPeopleGroup, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabValue, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
 import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
@@ -27,16 +29,20 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
-    styleUrls: ['./conversation-detail-dialog.component.scss'],
     imports: [
         ChannelIconComponent,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         RouterLink,
         ConversationMembersComponent,
         ConversationInfoComponent,
         ConversationSettingsComponent,
         ProfilePictureComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
     ],
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
@@ -44,12 +50,13 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     activeConversation = signal<ConversationDTO | undefined>(undefined);
     course = signal<Course | undefined>(undefined);
-    selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
+    readonly selectedTab = signal<ConversationDetailTabs>(ConversationDetailTabs.MEMBERS);
 
     override isInitialized = false;
     readonly isOneToOneChat = signal(false);
     readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
     readonly faPeopleGroup = faPeopleGroup;
+    protected readonly faXmark = faXmark;
     readonly userNameClicked = output<number>();
 
     override initialize() {
@@ -70,6 +77,14 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     readonly changesWerePerformed = signal(false);
 
     Tabs = ConversationDetailTabs;
+
+    /** The tab list reports the selected tab as a plain value, so only a known tab is taken over. */
+    onTabChange(value: TumAetUiTabValue) {
+        const tab = Object.values(ConversationDetailTabs).find((candidate) => candidate === value);
+        if (tab) {
+            this.selectedTab.set(tab);
+        }
+    }
 
     clear() {
         if (this.changesWerePerformed()) {
@@ -108,9 +123,9 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
      */
     onUserNameClicked(userId: number) {
         this.userNameClicked.emit(userId);
-        // Also invoke callback passed via dialog data (for DynamicDialog callers)
+        // Also invoke callback passed via dialog data (for callers opening the dialog through the dialog service)
         const callback = this.dialogConfig?.data?.onUserNameClicked;
-        if (callback) {
+        if (typeof callback === 'function') {
             callback(userId);
         }
     }
