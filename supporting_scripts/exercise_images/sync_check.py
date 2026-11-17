@@ -71,6 +71,30 @@ SOURCES = {
     # The template pins no Package.resolved. The image holds the clones of the dependencies in the cache of SwiftPM, which finds any
     # version a requirement allows in them, so the declared packages and requirements have to be the same.
     "swift": [Source("swift/test/Package.swift", "Package.swift")],
+    # `bundler install` runs in the test directory with the lock file of the template. The image holds the gems of the lock file of its
+    # own project, which has to contain every gem of every template lock file (the regular and the static code analysis test project).
+    "ruby": [
+        Source("ruby/test/Gemfile.lock", "Gemfile.lock"),
+        Source("ruby/staticCodeAnalysis/test/Gemfile.lock", "Gemfile.lock"),
+        Source("ruby/exercise/Gemfile.lock", "Gemfile.lock"),
+        Source("ruby/solution/Gemfile.lock", "Gemfile.lock"),
+        Source("ruby/staticCodeAnalysis/exercise/Gemfile.lock", "Gemfile.lock"),
+        Source("ruby/staticCodeAnalysis/solution/Gemfile.lock", "Gemfile.lock"),
+    ],
+    # `dart pub get` runs in the test and assignment directories with the lock files of the templates. The test project depends on the
+    # assignment through a path, which is not downloaded.
+    "dart": [
+        Source("dart/test/pubspec.lock", "pubspec.lock"),
+        Source("dart/exercise/pubspec.lock", "pubspec.lock"),
+        Source("dart/solution/pubspec.lock", "pubspec.lock"),
+    ],
+    # The image restores the NuGet packages of its test project. The assignment is a project reference, so its target framework has
+    # to be one the packages of the test project (and the runtime packs of the SDK) were restored for.
+    "c_sharp": [
+        Source("c_sharp/test/test.csproj", "test.csproj"),
+        Source("c_sharp/exercise/assignment.csproj", "test.csproj"),
+        Source("c_sharp/solution/assignment.csproj", "test.csproj"),
+    ],
 }
 
 
@@ -198,9 +222,107 @@ def npm_lock_versions(text: str) -> Versions:
     return versions
 
 
+def gemfile_lock_versions(text: str) -> Versions:
+    """Versions of the gems a ``Gemfile.lock`` resolves from a registry or a repository, by gem name. Path gems are not downloaded.
+
+    The same version of a gem from a repository can come from another commit, so its repository with the locked revision is part of the value.
+    """
+    versions: Versions = {}
+    section: str | None = None
+    source = ""
+    in_specs = False
+    for line in text.splitlines():
+        if line and not line.startswith(" "):
+            section, source, in_specs = line.strip(), "", False
+            continue
+        field = re.fullmatch(r"  (remote|revision): (.+)", line)
+        if field and section == "GIT":
+            source += f" {field.group(2)}" if field.group(1) == "remote" else f"@{field.group(2)}"
+        elif line == "  specs:":
+            in_specs = True
+        elif in_specs and section in ("GEM", "GIT"):
+            gem = re.fullmatch(r"    (\S+) \(([^)]+)\)", line)
+            if gem:
+                versions.setdefault(gem.group(1), set()).add(f"{gem.group(2)} (git {source.strip()})" if section == "GIT" else gem.group(2))
+    return versions
+
+
+def pubspec_lock_versions(text: str) -> Versions:
+    """Versions of the packages a ``pubspec.lock`` downloads, by package name. Path and SDK packages are not downloaded.
+
+    A package from a repository is identified by its repository and the locked commit as well as by its version.
+    """
+    versions: Versions = {}
+    name: str | None = None
+    fields: dict[str, str] = {}
+    description: dict[str, str] = {}
+    in_description = False
+
+    def finish() -> None:
+        if name is None or "version" not in fields:
+            return
+        source = fields.get("source")
+        if source == "hosted":
+            versions.setdefault(name, set()).add(fields["version"])
+        elif source == "git":
+            versions.setdefault(name, set()).add(f"{fields['version']} ({description.get('url', '')}@{description.get('resolved-ref', '')})")
+
+    in_packages = False
+    for line in text.splitlines():
+        if re.fullmatch(r"\S.*", line):
+            finish()
+            name, fields, description, in_description = None, {}, {}, False
+            in_packages = line.strip() == "packages:"
+            continue
+        if not in_packages:
+            continue
+        package = re.fullmatch(r"  (\S+):", line)
+        if package:
+            finish()
+            name, fields, description, in_description = package.group(1), {}, {}, False
+            continue
+        field = re.fullmatch(r"    ([\w-]+):(?: (.*))?", line)
+        if field:
+            value = (field.group(2) or "").strip().strip("\"'")
+            in_description = field.group(1) == "description" and not value
+            if value:
+                fields[field.group(1)] = value
+            continue
+        nested = re.fullmatch(r"      ([\w-]+): (.*)", line)
+        if nested and in_description:
+            description[nested.group(1)] = nested.group(2).strip().strip("\"'")
+    finish()
+    return versions
+
+
+def csproj_versions(text: str) -> Versions:
+    """The NuGet packages a project file references, by lower-case package name, and its target frameworks."""
+    if "<!DOCTYPE" in text or "<!ENTITY" in text:
+        raise ValueError("A build file with a DOCTYPE or entity declaration is not read")
+    root = ET.fromstring(text.lstrip("\ufeff"))  # noqa: S314 - no DOCTYPE or entity declaration, checked above
+    for element in root.iter():
+        element.tag = element.tag.rpartition("}")[2]
+    versions: Versions = {}
+    for element in root.iter():
+        if element.tag in ("TargetFramework", "TargetFrameworks"):
+            versions.setdefault("target framework", set()).update(framework.strip() for framework in (element.text or "").split(";") if framework.strip())
+        elif element.tag in ("PackageReference", "PackageVersion"):
+            name = element.get("Include") or element.get("Update")
+            version = element.get("Version") or (element.findtext("Version") or "").strip() or element.get("VersionOverride")
+            if name and version:
+                versions.setdefault(name.lower(), set()).add(version)
+    return versions
+
+
 def versions_of(file_name: str, text: str, properties: dict[str, str] | None = None) -> Versions:
     if file_name.endswith("Cargo.lock"):
         return cargo_lock_versions(text)
+    if file_name.endswith("Gemfile.lock"):
+        return gemfile_lock_versions(text)
+    if file_name.endswith("pubspec.lock"):
+        return pubspec_lock_versions(text)
+    if file_name.endswith(".csproj"):
+        return csproj_versions(text)
     if file_name.endswith("package-lock.json"):
         return npm_lock_versions(text)
     if file_name.endswith("Package.swift"):
