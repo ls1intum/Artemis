@@ -1075,4 +1075,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
         return ['/course-management', this.courseId(), exerciseTypePath, exercise.id!];
     });
+
+    /**
+     * Whether the user can open the details page of the exercise. The server gives the details of an exam exercise only to editors and above,
+     * except for a modeling exercise, so a tutor would only get a permission error from the button.
+     */
+    readonly canOpenExerciseDetails = computed(() => {
+        const exercise = this.exercise();
+        return !exercise.exerciseGroup || exercise.type === ExerciseType.MODELING || this.accountService.isAtLeastEditorInCourseWithId(this.courseId());
+    });
 }
