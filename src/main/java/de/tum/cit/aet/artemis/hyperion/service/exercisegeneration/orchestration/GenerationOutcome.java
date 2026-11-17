@@ -17,8 +17,8 @@ import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
+import de.tum.cit.aet.artemis.hyperion.runtime.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService.Seed;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /** Frozen worker output adapted to core persistence. It never contains a live sandbox or an executable callback. */

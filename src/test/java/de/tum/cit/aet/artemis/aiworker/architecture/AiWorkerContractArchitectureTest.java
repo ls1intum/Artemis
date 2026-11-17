@@ -14,6 +14,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 
 import de.tum.cit.aet.artemis.aiworker.api.ExecutionObserver;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
+import de.tum.cit.aet.artemis.aiworker.api.JUnitXmlParser;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
@@ -28,7 +29,7 @@ class AiWorkerContractArchitectureTest {
     private static final JavaClasses CLASSES = IMPORTER.importPackages("de.tum.cit.aet.artemis.aiworker.domain", "de.tum.cit.aet.artemis.aiworker.dto");
 
     private static final JavaClasses PORTABLE_API = IMPORTER.importClasses(ExecutionObserver.class, InteractiveSandbox.class, SandboxApi.class, SandboxUnavailableException.class,
-            WorkerMessageCodecApi.class, WorkloadApi.class);
+            WorkerMessageCodecApi.class, WorkloadApi.class, JUnitXmlParser.class);
 
     @Test
     void contractsAreIndependentOfImplementationsAndWorkloads() {
