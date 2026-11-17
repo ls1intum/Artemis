@@ -319,31 +319,21 @@
                                 </div>
                             }
                             <!-- Display started exams-->
-                            @if (
-                                examChecklist() &&
-                                examChecklist()!.numberOfGeneratedStudentExams !== null &&
-                                examChecklist()!.numberOfGeneratedStudentExams !== 0 &&
-                                numberOfStarted() > 0
-                            ) {
+                            @if (examChecklist() && numberOfGeneratedStudentExams() !== 0 && numberOfStarted() > 0) {
                                 <div>
                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }} :</span>
                                     <div class="pt-2">
                                         <jhi-progress-bar
-                                            [denominator]="examChecklist()!.numberOfGeneratedStudentExams!"
+                                            [denominator]="numberOfGeneratedStudentExams()"
                                             [numerator]="numberOfStarted()"
-                                            [percentage]="(100 * numberOfStarted()) / examChecklist()!.numberOfGeneratedStudentExams!"
+                                            [percentage]="(100 * numberOfStarted()) / numberOfGeneratedStudentExams()"
                                         />
                                     </div>
                                     <hr />
                                 </div>
                             }
                             <!-- Display submitted exams-->
-                            @if (
-                                examChecklist() &&
-                                examChecklist()!.numberOfGeneratedStudentExams !== null &&
-                                examChecklist()!.numberOfGeneratedStudentExams !== 0 &&
-                                numberOfSubmitted() > 0
-                            ) {
+                            @if (examChecklist() && numberOfGeneratedStudentExams() !== 0 && numberOfSubmitted() > 0) {
                                 <div>
                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }} :</span>
                                     <div class="pt-2">

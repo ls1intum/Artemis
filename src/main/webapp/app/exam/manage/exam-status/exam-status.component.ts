@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
+import { ExamConductionCountsState } from 'app/exam/manage/exams/exam-checklist-component/exam-conduction-counts-state';
+import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -35,7 +36,7 @@ export enum ExamConductionState {
     styleUrls: ['./exam-status.component.scss'],
     imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
-export class ExamStatusComponent implements OnInit, OnDestroy {
+export class ExamStatusComponent implements OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
     private websocketService = inject(WebsocketService);
 
@@ -44,12 +45,15 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            this.updateChecklistState();
+            const exam = this.exam();
+            const course = this.course();
+            untracked(() => this.updateChecklistState(exam, course));
         });
     }
 
     readonly examChecklist = signal<ExamChecklist>(undefined!);
-    readonly numberOfGeneratedStudentExams = signal<number>(0);
+    private readonly conductionCounts = new ExamConductionCountsState((exam) => this.examChecklistService.getExamConductionCounts(exam));
+    readonly numberOfGeneratedStudentExams = this.conductionCounts.numberOfGeneratedStudentExams;
 
     readonly configuredExercises = signal<boolean>(false);
     readonly registeredStudents = signal<boolean>(false);
@@ -72,10 +76,11 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     readonly round = round;
     readonly Math = Math;
 
-    readonly numberOfSubmitted = signal(0);
-    readonly numberOfStarted = signal(0);
+    readonly numberOfSubmitted = this.conductionCounts.numberOfSubmitted;
+    readonly numberOfStarted = this.conductionCounts.numberOfStarted;
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
+    private statisticsSubscription?: Subscription;
 
     // Icons
     faTimes = faTimes;
@@ -85,41 +90,45 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     faDotCircle = faDotCircle;
     faCircleExclamation = faCircleExclamation;
 
-    ngOnInit() {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((count) => count + 1));
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((count) => count + 1));
-    }
+    private updateChecklistState(exam: Exam, course: Course) {
+        this.statisticsSubscription?.unsubscribe();
+        this.submittedSubscription?.unsubscribe();
+        this.startedSubscription?.unsubscribe();
+        this.conductionCounts.reset(exam);
+        this.submittedSubscription = this.websocketService.subscribe<void>(this.examChecklistService.getSubmittedTopic(exam)).subscribe(() => this.conductionCounts.submitted());
+        this.startedSubscription = this.websocketService.subscribe<void>(this.examChecklistService.getStartedTopic(exam)).subscribe(() => this.conductionCounts.started());
+        this.statisticsSubscription = this.examChecklistService.getExamStatistics(exam).subscribe({
+            next: (examStats) => {
+                if (this.exam() !== exam || this.course() !== course) {
+                    return;
+                }
+                this.examChecklist.set(examStats);
+                this.conductionCounts.initialize(examStats);
+                this.isTestExam.set(exam.testExam!);
 
-    private updateChecklistState() {
-        this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
-            this.examChecklist.set(examStats);
-            this.numberOfGeneratedStudentExams.set(this.examChecklist().numberOfGeneratedStudentExams ?? 0);
-            this.isTestExam.set(this.exam().testExam!);
+                if (course?.isAtLeastInstructor) {
+                    // Step 1:
+                    this.setExamPreparation();
+                }
 
-            if (this.course()?.isAtLeastInstructor) {
-                // Step 1:
-                this.setExamPreparation();
-            }
+                // Step 2: Exam conduction
+                this.setConductionState();
 
-            // Step 2: Exam conduction
-            this.setConductionState();
-
-            if (!this.isTestExam()) {
-                // Step 3: Exam correction
-                this.setReviewState();
-                this.setCorrectionState();
-            }
-
-            this.numberOfStarted.set(this.examChecklist().numberOfExamsStarted);
-            this.numberOfSubmitted.set(this.examChecklist().numberOfExamsSubmitted);
+                if (!this.isTestExam()) {
+                    // Step 3: Exam correction
+                    this.setReviewState();
+                    this.setCorrectionState();
+                }
+            },
+            error: () => this.conductionCounts.initialize(),
         });
     }
 
     ngOnDestroy(): void {
         this.submittedSubscription?.unsubscribe();
         this.startedSubscription?.unsubscribe();
+        this.statisticsSubscription?.unsubscribe();
+        this.conductionCounts.destroy();
     }
 
     /**
