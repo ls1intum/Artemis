@@ -640,8 +640,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         assertThat(buildJobRepository.findByBuildJobId("late-0")).map(BuildJob::getBuildStatus).as("a finished job stays finished").contains(BuildStatus.SUCCESSFUL);
         assertThat(buildJobRepository.findByBuildJobId("late-1")).map(BuildJob::getBuildStatus).as("a queued job starts building").contains(BuildStatus.BUILDING);
-        assertThat(buildJobRepository.findAllByBuildGroupId("late")).filteredOn(job -> LocalCIBuildGroupService.FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()))
-                .hasSize(1);
+        assertThat(buildJobRepository.findAllByBuildGroupId("late")).filteredOn(job -> LocalCIBuildGroupService.FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).hasSize(1);
     }
 
     @Test
@@ -796,8 +795,8 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         saveGroupJob("candidate-running-0", "candidate-running", participation, commitHash, BuildStatus.SUCCESSFUL, runningResult, false, now.minusMinutes(30), 0);
         saveGroupJob("candidate-running-1", "candidate-running", participation, commitHash, BuildStatus.BUILDING, null, false, now.minusMinutes(30), 0);
 
-        List<String> candidates = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(LocalCIBuildGroupService.FINISHED_BUILD_STATUSES, now.minusHours(1),
-                now, PageRequest.of(0, 50));
+        List<String> candidates = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(LocalCIBuildGroupService.FINISHED_BUILD_STATUSES, now.minusHours(1), now,
+                PageRequest.of(0, 50));
 
         assertThat(candidates).containsSubsequence("candidate-older", "candidate-newer").doesNotContain("candidate-running");
     }
