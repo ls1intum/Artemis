@@ -63,9 +63,11 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinuteAspect;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
+import de.tum.cit.aet.artemis.core.util.RateLimitTestUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -120,6 +122,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     protected String getTestPrefix() {
         return TEST_PREFIX;
     }
+
+    @Autowired
+    private LimitRequestsPerMinuteAspect requestLimitAspect;
 
     @Autowired
     private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
@@ -1545,6 +1550,25 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.OK);
         }
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testJoiningTooOftenIsRejected() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(2),
+                QuizMode.BATCHED);
+        QuizBatch batch = new QuizBatch();
+        batch.setStartTime(ZonedDateTime.now().minusMinutes(1));
+        batch.setPassword("12345678");
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
+        String joinUrl = "/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join";
+
+        RateLimitTestUtil.withRateLimits(requestLimitAspect, properties -> properties.setQuizBatchJoinRequestsPerMinute(2), () -> {
+            request.postWithResponseBody(joinUrl, new QuizBatchJoinDTO("00000001"), QuizBatch.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody(joinUrl, new QuizBatchJoinDTO("00000002"), QuizBatch.class, HttpStatus.BAD_REQUEST);
+            // once the budget is used up, further attempts are refused before the batch password is compared
+            request.postWithResponseBody(joinUrl, new QuizBatchJoinDTO("12345678"), QuizBatch.class, HttpStatus.TOO_MANY_REQUESTS);
+        });
     }
 
     /**

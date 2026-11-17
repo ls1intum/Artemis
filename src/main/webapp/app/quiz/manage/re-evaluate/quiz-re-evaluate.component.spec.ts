@@ -10,7 +10,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -23,7 +23,6 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
 import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
@@ -87,7 +86,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -355,7 +354,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         child.handleAddFile({ fileName: 'diagram.png', file });
         vi.spyOn(comp, 'reEvaluateDragAndDropQuestionComponents').mockReturnValue([child]);
         const close = new Subject<boolean>();
-        const dialog = Object.assign(new DynamicDialogRef(), { onClose: close });
+        const dialog = Object.assign(new TumAetUiDialogRef(vi.fn(), vi.fn()), { onClose: close });
         const open = vi.spyOn(comp.popupService, 'open').mockResolvedValue(dialog);
         comp.quizExercise().title = 'Changed title';
         comp.cacheValidation();

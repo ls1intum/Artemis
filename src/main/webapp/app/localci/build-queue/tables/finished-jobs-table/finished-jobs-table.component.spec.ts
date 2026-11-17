@@ -102,6 +102,26 @@ describe('FinishedJobsTableComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should show the display name of the build agent in the course view, where no address is sent', () => {
+        fixture.componentRef.setInput('isAdminView', false);
+        fixture.componentRef.setInput('buildJobs', [{ ...mockFinishedJobs[0], buildAgentAddress: undefined, buildAgentDisplayName: 'Agent One' }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('Agent One');
+    });
+
+    it.each([true, false])('should make the build agent column sortable only in the administration (admin view: %s)', (isAdminView) => {
+        fixture.componentRef.setInput('isAdminView', isAdminView);
+        fixture.componentRef.setInput('buildJobs', mockFinishedJobs);
+        fixture.detectChanges();
+
+        const agentHeader = Array.from(fixture.nativeElement.querySelectorAll('th')).find((th) =>
+            (th as HTMLElement).querySelector('[jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"]'),
+        ) as HTMLElement;
+        expect(agentHeader).toBeTruthy();
+        expect(agentHeader.hasAttribute('aria-sort')).toBe(isAdminView);
+    });
+
     it('should display finished jobs', () => {
         fixture.componentRef.setInput('buildJobs', mockFinishedJobs);
         fixture.detectChanges();
