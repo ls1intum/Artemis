@@ -17,6 +17,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.account.repository.UserCreationLockRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseRequest;
 import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
@@ -24,12 +26,33 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequest, Long> {
+public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequest, Long>, UserCreationLockRepository {
 
     @EntityGraph(type = LOAD, attributePaths = { "requester" })
     Optional<CourseRequest> findOneWithEagerRelationshipsById(long id);
 
     Optional<CourseRequest> findOneByShortNameIgnoreCase(String shortName);
+
+    long countByRequesterIdAndStatus(long requesterId, CourseRequestStatus status);
+
+    /**
+     * Inserts a request only while the requester has room for another pending request. The parent-row lock also
+     * serializes creation when the requester has no pending requests yet.
+     *
+     * @param courseRequest          the new pending request
+     * @param maximumPendingRequests the pending request limit
+     * @return the persisted request
+     */
+    @Transactional
+    default CourseRequest saveWithPendingLimit(CourseRequest courseRequest, int maximumPendingRequests) {
+        long requesterId = courseRequest.getRequester().getId();
+        lockUserForCreation(requesterId);
+        if (countByRequesterIdAndStatus(requesterId, CourseRequestStatus.PENDING) >= maximumPendingRequests) {
+            throw new BadRequestAlertException("There are too many course requests waiting for a decision, please wait for a decision before you send another one",
+                    CourseRequest.ENTITY_NAME, "courseRequestTooManyPending");
+        }
+        return save(courseRequest);
+    }
 
     @Transactional // ok because of delete
     @Modifying

@@ -27,6 +27,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         HelpIconComponent,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
     ],
 })
 export class TextBlockFeedbackEditorComponent {
