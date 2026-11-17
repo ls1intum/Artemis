@@ -5,7 +5,15 @@
             <div id="name-section" class="flex flex-col gap-1 px-2 py-1">
                 @if (canEditName()) {
                     <tumaet-ui-form-field [label]="'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate" controlId="name-input" [invalid]="!!nameError()">
-                        <input tumAetUiInput tumAetUiInputSize="small" class="w-full" [ngModel]="editableName()" (ngModelChange)="onNameInput($event)" />
+                        <input
+                            id="name-input"
+                            tumAetUiInput
+                            tumAetUiInputSize="small"
+                            class="w-full"
+                            [attr.aria-label]="'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate"
+                            [ngModel]="editableName()"
+                            (ngModelChange)="onNameInput($event)"
+                        />
                         <ng-container tumAetUiFormFieldError>
                             @if (nameError(); as error) {
                                 @if (error === 'required') {
@@ -32,9 +40,11 @@
                 @if (!readOnlyMode() && canChangeChannelProperties(channel)) {
                     <tumaet-ui-form-field [label]="'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate" controlId="topic-input">
                         <textarea
+                            id="topic-input"
                             tumAetUiInput
                             tumAetUiInputSize="small"
                             class="field-sizing-content w-full"
+                            [attr.aria-label]="'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate"
                             [ngModel]="editableTopic()"
                             (ngModelChange)="onTopicInput($event)"
                             rows="2"
@@ -55,9 +65,11 @@
                 @if (!readOnlyMode() && canChangeChannelProperties(channel)) {
                     <tumaet-ui-form-field [label]="'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate" controlId="description-input">
                         <textarea
+                            id="description-input"
                             tumAetUiInput
                             tumAetUiInputSize="small"
                             class="field-sizing-content w-full"
+                            [attr.aria-label]="'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate"
                             [ngModel]="editableDescription()"
                             (ngModelChange)="onDescriptionInput($event)"
                             rows="2"

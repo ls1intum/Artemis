@@ -12,10 +12,12 @@
                     <jhi-channel-icon [isPublic]="isPublicControl?.value" [isAnnouncementChannel]="isisAnnouncementChannelControl?.value" />
                 </tumaet-ui-input-group-addon>
                 <input
+                    id="name"
                     type="text"
                     tumAetUiInput
                     cdkFocusInitial
                     formControlName="name"
+                    [attr.aria-label]="'artemisApp.dialogs.createChannel.channelForm.nameInput.label' | artemisTranslate"
                     [placeholder]="'artemisApp.dialogs.createChannel.channelForm.nameInput.placeholder' | artemisTranslate"
                 />
             </tumaet-ui-input-group>
@@ -38,7 +40,13 @@
             [hint]="'artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp' | artemisTranslate"
             [invalid]="!!descriptionControl?.invalid && (!!descriptionControl?.dirty || !!descriptionControl?.touched)"
         >
-            <input type="text" tumAetUiInput formControlName="description" />
+            <input
+                id="description"
+                type="text"
+                tumAetUiInput
+                formControlName="description"
+                [attr.aria-label]="'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label' | artemisTranslate"
+            />
             <div tumAetUiFormFieldError>
                 @if (descriptionControl?.errors?.maxlength) {
                     <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError" [translateValues]="{ max: '250' }"></div>
