@@ -148,11 +148,15 @@ def wrapper_versions(text: str) -> Versions:
 
 
 def cargo_lock_versions(text: str) -> Versions:
-    """Versions of the crates a ``Cargo.lock`` resolves from a registry, by crate name. Path crates are built, not downloaded."""
+    """Versions of the crates a ``Cargo.lock`` resolves from a registry or a repository, by crate name. Path crates are built, not downloaded.
+
+    The same version of a crate from a repository can come from another commit, so its source with the locked commit is part of the value.
+    """
     versions: Versions = {}
     for package in tomllib.loads(text).get("package", []):
-        if "source" in package:
-            versions.setdefault(package["name"], set()).add(package["version"])
+        source = package.get("source")
+        if source:
+            versions.setdefault(package["name"], set()).add(f"{package['version']} ({source})" if source.startswith("git+") else package["version"])
     return versions
 
 
@@ -174,11 +178,16 @@ def swift_package_versions(text: str) -> Versions:
 
 
 def npm_lock_versions(text: str) -> Versions:
-    """Versions of the packages an npm ``package-lock.json`` installs, by package name. Workspaces and links are not downloaded."""
+    """Versions of the packages an npm ``package-lock.json`` installs, by package name. Workspaces and links are not downloaded.
+
+    The same version of a package from a repository can come from another commit, so its source with the locked commit is part of the value.
+    """
     versions: Versions = {}
     for path, package in json.loads(text).get("packages", {}).items():
         if "node_modules" in path.split("/") and "version" in package and not package.get("link"):
-            versions.setdefault(path.rpartition("node_modules/")[2], set()).add(package["version"])
+            resolved = package.get("resolved", "")
+            version = f"{package['version']} ({resolved})" if resolved.startswith("git+") else package["version"]
+            versions.setdefault(path.rpartition("node_modules/")[2], set()).add(version)
     return versions
 
 

@@ -407,6 +407,15 @@ class CargoLockTest(unittest.TestCase):
     def test_only_crates_from_a_registry_are_compared(self):
         self.assertEqual(sync_check.versions_of("Cargo.lock", CARGO_LOCK), {"rand": {"0.9.4"}})
 
+    def test_a_crate_from_a_repository_is_compared_with_its_locked_commit(self):
+        lock = '[[package]]\nname = "tool"\nversion = "1.0.0"\nsource = "git+https://example.com/tool.git?tag=v1#{commit}"\n'
+        template = sync_check.versions_of("Cargo.lock", lock.format(commit="a" * 40))
+        image = sync_check.versions_of("Cargo.lock", lock.format(commit="b" * 40))
+        problems = sync_check.compare(template, image)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertTrue(problems[0].startswith("tool 1.0.0 (git+https://example.com/tool.git?tag=v1#aaaa"), problems)
+        self.assertEqual(sync_check.compare(template, template), [])
+
     def _fetch(self, image_lock: str, requested: list[str]):
         def fetch(url: str) -> str:
             requested.append(url)
@@ -467,6 +476,15 @@ class NpmAndSwiftTest(unittest.TestCase):
             sync_check.versions_of("package-lock.json", NPM_LOCK),
             {"@types/node": {"20.19.43"}, "minimatch": {"3.1.5", "10.2.6"}},
         )
+
+    def test_a_package_from_a_repository_is_compared_with_its_locked_commit(self):
+        lock = '{{"packages": {{"node_modules/tool": {{"version": "1.0.0", "resolved": "git+ssh://git@example.com/tool.git#{commit}"}}}}}}'
+        template = sync_check.versions_of("package-lock.json", lock.format(commit="a" * 40))
+        image = sync_check.versions_of("package-lock.json", lock.format(commit="b" * 40))
+        self.assertEqual(len(sync_check.compare(template, image)), 1)
+        self.assertEqual(sync_check.compare(template, template), [])
+        registry = '{"packages": {"node_modules/tool": {"version": "1.0.0", "resolved": "https://registry.npmjs.org/tool/-/tool-1.0.0.tgz"}}}'
+        self.assertEqual(sync_check.versions_of("package-lock.json", registry), {"tool": {"1.0.0"}})
 
     def test_a_typescript_package_the_image_lacks_is_reported(self):
         stale = '{"packages": {"node_modules/minimatch": {"version": "10.2.6"}}}'
