@@ -1,6 +1,6 @@
-<span class="badge" [class.on-colored-background]="onColoredBackground()" [ngbTooltip]="tooltip">
-    @if (icon) {
-        <fa-icon [icon]="icon!" />
+<span class="file-browser-badge" [class.file-browser-badge--with-icon]="isReviewComment()" [class.on-colored-background]="onColoredBackground()" [ngbTooltip]="tooltip">
+    @if (isReviewComment()) {
+        <fa-icon [icon]="faComments" aria-hidden="true" />
     }
     <span>{{ badge().count }}</span>
 </span>

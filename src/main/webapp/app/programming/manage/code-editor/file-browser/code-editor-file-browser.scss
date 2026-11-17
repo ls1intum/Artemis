@@ -10,9 +10,35 @@ File browser
         padding: 1rem 0.5rem;
     }
 
+    // The toolbar is a row of cells, each button as high as the toolbar and set off from the next by a border, like the icons of
+    // the collapsed panels and the collapse button of the right panel of the exercise details
     .card-second-header {
+        align-items: stretch;
+        padding: 0;
+
         button {
             width: 60px;
+            border: 0;
+            border-radius: 0;
+            border-right: var(--bs-border-width) solid var(--bs-border-color);
+
+            &:hover:not(:disabled),
+            &:focus-visible {
+                color: var(--bs-primary);
+                background: var(--hover-slightly-darker-body-bg);
+            }
+        }
+
+        // The buttons at the far end have their border on the side towards the rest
+        #compress_tree,
+        .collapse-panel-button {
+            border-right: 0;
+            border-left: var(--bs-border-width) solid var(--bs-border-color);
+        }
+
+        .collapse-panel-button {
+            width: 2.5rem;
+            padding: 0;
         }
     }
 }

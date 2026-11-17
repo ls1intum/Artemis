@@ -1,5 +1,5 @@
 <!-- As a page of its own, the editor is framed like the other editors of the course management, which sit on a module surface with a gutter. -->
-<div [id]="'exercise-' + exercise()?.id" [class.module-bg]="fullPage()" [class.p-3]="fullPage()" [class.pt-1]="fullPage()">
+<div class="h-full" [id]="'exercise-' + exercise()?.id" [class.module-bg]="fullPage()" [class.p-3]="fullPage()" [class.pt-1]="fullPage()">
     @if (loadingParticipation() || participationCouldNotBeFetched()) {
         <nav class="card">
             <div class="card-body">
@@ -22,13 +22,16 @@
     @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
-            [editable]="!repositoryIsLocked()"
+            [editable]="!repositoryIsLocked() && viewedResultId() === undefined"
+            [commitId]="viewedCommitHash()"
             [participation]="participation()"
             [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment()"
             [readOnlyManualFeedback]="true"
             [course]="course()"
             [showNavbar]="!lightweight()"
+            [generalFeedbackCount]="unreferencedFeedback.length"
+            [fillHeight]="true"
         >
             <div editorTitle>
                 <span>{{ exercise()?.title }}</span>
@@ -96,11 +99,8 @@
                 [personalParticipation]="!fullPage()"
                 class="instructions-wrapper__content card-body p-0"
             />
+            <!-- Shown as a tab beside the build output -->
+            <jhi-general-feedback editorBottomFeedback [feedbacks]="unreferencedFeedback" [course]="course()" [showTitle]="false" />
         </jhi-code-editor-container>
     }
-    <div class="row ms-0">
-        @if (unreferencedFeedback.length > 0) {
-            <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true" [course]="course()" />
-        }
-    </div>
 </div>

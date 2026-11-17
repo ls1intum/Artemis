@@ -88,7 +88,7 @@ describe('ExerciseSplitPanelComponent', () => {
             .overrideComponent(ExerciseSplitPanelComponent, {
                 set: {
                     template: `
-                        <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()">
+                        <jhi-resizable-panels [flushLeftPanel]="flushEditorPanel()" [leftMinSizePercent]="leftMinSizePercent()">
                             @if (showEditorPanel()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
@@ -146,6 +146,61 @@ describe('ExerciseSplitPanelComponent', () => {
 
         const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
         expect(panels.flushLeftPanel()).toBe(true);
+    });
+
+    it('should make the code editor panel full bleed, like the modeling editor', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(panels.flushLeftPanel()).toBe(true);
+    });
+
+    it.each([
+        [ExerciseType.PROGRAMMING, 36],
+        [ExerciseType.TEXT, 36],
+        [ExerciseType.MODELING, 36],
+        [ExerciseType.FILE_UPLOAD, 0],
+        [ExerciseType.QUIZ, 0],
+    ])('should keep the share of the %s editor panel at %s percent', (type, share) => {
+        fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.leftMinSizePercent()).toBe(share);
+    });
+
+    it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should make the %s editor panel full bleed, as the editor adds its own padding', (type) => {
+        fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(panels.flushLeftPanel()).toBe(true);
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
+        'should offer the rating and the complaint below the %s exercise details for a tutor assessment',
+        (type) => {
+            fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+            fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
+            fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.MANUAL } as Result);
+
+            expect(component.showRating()).toBe(true);
+            expect(component.showComplaintView()).toBe(true);
+        },
+    );
+
+    it('should not offer the rating or the complaint for an automatic result unless complaints about it are allowed', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
+        fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.AUTOMATIC } as Result);
+
+        expect(component.showRating()).toBe(false);
+        expect(component.showComplaintView()).toBe(false);
+
+        fixture.componentRef.setInput('allowComplaintsForAutomaticAssessments', true);
+        expect(component.showComplaintView()).toBe(true);
     });
 
     it('should not make the left panel full bleed while the modeling exercise has no editor panel, so the problem statement keeps its padding', () => {
@@ -250,30 +305,6 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
-    });
-
-    it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
-        'should offer the rating and the complaint below the %s exercise details for a tutor assessment',
-        (type) => {
-            fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
-            fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
-            fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.MANUAL } as Result);
-
-            expect(component.showRating()).toBe(true);
-            expect(component.showComplaintView()).toBe(true);
-        },
-    );
-
-    it('should not offer the rating or the complaint for an automatic result unless complaints about it are allowed', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
-        fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
-        fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.AUTOMATIC } as Result);
-
-        expect(component.showRating()).toBe(false);
-        expect(component.showComplaintView()).toBe(false);
-
-        fixture.componentRef.setInput('allowComplaintsForAutomaticAssessments', true);
-        expect(component.showComplaintView()).toBe(true);
     });
 
     describe('exercise details panel', () => {
