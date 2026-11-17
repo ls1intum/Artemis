@@ -180,6 +180,11 @@ public class ProgrammingExerciseImportBasicService {
         }
         newExercise.validateDates();
 
+        // Resolve every selected competency before the first write, including the submission policy. A selection may
+        // have been deleted while the import form was open; discovering that after saving would leave an incomplete import.
+        var competencyLinks = competencyExerciseLinkService.resolveCompetencyLinksForCreation(newExercise,
+                competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise));
+
         // Persist the submission policy (as a fresh entity) up front for the same reason.
         importSubmissionPolicy(newExercise);
 
@@ -190,7 +195,6 @@ public class ProgrammingExerciseImportBasicService {
         // Persist the exercise once (cascading the grading criteria) so that the template and solution participations,
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
-        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         // An exam exercise is always individual: whatever team settings the request brought along are ignored, and its permanent
         // row keeps the defaults.
         final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
@@ -204,7 +208,10 @@ public class ProgrammingExerciseImportBasicService {
         final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.initializeFor(newExercise, desiredTeamAssignmentConfig);
         final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.initializeFor(newExercise, desiredPlagiarismDetectionConfig);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
+            for (var link : competencyLinks) {
+                link.setExercise(newExercise);
+            }
+            newExercise.setCompetencyLinks(competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
         }
 

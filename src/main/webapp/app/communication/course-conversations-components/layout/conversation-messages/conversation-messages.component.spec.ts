@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
@@ -17,6 +16,7 @@ import { Conversation, ConversationDTO, ConversationType } from 'app/communicati
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Directive, NO_ERRORS_SCHEMA, type WritableSignal, input, output, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -86,7 +86,6 @@ examples.forEach((activeConversation) => {
                 providers: [
                     MockProvider(CourseConversationsService),
                     MockProvider(CommunicationService),
-                    MockProvider(DialogService),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: AccountService, useClass: MockAccountService },
                 ],
@@ -984,7 +983,7 @@ examples.forEach((activeConversation) => {
 
         if (getAsChannelDTO(activeConversation)?.isAnnouncementChannel) {
             it('should display the "new announcement" button when the conversation is an announcement channel', () => {
-                const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
+                const announcementButton = fixture.debugElement.query(By.directive(TumAetUiButtonDirective));
                 expect(announcementButton).toBeTruthy(); // Check if the button is present
                 expect(component.isHiddenInputFull()).toBeFalsy();
                 expect(component.isHiddenInputWithCallToAction()).toBeTruthy();
@@ -1629,7 +1628,6 @@ describe('ConversationMessagesComponent before the container is rendered', () =>
             providers: [
                 MockProvider(CourseConversationsService),
                 MockProvider(CommunicationService),
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
             ],

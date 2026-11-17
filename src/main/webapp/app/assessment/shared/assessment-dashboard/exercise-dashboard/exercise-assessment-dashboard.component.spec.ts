@@ -879,11 +879,30 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
-    it('generate exercise detail link', () => {
-        comp.exercise.set(modelingExercise);
+    it('generate exercise detail link of a course exercise', () => {
+        comp.exercise.set({ ...modelingExercise, exerciseGroup: undefined });
         comp.courseId.set(4);
         const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
+    });
+
+    it('generates the exercise detail link of an exam exercise below its exam', () => {
+        comp.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, id: 7, exerciseGroup: { id: 8, exam: { id: 9 } } as ExerciseGroup });
+        comp.courseId.set(4);
+        expect(comp.exerciseDetailsLink()).toEqual(['/course-management', 4, 'exams', 9, 'exercise-groups', 8, 'programming-exercises', 7]);
+    });
+
+    it.each([
+        { description: 'a tutor of an exam programming exercise', editor: false, group: true, type: ExerciseType.PROGRAMMING, expected: false },
+        { description: 'an editor of an exam programming exercise', editor: true, group: true, type: ExerciseType.PROGRAMMING, expected: true },
+        { description: 'a tutor of an exam modeling exercise, which the server gives to tutors', editor: false, group: true, type: ExerciseType.MODELING, expected: true },
+        { description: 'a tutor of a course exercise', editor: false, group: false, type: ExerciseType.PROGRAMMING, expected: true },
+    ])('should offer the exercise details to $description: $expected', ({ editor, group, type, expected }) => {
+        vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(editor);
+        comp.courseId.set(4);
+        comp.exercise.set({ ...exercise, type, exerciseGroup: group ? ({ id: 8, exam: { id: 9 } } as ExerciseGroup) : undefined });
+
+        expect(comp.canOpenExerciseDetails()).toBe(expected);
     });
 
     it('should toggle second correction', () => {

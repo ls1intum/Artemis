@@ -1,40 +1,38 @@
 <div>
     <!-- Projected into the shell title bar, like the management FAQ page, so this page does not render a second bar. -->
-    <div *titleBarActions class="d-flex justify-content-between gap-2">
-        <jhi-search-filter class="flex-grow-1" (newSearchEvent)="setSearchValue($event)" />
-        <div class="ms-2 me-2" aria-label="Filter Dropdown" ngbDropdown>
-            <button
-                type="button"
-                class="btn"
-                [ngClass]="{ 'btn-secondary': activeFilters().size === 0, 'btn-success': activeFilters().size > 0 }"
-                ngbDropdownToggle
-                id="filter-dropdown-button"
-            >
-                <fa-icon [icon]="faFilter" />
-                <span class="d-s-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters().size }"></span>
-            </button>
-            @if (hasCategories()) {
-                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                    @for (category of existingCategories(); track category) {
-                        <li>
-                            <label class="d-flex align-items-center">
-                                <input
-                                    id="filter-{{ category.category }}"
-                                    class="ms-2 form-check-input"
-                                    (change)="toggleFilters(category.category!)"
-                                    [checked]="activeFilters().has(category.category!)"
-                                    type="checkbox"
-                                />
-                                <jhi-custom-exercise-category-badge [category]="category" class="mt-2 ms-1" />
-                            </label>
-                        </li>
-                    }
-                </ul>
-            }
-        </div>
+    <div *titleBarActions class="flex justify-between gap-2">
+        <jhi-search-filter class="grow" (newSearchEvent)="setSearchValue($event)" />
+        <button
+            type="button"
+            tumAetUiButton
+            class="mx-2"
+            [severity]="activeFilters().size === 0 ? 'secondary' : 'success'"
+            [tumAetUiPopoverTrigger]="filters"
+            [disabled]="!hasCategories()"
+            id="filter-dropdown-button"
+        >
+            <fa-icon [icon]="faFilter" />
+            <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters().size }"></span>
+        </button>
+        <tumaet-ui-popover #filters [ariaLabel]="'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters().size }">
+            <div class="flex flex-col gap-2">
+                @for (category of existingCategories(); track category) {
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
+                            [inputId]="'filter-' + category.category"
+                            [checked]="activeFilters().has(category.category!)"
+                            (changed)="toggleFilters(category.category!)"
+                        />
+                        <label class="flex cursor-pointer items-center" [for]="'filter-' + category.category">
+                            <jhi-custom-exercise-category-badge [category]="category" />
+                        </label>
+                    </div>
+                }
+            </div>
+        </tumaet-ui-popover>
     </div>
     @if (faqs().length === 0) {
-        <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noExisting"></h2>
+        <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noExisting">Currently, there is no FAQ available for this course.</h2>
     }
     <div>
         @for (faq of filteredFaqs(); track faq) {
@@ -44,6 +42,6 @@
         }
     </div>
     @if (filteredFaqs().length === 0 && faqs().length > 0) {
-        <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noMatching"></h2>
+        <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noMatching">There is no FAQ that matches the combination of filter and search criteria.</h2>
     }
 </div>
