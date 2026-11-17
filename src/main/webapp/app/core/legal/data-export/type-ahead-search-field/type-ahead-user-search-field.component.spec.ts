@@ -7,7 +7,6 @@ import { User } from 'app/account/user/user.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
-import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -108,7 +107,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         vi.spyOn(userService, 'search').mockReturnValue(searchSubject.asObservable());
 
         // A valid query starts a search that has not resolved yet.
-        component.onComplete({ query: 'abc' } as AutoCompleteCompleteEvent);
+        component.onComplete({ query: 'abc' });
         // The user deletes back below the minimum length before it resolves (PrimeNG no longer fires completeMethod).
         component.loginOrName.set('ab');
         component.onChange();

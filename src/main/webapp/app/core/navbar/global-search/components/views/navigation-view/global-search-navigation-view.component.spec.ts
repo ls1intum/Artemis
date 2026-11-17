@@ -374,7 +374,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
                 const list = fixture.nativeElement.querySelector('.search-results-list');
-                expect(list.classList).not.toContain('mt-3');
+                expect(list.classList).not.toContain('search-results-spaced');
             });
 
             it('should add top margin to the results list only while the iris card actually occupies space', () => {
@@ -387,7 +387,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 (irisChild as unknown as { occupiesSpace: () => boolean }).occupiesSpace = () => true;
                 fixture.detectChanges();
                 const list = fixture.nativeElement.querySelector('.search-results-list');
-                expect(list.classList).toContain('mt-3');
+                expect(list.classList).toContain('search-results-spaced');
             });
 
             it('should render no results state', () => {
@@ -436,7 +436,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should render loading state', () => {
                 fixture.componentRef.setInput('isLoading', true);
                 fixture.detectChanges();
-                const skeletons = fixture.nativeElement.querySelectorAll('p-skeleton');
+                const skeletons = fixture.nativeElement.querySelectorAll('.skeleton-block');
                 expect(skeletons.length).toBeGreaterThan(0);
             });
         });

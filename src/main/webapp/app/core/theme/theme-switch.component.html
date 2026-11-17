@@ -1,30 +1,9 @@
-<ng-template #popContent>
-    <div class="popover-content" (mouseenter)="openPopover()" id="theme-switch-popover-content">
-        <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode"></span> ☾</div>
-        <div class="switch-box">
-            <div><fa-icon [icon]="faSync" /> <span jhiTranslate="artemisApp.theme.sync"></span></div>
-            <div class="form-switch">
-                <input
-                    [attr.aria-label]="'artemisApp.theme.sync' | artemisTranslate"
-                    class="form-check-input"
-                    type="checkbox"
-                    (click)="toggleSynced()"
-                    [checked]="isSyncedWithOS()"
-                />
-            </div>
-        </div>
-    </div>
-</ng-template>
 <div (mouseenter)="openPopover()" (mouseleave)="mouseLeave()" class="wrapper">
     <div
         class="toggle-popover-wrapper"
         (click)="toggleTheme()"
-        [ngbPopover]="popContent"
-        [triggers]="''"
-        #popover="ngbPopover"
-        [autoClose]="false"
-        [animation]="true"
-        [placement]="popoverPlacement()"
+        cdkOverlayOrigin
+        #popoverOrigin="cdkOverlayOrigin"
         #keyboardAction13
         role="button"
         tabindex="0"
@@ -32,6 +11,7 @@
         (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
         (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+        (keydown.tab)="focusPopover($event)"
     >
         <div class="theme-toggle" [class.dark]="isDarkTheme()" id="theme-toggle">
             <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
@@ -54,3 +34,27 @@
         </div>
     </div>
 </div>
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="popoverOrigin"
+    [cdkConnectedOverlayOpen]="isPopoverOpen()"
+    [cdkConnectedOverlayPositions]="positions()"
+    (detach)="closePopover()"
+>
+    <div
+        class="theme-popover rounded-md border border-border bg-overlay-background text-text shadow-lg"
+        role="dialog"
+        [attr.aria-label]="'artemisApp.theme.darkMode' | artemisTranslate"
+        (mouseenter)="openPopover()"
+        (mouseleave)="mouseLeave()"
+        (keydown.tab)="leavePopover($event, keyboardAction13)"
+        (keydown.shift.tab)="leavePopover($event, keyboardAction13)"
+        id="theme-switch-popover-content"
+    >
+        <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode"></span> ☾</div>
+        <div class="switch-box">
+            <div><fa-icon [icon]="faSync" /> <span jhiTranslate="artemisApp.theme.sync"></span></div>
+            <tumaet-ui-toggle-switch [ariaLabel]="'artemisApp.theme.sync' | artemisTranslate" [ngModel]="isSyncedWithOS()" (changed)="toggleSynced()" />
+        </div>
+    </div>
+</ng-template>
