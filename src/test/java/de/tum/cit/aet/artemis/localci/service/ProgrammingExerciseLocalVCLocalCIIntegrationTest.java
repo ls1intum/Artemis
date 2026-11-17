@@ -457,6 +457,51 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testUpdateProgrammingExercise_withoutSubmissionPolicyKeepsTheCurrentPolicy() throws Exception {
+        long policyId = addLockRepositoryPolicyWithLimit3();
+        // the exercise of the request carries no policy, as the request of a client that does not send it
+        programmingExercise.setSubmissionPolicy(null);
+
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.OK);
+
+        assertPolicyUnchanged(policyId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testUpdateProgrammingExercise_withASubmissionPolicyDoesNotChangeTheCurrentPolicy() throws Exception {
+        long policyId = addLockRepositoryPolicyWithLimit3();
+        var otherPolicy = new LockRepositoryPolicy();
+        otherPolicy.setId(policyId + 1000);
+        otherPolicy.setSubmissionLimit(9);
+        otherPolicy.setActive(true);
+        programmingExercise.setSubmissionPolicy(otherPolicy);
+
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.OK);
+
+        assertPolicyUnchanged(policyId);
+    }
+
+    private long addLockRepositoryPolicyWithLimit3() {
+        var policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(3);
+        policy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
+        return submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()).getId();
+    }
+
+    private void assertPolicyUnchanged(long policyId) {
+        var keptPolicy = submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId());
+        assertThat(keptPolicy).isNotNull();
+        assertThat(keptPolicy.getId()).isEqualTo(policyId);
+        assertThat(keptPolicy.getSubmissionLimit()).isEqualTo(3);
+        assertThat(keptPolicy.isActive()).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateProgrammingExercise_duplicateBuildPhaseNames_caseInsensitive() throws Exception {
         var updatedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);

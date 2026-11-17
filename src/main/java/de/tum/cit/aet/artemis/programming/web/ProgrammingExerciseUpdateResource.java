@@ -257,7 +257,8 @@ public class ProgrammingExerciseUpdateResource {
             Replaces the editable settings of an existing programming exercise, so send the whole exercise: omitted flags reset to false. \
             shortName, staticCodeAnalysisEnabled, the checkout paths and the course cannot be changed. A request with a personal access \
             token can change only an exercise that students cannot see yet (its releaseDate is in the future) and that has no student \
-            participations, and the change must keep releaseDate in the future. Anything else can be changed only in the Artemis web interface.""")
+            participations, and the change must keep releaseDate in the future. Anything else can be changed only in the Artemis web interface. \
+            The update does not change the submission policy of the exercise, whether or not submissionPolicy is sent; the submission-policy endpoints of the exercise add, change and remove it.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText,
             @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
@@ -452,8 +453,8 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
 
-        // toEntity() copies the id through, so an existing policy keeps its identity instead of inserting a second row
-        exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
+        // The update leaves the submission policy as it is, whether or not the request carries one: adding, changing and removing it are the requests of the
+        // submission policy endpoints, and removing it needs the instructor role
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 

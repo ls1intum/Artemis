@@ -86,7 +86,9 @@ paths:
         access token can change only an exercise that students cannot see yet (its
         releaseDate is in the future) and that has no student participations, and
         the change must keep releaseDate in the future. Anything else can be changed
-        only in the Artemis web interface.'
+        only in the Artemis web interface. The update does not change the submission
+        policy of the exercise, whether or not submissionPolicy is sent; the submission-policy
+        endpoints of the exercise add, change and remove it.'
       operationId: updateProgrammingExercise
       parameters:
       - name: notificationText
