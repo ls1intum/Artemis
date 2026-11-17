@@ -29,6 +29,11 @@ import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 @Service
 public class UserSshPublicKeyService {
 
+    /**
+     * The maximum number of SSH public keys a user can have registered at the same time.
+     */
+    public static final int MAX_KEYS_PER_USER = 50;
+
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
@@ -37,7 +42,8 @@ public class UserSshPublicKeyService {
 
     /**
      * Creates a new SSH public key for the specified user, ensuring that the key is unique
-     * based on its SHA-512 hash fingerprint. If the key already exists, an exception is thrown.
+     * based on its SHA-512 hash fingerprint. If the key is already registered, a generic validation error is returned that is the same
+     * for a key of the same user and a key of another user. A user can have at most {@link #MAX_KEYS_PER_USER} keys and an expiry date must not lie in the past.
      *
      * @param user         the {@link User} for whom the SSH key is being created.
      * @param keyEntry     the {@link AuthorizedKeyEntry} containing the SSH public key details, used to resolve the {@link PublicKey}.
@@ -47,8 +53,11 @@ public class UserSshPublicKeyService {
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
 
+        if (sshPublicKey.expiryDate() != null && sshPublicKey.expiryDate().isBefore(ZonedDateTime.now())) {
+            throw new BadRequestAlertException("The expiry date of the key must not lie in the past", "SSH key", "keyExpiryDateInPast", true);
+        }
         if (userSshPublicKeyRepository.findByKeyHash(keyHash).isPresent()) {
-            throw new BadRequestAlertException("Key already exists", "SSH key", "keyAlreadyExists", true);
+            throw new BadRequestAlertException("The key cannot be added", "SSH key", "keyNotAccepted", true);
         }
 
         UserSshPublicKey newUserSshPublicKey = new UserSshPublicKey();
@@ -63,7 +72,7 @@ public class UserSshPublicKeyService {
             newUserSshPublicKey.setExpiryDate(expiryDate);
         }
 
-        userSshPublicKeyRepository.save(newUserSshPublicKey);
+        userSshPublicKeyRepository.saveWithUserLimit(newUserSshPublicKey, MAX_KEYS_PER_USER);
     }
 
     /**
