@@ -675,6 +675,31 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "MODELING", "FILE_UPLOAD" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void selectedTeamAssessmentChecksDeadlineOnlyWhenStarting(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var url = assessmentStartUrl(type, submission.getId());
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+
+        request.get(url, HttpStatus.FORBIDDEN, String.class);
+        assertThat(resultRepository.existsBySubmissionId(submission.getId())).isFalse();
+
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exerciseRepository.save(exercise);
+        request.get(url, HttpStatus.OK, String.class);
+        var resultId = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResultForCorrectionRound(0).getId();
+
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        request.get(url, HttpStatus.OK, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).singleElement()
+                .satisfies(result -> assertThat(result.getId()).isEqualTo(resultId));
+    }
+
     /** Creates a released team exercise with a passed submission deadline. */
     private Exercise teamExercise(ExerciseType type) {
         Exercise exercise = switch (type) {

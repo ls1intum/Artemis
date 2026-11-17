@@ -85,6 +85,9 @@ public class ModelingSubmissionService extends SubmissionService {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
 
+        if (!modelingExercise.isExamExercise() && submission.getResultForCorrectionRound(correctionRound) == null) {
+            checkIfExerciseDueDateIsReached(modelingExercise);
+        }
         lockSubmission(submission, correctionRound);
         return submission;
     }

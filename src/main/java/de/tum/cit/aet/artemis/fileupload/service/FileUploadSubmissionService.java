@@ -267,6 +267,9 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams
+        if (!fileUploadExercise.isExamExercise() && fileUploadSubmission.getResultForCorrectionRound(correctionRound) == null) {
+            checkIfExerciseDueDateIsReached(fileUploadExercise);
+        }
         lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
     }
