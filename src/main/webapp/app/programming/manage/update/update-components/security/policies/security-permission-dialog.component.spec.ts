@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-import { SecurityFilePermission } from 'app/programming/shared/entities/security-policy.model';
+import { SecurityCommandPermission, SecurityFilePermission } from 'app/programming/shared/entities/security-policy.model';
 import { ResourceKind, ResourceRow, joinArguments, splitArguments } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 import { SecurityPermissionDialogComponent, joinList, splitList } from 'app/programming/manage/update/update-components/security/policies/security-permission-dialog.component';
 
@@ -73,6 +73,30 @@ describe('SecurityPermissionDialogComponent', () => {
         handlers.setFileAction('overwrite', true);
         handlers.save();
         expect(saved[0]).toEqual([{ ...edited, overwrite: true }]);
+    });
+
+    it('keeps the exact path and command of an edited row, also with surrounding spaces, and still refuses a blank one', () => {
+        open('files');
+        comp.path.set('" data/input.csv "');
+        handlers.setFileAction('read', true);
+        handlers.save();
+        const added = saved[0][0] as SecurityFilePermission;
+        expect(added.path).toBe(' data/input.csv ');
+
+        open('files', added);
+        handlers.setFileAction('overwrite', true);
+        handlers.save();
+        expect(saved[0]).toEqual([{ ...added, overwrite: true }]);
+
+        const command: SecurityCommandPermission = { command: 'run.sh ', arguments: ['-v'] };
+        open('commands', command);
+        comp.argumentsText.set('-q');
+        handlers.save();
+        expect(saved[0]).toEqual([{ command: 'run.sh ', arguments: ['-q'] }]);
+
+        open('files', added);
+        comp.path.set('   ');
+        expect(comp.problem()).toBe(PROBLEM + 'pathRequired');
     });
 
     it('refuses the same entry twice in one save', () => {

@@ -114,7 +114,8 @@ export class SecurityPermissionDialogComponent {
     readonly rows = computed<ResourceRow[]>(() => {
         switch (this.kind()) {
             case 'files': {
-                const paths = this.isEditing() ? [this.path().trim()] : (splitList(this.path()) ?? []);
+                // An edited row keeps its exact path, even with surrounding spaces, so saving it does not grant another target.
+                const paths = this.isEditing() ? [this.path()] : (splitList(this.path()) ?? []);
                 const actions = this.fileActions();
                 return paths.map(
                     (path) =>
@@ -136,7 +137,7 @@ export class SecurityPermissionDialogComponent {
             }
             case 'commands': {
                 const argumentList = splitArguments(this.argumentsText()) ?? [];
-                const commands = this.isEditing() ? [this.command().trim()] : (splitList(this.command()) ?? []);
+                const commands = this.isEditing() ? [this.command()] : (splitList(this.command()) ?? []);
                 return commands.map((command) => ({ command, arguments: argumentList }) satisfies SecurityCommandPermission);
             }
             case 'threads':
@@ -167,7 +168,7 @@ export class SecurityPermissionDialogComponent {
                 if (!this.isEditing() && splitList(this.path()) === undefined) {
                     return prefix + 'listQuote';
                 }
-                if (!this.rows().length || this.rows().some((row) => !(row as SecurityFilePermission).path)) {
+                if (!this.rows().length || this.rows().some((row) => !(row as SecurityFilePermission).path.trim())) {
                     return prefix + 'pathRequired';
                 }
                 break;
@@ -183,7 +184,7 @@ export class SecurityPermissionDialogComponent {
                 if (!this.isEditing() && splitList(this.command()) === undefined) {
                     return prefix + 'listQuote';
                 }
-                if (!this.rows().length || this.rows().some((row) => !(row as SecurityCommandPermission).command)) {
+                if (!this.rows().length || this.rows().some((row) => !(row as SecurityCommandPermission).command.trim())) {
                     return prefix + 'commandRequired';
                 }
                 if (!splitArguments(this.argumentsText())) {
