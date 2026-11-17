@@ -820,6 +820,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
             cloneWith(defaultSecondLayerDialogOptions, {
                 ariaLabel: this.translateService.instant('artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel'),
                 autoFocus: 'first-tabbable',
+                // The form is tall; the small preset wraps its texts so much that the create button leaves a 900px high window.
+                size: 'medium',
                 data: { course: this.course() },
             }),
         );

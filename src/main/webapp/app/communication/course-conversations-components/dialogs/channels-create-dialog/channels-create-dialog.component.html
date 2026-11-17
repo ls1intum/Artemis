@@ -25,7 +25,7 @@
                 <fa-icon [icon]="faXmark" />
             </button>
         </div>
-        <p class="m-0" jhiTranslate="artemisApp.dialogs.createChannel.description"></p>
+        <p class="m-0 text-sm" jhiTranslate="artemisApp.dialogs.createChannel.description"></p>
         <jhi-channel-form
             [canCreateAnnouncementChannel]="!!course()?.isAtLeastInstructor"
             (channelTypeChanged)="onChannelTypeChanged($event)"
