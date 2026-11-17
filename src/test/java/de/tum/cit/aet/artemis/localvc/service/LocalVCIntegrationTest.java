@@ -80,8 +80,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private static final String TEST_PREFIX = "localvcint";
 
-    // Measured baselines for one authenticated git request. Advertisements and transfers have separate audit entries.
-    // Upper bounds, so a new authentication query fails the build.
+    // Measured baselines for one authenticated git request; a clone or a push is two of these. Upper bounds, so a new
+    // query fails the build.
     //
     // The participation-token counts are the ones that matter for exam load: that is what students use. Password
     // authentication is more expensive because it falls through to the authentication manager, which re-reads the user,
@@ -193,8 +193,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
         request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
 
-        warmGitAuthorization(request, RepositoryActionType.READ);
-
         assertThatDb(() -> {
             localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
             return null;
@@ -216,8 +214,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
         request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
 
-        warmGitAuthorization(request, RepositoryActionType.READ);
-
         assertThatDb(() -> {
             localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
             return null;
@@ -236,19 +232,16 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
         request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
 
-        warmGitAuthorization(request, RepositoryActionType.WRITE);
-
         assertThatDb(() -> {
             localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
             return null;
-        }).hasBeenCalledAtMostTimes(GIT_TOKEN_PUSH_QUERY_COUNT + 1);
-        assertSinglePushAuditInsert();
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_PUSH_QUERY_COUNT);
     }
 
     /**
      * The push counterpart of {@link #testAuthenticateAndAuthorizeGitRequestQueryCount}. A push authorizes as WRITE,
-     * which additionally resolves whether the participation is locked. Its authentication budget is unchanged; the
-     * transfer now also writes its own audit entry instead of trying to amend an earlier advertisement.
+     * which additionally resolves whether the participation is locked; measured, that lands on the same count as a
+     * fetch, so both paths are pinned at the same number.
      */
     @Test
     void testAuthenticateAndAuthorizeGitPushQueryCount() throws Exception {
@@ -257,27 +250,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
         request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
 
-        warmGitAuthorization(request, RepositoryActionType.WRITE);
-
         assertThatDb(() -> {
             localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
             return null;
-        }).hasBeenCalledAtMostTimes(GIT_PUSH_AUTH_QUERY_COUNT + 1);
-        assertSinglePushAuditInsert();
-    }
-
-    private void warmGitAuthorization(MockHttpServletRequest request, RepositoryActionType action) throws Exception {
-        // Pin the frequent, steady-state request cost. First authentication and the once-per-day password notice have separate functional coverage.
-        var warmup = new MockHttpServletRequest(request.getMethod(), request.getRequestURI());
-        warmup.addHeader(HttpHeaders.AUTHORIZATION, request.getHeader(HttpHeaders.AUTHORIZATION));
-        localVCServletService.authenticateAndAuthorizeGitRequest(warmup, action);
-    }
-
-    /**
-     * The POST owns one audit row. Require that exact insert as well as the total bound above, so the extra statement cannot hide an authentication SELECT regression.
-     */
-    private void assertSinglePushAuditInsert() {
-        assertThat(queryInterceptor.getStatements()).filteredOn(sql -> sql.toLowerCase(Locale.ROOT).startsWith("insert into vcs_access_log ")).hasSize(1);
+        }).hasBeenCalledAtMostTimes(GIT_PUSH_AUTH_QUERY_COUNT);
     }
 
     @Test

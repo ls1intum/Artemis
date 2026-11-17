@@ -43,6 +43,25 @@ describe('ExamConductionCountsState', () => {
         expect(state.numberOfGeneratedStudentExams()).toBe(8);
     });
 
+    it('never shows more started than generated student exams while the response of a start is pending', () => {
+        state.initialize(checklist(1, 1, 0));
+        expect(state.numberOfStarted()).toBe(1);
+        expect(state.numberOfGeneratedStudentExams()).toBe(1);
+
+        // The next start is shown at once and its response is deferred: the total must already include the attempt that was started
+        state.started();
+
+        expect(fetchCounts).toHaveBeenCalledTimes(1);
+        expect(state.numberOfStarted()).toBe(2);
+        expect(state.numberOfGeneratedStudentExams()).toBeGreaterThanOrEqual(state.numberOfStarted());
+        const response = fetchCounts.mock.results[0].value;
+        // an attempt that was opened on the start page and is started now is already part of the authoritative total
+        response.next(counts(2, 2, 0));
+        response.complete();
+        expect(state.numberOfGeneratedStudentExams()).toBe(2);
+        expect(state.numberOfStarted()).toBe(2);
+    });
+
     it('lets slow requests complete and retains one trailing refresh through a continuous burst', () => {
         state.initialize(checklist(6, 5));
         state.started();
@@ -54,9 +73,9 @@ describe('ExamConductionCountsState', () => {
         expect(first.observed).toBe(true);
         expect(fetchCounts).toHaveBeenCalledTimes(1);
         first.next(counts(7, 6));
-        // A snapshot requested before the new events must not erase their optimistic increments.
+        // A snapshot requested before the new events must not erase their optimistic increments, and the total never lags behind them.
         expect(state.numberOfStarted()).toBe(26);
-        expect(state.numberOfGeneratedStudentExams()).toBe(7);
+        expect(state.numberOfGeneratedStudentExams()).toBe(26);
         first.complete();
         expect(fetchCounts).toHaveBeenCalledTimes(2);
         const trailing = fetchCounts.mock.results[1].value;
@@ -164,7 +183,8 @@ describe('ExamConductionCountsState', () => {
         request.next(counts(100, 100));
         vi.advanceTimersByTime(5000);
         expect(fetchCounts).toHaveBeenCalledTimes(1);
-        expect(state.numberOfGeneratedStudentExams()).toBe(6);
+        // the total never lags behind the two starts, and the response that came after the destroy changed nothing
+        expect(state.numberOfGeneratedStudentExams()).toBe(7);
     });
 
     it.each(['snapshot-before-event', 'event-before-response'])('reconciles regular exam counters for %s', (ordering) => {

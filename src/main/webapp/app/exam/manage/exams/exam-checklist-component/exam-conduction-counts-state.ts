@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { signal, untracked } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
@@ -42,17 +42,30 @@ export class ExamConductionCountsState {
             this.numberOfGeneratedStudentExams.update((count) => Math.max(count, checklist.numberOfGeneratedStudentExams ?? 0));
         }
         this.initialized = true;
+        this.keepCountsConsistent();
         this.scheduleRefresh();
     }
 
     started(): void {
         this.numberOfStarted.update((count) => count + 1);
+        this.keepCountsConsistent();
         this.changed();
     }
 
     submitted(): void {
         this.numberOfSubmitted.update((count) => count + 1);
+        this.keepCountsConsistent();
         this.changed();
+    }
+
+    /**
+     * Keeps what is displayed possible while the authoritative counts are on their way: a student exam exists before it is started. Without this, the start event of the next
+     * student raises the started count at once while the total waits for the response, which shows more than 100 percent.
+     */
+    private keepCountsConsistent(): void {
+        // Read untracked: the first statistics can arrive while an effect of the component runs, which must not start to depend on the started count and reset the state with it.
+        const started = untracked(this.numberOfStarted);
+        this.numberOfGeneratedStudentExams.update((count) => Math.max(count, started));
     }
 
     private changed(): void {
@@ -98,6 +111,7 @@ export class ExamConductionCountsState {
                     this.numberOfGeneratedStudentExams.update((count) => reconcile(count, counts.numberOfGeneratedStudentExams));
                     this.numberOfStarted.update((count) => reconcile(count, counts.numberOfExamsStarted));
                     this.numberOfSubmitted.update((count) => reconcile(count, counts.numberOfExamsSubmitted));
+                    this.keepCountsConsistent();
                 },
                 error: () => {
                     if (this.exam !== exam) {
