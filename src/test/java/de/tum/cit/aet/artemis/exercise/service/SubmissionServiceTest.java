@@ -676,7 +676,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @ParameterizedTest
-    @EnumSource(value = ExerciseType.class, names = { "MODELING", "FILE_UPLOAD" })
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void selectedTeamAssessmentChecksDeadlineOnlyWhenStarting(ExerciseType type) throws Exception {
         var exercise = teamExercise(type);
@@ -698,6 +698,42 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         request.get(url, HttpStatus.OK, String.class);
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).singleElement()
                 .satisfies(result -> assertThat(result.getId()).isEqualTo(resultId));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void selectedTeamAssessmentUsesItsOwnDeadline(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var regular = teamSubmission(exercise, tutor1, "own");
+        var extended = teamSubmission(exercise, tutor1, "anotherown");
+        var extendedParticipation = (StudentParticipation) extended.getParticipation();
+        extendedParticipation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        studentParticipationRepository.save(extendedParticipation);
+
+        request.get(assessmentStartUrl(type, regular.getId()), HttpStatus.OK, String.class);
+
+        var earlier = teamSubmission(exercise, tutor2, "other");
+        var earlierParticipation = (StudentParticipation) earlier.getParticipation();
+        earlierParticipation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(earlierParticipation);
+        var extendedUrl = assessmentStartUrl(type, extended.getId());
+        request.get(extendedUrl, HttpStatus.FORBIDDEN, String.class);
+        assertThat(resultRepository.existsBySubmissionId(extended.getId())).isFalse();
+
+        exercise.setDueDate(null);
+        exerciseRepository.save(exercise);
+        request.get(extendedUrl, HttpStatus.FORBIDDEN, String.class);
+        assertThat(resultRepository.existsBySubmissionId(extended.getId())).isFalse();
+
+        extendedParticipation.setIndividualDueDate(null);
+        studentParticipationRepository.save(extendedParticipation);
+        request.get(extendedUrl, HttpStatus.OK, String.class);
+
+        extendedParticipation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        studentParticipationRepository.save(extendedParticipation);
+        request.get(extendedUrl, HttpStatus.OK, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(extended.getId()).getManualResults()).hasSize(1);
     }
 
     /** Creates a released team exercise with a passed submission deadline. */

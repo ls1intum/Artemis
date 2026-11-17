@@ -652,10 +652,7 @@ public class SubmissionService {
     }
 
     /**
-     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
-     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
-     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
-     * necessarily have its exam loaded.
+     * Rejects negative rounds; callers validate the upper bound using the fully loaded exercise.
      *
      * @param correctionRound the correction round to check
      * @throws BadRequestAlertException if the correction round is negative
@@ -667,8 +664,7 @@ public class SubmissionService {
     }
 
     /**
-     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
-     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * Creates or locks an assessment for the requested round once the selected participation's deadline has passed.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -679,6 +675,10 @@ public class SubmissionService {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
+        if (result == null && !submission.getParticipation().getExercise().isExamExercise()
+                && ExerciseDateService.getDueDate(submission.getParticipation()).filter(ZonedDateTime.now()::isBefore).isPresent()) {
+            throw new AccessForbiddenException("The submission deadline has not passed yet.");
+        }
         if (submission.getParticipation().getExercise().isTeamMode() && result != null && result.getCompletionDate() != null) {
             return result;
         }
