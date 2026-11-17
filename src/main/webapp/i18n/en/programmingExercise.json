@@ -789,6 +789,7 @@
                             "portRange": "Enter a port between 0 and 65535.",
                             "commandRequired": "Enter a command.",
                             "argumentsQuote": "Close the double quote of the arguments.",
+                            "listQuote": "Close the double quote of the entry.",
                             "className": "Enter a fully qualified class name, e.g. java.lang.Thread.",
                             "threadCount": "Enter a whole number of at least 1.",
                             "packageName": "Enter a package name such as org.apache.commons.lang3.",

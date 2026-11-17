@@ -789,6 +789,7 @@
                             "portRange": "Gib einen Port zwischen 0 und 65535 ein.",
                             "commandRequired": "Gib einen Befehl ein.",
                             "argumentsQuote": "Schließe das doppelte Anführungszeichen der Argumente.",
+                            "listQuote": "Schließe das doppelte Anführungszeichen des Eintrags.",
                             "className": "Gib einen vollqualifizierten Klassennamen ein, z. B. java.lang.Thread.",
                             "threadCount": "Gib eine ganze Zahl von mindestens 1 ein.",
                             "packageName": "Gib einen Paketnamen wie org.apache.commons.lang3 ein.",

@@ -5,7 +5,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 
 import { SecurityFilePermission } from 'app/programming/shared/entities/security-policy.model';
 import { ResourceKind, ResourceRow, joinArguments, splitArguments } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
-import { SecurityPermissionDialogComponent, splitList } from 'app/programming/manage/update/update-components/security/policies/security-permission-dialog.component';
+import { SecurityPermissionDialogComponent, joinList, splitList } from 'app/programming/manage/update/update-components/security/policies/security-permission-dialog.component';
 
 const PROBLEM = 'artemisApp.programmingExercise.security.advanced.row.problem.';
 
@@ -140,8 +140,32 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(comp.browsedEntries()).toEqual(['src/a.txt', 'src/b.txt']);
     });
 
+    it('keeps a browsed file name with a comma as one path, so the row grants exactly the selected file', () => {
+        open('files');
+        handlers.onBrowsed(['data/a,b.csv', 'src/']);
+        handlers.setFileAction('read', true);
+
+        expect(comp.browsedEntries()).toEqual(['data/a,b.csv', 'src/']);
+        handlers.save();
+        expect(saved[0].map((row) => (row as SecurityFilePermission).path)).toEqual(['data/a,b.csv', 'src/']);
+    });
+
+    it('names an unclosed double quote of a list instead of guessing its entries', () => {
+        open('commands');
+        comp.command.set('"run,me.sh');
+
+        expect(comp.problem()).toBe(PROBLEM + 'listQuote');
+        expect(comp.browsedEntries()).toEqual([]);
+    });
+
     it('splits lists and arguments', () => {
         expect(splitList(' a , ,b ')).toEqual(['a', 'b']);
+        expect(splitList(' "a,b.csv" , " c " ,d e, "x""y"')).toEqual(['a,b.csv', ' c ', 'd e', 'x"y']);
+        expect(splitList('"open')).toBeUndefined();
+        for (const entries of [['data/a,b.csv', 'logs/'], [' spaced ', 'say "hi"', 'plain/path.txt'], ['scripts/run.sh']]) {
+            expect(splitList(joinList(entries))).toEqual(entries);
+        }
+        expect(joinList(['a.txt', 'b,c.txt'])).toBe('a.txt, "b,c.txt"');
         expect(splitArguments('')).toEqual([]);
         expect(splitArguments(' -c  "x y" "" a\\ b ')).toEqual(['-c', 'x y', '', 'a b']);
         expect(splitArguments('"open')).toBeUndefined();

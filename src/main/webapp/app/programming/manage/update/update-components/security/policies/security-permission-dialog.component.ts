@@ -108,13 +108,13 @@ export class SecurityPermissionDialogComponent {
     readonly titleKey = computed(() => `${ROW_PREFIX}${this.kind()}.${this.isEditing() ? 'editTitle' : 'addTitle'}`);
     readonly confirmKey = computed(() => (this.isEditing() ? `${ROW_PREFIX}saveChanges` : `${ROW_PREFIX}${this.kind()}.addTitle`));
     /** The paths or commands the field names; several are separated by commas. */
-    readonly browsedEntries = computed(() => splitList(this.kind() === 'commands' ? this.command() : this.path()));
+    readonly browsedEntries = computed(() => splitList(this.kind() === 'commands' ? this.command() : this.path()) ?? []);
 
     /** The rows the dialog would add, from the fields and the browsed entries. */
     readonly rows = computed<ResourceRow[]>(() => {
         switch (this.kind()) {
             case 'files': {
-                const paths = this.isEditing() ? [this.path().trim()] : splitList(this.path());
+                const paths = this.isEditing() ? [this.path().trim()] : (splitList(this.path()) ?? []);
                 const actions = this.fileActions();
                 return paths.map(
                     (path) =>
@@ -136,7 +136,7 @@ export class SecurityPermissionDialogComponent {
             }
             case 'commands': {
                 const argumentList = splitArguments(this.argumentsText()) ?? [];
-                const commands = this.isEditing() ? [this.command().trim()] : splitList(this.command());
+                const commands = this.isEditing() ? [this.command().trim()] : (splitList(this.command()) ?? []);
                 return commands.map((command) => ({ command, arguments: argumentList }) satisfies SecurityCommandPermission);
             }
             case 'threads':
@@ -164,6 +164,9 @@ export class SecurityPermissionDialogComponent {
         const prefix = `${ROW_PREFIX}problem.`;
         switch (this.kind()) {
             case 'files':
+                if (!this.isEditing() && splitList(this.path()) === undefined) {
+                    return prefix + 'listQuote';
+                }
                 if (!this.rows().length || this.rows().some((row) => !(row as SecurityFilePermission).path)) {
                     return prefix + 'pathRequired';
                 }
@@ -177,6 +180,9 @@ export class SecurityPermissionDialogComponent {
                 }
                 break;
             case 'commands':
+                if (!this.isEditing() && splitList(this.command()) === undefined) {
+                    return prefix + 'listQuote';
+                }
                 if (!this.rows().length || this.rows().some((row) => !(row as SecurityCommandPermission).command)) {
                     return prefix + 'commandRequired';
                 }
@@ -304,12 +310,12 @@ export class SecurityPermissionDialogComponent {
         this.browseOpen.set(true);
     }
 
-    /** The picked paths or scripts replace the entries of the field; each becomes its own row. */
+    /** The picked paths or scripts replace the entries of the field; each becomes its own row, also one whose name contains a comma. */
     protected onBrowsed(paths: string[]): void {
         if (this.kind() === 'commands') {
-            this.command.set(paths.join(', '));
+            this.command.set(joinList(paths));
         } else {
-            this.path.set(paths.join(', '));
+            this.path.set(joinList(paths));
         }
     }
 
@@ -323,12 +329,58 @@ export class SecurityPermissionDialogComponent {
     }
 }
 
-/** Splits a field that lists several paths or commands, separated by commas. */
-export function splitList(text: string): string[] {
-    return text
-        .split(',')
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0);
+/**
+ * Splits a field that lists several paths or commands, separated by commas. An entry in double quotes keeps its commas and spaces, and two double quotes
+ * inside it stand for one, so every file name can be listed; {@link joinList} writes such a field.
+ * @returns the entries without the spaces around them, or undefined if a double quote is not closed
+ */
+export function splitList(text: string): string[] | undefined {
+    const entries: string[] = [];
+    // An entry is the quoted text, kept as it is, between the unquoted text before and after it, whose surrounding spaces are dropped.
+    let entry = '';
+    let pendingSpace = '';
+    let quoted = false;
+    const finish = () => {
+        if (entry.length > 0) {
+            entries.push(entry);
+        }
+        entry = '';
+        pendingSpace = '';
+    };
+    for (let index = 0; index < text.length; index++) {
+        const character = text[index];
+        if (quoted) {
+            if (character === '"' && text[index + 1] === '"') {
+                entry += '"';
+                index++;
+            } else if (character === '"') {
+                quoted = false;
+            } else {
+                entry += character;
+            }
+        } else if (character === '"') {
+            entry += entry.length > 0 ? pendingSpace : '';
+            pendingSpace = '';
+            quoted = true;
+        } else if (character === ',') {
+            finish();
+        } else if (/\s/.test(character)) {
+            pendingSpace += character;
+        } else {
+            entry += (entry.length > 0 ? pendingSpace : '') + character;
+            pendingSpace = '';
+        }
+    }
+    if (quoted) {
+        return undefined;
+    }
+    finish();
+    return entries;
+}
+
+/** Writes entries into a field that {@link splitList} reads back as the same entries, quoting those with a comma, a double quote or surrounding spaces. */
+export function joinList(entries: string[]): string {
+    return entries.map((entry) => (/[,"]|^\s|\s$/.test(entry) ? `"${entry.replaceAll('"', '""')}"` : entry)).join(', ');
 }
 
 /** @returns the number of a field that holds digits only; undefined for any other text, which the field's problem then names */
