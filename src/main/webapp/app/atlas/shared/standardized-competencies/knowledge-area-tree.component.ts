@@ -108,7 +108,7 @@ export class KnowledgeAreaTreeComponent {
     }
 
     /**
-     * Toggles the expansion of a knowledge area. The focusable row, title and chevron call it.
+     * Toggles the expansion of a knowledge area from its keyboard handler on the row.
      * @param knowledgeArea the knowledge area whose expansion to toggle
      */
     protected toggle(knowledgeArea: KnowledgeAreaForTree): void {
@@ -124,6 +124,17 @@ export class KnowledgeAreaTreeComponent {
             }
             return next;
         });
+    }
+
+    /**
+     * Toggles a knowledge area from its chevron or title and moves the focus to the row. A click focuses the clicked
+     * control itself, and the row ignores keys from its descendants, so the arrow keys would stop working otherwise.
+     * @param knowledgeArea the knowledge area whose expansion to toggle
+     * @param event the click on the chevron or title
+     */
+    protected toggleFromRowControl(knowledgeArea: KnowledgeAreaForTree, event: Event): void {
+        this.toggle(knowledgeArea);
+        (event.currentTarget as HTMLElement).closest<HTMLElement>('[role="treeitem"]')?.focus();
     }
 
     /**

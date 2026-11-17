@@ -1,10 +1,13 @@
-<div class="update-footer gap-4">
+<div class="update-footer gap-6!">
     <div class="text-start">
         @if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
-            <div class="d-flex align-items-center">
+            <div class="flex items-center">
                 <div
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate }}"
-                    [disableTooltip]="areAuxiliaryRepositoriesValid()"
+                    [tumAetUiTooltip]="
+                        areAuxiliaryRepositoriesValid()
+                            ? undefined
+                            : ('artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate)
+                    "
                 >
                     <jhi-switch-edit-mode-button
                         class="me-1"
@@ -19,7 +22,7 @@
         }
     </div>
     @if (!isCreation() && !isImport()) {
-        <jhi-exercise-update-notification class="flex-grow-1 w-100" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
+        <jhi-exercise-update-notification class="w-full grow" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
     }
     <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
     @if (invalidReasons().length) {
@@ -29,9 +32,9 @@
             }
         </ul>
     }
-    <div class="d-flex gap-2 text-end">
+    <div class="flex gap-2 text-end">
         @if (isSaving()) {
-            <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
+            <tumaet-ui-tag severity="secondary" size="sm" class="self-center" data-testid="form-footer-saving"><span jhiTranslate="entity.action.saving"></span></tumaet-ui-tag>
         }
         <button
             [attr.aria-label]="'entity.action.cancel' | artemisTranslate"

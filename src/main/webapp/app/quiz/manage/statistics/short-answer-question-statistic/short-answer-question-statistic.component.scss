@@ -16,7 +16,7 @@
             position: relative;
 
             &__input {
-                border: 1px solid #ced4da;
+                border: 1px solid var(--sa-question-container-input-border);
                 line-height: 35px;
                 margin-bottom: 10px;
             }
@@ -31,11 +31,11 @@
             }
 
             &__statistic-letter {
-                @include quiz-mapping-letter-number(#428bca);
+                @include quiz-mapping-letter-number(var(--quiz-statistic-letter-background));
             }
 
             &__statistic-letter-solution {
-                @include quiz-mapping-letter-number(#5cb85c);
+                @include quiz-mapping-letter-number(var(--quiz-statistic-letter-solution-background));
             }
         }
     }
