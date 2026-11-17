@@ -95,6 +95,9 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
         catch (HttpStatusException e) {
             servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");
+            // The push was attempted and refused, so it is a failed push, which the log joins to the advertisement that came before it.
+            accessLogRecorder.auditOf(servletRequest).onPushReceived(LocalVCAccessLogRecorderService.headCommitOf(servletRequest));
+            accessLogRecorder.recordPushHTTPS(servletRequest);
             return;
         }
         long startNanos = System.nanoTime();

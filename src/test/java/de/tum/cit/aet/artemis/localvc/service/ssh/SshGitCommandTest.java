@@ -28,10 +28,12 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.localvc.service.AccessLogSubject;
+import de.tum.cit.aet.artemis.localvc.service.GitOperationAudit;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
@@ -138,8 +140,9 @@ class SshGitCommandTest {
         ServerSession session = mock(ServerSession.class);
         ExitCallback exitCallback = mock(ExitCallback.class);
         ByteArrayOutputStream error = new ByteArrayOutputStream();
-        SshGitCommand command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'conflict.git'", null, mock(LocalVCServletService.class),
-                mock(LocalVCAccessLogRecorderService.class), pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
+        LocalVCAccessLogRecorderService accessLogRecorder = mock(LocalVCAccessLogRecorderService.class);
+        SshGitCommand command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'conflict.git'", null, mock(LocalVCServletService.class), accessLogRecorder,
+                pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
         when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
         when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
         when(pushProcessingService.claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise)))
@@ -155,6 +158,10 @@ class SshGitCommandTest {
         String message = "Push rejected: Exercise generation is running Please retry the push later.";
         assertThat(error.toString()).contains(message);
         verify(exitCallback).onExit(-1, message);
+        // the push was attempted and refused, so it is written as a failed push and not as a write that had nothing new
+        var audit = ArgumentCaptor.forClass(GitOperationAudit.class);
+        verify(accessLogRecorder).recordPushSSH(any(), audit.capture(), any(Repository.class));
+        assertThat(audit.getValue().isPushReceived()).isTrue();
     }
 
     @Test

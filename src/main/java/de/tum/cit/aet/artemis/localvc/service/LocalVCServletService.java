@@ -276,7 +276,10 @@ public class LocalVCServletService {
         try {
             var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, exerciseId,
                     participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId));
-            var commitHash = repositoryResolver.getCommitHash(localVCRepositoryUri);
+            // A request that advertises the references is refused before the repository is reached, so the entry carries no commit. That is what lets the log tell it from a
+            // transfer that was refused after an advertisement was stored, see VcsAccessLogOperations.
+            boolean refusedBeforeAdvertisement = context instanceof AuthenticationContext.Request(var request) && "GET".equals(request.getMethod());
+            var commitHash = refusedBeforeAdvertisement ? "" : repositoryResolver.getCommitHash(localVCRepositoryUri);
             var authenticationMechanism = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(context, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             var ipAddress = context.getIpAddress();

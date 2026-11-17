@@ -271,10 +271,10 @@ public class AsyncConfiguration implements AsyncConfigurer {
      * <p>
      * Neither may it drop one, which is why a full queue runs the task on the caller and never discards it.
      * <p>
-     * Only entries that nothing looks up afterwards are written here, such as the record of a rejected request. The entry
-     * of a clone, pull or push is stored on the thread of the request: the data transfer request that follows amends it,
-     * may be answered by another node, and must find it there. An entry that was written in the background gives no such
-     * guarantee, however the pool is configured, because a task that falls back to the caller overtakes the queue.
+     * Only entries that nothing depends on being stored by a certain moment are written here, such as the record of a
+     * rejected request. The entry of a clone, pull or push is stored on the thread of the request, when the operation is
+     * over, so that it exists as soon as the client has its answer. An entry that was written in the background gives
+     * no such guarantee, because a task that falls back to the caller overtakes the queue.
      * <p>
      * Single threaded because the work is a handful of small inserts per git operation, far below what one thread
      * sustains, and the bounded queue in front of it is the buffer for a burst.

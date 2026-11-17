@@ -40,16 +40,6 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         this.audit = audit;
     }
 
-    /**
-     * Creates a hook that does not report to an audit, for a caller that has no access log entry to write.
-     *
-     * @param localVCServletService the service that answers the questions about the repository
-     * @param user                  the user who pushes
-     */
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
-        this(localVCServletService, user, new GitOperationAudit());
-    }
-
     private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
 
     /** The most entries of the tree of the pushed commit that are examined. A tree can reference the same subtree many times, so its paths are far more than its objects. */
@@ -184,14 +174,9 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         }
     }
 
-    /** JGit has read the commands of every push that reaches a hook. A receive that has not read any has none to count, and its list is still unset. */
+    /** JGit has read the commands of every push that reaches a hook, and counts those that it rejected itself, which the hook is not given. */
     private static boolean hasReadCommands(ReceivePack receivePack) {
-        try {
-            return !receivePack.getAllCommands().isEmpty();
-        }
-        catch (NullPointerException _) {
-            return false;
-        }
+        return !receivePack.getAllCommands().isEmpty();
     }
 
     private void examine(ReceivePack receivePack, Collection<ReceiveCommand> commands) {

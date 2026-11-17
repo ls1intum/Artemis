@@ -202,6 +202,12 @@ public class SshGitCommand extends GitPackCommand {
 
                                 receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                             }
+                            catch (HttpStatusException e) {
+                                // A push that is refused, for example because the repository is being changed by something else, was attempted, so it is a failed push and not a
+                                // write that had nothing new. Nothing changes if the push was already known to the audit.
+                                audit.onPushReceived(LocalVCFetchPreUploadHook.headCommitOf(repository));
+                                throw e;
+                            }
                         }
                         default -> throw new IllegalArgumentException("Unknown git command: " + command);
                     }

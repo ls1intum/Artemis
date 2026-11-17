@@ -43,7 +43,7 @@ public record LocalVCFetchPreUploadHook(GitOperationAudit audit) implements PreU
      * @param repository the repository
      * @return the hash of the commit that HEAD points to, null if there is none or it cannot be read
      */
-    static @Nullable String headCommitOf(Repository repository) {
+    public static @Nullable String headCommitOf(Repository repository) {
         try {
             ObjectId head = repository.resolve(Constants.HEAD);
             return head == null ? null : head.name();
