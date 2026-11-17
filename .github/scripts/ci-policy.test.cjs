@@ -70,7 +70,9 @@ test('the current-head check shares change detection and its failure remains req
 });
 test('only develop pushes share the E2E queue without replacing running or pending calls', () => {
     const e2e = job('e2e');
-    const match = e2e.match(/group: artemis-e2e-(.+)\n/);
+    const concurrency = e2e.match(/^    concurrency:\n((?:      [^\n]*\n)+)/m)?.[1];
+    assert.ok(concurrency, 'Expected E2E job concurrency settings');
+    const match = concurrency.match(/^      group: artemis-e2e-(.+)$/m);
     assert.ok(match);
     const group = expression(match[1]);
     const push = { event_name: 'push', ref: 'refs/heads/develop', run_id: '1' };
@@ -80,12 +82,12 @@ test('only develop pushes share the E2E queue without replacing running or pendi
         assert.notEqual(group({ ...push, event_name: event }), group({ ...push, event_name: event, run_id: '2' }));
     }
     assert.notEqual(group(push), group({ ...push, ref: 'refs/heads/release/10.8' }));
-    assert.match(e2e, /      queue: max\n/);
-    assert.match(e2e, /cancel-in-progress: false/);
+    assert.match(concurrency, /^      queue: max$/m);
+    assert.match(concurrency, /^      cancel-in-progress: false$/m);
     assert.doesNotMatch(job('build'), /artemis-e2e/);
 });
 
-test('the queued E2E workflow reads the develop tip before requesting a self-hosted runner', () => {
+test('the queued E2E workflow reads the develop tip before requesting a self-hosted runner', (t) => {
     const reusable = fs.readFileSync(path.join(__dirname, '../workflows/ci-e2e.yml'), 'utf8');
     const tip = job('develop-e2e-tip', reusable);
     assert.match(tip, /runs-on: ubuntu-latest/);
@@ -98,24 +100,37 @@ test('the queued E2E workflow reads the develop tip before requesting a self-hos
     }
     const script = tip.match(/        run: \|\n((?:          [^\n]*\n)+)/)[1].replace(/^ {10}/gm, '');
     const revision = 'a'.repeat(40);
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-develop-tip-'));
+    t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+    const output = path.join(directory, 'output');
     function runTip(value, status = 0) {
-        return spawnSync('bash', ['-c', 'gh() { printf "%s" "$MOCK_TIP"; return "$MOCK_STATUS"; }\n' + script], {
+        fs.writeFileSync(output, '');
+        const result = spawnSync('bash', ['-c', 'gh() { printf "%s" "$MOCK_TIP"; return "$MOCK_STATUS"; }\n' + script], {
             encoding: 'utf8',
             env: {
                 ...process.env,
                 GITHUB_REPOSITORY: 'ls1intum/Artemis',
                 COMMIT_SHA: revision,
-                GITHUB_OUTPUT: '/dev/stdout',
+                GITHUB_OUTPUT: output,
                 GITHUB_STEP_SUMMARY: '/dev/null',
                 MOCK_TIP: value,
                 MOCK_STATUS: status,
             },
         });
+        return { status: result.status, stderr: result.stderr, output: fs.readFileSync(output, 'utf8') };
     }
-    assert.match(runTip(revision).stdout, /^current=true\s*$/);
-    assert.match(runTip('b'.repeat(40)).stdout, /^current=false\s*$/);
-    assert.notEqual(runTip('null').status, 0);
-    assert.notEqual(runTip(revision, 1).status, 0);
+    for (const [tipSha, expected] of [
+        [revision, 'true'],
+        ['b'.repeat(40), 'false'],
+    ]) {
+        const result = runTip(tipSha);
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(result.output.trim(), `current=${expected}`);
+    }
+    for (const result of [runTip('null'), runTip(revision, 1)]) {
+        assert.equal(result.status, 1);
+        assert.equal(result.output, '');
+    }
     const e2e = job('run-e2e-all-non-pr', reusable);
     assert.match(e2e, /needs: develop-e2e-tip/);
     const admits = expression(
