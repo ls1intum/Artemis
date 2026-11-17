@@ -190,7 +190,7 @@ class WorkspaceArchiveTest {
 
     @Test
     void buildWorkspaceTarSharesTheEntryBudgetBetweenTextAndDirectories(@TempDir Path repo) throws Exception {
-        Files.writeString(repo.resolve("extra.txt"), "");
+        FileUtils.writeStringToFile(repo.resolve("extra.txt").toFile(), "", StandardCharsets.UTF_8);
         Map<String, String> textFiles = new LinkedHashMap<>();
         for (int index = 0; index < maxArchiveEntries(); index++) {
             textFiles.put("template/" + index + ".txt", "");
@@ -214,7 +214,7 @@ class WorkspaceArchiveTest {
     @Test
     void buildWorkspaceTarSharesTheByteBudgetBetweenTextAndDirectories(@TempDir Path repo) throws Exception {
         String text = "x".repeat((int) WorkspaceArchive.MAX_TOTAL_BYTES / 2);
-        Files.write(repo.resolve("data.bin"), new byte[(int) WorkspaceArchive.MAX_TOTAL_BYTES / 2 + 1]);
+        FileUtils.writeByteArrayToFile(repo.resolve("data.bin").toFile(), new byte[(int) WorkspaceArchive.MAX_TOTAL_BYTES / 2 + 1]);
 
         assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
                 .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of("template/text.txt", text), Map.of("solution", repo)))
@@ -241,7 +241,8 @@ class WorkspaceArchiveTest {
 
     @Test
     void buildWorkspaceTarConvertsDirectoryReadFailuresToUncheckedIo(@TempDir Path repo) throws Exception {
-        Path file = Files.writeString(repo.resolve("data.txt"), "data");
+        Path file = repo.resolve("data.txt");
+        FileUtils.writeStringToFile(file.toFile(), "data", StandardCharsets.UTF_8);
         IOException failure = new IOException("read failed");
         try (var files = mockStatic(Files.class, CALLS_REAL_METHODS)) {
             files.when(() -> Files.newInputStream(file, LinkOption.NOFOLLOW_LINKS)).thenThrow(failure);
