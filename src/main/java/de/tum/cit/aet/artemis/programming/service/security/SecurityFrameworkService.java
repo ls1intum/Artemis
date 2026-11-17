@@ -827,9 +827,12 @@ public class SecurityFrameworkService {
     /**
      * The Security Framework reads and rewrites files of the checkout, and both follow symbolic links. A link committed to the tests repository could
      * therefore make a change read or modify a file outside the checkout with the server's permissions, so a repository with links is not changed at all.
+     * A checkout without links writes a link as a plain file, so the links that the index records count as well.
      */
-    private static void rejectSymbolicLinks(ProgrammingExercise exercise, Repository repository) {
-        List<String> links = SecurityPolicyRepositoryFiles.findSymbolicLinks(repository.getLocalPath());
+    private static void rejectSymbolicLinks(ProgrammingExercise exercise, Repository repository) throws IOException {
+        List<String> links = Stream
+                .concat(SecurityPolicyRepositoryFiles.findSymbolicLinks(repository.getLocalPath()).stream(), SecurityFrameworkCommitFiles.symbolicLinkEntries(repository).stream())
+                .distinct().sorted().toList();
         if (!links.isEmpty()) {
             log.warn("Refusing to change the tests repository of exercise {}, because it contains symbolic links: {}", exercise.getId(), links);
             throw new BadRequestAlertException("The tests repository contains symbolic links, which the Security Framework does not follow: " + String.join(", ", links),

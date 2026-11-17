@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -53,6 +56,23 @@ final class SecurityFrameworkCommitFiles {
         SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null),
                 readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null));
         return SecurityPolicyRepositoryFiles.evaluate(javaSources(repository, tree), path -> readPolicyFile(repository, tree, path), buildFiles);
+    }
+
+    /**
+     * Lists the entries of the index of a checkout that are symbolic links. Artemis checks out without creating links, so such an entry is a plain file that
+     * holds the target of the link; a change that rewrote it would turn the target into the content of the link.
+     *
+     * @return the paths of the links, with forward slashes, in the order of the index
+     */
+    static List<String> symbolicLinkEntries(Repository repository) throws IOException {
+        DirCache index = repository.readDirCache();
+        List<String> links = new ArrayList<>();
+        for (int i = 0; i < index.getEntryCount(); i++) {
+            if ((index.getEntry(i).getRawMode() & FileMode.TYPE_MASK) == FileMode.TYPE_SYMLINK) {
+                links.add(index.getEntry(i).getPathString());
+            }
+        }
+        return links;
     }
 
     static Map<String, String> javaSources(Repository repository, RevTree tree) throws IOException {

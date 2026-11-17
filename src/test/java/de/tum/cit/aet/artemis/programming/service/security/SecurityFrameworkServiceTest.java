@@ -34,9 +34,13 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.PushResult;
@@ -152,6 +156,9 @@ class SecurityFrameworkServiceTest {
     /** Simulates someone else, e.g. the online editor, pushing to the tests repository while a change is being prepared. */
     private boolean pushConcurrentlyAfterCheckout;
 
+    /** Whether the checkout writes symbolic links as plain files, as Artemis checks out repositories. */
+    private boolean checkoutWithoutSymbolicLinks;
+
     /** Runs once after the next checkout, e.g. another instructor's change that is pushed while this checkout is being prepared. */
     private Runnable afterNextCheckout;
 
@@ -181,7 +188,18 @@ class SecurityFrameworkServiceTest {
         gitService = mock(GitService.class);
         when(gitService.getOrCheckoutRepositoryOnBranch(any(LocalVCRepositoryUri.class), any(Path.class), anyString())).thenAnswer(call -> {
             Path localPath = call.getArgument(1, Path.class);
-            Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
+            if (checkoutWithoutSymbolicLinks) {
+                try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class))
+                        .setNoCheckout(true).call()) {
+                    StoredConfig config = git.getRepository().getConfig();
+                    config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+                    config.save();
+                    git.reset().setMode(ResetCommand.ResetType.HARD).setRef(Constants.HEAD).call();
+                }
+            }
+            else {
+                Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
+            }
             if (pushConcurrentlyAfterCheckout) {
                 pushUnrelatedCommit();
             }
@@ -470,6 +488,20 @@ class SecurityFrameworkServiceTest {
 
         assertThat(Files.readString(externalTest)).isEqualTo(externalContent);
         assertThat(outside.toFile().list()).containsExactly("OtherExerciseTest.java");
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        verifyNoInteractions(localVCPushProcessingService);
+    }
+
+    @Test
+    void aSymbolicLinkIsRecognizedAlsoInACheckoutThatWritesLinksAsPlainFiles() throws Exception {
+        assumeTrue(FS.DETECTED.supportsSymlinks(), "The file system does not support symbolic links");
+        Path outside = newDirectory("other-exercise-");
+        pushCheckoutChange(checkout -> Files.createSymbolicLink(checkout.resolve("test/de/linked"), outside));
+        checkoutWithoutSymbolicLinks = true;
+        String headBefore = pushedHead();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user))
+                .matches(exception -> "securityFrameworkSymbolicLinks".equals(exception.getErrorKey()));
         assertThat(pushedHead()).isEqualTo(headBefore);
         verifyNoInteractions(localVCPushProcessingService);
     }
