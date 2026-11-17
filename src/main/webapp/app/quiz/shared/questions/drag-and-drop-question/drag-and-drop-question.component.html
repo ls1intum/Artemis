@@ -10,13 +10,13 @@
     <div [hidden]="loadingState() === 'success'">
         @if (loadingState() !== 'error') {
             <h2>
-                <span style="color: grey"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.loading"></span></span>
+                <span class="text-muted-color"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.loading"></span></span>
             </h2>
         }
         @if (loadingState() === 'error') {
             <div>
                 <h2>
-                    <span style="color: grey"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
+                    <span class="text-muted-color"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
                 </h2>
                 <p>
                     <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="secureImageComponent().retryLoadImage()"
@@ -32,7 +32,7 @@
         </h4>
         <p [innerHTML]="renderedQuestion().text"></p>
         @if (dragAndDropQuestion().invalid) {
-            <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+            <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
         }
         @if (dragAndDropQuestion().hint || (dragAndDropQuestion().explanation && showResult())) {
             <div class="hint">
