@@ -453,6 +453,9 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         service.commitPolicies.mockReturnValue(committed);
         const deactivated: void[] = [];
         comp.deactivateRequested.subscribe(() => deactivated.push(undefined));
+        // The card hears of the pending commit too, because simple mode can hide this view while the commit runs.
+        const committing: boolean[] = [];
+        comp.committingChange.subscribe((pending) => committing.push(pending));
         handlers.onScanRequested(true);
         handlers.onDialogConfirmed(undefined);
         // The dialog closes itself once confirmed.
@@ -468,7 +471,9 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(deactivated).toEqual([]);
         expect(comp.isCommitting()).toBe(true);
 
+        expect(committing).toEqual([true]);
         committed.next({ editor: editor('d'.repeat(40)), config: configured() });
+        expect(committing).toEqual([true, false]);
         handlers.onToggleRequested(false);
         expect(comp.dialogMode()).toBe('deactivate');
         expect(comp.dialogOpen()).toBe(true);

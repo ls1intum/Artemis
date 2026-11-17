@@ -179,6 +179,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly deactivateRequested = output<void>();
     /** Emits the Security Framework state after a commit of this view. */
     readonly configChange = output<SecurityFrameworkConfig>();
+    /** Emits whether a commit of this view waits for its answer; the card must not change the repository meanwhile, also while simple mode hides this view. */
+    readonly committingChange = output<boolean>();
 
     readonly sectionCollapsed = signal(true);
     readonly loading = signal(false);
@@ -931,6 +933,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.runCommit(this.buildChange(commitMessage), false, undefined);
     }
 
+    /** Records whether a commit waits for its answer and tells the card. */
+    private setCommitPending(pending: boolean): void {
+        this.commitPending.set(pending);
+        this.committingChange.emit(pending);
+    }
+
     /** Commits a change. A commit of the unsaved changes replaces them with the new commit; a commit of dependency scanning keeps them on top of it. */
     private runCommit(change: SecurityPolicyChange, keepUnsaved: boolean, scan: 'scanOn' | 'scanOff' | undefined): void {
         // While the policies load, the change may be based on a state the reload is about to replace.
@@ -938,12 +946,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return;
         }
         this.banner.set({ kind: 'committing' });
-        this.commitPending.set(true);
+        this.setCommitPending(true);
         this.conflictLookups++;
         this.failedRequest = undefined;
         this.securityService.commitPolicies(this.exerciseId(), change).subscribe({
             next: (result) => {
-                this.commitPending.set(false);
+                this.setCommitPending(false);
                 // A load that is still pending started before this commit, so its answer is older than the editor of the commit.
                 this.loadRequests++;
                 this.loading.set(false);
@@ -966,7 +974,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 });
             },
             error: (error: HttpErrorResponse) => {
-                this.commitPending.set(false);
+                this.setCommitPending(false);
                 this.reviewOpen.set(false);
                 this.pendingScan.set(undefined);
                 if (error.status === 409) {

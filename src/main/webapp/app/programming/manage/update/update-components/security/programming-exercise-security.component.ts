@@ -233,8 +233,18 @@ export class ProgrammingExerciseSecurityComponent {
     readonly loading = signal(false);
 
     readonly isActive = computed(() => isSecurityConfigured(this.config()));
-    /** In progress - loading the config, or activating/deactivating: spinner on, controls locked to prevent a double-submit or acting on not-yet-loaded state. */
-    readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()));
+    /**
+     * In progress - loading the config, activating/deactivating, or committing policies in the Advanced view: spinner on, controls locked to prevent a
+     * double-submit or acting on not-yet-loaded state.
+     */
+    readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()) || this.isPolicyCommitPending());
+    /** Whether the policy editor waits for the answer of a commit, also while simple mode hides it. */
+    private readonly policyCommitPending = signal(false);
+    /**
+     * A pending commit of the policy editor answers with the state of the tests repository, so an operation of this card started meanwhile, e.g. a
+     * deactivation in simple mode, would be overwritten by that answer. The card waits until the commit settles.
+     */
+    private readonly isPolicyCommitPending = computed(() => this.policyCommitPending() && this.advancedViewMounted());
 
     /** The states the Advanced view manages; the others need the repair and retry actions of this card. */
     private static readonly ADVANCED_VIEW_STATUSES: ReadonlySet<SecurityActivationStatus> = new Set([
@@ -505,6 +515,8 @@ export class ProgrammingExerciseSecurityComponent {
         }
         this.visit++;
         this.pendingOperation = undefined;
+        // The policy editor of the previous exercise is replaced, together with its pending commit.
+        this.policyCommitPending.set(false);
         this.config.set({ status: SecurityActivationStatus.CONFIGURED });
         this.lastSettledActive.set(true);
         this.loadConfig(exerciseId);
@@ -720,6 +732,11 @@ export class ProgrammingExerciseSecurityComponent {
         }
     }
 
+    /** The Advanced view started or finished a commit. */
+    protected onAdvancedCommitting(pending: boolean): void {
+        this.policyCommitPending.set(pending);
+    }
+
     /** A commit of the Advanced view changed the tests repository; the returned state is the new truth. */
     protected onAdvancedCommitted(next: SecurityFrameworkConfig): void {
         this.settle(next);
@@ -749,6 +766,9 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Deactivating commits to the tests repository and runs the builds again, so the instructor confirms it; cancelling leaves everything as it was. */
     private confirmDeactivation(exerciseId: number): void {
+        if (this.isPolicyCommitPending()) {
+            return;
+        }
         const visit = this.visit;
         this.deactivationPending.set(true);
         this.confirmationService.confirm({
@@ -778,7 +798,8 @@ export class ProgrammingExerciseSecurityComponent {
      * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available and Repair doubles as the retry.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
-        if (this.editExerciseId() === undefined) {
+        // Also guards a confirmation that was accepted while a commit of the policy editor was pending.
+        if (this.editExerciseId() === undefined || this.isPolicyCommitPending()) {
             return;
         }
         const visit = this.visit;

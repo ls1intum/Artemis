@@ -1378,6 +1378,7 @@ class PolicyEditorStubComponent {
     readonly activateRequested = output<string>();
     readonly deactivateRequested = output<void>();
     readonly configChange = output<SecurityFrameworkConfig>();
+    readonly committingChange = output<boolean>();
 }
 
 describe('ProgrammingExerciseSecurityComponent policy editor', () => {
@@ -1416,5 +1417,51 @@ describe('ProgrammingExerciseSecurityComponent policy editor', () => {
         expect(second).not.toBe(first);
         expect(second.exerciseId()).toBe(43);
         expect(fixture.debugElement.queryAll(By.directive(PolicyEditorStubComponent))).toHaveLength(1);
+    });
+
+    it('changes nothing in simple mode while a commit of the hidden policy editor is pending, so its late answer cannot undo a deactivation', () => {
+        const editor = showExercise(42);
+        const comp = fixture.componentInstance;
+        service.deactivate.mockReturnValue(of(inactiveConfig()));
+        const confirmation = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const requests: TumAetUiConfirmationRequest[] = [];
+        vi.spyOn(confirmation, 'confirm').mockImplementation((request) => requests.push(request));
+
+        // A deactivation confirmation that is still open when the commit starts.
+        comp.onToggleChanged(false);
+        editor.committingChange.emit(true);
+        fixture.componentRef.setInput('advancedMode', false);
+        fixture.detectChanges();
+
+        expect(comp.isBusy()).toBe(true);
+        requests[0].accept();
+        comp.onToggleChanged(false);
+        comp.onRepair();
+        comp.onAddDiscoveredTestClasses();
+        expect(requests).toHaveLength(1);
+        expect(service.deactivate).not.toHaveBeenCalled();
+        expect(service.activate).not.toHaveBeenCalled();
+        expect(service.addDiscoveredTestClasses).not.toHaveBeenCalled();
+
+        // The commit answers late with the state of the repository, which nothing has changed meanwhile.
+        editor.configChange.emit(configuredConfig('3.3.0'));
+        editor.committingChange.emit(false);
+        fixture.detectChanges();
+        expect(comp.isBusy()).toBe(false);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+        comp.onToggleChanged(false);
+        requests[1].accept();
+        expect(service.deactivate).toHaveBeenCalledExactlyOnceWith(42);
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+    });
+
+    it('drops the pending commit of the policy editor of the previous exercise', () => {
+        showExercise(42).committingChange.emit(true);
+        expect(fixture.componentInstance.isBusy()).toBe(true);
+
+        showExercise(43);
+
+        expect(fixture.componentInstance.isBusy()).toBe(false);
     });
 });
