@@ -157,6 +157,34 @@ class HyperionQuizQuestionPoolMaterialServiceTest {
         assertThatThrownBy(() -> HyperionQuizQuestionPoolMaterialService.readPdfText(file)).isInstanceOf(IOException.class);
     }
 
+    @Test
+    void fingerprintOf_changesWithTheContentOfATextUnit() {
+        assertThat(service.fingerprintOf(textUnit(1L, "Loops repeat a block."))).isEqualTo(service.fingerprintOf(textUnit(2L, "Loops repeat a block.")));
+        assertThat(service.fingerprintOf(textUnit(1L, "Loops repeat a block."))).isNotEqualTo(service.fingerprintOf(textUnit(1L, "Loops repeat a block!")));
+        assertThat(service.fingerprintOf(textUnit(1L, null))).startsWith("text:").hasSize(69);
+    }
+
+    @Test
+    void fingerprintOf_changesWithTheAttachmentVersionAndTheTranscriptOfAVideoUnit() {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(2L);
+        Attachment attachment = new Attachment();
+        attachment.setLink("slides.pdf");
+        attachment.setVersion(1);
+        unit.setAttachment(attachment);
+        when(transcriptionsApi.findByLectureUnit_Id(2L)).thenReturn(Optional.empty());
+        String first = service.fingerprintOf(unit);
+
+        attachment.setVersion(2);
+        String afterNewVersion = service.fingerprintOf(unit);
+        when(transcriptionsApi.findByLectureUnit_Id(2L)).thenReturn(Optional.of(transcription(unit, "Welcome back.")));
+        String afterTranscript = service.fingerprintOf(unit);
+
+        assertThat(first).startsWith("video:").isNotEqualTo(afterNewVersion);
+        assertThat(afterTranscript).isNotEqualTo(afterNewVersion);
+        assertThat(service.fingerprintOf(new OnlineUnit())).isEqualTo("none");
+    }
+
     private static void addPage(PDDocument document, String line) throws IOException {
         PDPage page = new PDPage();
         document.addPage(page);

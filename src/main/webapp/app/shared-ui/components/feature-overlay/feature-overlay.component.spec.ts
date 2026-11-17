@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
-import { NgbTooltip, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -10,7 +10,6 @@ describe('Feature Overlay Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -19,36 +18,33 @@ describe('Feature Overlay Component Tests', () => {
             });
     });
 
-    it('should display tooltip and add "disabled" class when enabled is false', () => {
+    it('should display tooltip and disable the content when enabled is false', () => {
         fixture.componentRef.setInput('enabled', false);
         fixture.detectChanges();
 
-        const tooltipDebugEl = fixture.debugElement.query(By.directive(NgbTooltip));
+        const tooltipDebugEl = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective));
         expect(tooltipDebugEl).not.toBeNull();
 
-        const tooltipInstance = tooltipDebugEl.injector.get(NgbTooltip);
-        const expectedTooltip = 'featureOverview.overlay.title';
-        expect(tooltipInstance.ngbTooltip).toEqual(expectedTooltip);
+        const tooltipInstance = tooltipDebugEl.injector.get(TumAetUiTooltipDirective);
+        expect(tooltipInstance.content()).toBe('featureOverview.overlay.title');
 
-        const peElement = fixture.debugElement.query(By.css('div.pe-none'));
-        expect(peElement).not.toBeNull();
-        const opacityElement = fixture.debugElement.query(By.css('div.opacity-50'));
-        expect(opacityElement).not.toBeNull();
+        const content = fixture.debugElement.query(By.css('[data-testid="feature-overlay-content"]')).nativeElement as HTMLElement;
+        expect(content.classList).toContain('pointer-events-none');
+        expect(content.classList).toContain('opacity-50');
     });
 
-    it('should not display tooltip nor add "disabled" class when enabled is true', () => {
+    it('should not display tooltip nor disable the content when enabled is true', () => {
         fixture.componentRef.setInput('enabled', true);
         fixture.detectChanges();
 
-        const tooltipDebugEl = fixture.debugElement.query(By.directive(NgbTooltip));
+        const tooltipDebugEl = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective));
         expect(tooltipDebugEl).not.toBeNull();
 
-        const tooltipInstance = tooltipDebugEl.injector.get(NgbTooltip);
-        expect(tooltipInstance.ngbTooltip).toBe('');
+        const tooltipInstance = tooltipDebugEl.injector.get(TumAetUiTooltipDirective);
+        expect(tooltipInstance.content()).toBeUndefined();
 
-        const peElement = fixture.debugElement.query(By.css('div.pe-none'));
-        expect(peElement).toBeNull();
-        const opacityElement = fixture.debugElement.query(By.css('div.opacity-50'));
-        expect(opacityElement).toBeNull();
+        const content = fixture.debugElement.query(By.css('[data-testid="feature-overlay-content"]')).nativeElement as HTMLElement;
+        expect(content.classList).not.toContain('pointer-events-none');
+        expect(content.classList).not.toContain('opacity-50');
     });
 });
