@@ -68,6 +68,20 @@ describe('markdown.conversion.util', () => {
             expect(image.hasAttribute('srcset')).toBe(false);
         });
 
+        it('keeps an allowed srcset when only the src is not allowed', () => {
+            const image = restricted('<img src="https://unlisted.example/a.png" srcset="https://images.example.net/a.png 1x">', 'img');
+
+            expect(image.hasAttribute('src')).toBe(false);
+            expect(image.getAttribute('srcset')).toContain('images.example.net');
+        });
+
+        it('removes both the src and the srcset when neither is allowed', () => {
+            const image = restricted('<img src="https://unlisted.example/a.png" srcset="https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('src')).toBe(false);
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
         it('finds a candidate that follows a data address with a comma', () => {
             const image = restricted('<img srcset="data:image/png;base64,AAAA 1x, https://unlisted.example/b.png 2x">', 'img');
 

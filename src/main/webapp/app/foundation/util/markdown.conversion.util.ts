@@ -210,8 +210,8 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
     if (node.tagName === 'IMG') {
         node.setAttribute('referrerpolicy', 'no-referrer');
         if (!isImageSourceAllowed(node.getAttribute('src'))) {
+            // the srcset is checked on its own by restrictImageAttributes, so that an image of an allowed host stays
             node.removeAttribute('src');
-            node.removeAttribute('srcset');
         }
     }
     if (hasImageHostRestriction() && node.hasAttribute?.('style')) {
