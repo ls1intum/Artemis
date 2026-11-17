@@ -19,6 +19,8 @@ export interface TumAetUiDialogOptions<D = Record<string, unknown>, T = unknown>
     closeOnEscape?: boolean;
     dismissableMask?: boolean;
     autoFocus?: 'dialog' | 'first-tabbable';
+    /** `none` removes the content inset for content that lays out its own edges, such as a full-bleed canvas. */
+    contentPadding?: 'default' | 'none';
     inputValues?: TumAetUiDialogInputs<T>;
     data?: D;
     templates?: { header?: Type<unknown>; footer?: Type<unknown> };

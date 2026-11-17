@@ -20,11 +20,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -34,6 +36,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +68,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
+import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -475,10 +481,71 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+        var result = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, CourseFinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetFinishedBuildJobsForCourse_withoutPagingParametersOrAddressSortIsBadRequest() throws Exception {
+        request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.BAD_REQUEST, CourseFinishedBuildJobDTO.class);
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        pageableSearchDTO.setSortedColumn("buildAgentAddress");
+        request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.BAD_REQUEST, CourseFinishedBuildJobDTO.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_adminCanSortByTheBuildAgentAddressButNeedsPagingParameters() throws Exception {
+        request.getList("/api/admin/finished-jobs", HttpStatus.BAD_REQUEST, FinishedBuildJobDTO.class);
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        pageableSearchDTO.setSortedColumn("buildAgentAddress");
+        request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testFinishedBuildJobViewsOfACourseOmitTheAddressOfTheBuildAgent() throws Exception {
+        finishedJob1.setBuildAgentAddress("[10.20.30.40]:5701");
+        buildAgentInformation.clear();
+        buildJobRepository.save(finishedJob1);
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+
+        var list = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, Map.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+        var single = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + finishedJob1.getBuildJobId(), HttpStatus.OK, Map.class);
+
+        assertThat(list).hasSize(1).allSatisfy(view -> assertThat(view).doesNotContainKey("buildAgentAddress"));
+        assertThat(single).doesNotContainKey("buildAgentAddress");
+        String expectedName = buildAgentDisplayName == null || buildAgentDisplayName.isBlank() ? buildAgentShortName : buildAgentDisplayName;
+        assertThat(single).containsEntry("buildAgentDisplayName", expectedName);
+        assertThat(list.getFirst()).containsEntry("buildAgentDisplayName", expectedName);
+        assertThat(list.toString() + single).doesNotContain("10.20.30.40");
+    }
+
+    private static Stream<Arguments> longAgentNames() {
+        return Stream.of(Arguments.of("a".repeat(256), "a".repeat(255)), Arguments.of("a".repeat(254) + "😀 suffix", "a".repeat(254) + "😀"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("longAgentNames")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testFinishedJobPersistsALongConfiguredAgentNameWithoutRejectingTheBuild(String configuredName, String expectedName) throws Exception {
+        var queueItem = new BuildJobQueueItem(job1, new BuildAgentDTO("agent-short-name", "[10.20.30.40]:5701", configuredName), 0);
+        var finishedJob = new BuildJob(queueItem, BuildStatus.SUCCESSFUL, null);
+        finishedJob.setBuildJobId("long-agent-name-job");
+        buildJobRepository.save(finishedJob);
+        buildAgentInformation.clear();
+
+        var single = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + finishedJob.getBuildJobId(), HttpStatus.OK, Map.class);
+
+        assertThat(single).containsEntry("buildAgentDisplayName", expectedName).doesNotContainKey("buildAgentAddress");
+        assertThat(single.toString()).doesNotContain("10.20.30.40");
     }
 
     @Test
@@ -492,10 +559,11 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildJob queuedJob = buildJobRepository.save(buildJobForStatus(BuildStatus.QUEUED, "queued-job"));
 
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+        var result = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, CourseFinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
 
-        assertThat(result).extracting(FinishedBuildJobDTO::id).containsExactly(finishedJob1.getBuildJobId()).doesNotContain(runningJob.getBuildJobId(), queuedJob.getBuildJobId());
+        assertThat(result).extracting(CourseFinishedBuildJobDTO::id).containsExactly(finishedJob1.getBuildJobId()).doesNotContain(runningJob.getBuildJobId(),
+                queuedJob.getBuildJobId());
     }
 
     @Test
@@ -751,15 +819,36 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildJobByIdForCourse_runningJob() throws Exception {
-        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, CourseBuildJobDTO.class);
         assertThat(result.id()).isEqualTo(job1.id());
+        assertThat(result.buildConfig().commitHashToBuild()).isEqualTo(job1.buildConfig().commitHashToBuild());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCourseBuildJobViewsOmitBuildConfigurationAndAddresses() throws Exception {
+        queuedJobs.add(job1);
+        var queued = request.get("/api/localci/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
+        var running = request.get("/api/localci/courses/" + course.getId() + "/running-jobs", HttpStatus.OK, List.class);
+        var single = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, Map.class);
+
+        var views = new ArrayList<Map<String, Object>>();
+        queued.forEach(view -> views.add((Map<String, Object>) view));
+        running.forEach(view -> views.add((Map<String, Object>) view));
+        views.add(single);
+        assertThat(views).isNotEmpty().allSatisfy(view -> {
+            assertThat((Map<String, Object>) view.get("buildConfig")).containsOnlyKeys("commitHashToBuild");
+            assertThat((Map<String, Object>) view.get("repositoryInfo")).doesNotContainKeys("assignmentRepositoryUri", "testRepositoryUri", "solutionRepositoryUri");
+            assertThat((Map<String, Object>) view.get("buildAgent")).doesNotContainKey("memberAddress");
+            assertThat(view).doesNotContainKey("submissionResult");
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildJobByIdForCourse_finishedJob() throws Exception {
         buildJobRepository.save(finishedJob1);
-        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + finishedJob1.getBuildJobId(), HttpStatus.OK, CourseFinishedBuildJobDTO.class);
         assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
     }
 
