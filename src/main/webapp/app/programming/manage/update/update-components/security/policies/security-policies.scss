@@ -686,11 +686,11 @@
     font-size: var(--tumaet-ui-font-size-xs);
     line-height: 1.25rem;
 
+    // A long line wraps instead of being cut off, so the whole change can be compared before the commit.
     > span {
-        overflow: hidden;
         padding-inline: calc(var(--tumaet-ui-spacing) * 2);
-        text-overflow: ellipsis;
-        white-space: pre;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
     }
 }
 

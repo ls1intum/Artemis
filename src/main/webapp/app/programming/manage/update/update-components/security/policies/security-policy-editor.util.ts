@@ -262,7 +262,8 @@ function normalized(value: unknown): unknown {
 
 /**
  * The rows a category shows: the rows the preset adds, locked, then the rows of the working document, each tagged new, changed or committed, and the
- * committed rows the unsaved changes deleted, so they can be restored.
+ * committed rows the unsaved changes deleted, so they can be restored. A row of the working document that the preset also adds is shown as a row of the
+ * document, so it stays visible and can be edited or removed; the preset row comes back when it is removed.
  */
 export function sourcedRows<K extends ResourceKind>(
     kind: K,
@@ -271,10 +272,12 @@ export function sourcedRows<K extends ResourceKind>(
     preset: SecurityPreset | undefined,
 ): SourcedRow<K>[] {
     const committed = new Map(rowsOf(base, kind).map((row) => [rowKey(kind, row), row]));
-    const presetRows: SourcedRow<K>[] = rowsOf(preset, kind).map((row) => ({ key: rowKey(kind, row), row, source: RowSource.PRESET, preset: preset?.label }));
-    const presetKeys = new Set(presetRows.map((row) => row.key));
-    const workingRows = rowsOf(working, kind).filter((row) => !presetKeys.has(rowKey(kind, row)));
+    const workingRows = rowsOf(working, kind);
     const workingKeys = new Set(workingRows.map((row) => rowKey(kind, row)));
+    const presetRows: SourcedRow<K>[] = rowsOf(preset, kind)
+        .map((row) => ({ key: rowKey(kind, row), row, source: RowSource.PRESET, preset: preset?.label }))
+        .filter((row) => !workingKeys.has(row.key));
+    const presetKeys = new Set(presetRows.map((row) => row.key));
     const ownRows: SourcedRow<K>[] = workingRows.map((row) => {
         const key = rowKey(kind, row);
         const before = committed.get(key);
@@ -382,7 +385,7 @@ export function summarizeChanges(policy: EditorPolicy): PolicyChangeSummary {
         ? 0
         : (policy.name !== committedName(policy) ? 1 : 0) + (isSameValue(policy.base?.preset, working.preset) ? 0 : 1) + changedFileSettings(policy.base, working).length;
     const testCases = tests.added.length + tests.removed.length;
-    const classChanges = testClasses.added.length + testClasses.removed.length;
+    const classChanges = testClasses.added.length + testClasses.removed.length + changedDeclarations(policy, tests, testClasses);
     return {
         restrictions,
         restrictionsByKind,
@@ -393,6 +396,19 @@ export function summarizeChanges(policy: EditorPolicy): PolicyChangeSummary {
         isNew,
         total: restrictions + behaviours + testCases + classChanges + settings + (isNew ? 1 : 0),
     };
+}
+
+/**
+ * Counts the declared test classes that changed on their own, e.g. an import that declares pkg.Test#second instead of pkg.Test#first while the tests
+ * stay assigned. The declarations of changed tests and extra classes change with them and are counted with them already.
+ */
+function changedDeclarations(policy: EditorPolicy, tests: { added: string[]; removed: string[] }, extraClasses: { added: string[]; removed: string[] }): number {
+    if (isNewPolicy(policy)) {
+        return 0;
+    }
+    const counted = new Set([...tests.added, ...tests.removed, ...extraClasses.added, ...extraClasses.removed].map(testClassOf));
+    const declarations = listChanges(policy.base?.testClasses ?? [], policy.working?.testClasses ?? []);
+    return [...declarations.added, ...declarations.removed].filter((declaration) => !counted.has(testClassOf(declaration))).length;
 }
 
 /** @returns whether the policy is not committed yet */

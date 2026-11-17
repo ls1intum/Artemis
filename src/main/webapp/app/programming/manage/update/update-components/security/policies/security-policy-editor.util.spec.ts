@@ -63,6 +63,23 @@ describe('security-policy-editor.util', () => {
         expect(sourcedRows('threads', DOCUMENT, DOCUMENT, undefined).map((row) => row.source)).toEqual([RowSource.COMMITTED]);
     });
 
+    it('shows a row of the document that the preset also adds as a row of the document, so it can still be edited or removed', () => {
+        const mock = { path: 'mock/', read: true, overwrite: false, create: false, execute: false, delete: false };
+        const preset = { name: 'MOCKITO', label: 'Mockito', files: [mock] };
+        const working = withRows(DOCUMENT, 'files', [...(DOCUMENT.files ?? []), mock]);
+
+        expect(sourcedRows('files', DOCUMENT, working, preset).map((row) => [row.key, row.source])).toEqual([
+            ['data/input.txt', RowSource.COMMITTED],
+            ['logs/', RowSource.COMMITTED],
+            ['mock/', RowSource.NEW],
+        ]);
+        expect(sourcedRows('files', DOCUMENT, DOCUMENT, preset).map((row) => [row.key, row.source])).toEqual([
+            ['mock/', RowSource.PRESET],
+            ['data/input.txt', RowSource.COMMITTED],
+            ['logs/', RowSource.COMMITTED],
+        ]);
+    });
+
     it('reads a committed policy with its tests and the classes no test needs', () => {
         const policy = editorPolicyOf(FILE);
 
@@ -118,6 +135,25 @@ describe('security-policy-editor.util', () => {
         expect(rebased.working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
         expect(rebased.tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
         expect(rebased.baseTests).toEqual(['de.example.SortingTest']);
+    });
+
+    it('counts a declared test class that only an import changed, and a declaration that changes with its tests once', () => {
+        const file: SecurityPolicyFile = {
+            ...FILE,
+            document: { ...DOCUMENT, testClasses: ['de.example.SortingTest#first', 'de.example.Helper'] },
+            assignedTests: ['de.example.SortingTest#first'],
+        };
+        const policy = editorPolicyOf(file);
+        const imported = { ...policy, working: { ...policy.working!, testClasses: ['de.example.SortingTest#second', 'de.example.Helper'] } };
+
+        expect(summarizeChanges(policy).total).toBe(0);
+        expect(summarizeChanges(imported).testClasses).toBe(2);
+        expect(summarizeChanges(imported).total).toBe(2);
+
+        const reassigned = withAssignment(policy, ['de.example.StressTest'], ['de.example.Helper']);
+        expect(reassigned.working?.testClasses).toEqual(['de.example.Helper', 'de.example.StressTest']);
+        expect(summarizeChanges(reassigned).testCases).toBe(2);
+        expect(summarizeChanges(reassigned).testClasses).toBe(0);
     });
 
     it('counts and keeps the settings of a file that an import changes', () => {

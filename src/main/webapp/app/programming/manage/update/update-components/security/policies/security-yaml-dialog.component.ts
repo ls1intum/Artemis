@@ -177,18 +177,26 @@ export class SecurityYamlDialogComponent {
         const epoch = this.importEpoch();
         // The parent counts the read as a pending import, so nothing is committed before the file it imports is read.
         this.setReading(selection);
-        let content: string;
+        let content: string | undefined;
         try {
             content = await file.text();
+        } catch {
+            // The file may have become unreadable since it was selected, e.g. because it was moved or deleted.
+            content = undefined;
         } finally {
             // A read that a newer selection or a replacement of the unsaved changes made obsolete no longer counts, and its end changes nothing.
             if (this.readingSelection === selection) {
                 this.setReading(undefined);
             }
         }
-        if (selection === this.importCount && epoch === this.importEpoch()) {
-            this.imported.emit({ content, policyPath: target });
+        if (selection !== this.importCount || epoch !== this.importEpoch()) {
+            return;
         }
+        if (content === undefined) {
+            this.importError.set('artemisApp.programmingExercise.security.advanced.yaml.importUnreadable');
+            return;
+        }
+        this.imported.emit({ content, policyPath: target });
     }
 
     /** Reports to the parent whether the file of a selection that can still become an import is being read. */

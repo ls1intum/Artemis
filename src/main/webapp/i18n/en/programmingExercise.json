@@ -929,6 +929,7 @@
                         "import": "Import",
                         "export": "Export",
                         "importTooLarge": "The file is larger than 256 KB.",
+                        "importUnreadable": "The file could not be read. Select it again.",
                         "imported": "Imported. {{ count }} unsaved change(s) in {{ policy }} — review them before you commit."
                     },
                     "review": {

@@ -97,6 +97,25 @@ describe('SecurityYamlDialogComponent', () => {
         expect(comp.importError()).toBeUndefined();
     });
 
+    it('explains a file that cannot be read, but not the failed read of a file that a newer selection replaced', async () => {
+        const imported: { content: string; policyPath: string }[] = [];
+        comp.imported.subscribe((content) => imported.push(content));
+        const select = (file: Partial<File>) => handlers.onFileSelected({ target: { files: [file], value: 'x' } } as unknown as Event);
+
+        await select({ size: 10, text: () => Promise.reject(new DOMException('gone', 'NotReadableError')) });
+        expect(comp.importError()).toBe('artemisApp.programmingExercise.security.advanced.yaml.importUnreadable');
+        expect(imported).toEqual([]);
+
+        let failRead: (error: unknown) => void = () => {};
+        const obsolete = select({ size: 10, text: () => new Promise<string>((_, reject) => (failRead = reject)) });
+        await select({ size: 10, text: () => Promise.resolve('a: 1\n') });
+        failRead(new DOMException('gone', 'NotReadableError'));
+        await obsolete;
+
+        expect(imported).toEqual([{ content: 'a: 1\n', policyPath: 'test/SecurityPolicy.yaml' }]);
+        expect(comp.importError()).toBeUndefined();
+    });
+
     it('reports while a selected file is being read', async () => {
         const reading: boolean[] = [];
         comp.readingChange.subscribe((value) => reading.push(value));
