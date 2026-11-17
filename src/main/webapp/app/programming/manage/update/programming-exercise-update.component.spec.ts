@@ -742,7 +742,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
         });
 
-        it('should translate unsupported branch-pattern save errors', () => {
+        it('should not show an unsupported branch-pattern save error a second time when the global handler shows it', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.id = 1;
             vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
@@ -755,6 +755,32 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                         }),
                 ),
             );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(true);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should translate an unsupported branch-pattern save error that the global handler does not show', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(false);
             const alertSpy = vi.spyOn(alertService, 'addAlert');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
