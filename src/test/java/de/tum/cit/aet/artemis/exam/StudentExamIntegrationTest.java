@@ -854,6 +854,61 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(testExamWithSimulation);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetStudentExamForConduction_unpreparedSupervisedSession_linksParticipationsAndSurvivesReload() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().plusHours(1));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(3));
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        var examUser = new ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
+                null);
+
+        // The supervised session is running, but the exercises were never prepared in bulk
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+        assertThat(studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId()).getStudentParticipations()).isEmpty();
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+        String conductionUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExam.getId() + "/conduction";
+
+        var response = request.get(conductionUrl, HttpStatus.OK, StudentExam.class, headers);
+        assertThat(response.isStarted()).isTrue();
+        assertOneParticipationPerExercise(response);
+        int exerciseCount = response.getExercises().size();
+        assertThat(exerciseCount).isPositive();
+        var linkedAfterStart = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId()).getStudentParticipations();
+        assertThat(linkedAfterStart).as("the participations created at the start are linked to the student exam").hasSize(exerciseCount);
+
+        // Reloading must neither lose nor duplicate the participations
+        var reloaded = request.get(conductionUrl, HttpStatus.OK, StudentExam.class, headers);
+        assertOneParticipationPerExercise(reloaded);
+        assertThat(studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId()).getStudentParticipations())
+                .extracting(participation -> participation.getId())
+                .containsExactlyInAnyOrderElementsOf(linkedAfterStart.stream().map(participation -> participation.getId()).toList());
+
+        deleteExamWithInstructor(testExamWithSimulation);
+    }
+
+    private void assertOneParticipationPerExercise(StudentExam response) {
+        for (var exercise : response.getExercises()) {
+            assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);
+        }
+    }
+
     private void assertParticipationAndSubmissions(StudentExam response, User user) {
         for (var exercise : response.getExercises()) {
             assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);

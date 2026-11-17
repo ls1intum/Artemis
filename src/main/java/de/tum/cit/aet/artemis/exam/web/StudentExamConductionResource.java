@@ -236,7 +236,11 @@ public class StudentExamConductionResource {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
         // Test runs are already prepared when they are created.
-        if (studentExam.getExam().isTestOrPractice(now()) && !studentExam.isTestRun()) {
+        // The supervised session of a practice exam is conducted like a real exam, but its participations are linked to the student exam like those of
+        // a practice attempt. Participations that the bulk preparation did not create therefore have to be set up and linked here as well, otherwise
+        // the conduction, the programming authorization and the summary would not find them.
+        boolean isSupervisedSession = studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SIMULATION && !studentExam.getExam().isTestOrPractice(now());
+        if ((studentExam.getExam().isTestOrPractice(now()) || isSupervisedSession) && !studentExam.isTestRun()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
                 // For test exam with simulation it can happen that the student has not started their
