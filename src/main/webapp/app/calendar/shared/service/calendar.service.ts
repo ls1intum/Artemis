@@ -1,5 +1,6 @@
 import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
 import { EMPTY, Observable, Subscription, catchError, defer, finalize, map, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
@@ -163,6 +164,11 @@ export class CalendarService implements OnDestroy {
                     if (!this.alertService.showsHttpErrorAlert(error)) {
                         this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
                     }
+                    if (this.mayHaveReplacedTheToken(error)) {
+                        // the server may have replaced the token without the answer arriving, so the cached one is unknown until it is read again
+                        this.currentSubscriptionToken.set(undefined);
+                        this.loadSubscriptionToken();
+                    }
                     return throwError(() => error);
                 }),
                 finalize(() => {
@@ -174,6 +180,14 @@ export class CalendarService implements OnDestroy {
                 }),
             );
         });
+    }
+
+    /**
+     * Whether a failed replacement may still have changed the token on the server. A rejection with a client error status did not, while a lost connection or a server error can
+     * follow a change that was stored.
+     */
+    private mayHaveReplacedTheToken(error: unknown): boolean {
+        return !(error instanceof HttpErrorResponse) || error.status === 0 || error.status >= 500;
     }
 
     private loadSubscriptionToken() {

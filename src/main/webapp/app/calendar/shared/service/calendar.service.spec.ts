@@ -281,6 +281,42 @@ describe('CalendarService', () => {
         expect(service.subscriptionToken()).toBe(testToken);
     });
 
+    it('should read the token again after a failure that may have replaced it', async () => {
+        await Promise.resolve();
+        // the server stored a new token, but the response of the replacement was lost
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of('tokenStoredByTheServer'));
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(service.subscriptionToken()).toBe('tokenStoredByTheServer');
+    });
+
+    it('should hide the link until the token is known again after a failure that may have replaced it', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+        const pendingRead = new Subject<string>();
+        calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(pendingRead);
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+        expect(service.subscriptionToken()).toBeUndefined();
+
+        pendingRead.next('tokenStoredByTheServer');
+        pendingRead.complete();
+        expect(service.subscriptionToken()).toBe('tokenStoredByTheServer');
+    });
+
+    it('should keep the token after a rejection that cannot have replaced it', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
+        expect(service.subscriptionToken()).toBe(testToken);
+    });
+
     it('should not show a second alert for a failure that the global handler shows', async () => {
         await Promise.resolve();
         calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
