@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,12 +15,49 @@ describe('DiffReviewBannerComponent', () => {
         fixture.detectChanges();
     });
 
+    it('describes the focused split-view button with its visible keyboard tooltip', () => {
+        vi.useFakeTimers();
+        const button = fixture.nativeElement.querySelector('button[data-testid="toggle-split-view"], [data-testid="toggle-split-view"] button') as HTMLButtonElement;
+        try {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+            button.focus();
+            expect(document.activeElement).toBe(button);
+            vi.advanceTimersByTime(151);
+            TestBed.inject(ApplicationRef).tick();
+            const tooltip = document.querySelector('[role="tooltip"]') as HTMLElement;
+            expect(tooltip).not.toBeNull();
+            expect(tooltip.textContent).toContain('artemisApp.programmingExercise.diffReport.splitView.tooltip');
+            expect(tooltip.id).not.toBe('');
+            expect((button.getAttribute('aria-describedby') ?? '').split(' ')).toContain(tooltip.id);
+        } finally {
+            button.blur();
+            vi.runOnlyPendingTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it('keeps review actions from submitting a surrounding form', () => {
+        const form = document.createElement('form');
+        const submit = vi.fn((event: Event) => event.preventDefault());
+        form.addEventListener('submit', submit);
+        document.body.appendChild(form);
+        form.appendChild(fixture.nativeElement);
+        try {
+            const buttons = fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
+            expect(buttons).toHaveLength(3);
+            buttons.forEach((button) => button.click());
+            expect(submit).not.toHaveBeenCalled();
+        } finally {
+            form.remove();
+        }
+    });
+
     it('toggles split view and reports the new value to its caller', () => {
         const splitViewChanged = vi.fn();
         fixture.componentInstance.allowSplitView.subscribe(splitViewChanged);
         fixture.componentRef.setInput('allowSplitView', true);
         fixture.detectChanges();
-        const splitButton = fixture.nativeElement.querySelector('[data-testid="toggle-split-view"] button');
+        const splitButton = fixture.nativeElement.querySelector('button[data-testid="toggle-split-view"]');
         expect(splitButton.textContent).toContain('disable');
         splitButton.click();
         fixture.detectChanges();
@@ -39,10 +77,10 @@ describe('DiffReviewBannerComponent', () => {
         const stats = fixture.debugElement.query(By.directive(GitDiffLineStatComponent)).componentInstance as GitDiffLineStatComponent;
         expect(stats.addedLineCount()).toBe(8);
         expect(stats.removedLineCount()).toBe(2);
-        fixture.nativeElement.querySelector('[data-testid="revert-diff"] button').click();
+        fixture.nativeElement.querySelector('button[data-testid="revert-diff"]').click();
         expect(revert).toHaveBeenCalledOnce();
         expect(done).not.toHaveBeenCalled();
-        fixture.nativeElement.querySelector('[data-testid="done-reviewing"] button').click();
+        fixture.nativeElement.querySelector('button[data-testid="done-reviewing"]').click();
         expect(done).toHaveBeenCalledOnce();
     });
 
@@ -53,11 +91,11 @@ describe('DiffReviewBannerComponent', () => {
         fixture.componentInstance.doneRequested.subscribe(done);
         fixture.componentRef.setInput('actionsDisabled', true);
         fixture.detectChanges();
-        const revertButton = fixture.nativeElement.querySelector('[data-testid="revert-diff"] button') as HTMLButtonElement;
-        const doneButton = fixture.nativeElement.querySelector('[data-testid="done-reviewing"] button') as HTMLButtonElement;
+        const revertButton = fixture.nativeElement.querySelector('button[data-testid="revert-diff"]') as HTMLButtonElement;
+        const doneButton = fixture.nativeElement.querySelector('button[data-testid="done-reviewing"]') as HTMLButtonElement;
         expect(revertButton.disabled).toBe(true);
         expect(doneButton.disabled).toBe(true);
-        expect(fixture.nativeElement.querySelector('[data-testid="toggle-split-view"] button').disabled).toBe(false);
+        expect(fixture.nativeElement.querySelector('button[data-testid="toggle-split-view"]').disabled).toBe(false);
         revertButton.click();
         doneButton.click();
         expect(revert).not.toHaveBeenCalled();

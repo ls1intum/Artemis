@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave, faTableColumns } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -9,7 +9,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
 @Component({
     selector: 'jhi-diff-review-banner',
     templateUrl: './diff-review-banner.component.html',
-    imports: [TumAetUiMessageComponent, TumAetUiButtonComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, GitDiffLineStatComponent],
+    imports: [TumAetUiMessageComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, GitDiffLineStatComponent],
     host: { class: 'block mb-1' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

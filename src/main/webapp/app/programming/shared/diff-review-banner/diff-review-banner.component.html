@@ -2,29 +2,33 @@
     <div class="flex flex-wrap items-center gap-2">
         <strong class="text-sm" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
         <span class="text-muted-color text-sm" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
-        <tumaet-ui-button
+        <button
+            tumAetUiButton
+            type="button"
             data-testid="toggle-split-view"
             size="small"
             severity="primary"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
-            (clicked)="allowSplitView.set(!allowSplitView())"
+            (click)="allowSplitView.set(!allowSplitView())"
         >
             <fa-icon [icon]="faTableColumns" />
             <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
-        </tumaet-ui-button>
-        <tumaet-ui-button
+        </button>
+        <button
+            tumAetUiButton
+            type="button"
             data-testid="revert-diff"
             size="small"
             severity="secondary"
             [disabled]="actionsDisabled()"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.problemStatement.revertAllTooltip' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
-            (clicked)="revertRequested.emit()"
+            (click)="revertRequested.emit()"
         >
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
-        </tumaet-ui-button>
+        </button>
         <jhi-git-diff-line-stat
             class="font-bold mx-1"
             [addedLineCount]="addedLineCount()"
@@ -32,17 +36,19 @@
             [tumAetUiTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
         />
-        <tumaet-ui-button
+        <button
+            tumAetUiButton
+            type="button"
             data-testid="done-reviewing"
             size="small"
             severity="success"
             [disabled]="actionsDisabled()"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.problemStatement.doneReviewingTooltip' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
-            (clicked)="doneRequested.emit()"
+            (click)="doneRequested.emit()"
         >
             <fa-icon [icon]="faSave" />
             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
-        </tumaet-ui-button>
+        </button>
     </div>
 </tumaet-ui-message>
