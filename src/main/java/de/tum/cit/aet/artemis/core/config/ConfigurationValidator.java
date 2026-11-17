@@ -252,8 +252,22 @@ public class ConfigurationValidator {
         return Binder.get(configurableEnvironment).bind(INTERNAL_ALLOWED_CIDRS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
     }
 
+    /**
+     * Whether a range has a prefix length of zero, which matches every address. The length is compared as a number, because the matcher that checks the requests parses it
+     * the same way, so {@code /00} is a range of every address too.
+     */
     private static boolean coversEveryAddress(String range) {
-        return range.endsWith("/0");
+        int separator = range.lastIndexOf('/');
+        if (separator < 0) {
+            return false;
+        }
+        try {
+            return Integer.parseInt(range.substring(separator + 1).trim()) == 0;
+        }
+        catch (NumberFormatException e) {
+            // a range that cannot be parsed is not a range of every address; the check of the requests rejects it when it starts
+            return false;
+        }
     }
 
     /**

@@ -162,6 +162,15 @@ class ConfigurationValidatorTest {
         }
 
         @Test
+        void recognizesEveryWayToWriteAPrefixLengthOfZero() {
+            var listed = Map.<String, Object>of("artemis.security.internal.allowed-cidrs[0]", "0.0.0.0/00", "artemis.security.internal.allowed-cidrs[1]", "::/000",
+                    "artemis.security.internal.allowed-cidrs[2]", "10.0.0.0/8", "artemis.security.internal.allowed-cidrs[3]", "10.0.0.1",
+                    "artemis.security.internal.allowed-cidrs[4]", "0.0.0.0/x");
+
+            assertThat(rangesReportedFor(true, List.of(listed))).containsExactly("0.0.0.0/00", "::/000");
+        }
+
+        @Test
         void doesNotWarnForRestrictedRangesNoRangesOrOutsideProd() {
             assertThat(rangesReportedFor(true,
                     List.of(Map.of("artemis.security.internal.allowed-cidrs[0]", "10.0.0.0/8", "artemis.security.internal.allowed-cidrs[1]", "192.168.1.0/24")))).isEmpty();
