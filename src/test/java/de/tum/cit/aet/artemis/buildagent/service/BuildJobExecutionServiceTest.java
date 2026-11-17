@@ -316,6 +316,21 @@ class BuildJobExecutionServiceTest {
         verify(git).clearCloneTokenForCurrentThread();
     }
 
+    @Test
+    void jobOfAContainerWithoutTheTestRepositoryReachesTheRunnerWithoutCloningTheTests() throws Exception {
+        when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(null, 0, completedAt, () -> {
+        }));
+        var job = buildJob("job", RepositoryType.USER, true, null, null, new String[0]);
+
+        var result = service.runBuildJob(job);
+
+        assertThat(result.buildScriptExitCode()).isZero();
+        var prepared = org.mockito.ArgumentCaptor.forClass(PreparedBuildJob.class);
+        verify(runner).execute(eq(job), prepared.capture());
+        assertThat(prepared.getValue().testRepository()).as("the instructor's tests are never cloned for this container").isNull();
+        verify(git, times(1)).cloneRepository(any(), any());
+    }
+
     private Repository repository(Path path) {
         Repository repository = mock(Repository.class);
         when(repository.getLocalPath()).thenReturn(path);
@@ -331,8 +346,11 @@ class BuildJobExecutionServiceTest {
     }
 
     private BuildJobQueueItem buildJob(String id, RepositoryType trigger, boolean explicitCommits, String solution, String[] auxiliary) {
-        var repositories = new RepositoryInfo("repository", RepositoryType.USER, trigger, uri("course-student"), uri("course-tests"), solution, auxiliary,
-                new String[auxiliary.length]);
+        return buildJob(id, trigger, explicitCommits, uri("course-tests"), solution, auxiliary);
+    }
+
+    private BuildJobQueueItem buildJob(String id, RepositoryType trigger, boolean explicitCommits, String tests, String solution, String[] auxiliary) {
+        var repositories = new RepositoryInfo("repository", RepositoryType.USER, trigger, uri("course-student"), tests, solution, auxiliary, new String[auxiliary.length]);
         var timing = new JobTimingInfo(completedAt.minusMinutes(1), null, null, null, 60);
         var config = new BuildConfig("echo test", "ubuntu:24.04", "commit", explicitCommits ? "assignment-commit" : null, explicitCommits ? "test-commit" : null, "main",
                 ProgrammingLanguage.JAVA, null, false, false, List.of("results/*.xml"), 60, "assignment", "tests", "solution", new DockerRunConfig(List.of(), null, 0, 0, 0));
