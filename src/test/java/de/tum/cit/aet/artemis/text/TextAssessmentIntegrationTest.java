@@ -362,6 +362,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void retrieveParticipationForSubmission_studentHidden() throws Exception {
+        exerciseDueDatePassed();
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
@@ -371,6 +372,22 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
         assertThat(participationWithoutAssessment.submissions().getLast().id()).as("participation with correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(participationWithoutAssessment.student()).as("student of participation is hidden").isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,false", "false,true", "true,false", "true,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void retrieveParticipationForSubmission_checksDeadlineOnlyForNewAssessment(boolean deadlinePassed, boolean existingAssessment) throws Exception {
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        submission = existingAssessment
+                ? textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1")
+                : textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(textExercise.getId(), deadlinePassed ? now().minusDays(1) : now().plusDays(1));
+        var expectedStatus = deadlinePassed || existingAssessment ? HttpStatus.OK : HttpStatus.FORBIDDEN;
+
+        request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", expectedStatus, TextParticipationDTO.class);
+
+        assertThat(resultRepository.existsBySubmissionId(submission.getId())).isEqualTo(deadlinePassed || existingAssessment);
     }
 
     @Test
