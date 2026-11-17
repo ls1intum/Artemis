@@ -1,14 +1,14 @@
-<div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="position-relative min-h-100 d-flex flex-column">
+<div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="relative flex min-h-100 flex-col">
     @if (quizExercise()) {
         @if (mode() === 'live' && quizExercise().quizEnded && !shouldTreatAsSubmittedForUi()) {
-            <div id="missed-deadline-message" class="d-flex justify-content-center text-center my-3">
+            <div id="missed-deadline-message" class="my-4! flex justify-center text-center">
                 <span [jhiTranslate]="'artemisApp.quizExercise.missedDeadlinePracticeHint'"></span>
             </div>
         } @else {
             @if (mode() === 'preview' || mode() === 'solution') {
-                <div id="quiz-header" #quizHeader class="row module-bg">
-                    <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
-                        <h5 class="mb-0 d-flex gap-2 align-items-center">
+                <div id="quiz-header" #quizHeader class="module-bg -mx-3">
+                    <div class="module-bg flex items-center justify-between gap-2 px-3! pt-2">
+                        <h5 class="mb-0 flex items-center gap-2">
                             <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
                             @if (mode() === 'preview' || mode() === 'solution') {
                                 {{ quizExercise().course?.title ? quizExercise().course?.title : quizExercise().exerciseGroup?.exam?.course?.title }}
@@ -24,16 +24,16 @@
                                 @default {}
                             }
                             <ng-template #modeBadge let-modeTranslation>
-                                <span class="small">
-                                    <span class="badge bg-secondary" [jhiTranslate]="'artemisApp.quizExercise.' + modeTranslation"></span>
+                                <span class="text-[0.875em]">
+                                    <tumaet-ui-tag severity="secondary"><span [jhiTranslate]="'artemisApp.quizExercise.' + modeTranslation"></span></tumaet-ui-tag>
                                 </span>
                             </ng-template>
                         </h5>
                         <div>
                             @if (!showingResult()) {
-                                <div class="d-flex gap-2 align-items-center">
+                                <div class="flex items-center gap-2">
                                     @if (!waitingForQuizStart() && !submission().submitted && remainingTimeSeconds() >= 0) {
-                                        <div class="align-content-center">
+                                        <div class="content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                                             <span
                                                 id="remaining-time-value"
@@ -46,17 +46,17 @@
                                             </span>
                                         </div>
                                     } @else if (!waitingForQuizStart() && remainingTimeSeconds() < 0 && !showingResult() && !hasAnyAnswer()) {
-                                        <div class="align-content-center">
+                                        <div class="content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                                             <span id="remaining-time-value" class="time-critical">{{ remainingTimeText() }}</span>
                                         </div>
                                     } @else if (quizExercise().dueDate && !quizExercise().quizEnded && submission().submitted) {
-                                        <div class="align-content-center">
+                                        <div class="content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
                                             <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
                                         </div>
                                     } @else if (quizExercise().dueDate && remainingTimeSeconds() < 0 && hasAnyAnswer()) {
-                                        <div class="align-content-center">
+                                        <div class="content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
                                             <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
                                         </div>
@@ -94,15 +94,15 @@
             <!-- STEPWIZARD SECTION -->
             <!-- TODO the STEPWIZARD SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
             <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->
-            <div class="row m-0">
-                <div class="col-md-auto ps-0">
+            <div class="flex flex-col md:flex-row">
+                <div class="pe-3! md:shrink-0">
                     <div
                         #stepWizard
-                        class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
+                        class="quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
                         [ngClass]="{ 'sticky-top-quiz': mode() === 'preview' }"
                     >
                         @for (question of quizExercise().quizQuestions; track question; let index = $index) {
-                            <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
+                            <div class="stepwizardquiz__step" [class.mb-4!]="!$last">
                                 @switch (question.type) {
                                     @case (DRAG_AND_DROP) {
                                         <ng-template
@@ -140,10 +140,11 @@
                                 <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
                                 <ng-template #stepwizardCircle let-questionAnswers="questionAnswers" let-abbreviation="abbreviation" let-questionColorClass="questionColorClass">
                                     <span
-                                        class="btn btn-light btn-circle"
+                                        class="quiz-nav-step"
                                         [class]="questionColorClass"
                                         (click)="navigateToQuestion(index)"
-                                        [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                        [tumAetUiTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                        tumAetUiTooltipPlacement="right"
                                         [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
                                         #keyboardAction142
                                         role="button"
@@ -162,7 +163,7 @@
                 <!-- END STEPWIZARD SECTION -->
                 <!-- QUESTION CONTENT SECTION -->
                 <!-- TODO the QUESTION CONTENT SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
-                <div class="col p-0 quiz-content mb-3">
+                <div class="quiz-content mb-4! min-w-0 md:flex-1">
                     @if (!waitingForQuizStart()) {
                         @if (!submission().submitted && !showingResult() && remainingTimeSeconds() >= 0) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
@@ -235,14 +236,14 @@
                 </div>
                 <!-- END QUESTION SECTION -->
             </div>
-            <div class="row sticky-bottom mb-0 mt-auto">
+            <div class="sticky bottom-0 z-[1020] mt-auto -mx-3">
                 @if (mode() === 'live') {
                     <!-- The status row below sits on the card's own surface at its bottom edge, so it needs no rule above it. -->
-                    <div class="container d-flex fs-small align-items-center justify-content-between module-bg mb-n3 py-2">
+                    <div class="fs-small module-bg -mb-4 flex w-full items-center justify-between px-3! py-2">
                         @if (!showingResult()) {
                             @if (!waitingForQuizStart()) {
                                 <div>
-                                    <span ngbTooltip="{{ submission().submissionDate | artemisDate: 'long' : true }}" placement="right auto">
+                                    <span [tumAetUiTooltip]="submission().submissionDate | artemisDate: 'long' : true" tumAetUiTooltipPlacement="right">
                                         @if (submission().submitted) {
                                             <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                         } @else {
@@ -266,10 +267,10 @@
                                 </div>
                             }
                             <!-- CONNECTION STATUS -->
-                            <div class="d-flex justify-content-end align-items-center flex-grow-1 gap-2">
+                            <div class="flex grow items-center justify-end gap-2">
                                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.autoSave"></div>
                                 @if (unsavedChanges()) {
-                                    <span class="badge bg-warning fs-x-small" jhiTranslate="artemisApp.quizExercise.unsavedChanges"></span>
+                                    <tumaet-ui-tag severity="warn" size="sm"><span jhiTranslate="artemisApp.quizExercise.unsavedChanges"></span></tumaet-ui-tag>
                                 }
                                 <jhi-connection-status class="connection-status-quiz" />
                             </div>
@@ -294,13 +295,13 @@
                 <!-- OVERLAY SECTION -->
                 @if (!waitingForQuizStart() && !showingResult() && remainingTimeSeconds() < 0 && !submission().submitted) {
                     @if (!hasAnyAnswer()) {
-                        <div class="quiz-is-over-overlay alert alert-info">
+                        <tumaet-ui-message class="quiz-is-over-overlay" severity="info">
                             <span jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
-                        </div>
+                        </tumaet-ui-message>
                     } @else if (quizExercise()?.quizMode === QuizMode.SYNCHRONIZED) {
-                        <div class="quiz-is-over-overlay alert alert-info">
+                        <tumaet-ui-message class="quiz-is-over-overlay" severity="info">
                             <span jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
-                        </div>
+                        </tumaet-ui-message>
                     }
                 }
                 @if (
@@ -311,7 +312,7 @@
                     submission().submitted &&
                     !submissionConfirmationDismissed()
                 ) {
-                    <div class="quiz-submitted-overlay alert alert-success" role="status" data-testid="quiz-submission-confirmation">
+                    <tumaet-ui-message class="quiz-submitted-overlay" severity="success" data-testid="quiz-submission-confirmation">
                         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
                         <button
                             type="button"
@@ -324,11 +325,11 @@
                         >
                             {{ 'entity.action.close' | artemisTranslate }}
                         </button>
-                    </div>
+                    </tumaet-ui-message>
                 }
             </div>
             @if (waitingForQuizStart()) {
-                <div class="quiz-waiting-for-start-overlay alert alert-info">
+                <tumaet-ui-message class="quiz-waiting-for-start-overlay" severity="info" data-testid="quiz-waiting-for-start">
                     @if (quizBatch() || quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
                         <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
                         @if (startDate()) {
@@ -367,7 +368,7 @@
                             }
                         }
                     }
-                </div>
+                </tumaet-ui-message>
             }
             <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz()">
                 <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
