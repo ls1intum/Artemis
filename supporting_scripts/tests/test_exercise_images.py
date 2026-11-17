@@ -659,6 +659,20 @@ class RubyDartAndCSharpTest(unittest.TestCase):
             ["nunit 4.0.0 differs from the image (3.14.0)", "target framework net9.0 differs from the image (net8.0)"],
         )
 
+    def test_an_exact_nuget_version_is_the_same_as_the_plain_version(self):
+        exact = CSPROJ.replace('Version="3.14.0"', 'Version="[3.14.0]"')
+        plain = sync_check.versions_of("test.csproj", CSPROJ)
+        self.assertEqual(sync_check.compare(sync_check.versions_of("test.csproj", exact), plain), [])
+        self.assertEqual(sync_check.compare(plain, sync_check.versions_of("test.csproj", exact)), [])
+        self.assertEqual(
+            sync_check.compare(sync_check.versions_of("test.csproj", CSPROJ.replace('Version="3.14.0"', 'Version="[4.0.0]"')), plain),
+            ["nunit 4.0.0 differs from the image (3.14.0)"],
+        )
+        # a range or a floating version can restore other packages, so it is not read as a plain version
+        for version in ("[3.14.0,4.0.0)", "(,3.14.0]", "3.*"):
+            with self.subTest(version=version):
+                self.assertEqual(len(sync_check.compare(sync_check.versions_of("test.csproj", CSPROJ.replace('Version="3.14.0"', f'Version="{version}"')), plain)), 1)
+
     def test_a_csproj_with_an_entity_declaration_is_refused(self):
         with self.assertRaises(ValueError):
             sync_check.versions_of("test.csproj", '<!DOCTYPE x [<!ENTITY e "v">]><Project/>')

@@ -295,6 +295,15 @@ def pubspec_lock_versions(text: str) -> Versions:
     return versions
 
 
+def _nuget_version(version: str) -> str:
+    """A version in the notation of an exact version (``[3.14.0]``) restores the same package as ``3.14.0``, whose lowest applicable version is that one.
+
+    Other intervals and floating versions are kept as they are: they can restore different packages and are not compared as equal to a plain version.
+    """
+    exact = re.fullmatch(r"\[\s*([^\s,\[\]()]+)\s*\]", version.strip())
+    return exact.group(1) if exact else version.strip()
+
+
 def csproj_versions(text: str) -> Versions:
     """The NuGet packages a project file references, by lower-case package name, and its target frameworks."""
     if "<!DOCTYPE" in text or "<!ENTITY" in text:
@@ -310,7 +319,7 @@ def csproj_versions(text: str) -> Versions:
             name = element.get("Include") or element.get("Update")
             version = element.get("Version") or (element.findtext("Version") or "").strip() or element.get("VersionOverride")
             if name and version:
-                versions.setdefault(name.lower(), set()).add(version)
+                versions.setdefault(name.lower(), set()).add(_nuget_version(version))
     return versions
 
 
