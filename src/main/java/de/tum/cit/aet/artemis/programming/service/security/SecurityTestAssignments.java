@@ -139,9 +139,11 @@ final class SecurityTestAssignments {
                                         () -> defaultMethods.add(method));
                             }
                         });
+                        // Like an annotation of a method, an empty path, e.g. @Policy(value = ""), names no policy file: the class uses the strict default policy.
+                        String classPolicyPath = annotation.policyPath().filter(path -> !path.isBlank()).orElse(null);
                         testClasses.put(qualifiedName,
-                                new TestClass(qualifiedName, sourcePath, annotation.isActivated(), annotation.policyPath().orElse(null), Map.copyOf(methodPolicyPaths),
-                                        Set.copyOf(defaultMethods), Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
+                                new TestClass(qualifiedName, sourcePath, annotation.isActivated(), classPolicyPath, Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods),
+                                        Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
                                         type.superclass().stream().anyMatch(testClassPaths::containsKey)));
                     });
         });

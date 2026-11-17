@@ -923,6 +923,18 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void assignsAClassWhoseAnnotationNamesNoPolicyFile() throws Exception {
+        pushToTests(STRESS_TEST_PATH, STRESS_TEST.replace("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")", "@de.tum.cit.ase.ares.api.Policy(value = \"\")"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactly("de.example.SortingTest");
+
+        editorService.commit(exercise(), change(editor, edited(loadedPolicy(editor), BOTH_CLASSES)), user);
+
+        assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")"));
+        assertThat(editorService.getEditor(exercise()).policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+    }
+
+    @Test
     void deletingAPolicyLetsItsTestsUseTheDefaultPolicy() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 
