@@ -2,7 +2,7 @@
 id: hardening-checklist
 title: Hardening Checklist
 sidebar_label: Hardening Checklist
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-17
 ---
 
 This page collects what an operator has to check before an Artemis installation goes into production and when it is upgraded. Every item links to the page that explains it. The list does not replace
@@ -14,6 +14,8 @@ The remaining items depend on how and where you run Artemis, so only you can ver
 ## Network and reverse proxy
 
 - [ ] Only the reverse proxy is reachable from the internet. The database, the broker, the distributed data provider and the build agents are on a private network.
+- [ ] Iris (Pyris), Athena, Weaviate and the other extension services are on the private network and reachable only from the core nodes. Production has its own instances, environments that share an instance hold test
+      data only, and every Artemis installation has its own shared secret. See [Extension Services](/admin/production-setup/network-model#extension-services).
 - [ ] HTTPS terminates at the reverse proxy with a valid certificate and current TLS settings.
 - [ ] The reverse proxy sets `X-Forwarded-For`, and both `server.tomcat.remoteip.internal-proxies` and `artemis.continuous-integration.build-agent-network.trusted-proxies` list only your own proxies, so the rate limit counts the real client address. See
       [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
