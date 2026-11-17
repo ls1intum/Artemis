@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 
@@ -74,6 +75,12 @@ public class BareGitRepositoryService extends AbstractGitService {
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
+
+    @Value("${artemis.version-control.max-repository-size-mb:20}")
+    private long maxRepositorySizeMb = 20;
+
+    @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}")
+    private long maxTestsAndSolutionRepositorySizeMb = 50;
 
     // The two overrides below read the same as GitService's on purpose: both run on the server, where a repository is a path. They cannot move up into
     // AbstractGitService, because BuildJobGitService runs on a build agent and reaches the same repositories over SSH or HTTP with credentials attached.
@@ -576,5 +583,19 @@ public class BareGitRepositoryService extends AbstractGitService {
         }
 
         return commitInfos;
+    }
+
+    /**
+     * The size that the files of a repository may add up to, as for a push to the repository: the limit for tests and solution repositories, or the limit for the others.
+     *
+     * @param repository the working copy of the repository
+     * @return the limit in bytes, or {@link Long#MAX_VALUE} if the limit is disabled by configuration
+     */
+    public long getMaxRepositorySizeBytes(Repository repository) {
+        String repositoryTypeOrUserName = repository.getRemoteRepositoryUri().getRepositoryTypeOrUserName();
+        boolean isTestsOrSolutionRepository = RepositoryType.TESTS.toString().equals(repositoryTypeOrUserName)
+                || RepositoryType.SOLUTION.toString().equals(repositoryTypeOrUserName);
+        long limitInMegabytes = isTestsOrSolutionRepository ? maxTestsAndSolutionRepositorySizeMb : maxRepositorySizeMb;
+        return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
     }
 }
