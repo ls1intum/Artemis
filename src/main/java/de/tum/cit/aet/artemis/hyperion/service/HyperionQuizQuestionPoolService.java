@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -26,26 +27,35 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolLectureUnit;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCompetencyDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolDeletionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolLectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
- * Starts pool builds and answers what the pool page shows: progress, the items with their decisions and lecture units, and the course's settings.
+ * Starts pool builds and answers what the pool page shows: progress with the last build, the items with their decisions and lecture
+ * units, the lecture units themselves with their counts and exclusion, and the course's settings.
  */
 @Service
 @Lazy
@@ -69,17 +79,30 @@ public class HyperionQuizQuestionPoolService {
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
+    private final QuizQuestionPoolLectureUnitRepository lectureUnitRepository;
+
+    private final QuizQuestionPoolBuildRepository buildRepository;
+
+    private final HyperionQuizQuestionPoolMaterialService materialService;
+
+    private final CourseRepository courseRepository;
+
     private final HyperionQuizQuestionPoolModelService modelService;
 
     public HyperionQuizQuestionPoolService(HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolTaskService taskService,
             QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService, Optional<CourseCompetencyApi> courseCompetencyApi,
-            Optional<LectureUnitApi> lectureUnitApi, HyperionQuizQuestionPoolModelService modelService) {
+            Optional<LectureUnitApi> lectureUnitApi, QuizQuestionPoolLectureUnitRepository lectureUnitRepository, QuizQuestionPoolBuildRepository buildRepository,
+            HyperionQuizQuestionPoolMaterialService materialService, CourseRepository courseRepository, HyperionQuizQuestionPoolModelService modelService) {
         this.buildService = buildService;
         this.taskService = taskService;
         this.itemRepository = itemRepository;
         this.settingsService = settingsService;
         this.courseCompetencyApi = courseCompetencyApi;
         this.lectureUnitApi = lectureUnitApi;
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.buildRepository = buildRepository;
+        this.materialService = materialService;
+        this.courseRepository = courseRepository;
         this.modelService = modelService;
     }
 
@@ -103,12 +126,28 @@ public class HyperionQuizQuestionPoolService {
             return new QuizQuestionPoolBuildStartDTO(false, 0);
         }
         int enqueued;
+        long buildId;
         try {
             enqueued = buildService.enqueue(course);
-            taskService.runBuildAsync(courseId, userId, leaseToken);
+            buildId = buildService.recordStart(course, QuizQuestionPoolBuildTrigger.MANUAL, enqueued).getId();
         }
         catch (RuntimeException e) {
             buildService.release(courseId, leaseToken);
+            throw e;
+        }
+        try {
+            taskService.runBuildAsync(courseId, userId, buildId, leaseToken);
+        }
+        catch (RuntimeException e) {
+            try {
+                buildService.recordDispatchFailure(buildId);
+            }
+            catch (RuntimeException recordFailure) {
+                e.addSuppressed(recordFailure);
+            }
+            finally {
+                buildService.release(courseId, leaseToken);
+            }
             throw e;
         }
         HyperionCourseSettings settings = buildService.settingsOfRunningBuild(courseId);
@@ -169,8 +208,88 @@ public class HyperionQuizQuestionPoolService {
         int judged = counts.getOrDefault(QuizQuestionPoolItemState.FILTERED, 0);
         int failed = counts.getOrDefault(QuizQuestionPoolItemState.FAILED_GENERATION, 0) + counts.getOrDefault(QuizQuestionPoolItemState.FAILED_FILTER, 0);
         HyperionCourseSettings buildSettings = buildService.settingsOfRunningBuild(courseId);
+        QuizQuestionPoolBuildDTO lastBuild = buildRepository.findAllByCourseIdNewestFirst(courseId, PageRequest.of(0, 1)).stream().findFirst().map(QuizQuestionPoolBuildDTO::of)
+                .orElse(null);
         return new QuizQuestionPoolProgressDTO(buildService.isRunning(courseId), total, toGenerate, toJudge, judged, accepted, rejected, failed,
-                buildSettings == null ? null : HyperionCourseSettingsDTO.of(buildSettings), modelService.isConfigured());
+                buildSettings == null ? null : HyperionCourseSettingsDTO.of(buildSettings), lastBuild, modelService.isConfigured());
+    }
+
+    /**
+     * Lists the lecture units the pool can generate from, per competency they are linked to, with their counts and exclusion.
+     *
+     * @param courseId the course
+     * @return the units in competency order, each with the competency it is listed under
+     */
+    public List<QuizQuestionPoolLectureUnitDTO> getLectureUnits(long courseId) {
+        if (courseCompetencyApi.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, String> titles = new HashMap<>();
+        List<Long> competencyIds = new ArrayList<>();
+        courseCompetencyApi.get().findAllForCourse(courseId).stream().sorted((first, second) -> Long.compare(first.getId(), second.getId())).forEach(competency -> {
+            competencyIds.add(competency.getId());
+            titles.put(competency.getId(), competency.getTitle());
+        });
+        Map<Long, QuizQuestionPoolLectureUnit> records = lectureUnitRepository.findAllByCourseId(courseId).stream()
+                .collect(Collectors.toMap(QuizQuestionPoolLectureUnit::getLectureUnitId, record -> record, (first, second) -> first));
+        Map<Long, QuizQuestionPoolLectureUnitCountDTO> counts = itemRepository.countByLectureUnitForCourse(courseId, QuizQuestionReviewState.APPROVED).stream()
+                .collect(Collectors.toMap(QuizQuestionPoolLectureUnitCountDTO::lectureUnitId, count -> count, (first, second) -> first));
+        List<QuizQuestionPoolLectureUnitDTO> units = new ArrayList<>();
+        materialService.findGroundableUnits(competencyIds).forEach((competencyId, lectureUnits) -> {
+            for (LectureUnit unit : lectureUnits) {
+                QuizQuestionPoolLectureUnit record = records.get(unit.getId());
+                QuizQuestionPoolLectureUnitCountDTO count = counts.get(unit.getId());
+                units.add(new QuizQuestionPoolLectureUnitDTO(competencyId, titles.get(competencyId), unit.getId(), unit.getName(),
+                        unit.getLecture() != null ? unit.getLecture().getTitle() : null, record != null && record.isExcluded(), count != null && count.materialChanged() > 0,
+                        count == null ? 0 : count.total().intValue(), count == null ? 0 : count.approved().intValue(), record == null ? null : record.getLastBuiltAt()));
+            }
+        });
+        return units;
+    }
+
+    /**
+     * Records whether a lecture unit is excluded from generation. Excluding a unit removes its unreviewed questions at once and keeps the
+     * approved ones; including it again lets the next build fill its cells.
+     *
+     * @param courseId      the course
+     * @param lectureUnitId the lecture unit, which must belong to a lecture of the course
+     * @param excluded      whether the unit is excluded
+     * @throws EntityNotFoundException if the unit does not exist in the course
+     * @throws ConflictException       if the unit is to be excluded while a build of the course is running; excluding holds the course's build
+     *                                     lease, so no build starts while the unit's questions are deleted
+     */
+    public void updateLectureUnitRelevance(long courseId, long lectureUnitId, boolean excluded) {
+        LectureUnit unit = materialService.findUnits(List.of(lectureUnitId)).get(lectureUnitId);
+        if (unit == null || unit.getLecture() == null || unit.getLecture().getCourse() == null || !Objects.equals(unit.getLecture().getCourse().getId(), courseId)) {
+            throw new EntityNotFoundException("LectureUnit", lectureUnitId);
+        }
+        if (excluded) {
+            whileHoldingTheBuildLease(courseId, () -> storeRelevance(courseId, lectureUnitId, true));
+        }
+        else {
+            storeRelevance(courseId, lectureUnitId, false);
+        }
+        log.info("Quiz question pool of course [{}]: {} {} lecture unit [{}]", courseId, currentUser(), excluded ? "excluded" : "included", lectureUnitId);
+    }
+
+    /**
+     * Stores whether the lecture unit is excluded and, when it is, deletes its questions that are not approved. An existing record is
+     * updated in its exclusion only, so a build reconciling the unit at the same time keeps what it records. A unit without a record
+     * counts as included, so including it creates none.
+     */
+    private void storeRelevance(long courseId, long lectureUnitId, boolean excluded) {
+        ZonedDateTime now = ZonedDateTime.now();
+        if (lectureUnitRepository.updateExcluded(courseId, lectureUnitId, excluded, now) == 0 && excluded) {
+            QuizQuestionPoolLectureUnit created = new QuizQuestionPoolLectureUnit();
+            created.setCourse(courseRepository.findByIdElseThrow(courseId));
+            created.setLectureUnitId(lectureUnitId);
+            created.setExcluded(true);
+            created.setUpdatedAt(now);
+            lectureUnitRepository.save(created);
+        }
+        if (excluded) {
+            itemRepository.deleteAllByLectureUnitExceptReviewState(courseId, lectureUnitId, QuizQuestionReviewState.APPROVED);
+        }
     }
 
     /**
@@ -339,7 +458,7 @@ public class HyperionQuizQuestionPoolService {
 
     private static QuizQuestionPoolItemDTO toDTO(QuizQuestionPoolItem item, @Nullable String competencyTitle, @Nullable String lectureUnitName) {
         return new QuizQuestionPoolItemDTO(item.getId(), item.getCompetencyId(), competencyTitle, item.getLectureUnitId(), lectureUnitName, item.getLanguage(),
-                item.getQuestionType(), item.getDifficulty(), item.getState(), item.getReviewState(), flaggedOf(item), item.getQuestion(),
+                item.getQuestionType(), item.getDifficulty(), item.getState(), item.getReviewState(), flaggedOf(item), item.isMaterialChanged(), item.getQuestion(),
                 item.getDecision() == null ? null : QuizQuestionReviewFlags.withFlags(item.getDecision()), item.getFailure(), item.getGeneratorModel(), item.getJudgeModel(),
                 item.getUpdatedAt());
     }
