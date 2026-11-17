@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { SecurityPolicyChange } from 'app/programming/shared/entities/security-policy.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 
@@ -53,8 +54,13 @@ describe('SecurityFrameworkService', () => {
         service.commitPolicies(42, change).subscribe();
         service.importPolicy(42, 'SecurityPolicy.yaml', 'content').subscribe();
 
-        expect(http.expectOne({ method: 'POST', url: `${URL}/policies/preview` }).request.body).toEqual(change);
-        expect(http.expectOne({ method: 'PUT', url: `${URL}/policies` }).request.body).toEqual(change);
-        expect(http.expectOne({ method: 'POST', url: `${URL}/policies/import` }).request.body).toEqual({ policyPath: 'SecurityPolicy.yaml', content: 'content' });
+        const preview = http.expectOne({ method: 'POST', url: `${URL}/policies/preview` }).request;
+        const commit = http.expectOne({ method: 'PUT', url: `${URL}/policies` }).request;
+        const imported = http.expectOne({ method: 'POST', url: `${URL}/policies/import` }).request;
+        expect(preview.body).toEqual(change);
+        expect(commit.body).toEqual(change);
+        expect(imported.body).toEqual({ policyPath: 'SecurityPolicy.yaml', content: 'content' });
+        // The editor shows these failures itself, e.g. a conflict as its banner, so no error alert repeats them.
+        expect([preview, commit, imported].map((request) => request.context.get(SKIP_HTTP_ERROR_ALERT))).toEqual([true, true, true]);
     });
 });

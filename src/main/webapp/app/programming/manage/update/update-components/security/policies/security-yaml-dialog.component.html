@@ -74,7 +74,11 @@
                 @for (line of lines(); track line.number) {
                     <div class="sp-code-line" [class.sp-code-new]="line.highlighted">
                         <span>{{ line.number }}</span>
-                        <span>{{ line.text }}</span>
+                        <!-- The line keeps its whitespace, so nothing may stand between these parts. -->
+                        <span
+                            >{{ line.lead }}<span class="sp-key">{{ line.key }}</span
+                            >{{ line.rest }}</span
+                        >
                     </div>
                 }
             </div>

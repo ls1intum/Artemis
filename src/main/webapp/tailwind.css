@@ -95,6 +95,7 @@
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/programming/shared/build-window-notice';
 @source './app/programming/manage/update/update-components/build-time-window';
+@source './app/programming/manage/update/update-components/security';
 @source './app/course/manage/user-management-dropdown';
 
 /* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are

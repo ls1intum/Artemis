@@ -17,6 +17,11 @@ import {
  * rebasing them onto a newer commit, and the line diff of the review. Nothing here talks to the server.
  */
 
+/** The key of a text that names a count: `<key>.one` for exactly one, `<key>.other` otherwise. The text receives the count as `count`. */
+export function countKey(key: string, count: number): string {
+    return `${key}.${count === 1 ? 'one' : 'other'}`;
+}
+
 /** The categories of the Allow Resource Access box, in the order of its tabs. */
 export type ResourceKind = 'files' | 'network' | 'commands' | 'threads' | 'packages';
 

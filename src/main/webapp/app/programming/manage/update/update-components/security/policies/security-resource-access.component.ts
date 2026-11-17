@@ -42,6 +42,7 @@ import {
     ResourceRow,
     RowSource,
     SourcedRow,
+    countKey,
     countRowChanges,
     joinArguments,
     rowKey,
@@ -230,7 +231,13 @@ export class SecurityResourceAccessComponent {
             case 'commands':
                 return [{ labelKey: `${PREFIX}.granted.execute`, tooltipKey: `${PREFIX}.grantedHelp.commands` }];
             case 'threads':
-                return [{ labelKey: `${PREFIX}.granted.create`, tooltipKey: `${PREFIX}.grantedHelp.threads`, params: { count: (row as SecurityThreadPermission).maxThreads } }];
+                return [
+                    {
+                        labelKey: `${PREFIX}.granted.create`,
+                        tooltipKey: countKey(`${PREFIX}.grantedHelp.threads`, (row as SecurityThreadPermission).maxThreads),
+                        params: { count: (row as SecurityThreadPermission).maxThreads },
+                    },
+                ];
             case 'packages':
                 return [{ labelKey: `${PREFIX}.granted.import`, tooltipKey: `${PREFIX}.grantedHelp.packages` }];
             default:
@@ -298,15 +305,16 @@ export class SecurityResourceAccessComponent {
         this.documentChange.emit(withRows(this.document(), kind, restored));
     }
 
-    readonly deleteHeader = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.delete.title`, params: { noun: this.noun() } }));
+    readonly deleteHeader = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.delete.title`, params: { noun: this.noun('noun') } }));
+    // Lower-casing the title noun would also lower-case German nouns, so each language names the noun for a sentence itself.
     readonly deleteQuestion = computed<SecurityTranslatable>(() => ({
         key: `${PREFIX}.delete.question`,
-        params: { noun: this.noun().toLocaleLowerCase(), tab: this.translateService.instant(`${PREFIX}.tab.${this.activeTab()}`) },
+        params: { noun: this.noun('nounInSentence'), tab: this.translateService.instant(`${PREFIX}.tab.${this.activeTab()}`) },
     }));
     readonly deleteNote: SecurityTranslatable = { key: `${PREFIX}.delete.note` };
 
-    private noun(): string {
-        return this.translateService.instant(`artemisApp.programmingExercise.security.advanced.row.${this.activeTab()}.noun`);
+    private noun(form: 'noun' | 'nounInSentence'): string {
+        return this.translateService.instant(`artemisApp.programmingExercise.security.advanced.row.${this.activeTab()}.${form}`);
     }
 
     /** What the deletion dialog names: the fields of the row and its granted actions. */

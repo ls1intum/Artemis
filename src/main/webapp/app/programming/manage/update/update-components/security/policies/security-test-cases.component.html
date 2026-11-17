@@ -45,7 +45,9 @@
                                     <li>
                                         <span class="sp-li-row">
                                             <span class="sp-mono">{{ node.simpleName }}</span>
-                                            <span class="sp-mut text-xs">{{ prefix + 'testCaseCount' | artemisTranslate: { count: node.testCases.length } }}</span>
+                                            <span class="sp-mut text-xs">{{
+                                                countKey(prefix + 'testCaseCount', node.testCases.length) | artemisTranslate: { count: node.testCases.length }
+                                            }}</span>
                                         </span>
                                         <ul class="sp-l3">
                                             @for (testCase of node.testCases; track testCase.entry) {

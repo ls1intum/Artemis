@@ -100,13 +100,16 @@
                         <fa-icon [icon]="faCircleXmark" />
                         <span [jhiTranslate]="prefix + 'regularFailure'"></span>
                     </div>
-                    <div class="sp-preview-message sp-mono">
-                        @if (privilegedExceptions()?.enabled) {
-                            {{ shownMessage().trim() || (prefix + 'messagePlaceholder' | artemisTranslate) }}
-                        } @else {
-                            {{ prefix + 'originalException' | artemisTranslate }}
-                        }
-                    </div>
+                    <!-- The message keeps its line breaks, so the indentation of this template must not reach it. -->
+                    <div
+                        class="sp-preview-message sp-mono"
+                        data-testid="security-behaviour-standard-preview"
+                        [textContent]="
+                            privilegedExceptions()?.enabled
+                                ? shownMessage().trim() || (prefix + 'messagePlaceholder' | artemisTranslate)
+                                : (prefix + 'originalException' | artemisTranslate)
+                        "
+                    ></div>
                 </div>
             </div>
         }
@@ -178,7 +181,7 @@
                 </div>
             </div>
             @if (hiddenTests() && hiddenPeriodInvalid()) {
-                <p class="m-0 text-sm text-state-danger-foreground" role="alert" [jhiTranslate]="prefix + 'hiddenPeriodInvalid'"></p>
+                <p class="m-0 text-sm text-state-danger" role="alert" [jhiTranslate]="prefix + 'hiddenPeriodInvalid'"></p>
             }
             <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'timeZone'"></p>
         }

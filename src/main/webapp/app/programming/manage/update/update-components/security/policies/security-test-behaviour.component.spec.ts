@@ -56,6 +56,19 @@ describe('SecurityTestBehaviourComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="security-behaviour-mirror"]')).not.toBeNull();
     });
 
+    it('previews the exception or the replacing message exactly, without the indentation of the template', () => {
+        handlers.onTabChange('standardFeedback');
+        fixture.detectChanges();
+        const preview = (): string | null => fixture.nativeElement.querySelector('[data-testid="security-behaviour-standard-preview"]').textContent;
+
+        expect(preview()).toBe('artemisApp.programmingExercise.security.advanced.behaviour.originalException');
+
+        handlers.setReplaceExceptions(true);
+        handlers.setFailureMessage('  Test failed.  ');
+        fixture.detectChanges();
+        expect(preview()).toBe('Test failed.');
+    });
+
     it('replaces exceptions with a message and drops the section when switched off again', () => {
         handlers.setReplaceExceptions(true);
         handlers.setFailureMessage('Test failed.');

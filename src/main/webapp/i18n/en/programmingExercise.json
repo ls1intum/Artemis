@@ -383,7 +383,10 @@
                 },
                 "unsavedPoliciesOnSave": {
                     "header": "Discard the unsaved security policy changes?",
-                    "message": "The security policies have {{ count }} unsaved change(s). Saving the exercise does not commit them and leaves this page, so they are discarded. To keep them, cancel and commit them in Manage Security Policies first.",
+                    "message": {
+                        "one": "The security policies have 1 unsaved change. Saving the exercise does not commit it and leaves this page, so it is discarded. To keep it, cancel and commit it in Manage Security Policies first.",
+                        "other": "The security policies have {{ count }} unsaved changes. Saving the exercise does not commit them and leaves this page, so they are discarded. To keep them, cancel and commit them in Manage Security Policies first."
+                    },
                     "confirm": "Discard and save"
                 },
                 "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox, and nothing the security policy configures for the tests applies. Hidden tests are then protected only by the test visibility settings of Artemis.",
@@ -406,7 +409,10 @@
                     "retry": "Retry",
                     "uncommitted": "Uncommitted",
                     "uncommittedCount": "{{ count }} uncommitted",
-                    "unsavedCount": "{{ count }} unsaved change(s)",
+                    "unsavedCount": {
+                        "one": "1 unsaved change",
+                        "other": "{{ count }} unsaved changes"
+                    },
                     "card": {
                         "activate": "Activate Ares2",
                         "activateHelp": "Ares2, the Programming Exercise Security Framework, runs student code in a sandbox during the automated tests. Any access that no security policy allows fails the test case with a security violation.",
@@ -456,10 +462,16 @@
                         "deleteOne": "Deletes {{ file }} and turns the @Policy annotations of the test classes off.",
                         "deleteMany": "Deletes {{ count }} policy files and turns the @Policy annotations of the test classes off.",
                         "control": "Disables Resource Access control and Test Behaviour control.",
-                        "apiUsesTitle": "{{ count }} test file(s) use other features of Ares2.",
+                        "apiUsesTitle": {
+                            "one": "1 test file uses other features of Ares2.",
+                            "other": "{{ count }} test files use other features of Ares2."
+                        },
                         "apiUses": "Ares2 stays in the build, so they keep compiling: {{ files }} ({{ apis }}).",
                         "showFiles": "Show Files in Repository",
-                        "discarded": "Your {{ count }} unsaved change(s) are discarded.",
+                        "discarded": {
+                            "one": "Your unsaved change is discarded.",
+                            "other": "Your {{ count }} unsaved changes are discarded."
+                        },
                         "confirm": "Turn Off Ares2"
                     },
                     "scanOn": {
@@ -499,12 +511,30 @@
                         "addPolicy": "Add Security Policy"
                     },
                     "commitBar": {
-                        "restrictions": "{{ count }} allowed resource access(es)",
-                        "behaviours": "{{ count }} set test behaviour(s)",
-                        "testCases": "{{ count }} test case assignment(s)",
-                        "testClasses": "{{ count }} declared test class(es)",
-                        "settings": "{{ count }} policy setting(s)",
-                        "build": "{{ count }} build setting(s)",
+                        "restrictions": {
+                            "one": "1 allowed resource access",
+                            "other": "{{ count }} allowed resource accesses"
+                        },
+                        "behaviours": {
+                            "one": "1 set test behaviour",
+                            "other": "{{ count }} set test behaviours"
+                        },
+                        "testCases": {
+                            "one": "1 test case assignment",
+                            "other": "{{ count }} test case assignments"
+                        },
+                        "testClasses": {
+                            "one": "1 declared test class",
+                            "other": "{{ count }} declared test classes"
+                        },
+                        "settings": {
+                            "one": "1 policy setting",
+                            "other": "{{ count }} policy settings"
+                        },
+                        "build": {
+                            "one": "1 build setting",
+                            "other": "{{ count }} build settings"
+                        },
                         "notEnforced": "Nothing is enforced until you commit.",
                         "nothing": "Everything is committed. There is nothing to commit or discard.",
                         "instructorsOnly": "Only instructors of the course can change the security policies.",
@@ -516,7 +546,10 @@
                         "unnamed": "Unnamed policy",
                         "new": "New · uncommitted",
                         "newHelp": "This policy has not been committed yet. It takes effect once you commit.",
-                        "changesHelp": "This policy has {{ count }} change(s) since the last commit. They take effect once you commit.",
+                        "changesHelp": {
+                            "one": "This policy has 1 change since the last commit. It takes effect once you commit.",
+                            "other": "This policy has {{ count }} changes since the last commit. They take effect once you commit."
+                        },
                         "readOnly": "Read-only",
                         "viewYaml": "View YAML",
                         "delete": "Delete policy",
@@ -541,7 +574,10 @@
                             "behaviour": "Configure Test Behaviour",
                             "tests": "Assign Test Cases"
                         },
-                        "boxChangesHelp": "{{ count }} change(s) in this section since the last commit. They take effect once you commit.",
+                        "boxChangesHelp": {
+                            "one": "1 change in this section since the last commit. It takes effect once you commit.",
+                            "other": "{{ count }} changes in this section since the last commit. They take effect once you commit."
+                        },
                         "readOnlyReason": {
                             "MISSING": "{{ path }} does not exist, so it cannot be edited here.",
                             "TOO_LARGE": "{{ path }} is too large to be edited here.",
@@ -613,7 +649,10 @@
                                 "receive": "Student code may receive data from this endpoint."
                             },
                             "commands": "Student code may start this program with exactly these arguments.",
-                            "threads": "Student code may start up to {{ count }} thread(s) of this class.",
+                            "threads": {
+                                "one": "Student code may start up to 1 thread of this class.",
+                                "other": "Student code may start up to {{ count }} threads of this class."
+                            },
                             "packages": "Student code may use classes from this package."
                         },
                         "source": {
@@ -653,6 +692,7 @@
                     "row": {
                         "files": {
                             "noun": "Path",
+                            "nounInSentence": "path",
                             "addTitle": "Add Path",
                             "editTitle": "Edit Path",
                             "target": "On this path and all paths below",
@@ -683,6 +723,7 @@
                         },
                         "network": {
                             "noun": "Endpoint",
+                            "nounInSentence": "endpoint",
                             "addTitle": "Add Endpoint",
                             "editTitle": "Edit Endpoint",
                             "host": "On this host",
@@ -707,6 +748,7 @@
                         },
                         "commands": {
                             "noun": "Command",
+                            "nounInSentence": "command",
                             "addTitle": "Add Command",
                             "editTitle": "Edit Command",
                             "command": "On this command",
@@ -716,6 +758,7 @@
                         },
                         "threads": {
                             "noun": "Thread Class",
+                            "nounInSentence": "thread class",
                             "addTitle": "Add Thread Class",
                             "editTitle": "Edit Thread Class",
                             "threadClass": "On this class",
@@ -725,6 +768,7 @@
                         },
                         "packages": {
                             "noun": "Package",
+                            "nounInSentence": "package",
                             "addTitle": "Add Package",
                             "editTitle": "Edit Package",
                             "packageName": "On this package",
@@ -842,7 +886,10 @@
                         "addTestCases": "Add Test Cases",
                         "noTests": "No test cases are assigned. This policy applies to no test yet.",
                         "allTestCases": "all test cases",
-                        "testCaseCount": "{{ count }} test case(s)",
+                        "testCaseCount": {
+                            "one": "1 test case",
+                            "other": "{{ count }} test cases"
+                        },
                         "declared": "Declared test classes ({{ count }})",
                         "declaredHelp": "Ares2 treats code in these classes as test code, not as student code. Classes of assigned test cases are always included. Add helper classes without test annotations here.",
                         "declaredIn": "Test classes declared in {{ policy }}",
@@ -930,17 +977,38 @@
                         "export": "Export",
                         "importTooLarge": "The file is larger than 256 KB.",
                         "importUnreadable": "The file could not be read. Select it again.",
-                        "imported": "Imported. {{ count }} unsaved change(s) in {{ policy }} — review them before you commit."
+                        "imported": {
+                            "one": "Imported. 1 unsaved change in {{ policy }} — review it before you commit.",
+                            "other": "Imported. {{ count }} unsaved changes in {{ policy }} — review them before you commit."
+                        }
                     },
                     "review": {
                         "title": "Review and Commit Changes",
                         "changed": {
-                            "restrictions": "{{ count }} allowed resource access(es) changed",
-                            "behaviours": "{{ count }} set test behaviour(s) changed",
-                            "testCases": "{{ count }} test case assignment(s) changed",
-                            "testClasses": "{{ count }} declared test class(es) changed",
-                            "settings": "{{ count }} policy setting(s) changed",
-                            "build": "{{ count }} build setting(s) changed"
+                            "restrictions": {
+                                "one": "1 allowed resource access changed",
+                                "other": "{{ count }} allowed resource accesses changed"
+                            },
+                            "behaviours": {
+                                "one": "1 set test behaviour changed",
+                                "other": "{{ count }} set test behaviours changed"
+                            },
+                            "testCases": {
+                                "one": "1 test case assignment changed",
+                                "other": "{{ count }} test case assignments changed"
+                            },
+                            "testClasses": {
+                                "one": "1 declared test class changed",
+                                "other": "{{ count }} declared test classes changed"
+                            },
+                            "settings": {
+                                "one": "1 policy setting changed",
+                                "other": "{{ count }} policy settings changed"
+                            },
+                            "build": {
+                                "one": "1 build setting changed",
+                                "other": "{{ count }} build settings changed"
+                            }
                         },
                         "basedOn": "based on commit {{ commit }}",
                         "explanation": "The diff shows the changed files and test case assignments. View YAML explains the field names.",
@@ -952,7 +1020,10 @@
                         "diffOf": "Side-by-side diff of {{ file }}",
                         "before": "Before · {{ commit }}",
                         "after": "After · your changes",
-                        "unchanged": "{{ count }} unchanged line(s)",
+                        "unchanged": {
+                            "one": "1 unchanged line",
+                            "other": "{{ count }} unchanged lines"
+                        },
                         "assignments": "Test case assignments",
                         "assignmentsWhere": "stored in the @Policy annotations of the test classes, not in the YAML files",
                         "assigned": "Assigned:",
@@ -969,7 +1040,10 @@
                         "back": "Back to Editing",
                         "commitAndPush": "Commit & Push",
                         "securitySettings": "security settings",
-                        "defaultMessage": "Update {{ subject }} ({{ count }} change(s))"
+                        "defaultMessage": {
+                            "one": "Update {{ subject }} (1 change)",
+                            "other": "Update {{ subject }} ({{ count }} changes)"
+                        }
                     },
                     "problem": {
                         "nameRequired": "A security policy has no name.",
@@ -983,8 +1057,14 @@
                         "committed": "Committed",
                         "committedText": "Commit {{ hash }} was pushed. The build it started shows whether Ares2 accepts the new policy.",
                         "conflict": "The policy changed in the repository",
-                        "conflictText": "{{ author }} committed {{ hash }} after you opened the editor. Reload to see it — your {{ count }} unsaved change(s) are kept.",
-                        "conflictTextUnknown": "Someone committed to the tests repository after you opened the editor. Reload to see it — your {{ count }} unsaved change(s) are kept.",
+                        "conflictText": {
+                            "one": "{{ author }} committed {{ hash }} after you opened the editor. Reload to see it — your unsaved change is kept.",
+                            "other": "{{ author }} committed {{ hash }} after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
+                        },
+                        "conflictTextUnknown": {
+                            "one": "Someone committed to the tests repository after you opened the editor. Reload to see it — your unsaved change is kept.",
+                            "other": "Someone committed to the tests repository after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
+                        },
                         "reload": "Reload",
                         "reloaded": "Reloaded commit {{ hash }}. Your unsaved changes are kept — commit again when ready.",
                         "orphaned": "A policy you changed is gone from the repository",
@@ -1002,7 +1082,10 @@
                     },
                     "discard": {
                         "title": "Discard Unsaved Changes",
-                        "question": "Are you sure you want to discard all {{ count }} unsaved change(s)?",
+                        "question": {
+                            "one": "Are you sure you want to discard your unsaved change?",
+                            "other": "Are you sure you want to discard all {{ count }} unsaved changes?"
+                        },
                         "warning": "The editor returns to the committed state of commit {{ commit }}. Discarded changes cannot be restored.",
                         "confirm": "Discard Changes"
                     },

@@ -6,6 +6,7 @@ import {
     RowSource,
     changedLineNumbers,
     classesOfTests,
+    countKey,
     declaredTestClasses,
     diffLines,
     diffStats,
@@ -44,6 +45,10 @@ const FILE: SecurityPolicyFile = {
 };
 
 describe('security-policy-editor.util', () => {
+    it('names a count of exactly one in the singular and every other count in the plural', () => {
+        expect([0, 1, 2].map((count) => countKey('changes', count))).toEqual(['changes.other', 'changes.one', 'changes.other']);
+    });
+
     it('tags each row as preset, committed, new, changed or removed', () => {
         const working = withRows(DOCUMENT, 'files', [
             { path: 'data/input.txt', read: true, overwrite: true, create: false, execute: false, delete: false },

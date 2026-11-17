@@ -55,7 +55,7 @@
                     <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" data-testid="security-activation-api-uses">
                         <span class="text-sm">
                             @if (apiFiles().length) {
-                                <strong>{{ prefix + 'apiUsesTitle' | artemisTranslate: { count: apiFiles().length } }}</strong>
+                                <strong>{{ countKey(prefix + 'apiUsesTitle', apiFiles().length) | artemisTranslate: { count: apiFiles().length } }}</strong>
                                 {{ prefix + 'apiUses' | artemisTranslate: { apis: apis().join(', '), files: apiFiles().join(', ') } }}
                                 @if (repositoryLink(); as link) {
                                     <a [routerLink]="link" target="_blank" class="ms-1 inline-flex items-center gap-1" data-testid="security-activation-show-files">
@@ -65,7 +65,7 @@
                                 }
                             }
                             @if (unsavedChanges()) {
-                                <span class="block">{{ prefix + 'discarded' | artemisTranslate: { count: unsavedChanges() } }}</span>
+                                <span class="block">{{ countKey(prefix + 'discarded', unsavedChanges()) | artemisTranslate: { count: unsavedChanges() } }}</span>
                             }
                         </span>
                     </tumaet-ui-message>

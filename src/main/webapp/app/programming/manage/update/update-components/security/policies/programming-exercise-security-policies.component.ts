@@ -61,6 +61,7 @@ import {
     PolicyChangeSummary,
     classesOfTests,
     committedName,
+    countKey,
     editorPolicyOf,
     fileNameOf,
     isNewPolicy,
@@ -147,6 +148,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 
+    protected readonly countKey = countKey;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faCircleInfo = faCircleInfo;
@@ -330,7 +332,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly changeText = computed(() => {
         const parts = this.changeParts();
         return CHANGE_KINDS.filter((kind) => parts[kind] > 0)
-            .map((kind) => this.translateService.instant(`${PREFIX}.commitBar.${kind}`, { count: parts[kind] }) as string)
+            .map((kind) => this.translateService.instant(countKey(`${PREFIX}.commitBar.${kind}`, parts[kind]), { count: parts[kind] }) as string)
             .join(' · ');
     });
 
@@ -413,7 +415,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly reviewSummary = computed(() => {
         const parts = this.changeParts();
         const texts = CHANGE_KINDS.filter((kind) => parts[kind] > 0).map(
-            (kind) => this.translateService.instant(`${PREFIX}.review.changed.${kind}`, { count: parts[kind] }) as string,
+            (kind) => this.translateService.instant(countKey(`${PREFIX}.review.changed.${kind}`, parts[kind]), { count: parts[kind] }) as string,
         );
         texts.push(this.translateService.instant(`${PREFIX}.review.basedOn`, { commit: this.shortBaseCommit() ?? '' }));
         return texts.join(' · ');
@@ -425,7 +427,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             .filter((policy) => (this.summaries().get(policy.id)?.total ?? 0) > 0)
             .map((policy) => policy.name);
         const subject = changed.length ? changed.join(', ') : this.translateService.instant(`${PREFIX}.review.securitySettings`);
-        return this.translateService.instant(`${PREFIX}.review.defaultMessage`, { subject, count: this.totalChanges() });
+        return this.translateService.instant(countKey(`${PREFIX}.review.defaultMessage`, this.totalChanges()), { subject, count: this.totalChanges() });
     });
 
     readonly versionTooOld = computed(() => this.versionCheck()?.verdict === SecurityVersionCompatibilityVerdict.INCOMPATIBLE);
@@ -1026,7 +1028,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     readonly discardHeader: SecurityTranslatable = { key: `${PREFIX}.discard.title` };
-    readonly discardQuestion = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.discard.question`, params: { count: this.totalChanges() } }));
+    readonly discardQuestion = computed<SecurityTranslatable>(() => ({ key: countKey(`${PREFIX}.discard.question`, this.totalChanges()), params: { count: this.totalChanges() } }));
     readonly discardWarning = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.discard.warning`, params: { commit: this.shortBaseCommit() ?? '' } }));
 
     protected openYaml(policy: EditorPolicy): void {
@@ -1107,7 +1109,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     this.yamlUnsaved.set(undefined);
                     this.renderYamlUnsaved();
                     const changes = this.summaries().get(policy.id)?.total ?? 0;
-                    this.importNotice.set({ severity: 'success', text: this.translateService.instant(`${PREFIX}.yaml.imported`, { count: changes, policy: current.name }) });
+                    this.importNotice.set({
+                        severity: 'success',
+                        text: this.translateService.instant(countKey(`${PREFIX}.yaml.imported`, changes), { count: changes, policy: current.name }),
+                    });
                 } else {
                     this.importNotice.set({
                         severity: 'error',
@@ -1128,9 +1133,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected focusVersion(): void {
+        // The id is the one of the trigger of the select, so the trigger itself takes the focus.
         const select = document.getElementById('securityAdvancedVersion');
         select?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        (select?.querySelector('button, input, [tabindex]') as HTMLElement | null)?.focus();
+        select?.focus({ preventScroll: true });
     }
 
     protected dismissBanner(): void {

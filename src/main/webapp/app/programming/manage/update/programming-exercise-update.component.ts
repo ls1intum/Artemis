@@ -54,6 +54,7 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { countKey } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import {
     SecurityActivationStatus,
@@ -951,7 +952,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.confirmationService.confirm({
                 key: 'securityPolicyChangesOnSave',
                 header: this.translateService.instant('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.header'),
-                message: this.translateService.instant('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.message', { count: unsavedPolicyChanges }),
+                message: this.translateService.instant(countKey('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.message', unsavedPolicyChanges), {
+                    count: unsavedPolicyChanges,
+                }),
                 acceptLabel: this.translateService.instant('artemisApp.programmingExercise.security.unsavedPoliciesOnSave.confirm'),
                 rejectLabel: this.translateService.instant('entity.action.cancel'),
                 acceptSeverity: 'danger',

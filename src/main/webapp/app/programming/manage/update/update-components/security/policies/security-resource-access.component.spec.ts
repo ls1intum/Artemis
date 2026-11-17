@@ -135,6 +135,13 @@ describe('SecurityResourceAccessComponent', () => {
         });
     });
 
+    it('names the row in the deletion title and in the sentence of the question in the form of each language', () => {
+        const row = 'artemisApp.programmingExercise.security.advanced.row.files';
+
+        expect(comp.deleteHeader().params).toEqual({ noun: `${row}.noun` });
+        expect(comp.deleteQuestion().params).toEqual({ noun: `${row}.nounInSentence`, tab: 'artemisApp.programmingExercise.security.advanced.resources.tab.files' });
+    });
+
     it('tags the paths and scripts that already have a row for Browse…', () => {
         expect([...comp.browseBadges().keys()]).toEqual(['a.txt', 'b.txt', 'c.txt']);
 

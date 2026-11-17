@@ -40,6 +40,22 @@ describe('SecurityYamlDialogComponent', () => {
         expect(comp.changedLines()).toBe(0);
     });
 
+    it('colours the key of a line, also of a list entry, and leaves comments and plain values as they are', () => {
+        fixture.componentRef.setInput('unsavedContent', '# comment: kept\nregardingThreadCreations:\n  - createTheFollowingNumberOfThreads: 1\n  - "test.ClassTest"\n');
+        fixture.detectChanges();
+
+        expect(comp.lines().map((line) => [line.lead, line.key, line.rest])).toEqual([
+            ['# comment: kept', '', ''],
+            ['', 'regardingThreadCreations', ':'],
+            ['  - ', 'createTheFollowingNumberOfThreads', ': 1'],
+            ['  - "test.ClassTest"', '', ''],
+        ]);
+        // The dialog renders in an overlay outside the host element.
+        const rows = document.querySelectorAll('[data-testid="security-yaml-code"] .sp-code-line');
+        expect(rows[2].querySelector('.sp-key')?.textContent).toBe('createTheFollowingNumberOfThreads');
+        expect(rows[2].textContent).toBe('3  - createTheFollowingNumberOfThreads: 1');
+    });
+
     it('asks for the unsaved version when it is not rendered yet', () => {
         const requested = vi.fn();
         comp.unsavedRequested.subscribe(requested);

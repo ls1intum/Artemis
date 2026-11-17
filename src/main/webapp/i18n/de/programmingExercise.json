@@ -383,7 +383,10 @@
                 },
                 "unsavedPoliciesOnSave": {
                     "header": "Ungespeicherte Änderungen der Sicherheitsrichtlinien verwerfen?",
-                    "message": "Die Sicherheitsrichtlinien haben {{ count }} ungespeicherte Änderung(en). Das Speichern der Aufgabe committet sie nicht und verlässt diese Seite, daher werden sie verworfen. Um sie zu behalten, brich ab und committe sie zuerst unter Sicherheitsrichtlinien verwalten.",
+                    "message": {
+                        "one": "Die Sicherheitsrichtlinien haben 1 ungespeicherte Änderung. Das Speichern der Aufgabe committet sie nicht und verlässt diese Seite, daher wird sie verworfen. Um sie zu behalten, brich ab und committe sie zuerst unter Sicherheitsrichtlinien verwalten.",
+                        "other": "Die Sicherheitsrichtlinien haben {{ count }} ungespeicherte Änderungen. Das Speichern der Aufgabe committet sie nicht und verlässt diese Seite, daher werden sie verworfen. Um sie zu behalten, brich ab und committe sie zuerst unter Sicherheitsrichtlinien verwalten."
+                    },
                     "confirm": "Verwerfen und speichern"
                 },
                 "stagedDeactivationHint": "Sobald die Aufgabe gespeichert ist, läuft der Code der Studierenden ohne Sandbox, und nichts, was die Sicherheitsrichtlinie für die Tests festlegt, gilt mehr. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis.",
@@ -406,7 +409,10 @@
                     "retry": "Erneut versuchen",
                     "uncommitted": "Nicht committet",
                     "uncommittedCount": "{{ count }} nicht committet",
-                    "unsavedCount": "{{ count }} ungespeicherte Änderung(en)",
+                    "unsavedCount": {
+                        "one": "1 ungespeicherte Änderung",
+                        "other": "{{ count }} ungespeicherte Änderungen"
+                    },
                     "card": {
                         "activate": "Ares2 aktivieren",
                         "activateHelp": "Ares2, das Security Framework für Programmieraufgaben, führt den Code der Studierenden während der automatischen Tests in einer Sandbox aus. Jeder Zugriff, den keine Sicherheitsrichtlinie erlaubt, lässt den Testfall mit einer Sicherheitsverletzung fehlschlagen.",
@@ -456,10 +462,16 @@
                         "deleteOne": "Löscht {{ file }} und schaltet die @Policy-Annotationen der Testklassen aus.",
                         "deleteMany": "Löscht {{ count }} Richtliniendateien und schaltet die @Policy-Annotationen der Testklassen aus.",
                         "control": "Deaktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
-                        "apiUsesTitle": "{{ count }} Testdatei(en) verwenden weitere Funktionen von Ares2.",
+                        "apiUsesTitle": {
+                            "one": "1 Testdatei verwendet weitere Funktionen von Ares2.",
+                            "other": "{{ count }} Testdateien verwenden weitere Funktionen von Ares2."
+                        },
                         "apiUses": "Ares2 bleibt im Build, daher kompilieren sie weiterhin: {{ files }} ({{ apis }}).",
                         "showFiles": "Dateien im Repository anzeigen",
-                        "discarded": "Deine {{ count }} ungespeicherte(n) Änderung(en) werden verworfen.",
+                        "discarded": {
+                            "one": "Deine ungespeicherte Änderung wird verworfen.",
+                            "other": "Deine {{ count }} ungespeicherten Änderungen werden verworfen."
+                        },
                         "confirm": "Ares2 ausschalten"
                     },
                     "scanOn": {
@@ -499,12 +511,30 @@
                         "addPolicy": "Sicherheitsrichtlinie hinzufügen"
                     },
                     "commitBar": {
-                        "restrictions": "{{ count }} erlaubte(r) Ressourcenzugriff(e)",
-                        "behaviours": "{{ count }} festgelegte(s) Testverhalten",
-                        "testCases": "{{ count }} Testfallzuordnung(en)",
-                        "testClasses": "{{ count }} deklarierte Testklasse(n)",
-                        "settings": "{{ count }} Richtlinieneinstellung(en)",
-                        "build": "{{ count }} Build-Einstellung(en)",
+                        "restrictions": {
+                            "one": "1 erlaubter Ressourcenzugriff",
+                            "other": "{{ count }} erlaubte Ressourcenzugriffe"
+                        },
+                        "behaviours": {
+                            "one": "1 festgelegtes Testverhalten",
+                            "other": "{{ count }} festgelegte Testverhalten"
+                        },
+                        "testCases": {
+                            "one": "1 Testfallzuordnung",
+                            "other": "{{ count }} Testfallzuordnungen"
+                        },
+                        "testClasses": {
+                            "one": "1 deklarierte Testklasse",
+                            "other": "{{ count }} deklarierte Testklassen"
+                        },
+                        "settings": {
+                            "one": "1 Richtlinieneinstellung",
+                            "other": "{{ count }} Richtlinieneinstellungen"
+                        },
+                        "build": {
+                            "one": "1 Build-Einstellung",
+                            "other": "{{ count }} Build-Einstellungen"
+                        },
                         "notEnforced": "Nichts wird durchgesetzt, bevor du committest.",
                         "nothing": "Alles ist committet. Es gibt nichts zu committen oder zu verwerfen.",
                         "instructorsOnly": "Nur Lehrende des Kurses können die Sicherheitsrichtlinien ändern.",
@@ -516,7 +546,10 @@
                         "unnamed": "Unbenannte Richtlinie",
                         "new": "Neu · nicht committet",
                         "newHelp": "Diese Richtlinie wurde noch nicht committet. Sie wirkt, sobald du committest.",
-                        "changesHelp": "Diese Richtlinie hat {{ count }} Änderung(en) seit dem letzten Commit. Sie wirken, sobald du committest.",
+                        "changesHelp": {
+                            "one": "Diese Richtlinie hat 1 Änderung seit dem letzten Commit. Sie wirkt, sobald du committest.",
+                            "other": "Diese Richtlinie hat {{ count }} Änderungen seit dem letzten Commit. Sie wirken, sobald du committest."
+                        },
                         "readOnly": "Schreibgeschützt",
                         "viewYaml": "YAML anzeigen",
                         "delete": "Richtlinie löschen",
@@ -541,7 +574,10 @@
                             "behaviour": "Testverhalten konfigurieren",
                             "tests": "Testfälle zuordnen"
                         },
-                        "boxChangesHelp": "{{ count }} Änderung(en) in diesem Bereich seit dem letzten Commit. Sie wirken, sobald du committest.",
+                        "boxChangesHelp": {
+                            "one": "1 Änderung in diesem Bereich seit dem letzten Commit. Sie wirkt, sobald du committest.",
+                            "other": "{{ count }} Änderungen in diesem Bereich seit dem letzten Commit. Sie wirken, sobald du committest."
+                        },
                         "readOnlyReason": {
                             "MISSING": "{{ path }} existiert nicht und kann daher hier nicht bearbeitet werden.",
                             "TOO_LARGE": "{{ path }} ist zu groß, um hier bearbeitet zu werden.",
@@ -613,7 +649,10 @@
                                 "receive": "Der Code der Studierenden darf Daten von diesem Endpunkt empfangen."
                             },
                             "commands": "Der Code der Studierenden darf dieses Programm genau mit diesen Argumenten starten.",
-                            "threads": "Der Code der Studierenden darf bis zu {{ count }} Thread(s) dieser Klasse starten.",
+                            "threads": {
+                                "one": "Der Code der Studierenden darf bis zu 1 Thread dieser Klasse starten.",
+                                "other": "Der Code der Studierenden darf bis zu {{ count }} Threads dieser Klasse starten."
+                            },
                             "packages": "Der Code der Studierenden darf Klassen aus diesem Paket verwenden."
                         },
                         "source": {
@@ -653,6 +692,7 @@
                     "row": {
                         "files": {
                             "noun": "Pfad",
+                            "nounInSentence": "Pfad",
                             "addTitle": "Pfad hinzufügen",
                             "editTitle": "Pfad bearbeiten",
                             "target": "Auf diesem Pfad und allen Pfaden darunter",
@@ -683,6 +723,7 @@
                         },
                         "network": {
                             "noun": "Endpunkt",
+                            "nounInSentence": "Endpunkt",
                             "addTitle": "Endpunkt hinzufügen",
                             "editTitle": "Endpunkt bearbeiten",
                             "host": "Auf diesem Host",
@@ -707,6 +748,7 @@
                         },
                         "commands": {
                             "noun": "Befehl",
+                            "nounInSentence": "Befehl",
                             "addTitle": "Befehl hinzufügen",
                             "editTitle": "Befehl bearbeiten",
                             "command": "Diesen Befehl",
@@ -716,6 +758,7 @@
                         },
                         "threads": {
                             "noun": "Thread-Klasse",
+                            "nounInSentence": "Thread-Klasse",
                             "addTitle": "Thread-Klasse hinzufügen",
                             "editTitle": "Thread-Klasse bearbeiten",
                             "threadClass": "Diese Klasse",
@@ -725,6 +768,7 @@
                         },
                         "packages": {
                             "noun": "Paket",
+                            "nounInSentence": "Paket",
                             "addTitle": "Paket hinzufügen",
                             "editTitle": "Paket bearbeiten",
                             "packageName": "Dieses Paket",
@@ -842,7 +886,10 @@
                         "addTestCases": "Testfälle hinzufügen",
                         "noTests": "Keine Testfälle zugeordnet. Diese Richtlinie gilt noch für keinen Test.",
                         "allTestCases": "alle Testfälle",
-                        "testCaseCount": "{{ count }} Testfall/Testfälle",
+                        "testCaseCount": {
+                            "one": "1 Testfall",
+                            "other": "{{ count }} Testfälle"
+                        },
                         "declared": "Deklarierte Testklassen ({{ count }})",
                         "declaredHelp": "Ares2 behandelt Code in diesen Klassen als Testcode, nicht als Code der Studierenden. Klassen zugeordneter Testfälle gehören immer dazu. Füge hier Hilfsklassen ohne Testannotationen hinzu.",
                         "declaredIn": "In {{ policy }} deklarierte Testklassen",
@@ -930,17 +977,38 @@
                         "export": "Exportieren",
                         "importTooLarge": "Die Datei ist größer als 256 KB.",
                         "importUnreadable": "Die Datei konnte nicht gelesen werden. Wähle sie erneut aus.",
-                        "imported": "Importiert. {{ count }} ungespeicherte Änderung(en) in {{ policy }} — prüfe sie vor dem Commit."
+                        "imported": {
+                            "one": "Importiert. 1 ungespeicherte Änderung in {{ policy }} — prüfe sie vor dem Commit.",
+                            "other": "Importiert. {{ count }} ungespeicherte Änderungen in {{ policy }} — prüfe sie vor dem Commit."
+                        }
                     },
                     "review": {
                         "title": "Änderungen prüfen und committen",
                         "changed": {
-                            "restrictions": "{{ count }} erlaubte(r) Ressourcenzugriff(e) geändert",
-                            "behaviours": "{{ count }} festgelegte(s) Testverhalten geändert",
-                            "testCases": "{{ count }} Testfallzuordnung(en) geändert",
-                            "testClasses": "{{ count }} deklarierte Testklasse(n) geändert",
-                            "settings": "{{ count }} Richtlinieneinstellung(en) geändert",
-                            "build": "{{ count }} Build-Einstellung(en) geändert"
+                            "restrictions": {
+                                "one": "1 erlaubter Ressourcenzugriff geändert",
+                                "other": "{{ count }} erlaubte Ressourcenzugriffe geändert"
+                            },
+                            "behaviours": {
+                                "one": "1 festgelegtes Testverhalten geändert",
+                                "other": "{{ count }} festgelegte Testverhalten geändert"
+                            },
+                            "testCases": {
+                                "one": "1 Testfallzuordnung geändert",
+                                "other": "{{ count }} Testfallzuordnungen geändert"
+                            },
+                            "testClasses": {
+                                "one": "1 deklarierte Testklasse geändert",
+                                "other": "{{ count }} deklarierte Testklassen geändert"
+                            },
+                            "settings": {
+                                "one": "1 Richtlinieneinstellung geändert",
+                                "other": "{{ count }} Richtlinieneinstellungen geändert"
+                            },
+                            "build": {
+                                "one": "1 Build-Einstellung geändert",
+                                "other": "{{ count }} Build-Einstellungen geändert"
+                            }
                         },
                         "basedOn": "basierend auf Commit {{ commit }}",
                         "explanation": "Der Diff zeigt die geänderten Dateien und Testfallzuordnungen. YAML anzeigen erklärt die Feldnamen.",
@@ -952,7 +1020,10 @@
                         "diffOf": "Diff von {{ file }} nebeneinander",
                         "before": "Vorher · {{ commit }}",
                         "after": "Nachher · deine Änderungen",
-                        "unchanged": "{{ count }} unveränderte Zeile(n)",
+                        "unchanged": {
+                            "one": "1 unveränderte Zeile",
+                            "other": "{{ count }} unveränderte Zeilen"
+                        },
                         "assignments": "Testfallzuordnungen",
                         "assignmentsWhere": "in den @Policy-Annotationen der Testklassen gespeichert, nicht in den YAML-Dateien",
                         "assigned": "Zugeordnet:",
@@ -969,7 +1040,10 @@
                         "back": "Zurück zum Bearbeiten",
                         "commitAndPush": "Commit & Push",
                         "securitySettings": "security settings",
-                        "defaultMessage": "Update {{ subject }} ({{ count }} change(s))"
+                        "defaultMessage": {
+                            "one": "Update {{ subject }} (1 change)",
+                            "other": "Update {{ subject }} ({{ count }} changes)"
+                        }
                     },
                     "problem": {
                         "nameRequired": "Eine Sicherheitsrichtlinie hat keinen Namen.",
@@ -983,8 +1057,14 @@
                         "committed": "Committet",
                         "committedText": "Commit {{ hash }} wurde gepusht. Der gestartete Build zeigt, ob Ares2 die neue Richtlinie akzeptiert.",
                         "conflict": "Die Richtlinie hat sich im Repository geändert",
-                        "conflictText": "{{ author }} hat {{ hash }} committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine {{ count }} ungespeicherte(n) Änderung(en) bleiben erhalten.",
-                        "conflictTextUnknown": "Jemand hat in das Test-Repository committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine {{ count }} ungespeicherte(n) Änderung(en) bleiben erhalten.",
+                        "conflictText": {
+                            "one": "{{ author }} hat {{ hash }} committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
+                            "other": "{{ author }} hat {{ hash }} committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
+                        },
+                        "conflictTextUnknown": {
+                            "one": "Jemand hat in das Test-Repository committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
+                            "other": "Jemand hat in das Test-Repository committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
+                        },
                         "reload": "Neu laden",
                         "reloaded": "Commit {{ hash }} neu geladen. Deine ungespeicherten Änderungen bleiben erhalten — committe erneut, wenn du so weit bist.",
                         "orphaned": "Eine geänderte Richtlinie fehlt im Repository",
@@ -1002,7 +1082,10 @@
                     },
                     "discard": {
                         "title": "Ungespeicherte Änderungen verwerfen",
-                        "question": "Möchtest du wirklich alle {{ count }} ungespeicherte(n) Änderung(en) verwerfen?",
+                        "question": {
+                            "one": "Möchtest du deine ungespeicherte Änderung wirklich verwerfen?",
+                            "other": "Möchtest du wirklich alle {{ count }} ungespeicherten Änderungen verwerfen?"
+                        },
                         "warning": "Der Editor kehrt zum committeten Stand von Commit {{ commit }} zurück. Verworfene Änderungen können nicht wiederhergestellt werden.",
                         "confirm": "Änderungen verwerfen"
                     },

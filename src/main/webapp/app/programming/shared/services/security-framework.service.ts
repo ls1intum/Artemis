@@ -1,7 +1,8 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { SecurityFrameworkConfig, SecurityFrameworkVersions } from 'app/programming/shared/entities/security-framework-config.model';
 import {
     SecurityPolicyChange,
@@ -67,19 +68,22 @@ export class SecurityFrameworkService {
         return this.http.get<SecurityPolicyEditor>(`${this.resourceUrl(exerciseId)}/policies`);
     }
 
-    /** Renders changed policies without committing them and checks them against the pinned Ares version. */
+    /**
+     * Renders changed policies without committing them and checks them against the pinned Ares version. The editor shows a failure itself, like the
+     * failures of committing and importing, so no error alert repeats it.
+     */
     previewPolicies(exerciseId: number, change: SecurityPolicyChange): Observable<SecurityPolicyPreview> {
-        return this.http.post<SecurityPolicyPreview>(`${this.resourceUrl(exerciseId)}/policies/preview`, change);
+        return this.http.post<SecurityPolicyPreview>(`${this.resourceUrl(exerciseId)}/policies/preview`, change, { context: this.shownByEditor() });
     }
 
     /** Commits changed policies to the tests repository; fails with 409 if the policies changed since they were loaded. */
     commitPolicies(exerciseId: number, change: SecurityPolicyChange): Observable<SecurityPolicyCommitResult> {
-        return this.http.put<SecurityPolicyCommitResult>(`${this.resourceUrl(exerciseId)}/policies`, change);
+        return this.http.put<SecurityPolicyCommitResult>(`${this.resourceUrl(exerciseId)}/policies`, change, { context: this.shownByEditor() });
     }
 
     /** Reads an imported policy file like a committed one, without writing it. */
     importPolicy(exerciseId: number, policyPath: string, content: string): Observable<SecurityPolicyFile> {
-        return this.http.post<SecurityPolicyFile>(`${this.resourceUrl(exerciseId)}/policies/import`, { policyPath, content });
+        return this.http.post<SecurityPolicyFile>(`${this.resourceUrl(exerciseId)}/policies/import`, { policyPath, content }, { context: this.shownByEditor() });
     }
 
     /** The test classes of the tests repository with their test cases. */
@@ -90,5 +94,10 @@ export class SecurityFrameworkService {
     /** The files of the template repository. */
     getTemplateFiles(exerciseId: number): Observable<SecurityTemplateFiles> {
         return this.http.get<SecurityTemplateFiles>(`${this.resourceUrl(exerciseId)}/template-files`);
+    }
+
+    /** The context of a request whose failure the policy editor shows next to what failed. */
+    private shownByEditor(): HttpContext {
+        return new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
     }
 }

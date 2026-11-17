@@ -169,10 +169,11 @@
                                                     <fa-icon [fixedWidth]="true" [icon]="faPen" />
                                                     <span jhiTranslate="entity.action.edit"></span>
                                                 </button>
+                                                <!-- The menu item sets its own text colour, so only an important colour marks the deletion. -->
                                                 <button
                                                     type="button"
                                                     tumAetUiMenuItem
-                                                    class="text-state-danger-foreground"
+                                                    class="text-state-danger!"
                                                     (triggered)="openDelete(entry)"
                                                     data-testid="security-resource-delete"
                                                 >

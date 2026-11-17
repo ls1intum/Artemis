@@ -19,6 +19,9 @@ export interface SecurityImportNotice {
     text: string;
 }
 
+/** A key at the start of a YAML line, after the indentation and an optional list dash, which the code view colours like the documentation of Ares. */
+const YAML_KEY = /^(\s*(?:- )?)([\w.]+)(:.*)$/;
+
 /** An imported policy file and the policy it was selected for. */
 export interface SecurityYamlImport {
     content: string;
@@ -105,7 +108,10 @@ export class SecurityYamlDialogComponent {
         if (lines[lines.length - 1] === '') {
             lines.pop();
         }
-        return lines.map((text, index) => ({ number: index + 1, text, highlighted: highlighted.has(index + 1) }));
+        return lines.map((text, index) => {
+            const key = YAML_KEY.exec(text);
+            return { number: index + 1, text, lead: key?.[1] ?? text, key: key?.[2] ?? '', rest: key?.[3] ?? '', highlighted: highlighted.has(index + 1) };
+        });
     });
 
     readonly fileName = computed(() => fileNameOf(this.policyPath()));

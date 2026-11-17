@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityPolicyPreview } from 'app/programming/shared/entities/security-policy.model';
-import { DiffRow, diffLines, diffStats } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import { DiffRow, countKey, diffLines, diffStats } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 /** The diff of one changed file. */
 interface FileDiff {
@@ -57,6 +57,7 @@ export interface AssignmentChange {
     ],
 })
 export class SecurityReviewDialogComponent {
+    protected readonly countKey = countKey;
     protected readonly faCheck = faCheck;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faCircleInfo = faCircleInfo;

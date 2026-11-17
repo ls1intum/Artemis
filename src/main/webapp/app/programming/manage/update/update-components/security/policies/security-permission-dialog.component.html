@@ -147,7 +147,7 @@
                 @default {}
             }
             @if (submitted() && problem(); as problemKey) {
-                <p class="m-0 text-sm text-state-danger-foreground" role="alert" data-testid="security-permission-problem">
+                <p class="m-0 text-sm text-state-danger" role="alert" data-testid="security-permission-problem">
                     {{ problemKey | artemisTranslate: { entry: target() } }}
                 </p>
             }
@@ -192,8 +192,8 @@
                     }
                 </fieldset>
                 @if (grantsNothing()) {
-                    <p class="m-0 text-sm text-state-danger-foreground" data-testid="security-permission-grants-nothing">
-                        {{ prefix + 'grantsNothing' | artemisTranslate: { noun: (prefix + kind() + '.noun' | artemisTranslate) } }}
+                    <p class="m-0 text-sm text-state-danger" data-testid="security-permission-grants-nothing">
+                        {{ prefix + 'grantsNothing' | artemisTranslate: { noun: (prefix + kind() + '.nounInSentence' | artemisTranslate) } }}
                     </p>
                 }
             </div>

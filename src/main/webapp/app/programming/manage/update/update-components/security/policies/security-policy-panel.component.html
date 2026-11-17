@@ -17,7 +17,7 @@
                 <tumaet-ui-tag
                     severity="warn"
                     size="sm"
-                    [tumAetUiTooltip]="prefix + 'changesHelp' | artemisTranslate: { count: summary().total }"
+                    [tumAetUiTooltip]="countKey(prefix + 'changesHelp', summary().total) | artemisTranslate: { count: summary().total }"
                     tabindex="0"
                     data-testid="security-policy-changes"
                     [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().total }"
@@ -119,7 +119,7 @@
                         <tumaet-ui-tag
                             severity="warn"
                             size="sm"
-                            [tumAetUiTooltip]="prefix + 'boxChangesHelp' | artemisTranslate: { count: summary().restrictions }"
+                            [tumAetUiTooltip]="countKey(prefix + 'boxChangesHelp', summary().restrictions) | artemisTranslate: { count: summary().restrictions }"
                             tabindex="0"
                             [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().restrictions }"
                         />
@@ -150,7 +150,7 @@
                         <tumaet-ui-tag
                             severity="warn"
                             size="sm"
-                            [tumAetUiTooltip]="prefix + 'boxChangesHelp' | artemisTranslate: { count: summary().behaviours }"
+                            [tumAetUiTooltip]="countKey(prefix + 'boxChangesHelp', summary().behaviours) | artemisTranslate: { count: summary().behaviours }"
                             tabindex="0"
                             [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().behaviours }"
                         />
@@ -179,7 +179,10 @@
                         <tumaet-ui-tag
                             severity="warn"
                             size="sm"
-                            [tumAetUiTooltip]="prefix + 'boxChangesHelp' | artemisTranslate: { count: summary().testCases + summary().testClasses }"
+                            [tumAetUiTooltip]="
+                                countKey(prefix + 'boxChangesHelp', summary().testCases + summary().testClasses)
+                                    | artemisTranslate: { count: summary().testCases + summary().testClasses }
+                            "
                             tabindex="0"
                             [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().testCases + summary().testClasses }"
                         />

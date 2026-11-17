@@ -38,9 +38,9 @@
                                     @case ('collapsed') {
                                         <div class="sp-diff-row sp-diff-gap">
                                             <span></span>
-                                            <span>⋯ {{ prefix + 'unchanged' | artemisTranslate: { count: row.count } }}</span>
+                                            <span>⋯ {{ countKey(prefix + 'unchanged', row.count) | artemisTranslate: { count: row.count } }}</span>
                                             <span></span>
-                                            <span>⋯ {{ prefix + 'unchanged' | artemisTranslate: { count: row.count } }}</span>
+                                            <span>⋯ {{ countKey(prefix + 'unchanged', row.count) | artemisTranslate: { count: row.count } }}</span>
                                         </div>
                                     }
                                     @case ('same') {

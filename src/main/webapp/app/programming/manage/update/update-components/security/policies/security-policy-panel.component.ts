@@ -20,7 +20,13 @@ import { SecurityHelpComponent } from 'app/programming/manage/update/update-comp
 import { SecurityResourceAccessComponent } from 'app/programming/manage/update/update-components/security/policies/security-resource-access.component';
 import { SecurityTestBehaviourComponent } from 'app/programming/manage/update/update-components/security/policies/security-test-behaviour.component';
 import { SecurityTestCasesComponent } from 'app/programming/manage/update/update-components/security/policies/security-test-cases.component';
-import { EditorPolicy, PolicyChangeSummary, fileNameOf, withAssignment } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import {
+    EditorPolicy,
+    PolicyChangeSummary,
+    countKey,
+    fileNameOf,
+    withAssignment,
+} from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 /** The boxes of a policy, which open and close on their own. */
 export type PolicyBox = 'resources' | 'behaviour' | 'tests';
@@ -56,6 +62,7 @@ let panelCounter = 0;
     ],
 })
 export class SecurityPolicyPanelComponent {
+    protected readonly countKey = countKey;
     protected readonly faCode = faCode;
     protected readonly faLock = faLock;
     protected readonly faTrashCan = faTrashCan;

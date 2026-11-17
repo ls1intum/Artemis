@@ -135,6 +135,32 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
     });
 
+    it('moves the focus to the version select when the banner asks to change the version', () => {
+        create();
+        const trigger = document.getElementById('securityAdvancedVersion')!;
+        trigger.scrollIntoView = vi.fn();
+
+        comp['focusVersion']();
+
+        expect(trigger.scrollIntoView).toHaveBeenCalledOnce();
+        expect(document.activeElement).toBe(trigger);
+    });
+
+    it('names one unsaved change in the singular and several in the plural', () => {
+        create(configured(), false);
+        const prefix = 'artemisApp.programmingExercise.security.advanced.commitBar';
+        const policy = comp.policies()[0];
+        comp['onPolicyChange']({ ...policy, working: withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]) });
+
+        expect(comp.changeText()).toBe(`${prefix}.restrictions.one`);
+        expect(comp.discardQuestion().key).toBe('artemisApp.programmingExercise.security.advanced.discard.question.one');
+
+        comp['onPolicyChange']({ ...policy, working: withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }, { packageName: 'org.junit' }]) });
+
+        expect(comp.changeText()).toBe(`${prefix}.restrictions.other`);
+        expect(comp.discardQuestion().key).toBe('artemisApp.programmingExercise.security.advanced.discard.question.other');
+    });
+
     it('removes the file of a deleted committed policy with the commit', () => {
         create(configured(), false);
         comp['askDeletePolicy'](comp.policies()[0]);
@@ -555,7 +581,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
             { sign: '+', entry: 'de.example.SortingTest#merge', file: expect.stringMatching(/\.yaml$/) },
         ]);
         expect(comp.reviewSummary()).toContain('review.basedOn');
-        expect(comp.defaultCommitMessage()).toBe('artemisApp.programmingExercise.security.advanced.review.defaultMessage');
+        expect(comp.defaultCommitMessage()).toBe('artemisApp.programmingExercise.security.advanced.review.defaultMessage.other');
         expect(comp.otherTestsByPolicy().get(committed.id)).toEqual(new Map([['de.example.SortingTest#merge', expect.any(String)]]));
     });
 

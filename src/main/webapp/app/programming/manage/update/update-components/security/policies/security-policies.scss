@@ -776,6 +776,12 @@
     width: 100%;
 }
 
+// A message sizes its projected content to the content, so a row would end right after its text; the row must fill the message to put its actions at the end.
+.sp-message-fill ::ng-deep .tumaet-ui-message-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .sp-kv {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);

@@ -15,6 +15,7 @@ import {
     EditorPolicy,
     TEST_CASE_SEPARATOR,
     classesOfTests,
+    countKey,
     testClassOf,
     withRestoredEntry,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
@@ -73,6 +74,7 @@ const PREFIX = 'artemisApp.programmingExercise.security.advanced.tests';
     ],
 })
 export class SecurityTestCasesComponent {
+    protected readonly countKey = countKey;
     protected readonly faPlus = faPlus;
     protected readonly faXmark = faXmark;
 

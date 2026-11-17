@@ -9,6 +9,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SecurityAresApiUse, SecurityFrameworkVersionOption } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityHelpComponent } from 'app/programming/manage/update/update-components/security/policies/security-help.component';
+import { countKey } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 /** What the dialog confirms: turning the sandbox or dependency scanning on or off. */
 export type SecurityActivationMode = 'activate' | 'deactivate' | 'scanOn' | 'scanOff';
@@ -35,6 +36,7 @@ export type SecurityActivationMode = 'activate' | 'deactivate' | 'scanOn' | 'sca
     ],
 })
 export class SecurityActivationDialogComponent {
+    protected readonly countKey = countKey;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faMagnifyingGlass = faMagnifyingGlass;

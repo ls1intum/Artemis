@@ -31,7 +31,7 @@
                         <span [jhiTranslate]="prefix + 'loading'"></span>
                     </div>
                 } @else if (loadFailed()) {
-                    <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-policies-load-error">
+                    <tumaet-ui-message class="sp-message-fill" severity="error" [icon]="faCircleXmark" data-testid="security-policies-load-error">
                         <span class="sp-message-row">
                             <span class="sp-grow text-sm" [jhiTranslate]="prefix + 'loadError'"></span>
                             <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="retryLoad()">
@@ -82,10 +82,14 @@
                     </div>
 
                     @if (totalChanges()) {
-                        <tumaet-ui-message severity="warn" data-testid="security-policies-commit-bar">
+                        <tumaet-ui-message class="sp-message-fill" severity="warn" data-testid="security-policies-commit-bar">
                             <span class="sp-message-row">
                                 <span class="sp-grow sp-row">
-                                    <tumaet-ui-tag severity="warn" size="sm" [value]="prefix + 'unsavedCount' | artemisTranslate: { count: totalChanges() }" />
+                                    <tumaet-ui-tag
+                                        severity="warn"
+                                        size="sm"
+                                        [value]="countKey(prefix + 'unsavedCount', totalChanges()) | artemisTranslate: { count: totalChanges() }"
+                                    />
                                     <span class="text-sm">{{ changeText() }}. {{ prefix + 'commitBar.notEnforced' | artemisTranslate }}</span>
                                 </span>
                                 <span class="sp-row">
@@ -136,7 +140,7 @@
         @if (banner(); as current) {
             @switch (current.kind) {
                 @case ('committing') {
-                    <tumaet-ui-message severity="info" role="status" data-testid="security-banner-committing">
+                    <tumaet-ui-message class="sp-message-fill" severity="info" role="status" data-testid="security-banner-committing">
                         <span class="sp-message-row">
                             <fa-icon [icon]="faSpinner" class="sp-spin" />
                             <span class="sp-grow">
@@ -153,15 +157,18 @@
                     </tumaet-ui-message>
                 }
                 @case ('conflict') {
-                    <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" role="alert" data-testid="security-banner-conflict">
+                    <tumaet-ui-message class="sp-message-fill" severity="warn" [icon]="faTriangleExclamation" role="alert" data-testid="security-banner-conflict">
                         <span class="sp-message-row">
                             <span class="sp-grow">
                                 <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.conflict'"></span>
                                 <span class="text-sm">
                                     @if (current.authorName && current.hash) {
-                                        {{ prefix + 'banner.conflictText' | artemisTranslate: { author: current.authorName, hash: current.hash, count: totalChanges() } }}
+                                        {{
+                                            countKey(prefix + 'banner.conflictText', totalChanges())
+                                                | artemisTranslate: { author: current.authorName, hash: current.hash, count: totalChanges() }
+                                        }}
                                     } @else {
-                                        {{ prefix + 'banner.conflictTextUnknown' | artemisTranslate: { count: totalChanges() } }}
+                                        {{ countKey(prefix + 'banner.conflictTextUnknown', totalChanges()) | artemisTranslate: { count: totalChanges() } }}
                                     }
                                 </span>
                             </span>
@@ -172,7 +179,7 @@
                     </tumaet-ui-message>
                 }
                 @case ('failed') {
-                    <tumaet-ui-message severity="error" [icon]="faCircleXmark" role="alert" data-testid="security-banner-failed">
+                    <tumaet-ui-message class="sp-message-fill" severity="error" [icon]="faCircleXmark" role="alert" data-testid="security-banner-failed">
                         <span class="sp-message-row">
                             <span class="sp-grow">
                                 <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.failed'"></span>
@@ -199,7 +206,7 @@
             }
         }
         @if (isConfigured() && versionTooOld()) {
-            <tumaet-ui-message severity="error" [icon]="faCircleXmark" role="alert" data-testid="security-banner-too-old">
+            <tumaet-ui-message class="sp-message-fill" severity="error" [icon]="faCircleXmark" role="alert" data-testid="security-banner-too-old">
                 <span class="sp-message-row">
                     <span class="sp-grow">
                         <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.tooOld'"></span>
@@ -217,7 +224,7 @@
             </tumaet-ui-message>
         }
         @if (isConfigured() && readOnlyPolicies().length) {
-            <tumaet-ui-message severity="secondary" [icon]="faLock" role="alert" data-testid="security-banner-read-only">
+            <tumaet-ui-message class="sp-message-fill" severity="secondary" [icon]="faLock" role="alert" data-testid="security-banner-read-only">
                 <span class="sp-message-row">
                     <span class="sp-grow">
                         <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.readOnly'"></span>
