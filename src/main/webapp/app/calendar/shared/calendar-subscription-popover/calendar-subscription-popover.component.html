@@ -131,5 +131,38 @@
                 }
             </button>
         </div>
+        @if (confirmingReset()) {
+            <span data-testid="subscription-link-reset-explanation" jhiTranslate="artemisApp.calendar.subscriptionPopover.resetExplanation"></span>
+            <div class="flex gap-2">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    severity="danger"
+                    data-testid="subscription-link-reset-confirm"
+                    (click)="resetSubscriptionLink()"
+                    jhiTranslate="artemisApp.calendar.subscriptionPopover.resetButtonLabel"
+                ></button>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="outlined"
+                    severity="secondary"
+                    data-testid="subscription-link-reset-cancel"
+                    (click)="confirmingReset.set(false)"
+                    jhiTranslate="entity.action.cancel"
+                ></button>
+            </div>
+        } @else {
+            <div>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    data-testid="subscription-link-reset-button"
+                    (click)="confirmingReset.set(true)"
+                    jhiTranslate="artemisApp.calendar.subscriptionPopover.resetButtonLabel"
+                ></button>
+            </div>
+        }
     </div>
 </tumaet-ui-popover>

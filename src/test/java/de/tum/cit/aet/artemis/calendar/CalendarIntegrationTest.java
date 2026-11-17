@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.calendar.util.CalendarSubscriptionFilterOption;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -1618,6 +1619,38 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             assertThat(actualToken).isNotNull();
             assertThat(actualToken.length()).isEqualTo(32);
             assertThat(actualToken).matches("^[0-9a-f]+$");
+        }
+    }
+
+    @Nested
+    class RotateCalendarEventSubscriptionTokenTests {
+
+        @Autowired
+        private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReplaceTheTokenAndEndTheUseOfTheOldOne() throws Exception {
+            String oldToken = "921651b1118f216d04b190fc0659386b";
+            userUtilService.clearAllTokensAndSetTokenForUser(student, oldToken);
+
+            String newToken = request.postWithResponseBodyString("/api/calendar/subscription-token", "", HttpStatus.OK);
+
+            assertThat(newToken).isNotEqualTo(oldToken).hasSize(32).matches("^[0-9a-f]+$");
+            assertThat(request.get("/api/calendar/subscription-token", HttpStatus.OK, String.class)).isEqualTo(newToken);
+            assertThat(userTestRepository.findOneWithAuthoritiesByCalendarSubscriptionToken(oldToken)).isEmpty();
+            assertThat(userTestRepository.findOneWithAuthoritiesByCalendarSubscriptionToken(newToken)).isPresent();
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldCreateATokenForAUserWithoutOne() throws Exception {
+            calendarSubscriptionTokenStoreRepository.deleteAll();
+
+            String token = request.postWithResponseBodyString("/api/calendar/subscription-token", "", HttpStatus.OK);
+
+            assertThat(token).hasSize(32);
+            assertThat(request.get("/api/calendar/subscription-token", HttpStatus.OK, String.class)).isEqualTo(token);
         }
     }
 }

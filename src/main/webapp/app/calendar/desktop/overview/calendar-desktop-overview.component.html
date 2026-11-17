@@ -65,7 +65,12 @@
                     <fa-icon [icon]="faArrowUpFromBracket" />
                     <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
-                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
+                <jhi-calendar-subscription-popover
+                    [subscriptionToken]="subscriptionToken"
+                    [courseId]="currentCourseId"
+                    (subscriptionResetRequested)="resetSubscriptionLink()"
+                    #subscriptionPopover
+                />
             </div>
         }
         <button type="button" id="today-button" tumAetUiButton size="small" variant="outlined" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +21,7 @@ describe('CalendarService', () => {
     let calendarApiService: {
         getCalendarEventsOverlappingMonths: ReturnType<typeof vi.fn>;
         getCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
+        rotateCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
     };
 
     const courseId = 42;
@@ -79,6 +80,7 @@ describe('CalendarService', () => {
         calendarApiService = {
             getCalendarEventsOverlappingMonths: vi.fn(),
             getCalendarEventSubscriptionToken: vi.fn(),
+            rotateCalendarEventSubscriptionToken: vi.fn(),
         };
 
         calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of(testToken));
@@ -240,6 +242,27 @@ describe('CalendarService', () => {
         // Allow microtasks to complete
         await Promise.resolve();
         expect(service.subscriptionToken()).toBe(testToken);
+    });
+
+    it('should replace the subscription token with the rotated one', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('rotatedToken'));
+
+        await firstValueFrom(service.rotateSubscriptionToken());
+
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
+        expect(service.subscriptionToken()).toBe('rotatedToken');
+    });
+
+    it('should keep the subscription token and show an alert if the rotation fails', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        const addErrorAlert = vi.spyOn(TestBed.inject(AlertService), 'addErrorAlert');
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(service.subscriptionToken()).toBe(testToken);
+        expect(addErrorAlert).toHaveBeenCalledWith('artemisApp.calendar.tokenRotationError');
     });
 
     it('should refresh', async () => {

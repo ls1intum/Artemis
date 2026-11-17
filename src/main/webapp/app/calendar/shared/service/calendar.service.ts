@@ -129,6 +129,26 @@ export class CalendarService implements OnDestroy {
         });
     }
 
+    /**
+     * Replaces the subscription token with a new one. The subscription links with the old token stop working.
+     *
+     * @returns the observable that completes when the new token is in use
+     */
+    rotateSubscriptionToken(): Observable<void> {
+        const generation = this.stateGeneration;
+        return this.apiService.rotateCalendarEventSubscriptionToken().pipe(
+            map((token: string) => {
+                if (this.stateGeneration !== generation) return;
+                this.currentSubscriptionToken.set(token);
+            }),
+            catchError((error) => {
+                if (this.stateGeneration !== generation) return EMPTY;
+                this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
+                return throwError(() => error);
+            }),
+        );
+    }
+
     private loadSubscriptionToken() {
         const generation = this.stateGeneration;
         this.apiService

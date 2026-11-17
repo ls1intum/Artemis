@@ -43,6 +43,11 @@ export abstract class CalendarOverviewComponent {
             .subscribe(() => this.loadEventsForCurrentMonth());
     }
 
+    /** Replaces the subscription link by a new one; the service reports a failure to the user. */
+    resetSubscriptionLink(): void {
+        this.calendarService.rotateSubscriptionToken().subscribe({ error: () => undefined });
+    }
+
     abstract goToPrevious(): void;
 
     abstract goToNext(): void;

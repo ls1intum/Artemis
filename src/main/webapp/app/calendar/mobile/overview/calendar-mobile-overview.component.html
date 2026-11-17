@@ -48,7 +48,13 @@
                 >
                     <fa-icon [icon]="faArrowUpFromBracket" />
                 </button>
-                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" [isMobile]="true" #subscriptionPopover />
+                <jhi-calendar-subscription-popover
+                    [subscriptionToken]="subscriptionToken"
+                    [courseId]="currentCourseId"
+                    [isMobile]="true"
+                    (subscriptionResetRequested)="resetSubscriptionLink()"
+                    #subscriptionPopover
+                />
             </div>
         }
         <button

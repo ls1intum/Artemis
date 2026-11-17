@@ -2,7 +2,7 @@
 id: calendar
 title: Calendar
 sidebar_label: Calendar
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-17
 ---
 
 import calendarTabImage from '../assets/calendar/calendar-tab.png';
@@ -67,6 +67,8 @@ By using the filter component of the calendar, users can include or exclude even
 ## Subscribing External Calendars
 Users can subscribe external calendar applications to the Artemis calendar by clicking the Subscribe button, selecting a language, choosing which event types to include, and copying the generated link.
 This link can then be pasted into the settings of third-party calendar applications (e.g., Apple Calendar, Google Calendar, etc.) to subscribe them to the Artemis calendar.
+
+The link contains a personal token. To get a new link, for example after you passed the old one on by mistake, select **Reset link** in the same popover and confirm. This replaces the token, so every link that was created before stops working, and you have to subscribe your calendar applications again with the new link.
 
 <div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
     <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Popover for Large Devices"} caption={"iCalendar Subscription Popover for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>

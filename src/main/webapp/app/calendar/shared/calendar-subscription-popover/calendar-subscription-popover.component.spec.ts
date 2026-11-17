@@ -80,4 +80,29 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(component.tutorialsIsLastSelectedEventType()).toBe(false);
         expect(component.examsIsLastSelectedEventType()).toBe(false);
     });
+
+    it('asks for a confirmation before it requests a new subscription link', () => {
+        const resetSpy = vi.fn();
+        component.subscriptionResetRequested.subscribe(resetSpy);
+
+        expect(component.confirmingReset()).toBe(false);
+        component.confirmingReset.set(true);
+        component.confirmingReset.set(false);
+        expect(resetSpy).not.toHaveBeenCalled();
+
+        component.confirmingReset.set(true);
+        component.resetSubscriptionLink();
+
+        expect(resetSpy).toHaveBeenCalledOnce();
+        expect(component.confirmingReset()).toBe(false);
+    });
+
+    it('starts without a pending confirmation each time it is opened', () => {
+        component.confirmingReset.set(true);
+        const button = document.createElement('button');
+
+        component.open({ currentTarget: button } as unknown as Event);
+
+        expect(component.confirmingReset()).toBe(false);
+    });
 });

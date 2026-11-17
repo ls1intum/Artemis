@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +36,9 @@ export class CalendarSubscriptionPopoverComponent {
     subscriptionToken = input.required<string>();
     courseId = input.required<number>();
     isMobile = input<boolean>(false);
+    /** Emitted when the user confirms that the subscription link is replaced by a new one. */
+    subscriptionResetRequested = output<void>();
+    confirmingReset = signal(false);
     copiedUrl = signal(false);
     includeLectureEvents = signal(true);
     includeExerciseEvents = signal(true);
@@ -66,9 +69,15 @@ export class CalendarSubscriptionPopoverComponent {
         }
     }
 
+    resetSubscriptionLink() {
+        this.confirmingReset.set(false);
+        this.subscriptionResetRequested.emit();
+    }
+
     /** Opens the popover next to the element that received the click. */
     open(event: Event): void {
         const origin = event.currentTarget;
+        this.confirmingReset.set(false);
         if (origin instanceof HTMLElement) {
             this.calendarSubscriptionPopover()?.open(origin);
         }
