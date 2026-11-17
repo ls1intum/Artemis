@@ -1,5 +1,6 @@
 <jhi-tutorial-registrations-students-table
     hasToolbar
+    showRegistrationDate
     [students]="filteredRegisteredStudents()"
     [emptyTitle]="searchString() ? 'global.search.noResultsFound' : undefined"
     [removeActionColumnInfo]="loggedInUserIsAtLeastTutorOfGroup() ? studentsTableRemoveActionColumnInfo : undefined"

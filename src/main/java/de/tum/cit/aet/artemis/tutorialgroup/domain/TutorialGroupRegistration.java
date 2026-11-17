@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.tutorialgroup.domain;
 
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
@@ -9,7 +12,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -20,6 +27,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 @Entity
 @Table(name = "tutorial_group_registration")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@EntityListeners(AuditingEntityListener.class)
 public class TutorialGroupRegistration extends DomainObject {
 
     @ManyToOne
@@ -39,6 +47,16 @@ public class TutorialGroupRegistration extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private TutorialGroupRegistrationType type;
+
+    /**
+     * When the student was registered to this tutorial group. Set once on insert and never updated, so a later save cannot change it.
+     * Registrations created before this column existed have no date. Read through {@code TutorialGroupStudentDTO} for the participant list and through
+     * {@link #getRegistrationDate()} for the student's personal data export.
+     */
+    @CreatedDate
+    @Column(name = "registration_date", updatable = false)
+    @JsonIgnore
+    private Instant registrationDate;
 
     public TutorialGroupRegistration() {
         // Empty constructor needed for Jackson.
@@ -72,5 +90,10 @@ public class TutorialGroupRegistration extends DomainObject {
 
     public void setType(TutorialGroupRegistrationType type) {
         this.type = type;
+    }
+
+    @Nullable
+    public Instant getRegistrationDate() {
+        return registrationDate;
     }
 }

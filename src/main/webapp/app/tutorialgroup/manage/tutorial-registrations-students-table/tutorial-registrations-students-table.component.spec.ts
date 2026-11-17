@@ -5,6 +5,8 @@ import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from './tuto
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import dayjs from 'dayjs/esm';
 
 describe('TutorialRegistrationsStudentsTable', () => {
     let fixture: ComponentFixture<TutorialRegistrationsStudentsTableComponent>;
@@ -167,6 +169,80 @@ describe('TutorialRegistrationsStudentsTable', () => {
 
             expect(fixture.componentInstance.sortOrder()).toBe(-1);
             expect(names()).toEqual(['Alan Turing', 'Ada Lovelace', 'grace Hopper']);
+        });
+    });
+
+    describe('registration date', () => {
+        const registeredAt = '2026-10-14T08:30:00Z';
+        const datedStudent: TutorialGroupStudent = { ...firstStudent, registrationDate: registeredAt };
+        const undatedStudent: TutorialGroupStudent = { ...secondStudent, registrationDate: undefined };
+        const headerTexts = () =>
+            Array.from(fixture.nativeElement.querySelectorAll('thead th[scope="col"]') as NodeListOf<HTMLElement>).map((header) =>
+                header.querySelector('span[jhiTranslate]')?.getAttribute('jhiTranslate'),
+            );
+        const dateCell = (rowIndex: number) => fixture.nativeElement.querySelectorAll('tbody tr')[rowIndex].querySelectorAll('td')[4] as HTMLElement;
+
+        it('should show the registration date column with date and time when enabled', () => {
+            fixture.componentRef.setInput('students', [datedStudent]);
+            fixture.componentRef.setInput('showRegistrationDate', true);
+            fixture.detectChanges();
+
+            expect(headerTexts()).toContain('artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationDate');
+            expect(dateCell(0).textContent!.trim()).toBe(dayjs(registeredAt).format(ArtemisDatePipe.format('en', 'short')));
+        });
+
+        it('should not render the registration date column by default', () => {
+            fixture.componentRef.setInput('students', [datedStudent]);
+            fixture.detectChanges();
+
+            expect(headerTexts()).not.toContain('artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationDate');
+            expect(fixture.nativeElement.querySelectorAll('thead th[scope="col"]')).toHaveLength(4);
+            expect(fixture.nativeElement.querySelectorAll('tbody tr td')).toHaveLength(4);
+        });
+
+        it('should show a dash with a screen reader label when no registration date was recorded', () => {
+            fixture.componentRef.setInput('students', [undatedStudent]);
+            fixture.componentRef.setInput('showRegistrationDate', true);
+            fixture.detectChanges();
+
+            const cell = dateCell(0);
+            expect(cell.querySelector('[aria-hidden="true"]')!.textContent!.trim()).toBe('–');
+            expect(cell.querySelector('.sr-only')!.getAttribute('jhiTranslate')).toBe('artemisApp.pages.tutorialGroupRegistrations.studentsTableNoRegistrationDate');
+        });
+
+        it('should sort registration dates in the same second by time, not by their string form', () => {
+            // Serialized instants drop a zero fraction: 08:30:00 is earlier than 08:30:00.5, although '00Z' sorts after '00.5Z' as a string
+            const later: TutorialGroupStudent = { id: 5, name: 'Later Student', login: 'later', registrationDate: '2026-10-14T08:30:00.5Z' };
+            const earlier: TutorialGroupStudent = { id: 6, name: 'Earlier Student', login: 'earlier', registrationDate: '2026-10-14T08:30:00Z' };
+            fixture.componentRef.setInput('students', [later, undatedStudent, earlier]);
+            fixture.componentRef.setInput('showRegistrationDate', true);
+            fixture.detectChanges();
+            const order = () => fixture.componentInstance.sortedStudents().map((student) => student.login);
+
+            fixture.componentInstance.onSort({ field: 'registrationDate', order: 1 });
+            fixture.detectChanges();
+            expect(order()).toEqual(['earlier', 'later', 'alan']);
+
+            fixture.componentInstance.onSort({ field: 'registrationDate', order: -1 });
+            fixture.detectChanges();
+            expect(order()).toEqual(['later', 'earlier', 'alan']);
+        });
+
+        it('should sort by registration date in both directions and keep students without a date last', () => {
+            const earliest: TutorialGroupStudent = { id: 3, name: 'Grace Hopper', login: 'grace', registrationDate: '2026-10-01T09:00:00Z' };
+            const latest: TutorialGroupStudent = { id: 4, name: 'Barbara Liskov', login: 'barbara', registrationDate: '2026-10-20T09:00:00Z' };
+            fixture.componentRef.setInput('students', [undatedStudent, latest, datedStudent, earliest]);
+            fixture.componentRef.setInput('showRegistrationDate', true);
+            fixture.detectChanges();
+            const order = () => fixture.componentInstance.sortedStudents().map((student) => student.login);
+
+            fixture.componentInstance.onSort({ field: 'registrationDate', order: 1 });
+            fixture.detectChanges();
+            expect(order()).toEqual(['grace', 'ada', 'barbara', 'alan']);
+
+            fixture.componentInstance.onSort({ field: 'registrationDate', order: -1 });
+            fixture.detectChanges();
+            expect(order()).toEqual(['barbara', 'ada', 'grace', 'alan']);
         });
     });
 

@@ -2,6 +2,7 @@ export const NAME_KEY = 'Name';
 export const USERNAME_KEY = 'Username';
 export const EMAIL_KEY = 'Email';
 export const REGISTRATION_NUMBER_KEY = 'Registration Number';
+export const REGISTRATION_DATE_KEY = 'Registration Date';
 
 export const UNCAPPED_COURSE_POINTS_KEY = 'Uncapped Course Points';
 export const EXCESS_VARIANT_POINTS_KEY = 'Excess Variant Points';

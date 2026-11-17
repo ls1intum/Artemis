@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.tutorialgroup;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.RecordComponent;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSummaryDTO;
 
 /**
@@ -38,6 +40,11 @@ class TutorialGroupDTOContractTest {
     @Test
     void tutorialGroupSummarySessionDtoStatusShouldBeTypedEnum() {
         assertThat(componentType(TutorialGroupSummaryDTO.TutorialGroupSummarySessionDTO.class, "status")).isEqualTo(TutorialGroupSessionStatus.class);
+    }
+
+    @Test
+    void tutorialGroupStudentDtoRegistrationDateShouldBeTypedInstant() {
+        assertThat(componentType(TutorialGroupStudentDTO.class, "registrationDate")).isEqualTo(Instant.class);
     }
 
     private static Class<?> componentType(Class<?> recordClass, String componentName) {

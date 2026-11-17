@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -399,6 +401,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testExportTutorialGroupRegistrations() throws IOException {
+            Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS);
             // Create tutorial group registration if tutorial groups are available
             tutorialGroupUtilService.ifPresent(service -> {
                 // Create a tutorial group with the student already registered
@@ -418,6 +421,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
                     var records = csvParser.getRecords();
                     assertThat(records).hasSize(1);
                     assertThat(records.getFirst().get("tutorial_group_title")).isEqualTo("Test Tutorial Group");
+                    assertThat(Instant.parse(records.getFirst().get("registration_date"))).isBetween(before, Instant.now());
                 }
             }
         }

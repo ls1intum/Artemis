@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_DATE_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import * as writeUsersToCsv from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TutorialRegistrationsImportModalMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-import-modal-mock.component';
@@ -39,6 +39,7 @@ describe('TutorialRegistrationsComponent', () => {
         email: ' ada@tum.de ',
         registrationNumber: ' R001 ',
         profilePictureUrl: undefined,
+        registrationDate: '2026-10-14T08:30:00Z',
     };
 
     const secondStudent: TutorialGroupStudent = {
@@ -160,7 +161,13 @@ describe('TutorialRegistrationsComponent', () => {
         expect(studentsTable.students()).toEqual([thirdStudent]);
     });
 
-    it('should export registered students as csv with trimmed values and the expected column order', () => {
+    it('should show the registration date column in the participant list', () => {
+        const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableMockComponent)).componentInstance;
+
+        expect(studentsTable.showRegistrationDate()).toBe(true);
+    });
+
+    it('should export registered students as csv with trimmed values, the registration date and the expected column order', () => {
         const exportSpy = vi.spyOn(writeUsersToCsv, 'exportUserInformationAsCsv').mockImplementation(vi.fn());
 
         component.exportRegisteredStudents();
@@ -172,21 +179,24 @@ describe('TutorialRegistrationsComponent', () => {
                     [USERNAME_KEY]: 'ada',
                     [EMAIL_KEY]: 'ada@tum.de',
                     [REGISTRATION_NUMBER_KEY]: 'R001',
+                    [REGISTRATION_DATE_KEY]: '2026-10-14T08:30:00Z',
                 },
                 {
                     [NAME_KEY]: 'Alan Turing',
                     [USERNAME_KEY]: 'alan',
                     [EMAIL_KEY]: 'alan@tum.de',
                     [REGISTRATION_NUMBER_KEY]: 'R002',
+                    [REGISTRATION_DATE_KEY]: '',
                 },
                 {
                     [NAME_KEY]: '',
                     [USERNAME_KEY]: 'grace',
                     [EMAIL_KEY]: 'grace@tum.de',
                     [REGISTRATION_NUMBER_KEY]: 'R003',
+                    [REGISTRATION_DATE_KEY]: '',
                 },
             ],
-            [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY],
+            [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY, REGISTRATION_DATE_KEY],
             'registrations',
         );
     });

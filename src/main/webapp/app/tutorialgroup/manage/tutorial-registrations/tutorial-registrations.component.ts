@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_DATE_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import {
@@ -15,6 +15,9 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
+
+/** The shared user export row plus the registration date, which only the participant list has. */
+type RegisteredStudentExportRow = ExportUserInformationRow & { [REGISTRATION_DATE_KEY]: string };
 
 @Component({
     selector: 'jhi-tutorial-registrations',
@@ -57,15 +60,16 @@ export class TutorialRegistrationsComponent {
     exportRegisteredStudents() {
         const registeredStudents = this.registeredStudents();
         if (registeredStudents.length > 0) {
-            const rows: ExportUserInformationRow[] = registeredStudents.map((student) => {
+            const rows: RegisteredStudentExportRow[] = registeredStudents.map((student) => {
                 return {
                     [NAME_KEY]: student.name?.trim() ?? '',
                     [USERNAME_KEY]: student.login?.trim() ?? '',
                     [EMAIL_KEY]: student.email?.trim() ?? '',
                     [REGISTRATION_NUMBER_KEY]: student.registrationNumber?.trim() ?? '',
+                    [REGISTRATION_DATE_KEY]: student.registrationDate ?? '',
                 };
             });
-            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY, REGISTRATION_DATE_KEY];
             exportUserInformationAsCsv(rows, keys, 'registrations');
         }
     }
