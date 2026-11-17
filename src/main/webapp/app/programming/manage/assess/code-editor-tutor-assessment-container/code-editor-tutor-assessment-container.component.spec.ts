@@ -1166,6 +1166,21 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(true);
     });
 
+    it('should not alert for a feedback-suggestions failure that arrives after the component was destroyed', async () => {
+        const pendingSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(pendingSubject.asObservable());
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const pendingPromise = comp['loadFeedbackSuggestions']();
+        comp.ngOnDestroy();
+
+        pendingSubject.error(new Error('network error'));
+        await pendingPromise;
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
     it('should ignore a pending feedback-suggestions request once the lookup of the next submission starts', async () => {
         const suggestions = new Subject<Feedback[]>();
         vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(suggestions.asObservable());

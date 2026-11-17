@@ -333,12 +333,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * If a subscription exists for paramSub, unsubscribe
+     * If a subscription exists for paramSub, unsubscribe, and mark pending feedback suggestion requests as stale
      */
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        // A request still pending after the assessor left must not show its error on the next page.
+        this.feedbackSuggestionsRequestGeneration++;
     }
 
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {

@@ -1113,6 +1113,22 @@ describe('TextEditorComponent', () => {
             expect(errorSpy).toHaveBeenCalledWith('error.http.403');
         });
 
+        it('should apply the update and retry a failed exam summary reload when the same result is emitted again', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([athenaResult(true)]);
+            getTextForParticipationStub.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValueOnce(of(reloaded));
+            const update = withResults([athenaResult(true)]);
+
+            participationSubject.next(update);
+            expect(comp.participation()).toBe(update);
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(getTextForParticipationStub).toHaveBeenCalledTimes(2);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(42, 5, 'owner');
+            expect(comp.participation()).toBe(reloaded);
+        });
+
         it('should not treat an unfinished Athena request as new feedback', () => {
             const participationSubject = openWithParticipation(withResults([]));
             const alertService = TestBed.inject(AlertService);

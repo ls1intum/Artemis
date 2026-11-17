@@ -129,6 +129,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     participationUpdateListener?: Subscription;
     private examSummaryReload?: Subscription;
+    private failedExamSummaryReloadResultId?: number;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;
@@ -216,12 +217,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.hasAthenaResultForLatestSubmission = true;
                     }
                 }
-                const resultIdToReload = getNewestResult(athenaResults.filter((result) => result.successful !== false))?.id;
+                // The tracker has already counted these results as notified, so a reload that failed is retried from its own record.
+                const resultIdToReload = getNewestResult(athenaResults.filter((result) => result.successful !== false))?.id ?? this.failedExamSummaryReloadResultId;
+                this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
                 if (resultIdToReload !== undefined && this.isExamSummary() && this.participation()?.id !== undefined) {
                     this.reloadForExamSummary(resultIdToReload);
-                    return;
                 }
-                this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
             });
     }
 
@@ -234,8 +235,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private reloadForExamSummary(resultId: number): void {
         this.examSummaryReload?.unsubscribe();
         this.examSummaryReload = this.textService.get(this.participation().id!, resultId, this.viewingPurpose()).subscribe({
-            next: (data) => this.updateParticipation(data, this.submissionId, resultId),
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            next: (data) => {
+                this.failedExamSummaryReloadResultId = undefined;
+                this.updateParticipation(data, this.submissionId, resultId);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.failedExamSummaryReloadResultId = resultId;
+                onError(this.alertService, error);
+            },
         });
     }
 
