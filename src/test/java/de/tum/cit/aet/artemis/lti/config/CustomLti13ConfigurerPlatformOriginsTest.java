@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,6 +24,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.PlatformOrigins;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 
@@ -53,14 +53,14 @@ class CustomLti13ConfigurerPlatformOriginsTest {
         when(repository.findAll()).thenReturn(List.of(platform("https://moodle.example.org/", "https://Moodle.example.org/mod/lti/auth.php"),
                 platform(null, "https://lms.example.com:8443/auth"), platform("not a url", "ftp://files.example.org/x")));
 
-        assertThat(configurer.getPlatformOrigins()).containsExactly("https://lms.example.com:8443", "https://moodle.example.org");
+        assertThat(configurer.getPlatformOrigins().origins()).containsExactly("https://lms.example.com:8443", "https://moodle.example.org");
     }
 
     @Test
     void hasNoOriginsWhileNoPlatformIsConfigured() {
         when(repository.findAll()).thenReturn(List.of());
 
-        assertThat(configurer.getPlatformOrigins()).isEmpty();
+        assertThat(configurer.getPlatformOrigins().origins()).isEmpty();
     }
 
     @Test
@@ -76,11 +76,34 @@ class CustomLti13ConfigurerPlatformOriginsTest {
     @Test
     void keepsTheLastOriginsWhenThePlatformsCannotBeRead() {
         when(repository.findAll()).thenReturn(List.of(platform(null, "https://moodle.example.org/auth"))).thenThrow(new IllegalStateException("database unavailable"));
-        assertThat(configurer.getPlatformOrigins()).containsExactly("https://moodle.example.org");
+        assertThat(configurer.getPlatformOrigins().origins()).containsExactly("https://moodle.example.org");
         ReflectionTestUtils.setField(configurer, "cachedPlatformOriginsAtNanos", System.nanoTime() - Duration.ofMinutes(2).toNanos());
 
-        assertThat(configurer.getPlatformOrigins()).containsExactly("https://moodle.example.org");
+        assertThat(configurer.getPlatformOrigins().origins()).containsExactly("https://moodle.example.org");
         verify(repository, times(2)).findAll();
+    }
+
+    @Test
+    void doesNotTreatAFailedFirstReadAsNoPlatformsBeingConfigured() {
+        when(repository.findAll()).thenThrow(new IllegalStateException("database unavailable")).thenReturn(List.of());
+
+        PlatformOrigins afterFailure = configurer.getPlatformOrigins();
+        assertThat(afterFailure.origins()).isEmpty();
+        assertThat(afterFailure.read()).isFalse();
+
+        ReflectionTestUtils.setField(configurer, "cachedPlatformOriginsAtNanos", System.nanoTime() - Duration.ofMinutes(2).toNanos());
+        PlatformOrigins afterSuccess = configurer.getPlatformOrigins();
+        assertThat(afterSuccess.origins()).isEmpty();
+        assertThat(afterSuccess.read()).isTrue();
+    }
+
+    @Test
+    void remainsReadWhenALaterRefreshFails() {
+        when(repository.findAll()).thenReturn(List.of(platform(null, "https://moodle.example.org/auth"))).thenThrow(new IllegalStateException("database unavailable"));
+        configurer.getPlatformOrigins();
+        ReflectionTestUtils.setField(configurer, "cachedPlatformOriginsAtNanos", System.nanoTime() - Duration.ofMinutes(2).toNanos());
+
+        assertThat(configurer.getPlatformOrigins().read()).isTrue();
     }
 
     @Test
@@ -111,14 +134,14 @@ class CustomLti13ConfigurerPlatformOriginsTest {
         });
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
-            Future<Set<String>> refreshing = executor.submit(configurer::getPlatformOrigins);
+            Future<PlatformOrigins> refreshing = executor.submit(configurer::getPlatformOrigins);
             assertThat(refreshStarted.await(10, TimeUnit.SECONDS)).isTrue();
 
             // the second request does not wait for the refresh and does not query the database
-            assertThat(configurer.getPlatformOrigins()).containsExactly("https://moodle.example.org");
+            assertThat(configurer.getPlatformOrigins().origins()).containsExactly("https://moodle.example.org");
 
             releaseRefresh.countDown();
-            assertThat(refreshing.get(10, TimeUnit.SECONDS)).containsExactly("https://lms.example.com");
+            assertThat(refreshing.get(10, TimeUnit.SECONDS).origins()).containsExactly("https://lms.example.com");
             verify(repository, times(2)).findAll();
         }
         finally {

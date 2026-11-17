@@ -88,11 +88,23 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
-    private final AtomicReference<Set<String>> cachedPlatformOrigins = new AtomicReference<>(Set.of());
+    private final AtomicReference<PlatformOrigins> cachedPlatformOrigins = new AtomicReference<>(new PlatformOrigins(Set.of(), false));
 
     private volatile long cachedPlatformOriginsAtNanos;
 
     private volatile boolean platformOriginsCached;
+
+    /**
+     * The origins of the configured LTI platforms, as they were read last.
+     *
+     * @param origins the origins, empty while no platform is configured
+     * @param read    whether a read of the platforms has succeeded. While it has not, the empty origins mean that the platforms are unknown, not that there are none.
+     */
+    public record PlatformOrigins(Set<String> origins, boolean read) {
+
+        /** The state of an installation without LTI platforms: nothing can embed the client, and nothing is unknown. */
+        public static final PlatformOrigins NONE = new PlatformOrigins(Set.of(), true);
+    }
 
     private final ReentrantLock refreshLock = new ReentrantLock();
 
@@ -112,11 +124,12 @@ public class CustomLti13Configurer extends Lti13Configurer {
      * <p>
      * Only one request refreshes the cache at a time. The other requests that arrive meanwhile get the cached origins instead of querying the database as well. A failed
      * refresh counts as a refresh: the previous origins stay in place and the next attempt waits for the cache duration, so that an outage of the database does not make
-     * every request query it. The very first read has no previous origins to serve, so concurrent requests wait for it.
+     * every request query it. The very first read has no previous origins to serve, so concurrent requests wait for it. If that read fails, the result says that the
+     * platforms are not known yet, which is not the same as no platform being configured.
      *
-     * @return the origins, empty while no platform is configured
+     * @return the origins, which are empty while no platform is configured, and whether a read of the platforms has succeeded yet
      */
-    public Set<String> getPlatformOrigins() {
+    public PlatformOrigins getPlatformOrigins() {
         if (isCacheFresh()) {
             return cachedPlatformOrigins.get();
         }
@@ -162,10 +175,10 @@ public class CustomLti13Configurer extends Lti13Configurer {
                 }
             }
             warnAboutNewPlatformsWithoutOrigin(platformsWithoutOrigin);
-            cachedPlatformOrigins.set(Collections.unmodifiableSortedSet(new TreeSet<>(origins)));
+            cachedPlatformOrigins.set(new PlatformOrigins(Collections.unmodifiableSortedSet(new TreeSet<>(origins)), true));
         }
         catch (RuntimeException e) {
-            // The previous origins stay in place rather than opening or closing the framing because of a failed read
+            // The previous origins stay in place rather than opening or closing the framing because of a failed read. Before the first successful read, they are marked as unknown.
             log.warn("The LTI platforms could not be read to derive the origins that may embed the client: {}", e.getMessage());
         }
         cachedPlatformOriginsAtNanos = System.nanoTime();

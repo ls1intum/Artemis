@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.PlatformOrigins;
 
 /**
  * Configuration class defining authentication and authorization mechanism for all application endpoints
@@ -316,7 +317,8 @@ public class SecurityConfiguration {
      * {@code frame-ancestors} directive. When the LTI module is enabled and there are no such origins, no {@code frame-ancestors} directive is added. Without the LTI module,
      * the client may not be embedded at all.
      *
-     * @param ltiEnabled         whether the LTI module is enabled
+     * @param ltiEnabled         whether the LTI module is enabled and its platforms are known. While they are not known yet, because the first read failed, the client may not
+     *                               be embedded, as without the module.
      * @param ltiPlatformOrigins the origins of the configured LTI platforms, which are skipped if they are not of the form {@code scheme://host[:port]}
      * @return the policy directives
      * @throws IllegalStateException if a configured origin is not of the form {@code scheme://host[:port]}
@@ -353,8 +355,10 @@ public class SecurityConfiguration {
      * @return the policy directives
      */
     String currentContentSecurityPolicy() {
-        Set<String> platformOrigins = customLti13Configurer.map(CustomLti13Configurer::getPlatformOrigins).orElse(Set.of());
-        boolean ltiEnabled = moduleFeatureService.isLtiEnabled();
+        PlatformOrigins platforms = customLti13Configurer.map(CustomLti13Configurer::getPlatformOrigins).orElse(PlatformOrigins.NONE);
+        Set<String> platformOrigins = platforms.origins();
+        // While no read of the platforms has succeeded, no origin can be told apart from "no platform is configured", so the client may not be embedded until the read succeeds
+        boolean ltiEnabled = moduleFeatureService.isLtiEnabled() && platforms.read();
         CachedContentSecurityPolicy cached = cachedContentSecurityPolicy.get();
         if (cached != null && cached.ltiEnabled() == ltiEnabled && cached.platformOrigins().equals(platformOrigins)) {
             return cached.policy();
@@ -364,7 +368,7 @@ public class SecurityConfiguration {
         return policy;
     }
 
-    /** The policy that was built for the given input. */
+    /** The policy that was built for the given input, where {@code ltiEnabled} means that the LTI module is enabled and its platforms are known. */
     private record CachedContentSecurityPolicy(boolean ltiEnabled, Set<String> platformOrigins, String policy) {
     }
 

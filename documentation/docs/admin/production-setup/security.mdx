@@ -523,7 +523,8 @@ the LTI configuration removes `X-Frame-Options` while the module is enabled. As 
 
 Artemis derives the sites that may embed it from the LTI platforms that you configure. The origin (scheme, host and port) of the issuer and of the authorization address of every platform is added
 to the directive, so that after the first platform the policy is `frame-ancestors 'self'` followed by these origins. Artemis reads the platforms again at most once a minute, so a new platform
-takes effect within a minute without a restart. An origin that a platform needs but that is not part of these two addresses has to be listed explicitly: Canvas, for example, authorizes at a central
+takes effect within a minute without a restart. If the platforms cannot be read at all yet, for example because the database is not reachable during the first request after the start, no site may embed
+Artemis until the next read succeeds, which is tried a minute later. An origin that a platform needs but that is not part of these two addresses has to be listed explicitly: Canvas, for example, authorizes at a central
 address, and Blackboard Learn uses the issuer `https://blackboard.com` and an authorization address at `developer.blackboard.com`, while the pages that embed Artemis come from the address of your
 institution. Artemis logs a warning when it cannot derive any origin from a platform. To list further origins, or to restrict the embedding without LTI, set:
 

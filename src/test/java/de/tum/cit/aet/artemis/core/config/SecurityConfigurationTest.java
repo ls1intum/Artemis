@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.PlatformOrigins;
 
 class SecurityConfigurationTest {
 
@@ -158,7 +159,7 @@ class SecurityConfigurationTest {
     void currentContentSecurityPolicy_isBuiltOnlyWhenItsInputChanges() {
         CustomLti13Configurer configurer = mock(CustomLti13Configurer.class);
         Set<String> origins = Set.of("https://moodle.example.org; script-src *");
-        when(configurer.getPlatformOrigins()).thenReturn(origins);
+        when(configurer.getPlatformOrigins()).thenReturn(new PlatformOrigins(origins, true));
         when(moduleFeatureService.isLtiEnabled()).thenReturn(true);
         ReflectionTestUtils.setField(securityConfiguration, "customLti13Configurer", Optional.of(configurer));
         Logger logger = (Logger) LoggerFactory.getLogger(SecurityConfiguration.class);
@@ -175,7 +176,7 @@ class SecurityConfigurationTest {
             // the origin that cannot be used is reported once, not once per response
             assertThat(appender.list).hasSize(1);
 
-            when(configurer.getPlatformOrigins()).thenReturn(Set.of("https://moodle.example.org"));
+            when(configurer.getPlatformOrigins()).thenReturn(new PlatformOrigins(Set.of("https://moodle.example.org"), true));
 
             assertThat(securityConfiguration.currentContentSecurityPolicy()).endsWith("frame-ancestors 'self' https://moodle.example.org");
             assertThat(appender.list).hasSize(1);
@@ -183,6 +184,23 @@ class SecurityConfigurationTest {
         finally {
             logger.detachAppender(appender);
         }
+    }
+
+    @Test
+    void currentContentSecurityPolicy_staysRestrictiveUntilThePlatformsWereRead() {
+        CustomLti13Configurer configurer = mock(CustomLti13Configurer.class);
+        when(moduleFeatureService.isLtiEnabled()).thenReturn(true);
+        ReflectionTestUtils.setField(securityConfiguration, "customLti13Configurer", Optional.of(configurer));
+
+        // a failed first read must not look like an installation without platforms
+        when(configurer.getPlatformOrigins()).thenReturn(new PlatformOrigins(Set.of(), false));
+        assertThat(securityConfiguration.currentContentSecurityPolicy()).endsWith("frame-ancestors 'none'");
+
+        when(configurer.getPlatformOrigins()).thenReturn(new PlatformOrigins(Set.of(), true));
+        assertThat(securityConfiguration.currentContentSecurityPolicy()).doesNotContain("frame-ancestors");
+
+        when(configurer.getPlatformOrigins()).thenReturn(new PlatformOrigins(Set.of("https://moodle.example.org"), true));
+        assertThat(securityConfiguration.currentContentSecurityPolicy()).endsWith("frame-ancestors 'self' https://moodle.example.org");
     }
 
     @Test
