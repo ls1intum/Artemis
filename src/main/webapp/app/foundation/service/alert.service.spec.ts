@@ -227,6 +227,26 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(0);
     });
 
+    it('should tell the user how long to wait on status 429 with a Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '12' }) }) });
+
+        expect(addAlert).toHaveBeenCalledWith(expect.objectContaining({ translationKey: 'error.http.429Wait', translationParams: { seconds: 12 } }));
+        expect(service.get()).toHaveLength(1);
+    });
+
+    it('should show a general message on status 429 without a usable Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': 'soon' }) }) });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429 }) });
+
+        expect(addAlert).toHaveBeenCalledTimes(2);
+        expect(addAlert).toHaveBeenNthCalledWith(1, expect.objectContaining({ translationKey: 'error.http.429' }));
+        expect(addAlert).toHaveBeenNthCalledWith(2, expect.objectContaining({ translationKey: 'error.http.429' }));
+    });
+
     describe('showsHttpErrorAlert', () => {
         const rejection = (status: number, body?: unknown, headers?: Record<string, string>) => new HttpErrorResponse({ status, error: body, headers: new HttpHeaders(headers) });
 
