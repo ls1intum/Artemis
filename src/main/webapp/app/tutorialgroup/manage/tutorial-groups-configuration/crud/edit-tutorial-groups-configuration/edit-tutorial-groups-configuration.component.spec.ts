@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { EditTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
@@ -102,5 +103,42 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
         expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
+    });
+    it('keeps the form open on save failure and clears loading', () => {
+        const request = new Subject<TutorialGroupConfiguration>();
+        vi.spyOn(configurationService, 'update').mockReturnValue(request);
+        const navigate = vi.spyOn(router, 'navigate');
+        const updateCourse = vi.spyOn(courseStorageService, 'updateCourse');
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component.updateTutorialGroupsConfiguration(tutorialsGroupsConfigurationDtoToFormData(generateExampleTutorialGroupsConfigurationDTO({})));
+        expect(component.isLoading()).toBe(true);
+        request.error(new HttpErrorResponse({ status: 403 }));
+        expect(component.isLoading()).toBe(false);
+        expect(navigate).not.toHaveBeenCalled();
+        expect(updateCourse).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledOnce();
+    });
+
+    it('cancels an unfinished save on destroy without navigating', () => {
+        const request = new Subject<TutorialGroupConfiguration>();
+        vi.spyOn(configurationService, 'update').mockReturnValue(request);
+        const navigate = vi.spyOn(router, 'navigate');
+
+        component.updateTutorialGroupsConfiguration(tutorialsGroupsConfigurationDtoToFormData(generateExampleTutorialGroupsConfigurationDTO({})));
+        component.ngOnDestroy();
+        request.next(generateExampleTutorialGroupsConfigurationDTO({}));
+        expect(component.isLoading()).toBe(false);
+        expect(request.observed).toBe(false);
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('preserves existing free periods in the update request', () => {
+        const freePeriods = [{ id: 7, reason: 'Holiday' }];
+        component.tutorialGroupsConfiguration.tutorialGroupFreePeriods = freePeriods;
+        const update = vi.spyOn(configurationService, 'update').mockReturnValue(of(exampleConfiguration));
+        const formData = tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration);
+        component.updateTutorialGroupsConfiguration(formData);
+        expect(update).toHaveBeenCalledWith(course.id, exampleConfiguration.id, freePeriods, formData);
     });
 });
