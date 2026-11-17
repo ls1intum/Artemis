@@ -800,6 +800,7 @@ To enforce minimal access for external tools, Artemis provides `@AllowedTools`. 
 * Requests without a tool claim (e.g., browser requests) remain subject to role-based authorization rules
 * Requests with a tool claim (e.g., `{"tools": "SCORPIO"}`) can only access endpoints annotated with `@AllowedTools(ToolTokenType.__)`
 * If a tool tries to access an unannotated endpoint, it receives a `403 Forbidden` response
+* A Tool Token authenticates requests to the REST endpoints below `/api/` and to the native websocket endpoint `/websocket/websocket`. On every other path, for example `/management/info`, it does not authenticate the request, which continues like a request without credentials
 
 **Example:**
 ```java

@@ -132,6 +132,11 @@ public class RateLimitConfigurationService {
             case CLIENT_ERROR_REPORT -> properties.getClientErrorReportRequestsPerMinute() != null ? properties.getClientErrorReportRequestsPerMinute() : type.getDefaultRpm();
             case SERVICE_CREDENTIAL_FAILURE ->
                 properties.getServiceCredentialFailureRequestsPerMinute() != null ? properties.getServiceCredentialFailureRequestsPerMinute() : type.getDefaultRpm();
+            case APOLLON_CONVERSION -> properties.getApollonConversionRequestsPerMinute() != null ? properties.getApollonConversionRequestsPerMinute() : type.getDefaultRpm();
+            case QUIZ_BATCH_JOIN -> properties.getQuizBatchJoinRequestsPerMinute() != null ? properties.getQuizBatchJoinRequestsPerMinute() : type.getDefaultRpm();
+            case COURSE_REQUEST -> properties.getCourseRequestRequestsPerMinute() != null ? properties.getCourseRequestRequestsPerMinute() : type.getDefaultRpm();
+            case PROGRAMMING_BUILD_TRIGGER ->
+                properties.getProgrammingBuildTriggerRequestsPerMinute() != null ? properties.getProgrammingBuildTriggerRequestsPerMinute() : type.getDefaultRpm();
             case RE_EVALUATION -> properties.getReEvaluationRequestsPerMinute() != null ? properties.getReEvaluationRequestsPerMinute() : type.getDefaultRpm();
         };
     }
