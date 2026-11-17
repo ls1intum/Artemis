@@ -318,7 +318,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         assertThat(tokenAuthLogs).hasSize(1);
         var logEntry = tokenAuthLogs.getFirst();
         assertThat(logEntry.getUser().getLogin()).isEqualTo(student1Login);
-        assertThat(logEntry.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+        // A fetch of an up-to-date repository transfers nothing, so its repository advertisement is the only evidence
+        assertThat(logEntry.getRepositoryActionType()).isIn(RepositoryActionType.READ, RepositoryActionType.PULL, RepositoryActionType.CLONE);
     }
 
     @Test
@@ -349,7 +350,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         logs.forEach(accessLog -> {
             assertThat(accessLog.getUser().getLogin()).isEqualTo(student1Login);
             assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
-            assertThat(accessLog.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+            assertThat(accessLog.getRepositoryActionType()).isIn(RepositoryActionType.READ, RepositoryActionType.PULL, RepositoryActionType.CLONE);
         });
     }
 
@@ -383,11 +384,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
         }
 
-        // Verify we have both read (PULL/CLONE) and write (PUSH) operations logged
-        var readLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PULL || log.getRepositoryActionType() == RepositoryActionType.CLONE)
-                .toList();
+        // Verify we have both read (READ/PULL/CLONE) and write (WRITE/PUSH) operations logged
+        var readLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.READ || log.getRepositoryActionType() == RepositoryActionType.PULL
+                || log.getRepositoryActionType() == RepositoryActionType.CLONE).toList();
         assertThat(readLogs).as("Fetch should be logged as read operation").isNotEmpty();
-        var pushLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PUSH).toList();
+        var pushLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.WRITE || log.getRepositoryActionType() == RepositoryActionType.PUSH)
+                .toList();
         assertThat(pushLogs).as("Push should be logged").isNotEmpty();
     }
 
