@@ -343,6 +343,9 @@ public class LocalVCAccessLogRecorderService {
      * <p>
      * The attempt can only be attributed if the credentials name an existing user and the repository belongs to a participation. The first request of every operation carries no
      * credentials at all, because git waits to be asked, so that case is not an attempt and is not passed here. The write never fails the request that is being rejected.
+     * <p>
+     * The entry carries no commit, because the repository was not reached. That is what tells a failed push written here from one that the repository refused after its references
+     * were advertised: {@code VcsAccessLogOperations} joins only the latter to the advertisement.
      *
      * @param request              the request, which carries the credentials
      * @param localVCRepositoryUri the repository the request was for

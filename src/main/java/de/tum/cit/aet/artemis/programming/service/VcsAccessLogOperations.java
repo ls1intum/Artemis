@@ -1,11 +1,17 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
@@ -17,6 +23,10 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * Over HTTPS, a git operation is several requests that nothing links. The first one, which advertises the references, is stored as a read or a write, because it is all there is
  * of a fetch or push that is up to date. When data follows, a second request stores the clone, pull or push. The advertisement of that operation is then not an access of its
  * own, so it is left out here: every clone, pull or push takes away the newest preceding read or write of the same user, over the same mechanism and from the same address.
+ * <p>
+ * A failed push takes away an advertisement only if the repository was reached, which is when the entry carries the commit that the repository had. An attempt that was refused
+ * before the references were advertised, because of the credentials or the authorization, is stored without a commit and is an access of its own, so it must not hide the
+ * advertisement of an earlier push that was up to date.
  * <p>
  * Entries that are interchangeable cannot be told apart, and they do not need to be: with several operations at the same moment from the same user, address and mechanism, each
  * transfer takes away one advertisement, so the count of what is shown is right even if it is not known which advertisement belonged to which transfer. Stored entries are never
@@ -37,33 +47,40 @@ public final class VcsAccessLogOperations {
             AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN, AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN, AuthenticationMechanism.VCS_ACCESS_TOKEN,
             AuthenticationMechanism.AUTH_HEADER_MISSING);
 
+    /** Who advertised the references of a repository, how, from where, and for which kind of transfer. Advertisements with the same key are interchangeable. */
+    private record AdvertisementKey(Long userId, AuthenticationMechanism mechanism, String ipAddress, RepositoryActionType advertisement) {
+    }
+
     private VcsAccessLogOperations() {
     }
 
     /**
-     * Removes the advertisements that belong to an operation that moved data.
+     * Removes the advertisements that belong to an operation that moved data. The entries are read once: the advertisements that no transfer has taken yet are kept per key, the
+     * newest of them on top, so the time that this takes grows with the number of entries and not with the number of pairs among them.
      *
      * @param entries the stored entries of one repository, oldest first
      * @return the entries that are operations or accesses of their own, in the same order
      */
     public static List<VcsAccessLog> oneEntryPerOperation(List<VcsAccessLog> entries) {
-        Set<VcsAccessLog> advertisementsOfTransfers = new HashSet<>();
-        for (int index = 0; index < entries.size(); index++) {
-            VcsAccessLog transfer = entries.get(index);
-            RepositoryActionType advertisement = advertisementOf(transfer.getRepositoryActionType());
-            if (advertisement == null || transfer.getUser() == null || !HTTPS_MECHANISMS.contains(transfer.getAuthenticationMechanism())) {
+        Map<AdvertisementKey, Deque<VcsAccessLog>> untaken = new HashMap<>();
+        Set<VcsAccessLog> advertisementsOfTransfers = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (VcsAccessLog entry : entries) {
+            if (entry.getUser() == null || !HTTPS_MECHANISMS.contains(entry.getAuthenticationMechanism())) {
                 continue;
             }
-            // The newest advertisement before the transfer that no transfer has taken yet
-            for (int candidateIndex = index - 1; candidateIndex >= 0; candidateIndex--) {
-                VcsAccessLog candidate = entries.get(candidateIndex);
-                if (candidate.getRepositoryActionType() != advertisement || advertisementsOfTransfers.contains(candidate) || !isOfSameAccess(candidate, transfer)) {
-                    continue;
-                }
-                if (Duration.between(candidate.getTimestamp(), transfer.getTimestamp()).compareTo(MAX_TIME_BETWEEN_ADVERTISEMENT_AND_TRANSFER) <= 0) {
-                    advertisementsOfTransfers.add(candidate);
-                }
-                break;
+            RepositoryActionType type = entry.getRepositoryActionType();
+            if (type == RepositoryActionType.READ || type == RepositoryActionType.WRITE) {
+                untaken.computeIfAbsent(keyOf(entry, type), key -> new ArrayDeque<>()).push(entry);
+                continue;
+            }
+            RepositoryActionType advertisement = advertisementOf(entry);
+            if (advertisement == null) {
+                continue;
+            }
+            // The newest advertisement before the transfer that no transfer has taken yet. If it is too old, so are all before it.
+            Deque<VcsAccessLog> candidates = untaken.get(keyOf(entry, advertisement));
+            if (candidates != null && !candidates.isEmpty() && isCloseEnough(candidates.peek(), entry)) {
+                advertisementsOfTransfers.add(candidates.pop());
             }
         }
         List<VcsAccessLog> result = new ArrayList<>(entries);
@@ -71,17 +88,22 @@ public final class VcsAccessLogOperations {
         return result;
     }
 
-    /** Which stored kind advertises a transfer of this kind, null if the kind is not a transfer. */
-    private static RepositoryActionType advertisementOf(RepositoryActionType transfer) {
-        return switch (transfer) {
+    /** Which stored kind advertises a transfer of this kind, null if the entry is not a transfer that was preceded by an advertisement. */
+    private static RepositoryActionType advertisementOf(VcsAccessLog entry) {
+        return switch (entry.getRepositoryActionType()) {
             case CLONE, PULL -> RepositoryActionType.READ;
-            case PUSH, PUSH_FAIL -> RepositoryActionType.WRITE;
+            case PUSH -> RepositoryActionType.WRITE;
+            // A failed push that names no commit was refused before the references were advertised, so there is no advertisement that belongs to it
+            case PUSH_FAIL -> StringUtils.isEmpty(entry.getCommitHash()) ? null : RepositoryActionType.WRITE;
             default -> null;
         };
     }
 
-    private static boolean isOfSameAccess(VcsAccessLog advertisement, VcsAccessLog transfer) {
-        return advertisement.getUser() != null && Objects.equals(advertisement.getUser().getId(), transfer.getUser().getId())
-                && advertisement.getAuthenticationMechanism() == transfer.getAuthenticationMechanism() && Objects.equals(advertisement.getIpAddress(), transfer.getIpAddress());
+    private static AdvertisementKey keyOf(VcsAccessLog entry, RepositoryActionType advertisement) {
+        return new AdvertisementKey(entry.getUser().getId(), entry.getAuthenticationMechanism(), entry.getIpAddress(), advertisement);
+    }
+
+    private static boolean isCloseEnough(VcsAccessLog advertisement, VcsAccessLog transfer) {
+        return Duration.between(advertisement.getTimestamp(), transfer.getTimestamp()).compareTo(MAX_TIME_BETWEEN_ADVERTISEMENT_AND_TRANSFER) <= 0;
     }
 }

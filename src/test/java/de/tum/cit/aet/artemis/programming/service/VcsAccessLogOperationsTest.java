@@ -31,7 +31,11 @@ class VcsAccessLogOperationsTest {
     }
 
     private VcsAccessLog add(User user, RepositoryActionType action, AuthenticationMechanism mechanism, String ip, long secondsAfterStart) {
-        var entry = new VcsAccessLog(user, null, "name", "mail", action, mechanism, "hash", ip);
+        return add(user, action, mechanism, ip, secondsAfterStart, "hash");
+    }
+
+    private VcsAccessLog add(User user, RepositoryActionType action, AuthenticationMechanism mechanism, String ip, long secondsAfterStart, String commitHash) {
+        var entry = new VcsAccessLog(user, null, "name", "mail", action, mechanism, commitHash, ip);
         ReflectionTestUtils.setField(entry, "timestamp", START.plusSeconds(secondsAfterStart));
         log.add(entry);
         return entry;
@@ -118,6 +122,72 @@ class VcsAccessLogOperationsTest {
         add(null, RepositoryActionType.PULL, AuthenticationMechanism.BUILD_JOB_TOKEN, "10.0.0.1", 2);
 
         assertThat(VcsAccessLogOperations.oneEntryPerOperation(log)).hasSize(3);
+    }
+
+    /**
+     * The credentials of a push that does not hold are checked before the references are advertised, so that attempt follows no advertisement. It must not take away the one of an
+     * earlier push that was up to date.
+     */
+    @Test
+    void aPushThatWasRefusedBeforeTheReferencesWereAdvertisedLeavesTheEarlierAdvertisementAlone() {
+        var upToDatePush = add(alice, RepositoryActionType.WRITE, 0);
+        var refusedPush = add(alice, RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.PASSWORD, "10.0.0.1", 60, "");
+
+        assertThat(VcsAccessLogOperations.oneEntryPerOperation(log)).containsExactly(upToDatePush, refusedPush);
+    }
+
+    @Test
+    void aPushThatTheRepositoryRefusedTakesAwayItsAdvertisement() {
+        add(alice, RepositoryActionType.WRITE, 0);
+        var rejectedPush = add(alice, RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.PASSWORD, "10.0.0.1", 1, "abc123");
+
+        assertThat(VcsAccessLogOperations.oneEntryPerOperation(log)).containsExactly(rejectedPush);
+    }
+
+    /**
+     * A failed push without a commit is not paired, but it does not stop the pushes that follow from being paired with their advertisements either.
+     */
+    @Test
+    void aRefusedPushDoesNotChangeHowLaterPushesArePaired() {
+        var upToDatePush = add(alice, RepositoryActionType.WRITE, 0);
+        var refusedPush = add(alice, RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.PASSWORD, "10.0.0.1", 1, "");
+        add(alice, RepositoryActionType.WRITE, 2);
+        var push = add(alice, RepositoryActionType.PUSH, 3);
+
+        assertThat(VcsAccessLogOperations.oneEntryPerOperation(log)).containsExactly(upToDatePush, refusedPush, push);
+    }
+
+    /**
+     * Entries from before the advertisements were stored have none to pair with. Each of them is looked at once, and not compared with everything before it, which would take a
+     * number of steps that grows with the square of the retained history.
+     */
+    @Test
+    void aHistoryWithoutAdvertisementsIsReadOnceAndLeftAsItIs() {
+        var counted = new CountingList();
+        for (int i = 0; i < 2_000; i++) {
+            var action = i % 3 == 0 ? RepositoryActionType.CLONE : i % 3 == 1 ? RepositoryActionType.PULL : RepositoryActionType.PUSH;
+            var entry = new VcsAccessLog(alice, null, "name", "mail", action, AuthenticationMechanism.PASSWORD, "hash", "10.0.0.1");
+            ReflectionTestUtils.setField(entry, "timestamp", START.plusSeconds(i));
+            counted.add(entry);
+        }
+        counted.reads = 0;
+
+        var result = VcsAccessLogOperations.oneEntryPerOperation(counted);
+
+        assertThat(result).containsExactlyElementsOf(counted);
+        assertThat(counted.reads).isLessThanOrEqualTo(2 * counted.size());
+    }
+
+    /** Counts how often an element is read by its position, which is what a scan back through the history does for every entry. */
+    private static final class CountingList extends ArrayList<VcsAccessLog> {
+
+        private int reads;
+
+        @Override
+        public VcsAccessLog get(int index) {
+            reads++;
+            return super.get(index);
+        }
     }
 
     @Test

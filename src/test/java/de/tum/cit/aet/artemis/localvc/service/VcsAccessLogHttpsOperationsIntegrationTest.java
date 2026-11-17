@@ -307,6 +307,24 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
     }
 
     /**
+     * Credentials that do not hold are checked before the references are advertised, so a refused push follows no advertisement of its own and takes nothing away from the access
+     * of an earlier push that had nothing new.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void aPushWithAWrongPasswordLeavesAnEarlierPushWithNothingNewInTheLog() throws Exception {
+        String head = headOfTheRepository();
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
+        awaitEntriesWithAccesses(1);
+
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+
+        assertThat(awaitEntriesWithAccesses(2)).extracting(VcsAccessLogHttpsOperationsIntegrationTest::kindAndHash).containsExactly(List.of(RepositoryActionType.WRITE, head),
+                List.of(RepositoryActionType.PUSH_FAIL, ""));
+        assertNoMoreEntriesThan(2);
+    }
+
+    /**
      * The advertisement and the transfer of one clone are two requests that nothing links, and both are stored. The log joins them when it is read, so what is shown is one
      * entry per operation, while nothing that was stored is ever changed.
      */
