@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -28,7 +29,9 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -803,9 +806,19 @@ public class SecurityFrameworkService {
     /**
      * The Security Framework reads and rewrites files of the checkout, and both follow symbolic links. A link committed to the tests repository could
      * therefore make a change read or modify a file outside the checkout with the server's permissions, so a repository with links is not changed at all.
+     * A checkout without symbolic links writes a committed link as a plain file that holds its target, and rewriting that file would change where the link
+     * points, so the links are also read from the index.
      */
-    private static void rejectSymbolicLinks(ProgrammingExercise exercise, Repository repository) {
-        List<String> links = SecurityPolicyRepositoryFiles.findSymbolicLinks(repository.getLocalPath());
+    private static void rejectSymbolicLinks(ProgrammingExercise exercise, Repository repository) throws IOException {
+        Set<String> linkSet = new TreeSet<>(SecurityPolicyRepositoryFiles.findSymbolicLinks(repository.getLocalPath()));
+        DirCache index = repository.readDirCache();
+        for (int i = 0; i < index.getEntryCount(); i++) {
+            DirCacheEntry entry = index.getEntry(i);
+            if (FileMode.SYMLINK.equals(entry.getRawMode())) {
+                linkSet.add(entry.getPathString());
+            }
+        }
+        List<String> links = List.copyOf(linkSet);
         if (!links.isEmpty()) {
             log.warn("Refusing to change the tests repository of exercise {}, because it contains symbolic links: {}", exercise.getId(), links);
             throw new BadRequestAlertException("The tests repository contains symbolic links, which the Security Framework does not follow: " + String.join(", ", links),
