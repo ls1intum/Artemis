@@ -1,26 +1,13 @@
-<p-dialog
-    [(visible)]="isVisible"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    [closeOnEscape]="true"
-    [closable]="true"
-    appendTo="body"
-    [style]="{ width: '50rem' }"
-    [breakpoints]="{ '850px': '95vw' }"
->
+<tumaet-ui-dialog [(visible)]="isVisible" size="medium" [dismissableMask]="true">
     <ng-template #header>
-        <h5 class="modal-title">
-            <span
-                jhiTranslate="artemisApp.quizExercise.explanationText.scoringTitle"
-                [translateValues]="{ paramTitle: this.question().title, paramIndex: this.questionIndex() }"
-            ></span>
-        </h5>
+        <span
+            jhiTranslate="artemisApp.quizExercise.explanationText.scoringTitle"
+            [translateValues]="{ paramTitle: this.question().title, paramIndex: this.questionIndex() }"
+        ></span>
     </ng-template>
     @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && isSingleChoice()) {
-        <div class="modal-body">
-            <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoice"></span>
+        <div>
+            <span class="font-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoice"></span>
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoiceExplanation"></span>
             <br />
             <div>
@@ -54,8 +41,8 @@
         </div>
     }
     @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && !isSingleChoice()) {
-        <div class="modal-body">
-            <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
+        <div>
+            <span class="font-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span>
             <br />
             @if (this.question().type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -133,8 +120,8 @@
         </div>
     }
     @if (this.question().scoringType === ScoringType.PROPORTIONAL_WITH_PENALTY) {
-        <div class="modal-body">
-            <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
+        <div>
+            <span class="font-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span>
             <br />
             @if (this.question().type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -235,8 +222,8 @@
         </div>
     }
     @if (this.question().scoringType === ScoringType.PROPORTIONAL_WITHOUT_PENALTY) {
-        <div class="modal-body">
-            <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalWithout"></span>
+        <div>
+            <span class="font-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalWithout"></span>
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalWithoutExplanation"></span>
             <br />
             @if (this.question().type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -312,11 +299,11 @@
         </div>
     }
     <ng-template #footer>
-        <button type="button" class="btn btn-outline" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
+        <button tumAetUiButton type="button" severity="secondary" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>
 <div>
-    <button type="button" class="btn" (click)="open()">
+    <button type="button" class="cursor-pointer border-0 bg-transparent px-2 py-1" (click)="open()">
         <fa-icon [ngClass]="{ questionCorrect: this.score() === this.question().points, questionWrong: this.score() !== this.question().points }" [icon]="farQuestionCircle" />
     </button>
 </div>

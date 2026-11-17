@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,24 +36,35 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionFailureMode;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuild;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolLectureUnit;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterDecisionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCompetencyDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolLectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 class HyperionQuizQuestionPoolServiceTest {
@@ -75,6 +88,18 @@ class HyperionQuizQuestionPoolServiceTest {
     private LectureUnitApi lectureUnitApi;
 
     @Mock
+    private QuizQuestionPoolLectureUnitRepository lectureUnitRepository;
+
+    @Mock
+    private QuizQuestionPoolBuildRepository buildRepository;
+
+    @Mock
+    private HyperionQuizQuestionPoolMaterialService materialService;
+
+    @Mock
+    private CourseTestRepository courseRepository;
+
+    @Mock
     private HyperionQuizQuestionPoolModelService modelService;
 
     private HyperionQuizQuestionPoolService service;
@@ -88,9 +113,10 @@ class HyperionQuizQuestionPoolServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         when(modelService.isConfigured()).thenReturn(true);
         service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi),
-                modelService);
+                lectureUnitRepository, buildRepository, materialService, courseRepository, modelService);
         course = new Course();
         course.setId(5L);
+        lenient().when(buildRepository.findAllByCourseIdNewestFirst(eq(5L), any())).thenReturn(List.of());
     }
 
     @AfterEach
@@ -99,14 +125,17 @@ class HyperionQuizQuestionPoolServiceTest {
     }
 
     @Test
-    void startBuild_enqueuesAndDispatchesWhenTheSlotIsFree() {
+    void startBuild_enqueuesRecordsAndDispatchesWhenTheLeaseIsFree() {
         when(buildService.tryStart(5L)).thenReturn("lease");
         when(buildService.enqueue(course)).thenReturn(12);
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildService.recordStart(course, QuizQuestionPoolBuildTrigger.MANUAL, 12)).thenReturn(build);
 
         QuizQuestionPoolBuildStartDTO result = service.startBuild(course, 7L);
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(true, 12));
-        verify(taskService).runBuildAsync(5L, 7L, "lease");
+        verify(taskService).runBuildAsync(5L, 7L, 3L, "lease");
     }
 
     @Test
@@ -126,16 +155,38 @@ class HyperionQuizQuestionPoolServiceTest {
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(false, 0));
         verify(buildService, never()).enqueue(course);
-        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), any());
+        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), anyLong(), any());
     }
 
     @Test
     void startBuild_freesTheSlotWhenDispatchFails() {
         when(buildService.tryStart(5L)).thenReturn("lease");
         when(buildService.enqueue(course)).thenReturn(12);
-        doThrow(new TaskRejectedException("executor queue full")).when(taskService).runBuildAsync(5L, 7L, "lease");
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildService.recordStart(course, QuizQuestionPoolBuildTrigger.MANUAL, 12)).thenReturn(build);
+        TaskRejectedException rejected = new TaskRejectedException("executor queue full");
+        doThrow(rejected).when(taskService).runBuildAsync(5L, 7L, 3L, "lease");
 
-        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(TaskRejectedException.class);
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isSameAs(rejected);
+
+        verify(buildService).recordDispatchFailure(3L);
+        verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void startBuild_freesTheSlotAndKeepsTheDispatchFailureWhenRecordingItFails() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(buildService.enqueue(course)).thenReturn(12);
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildService.recordStart(course, QuizQuestionPoolBuildTrigger.MANUAL, 12)).thenReturn(build);
+        TaskRejectedException rejected = new TaskRejectedException("executor queue full");
+        doThrow(rejected).when(taskService).runBuildAsync(5L, 7L, 3L, "lease");
+        IllegalStateException recordFailure = new IllegalStateException("database unavailable");
+        doThrow(recordFailure).when(buildService).recordDispatchFailure(3L);
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isSameAs(rejected).hasSuppressedException(recordFailure);
 
         verify(buildService).release(5L, "lease");
     }
@@ -148,7 +199,7 @@ class HyperionQuizQuestionPoolServiceTest {
         assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(IllegalStateException.class);
 
         verify(buildService).release(5L, "lease");
-        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), any());
+        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), anyLong(), any());
     }
 
     @Test
@@ -161,7 +212,7 @@ class HyperionQuizQuestionPoolServiceTest {
 
         QuizQuestionPoolProgressDTO progress = service.getProgress(5L);
 
-        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null, true));
+        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null, null, true));
     }
 
     @Test
@@ -188,6 +239,117 @@ class HyperionQuizQuestionPoolServiceTest {
         when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of());
 
         assertThat(service.getProgress(5L).buildSettings()).isEqualTo(HyperionCourseSettingsDTO.of(settings));
+    }
+
+    @Test
+    void getProgress_carriesTheLastBuild() {
+        when(buildService.isRunning(5L)).thenReturn(false);
+        when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of());
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        build.setCourse(course);
+        build.setTrigger(QuizQuestionPoolBuildTrigger.SCHEDULED);
+        build.setEnqueued(12);
+        build.setGenerated(12);
+        build.setJudged(12);
+        build.setAccepted(9);
+        build.setRejected(3);
+        when(buildRepository.findAllByCourseIdNewestFirst(eq(5L), any())).thenReturn(List.of(build));
+
+        QuizQuestionPoolProgressDTO progress = service.getProgress(5L);
+
+        assertThat(progress.lastBuild()).isEqualTo(QuizQuestionPoolBuildDTO.of(build));
+        assertThat(progress.lastBuild().trigger()).isEqualTo(QuizQuestionPoolBuildTrigger.SCHEDULED);
+        assertThat(progress.lastBuild().accepted()).isEqualTo(9);
+    }
+
+    @Test
+    void getLectureUnits_listsTheUnitsOfEachCompetencyWithCountsAndExclusion() {
+        Competency competency = new Competency();
+        competency.setId(9L);
+        competency.setTitle("Arrays");
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
+        TextUnit other = unitOfCourse(6L, "Arrays, continued", 5L);
+        when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.of(unit, other)));
+        QuizQuestionPoolLectureUnit record = new QuizQuestionPoolLectureUnit();
+        record.setLectureUnitId(6L);
+        record.setExcluded(true);
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(record));
+        when(itemRepository.countByLectureUnitForCourse(5L, QuizQuestionReviewState.APPROVED)).thenReturn(List.of(new QuizQuestionPoolLectureUnitCountDTO(4L, 12L, 3L, 1L)));
+
+        List<QuizQuestionPoolLectureUnitDTO> units = service.getLectureUnits(5L);
+
+        assertThat(units).hasSize(2);
+        assertThat(units.getFirst()).isEqualTo(new QuizQuestionPoolLectureUnitDTO(9L, "Arrays", 4L, "Arrays in Java", "Lecture 1", false, true, 12, 3, null));
+        assertThat(units.get(1)).isEqualTo(new QuizQuestionPoolLectureUnitDTO(9L, "Arrays", 6L, "Arrays, continued", "Lecture 1", true, false, 0, 0, null));
+    }
+
+    @Test
+    void updateLectureUnitRelevance_excludesTheUnitAndDropsItsUnreviewedItems() {
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        when(buildService.tryStart(5L)).thenReturn("lease");
+
+        service.updateLectureUnitRelevance(5L, 4L, true);
+
+        verify(lectureUnitRepository).save(any(QuizQuestionPoolLectureUnit.class));
+        verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
+        verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void updateLectureUnitRelevance_refusesToExcludeWhileABuildRunsButIncludes() {
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+        when(buildService.tryStart(5L)).thenReturn(null);
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+
+        assertThatThrownBy(() -> service.updateLectureUnitRelevance(5L, 4L, true)).isInstanceOf(ConflictException.class);
+        verify(itemRepository, never()).deleteAllByLectureUnitExceptReviewState(anyLong(), anyLong(), any());
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+
+        service.updateLectureUnitRelevance(5L, 4L, false);
+        verify(lectureUnitRepository).updateExcluded(eq(5L), eq(4L), eq(false), any(ZonedDateTime.class));
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+    }
+
+    @Test
+    void updateLectureUnitRelevance_changesOnlyTheExclusionOfAnExistingRecord() {
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(lectureUnitRepository.updateExcluded(eq(5L), eq(4L), eq(true), any(ZonedDateTime.class))).thenReturn(1);
+
+        service.updateLectureUnitRelevance(5L, 4L, true);
+
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+        verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
+    }
+
+    @Test
+    void updateLectureUnitRelevance_rejectsAUnitOfAnotherCourse() {
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 6L);
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+
+        assertThatThrownBy(() -> service.updateLectureUnitRelevance(5L, 4L, true)).isInstanceOf(EntityNotFoundException.class);
+
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+    }
+
+    private static TextUnit unitOfCourse(long unitId, String name, long courseId) {
+        Course owner = new Course();
+        owner.setId(courseId);
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Lecture 1");
+        lecture.setCourse(owner);
+        TextUnit unit = new TextUnit();
+        unit.setId(unitId);
+        unit.setName(name);
+        unit.setContent("content");
+        unit.setLecture(lecture);
+        return unit;
     }
 
     @Test
