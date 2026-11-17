@@ -51,6 +51,8 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
 
     private static final String TEST_PREFIX = "gradescorequery";
 
+    private static final ZonedDateTime REFERENCE_TIME = ZonedDateTime.parse("2026-01-01T12:00:00Z");
+
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
@@ -75,12 +77,9 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private TeamRepository teamRepository;
 
-    private ZonedDateTime now;
-
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        now = ZonedDateTime.now();
     }
 
     @Test
@@ -88,8 +87,8 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise(TEST_PREFIX + "latest-submission");
         TextExercise exercise = (TextExercise) course.getExercises().iterator().next();
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        addSubmissionWithResult(participation, now.minusHours(3), now.minusHours(2), 50.0);
-        addSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 80.0);
+        addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(3), REFERENCE_TIME.minusHours(2), 50.0);
+        addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(30), 80.0);
 
         var grades = studentParticipationRepository.findIndividualGradesByCourseId(course.getId());
 
@@ -101,8 +100,8 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise(TEST_PREFIX + "latest-result");
         TextExercise exercise = (TextExercise) course.getExercises().iterator().next();
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        var submission = addSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(50), 50.0);
-        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, null, 80.0, true, now.minusMinutes(10));
+        var submission = addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(50), 50.0);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, null, 80.0, true, REFERENCE_TIME.minusMinutes(10));
 
         var grades = studentParticipationRepository.findIndividualGradesByCourseId(course.getId());
 
@@ -118,8 +117,8 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise(TEST_PREFIX + "first-submission");
         QuizExercise exercise = (QuizExercise) course.getExercises().iterator().next();
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        addQuizSubmissionWithResult(participation, now.minusHours(3), now.minusHours(2), 30.0);
-        addQuizSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 90.0);
+        addQuizSubmissionWithResult(participation, REFERENCE_TIME.minusHours(3), REFERENCE_TIME.minusHours(2), 30.0);
+        addQuizSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(30), 90.0);
 
         var grades = studentParticipationRepository.findIndividualQuizGradesByCourseId(course.getId());
 
@@ -144,7 +143,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         else {
             participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student.getLogin());
         }
-        var submission = addSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 80.0);
+        var submission = addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(30), 80.0);
         var official = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
         official.setAssessmentType(officialType);
         resultRepository.save(official);
@@ -153,7 +152,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         ai = resultRepository.save(ai);
         assertOfficialGrade(course, exercise, student.getId(), teamExercise);
 
-        ai.setCompletionDate(now.minusMinutes(10));
+        ai.setCompletionDate(REFERENCE_TIME.minusMinutes(10));
         ai.setSuccessful(true);
         ai = resultRepository.save(ai);
         assertOfficialGrade(course, exercise, student.getId(), teamExercise);
@@ -166,12 +165,12 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         if (teamExercise) {
             assertThat(studentParticipationRepository.findTeamGradesByCourseId(course.getId())).isEmpty();
             assertThat(studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
-            assertThat(studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), student.getId(), now)).isEmpty();
+            assertThat(studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), student.getId(), REFERENCE_TIME)).isEmpty();
         }
         else {
             assertThat(studentParticipationRepository.findIndividualGradesByCourseId(course.getId())).isEmpty();
             assertThat(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
-            assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), student.getId(), now)).isEmpty();
+            assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), student.getId(), REFERENCE_TIME)).isEmpty();
         }
     }
 
@@ -181,14 +180,14 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        var submission = addSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 80.0);
+        var submission = addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(30), 80.0);
         var official = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
         official.setAssessmentType(officialType);
         resultRepository.save(official);
         var ai = new Result().submission(submission).assessmentType(AssessmentType.AUTOMATIC_ATHENA).rated(true).score(aiScore);
         ai.setExerciseId(exercise.getId());
         ai.setSuccessful(successful);
-        ai.setCompletionDate(now);
+        ai.setCompletionDate(REFERENCE_TIME);
         ai = resultRepository.save(ai);
 
         var selected = studentParticipationRepository.findAllForPlagiarism(exercise.getId());
@@ -221,7 +220,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         else {
             participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student.getLogin());
         }
-        var submission = addSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 80.0);
+        var submission = addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(30), 80.0);
         var result = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result.setSuccessful(true);
@@ -235,7 +234,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         var studentGrades = teamExercise ? studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId)
                 : studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId);
         // The overview publishes manual grades only after the assessment due date.
-        var calculationTime = exercise.getAssessmentDueDate() == null ? now : exercise.getAssessmentDueDate().plusSeconds(1);
+        var calculationTime = exercise.getAssessmentDueDate() == null ? REFERENCE_TIME : exercise.getAssessmentDueDate().plusSeconds(1);
         var overviewGrades = teamExercise ? studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), studentId, calculationTime)
                 : studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId, calculationTime);
         assertThat(courseGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
