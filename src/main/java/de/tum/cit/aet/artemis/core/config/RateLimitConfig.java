@@ -19,6 +19,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.grid.hazelcast.Bucket4jHazelcast;
 import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
@@ -71,7 +72,9 @@ public class RateLimitConfig {
     @Conditional(RedisDistributedDataCondition.class)
     public ProxyManager<String> redisRateLimitProxyManager(RedissonClient redissonClient) {
         CommandAsyncExecutor commandExecutor = ((Redisson) redissonClient).getCommandExecutor();
-        return Bucket4jRedisson.casBasedBuilder(commandExecutor).build();
+        // Idle buckets expire like the ones of the other providers, so that distinct keys (the failed logins are keyed by the login name) cannot fill the store
+        return Bucket4jRedisson.casBasedBuilder(commandExecutor).expirationAfterWrite(ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofMinutes(10)))
+                .build();
     }
 
     /**

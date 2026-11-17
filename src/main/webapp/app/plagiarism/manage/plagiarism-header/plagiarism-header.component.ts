@@ -2,8 +2,8 @@ import { Component, inject, input, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { Exercise, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,11 +17,13 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiConfirmDialogComponent],
+    providers: [TumAetUiConfirmationService],
 })
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
-    private dialogService = inject(DialogService);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
 
     readonly comparison = input<PlagiarismComparison>();
@@ -52,17 +54,14 @@ export class PlagiarismHeaderComponent {
     private askForConfirmationOfDenying(onConfirm: () => void) {
         this.isLoading.set(true);
 
-        const dialogRef = openConfirmAutofocusDialog(this.dialogService, {
-            title: 'artemisApp.plagiarism.denyAfterConfirmModalTitle',
-            text: 'artemisApp.plagiarism.denyAfterConfirmModalText',
-            translateText: true,
-        });
-        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
-            if (result?.confirmed) {
-                onConfirm();
-            } else {
-                this.isLoading.set(false);
-            }
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.plagiarism.denyAfterConfirmModalTitle'),
+            message: this.translateService.instant('artemisApp.plagiarism.denyAfterConfirmModalText'),
+            acceptLabel: this.translateService.instant('global.form.confirm'),
+            acceptSeverity: 'danger',
+            rejectLabel: this.translateService.instant('global.form.cancel'),
+            accept: onConfirm,
+            reject: () => this.isLoading.set(false),
         });
     }
 

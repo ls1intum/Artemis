@@ -1,20 +1,10 @@
-<p-select
-    [pt]="{ listContainer: { 'data-testid': 'taxonomy-select-overlay' }, option: { 'data-testid': 'taxonomy-select-option' } }"
+<tumaet-ui-select
+    class="flex! w-full!"
+    data-testid="taxonomy-select"
     [formControl]="form()"
-    [inputId]="selectId()"
-    [options]="taxonomyOptions"
-    optionLabel="value"
+    [inputId]="selectId() || undefined"
+    [options]="taxonomyOptions()"
+    optionLabel="label"
     optionValue="value"
-    [showClear]="true"
-    styleClass="w-full"
-    appendTo="body"
->
-    <ng-template let-option #item>
-        <span class="whitespace-pre">{{ option.indent }}&boxur; </span>
-        <span [jhiTranslate]="'artemisApp.courseCompetency.taxonomies.' + option.value"></span>
-        (<span [jhiTranslate]="'artemisApp.courseCompetency.keywords.' + option.value"></span>)
-    </ng-template>
-    <ng-template let-option #selectedItem>
-        <span [jhiTranslate]="'artemisApp.courseCompetency.taxonomies.' + option.value"></span>
-    </ng-template>
-</p-select>
+    showClear
+/>

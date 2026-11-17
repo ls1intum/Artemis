@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, studentOne, tutor } from '../../support/users';
-import { asAdmin, newBrowserPage, prepareEndedExam, startAssessing } from '../../support/utils';
+import { asAdmin, dayjsToString, newBrowserPage, prepareEndedExam, startAssessing } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { ExerciseType } from '../../support/constants';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -66,33 +66,34 @@ test.describe.serial('Exam results publication and review period', { tag: '@slow
         await expect(page.locator('#text-editor')).toHaveValue((await Fixtures.get('loremIpsum-short.txt'))!);
         // ... but nothing of the assessment, for the client and for the server alike.
         await expect(page.getByTestId('achieved-percentage')).toHaveCount(0);
-        await expect(page.locator('#complain')).toHaveCount(0);
+        await expect(page.getByTestId('complain')).toHaveCount(0);
         const gradeSummary = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/student-exams/${studentExamId}/grade-summary`);
         expect(gradeSummary.status()).toBe(403);
     });
 
-    test('The results and the complaint form appear at the publication date and the complaint form disappears with the review period', async ({
-        browser,
-        page,
-        login,
-        examParticipation,
-    }) => {
-        const publishedAt = await asAdmin(browser, (adminExamRequests) => adminExamRequests.publishResultsIn(exam, 10));
-        await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+    test('The results and the complaint form appear at the publication date and the complaint form disappears with the review period', async ({ browser, page, login }) => {
+        await login(studentOne, '/courses');
+        const { publishedAt, reviewEnd } = await asAdmin(browser, async (adminExamRequests) => {
+            const publishedAt = await adminExamRequests.publishResultsIn(exam, 20);
+            const reviewEnd = publishedAt.add(60, 'seconds');
+            await adminExamRequests.updateExam(exam, { examStudentReviewEnd: dayjsToString(reviewEnd) });
+            return { publishedAt, reviewEnd };
+        });
+        await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+        await expect(page.getByTestId('exam-summary-results-unpublished')).toBeVisible();
         await asAdmin(browser, (adminExamRequests) => adminExamRequests.waitUntilServerClockIsAfter(exam, publishedAt));
 
-        // Published: the score is there (7 of 10 points), the grade summary is handed out, and a complaint is possible.
-        await examParticipation.checkResultScore('70%');
-        await expect(page.getByText('Your result will be published here as soon as the correction is finished.')).toHaveCount(0);
+        // This is a live publication transition: the general score helper can reload the page, which would hide a stale summary.
+        await expect(page.getByTestId('achieved-percentage').first()).toContainText('70%');
+        await expect(page.getByTestId('exam-summary-results-unpublished')).toHaveCount(0);
         const gradeSummary = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/student-exams/${studentExamId}/grade-summary`);
         expect(gradeSummary.status()).toBe(200);
         expect((await gradeSummary.json()).studentResult.overallPointsAchieved).toBe(7);
-        await expect(page.locator('#complain')).toBeVisible();
+        await expect(page.getByTestId('complain')).toBeVisible();
 
         // The review period ends: the result stays, the complaint form goes.
-        await asAdmin(browser, (adminExamRequests) => adminExamRequests.closeReviewPeriod(exam));
-        await page.reload();
-        await examParticipation.checkResultScore('70%');
-        await expect(page.locator('#complain')).toHaveCount(0);
+        await asAdmin(browser, (adminExamRequests) => adminExamRequests.waitUntilServerClockIsAfter(exam, reviewEnd));
+        await expect(page.getByTestId('achieved-percentage').first()).toContainText('70%');
+        await expect(page.getByTestId('complain')).toHaveCount(0);
     });
 });

@@ -1,5 +1,15 @@
 {
     "error": {
+        "stagedContentNotAllowed": {
+            "unreadable": "The staged repository content could not be checked. Try again.",
+            "tooManyEntries": "The repository exceeds the limit of {{ limit }} files and directories. Remove entries and commit again.",
+            "repositoryTooLarge": "The repository would contain {{ size }} bytes, exceeding the limit of {{ limit }} bytes. Remove large files and commit again.",
+            "pathTooLong": "The path exceeds the limit of {{ limit }} characters: {{ path }}",
+            "pathTooDeep": "The path exceeds the limit of {{ limit }} directory levels: {{ path }}",
+            "pathNotAllowed": "This path uses a reserved Git metadata name: {{ path }}",
+            "linksNotAllowed": "Symbolic links and submodules are not allowed: {{ path }}",
+            "fileTooLarge": "The file exceeds the limit of {{ limit }} bytes: {{ path }}"
+        },
         "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to configure a local language model.",
         "tumLiveUploadInProgress": "The pending upload is already being sent to TUM.Live. Discard it to start another one.",
         "tumLiveNotConnected": "The course is not connected to TUM.Live.",
@@ -81,6 +91,8 @@
         "notEnoughSubmissions": "There are not enough valid submissions in this exercise to compare. At least two submissions that pass the configured minimum score and size are required.",
         "incorrectPassword": "The current password is incorrect.",
         "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
+        "sessionOutdated": "You signed in before your credentials last changed. Please sign in again to add a passkey, SSH key or access token.",
+        "invalidEmailChangeKey": "The link to confirm the email change is invalid or has expired.",
         "internalServerError": "Internal server error",
         "url.not.found": "Not found",
         "Email": "Field {{ fieldName }} must be a valid email address!",
@@ -156,6 +168,10 @@
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
         "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
+        "buildTimeWindowEndBeforeStart": "The end of the build time window must be after its start.",
+        "buildTimeWindowOutsideExerciseDates": "The build time window must lie between the start date (or release date) and the due date of the exercise.",
+        "buildTimeWindowNotSupportedForExams": "The build time window is not available for exam exercises.",
+        "buildOutsideTimeWindow": "Builds cannot be triggered outside of the build time window of this exercise.",
         "gradedParticipationMismatch": "The selected participation does not belong to this exercise.",
         "sharingInfoInvalid": "The sharing information of the request could not be validated. Please start the import again from the Sharing Platform.",
         "dueDateOver": {
@@ -184,6 +200,15 @@
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
         "assignmentRepositoryNotAllowed": "Assignment repositories are not supported for exam exercises. Please use the test run feature instead to try out the exercise.",
+        "assessmentUpload": {
+            "fileEmpty": "The uploaded file is empty",
+            "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
+            "invalidZipFile": "The uploaded file could not be read as a zip file",
+            "multipleCorrectionRounds": "Manual assessments can only be uploaded for exercises with exactly one correction round",
+            "manualResultsNotAllowed": "Manual assessments are not allowed for this exercise yet",
+            "automaticAssessment": "Manual assessments can only be uploaded for exercises that have manual assessment enabled",
+            "tooManyParticipantsForTemplate": "The exercise has too many participants to generate a manual-assessment upload template"
+        },
         "room": {
             "fileEmpty": "The uploaded file is empty",
             "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",

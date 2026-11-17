@@ -124,6 +124,11 @@
     cursor: default;
 }
 
+/* Shared with the component's scoped rule so native `[tumAetUiButton]` hosts can be rounded too. */
+.tumaet-ui-btn.tumaet-ui-btn-rounded {
+    border-radius: 9999px;
+}
+
 .tumaet-ui-button-group {
     display: inline-flex;
 }

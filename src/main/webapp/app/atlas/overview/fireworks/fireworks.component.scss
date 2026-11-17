@@ -16,10 +16,10 @@ $box-shadow2: ();
 
     $box-shadow:
         $box-shadow,
-        $x - calc($width / 2) + px $y - calc($height / 1.2) + px hsl($hue, 100%, 50%);
+        $x - calc($width / 2) + px $y - calc($height / 1.2) + px oklch(70% 0.25 $hue);
     $box-shadow2:
         $box-shadow2,
-        0 0 #fff;
+        0 0 white;
 }
 
 @mixin keyframes($animationName) {

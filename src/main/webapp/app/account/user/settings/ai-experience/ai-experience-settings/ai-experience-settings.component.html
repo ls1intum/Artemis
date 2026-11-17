@@ -3,7 +3,7 @@
 
 <h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h5>
 
-<tumaet-ui-card class="mt-3 block">
+<tumaet-ui-card class="mt-4! block">
     @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
         <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudTitle"></h6>
         <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudDescription"></p>
@@ -27,7 +27,7 @@
         <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionDescription"></p>
     }
 
-    <div class="mt-3 flex items-center gap-3">
+    <div class="mt-4! flex items-center gap-4!">
         @if (currentSelection()) {
             <tumaet-ui-button (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"></span>

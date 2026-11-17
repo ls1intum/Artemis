@@ -335,6 +335,17 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_keepsTheClassOfTestCases() {
+        programmingExercise.getTestCases().forEach(testCase -> testCase.setTestClass("de.tum.Outer$Inner"));
+
+        var imported = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
+
+        assertThat(testCaseRepository.findByExerciseId(imported.getId())).hasSameSizeAs(programmingExercise.getTestCases())
+                .allSatisfy(testCase -> assertThat(testCase.getTestClass()).isEqualTo("de.tum.Outer$Inner"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDifferentBuildPlanAccessSecretForImportedExercise() {
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
