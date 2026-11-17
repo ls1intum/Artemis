@@ -6,7 +6,6 @@ import { translateValidationReasons } from 'app/exercise/util/exercise-validatio
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
@@ -19,7 +18,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: 'form-footer.component.html',
     styleUrls: ['form-footer.component.scss'],
     imports: [
-        NgbTooltip,
         SwitchEditModeButtonComponent,
         HelpIconComponent,
         ExerciseUpdateNotificationComponent,
