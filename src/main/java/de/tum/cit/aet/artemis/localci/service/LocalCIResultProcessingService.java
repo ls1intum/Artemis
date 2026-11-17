@@ -579,6 +579,9 @@ public class LocalCIResultProcessingService {
         try {
             // Append, link and finalize each commit on their own, as Artemis keeps transactions out of services.
             LinkedContainer linked = null;
+            // A container whose result could not be merged is missing from the merged result, which a student must be
+            // able to tell apart from tests that failed, so it counts as failed to build unless its result was merged.
+            boolean unmergedContainerFailed = true;
             try {
                 // A job that has already finished, because the sweep closed it as lost or its result arrived twice, is not
                 // merged: that would change a result that was already reported or deleted.
@@ -595,13 +598,17 @@ public class LocalCIResultProcessingService {
                     return new ContainerOutcome(finalizedResult != null ? finalizedResult : linked.appendedResult(), linked.job(), finalizedResult != null);
                 }
             }
+            catch (UnlinkedContainerException e) {
+                log.error("Could not save the build job of container {} of build job {} after its result was merged", buildGroup.containerName(), buildJob.id(), e);
+                unmergedContainerFailed = e.containerFailed();
+            }
             catch (RuntimeException e) {
                 log.error("Could not merge the result of container {} of build job {}", buildGroup.containerName(), buildJob.id(), e);
             }
             if (linked != null) {
                 return finalizeAfterAFailedFinalization(linked, buildJob, buildGroup, effectiveBuildResult, participation);
             }
-            return recordUnmergedContainer(buildJob, buildGroup, effectiveBuildResult, participation);
+            return recordUnmergedContainer(buildJob, buildGroup, effectiveBuildResult, participation, unmergedContainerFailed);
         }
         finally {
             aggregationLocks.unlock(buildGroupId);
@@ -635,7 +642,7 @@ public class LocalCIResultProcessingService {
             BuildJob linkedJob = saveFinishedBuildJob(buildJob, buildStatus, appended.result(), appended.containerFailed(), ranClean(buildResult));
             if (linkedJob == null) {
                 // Without the link the group's count stays one short, so the recovery records the job instead.
-                throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
+                throw new UnlinkedContainerException(buildGroup.containerName(), appended.containerFailed());
             }
             return new LinkedContainer(appended.result(), linkedJob);
         }
@@ -667,16 +674,35 @@ public class LocalCIResultProcessingService {
     /**
      * The merge failed: records the job as finished anyway, without a link, so the group's count still advances and, if this
      * was the last container, the siblings' aggregate is finalized now, as failed.
+     *
+     * @param containerFailed whether the container counts as failed to build, which marks the merged result's submission as a
+     *                            failed build: true unless the container's result was merged and only its job could not be saved
      */
     private ContainerOutcome recordUnmergedContainer(BuildJobQueueItem buildJob, BuildJobQueueItem.BuildGroupMembership buildGroup, BuildResult buildResult,
-            ProgrammingExerciseParticipation participation) {
-        BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
+            ProgrammingExerciseParticipation participation, boolean containerFailed) {
+        BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null, containerFailed, false);
         Result finalizedResult = finalizeIfGroupComplete(buildGroup.buildGroupId(), buildGroup.expectedContainerCount(), participation, buildResult.buildRunDate(), buildResult);
         return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
     }
 
     /** a container whose result was appended to the aggregated result, and its job linked to that */
     private record LinkedContainer(Result appendedResult, BuildJob job) {
+    }
+
+    /** A container's result was merged, but its job could not be saved, so the job is not linked to the merged result. */
+    private static final class UnlinkedContainerException extends IllegalStateException {
+
+        private final boolean containerFailed;
+
+        private UnlinkedContainerException(String containerName, boolean containerFailed) {
+            super("the build job of container " + containerName + " could not be saved after its result was merged");
+            this.containerFailed = containerFailed;
+        }
+
+        /** @return whether the merged container failed to build */
+        boolean containerFailed() {
+            return containerFailed;
+        }
     }
 
     private Long findAggregatedResultId(String buildGroupId) {

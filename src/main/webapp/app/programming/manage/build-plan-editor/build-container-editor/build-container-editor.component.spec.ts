@@ -108,7 +108,7 @@ describe('BuildContainerEditorComponent', () => {
         const timeoutField = fixture.debugElement.query(By.css('[data-testid="container-timeout-input"]'));
         expect(component.isTimeoutValid()).toBe(false);
         expect(message).not.toBeNull();
-        expect(timeoutField.nativeElement.classList).toContain('is-invalid');
+        expect(timeoutField.nativeElement.querySelector('input').getAttribute('aria-invalid')).toBe('true');
         // inside the field's column, the message would grow it and push the bottom-aligned field up
         expect(timeoutField.nativeElement.parentElement.contains(message.nativeElement)).toBe(false);
     });
@@ -163,8 +163,9 @@ describe('BuildContainerEditorComponent', () => {
 
             fixture.componentRef.setInput('customNetworks', ['none', 'custom']);
             fixture.detectChanges();
+            expect(getField('field_container_network_0')).not.toBeNull();
             // the empty option stands for the network of the exercise
-            expect(getField('field_container_network_0').queryAll(By.css('option'))).toHaveLength(3);
+            expect(component['networkOptions']().map((option) => option.value)).toEqual(['', 'none', 'custom']);
 
             component.setNetwork('none');
             expect(component.container().dockerFlags?.network).toBe('none');
@@ -193,7 +194,7 @@ describe('BuildContainerEditorComponent', () => {
             expect(component.isCpuCountValid()).toBe(false);
             expect(component.isMemoryValid()).toBe(false);
             expect(component.isMemorySwapValid()).toBe(false);
-            expect(getField('field_container_cpu_count_0').nativeElement.classList.contains('is-invalid')).toBe(true);
+            expect(getField('field_container_cpu_count_0').nativeElement.getAttribute('aria-invalid')).toBe('true');
 
             component.setCpuCount(1);
             component.setMemory(6);

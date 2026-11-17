@@ -79,14 +79,14 @@ test.describe('Build plan editor', { tag: '@fast' }, () => {
 
         // a timeout set while there were two containers still takes effect after the second one is gone, so it has to stay in sight
         await page.getByTestId('add-container-button').click();
-        await containerEditors(page).first().getByTestId('container-timeout-input').fill('90');
+        await containerEditors(page).first().getByTestId('container-timeout-input').locator('input').fill('90');
         await containerEditors(page).nth(1).getByTestId('remove-container-button').getByRole('button').click();
         await expect(containerEditors(page)).toHaveCount(1);
         await expectContainerSettingsShown(page, 0, true);
-        await expect(containerEditors(page).first().getByTestId('container-timeout-input')).toHaveValue('90');
+        await expect(containerEditors(page).first().getByTestId('container-timeout-input').locator('input')).toHaveValue('90');
 
         // clearing it leaves nothing to show
-        await containerEditors(page).first().getByTestId('container-timeout-input').fill('');
+        await containerEditors(page).first().getByTestId('container-timeout-input').locator('input').fill('');
         await expectContainerSettingsShown(page, 0, false);
     });
 });

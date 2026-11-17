@@ -831,8 +831,10 @@ class LocalCIResultProcessingServiceTest {
         verify(aggregationLocks).unlock("group-1");
     }
 
-    @Test
-    void aContainerWhoseJobCannotBeSavedAfterItsMergeIsRecordedAsFailed() {
+    /** Its result was merged, so whether it failed to build is the container's own verdict, not the failed save. */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void aContainerWhoseJobCannotBeSavedAfterItsMergeIsRecordedAsFailed(boolean containerFailed) {
         // the link's save fails, the recovery's save succeeds
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
         withParticipation();
@@ -843,7 +845,7 @@ class LocalCIResultProcessingServiceTest {
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
         when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
-                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+                .thenReturn(new AppendedContainerResult(aggregatedResult, containerFailed));
         // the recovery records the job without a link, and the group of two is not complete with it alone
         when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.ERROR, null)));
 
@@ -855,7 +857,32 @@ class LocalCIResultProcessingServiceTest {
         BuildJob recorded = saved.getAllValues().getLast();
         assertThat(recorded.getBuildStatus()).isEqualTo(BuildStatus.ERROR);
         assertThat(recorded.getResult()).isNull();
+        assertThat(recorded.isBuildFailed()).as("the verdict of the merged container").isEqualTo(containerFailed);
         verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    /**
+     * A container whose result could not be merged is missing from the merged result, so it counts as failed to build: the
+     * student then sees a failed build rather than only the missing tests as failed.
+     */
+    @Test
+    void aContainerWhoseResultCannotBeMergedCountsAsFailedToBuild() {
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenThrow(new IllegalStateException("the result could not be merged"));
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getBuildStatus()).isEqualTo(BuildStatus.ERROR);
+        assertThat(saved.getValue().getResult()).isNull();
+        assertThat(saved.getValue().isBuildFailed()).as("an unmerged container counts as failed to build").isTrue();
         verify(aggregationLocks).unlock("group-1");
     }
 

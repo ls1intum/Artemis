@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
@@ -8,7 +9,7 @@ import { BuildContainer, showsContainerSettings } from 'app/programming/shared/e
 @Component({
     selector: 'jhi-build-containers-details',
     templateUrl: './build-containers-details.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, BuildPhasesEditorComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, BuildPhasesEditorComponent, TumAetUiTagComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildContainersDetailsComponent {

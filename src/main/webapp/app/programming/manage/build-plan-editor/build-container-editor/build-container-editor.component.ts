@@ -1,8 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiCheckboxComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -40,10 +49,24 @@ type NumberFieldValue = number | string | null;
 @Component({
     selector: 'jhi-build-container-editor',
     templateUrl: './build-container-editor.component.html',
-    imports: [FormsModule, TumAetUiButtonComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, BuildPhasesEditorComponent],
+    imports: [
+        FormsModule,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        BuildPhasesEditorComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildContainerEditorComponent {
+    private readonly translateService = inject(TranslateService);
+
     protected readonly faTrash = faTrash;
     protected readonly faPlus = faPlus;
 
@@ -76,6 +99,21 @@ export class BuildContainerEditorComponent {
      * provides the assignment repository and never checks out the template separately, so neither is a choice
      */
     protected readonly repositoryTypes: BuildContainerRepositoryType[] = ['SOLUTION', 'TESTS', 'AUXILIARY'];
+
+    private readonly languageChange = toSignal(this.translateService.onLangChange);
+
+    /** the networks offered for the container: the exercise's own network (an empty value) first, then the custom ones */
+    protected readonly networkOptions = computed<{ label: string; value: string }[]>(() => {
+        this.languageChange();
+        const networks = this.customNetworks() ?? [];
+        return [
+            { label: this.translateService.instant('artemisApp.programmingExercise.buildContainersEditor.exerciseNetwork'), value: '' },
+            ...networks.map((network) => ({
+                label: network === 'none' ? this.translateService.instant('artemisApp.programmingExercise.dockerFlags.useCustomNetwork.noneOption') : network,
+                value: network,
+            })),
+        ];
+    });
 
     readonly showsSettings = computed(() => showsContainerSettings(this.container(), this.containerCount()));
 
