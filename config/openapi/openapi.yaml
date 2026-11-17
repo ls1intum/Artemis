@@ -4800,7 +4800,7 @@ components:
       properties:
         text: {type: string, minLength: 1}
         hint: {type: string}
-        explanation: {type: string, maxLength: 500, minLength: 0}
+        explanation: {type: string, maxLength: 2000, minLength: 0}
         isCorrect: {type: boolean}
       required: [isCorrect, text]
     TutorialGroupFreePeriodRequest:
@@ -5183,7 +5183,7 @@ components:
         id: {type: integer, format: int64}
         text: {type: string}
         hint: {type: string}
-        explanation: {type: string, maxLength: 500, minLength: 0}
+        explanation: {type: string, maxLength: 2000, minLength: 0}
         isCorrect: {type: boolean}
         invalid: {type: boolean}
       required: [id, invalid, isCorrect, text]
@@ -6133,7 +6133,7 @@ components:
         id: {type: integer, format: int64}
         text: {type: string, minLength: 1}
         hint: {type: string}
-        explanation: {type: string, maxLength: 500, minLength: 0}
+        explanation: {type: string, maxLength: 2000, minLength: 0}
         isCorrect: {type: boolean}
       required: [isCorrect, text]
     ShortAnswerSubmittedAnswerFromLiveClient:
