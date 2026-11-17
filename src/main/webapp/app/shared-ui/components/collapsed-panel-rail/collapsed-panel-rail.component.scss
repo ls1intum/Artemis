@@ -1,0 +1,51 @@
+// The look of the rail of the collapsed right panel of the exercise details (resizable-panels): the colour of the headers of the code
+// editor (the file tab above its editor), and each icon in a cell set off from the next by a border.
+:host {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+
+    // A page may give its rails another colour: the assessment pages use the colour of their panels
+    background: var(--collapsed-panel-rail-background, var(--code-editor-file-browser-header-background));
+
+    // A page whose panels have no frame of their own around the rail (the assessment pages) frames it, like the rail of the exercise details
+    border: var(--collapsed-panel-rail-border, 0);
+    border-radius: var(--collapsed-panel-rail-radius, 0);
+    overflow: hidden;
+}
+
+:host(.collapsed-panel-rail--horizontal) {
+    flex-direction: row;
+}
+
+.collapsed-panel-rail__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.75rem;
+    flex: none;
+    padding: 0.5rem;
+    color: var(--body-color);
+    background: transparent;
+    border: 0;
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--bs-primary);
+        background: var(--hover-slightly-darker-body-bg);
+    }
+}
+
+// A strip under the panel above it: the icons sit in a row at the start, each in a cell
+:host(.collapsed-panel-rail--horizontal) .collapsed-panel-rail__button {
+    width: auto;
+    min-width: 3rem;
+    border-bottom: 0;
+    border-right: var(--bs-border-width) solid var(--bs-border-color);
+}

@@ -1,0 +1,25 @@
+<!-- The upper content is declared once and rendered in whichever branch is active, so it is not duplicated. -->
+<ng-template #top><ng-content select="[feedbackSplitTop]" /></ng-template>
+
+@if (hasBottom()) {
+    <!-- Collapsed, the panel keeps just its header (its own height) and the line between them is not there to drag. -->
+    <tumaet-ui-splitter
+        class="feedback-split"
+        [class.feedback-split--collapsed]="!expanded()"
+        layout="vertical"
+        [panelSizes]="draggedSizes()"
+        [minSizes]="minSizes()"
+        [collapsedSecondSize]="expanded() ? undefined : 'auto'"
+        (resizeEnd)="onResizeEnd($event)"
+        data-testid="feedback-split"
+    >
+        <ng-template #panel>
+            <div class="feedback-split__top"><ng-container [ngTemplateOutlet]="top" /></div>
+        </ng-template>
+        <ng-template #panel>
+            <div class="feedback-split__bottom"><ng-container [ngTemplateOutlet]="bottomTemplate() ?? null" /></div>
+        </ng-template>
+    </tumaet-ui-splitter>
+} @else {
+    <div class="feedback-split__top feedback-split__top--alone"><ng-container [ngTemplateOutlet]="top" /></div>
+}

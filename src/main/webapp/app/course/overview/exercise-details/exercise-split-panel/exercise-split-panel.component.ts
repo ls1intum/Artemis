@@ -209,11 +209,16 @@ export class ExerciseSplitPanelComponent {
         return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || type === ExerciseType.QUIZ || this.showCodeEditor();
     });
 
+    /** The modeling editor still renders the rating and the complaint itself; for every other assessed type they live in the details. */
+    private readonly detailsOfferAssessmentResponses = computed(() => {
+        const type = this.exercise().type;
+        return type === ExerciseType.PROGRAMMING || type === ExerciseType.TEXT || type === ExerciseType.FILE_UPLOAD;
+    });
+
     readonly showComplaintView = computed(() => {
-        const exercise = this.exercise();
         const result = this.latestRatedResult();
         return (
-            exercise.type === ExerciseType.PROGRAMMING &&
+            this.detailsOfferAssessmentResponses() &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC || this.allowComplaintsForAutomaticAssessments())
@@ -223,7 +228,7 @@ export class ExerciseSplitPanelComponent {
     readonly showRating = computed(() => {
         const result = this.latestRatedResult();
         return (
-            this.exercise().type === ExerciseType.PROGRAMMING &&
+            this.detailsOfferAssessmentResponses() &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)
