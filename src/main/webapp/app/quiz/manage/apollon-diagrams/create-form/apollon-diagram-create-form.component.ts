@@ -34,11 +34,11 @@ const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
     imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent],
 })
 export class ApollonDiagramCreateFormComponent implements OnInit {
-    private dialogRef = inject(TumAetUiDialogRef<ApollonDiagram>);
-    private dialogConfig = inject(TumAetUiDialogConfig<{ apollonDiagram: ApollonDiagram }>);
-    private apollonDiagramService = inject(ApollonDiagramService);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
+    private readonly dialogRef = inject(TumAetUiDialogRef<ApollonDiagram>);
+    private readonly dialogConfig = inject(TumAetUiDialogConfig<{ apollonDiagram: ApollonDiagram }>);
+    private readonly apollonDiagramService = inject(ApollonDiagramService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
 
     /** Re-reads the labels when the user switches language while the dialog is open. */
     private readonly language = toSignal(this.translateService.onLangChange, { initialValue: undefined });
