@@ -17,7 +17,16 @@
                     }}
                 </span>
             </span>
-            <button type="button" tumAetUiButton severity="warn" variant="outlined" size="small" id="highlightDiffButton" (click)="toggleHighlightedProblemStatement($event)">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="warn"
+                variant="outlined"
+                size="small"
+                id="highlightDiffButton"
+                class="max-w-full whitespace-normal! text-center"
+                (click)="toggleHighlightedProblemStatement($event)"
+            >
                 {{
                     changesShown
                         ? ('artemisApp.exam.problemStatementUpdate.hideChanges' | artemisTranslate)
