@@ -185,7 +185,7 @@
                                     <span jhiTranslate="artemisApp.assessmentDashboard.exercise"></span>
                                 </th>
                                 @if (!isTestRun()) {
-                                    <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
+                                    <th class="w-[20rem] min-w-[18rem] xl:w-[44%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
                                 }
                                 <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 xl:table-cell xl:w-[7%]">
                                     <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
@@ -205,7 +205,7 @@
                                         <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
                                     </th>
                                 }
-                                <th class="w-10 min-w-10 text-end xl:w-[16%]">
+                                <th class="w-10 min-w-10 text-end xl:w-[8%] 2xl:w-[16%]">
                                     <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
                                 </th>
                             </tr>
@@ -234,7 +234,7 @@
                                         <tumaet-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tumaet-ui-tag>
                                     </td>
                                     @if (!isTestRun()) {
-                                        <td class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]">
+                                        <td class="w-[20rem] min-w-[18rem] xl:w-[44%] 2xl:w-[42%]">
                                             @if (exercise.tutorParticipations && exercise.tutorParticipations![0]) {
                                                 <jhi-tutor-participation-graph
                                                     class="block w-full"
@@ -298,7 +298,7 @@
                                             </div>
                                         </td>
                                     }
-                                    <td class="w-10 min-w-10 whitespace-nowrap xl:w-[16%]">
+                                    <td class="w-10 min-w-10 whitespace-nowrap xl:w-[8%] 2xl:w-[16%]">
                                         <div class="flex flex-wrap justify-end gap-2">
                                             @if (!exercise.teamMode) {
                                                 <ng-container>
@@ -313,7 +313,7 @@
                                                         size="small"
                                                     >
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                        <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                                                        <span class="hidden 2xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                                     </a>
                                                 </ng-container>
                                             } @else {
@@ -327,7 +327,7 @@
                                                     size="small"
                                                 >
                                                     <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                    <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
+                                                    <span class="hidden 2xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
                                                 </a>
                                             }
                                         </div>

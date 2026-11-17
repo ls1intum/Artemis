@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -48,11 +50,12 @@ public class ApollonConversionResource {
      * Converts given model to pdf
      *
      * @param request the model for conversion, which must not be blank and is limited in size
-     * @return input stream for conversion
+     * @return input stream for conversion, or 429 (Too Many Requests) if the user converts models too often
      */
     @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("apollon/convert-to-pdf")
     @EnforceAtLeastStudent
+    @LimitRequestsPerMinute(type = RateLimitType.APOLLON_CONVERSION, perUser = true)
     public ResponseEntity<InputStreamResource> convertApollonModel(@Valid @RequestBody ApollonModelDTO request) throws IOException {
         log.debug("REST call to convert apollon model to pdf");
 

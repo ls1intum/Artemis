@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
@@ -57,6 +58,13 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 public class SharedQueueManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueManagementService.class);
+
+    /**
+     * The properties of a build job the finished build jobs can be sorted by.
+     */
+    private static final Set<String> SORTABLE_FINISHED_BUILD_JOB_PROPERTIES = Set.of("id", "buildJobId", "name", "participationId", "exerciseId", "courseId", "buildAgentAddress",
+            "buildSubmissionDate", "buildStartDate", "buildCompletionDate", "repositoryType", "repositoryName", "commitHash", "retryCount", "priority", "triggeredByPushTo",
+            "buildStatus");
 
     private final BuildJobRepository buildJobRepository;
 
@@ -395,7 +403,16 @@ public class SharedQueueManagementService {
         Duration buildDurationLower = search.buildDurationLower() == null ? null : Duration.ofSeconds(search.buildDurationLower());
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
-        var sortOptions = Sort.by(search.pageable().getSortedColumn());
+        if (search.pageable() == null) {
+            throw new BadRequestAlertException("The paging and sorting parameters are missing", "BuildJob", "invalidSortedColumn");
+        }
+        String sortedColumn = search.pageable().getSortedColumn();
+        // The address of the build agent is only shown in the administration, so a course cannot sort by it
+        boolean allowed = sortedColumn != null && SORTABLE_FINISHED_BUILD_JOB_PROPERTIES.contains(sortedColumn) && !(courseId != null && "buildAgentAddress".equals(sortedColumn));
+        if (!allowed) {
+            throw new BadRequestAlertException("Finished build jobs cannot be sorted by this column", "BuildJob", "invalidSortedColumn");
+        }
+        var sortOptions = Sort.by(sortedColumn);
         sortOptions = search.pageable().getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         var pageRequest = PageRequest.of(search.pageable().getPage() - 1, search.pageable().getPageSize(), sortOptions);
         long start = System.nanoTime();
