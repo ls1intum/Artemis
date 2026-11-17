@@ -71,10 +71,7 @@ jobs:
     name: AI Worker Sandbox Tests
     if: inputs.run_sandbox_tests
     runs-on: ubuntu-latest
-    # The budget includes image provisioning, server test compilation and real offline builds.
-    # Two 35-minute runs reached the job deadline while offline build fixtures were still passing.
-    # Keep per-test bounds; leave room for the complete serial fixture suite and report upload.
-    timeout-minutes: 50
+    timeout-minutes: 25
     permissions:
       contents: read
       checks: write

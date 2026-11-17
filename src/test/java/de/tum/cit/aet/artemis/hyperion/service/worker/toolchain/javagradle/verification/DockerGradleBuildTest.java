@@ -543,19 +543,12 @@ class DockerGradleBuildTest {
         });
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = { 0, 1, 2 })
-    void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(int assessment) throws IOException {
-        checkStudentTestAssessment(assessment);
-    }
-
+    /**
+     * Learner-test probes executed once under the real Ares harness. The grader only counts the learner test's calls: removing the body is detected, suppressing its assertion is
+     * not, and the survivor stays an open obligation once the starter already contains the learner work and it can no longer be re-executed.
+     */
     @Test
-    void aStronglyGradedMethodCannotMaskAnotherMethodsIneffectiveAssertions() throws IOException {
-        checkStudentTestAssessment(3);
-    }
-
-    private void checkStudentTestAssessment(int assessment) throws IOException {
-        boolean gradeFaults = assessment == 1 || assessment == 3;
+    void learnerTestProbesRunUnderTheRealHarness() throws IOException {
         var verifier = new DifferentialVerifier(commands);
         String learner = """
                 package de.tum.cit.aet.reference;
@@ -573,9 +566,8 @@ class DockerGradleBuildTest {
         String support = """
                 package de.tum.cit.aet.reference;
                 public class Toolbox {
-                    private static boolean faulty;
                     public static int observations;
-                    public static int sum(int a, int b) { return faulty ? 0 : a + b; }
+                    public static int sum(int a, int b) { return a + b; }
                 }
                 """;
         String instructor = """
@@ -588,48 +580,26 @@ class DockerGradleBuildTest {
                 @Public @Policy("SecurityPolicy.yaml")
                 @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
                 class ScoreCalculatorTest {
-                    @Test @StrictTimeout(5) void testLearnerAssertions() throws Exception {
-                        var faulty = Toolbox.class.getDeclaredField("faulty");
-                        faulty.setAccessible(true);
-                        faulty.setBoolean(null, false);
+                    @Test @StrictTimeout(5) void testLearnerAssertions() {
                         Toolbox.observations = 0;
                         assertDoesNotThrow(() -> new LearnerCheck().verifiesSum());
-                        %s
+                        assertEquals(1, Toolbox.observations);
                     }
                 }
-                """.formatted(gradeFaults
-                ? "faulty.setBoolean(null, true); try { assertThrows(AssertionError.class, () -> new LearnerCheck().verifiesSum()); } finally { faulty.setBoolean(null, false); }"
-                : assessment == 2 ? "assertEquals(1, Toolbox.observations);" : "");
-        if (assessment == 3) {
-            learner = learner.replace("public class LearnerCheck {", """
-                    public class LearnerCheck {
-                        @org.junit.jupiter.api.Test public void checksAnotherCase() {
-                            Toolbox.observations++;
-                            org.junit.jupiter.api.Assertions.assertEquals(1, Toolbox.sum(1, 0));
-                        }
-                    """);
-            instructor = instructor.replace("class ScoreCalculatorTest {", """
-                    class ScoreCalculatorTest {
-                        @Test @StrictTimeout(5) void testOtherLearnerAssertions() {
-                            Toolbox.observations = 0;
-                            assertDoesNotThrow(() -> new LearnerCheck().checksAnotherCase());
-                            assertEquals(1, Toolbox.observations);
-                        }
-                    """);
-        }
+                """;
         List<WorkspaceFile> files = new ArrayList<>(
                 snapshot().files().stream().filter(file -> !file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")).toList());
         files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", instructor.getBytes(StandardCharsets.UTF_8), false));
         String path = "src/de/tum/cit/aet/reference/LearnerCheck.java";
         files.add(new WorkspaceFile("solution/" + path, learner.getBytes(StandardCharsets.UTF_8), false));
-        files.add(new WorkspaceFile("template/" + path,
-                learner.replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();")
-                        .replace("org.junit.jupiter.api.Assertions.assertEquals(1, Toolbox.sum(1, 0));", "throw new UnsupportedOperationException();")
-                        .getBytes(StandardCharsets.UTF_8),
+        files.add(new WorkspaceFile("template/" + path, learner
+                .replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();").getBytes(StandardCharsets.UTF_8),
                 false));
         for (String lane : List.of("template", "solution")) {
             files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Toolbox.java", support.getBytes(StandardCharsets.UTF_8), false));
         }
+        files.add(new WorkspaceFile("test-plan.json",
+                "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}".getBytes(StandardCharsets.UTF_8), false));
         String session = sandbox.createSession();
         var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
         var specifications = new ApprovedSpecRegistry();
@@ -648,182 +618,58 @@ class DockerGradleBuildTest {
         var seeder = new StructuralOracleSeeder(workspace, specifications);
         seeder.captureBaseline(session, seed.testsSeedSnapshot());
         var structural = seeder.seedIfStructuralDiff(sandbox, session, exercise);
-        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
-                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
-        assertThat(build(session, "solution").exitCode()).isZero();
-        assertThat(build(session, "template").testFailedNames()).contains("testLearnerAssertions");
-        String plan = "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
-        if (assessment == 3) {
-            plan = plan.replace("}]}", "},{\"name\":\"testOtherLearnerAssertions\",\"seam\":\"S2\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}");
-        }
-        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("test-plan.json", plan), Map.of()));
-
-        if (assessment == 2 || assessment == 3) {
-            var sources = JavaSourceSnapshot.capture(sandbox, session);
-            var outcomes = verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
-                    () -> sources.restore(sandbox, session), _ -> {
-                    });
-            assertThat(outcomes).anySatisfy(outcome -> {
-                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.EMPTY_STUDENT_TESTS);
-                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
-            }).anySatisfy(outcome -> {
-                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.NON_FAILING_STUDENT_TESTS);
-                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
-            });
-        }
-        assertThat(sandbox.exec(session, java.time.Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
+        assertThat(sandbox.exec(session, Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
                 .as("source-destructive verification is available only through server-managed tools").isTrue();
+
         var outcomes = assessmentOutcomes(verifier, session, structural);
 
-        if (assessment == 1) {
-            assertThat(outcomes).isNotEmpty().allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE));
-        }
-        else {
-            assertThat(outcomes).anySatisfy(outcome -> {
-                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
-                assertThat(outcome.mutant().solutionPath()).contains("LearnerCheck.java");
+        assertThat(learnerProbe(outcomes, SemanticMutant.Evidence.EMPTY_STUDENT_TESTS)).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(learnerProbe(outcomes, SemanticMutant.Evidence.NON_FAILING_STUDENT_TESTS)).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
+
+        var before = JavaSourceSnapshot.capture(sandbox, session);
+        sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
+        try {
+            assertThat(assessmentOutcomes(verifier, session, structural)).anySatisfy(unresolved -> {
+                assertThat(unresolved.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+                assertThat(unresolved.diagnostic()).contains("previously confirmed", "Preserve the assigned learner work");
             });
         }
-        assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
-        if (assessment != 1) {
-            var before = JavaSourceSnapshot.capture(sandbox, session);
-            sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
-            try {
-                assertThat(assessmentOutcomes(verifier, session, structural)).anySatisfy(unresolved -> {
-                    assertThat(unresolved.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
-                    assertThat(unresolved.diagnostic()).contains("previously confirmed", "Preserve the assigned learner work");
-                });
-            }
-            finally {
-                before.restore(sandbox, session);
-            }
-        }
-        if (gradeFaults) {
-            var before = JavaSourceSnapshot.capture(sandbox, session);
-            var tools = new SandboxAgentTools(sandbox, session, verifier, exercise);
-            tools.configureStructuralOracleRefresh(() -> structural);
-            tools.verify();
-            var after = JavaSourceSnapshot.capture(sandbox, session);
-            assertThat(after.solutionFiles()).isEqualTo(before.solutionFiles());
-            assertThat(after.templateFiles()).isEqualTo(before.templateFiles());
-            assertThat(after.testsFiles()).isEqualTo(before.testsFiles());
+        finally {
+            before.restore(sandbox, session);
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = { 0, 1, 2 })
-    void executedAssessmentDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(int assessment) throws IOException {
-        boolean observeInteraction = assessment == 1;
+    private static SemanticMutantOutcome.Disposition learnerProbe(List<SemanticMutantOutcome> outcomes, SemanticMutant.Evidence evidence) {
+        var matching = outcomes.stream().filter(outcome -> outcome.mutant().evidence() == evidence && outcome.mutant().ruleId().endsWith("#verifiesSum")).toList();
+        assertThat(matching).as("%s probe of verifiesSum in %s", evidence, outcomes).hasSize(1);
+        return matching.getFirst().disposition();
+    }
+
+    /** The output-only probe compiles and runs the reference main inside the sandbox image, whose tools, paths and limits exist only there. */
+    @Test
+    void transcriptCaptureRunsTheReferenceMainInsideTheSandbox() throws IOException {
         String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
         String reference = """
                 package de.tum.cit.aet.reference;
                 public class ScoreCalculator {
                     public static void main(String[] args) {
-                        Counter counter = new Counter();
-                        counter.increment();
-                        counter.reset();
-                        System.out.println(counter.value());
+                        System.out.println("Bücher: " + Math.addExact(1, 1));
                     }
                 }
                 """;
-        if (assessment == 2) {
-            reference = reference.replace("public static void main",
-                    "public static Counter runScenario() { Counter c = new Counter(); c.increment(); c.reset(); return c; } public static void main");
-        }
-        String supplied = """
-                package de.tum.cit.aet.reference;
-                public class Counter {
-                    private static Counter observed;
-                    private int value;
-                    private final int[] observedValues = new int[2];
-                    private int observedChanges;
-                    public Counter() { observed = this; }
-                    public void increment() { value++; observedValues[observedChanges++] = value; }
-                    public void reset() { value = 0; observedValues[observedChanges++] = value; }
-                    public int observedChanges() { return observedChanges; }
-                    public int valueAfterChange(int index) { return observedValues[index]; }
-                    public int value() { return value; }
-                    public static Counter lastCreated() { return observed; }
-                }
-                """;
-        String testSource = """
-                package de.tum.cit.aet.reference;
-                import static org.junit.jupiter.api.Assertions.*;
-                import java.io.ByteArrayOutputStream;
-                import java.io.PrintStream;
-                import org.junit.jupiter.api.Test;
-                import de.tum.cit.ase.ares.api.Policy;
-                import de.tum.cit.ase.ares.api.StrictTimeout;
-                import de.tum.cit.ase.ares.api.jupiter.Public;
-                @Public @Policy("SecurityPolicy.yaml")
-                @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
-                class ScoreCalculatorTest {
-                    @Test @StrictTimeout(5)
-                    void testDemo() {
-                        PrintStream previous = System.out;
-                        ByteArrayOutputStream output = new ByteArrayOutputStream();
-                        try {
-                            System.setOut(new PrintStream(output));
-                            ScoreCalculator.main(new String[0]);
-                        } finally { System.setOut(previous); }
-                        assertEquals("0", output.toString().strip());
-                        %s
-                    }
-                }
-                """.formatted(
-                observeInteraction
-                        ? "assertNotNull(Counter.lastCreated()); assertEquals(0, Counter.lastCreated().value()); "
-                                + "assertEquals(2, Counter.lastCreated().observedChanges()); assertEquals(1, Counter.lastCreated().valueAfterChange(0)); "
-                                + "assertEquals(0, Counter.lastCreated().valueAfterChange(1));"
-                        : "");
-        if (assessment == 2) {
-            testSource = testSource.replace("assertEquals(\"0\", output.toString().strip());",
-                    "assertEquals(\"0\", output.toString().strip()); assertEquals(0, ScoreCalculator.runScenario().value());");
-        }
         List<WorkspaceFile> files = new ArrayList<>();
-        snapshot().files().stream().filter(file -> file.path().startsWith("tests/") && !file.path().endsWith(".java")).forEach(files::add);
+        snapshot().files().stream().filter(file -> file.path().startsWith("tests/")).forEach(files::add);
         files.add(new WorkspaceFile("solution/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
-        files.add(new WorkspaceFile("template/" + sourcePath, reference.replace("Counter counter = new Counter();", "").replace("counter.increment();", "")
-                .replace("counter.reset();", "").replace("System.out.println(counter.value());", "").getBytes(StandardCharsets.UTF_8), false));
-        for (String lane : List.of("solution", "template")) {
-            files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Counter.java", supplied.getBytes(StandardCharsets.UTF_8), false));
-        }
-        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", testSource.getBytes(StandardCharsets.UTF_8), false));
-        String plan = "{\"tests\":[{\"name\":\"testDemo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
-        files.add(new WorkspaceFile("test-plan.json", plan.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
         String session = sandbox.createSession();
         workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
-        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
-                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
-        assertThat(build(session, "solution").failures()).isZero();
-        assertThat(build(session, "template").testFailedNames()).contains("testDemo");
 
-        // Reset leaves the final value unchanged even when the earlier increment is missing.
-        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference.replace("counter.increment();", "")), Map.of()));
-        var missingEarlierOperation = build(session, "solution");
-        if (observeInteraction) {
-            assertThat(missingEarlierOperation.testFailedNames()).contains("testDemo");
-        }
-        else {
-            assertThat(missingEarlierOperation.failures()).isZero();
-        }
-        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference), Map.of()));
+        var capture = sandbox.exec(session, OutputOnlyMainProbe.CAPTURE_TIMEOUT, "sh", "-c",
+                OutputOnlyMainProbe.captureCommand(new OutputOnlyMainProbe.Target(sourcePath, "ScoreCalculator", "de.tum.cit.aet.reference.ScoreCalculator")));
 
-        var outcomes = assessmentOutcomes(new DifferentialVerifier(commands), session, SeededStructuralTests.EMPTY);
-
-        if (observeInteraction) {
-            assertThat(outcomes).noneMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE
-                    || outcome.disposition() == SemanticMutantOutcome.Disposition.INCONCLUSIVE);
-            assertThat(outcomes).anySatisfy(outcome -> {
-                assertThat(outcome.mutant().solutionPath()).isEqualTo(sourcePath);
-                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.PRINTED_TRANSCRIPT);
-                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
-            });
-        }
-        else {
-            assertThat(outcomes).anyMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
-        }
-        assertThat(sandbox.exec(session, Duration.ofSeconds(10), "cat", "/workspace/solution/" + sourcePath).stdout()).isEqualTo(reference);
+        assertThat(capture.timedOut()).isFalse();
+        assertThat(OutputOnlyMainProbe.transcript(capture)).as(OutputOnlyMainProbe.skipReason(capture)).hasValue("Bücher: 2\n");
     }
 
     private List<SemanticMutantOutcome> assessmentOutcomes(DifferentialVerifier verifier, String session, SeededStructuralTests structural) {
