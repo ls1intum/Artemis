@@ -2,16 +2,17 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.service.PublishedHostKeyDatabase.Mode;
@@ -19,72 +20,76 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
 
 class PublishedHostKeyDatabaseTest {
 
-    private static KeyPair publishedKey;
+    /** Two fixed EC public keys (X.509, Base64), so the fingerprints are the same in every run. */
+    private static final PublicKey PUBLISHED_KEY = publicKey(
+            "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEK9YjdhqS1TC106N53CWscGSxaulw0SoJeues5YF4mk5+PU0DjI/W19fhMloYIQkaY2tSdYUpkTJGRkHJ5BZzeg==");
 
-    private static KeyPair otherKey;
+    private static final PublicKey OTHER_KEY = publicKey(
+            "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgZwqLHGs5oMoS34CwJcTENAWjnquYDrLJ9I+4kvrYr77bV59Zv8EOolNtC2DIub52A5hTzgpoHIk0ebtN12lwQ==");
 
-    @BeforeAll
-    static void generateKeys() throws Exception {
-        KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
-        generator.initialize(256);
-        publishedKey = generator.generateKeyPair();
-        otherKey = generator.generateKeyPair();
+    private static PublicKey publicKey(String base64) {
+        try {
+            return KeyFactory.getInstance("EC").generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(base64)));
+        }
+        catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    private static Set<String> published(KeyPair... keys) {
-        return Arrays.stream(keys).map(key -> HashUtils.getSha256Fingerprint(key.getPublic())).collect(Collectors.toSet());
+    private static Set<String> published(PublicKey... keys) {
+        return Arrays.stream(keys).map(key -> HashUtils.getSha256Fingerprint(key)).collect(Collectors.toSet());
     }
 
-    private static boolean accept(PublishedHostKeyDatabase database, KeyPair presented) {
-        return database.accept("artemis.example.org", null, presented.getPublic(), null, null);
+    private static boolean accept(PublishedHostKeyDatabase database, PublicKey presented) {
+        return database.accept("artemis.example.org", null, presented, null, null);
     }
 
     @Test
     void acceptsAHostKeyWhoseFingerprintIsPublished() {
-        var database = new PublishedHostKeyDatabase(() -> published(publishedKey), Mode.REQUIRED);
+        var database = new PublishedHostKeyDatabase(() -> published(PUBLISHED_KEY), Mode.REQUIRED);
 
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
     }
 
     @Test
     void refusesAHostKeyWhoseFingerprintIsNotPublished() {
-        var database = new PublishedHostKeyDatabase(() -> published(publishedKey), Mode.IF_AVAILABLE);
+        var database = new PublishedHostKeyDatabase(() -> published(PUBLISHED_KEY), Mode.IF_AVAILABLE);
 
-        assertThat(accept(database, otherKey)).isFalse();
+        assertThat(accept(database, OTHER_KEY)).isFalse();
     }
 
     @Test
     void refusesAMismatchEvenWhenTheCoreNodeCannotBeAskedAnymore() {
         var calls = new AtomicInteger();
-        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(publishedKey) : Set.of();
+        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(PUBLISHED_KEY) : Set.of();
         var database = new PublishedHostKeyDatabase(fetcher, Mode.IF_AVAILABLE);
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
 
-        assertThat(accept(database, otherKey)).as("the fingerprints that were published before still count").isFalse();
+        assertThat(accept(database, OTHER_KEY)).as("the fingerprints that were published before still count").isFalse();
     }
 
     @Test
     void fetchesTheFingerprintsAgainBeforeRefusingAKeyThatWasReplaced() {
         var calls = new AtomicInteger();
-        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(publishedKey) : published(otherKey);
+        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(PUBLISHED_KEY) : published(OTHER_KEY);
         var database = new PublishedHostKeyDatabase(fetcher, Mode.REQUIRED);
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
 
-        assertThat(accept(database, otherKey)).isTrue();
+        assertThat(accept(database, OTHER_KEY)).isTrue();
     }
 
     @Test
     void continuesWithoutAComparisonWhenNothingIsPublishedAndTheModeAllowsIt() {
         var database = new PublishedHostKeyDatabase(Set::of, Mode.IF_AVAILABLE);
 
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
     }
 
     @Test
     void refusesWhenNothingIsPublishedAndTheModeRequiresAComparison() {
         var database = new PublishedHostKeyDatabase(Set::of, Mode.REQUIRED);
 
-        assertThat(accept(database, publishedKey)).isFalse();
+        assertThat(accept(database, PUBLISHED_KEY)).isFalse();
     }
 
     @Test
@@ -98,10 +103,10 @@ class PublishedHostKeyDatabaseTest {
     @Test
     void acceptsEveryKeyOfAnAlgorithmThatTheCoreNodePublishes() {
         // while a host key is replaced, the core node publishes the old and the new key
-        var database = new PublishedHostKeyDatabase(() -> published(publishedKey, otherKey), Mode.REQUIRED);
+        var database = new PublishedHostKeyDatabase(() -> published(PUBLISHED_KEY, OTHER_KEY), Mode.REQUIRED);
 
-        assertThat(accept(database, publishedKey)).isTrue();
-        assertThat(accept(database, otherKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(accept(database, OTHER_KEY)).isTrue();
     }
 
     @Test
@@ -115,13 +120,13 @@ class PublishedHostKeyDatabaseTest {
         var database = new PublishedHostKeyDatabase(fetcher, Mode.IF_AVAILABLE, clock::get);
 
         // one connection asks once for the cached state and once before it gives up, which is one failed fetch
-        assertThat(accept(database, publishedKey)).isTrue();
-        assertThat(accept(database, publishedKey)).isTrue();
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
         assertThat(calls).hasValue(1);
 
         clock.addAndGet(PublishedHostKeyDatabase.FAILURE_CACHE_DURATION.toNanos() + 1);
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
 
         assertThat(calls).hasValue(2);
     }
@@ -144,12 +149,12 @@ class PublishedHostKeyDatabaseTest {
     void usesTheFingerprintsOfBeforeWhileTheCoreNodeCannotBeAsked() {
         var calls = new AtomicInteger();
         var clock = new AtomicLong();
-        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(publishedKey) : Set.of();
+        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(PUBLISHED_KEY) : Set.of();
         var database = new PublishedHostKeyDatabase(fetcher, Mode.REQUIRED, clock::get);
-        assertThat(accept(database, publishedKey)).isTrue();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
 
         clock.addAndGet(PublishedHostKeyDatabase.FAILURE_CACHE_DURATION.toNanos());
-        assertThat(accept(database, publishedKey)).isTrue();
-        assertThat(accept(database, otherKey)).isFalse();
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(accept(database, OTHER_KEY)).isFalse();
     }
 }

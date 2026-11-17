@@ -163,18 +163,18 @@ public class ProblemStatementRenderingService {
 
     private final String serverUrl;
 
-    @Value("${info.allowedImageHosts:}")
-    private String allowedImageHosts = "";
+    private final String allowedImageHosts;
 
     private final HtmlRenderer commonMarkRenderer;
 
     public ProblemStatementRenderingService(PlantUmlService plantUmlService, JsonMapper objectMapper, MessageSource messageSource, FileService fileService,
-            @Value("${server.url}") String serverUrl) {
+            @Value("${server.url}") String serverUrl, @Value("${info.allowedImageHosts:}") String allowedImageHosts) {
         this.plantUmlService = plantUmlService;
         this.objectMapper = objectMapper;
         this.messageSource = messageSource;
         this.fileService = fileService;
         this.serverUrl = serverUrl;
+        this.allowedImageHosts = allowedImageHosts;
         this.commonMarkRenderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
                 .attributeProviderFactory(_ -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
     }
