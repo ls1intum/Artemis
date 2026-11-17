@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -317,6 +318,32 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThat(signedInUser.getLastName()).isEqualTo("LastName");
         assertThat(signedInUser.getRegistrationNumber()).isNull();
         assertThat(userUtilService.getUserByLogin(OTHER_STUDENT_NAME).getRegistrationNumber()).isEqualTo(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcUpdateRefusesAnAccountThatBecameInternalBeforeTheReloadAfterAMatriculationNumberConflict() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        createOtherUser(OTHER_STUDENT_NAME + "@other.domain.invalid");
+        User otherUser = userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).orElseThrow();
+        otherUser.setRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        userTestRepository.save(otherUser);
+
+        // The save hits the unique constraint as in the test above. The account that is reloaded afterwards has become an internal one in the meantime.
+        UserRepository racingRepository = mock(UserRepository.class, AdditionalAnswers.delegatesTo(userTestRepository));
+        doReturn(Optional.empty()).doCallRealMethod().when(racingRepository).findUserWithAuthoritiesByRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        doAnswer(invocation -> userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME)).doAnswer(invocation -> {
+            User reloaded = userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+            reloaded.setInternal(true);
+            return Optional.of(reloaded);
+        }).when(racingRepository).findOneWithAuthoritiesByLogin(STUDENT_NAME);
+        OIDCService racingOidcService = createOidcService(racingRepository);
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class)
+                .isThrownBy(() -> racingOidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "ChangedFirstName", "LastName"))))
+                .matches(ex -> "internal_account".equals(ex.getError().getErrorCode()));
+
+        // no claim reached the stored account
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isNotEqualTo("ChangedFirstName");
     }
 
     @Test

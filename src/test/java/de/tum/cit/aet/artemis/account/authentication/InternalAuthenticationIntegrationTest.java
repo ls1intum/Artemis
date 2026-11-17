@@ -313,6 +313,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         String accessToken = responseBody.get("access_token").toString();
         assertThat(tokenProvider.validateTokenForAuthority(accessToken, null)).isTrue();
         assertThat(tokenProvider.getAuthentication(accessToken).getName()).isEqualTo(USERNAME);
+        assertThat(accessToken).isEqualTo(response.getCookie("jwt").getValue());
     }
 
     @Test
@@ -335,6 +336,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         String token = responseBody.get("access_token").toString();
         assertThat(tokenProvider.validateTokenForAuthority(token, null)).isTrue();
         assertThat(tokenProvider.getAuthentication(token).getName()).isEqualTo(USERNAME);
+        assertThat(token).isEqualTo(response.getCookie("jwt").getValue());
         assertThat(tokenProvider.getClaim(token, "tools", String.class).split(",")).contains(ToolTokenType.SCORPIO.toString());
     }
 
