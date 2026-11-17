@@ -228,7 +228,7 @@
                     </tumaet-ui-tag>
                 }
             </div>
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-6!">
                 <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.hint"></p>
                 @for (group of lectureUnitGroups(); track group.competencyId) {
                     <section class="flex flex-col" [attr.data-testid]="'pool-units-competency-' + group.competencyId">
