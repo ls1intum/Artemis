@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { Subject } from 'rxjs';
@@ -14,7 +16,7 @@ class MockModalComponent {}
 
 describe('QuizExercisePopupService', () => {
     let service: QuizExercisePopupService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let router: Router;
 
     const course = { id: 123 } as Course;
@@ -30,16 +32,16 @@ describe('QuizExercisePopupService', () => {
     /** Creates a dialog-ref mock backed by a controllable onClose subject. */
     const createDialogRefMock = () => {
         const onClose = new Subject<unknown>();
-        return { ref: { onClose } as unknown as DynamicDialogRef, onClose };
+        return { ref: { onClose } as unknown as TumAetUiDialogRef, onClose };
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [QuizExercisePopupService, MockProvider(DialogService), MockProvider(Router)],
+            providers: [QuizExercisePopupService, MockProvider(TumAetUiDialogService), MockProvider(Router), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         service = TestBed.inject(QuizExercisePopupService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         router = TestBed.inject(Router);
     });
 
@@ -63,20 +65,14 @@ describe('QuizExercisePopupService', () => {
         const result = await service.open(MockModalComponent, quizExercise, files);
 
         expect(result).toBe(ref);
-        // Assert the full dialog-option contract (preserving the original NgbModal { size: 'lg', backdrop: 'static' } fidelity):
-        // width 50rem == 'lg', dismissableMask: false == backdrop: 'static', plus the modal/closeOnEscape/draggable/resizable/showHeader pins.
+        // Assert the full dialog-option contract: dismissableMask false keeps the dialog open on a backdrop click, and the
+        // header-less dialog needs an accessible name.
         expect(openSpy).toHaveBeenCalledWith(MockModalComponent, {
-            width: '50rem',
-            breakpoints: {
-                '850px': '95vw',
-            },
-            modal: true,
-            closable: true,
+            size: 'medium',
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
             showHeader: false,
+            ariaLabel: 'artemisApp.quizExercise.re-evaluate.warning.warning',
             data: { quizExercise, files },
         });
 

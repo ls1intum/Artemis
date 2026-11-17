@@ -337,7 +337,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         if (await confirmButton.isVisible()) {
             await confirmButton.click();
         }
-        await expect(page.getByTestId('quiz-training-dialog-mask')).toHaveCount(0);
+        await expect(page.getByTestId('quiz-training-dialog')).toHaveCount(0);
         await expect(leagueBadge).toBeVisible({ timeout: 20_000 });
 
         await expect.poll(() => leaderboardRequests.length, { timeout: 20_000 }).toBeGreaterThan(0);

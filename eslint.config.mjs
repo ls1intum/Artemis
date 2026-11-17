@@ -87,14 +87,16 @@ const migratedModules = [
     'notification',
     'plagiarism',
     'presentation',
+    'quiz',
     'shared',
+    'shared-ui',
     'sharing',
     'text',
     'tutorialgroup',
     'videosource',
 ];
 // Components that are migrated although the rest of their module is not. They get the same locks as a module.
-const migratedComponentFolders = ['core/alert', 'shared-ui/user-registration-modal', 'core/navbar/global-search/components/modal', 'course/overview/course-home'];
+const migratedComponentFolders = ['core/alert', 'core/navbar/global-search/components/modal', 'course/overview/course-home'];
 const migratedFolders = (extension) => [...migratedModules, ...migratedComponentFolders].map((folder) => `src/main/webapp/app/${folder}/**/*.${extension}`);
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],

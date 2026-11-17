@@ -1,9 +1,11 @@
 @if (exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) {
-    <span
-        class="not-released-tag badge bg-warning"
+    <tumaet-ui-tag
+        class="not-released-tag"
+        severity="warn"
+        size="sm"
         [class.ms-1]="!noMargin()"
-        container="body"
-        ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise().releaseDate | artemisDate }}"
-        jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
-    ></span>
+        [tumAetUiTooltip]="('artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate) + (exercise().releaseDate | artemisDate)"
+    >
+        <span jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"></span>
+    </tumaet-ui-tag>
 }
