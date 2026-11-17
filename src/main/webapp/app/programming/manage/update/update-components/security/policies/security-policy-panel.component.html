@@ -54,11 +54,11 @@
             <div class="sp-grid-2">
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'Name'" [jhiTranslate]="prefix + 'name'"></label>
+                        <label class="sp-label" [for]="id + 'Name'">{{ prefix + 'name' | artemisTranslate }}</label>
                         <jhi-security-help [text]="prefix + 'nameHelp' | artemisTranslate" />
                     </span>
                     <input
-                        [id]="id + 'Name'"
+                        [tumAetUiInputId]="id + 'Name'"
                         tumAetUiInput
                         [placeholder]="prefix + 'namePlaceholder' | artemisTranslate"
                         [ngModel]="policy().name"
@@ -70,7 +70,7 @@
                 </div>
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'Presets'" [jhiTranslate]="prefix + 'presets'"></label>
+                        <label class="sp-label" [for]="id + 'Presets'">{{ prefix + 'presets' | artemisTranslate }}</label>
                         <jhi-security-help [text]="(presets().length ? prefix + 'presetsHelp' : prefix + 'presetsUnavailable') | artemisTranslate" />
                     </span>
                     <tumaet-ui-multi-select

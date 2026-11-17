@@ -6,7 +6,7 @@
             @switch (kind()) {
                 @case ('files') {
                     <div class="sp-stack">
-                        <label class="sp-label" for="securityRowPath" [jhiTranslate]="prefix + 'files.target'"></label>
+                        <label class="sp-label" for="securityRowPath">{{ prefix + 'files.target' | artemisTranslate }}</label>
                         <div class="flex items-center gap-2">
                             <input
                                 id="securityRowPath"
@@ -30,7 +30,7 @@
                 @case ('network') {
                     <div class="sp-grid-2 sp-tight">
                         <div class="sp-stack">
-                            <label class="sp-label" for="securityRowHost" [jhiTranslate]="prefix + 'network.host'"></label>
+                            <label class="sp-label" for="securityRowHost">{{ prefix + 'network.host' | artemisTranslate }}</label>
                             <input
                                 id="securityRowHost"
                                 name="host"
@@ -43,7 +43,7 @@
                             />
                         </div>
                         <div class="sp-stack">
-                            <label class="sp-label" for="securityRowPort" [jhiTranslate]="prefix + 'network.port'"></label>
+                            <label class="sp-label" for="securityRowPort">{{ prefix + 'network.port' | artemisTranslate }}</label>
                             <input
                                 id="securityRowPort"
                                 name="port"
@@ -62,7 +62,7 @@
                 @case ('commands') {
                     <div class="sp-grid-2 sp-tight">
                         <div class="sp-stack">
-                            <label class="sp-label" for="securityRowCommand" [jhiTranslate]="prefix + 'commands.command'"></label>
+                            <label class="sp-label" for="securityRowCommand">{{ prefix + 'commands.command' | artemisTranslate }}</label>
                             <div class="flex items-center gap-2">
                                 <input
                                     id="securityRowCommand"
@@ -82,7 +82,7 @@
                             </div>
                         </div>
                         <div class="sp-stack">
-                            <label class="sp-label" for="securityRowArguments" [jhiTranslate]="prefix + 'commands.arguments'"></label>
+                            <label class="sp-label" for="securityRowArguments">{{ prefix + 'commands.arguments' | artemisTranslate }}</label>
                             <input
                                 id="securityRowArguments"
                                 name="arguments"
@@ -99,7 +99,7 @@
                 @case ('threads') {
                     <div class="sp-grid-2 sp-tight">
                         <div class="sp-stack">
-                            <label class="sp-label" for="securityRowThreadClass" [jhiTranslate]="prefix + 'threads.threadClass'"></label>
+                            <label class="sp-label" for="securityRowThreadClass">{{ prefix + 'threads.threadClass' | artemisTranslate }}</label>
                             <input
                                 id="securityRowThreadClass"
                                 name="threadClass"
@@ -112,7 +112,7 @@
                             />
                         </div>
                         <div class="sp-stack">
-                            <label class="sp-label" for="securityRowMaxThreads" [jhiTranslate]="prefix + 'threads.maxThreads'"></label>
+                            <label class="sp-label" for="securityRowMaxThreads">{{ prefix + 'threads.maxThreads' | artemisTranslate }}</label>
                             <input
                                 id="securityRowMaxThreads"
                                 name="maxThreads"
@@ -130,7 +130,7 @@
                 }
                 @case ('packages') {
                     <div class="sp-stack">
-                        <label class="sp-label" for="securityRowPackage" [jhiTranslate]="prefix + 'packages.packageName'"></label>
+                        <label class="sp-label" for="securityRowPackage">{{ prefix + 'packages.packageName' | artemisTranslate }}</label>
                         <input
                             id="securityRowPackage"
                             name="packageName"
@@ -169,8 +169,8 @@
                                     [attr.data-testid]="'security-permission-action-' + action"
                                 />
                                 <span class="sp-row">
-                                    <span class="sp-strong text-sm" [jhiTranslate]="prefix + 'files.action.' + action"></span>
-                                    <span class="sp-perm-desc" [jhiTranslate]="prefix + 'files.actionHint.' + action"></span>
+                                    <span class="sp-strong text-sm">{{ prefix + 'files.action.' + action | artemisTranslate }}</span>
+                                    <span class="sp-perm-desc">{{ prefix + 'files.actionHint.' + action | artemisTranslate }}</span>
                                 </span>
                             </label>
                         }
@@ -184,8 +184,8 @@
                                     [attr.data-testid]="'security-permission-action-' + action"
                                 />
                                 <span class="sp-row">
-                                    <span class="sp-strong text-sm" [jhiTranslate]="prefix + 'network.action.' + action"></span>
-                                    <span class="sp-perm-desc" [jhiTranslate]="prefix + 'network.actionHint.' + action"></span>
+                                    <span class="sp-strong text-sm">{{ prefix + 'network.action.' + action | artemisTranslate }}</span>
+                                    <span class="sp-perm-desc">{{ prefix + 'network.actionHint.' + action | artemisTranslate }}</span>
                                 </span>
                             </label>
                         }

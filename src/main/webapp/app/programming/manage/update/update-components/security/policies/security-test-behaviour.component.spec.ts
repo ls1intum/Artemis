@@ -19,6 +19,14 @@ type Handlers = {
     setMaximumCharacters(value: string | number | null): void;
 };
 
+/** Every label of the element has text and names a control of the element, so clicking it focuses the control and screen readers announce it. */
+function expectLabelledControls(element: HTMLElement): void {
+    for (const label of Array.from(element.querySelectorAll<HTMLLabelElement>('label[for]'))) {
+        expect(label.textContent?.trim()).not.toBe('');
+        expect(element.querySelector(`[id="${label.htmlFor}"]`)).not.toBeNull();
+    }
+}
+
 describe('SecurityTestBehaviourComponent', () => {
     let fixture: ComponentFixture<SecurityTestBehaviourComponent>;
     let comp: SecurityTestBehaviourComponent;
@@ -43,6 +51,7 @@ describe('SecurityTestBehaviourComponent', () => {
             handlers.onTabChange(tab);
             fixture.detectChanges();
             expect(comp.activeTab()).toBe(tab);
+            expectLabelledControls(fixture.nativeElement);
         }
         expect(fixture.nativeElement.querySelector('[data-testid="security-behaviour-mirror"]')).not.toBeNull();
     });

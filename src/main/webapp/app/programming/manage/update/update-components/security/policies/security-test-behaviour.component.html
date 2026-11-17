@@ -27,7 +27,7 @@
         @case ('securityFeedback') {
             <div class="sp-stack sp-mid">
                 <span class="sp-label-row">
-                    <label class="sp-label" [for]="id + 'Level'" [jhiTranslate]="prefix + 'feedbackLevel'"></label>
+                    <label class="sp-label" [for]="id + 'Level'">{{ prefix + 'feedbackLevel' | artemisTranslate }}</label>
                     <jhi-security-help [text]="(prefix + 'feedbackLevelHelp' | artemisTranslate) + ' ' + (prefix + 'feedbackLevelUnavailable' | artemisTranslate)" />
                 </span>
                 <input
@@ -78,11 +78,11 @@
             </div>
             <div class="sp-stack sp-narrow" [class.sp-dimmed]="!privilegedExceptions()?.enabled">
                 <span class="sp-label-row">
-                    <label class="sp-label" [for]="id + 'Message'" [jhiTranslate]="prefix + 'message'"></label>
+                    <label class="sp-label" [for]="id + 'Message'">{{ prefix + 'message' | artemisTranslate }}</label>
                     <jhi-security-help [text]="prefix + 'messageHelp' | artemisTranslate" />
                 </span>
                 <input
-                    [id]="id + 'Message'"
+                    [tumAetUiInputId]="id + 'Message'"
                     tumAetUiInput
                     [placeholder]="prefix + 'messagePlaceholder' | artemisTranslate"
                     [ngModel]="shownMessage()"
@@ -143,11 +143,11 @@
             <div class="sp-marks" [class.sp-dimmed]="!hiddenTests()">
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'HiddenFrom'" [jhiTranslate]="prefix + 'hiddenFrom'"></label>
+                        <label class="sp-label" [for]="id + 'HiddenFrom'">{{ prefix + 'hiddenFrom' | artemisTranslate }}</label>
                         <jhi-security-help [text]="(prefix + 'hiddenFromHelp' | artemisTranslate) + (hiddenTests() ? '' : ' ' + (prefix + 'turnOnFirst' | artemisTranslate))" />
                     </span>
                     <input
-                        [id]="id + 'HiddenFrom'"
+                        [tumAetUiInputId]="id + 'HiddenFrom'"
                         tumAetUiInput
                         class="sp-mono"
                         type="datetime-local"
@@ -159,11 +159,11 @@
                 </div>
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'HiddenUntil'" [jhiTranslate]="prefix + 'hiddenUntil'"></label>
+                        <label class="sp-label" [for]="id + 'HiddenUntil'">{{ prefix + 'hiddenUntil' | artemisTranslate }}</label>
                         <jhi-security-help [text]="(prefix + 'hiddenUntilHelp' | artemisTranslate) + (hiddenTests() ? '' : ' ' + (prefix + 'turnOnFirst' | artemisTranslate))" />
                     </span>
                     <input
-                        [id]="id + 'HiddenUntil'"
+                        [tumAetUiInputId]="id + 'HiddenUntil'"
                         tumAetUiInput
                         class="sp-mono"
                         type="datetime-local"
@@ -198,11 +198,11 @@
             <div class="sp-grid-4" [class.sp-dimmed]="!strictTimeout()">
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'TimeLimit'" [jhiTranslate]="prefix + 'timeLimit'"></label>
+                        <label class="sp-label" [for]="id + 'TimeLimit'">{{ prefix + 'timeLimit' | artemisTranslate }}</label>
                         <jhi-security-help [text]="prefix + 'timeLimitHelp' | artemisTranslate" />
                     </span>
                     <input
-                        [id]="id + 'TimeLimit'"
+                        [tumAetUiInputId]="id + 'TimeLimit'"
                         tumAetUiInput
                         type="number"
                         min="1"
@@ -216,8 +216,8 @@
                 <div class="sp-stack">
                     <span class="sp-label-row">
                         <label class="sp-label" [for]="id + 'TimeUnit'">
-                            <span aria-hidden="true" [jhiTranslate]="prefix + 'unit.label'"></span>
-                            <span class="sr-only" [jhiTranslate]="prefix + 'timeLimitUnit'"></span>
+                            <span aria-hidden="true">{{ prefix + 'unit.label' | artemisTranslate }}</span>
+                            <span class="sr-only">{{ prefix + 'timeLimitUnit' | artemisTranslate }}</span>
                         </label>
                     </span>
                     <tumaet-ui-select
@@ -233,11 +233,11 @@
                 </div>
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'Grace'" [jhiTranslate]="prefix + 'gracePeriod'"></label>
+                        <label class="sp-label" [for]="id + 'Grace'">{{ prefix + 'gracePeriod' | artemisTranslate }}</label>
                         <jhi-security-help [text]="prefix + 'gracePeriodHelp' | artemisTranslate" />
                     </span>
                     <input
-                        [id]="id + 'Grace'"
+                        [tumAetUiInputId]="id + 'Grace'"
                         tumAetUiInput
                         type="number"
                         min="0"
@@ -251,8 +251,8 @@
                 <div class="sp-stack">
                     <span class="sp-label-row">
                         <label class="sp-label" [for]="id + 'GraceUnit'">
-                            <span aria-hidden="true" [jhiTranslate]="prefix + 'unit.label'"></span>
-                            <span class="sr-only" [jhiTranslate]="prefix + 'gracePeriodUnit'"></span>
+                            <span aria-hidden="true">{{ prefix + 'unit.label' | artemisTranslate }}</span>
+                            <span class="sr-only">{{ prefix + 'gracePeriodUnit' | artemisTranslate }}</span>
                         </label>
                     </span>
                     <tumaet-ui-select
@@ -286,11 +286,11 @@
             </div>
             <div class="sp-stack sp-xs" [class.sp-dimmed]="!outputMirroring()?.mirrored">
                 <span class="sp-label-row">
-                    <label class="sp-label" [for]="id + 'MaxChars'" [jhiTranslate]="prefix + 'maximumCharacters'"></label>
+                    <label class="sp-label" [for]="id + 'MaxChars'">{{ prefix + 'maximumCharacters' | artemisTranslate }}</label>
                     <jhi-security-help [text]="prefix + 'maximumCharactersHelp' | artemisTranslate" />
                 </span>
                 <input
-                    [id]="id + 'MaxChars'"
+                    [tumAetUiInputId]="id + 'MaxChars'"
                     tumAetUiInput
                     type="number"
                     min="1"

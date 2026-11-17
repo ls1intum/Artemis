@@ -14,7 +14,7 @@
                 </div>
                 <div class="sp-row">
                     <span class="sp-label-row">
-                        <label class="sp-label" for="securityActivationVersion" [jhiTranslate]="prefix + 'version'"></label>
+                        <label class="sp-label" for="securityActivationVersion">{{ prefix + 'version' | artemisTranslate }}</label>
                         <jhi-security-help [text]="prefix + 'versionHelp' | artemisTranslate" />
                     </span>
                     <tumaet-ui-select

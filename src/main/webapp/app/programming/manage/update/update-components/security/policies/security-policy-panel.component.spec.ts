@@ -71,6 +71,24 @@ describe('SecurityPolicyPanelComponent', () => {
         expect(changes[3].working?.testClasses).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
     });
 
+    it('associates every label with its control', () => {
+        create(editorPolicyOf(FILE));
+        comp.collapsed.set(false);
+        for (const box of ['resources', 'behaviour', 'tests']) {
+            handlers.setBoxCollapsed(box, false);
+        }
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        const labels = Array.from(element.querySelectorAll<HTMLLabelElement>('label[for]'));
+        expect(labels.map((label) => label.htmlFor)).toContain(`${comp.idPrefix()}Name`);
+        for (const label of labels) {
+            expect(label.textContent?.trim()).not.toBe('');
+            expect(element.querySelector(`[id="${label.htmlFor}"]`)).not.toBeNull();
+        }
+        expect(element.querySelector('[data-testid="security-policy-name"]')?.id).toBe(`${comp.idPrefix()}Name`);
+    });
+
     it('shows a policy it cannot edit as read-only with the reason', () => {
         create(editorPolicyOf({ ...FILE, document: undefined, readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3 }));
         comp.collapsed.set(false);

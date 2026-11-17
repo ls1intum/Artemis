@@ -104,7 +104,7 @@
         <div class="sp-row">
             <span class="sp-label-row">
                 @if (active()) {
-                    <label class="sp-label" for="securityAdvancedVersion" [jhiTranslate]="prefix + 'version'"></label>
+                    <label class="sp-label" for="securityAdvancedVersion">{{ prefix + 'version' | artemisTranslate }}</label>
                 } @else {
                     <span class="sp-label" [jhiTranslate]="prefix + 'version'"></span>
                 }
