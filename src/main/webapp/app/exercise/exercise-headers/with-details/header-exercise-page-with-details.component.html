@@ -1,8 +1,8 @@
 @if (exercise()) {
-    <div class="course-info-bar" id="exercise-header">
+    <header class="mb-0! pt-0! pb-2! text-text" id="exercise-header">
         <div class="left-col">
             <div class="title-row">
-                <div class="inner-row">
+                <div class="inner-row text-lg font-semibold">
                     @if (exercise().type) {
                         <fa-icon [icon]="getIcon(exercise().type)" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
                     }
@@ -13,36 +13,44 @@
                     <jhi-exercise-categories [exercise]="exercise()" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
                 }
             </div>
-            @if (exercise().maxPoints || (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING)) {
-                <div class="points-assessment-row">
-                    @if (exercise().maxPoints) {
-                        <span [style.margin-right]="exercise().maxPoints ? '30px' : null">
-                            <span class="me-2">
-                                {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                                @if (achievedPoints() !== undefined) {
-                                    {{ achievedPoints() + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
-                                }
-                                {{ exercise().maxPoints }}
-                                @if (exercise().bonusPoints) {
-                                    <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise().bonusPoints }})</span>
-                                }
-                            </span>
-                            @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                                <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" class="me-2" />
+            <div class="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                <ng-content select="[headerSubtitle]" />
+                @if (exercise().maxPoints) {
+                    <span class="inline-flex flex-wrap items-center gap-2">
+                        <span class="me-2">
+                            @if (achievedPoints() !== undefined) {
+                                {{ achievedPoints() + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
+                            }
+                            {{ exercise().maxPoints }} {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
+                            @if (exercise().bonusPoints) {
+                                <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise().bonusPoints }})</span>
                             }
                         </span>
+                        @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" class="me-2" />
+                        }
+                    </span>
+                }
+                @if (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING) {
+                    @if (exercise().maxPoints) {
+                        <span aria-hidden="true">·</span>
                     }
-                    @if (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING) {
-                        <span>
-                            <div>
-                                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
-                                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise().assessmentType | artemisTranslate }}
-                                <fa-icon [icon]="faQuestionCircle" tumAetUiTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
-                            </div>
-                        </span>
-                    }
-                </div>
-            }
+                    <span class="inline-flex items-center gap-1">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
+                        {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise().assessmentType | artemisTranslate }}
+                        <fa-icon [icon]="faQuestionCircle" tumAetUiTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
+                    </span>
+                }
+                @if (dueDate()) {
+                    <jhi-information-box
+                        layout="inline"
+                        [informationBoxData]="dueDateInformation()"
+                        [tumAetUiTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate() | artemisDate }"
+                    >
+                        <span contentComponent [class.text-state-danger]="dueDateSeverity() === 'danger'">{{ dueDate() | artemisTimeAgo }}</span>
+                    </jhi-information-box>
+                }
+            </div>
             @if (submissionPolicy() && submissionPolicy()!.active) {
                 <div class="submission-row">
                     <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
@@ -66,24 +74,13 @@
                 </div>
             }
         </div>
-        <div class="right-col">
+        <div class="flex flex-wrap items-center justify-end gap-2 self-start text-sm" data-testid="exercise-header-statuses">
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
             } @else {
                 <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
                 <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
-            @if (dueDate()) {
-                <div class="font-medium">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
-                    <span
-                        [ngClass]="dueDateStatusBadge()"
-                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
-                        [tumAetUiTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate() | artemisDate }"
-                    >
-                        {{ dueDate() | artemisTimeAgo }}
-                    </span>
-                </div>
-            }
+            <ng-content select="[headerActions]" />
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
             } @else {
                 <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
@@ -102,7 +99,8 @@
                 </div>
             }
         </div>
-    </div>
+    </header>
+    <hr class="mt-0! mb-2! border-0! border-t! border-border! opacity-100!" />
 }
 
 <ng-template #nextRelevantDateBadge>

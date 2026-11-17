@@ -8,21 +8,6 @@
     line-height: 1.2;
     font-weight: 400;
 
-    .right-col {
-        flex: 0 0 auto;
-
-        > div {
-            display: flex;
-            width: 100%;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        > div:not(:last-child) {
-            margin-bottom: 5px;
-        }
-    }
-
     .left-col {
         flex: 1 1 auto;
         flex-direction: column;
@@ -42,7 +27,6 @@
             .inner-row {
                 margin-bottom: 0;
                 margin-right: 10px;
-                font-size: 1.575rem;
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -54,7 +38,6 @@
             }
         }
 
-        .points-assessment-row,
         .submission-row {
             white-space: nowrap;
             display: flex;
@@ -66,9 +49,5 @@
 
     @media (max-width: 575px) {
         font-size: 1.1rem;
-
-        .left-col .title-row .inner-row {
-            font-size: 1.3em;
-        }
     }
 }

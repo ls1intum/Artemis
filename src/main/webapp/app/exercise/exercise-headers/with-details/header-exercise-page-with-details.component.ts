@@ -1,3 +1,4 @@
+import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
@@ -33,6 +34,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
     imports: [
         TumAetUiTooltipDirective,
+        InformationBoxComponent,
         NgTemplateOutlet,
         FaIconComponent,
         ExerciseCategoriesComponent,
@@ -72,7 +74,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
     public readonly nextRelevantDateLabel = signal<string | undefined>(undefined);
     public readonly nextRelevantDateStatusBadge = signal<string | undefined>(undefined);
-    public readonly dueDateStatusBadge = signal<string | undefined>(undefined);
+    readonly dueDateInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
+        content: { type: 'timeAgo', value: this.dueDate() },
+        isContentComponent: true,
+    }));
+    public readonly dueDateSeverity = signal<'success' | 'danger'>('success');
     public readonly canComplainLaterOn = signal<boolean>(undefined!);
 
     readonly achievedPoints = computed<number | undefined>(() => {
@@ -145,7 +152,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
         const dueDate = this.dueDate();
         if (dueDate) {
-            this.dueDateStatusBadge.set(dayjs().isBefore(dueDate) ? 'bg-state-success' : 'bg-state-danger');
+            this.dueDateSeverity.set(dayjs().isBefore(dueDate) ? 'success' : 'danger');
         }
     }
 

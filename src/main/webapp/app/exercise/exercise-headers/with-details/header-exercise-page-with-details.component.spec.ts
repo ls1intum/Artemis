@@ -147,11 +147,11 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should determine correct badge for due date', () => {
         exercise.dueDate = dayjs().add(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateStatusBadge()).toBe('bg-state-success');
+        expect(component.dueDateSeverity()).toBe('success');
 
         exercise.dueDate = dayjs().subtract(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateStatusBadge()).toBe('bg-state-danger');
+        expect(component.dueDateSeverity()).toBe('danger');
     });
 
     it('should set the icon according to the exam end date', () => {
@@ -233,7 +233,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 component.canComplainLaterOn.set(false);
                 fixture.detectChanges();
 
-                const summary: HTMLElement = fixture.nativeElement.querySelector('.right-col');
+                const summary: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-header-statuses"]');
                 expect(summary.querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(1);
                 if (expectedBadge) {
                     expect(summary.querySelector(`[jhiTranslate="${expectedBadge}"]`)).not.toBeNull();
@@ -250,7 +250,7 @@ describe('HeaderExercisePageWithDetails', () => {
             component.nextRelevantDate.set(undefined);
             component.canComplainLaterOn.set(false);
             fixture.detectChanges();
-            expect(fixture.nativeElement.querySelector('.right-col').querySelectorAll('.badge')).toHaveLength(0);
+            expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-statuses"]').querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(0);
         });
     });
 });
