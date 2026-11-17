@@ -45,12 +45,14 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.service.VcsAccessLogOperations;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
- * The VCS access log over HTTPS writes one entry per operation, when the operation is over, and never changes it afterwards.
+ * The VCS access log over HTTPS stores what each request learned, when the request is over, and never changes it afterwards. The log that is shown has one entry per operation.
  * <p>
- * The tests run real JGit clients against the embedded LocalVC server, so they go through the handshake request and the data transfer request of every operation.
+ * The tests run real JGit clients against the embedded LocalVC server, so they go through the handshake request and the data transfer request of every operation. The entries
+ * are read like the endpoint of the log does, which leaves out the advertisement of an operation that went on to move data.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -131,21 +133,42 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
     }
 
     /**
-     * The entry is written when the operation is over, which is just after the client has its answer, so the tests wait for it.
+     * The entries of operations that moved data are written when the operation is over, which is just after the client has its answer, so the tests wait for them. The
+     * advertisement of such an operation is written first and is not shown once its transfer is there, so an entry that is only an advertisement means the operation is still
+     * running.
      */
     private List<VcsAccessLog> awaitEntries(int count) {
-        await().atMost(Duration.ofSeconds(10)).until(() -> entries().size() >= count);
+        await().atMost(Duration.ofSeconds(10)).until(() -> entries().size() >= count && entries().stream().noneMatch(VcsAccessLogHttpsOperationsIntegrationTest::isAdvertisement));
         return entries();
     }
 
     /**
-     * Nothing is written for an operation that moves no data. There is no event to wait for, so the log has to stay as it is for a moment.
+     * The entries when the operations did not move data, which is what the advertisement of each of them is.
+     */
+    private List<VcsAccessLog> awaitEntriesWithAccesses(int count) {
+        await().atMost(Duration.ofSeconds(10)).until(() -> entries().size() >= count);
+        return entries();
+    }
+
+    private static boolean isAdvertisement(VcsAccessLog entry) {
+        return entry.getRepositoryActionType() == RepositoryActionType.READ || entry.getRepositoryActionType() == RepositoryActionType.WRITE;
+    }
+
+    /**
+     * Nothing more is written. There is no event to wait for, so the log has to stay as it is for a moment.
      */
     private void assertNoMoreEntriesThan(int count) {
         await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(entries()).hasSize(count));
     }
 
+    /** What the log shows: one entry per operation. */
     private List<VcsAccessLog> entries() {
+        return VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogRepository.findAllByParticipationId(participation.getId())).stream()
+                .filter(entry -> entry.getUser() != null && student1Login.equals(entry.getUser().getLogin())).toList();
+    }
+
+    /** What was stored, with the advertisement of every operation. */
+    private List<VcsAccessLog> storedEntries() {
         return vcsAccessLogRepository.findAllByParticipationId(participation.getId()).stream()
                 .filter(entry -> entry.getUser() != null && student1Login.equals(entry.getUser().getLogin())).toList();
     }
@@ -252,24 +275,50 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
         }
     }
 
+    /**
+     * Somebody accessed the repository even though there was nothing to fetch, and the log shows it as a read of the newest commit.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aFetchWithNothingToTransferIsNoOperation() throws Exception {
+    void aFetchThatIsUpToDateIsLoggedAsARead() throws Exception {
+        String head = headOfTheRepository();
         try (Git clone = cloneOverHttps()) {
             awaitEntries(1);
             localVCLocalCITestService.testFetchSuccessful(clone, student1Login, projectKey1, assignmentRepositorySlug);
 
-            assertNoMoreEntriesThan(1);
-            assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE);
+            assertThat(awaitEntriesWithAccesses(2)).extracting(VcsAccessLogHttpsOperationsIntegrationTest::kindAndHash).containsExactly(List.of(RepositoryActionType.CLONE, head),
+                    List.of(RepositoryActionType.READ, head));
+            assertNoMoreEntriesThan(2);
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void aPushWithNothingToTransferIsNoOperation() throws Exception {
+    void aPushWithNothingNewIsLoggedAsAWrite() throws Exception {
+        String head = headOfTheRepository();
+
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug);
 
-        assertNoMoreEntriesThan(0);
+        assertThat(awaitEntriesWithAccesses(1)).singleElement().satisfies(entry -> {
+            assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.WRITE);
+            assertThat(entry.getCommitHash()).isEqualTo(head);
+        });
+        assertNoMoreEntriesThan(1);
+    }
+
+    /**
+     * The advertisement and the transfer of one clone are two requests that nothing links, and both are stored. The log joins them when it is read, so what is shown is one
+     * entry per operation, while nothing that was stored is ever changed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void theAdvertisementOfAnOperationThatMovedDataIsStoredButNotShown() throws Exception {
+        try (Git _ = cloneOverHttps()) {
+            awaitEntries(1);
+
+            assertThat(storedEntries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.READ, RepositoryActionType.CLONE);
+            assertThat(entries()).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE);
+        }
     }
 
     /**

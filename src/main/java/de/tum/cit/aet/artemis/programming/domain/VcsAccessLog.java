@@ -114,6 +114,10 @@ public class VcsAccessLog extends DomainObject {
         return repositoryActionType;
     }
 
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
     public Participation getParticipation() {
         return participation;
     }

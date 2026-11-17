@@ -19,6 +19,10 @@ public final class GitOperationAudit {
 
     private @Nullable String commitHashWhenSent;
 
+    private boolean accessed;
+
+    private @Nullable String commitHashWhenAccessed;
+
     private boolean pushReceived;
 
     private @Nullable String commitHashBeforePush;
@@ -44,6 +48,17 @@ public final class GitOperationAudit {
     public void onPackSent(@Nullable String commitHash) {
         this.packSent = true;
         this.commitHashWhenSent = commitHash;
+    }
+
+    /**
+     * Remembers that the repository was reached, which is what the request that advertises its references is. Over HTTPS this is the first request of every fetch and push and,
+     * if nothing follows it, all there is of one that is up to date.
+     *
+     * @param commitHash the newest commit of the repository, null if it has none
+     */
+    public void onAccessed(@Nullable String commitHash) {
+        this.accessed = true;
+        this.commitHashWhenAccessed = commitHash;
     }
 
     /**
@@ -87,6 +102,20 @@ public final class GitOperationAudit {
      */
     public @Nullable String getCommitHashWhenSent() {
         return commitHashWhenSent;
+    }
+
+    /**
+     * @return whether the repository was reached by a request that advertises its references
+     */
+    public boolean isAccessed() {
+        return accessed;
+    }
+
+    /**
+     * @return the newest commit of the repository when it was reached
+     */
+    public @Nullable String getCommitHashWhenAccessed() {
+        return commitHashWhenAccessed;
     }
 
     /**

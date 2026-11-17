@@ -11,6 +11,7 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.http.server.ServletUtils;
 import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,8 +42,10 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * <ul>
  * <li>A fetch that sent data is a clone if the client offered nothing and a pull otherwise.</li>
  * <li>A push that brought commands is a push with the pushed commit if the repository accepted it, and a failed push with the commit the repository had before if it did not.</li>
- * <li>A request or command that moves no data, such as the advertisement of the references, a fetch that is up to date, or the check before a large push, is not an operation
- * and leaves no entry.</li>
+ * <li>Over SSH a command that moves no data, a fetch that is up to date or a push with nothing new, is an access of its own and is written as a read or a write.</li>
+ * <li>Over HTTPS the request that advertises the references is written as a read or a write, because it is all there is of an operation that is up to date. When data follows,
+ * the operation is a clone, pull or push, and the log shows that instead: the advertisement and the transfer cannot be linked here, so they are joined when the log is read, by
+ * {@code VcsAccessLogOperations}. A request that only negotiates, or the check before a large push, leaves no entry.</li>
  * <li>An attempt that was rejected is a failed clone or push, whether the credentials or the authorization did not hold.</li>
  * </ul>
  */
@@ -124,7 +127,13 @@ public class LocalVCAccessLogRecorderService {
      * @param request the request
      */
     public void recordFetchHTTPS(HttpServletRequest request) {
-        recordFetch(subjectOf(request), auditOf(request));
+        var subject = subjectOf(request);
+        var audit = auditOf(request);
+        if (subject != null && !audit.isPackSent() && audit.isAccessed()) {
+            write(subject, RepositoryActionType.READ, audit.getCommitHashWhenAccessed());
+            return;
+        }
+        recordFetch(subject, audit);
     }
 
     /**
@@ -133,7 +142,29 @@ public class LocalVCAccessLogRecorderService {
      * @param request the request
      */
     public void recordPushHTTPS(HttpServletRequest request) {
-        recordPush(subjectOf(request), auditOf(request));
+        var subject = subjectOf(request);
+        var audit = auditOf(request);
+        if (subject != null && !audit.isPushReceived() && audit.isAccessed()) {
+            write(subject, RepositoryActionType.WRITE, audit.getCommitHashWhenAccessed());
+            return;
+        }
+        recordPush(subject, audit);
+    }
+
+    /**
+     * Gives the newest commit of the repository that an HTTPS request is for.
+     *
+     * @param request a request that the git servlet has resolved a repository for
+     * @return the hash of the newest commit, null if there is none or the repository is not known
+     */
+    static @Nullable String headCommitOf(HttpServletRequest request) {
+        try {
+            return LocalVCFetchPreUploadHook.headCommitOf(ServletUtils.getRepository(request));
+        }
+        catch (RuntimeException e) {
+            log.debug("Could not read the newest commit of the repository of {}", request.getRequestURI(), e);
+            return null;
+        }
     }
 
     private static @Nullable AccessLogSubject subjectOf(HttpServletRequest request) {

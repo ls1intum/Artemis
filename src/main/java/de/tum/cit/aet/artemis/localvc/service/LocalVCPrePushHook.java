@@ -79,7 +79,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
      */
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
-        markPushReceived(receivePack);
+        markPushReceived(receivePack, commands);
         examine(receivePack, commands);
         // JGit passes only the commands that it did not reject itself, so these alone cannot tell: a push whose only command JGit rejected passes none. The objects are stored
         // only for a push that has commands, all of which, also those that JGit rejected on its own, are still to be applied.
@@ -106,7 +106,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         if (commands.isEmpty()) {
             return;
         }
-        markPushReceived(receivePack);
+        markPushReceived(receivePack, commands);
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
         // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
         // the remaining refs through without any of the checks below.
@@ -176,10 +176,21 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
      * reaches, and it is before the push changes anything, so the commit that is read is the one a rejected push leaves in the repository.
      *
      * @param receivePack the process handling the current receive
+     * @param commands    the commands that JGit passes to the hook, which leave out those that it rejected itself
      */
-    private void markPushReceived(ReceivePack receivePack) {
-        if (!receivePack.getAllCommands().isEmpty()) {
+    private void markPushReceived(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        if (!commands.isEmpty() || hasReadCommands(receivePack)) {
             audit.onPushReceived(LocalVCFetchPreUploadHook.headCommitOf(receivePack.getRepository()));
+        }
+    }
+
+    /** JGit has read the commands of every push that reaches a hook. A receive that has not read any has none to count, and its list is still unset. */
+    private static boolean hasReadCommands(ReceivePack receivePack) {
+        try {
+            return !receivePack.getAllCommands().isEmpty();
+        }
+        catch (NullPointerException _) {
+            return false;
         }
     }
 

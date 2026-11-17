@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
+import de.tum.cit.aet.artemis.programming.service.VcsAccessLogOperations;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -299,9 +300,20 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
                 .setDirectory(directory.toFile()).setCredentialsProvider(LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI).call();
     }
 
+    /**
+     * The log as it is shown, one entry per operation. The advertisement of an operation is stored first and is left out once its transfer is there, so an entry that is only
+     * an advertisement means that the operation is still running.
+     */
+    private List<VcsAccessLog> shownAccessLogs(long participationId) {
+        return VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogRepository.findAllByParticipationId(participationId));
+    }
+
     private List<VcsAccessLog> awaitAccessLogs(long participationId, int count) {
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> vcsAccessLogRepository.findAllByParticipationId(participationId).size() >= count);
-        return vcsAccessLogRepository.findAllByParticipationId(participationId);
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var shown = shownAccessLogs(participationId);
+            return shown.size() >= count && shown.stream().noneMatch(entry -> entry.getRepositoryActionType() == RepositoryActionType.READ);
+        });
+        return shownAccessLogs(participationId);
     }
 
     @Test

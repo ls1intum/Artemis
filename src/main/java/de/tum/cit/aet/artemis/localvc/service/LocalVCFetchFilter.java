@@ -80,15 +80,21 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         }
 
         long startNanos = System.nanoTime();
+        // The request that advertises the references is the first of every fetch, and all there is of one that is up to date.
+        boolean advertisement = "GET".equals(servletRequest.getMethod());
+        String commitHashBefore = advertisement ? LocalVCAccessLogRecorderService.headCommitOf(servletRequest) : null;
         // stays true if doFilter throws, so a fetch that blew up is not counted as a success
         boolean failed = true;
         try {
             filterChain.doFilter(servletRequest, servletResponse);
             failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+            if (advertisement && !failed) {
+                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore);
+            }
         }
         finally {
             usageTrackingService.recordFetch(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
-            // the fetch is over, so everything about it is known: it is written only if it sent data
+            // the request is over, so everything about it is known: it is written if it sent data, or if it advertised the references
             accessLogRecorder.recordFetchHTTPS(servletRequest);
         }
     }

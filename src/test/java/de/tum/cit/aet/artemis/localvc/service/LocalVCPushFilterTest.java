@@ -98,9 +98,11 @@ class LocalVCPushFilterTest {
     void getRequestSkipsTheMutationGuardAndPassesThroughTheFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
         LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, mock(LocalVCAccessLogRecorderService.class), pushProcessingService,
-                mock(LocalVCUsageTrackingService.class));
+        LocalVCAccessLogRecorderService accessLogRecorder = mock(LocalVCAccessLogRecorderService.class);
+        GitOperationAudit audit = new GitOperationAudit();
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, accessLogRecorder, pushProcessingService, mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = new MockHttpServletRequest(HttpMethod.GET.name(), "/git/TEST/test-exercise.git/info/refs");
+        when(accessLogRecorder.auditOf(request)).thenReturn(audit);
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
 
@@ -108,6 +110,9 @@ class LocalVCPushFilterTest {
 
         verify(filterChain).doFilter(request, response);
         verify(pushProcessingService, never()).claimProgrammingExerciseMutation(any(), anyLong());
+        // The advertisement is all there is of a push that has nothing new, so it is handed over to be written
+        assertThat(audit.isAccessed()).isTrue();
+        verify(accessLogRecorder).recordPushHTTPS(request);
     }
 
     private static MockHttpServletRequest receivePackRequest() {

@@ -251,11 +251,26 @@ class LocalVCAccessLogRecorderServiceTest {
     }
 
     @Test
-    void aRepositoryAdvertisementIsNoOperationAndWritesNothing() {
-        var advertisement = authorizedRequest("GET", AuthenticationMechanism.PASSWORD);
+    void anAdvertisementThatTheRepositoryAnsweredIsAReadForAFetchAndAWriteForAPush() {
+        var fetchAdvertisement = authorizedRequest("GET", AuthenticationMechanism.PASSWORD);
+        accessLogRecorder.auditOf(fetchAdvertisement).onAccessed("head");
+        var pushAdvertisement = authorizedRequest("GET", AuthenticationMechanism.PASSWORD);
+        accessLogRecorder.auditOf(pushAdvertisement).onAccessed("head");
 
-        accessLogRecorder.recordFetchHTTPS(advertisement);
-        accessLogRecorder.recordPushHTTPS(advertisement);
+        accessLogRecorder.recordFetchHTTPS(fetchAdvertisement);
+        accessLogRecorder.recordPushHTTPS(pushAdvertisement);
+
+        verifyEntry(RepositoryActionType.READ, AuthenticationMechanism.PASSWORD, "head");
+        verifyEntry(RepositoryActionType.WRITE, AuthenticationMechanism.PASSWORD, "head");
+        verifyNoMoreInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void aRequestThatWasNotAnsweredOrIsNotAnAdvertisementWritesNothing() {
+        var notAnswered = authorizedRequest("GET", AuthenticationMechanism.PASSWORD);
+
+        accessLogRecorder.recordFetchHTTPS(notAnswered);
+        accessLogRecorder.recordPushHTTPS(notAnswered);
 
         verifyNoInteractions(vcsAccessLogService);
     }

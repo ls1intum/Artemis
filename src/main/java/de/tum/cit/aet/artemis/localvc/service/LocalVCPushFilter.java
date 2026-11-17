@@ -77,7 +77,13 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
 
         if (!"POST".equals(servletRequest.getMethod())) {
+            // The request that advertises the references is the first of every push, and all there is of one that has nothing new.
+            String commitHashBefore = LocalVCAccessLogRecorderService.headCommitOf(servletRequest);
             filterChain.doFilter(servletRequest, servletResponse);
+            if (servletResponse.getStatus() < HttpServletResponse.SC_BAD_REQUEST) {
+                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore);
+                accessLogRecorder.recordPushHTTPS(servletRequest);
+            }
             return;
         }
 
@@ -99,7 +105,7 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
         finally {
             usageTrackingService.recordPush(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
-            // the push is over, so everything about it is known: it is written only if it brought commands
+            // the push is over, so everything about it is known: it is written if it brought commands
             accessLogRecorder.recordPushHTTPS(servletRequest);
         }
     }
