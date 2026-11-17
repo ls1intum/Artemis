@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-3.5">
     <div class="flex flex-col gap-3.5">
-        <div class="flex items-center justify-between gap-4!">
+        <div class="flex flex-col items-start gap-4! sm:flex-row sm:items-center sm:justify-between">
             <h2 class="m-0! text-xl! leading-none! font-bold!" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.title"></h2>
             @if (isProfileSetup()) {
                 <tumaet-ui-button severity="secondary" size="small" (clicked)="openOnboardingModal()">
@@ -26,7 +26,7 @@
                 <!-- Brief vs. Detailed setting -->
                 <tumaet-ui-panel>
                     <span tumAetUiPanelHeader id="feedback-detail-label" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.label"></span>
-                    <div class="flex items-start gap-4!">
+                    <div class="flex flex-col items-start gap-4! sm:flex-row md:flex-col lg:flex-row">
                         <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.description"></div>
                         <tumaet-ui-select
                             size="small"
@@ -43,7 +43,7 @@
                 </tumaet-ui-panel>
                 <tumaet-ui-panel>
                     <span tumAetUiPanelHeader id="feedback-formality-label" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.label"></span>
-                    <div class="flex items-start gap-4!">
+                    <div class="flex flex-col items-start gap-4! sm:flex-row md:flex-col lg:flex-row">
                         <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.description"></div>
                         <tumaet-ui-select
                             size="small"
