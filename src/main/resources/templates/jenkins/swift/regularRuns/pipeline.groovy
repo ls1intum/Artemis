@@ -48,8 +48,29 @@ private void test() {
         cd assignment
         swift build
 
-        # swift test
-        swift test --xunit-output tests.xml || true
+        # swift test: a failing test is part of the report and does not fail the stage, a run that ended abnormally does.
+        # Swift Testing appends -swift-testing to the name of the xUnit file and XCTest, which older exercises still use, writes tests.xml.
+        # Both frameworks write the closing tag when the run ends, so a report without it comes from an interrupted run.
+        status=0
+        swift test --xunit-output tests.xml || status=$?
+        reports=0
+        for report in tests.xml tests-swift-testing.xml
+        do
+            if [ -e "$report" ]
+            then
+                if ! grep -q '</testsuites>' "$report"
+                then
+                    echo "The test report $report is incomplete, because the test run ended abnormally."
+                    exit 1
+                fi
+                reports=$((reports + 1))
+            fi
+        done
+        if [ "$status" -ne 0 ] && [ "$reports" -eq 0 ]
+        then
+            echo "The test run ended without a test report."
+            exit "$status"
+        fi
         '''
     }
 }
@@ -79,9 +100,16 @@ void postBuildTasks() {
     sh '''
     rm -rf results
     mkdir results
-    if [ -e assignment/tests-swift-testing.xml ]
+    for report in tests.xml tests-swift-testing.xml
+    do
+        # an incomplete report comes from an interrupted run and is not passed on
+        if [ -e "assignment/$report" ] && grep -q '</testsuites>' "assignment/$report"
+        then
+            cp "assignment/$report" $WORKSPACE/results/ || true
+        fi
+    done
+    if ls $WORKSPACE/results/*.xml > /dev/null 2>&1
     then
-        cp assignment/tests-swift-testing.xml $WORKSPACE/results/ || true
         sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     fi
     '''
