@@ -132,8 +132,10 @@
                     "login": "Login",
                     "email": "Email",
                     "registrationNumber": "Registration Number",
+                    "registrationDate": "Registration Date",
                     "deregister": "Deregister"
                 },
+                "studentsTableNoRegistrationDate": "No date recorded",
                 "importModal": {
                     "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. If the file contains more then the required columns, they will be discarded automatically. Here an example for a valid .csv file:",
                     "explanationHeader": "Import Students",

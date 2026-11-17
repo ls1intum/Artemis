@@ -204,17 +204,6 @@ public class TutorialGroupChannelManagementService {
     }
 
     /**
-     * Removes the given users from all tutorial group channels of the given course.
-     *
-     * @param course the course of the tutorial groups
-     * @param users  the users to be removed from the channels
-     */
-    public void removeUsersFromAllTutorialGroupChannelsInCourse(Course course, Set<User> users) {
-        var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
-        tutorialGroups.forEach(tutorialGroup -> removeUsersFromTutorialGroupChannel(tutorialGroup, users));
-    }
-
-    /**
      * Add all students of the given tutorial group to the channel of the tutorial group.
      *
      * @param tutorialGroup the tutorial group for which all students should be added to the channel

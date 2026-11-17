@@ -250,9 +250,25 @@ public class TutorialGroupService {
         tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
-    private void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
-        tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
-        tutorialGroupChannelManagementService.removeUsersFromAllTutorialGroupChannelsInCourse(course, students);
+    /**
+     * Deregisters every imported student from all tutorial groups of the course except their target group, and removes them from those groups' channels.
+     * A student who is already registered in their target group keeps that registration, so its registration date and the channel membership survive a re-import.
+     *
+     * @param targetGroupToStudents the target tutorial group of each imported student
+     * @param course                the course of the tutorial groups
+     */
+    private void deregisterStudentsFromOtherTutorialGroupsInCourse(Map<TutorialGroup, Set<User>> targetGroupToStudents, Course course) {
+        targetGroupToStudents.forEach((targetGroup, students) -> tutorialGroupRegistrationRepository
+                .deleteAllByStudentIsInAndTypeAndTutorialGroupCourseAndTutorialGroupNot(students, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, course, targetGroup));
+
+        // One channel call per tutorial group of the course, with every imported student whose target is a different group
+        for (TutorialGroup tutorialGroup : tutorialGroupRepository.findAllByCourseId(course.getId())) {
+            Set<User> studentsToRemove = targetGroupToStudents.entrySet().stream().filter(entry -> !entry.getKey().getId().equals(tutorialGroup.getId()))
+                    .flatMap(entry -> entry.getValue().stream()).collect(Collectors.toSet());
+            if (!studentsToRemove.isEmpty()) {
+                tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, studentsToRemove);
+            }
+        }
     }
 
     private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser,
@@ -389,8 +405,7 @@ public class TutorialGroupService {
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
         }
 
-        // deregister all students that should be registered to a new tutorial group from their old tutorial groups
-        deregisterStudentsFromAllTutorialGroupInCourse(new HashSet<>(uniqueRegistrationsWithMatchingUsers.values()), course, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
+        deregisterStudentsFromOtherTutorialGroupsInCourse(tutorialGroupToRegisteredUsers, course);
 
         for (var tutorialGroupAndRegisteredUsers : tutorialGroupToRegisteredUsers.entrySet()) {
             registerMultipleStudentsToTutorialGroup(tutorialGroupAndRegisteredUsers.getValue(), tutorialGroupAndRegisteredUsers.getKey(),

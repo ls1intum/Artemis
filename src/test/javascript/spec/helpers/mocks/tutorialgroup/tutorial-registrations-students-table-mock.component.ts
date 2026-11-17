@@ -10,6 +10,7 @@ export class TutorialRegistrationsStudentsTableMockComponent {
     students = input.required<TutorialGroupStudent[]>();
     hasToolbar = input(false, { transform: booleanAttribute });
     emptyTitle = input<string>();
+    showRegistrationDate = input(false, { transform: booleanAttribute });
     removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
 
     triggerRemove(student: TutorialGroupStudent, event = new Event('click')) {

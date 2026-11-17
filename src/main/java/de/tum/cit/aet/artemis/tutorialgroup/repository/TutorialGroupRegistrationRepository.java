@@ -34,9 +34,17 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
 
     Set<TutorialGroupRegistration> findAllByTutorialGroup(TutorialGroup tutorialGroup);
 
+    /**
+     * Deletes the registrations of the given students in every tutorial group of the course except the given one, so their registration in that group, and its date, is kept.
+     *
+     * @param students      the students whose other registrations are deleted
+     * @param type          the registration type to delete
+     * @param course        the course of the tutorial groups
+     * @param tutorialGroup the tutorial group whose registrations are kept
+     */
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(Set<User> students, TutorialGroupRegistrationType type, Course course);
+    void deleteAllByStudentIsInAndTypeAndTutorialGroupCourseAndTutorialGroupNot(Set<User> students, TutorialGroupRegistrationType type, Course course, TutorialGroup tutorialGroup);
 
     /**
      * Deletes all tutorial group registrations for a given course.

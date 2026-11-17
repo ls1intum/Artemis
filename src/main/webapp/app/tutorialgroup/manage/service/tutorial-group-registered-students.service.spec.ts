@@ -110,7 +110,8 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     });
 
     it('should deregister a student and remove them from the state', () => {
-        service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')]);
+        tutorialGroupApiServiceMock.getRegisteredStudents.mockReturnValue(of([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')]));
+        service.fetchRegisteredStudents(courseId, tutorialGroupId);
         const response$ = new Subject<void>();
         tutorialGroupApiServiceMock.deregisterStudent.mockReturnValue(response$);
 
@@ -129,7 +130,8 @@ describe('TutorialGroupRegisteredStudentsService', () => {
 
     it('should show an error alert when deregistering a student fails', () => {
         const existingStudents = [createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')];
-        service.addStudentsToRegisteredStudentsState(existingStudents);
+        tutorialGroupApiServiceMock.getRegisteredStudents.mockReturnValue(of(existingStudents));
+        service.fetchRegisteredStudents(courseId, tutorialGroupId);
         tutorialGroupApiServiceMock.deregisterStudent.mockReturnValue(throwError(() => new Error('network error')));
 
         service.deregisterStudent(courseId, tutorialGroupId, studentLogin);
@@ -138,19 +140,5 @@ describe('TutorialGroupRegisteredStudentsService', () => {
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.services.tutorialGroupRegisteredStudentsService.networkError.deregisterStudent');
         expect(service.registeredStudents()).toEqual(existingStudents);
         expect(service.isLoading()).toBe(false);
-    });
-
-    it('should add only students that are not already present', () => {
-        service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice')]);
-
-        service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob'), createRegisteredStudent(3, 'carol')]);
-
-        expect(service.registeredStudents()).toEqual([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob'), createRegisteredStudent(3, 'carol')]);
-    });
-
-    it('should deduplicate students within the same add operation', () => {
-        service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice'), createRegisteredStudent(1, 'alice-duplicate')]);
-
-        expect(service.registeredStudents()).toEqual([createRegisteredStudent(1, 'alice')]);
     });
 });

@@ -2,7 +2,7 @@
 id: tutorial-groups
 title: Tutorial Groups
 sidebar_label: Tutorial Groups
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-17
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -90,9 +90,11 @@ The groups for which the tutor is responsible have a blue background.
 
 By clicking on the <code>Registrations</code> button of a tutorial group, the tutor can view the list of students that are registered for the tutorial group. From this list, the tutor can register or unregister students for the tutorial group. Only users that are enrolled in the course can be registered for a tutorial group.
 
+The **Registration Date** column shows when each student was registered for the tutorial group, which helps to spot students who joined late or changed groups. Click the column header to sort by it. Students who were registered before Artemis recorded this date show a dash and stay at the end of the list in both sort directions. Importing tutorial groups and their registrations from a CSV file again keeps the date of a student who stays in the same tutorial group. A student who moves to another tutorial group gets a new date.
+
 <Callout variant={CalloutVariant.info}>
 
-    An instructor can also import student registrations from a CSV file and export the list of registered students as a CSV file. Extra buttons for these actions are available in the <code>Registrations</code> page of the tutorial group page for instructors.
+    An instructor can also import student registrations from a CSV file and export the list of registered students as a CSV file, including their registration date. Extra buttons for these actions are available in the <code>Registrations</code> page of the tutorial group page for instructors.
 
 </Callout>
 

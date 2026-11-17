@@ -69,7 +69,7 @@ public class DataExportTutorialGroupService {
             return;
         }
 
-        String[] header = { "course_title", "tutorial_group_title", "registration_type" };
+        String[] header = { "course_title", "tutorial_group_title", "registration_type", "registration_date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("tutorial_group_registrations" + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -77,7 +77,9 @@ public class DataExportTutorialGroupService {
                 var tutorialGroup = registration.getTutorialGroup();
                 String courseTitle = tutorialGroup != null && tutorialGroup.getCourse() != null ? tutorialGroup.getCourse().getTitle() : "";
                 String tutorialGroupTitle = tutorialGroup != null ? tutorialGroup.getTitle() : "";
-                printer.printRecord(courseTitle, tutorialGroupTitle, registration.getType());
+                // Registrations created before the date was recorded have none
+                String registrationDate = registration.getRegistrationDate() != null ? registration.getRegistrationDate().toString() : "";
+                printer.printRecord(courseTitle, tutorialGroupTitle, registration.getType(), registrationDate);
             }
         }
     }
