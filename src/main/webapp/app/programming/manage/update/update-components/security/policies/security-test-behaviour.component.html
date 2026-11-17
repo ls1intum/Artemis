@@ -82,6 +82,7 @@
                     <jhi-security-help [text]="prefix + 'messageHelp' | artemisTranslate" />
                 </span>
                 <input
+                    [id]="id + 'Message'"
                     [tumAetUiInputId]="id + 'Message'"
                     tumAetUiInput
                     [placeholder]="prefix + 'messagePlaceholder' | artemisTranslate"
@@ -147,6 +148,7 @@
                         <jhi-security-help [text]="(prefix + 'hiddenFromHelp' | artemisTranslate) + (hiddenTests() ? '' : ' ' + (prefix + 'turnOnFirst' | artemisTranslate))" />
                     </span>
                     <input
+                        [id]="id + 'HiddenFrom'"
                         [tumAetUiInputId]="id + 'HiddenFrom'"
                         tumAetUiInput
                         class="sp-mono"
@@ -163,6 +165,7 @@
                         <jhi-security-help [text]="(prefix + 'hiddenUntilHelp' | artemisTranslate) + (hiddenTests() ? '' : ' ' + (prefix + 'turnOnFirst' | artemisTranslate))" />
                     </span>
                     <input
+                        [id]="id + 'HiddenUntil'"
                         [tumAetUiInputId]="id + 'HiddenUntil'"
                         tumAetUiInput
                         class="sp-mono"
@@ -202,6 +205,7 @@
                         <jhi-security-help [text]="prefix + 'timeLimitHelp' | artemisTranslate" />
                     </span>
                     <input
+                        [id]="id + 'TimeLimit'"
                         [tumAetUiInputId]="id + 'TimeLimit'"
                         tumAetUiInput
                         type="number"
@@ -237,6 +241,7 @@
                         <jhi-security-help [text]="prefix + 'gracePeriodHelp' | artemisTranslate" />
                     </span>
                     <input
+                        [id]="id + 'Grace'"
                         [tumAetUiInputId]="id + 'Grace'"
                         tumAetUiInput
                         type="number"
@@ -290,6 +295,7 @@
                     <jhi-security-help [text]="prefix + 'maximumCharactersHelp' | artemisTranslate" />
                 </span>
                 <input
+                    [id]="id + 'MaxChars'"
                     [tumAetUiInputId]="id + 'MaxChars'"
                     tumAetUiInput
                     type="number"
