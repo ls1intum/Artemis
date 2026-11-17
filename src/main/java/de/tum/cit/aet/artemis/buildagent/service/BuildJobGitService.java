@@ -375,9 +375,8 @@ public class BuildJobGitService extends AbstractGitService {
         // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
         FileUtils.deleteDirectory(localPath.toFile());
         CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
-        try (Git ignored = cloneCommand.call()) {
-            return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
-        }
+        cloneWithoutSymbolicLinks(cloneCommand);
+        return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
     }
 
     /**
