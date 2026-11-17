@@ -104,4 +104,26 @@ class AresTestCasesTest {
         assertThat(AresTestCases.testCases(source)).containsExactly("prüfe", "sortiereÜ", "check");
         assertThat(AresTestCases.overloadedTestCases(source)).containsExactly("check");
     }
+
+    @Test
+    void ignoresAnnotationsWhoseNameOnlyStartsWithTheNameOfATestAnnotation() {
+        String source = """
+                class SortingTest {
+
+                    @example.Test$Tag
+                    void helper() {
+                    }
+
+                    @Testing
+                    void otherHelper() {
+                    }
+
+                    @org.junit.jupiter.api.Test
+                    void sorts() {
+                    }
+                }
+                """;
+
+        assertThat(AresTestCases.testCases(source)).containsExactly("sorts");
+    }
 }
