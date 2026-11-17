@@ -1,6 +1,16 @@
 {
     "error": {
         "branchRegexNotSupported": "Der Branch-Regex verwendet nicht unterstützte Syntax. Erlaubt sind Zeichen, Klassen wie [a-z0-9-], Gruppen mit Alternativen, die Anker ^ und $ sowie die Quantifizierer * + ? und gezählte Wiederholungen mit Werten bis 1000. Eine wiederholte Gruppe darf keine Alternativen, Quantifizierer oder Anker enthalten. Jede Alternative innerhalb einer Gruppe muss mindestens ein Zeichen erfordern.",
+        "stagedContentNotAllowed": {
+            "unreadable": "Der vorgemerkte Repository-Inhalt konnte nicht geprüft werden. Versuche es erneut.",
+            "tooManyEntries": "Das Repository überschreitet die Grenze von {{ limit }} Dateien und Verzeichnissen. Entferne Einträge und erstelle den Commit erneut.",
+            "repositoryTooLarge": "Das Repository würde {{ size }} Bytes enthalten und damit die Grenze von {{ limit }} Bytes überschreiten. Entferne große Dateien und erstelle den Commit erneut.",
+            "pathTooLong": "Der Pfad überschreitet die Grenze von {{ limit }} Zeichen: {{ path }}",
+            "pathTooDeep": "Der Pfad überschreitet die Grenze von {{ limit }} Verzeichnisebenen: {{ path }}",
+            "pathNotAllowed": "Dieser Pfad verwendet einen reservierten Namen für Git-Metadaten: {{ path }}",
+            "linksNotAllowed": "Symbolische Links und Submodule sind nicht erlaubt: {{ path }}",
+            "fileTooLarge": "Die Datei überschreitet die Grenze von {{ limit }} Bytes: {{ path }}"
+        },
         "quizQuestionPoolModelNotConfigured": "Smart Quizzes ist auf diesem Server nicht eingerichtet. Bitte wende dich an deine Administration, damit ein lokales Sprachmodell konfiguriert wird.",
         "tumLiveUploadInProgress": "Der offene Upload wird bereits an TUM.Live gesendet. Verwirf ihn, um einen neuen zu starten.",
         "tumLiveNotConnected": "Der Kurs ist nicht mit TUM.Live verbunden.",
