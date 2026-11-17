@@ -44,6 +44,7 @@
                 "copyButtonLabel": "Copy subscription link",
                 "resetExplanation": "Resetting the link ends the use of the current one. Calendar applications that use it stop receiving events until you subscribe with the new link.",
                 "resetButtonLabel": "Reset link",
+                "resetPending": "Creating the new subscription link …",
                 "languageOption": {
                     "german": "German",
                     "english": "English"

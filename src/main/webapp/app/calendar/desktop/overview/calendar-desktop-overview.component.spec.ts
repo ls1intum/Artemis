@@ -42,6 +42,7 @@ describe('CalendarDesktopOverviewComponent', () => {
         eventMap: signal(new Map<string, IdentifiableCalendarEvent[]>()),
         loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
         subscriptionToken: signal('testToken'),
+        subscriptionTokenRotating: signal(false),
         loadSubscriptionToken: vi.fn().mockReturnValue(of([])),
         includedEventFilterOptions: signal([
             CalendarEventFilterOption.LectureEvents,

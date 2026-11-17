@@ -36,6 +36,8 @@ export class CalendarSubscriptionPopoverComponent {
     subscriptionToken = input.required<string>();
     courseId = input.required<number>();
     isMobile = input<boolean>(false);
+    /** Whether a replacement of the subscription link is running, during which the old link is not offered. */
+    resetting = input<boolean>(false);
     /** Emitted when the user confirms that the subscription link is replaced by a new one. */
     subscriptionResetRequested = output<void>();
     confirmingReset = signal(false);
@@ -63,7 +65,7 @@ export class CalendarSubscriptionPopoverComponent {
 
     copySubscriptionUrlToClipboard() {
         const url = this.subscriptionUrl();
-        if (url) {
+        if (url && !this.resetting()) {
             this.copiedUrl.set(true);
             void navigator.clipboard.writeText(url);
         }

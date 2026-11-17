@@ -68,6 +68,7 @@
                 <jhi-calendar-subscription-popover
                     [subscriptionToken]="subscriptionToken"
                     [courseId]="currentCourseId"
+                    [resetting]="subscriptionResetting()"
                     (subscriptionResetRequested)="resetSubscriptionLink()"
                     #subscriptionPopover
                 />

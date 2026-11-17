@@ -44,6 +44,7 @@
                 "copyButtonLabel": "Abonnement-Link kopieren",
                 "resetExplanation": "Das Zurücksetzen beendet die Nutzung des aktuellen Links. Kalender-Anwendungen, die ihn verwenden, erhalten keine Termine mehr, bis du den neuen Link abonnierst.",
                 "resetButtonLabel": "Link zurücksetzen",
+                "resetPending": "Der neue Abonnement-Link wird erstellt …",
                 "languageOption": {
                     "german": "Deutsch",
                     "english": "Englisch"

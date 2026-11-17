@@ -265,6 +265,34 @@ describe('CalendarService', () => {
         expect(addErrorAlert).toHaveBeenCalledWith('artemisApp.calendar.tokenRotationError');
     });
 
+    it('should report the running rotation and clear it when the rotation ends or fails', async () => {
+        await Promise.resolve();
+        const pending = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(pending);
+        expect(service.subscriptionTokenRotating()).toBe(false);
+
+        const done = firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(service.subscriptionTokenRotating()).toBe(true);
+        pending.error(new HttpErrorResponse({ status: 500 }));
+        await expect(done).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(service.subscriptionTokenRotating()).toBe(false);
+        // the token that was in use stays
+        expect(service.subscriptionToken()).toBe(testToken);
+    });
+
+    it('should not show a second alert for a failure that the global handler shows', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const alertService = TestBed.inject(AlertService);
+        vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(true);
+        const addErrorAlert = vi.spyOn(alertService, 'addErrorAlert');
+
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        expect(addErrorAlert).not.toHaveBeenCalled();
+    });
+
     it('should run only one token rotation at a time', async () => {
         await Promise.resolve();
         const first = new Subject<string>();
@@ -333,6 +361,7 @@ describe('CalendarService - authentication state changes', () => {
     let calendarApiService: {
         getCalendarEventsOverlappingMonths: ReturnType<typeof vi.fn>;
         getCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
+        rotateCalendarEventSubscriptionToken: ReturnType<typeof vi.fn>;
     };
 
     beforeEach(() => {
@@ -344,6 +373,7 @@ describe('CalendarService - authentication state changes', () => {
         calendarApiService = {
             getCalendarEventsOverlappingMonths: vi.fn(),
             getCalendarEventSubscriptionToken: vi.fn(),
+            rotateCalendarEventSubscriptionToken: vi.fn(),
         };
 
         calendarApiService.getCalendarEventSubscriptionToken.mockReturnValue(of(testToken));
@@ -384,6 +414,36 @@ describe('CalendarService - authentication state changes', () => {
         authState.next({ id: 42 } as User);
         expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
         expect(scoped.subscriptionToken()).toBe('newToken');
+    });
+
+    it('should let the next user replace the token while a replacement of the previous user is still running', async () => {
+        const previousUsersRotation = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValueOnce(previousUsersRotation);
+        const previousDone = firstValueFrom(scoped.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(scoped.subscriptionTokenRotating()).toBe(true);
+
+        authState.next({ id: 42 } as User);
+        expect(scoped.subscriptionTokenRotating()).toBe(false);
+
+        // the replacement of the new user runs, although the one of the previous user has not answered yet
+        const currentUsersRotation = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValueOnce(currentUsersRotation);
+        const currentDone = firstValueFrom(scoped.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(scoped.subscriptionTokenRotating()).toBe(true);
+
+        // the end of the previous replacement neither changes the token nor ends the running one
+        previousUsersRotation.next('tokenOfThePreviousUser');
+        previousUsersRotation.complete();
+        await previousDone;
+        expect(scoped.subscriptionToken()).not.toBe('tokenOfThePreviousUser');
+        expect(scoped.subscriptionTokenRotating()).toBe(true);
+
+        currentUsersRotation.next('tokenOfTheCurrentUser');
+        currentUsersRotation.complete();
+        await currentDone;
+        expect(scoped.subscriptionToken()).toBe('tokenOfTheCurrentUser');
+        expect(scoped.subscriptionTokenRotating()).toBe(false);
     });
 
     it('should not reset state when the same user re-emits', () => {

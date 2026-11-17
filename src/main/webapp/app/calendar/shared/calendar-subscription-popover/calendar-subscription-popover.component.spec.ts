@@ -105,4 +105,20 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
 
         expect(component.confirmingReset()).toBe(false);
     });
+
+    it('offers neither the link nor its copy action while the link is replaced', () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+        fixture.componentRef.setInput('resetting', true);
+        component.copySubscriptionUrlToClipboard();
+
+        expect(writeText).not.toHaveBeenCalled();
+        expect(component.copiedUrl()).toBe(false);
+
+        fixture.componentRef.setInput('resetting', false);
+        component.copySubscriptionUrlToClipboard();
+
+        expect(writeText).toHaveBeenCalledOnce();
+    });
 });

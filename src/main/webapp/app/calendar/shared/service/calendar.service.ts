@@ -22,7 +22,11 @@ export class CalendarService implements OnDestroy {
     private firstDayOfCurrentMonth?: Dayjs;
     private currentSubscriptionToken = signal<string | undefined>(undefined);
     private currentEventMap = signal<Map<string, IdentifiableCalendarEvent[]>>(new Map());
-    private rotationInProgress = false;
+    /** The token replacement that is running, which is cleared by the one that owns it and when the user changes. */
+    private activeRotation?: object;
+    private readonly rotatingSubscriptionToken = signal(false);
+    /** Whether a replacement of the subscription token is running, during which the current token must not be offered. */
+    readonly subscriptionTokenRotating = this.rotatingSubscriptionToken.asReadonly();
 
     subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
     eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
@@ -79,6 +83,8 @@ export class CalendarService implements OnDestroy {
      */
     private resetState(): void {
         this.stateGeneration++;
+        this.activeRotation = undefined;
+        this.rotatingSubscriptionToken.set(false);
         this.currentCourseId = undefined;
         this.firstDayOfCurrentMonth = undefined;
         this.currentSubscriptionToken.set(undefined);
@@ -139,10 +145,12 @@ export class CalendarService implements OnDestroy {
      */
     rotateSubscriptionToken(): Observable<void> {
         return defer(() => {
-            if (this.rotationInProgress) {
+            if (this.activeRotation) {
                 return EMPTY;
             }
-            this.rotationInProgress = true;
+            const rotation = {};
+            this.activeRotation = rotation;
+            this.rotatingSubscriptionToken.set(true);
             const generation = this.stateGeneration;
             return this.apiService.rotateCalendarEventSubscriptionToken().pipe(
                 map((token: string) => {
@@ -151,10 +159,19 @@ export class CalendarService implements OnDestroy {
                 }),
                 catchError((error) => {
                     if (this.stateGeneration !== generation) return EMPTY;
-                    this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
+                    // the global handler shows the rejections it knows, and showing the failure twice does not help the user
+                    if (!this.alertService.showsHttpErrorAlert(error)) {
+                        this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
+                    }
                     return throwError(() => error);
                 }),
-                finalize(() => (this.rotationInProgress = false)),
+                finalize(() => {
+                    // a replacement of the previous user may end after the one of the current user started, and must not end that one
+                    if (this.activeRotation === rotation) {
+                        this.activeRotation = undefined;
+                        this.rotatingSubscriptionToken.set(false);
+                    }
+                }),
             );
         });
     }

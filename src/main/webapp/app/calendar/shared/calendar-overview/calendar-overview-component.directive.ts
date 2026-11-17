@@ -26,6 +26,7 @@ export abstract class CalendarOverviewComponent {
     abstract monthDescription: Signal<string>;
 
     calendarSubscriptionToken = this.calendarService.subscriptionToken;
+    subscriptionResetting = this.calendarService.subscriptionTokenRotating;
     courseId: Signal<number | undefined> = this.getCurrentCourseIdSignal();
     isLoading = signal<boolean>(false);
 

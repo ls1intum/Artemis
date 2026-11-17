@@ -52,6 +52,7 @@
                     [subscriptionToken]="subscriptionToken"
                     [courseId]="currentCourseId"
                     [isMobile]="true"
+                    [resetting]="subscriptionResetting()"
                     (subscriptionResetRequested)="resetSubscriptionLink()"
                     #subscriptionPopover
                 />
