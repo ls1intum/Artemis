@@ -265,6 +265,39 @@ describe('CalendarService', () => {
         expect(addErrorAlert).toHaveBeenCalledWith('artemisApp.calendar.tokenRotationError');
     });
 
+    it('should run only one token rotation at a time', async () => {
+        await Promise.resolve();
+        const first = new Subject<string>();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(first);
+        const firstDone = firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
+
+        // a second request while the first runs does not call the server and does not change the token
+        await firstValueFrom(service.rotateSubscriptionToken(), { defaultValue: undefined });
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
+
+        first.next('firstRotation');
+        first.complete();
+        await firstDone;
+        expect(service.subscriptionToken()).toBe('firstRotation');
+
+        // after the first one finished, the next one runs
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('secondRotation'));
+        await firstValueFrom(service.rotateSubscriptionToken());
+        expect(calendarApiService.rotateCalendarEventSubscriptionToken).toHaveBeenCalledTimes(2);
+        expect(service.subscriptionToken()).toBe('secondRotation');
+    });
+
+    it('should allow another rotation after a failed one', async () => {
+        await Promise.resolve();
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        await expect(firstValueFrom(service.rotateSubscriptionToken())).rejects.toBeInstanceOf(HttpErrorResponse);
+
+        calendarApiService.rotateCalendarEventSubscriptionToken.mockReturnValue(of('afterFailure'));
+        await firstValueFrom(service.rotateSubscriptionToken());
+
+        expect(service.subscriptionToken()).toBe('afterFailure');
+    });
+
     it('should refresh', async () => {
         expect(calendarApiService.getCalendarEventSubscriptionToken).toHaveBeenCalledOnce();
         await Promise.resolve();

@@ -1,5 +1,5 @@
 import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
-import { EMPTY, Observable, Subscription, catchError, map, throwError } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, defer, finalize, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
@@ -22,6 +22,7 @@ export class CalendarService implements OnDestroy {
     private firstDayOfCurrentMonth?: Dayjs;
     private currentSubscriptionToken = signal<string | undefined>(undefined);
     private currentEventMap = signal<Map<string, IdentifiableCalendarEvent[]>>(new Map());
+    private rotationInProgress = false;
 
     subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
     eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
@@ -131,22 +132,31 @@ export class CalendarService implements OnDestroy {
 
     /**
      * Replaces the subscription token with a new one. The subscription links with the old token stop working.
+     * A request that arrives while another replacement is running does nothing: the responses of two replacements can arrive in another order than the server stored them,
+     * so only one runs at a time.
      *
      * @returns the observable that completes when the new token is in use
      */
     rotateSubscriptionToken(): Observable<void> {
-        const generation = this.stateGeneration;
-        return this.apiService.rotateCalendarEventSubscriptionToken().pipe(
-            map((token: string) => {
-                if (this.stateGeneration !== generation) return;
-                this.currentSubscriptionToken.set(token);
-            }),
-            catchError((error) => {
-                if (this.stateGeneration !== generation) return EMPTY;
-                this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
-                return throwError(() => error);
-            }),
-        );
+        return defer(() => {
+            if (this.rotationInProgress) {
+                return EMPTY;
+            }
+            this.rotationInProgress = true;
+            const generation = this.stateGeneration;
+            return this.apiService.rotateCalendarEventSubscriptionToken().pipe(
+                map((token: string) => {
+                    if (this.stateGeneration !== generation) return;
+                    this.currentSubscriptionToken.set(token);
+                }),
+                catchError((error) => {
+                    if (this.stateGeneration !== generation) return EMPTY;
+                    this.alertService.addErrorAlert('artemisApp.calendar.tokenRotationError');
+                    return throwError(() => error);
+                }),
+                finalize(() => (this.rotationInProgress = false)),
+            );
+        });
     }
 
     private loadSubscriptionToken() {
