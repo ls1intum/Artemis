@@ -542,6 +542,24 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     boolean existsByExamIdAndUserLogin(@Param("examId") long examId, @Param("login") String login);
 
+    /**
+     * Checks whether an attempt at the exam was started in the half-open interval {@code [from, to)}. Test runs are ignored.
+     *
+     * @param examId the id of the exam
+     * @param from   the inclusive start of the interval
+     * @param to     the exclusive end of the interval
+     * @return true if at least one attempt was started in the interval
+     */
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.testRun = FALSE
+                AND studentExam.startedDate >= :from
+                AND studentExam.startedDate < :to
+            """)
+    boolean existsAttemptStartedBetween(@Param("examId") long examId, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to);
+
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se

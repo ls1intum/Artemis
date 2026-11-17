@@ -1271,6 +1271,70 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
     }
 
+    private Exam saveSupervisedSessionExam(ZonedDateTime start, ZonedDateTime end) {
+        Exam exam = ExamFactory.generateTestExam(course1);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        exam.setVisibleDate(start.minusMinutes(5));
+        exam.setStartDate(start);
+        exam.setEndDate(end);
+        return examRepository.save(exam);
+    }
+
+    private StudentExam addStartedAttempt(Exam exam, ZonedDateTime startedDate) {
+        StudentExam attempt = examUtilService.addStudentExamForTestExam(exam, TEST_PREFIX + "student1");
+        attempt.setStartedAndStartDate(startedDate);
+        return studentExamRepository.save(attempt);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_supervisedSessionEnded_rejectsReclassifyingAPracticeAttempt() throws Exception {
+        // The session ended 15 minutes ago (50 minutes working time), so an attempt started 2 minutes ago is a practice attempt
+        Exam exam = saveSupervisedSessionExam(now().minusMinutes(65), now().plusMinutes(60));
+        StudentExam attempt = addStartedAttempt(exam, now().minusMinutes(2));
+
+        // Extending the working time by 20 minutes would move the end of the session behind that attempt
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", 1200, HttpStatus.BAD_REQUEST);
+
+        Exam unchanged = examRepository.findByIdElseThrow(exam.getId());
+        assertThat(unchanged.getWorkingTime()).isEqualTo(exam.getWorkingTime());
+        assertThat(studentExamRepository.findByIdElseThrow(attempt.getId()).getWorkingTime()).isEqualTo(exam.getWorkingTime());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_supervisedSessionEnded_rejectsChangingTheWorkingTimeButAllowsChangingTheEndDate() throws Exception {
+        Exam exam = saveSupervisedSessionExam(now().minusMinutes(65), now().plusMinutes(60));
+        addStartedAttempt(exam, now().minusMinutes(2));
+
+        exam.setWorkingTime(exam.getWorkingTime() + 1200);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+        assertThat(examRepository.findByIdElseThrow(exam.getId()).getWorkingTime()).isEqualTo(exam.getWorkingTime() - 1200);
+
+        // Moving the end of the practice window does not touch the end of the supervised session
+        exam.setWorkingTime(exam.getWorkingTime() - 1200);
+        ZonedDateTime newEndDate = exam.getEndDate().plusDays(1);
+        exam.setEndDate(newEndDate);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getEndDate()).isCloseTo(newEndDate, within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_supervisedSessionRunning_extendsButCannotShortenBehindAStartedAttempt() throws Exception {
+        // The session started 10 minutes ago and one student started 3 minutes ago
+        Exam exam = saveSupervisedSessionExam(now().minusMinutes(10), now().plusMinutes(70));
+        addStartedAttempt(exam, now().minusMinutes(3));
+
+        // Shortening the working time to 5 minutes would end the session before that attempt started
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", -2700, HttpStatus.BAD_REQUEST);
+        assertThat(examRepository.findByIdElseThrow(exam.getId()).getWorkingTime()).isEqualTo(exam.getWorkingTime());
+
+        // Extending the running session is still possible
+        var returnedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", 600, Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(exam.getWorkingTime() + 600);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_realExam() throws Exception {

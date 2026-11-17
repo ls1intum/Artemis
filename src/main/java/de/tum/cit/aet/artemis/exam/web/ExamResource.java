@@ -327,6 +327,10 @@ public class ExamResource {
 
         // Apply DTO values to the managed entity
         examUpdateDTO.applyTo(originalExam);
+        if (originalStartDate != null && originalExam.getStartDate() != null) {
+            examDateService.checkSupervisedSessionEndChangeAllowedElseThrow(originalExam.getId(), originalExam.getExamMode(),
+                    Exam.supervisedSessionEndDate(originalStartDate, originalExamDuration), originalExam.getSupervisedSessionEndDate(), now());
+        }
 
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
@@ -437,6 +441,10 @@ public class ExamResource {
             throw new BadRequestAlertException("The exam's working window exceeds the supported duration.", ENTITY_NAME, "examTimes");
         }
         checkExamWorkingTimeLimitElseThrow(newWorkingTime);
+        if (exam.getStartDate() != null) {
+            examDateService.checkSupervisedSessionEndChangeAllowedElseThrow(examId, exam.getExamMode(), Exam.supervisedSessionEndDate(exam.getStartDate(), originalWorkingTime),
+                    Exam.supervisedSessionEndDate(exam.getStartDate(), (int) newWorkingTime), now());
+        }
         if (exam.getExamMode().isReal()) {
             checkExamWorkingTimeLimitElseThrow(newDuration);
         }
