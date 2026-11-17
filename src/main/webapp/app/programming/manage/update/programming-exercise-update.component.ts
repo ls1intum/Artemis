@@ -1109,7 +1109,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         let errorMessage;
         let disableTranslation;
         // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
-        if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
+        if (error.error?.errorKey === 'branchRegexNotSupported') {
+            if (this.alertService.showsHttpErrorAlert(error)) {
+                // The global HTTP error handler already shows this rejection, so it is not shown a second time.
+                this.isSaving.set(false);
+                window.scrollTo(0, 0);
+                return;
+            }
+            errorMessage = this.translationBasePath + 'buildConfig.branchRegexNotSupported';
+            disableTranslation = false;
+        } else if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
             errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
             disableTranslation = false;
         } else {
