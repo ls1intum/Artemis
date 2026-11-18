@@ -664,7 +664,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         ];
         const takenNames = [...reloaded, ...added].map((policy) => policy.name);
         const orphaned = vanished.map((policy) => {
-            const kept = this.asNewPolicy(policy, takenNames);
+            const kept = this.asNewPolicy(policy, takenNames, languageConfiguration);
             takenNames.push(kept.name);
             return kept;
         });
@@ -761,9 +761,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /**
      * @param takenNames the names of the other policies; the new one gets a number if its name is taken, so it is saved to a file of its own
+     * @param committedLanguageConfiguration the language configuration the committed policies use, which new policies follow
      * @returns the policy as a new one with all of its current settings, assignments and rows as unsaved changes
      */
-    private asNewPolicy(policy: EditorPolicy, takenNames: readonly string[]): EditorPolicy {
+    private asNewPolicy(policy: EditorPolicy, takenNames: readonly string[], committedLanguageConfiguration: string | undefined): EditorPolicy {
         this.newPolicyCounter++;
         let name = policy.name;
         for (let number = 2; takenNames.includes(name); number++) {
@@ -777,6 +778,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             tests: [...policy.tests],
             baseExtraClasses: [],
             extraClasses: [...policy.extraClasses],
+            // A configuration other than the committed one, e.g. imported before the file was deleted, is kept through later reloads instead of followed.
+            ownLanguageConfiguration: !!policy.ownLanguageConfiguration || (!!policy.working && policy.working.languageConfiguration !== committedLanguageConfiguration),
         };
     }
 

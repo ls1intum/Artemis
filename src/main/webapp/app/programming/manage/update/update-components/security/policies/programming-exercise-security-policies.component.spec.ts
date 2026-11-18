@@ -966,6 +966,52 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()).toEqual({ kind: 'orphaned', files: 'SecurityPolicy.yaml' });
     });
 
+    describe('a policy kept after someone deleted its file', () => {
+        const scanning = 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION';
+        const second = { ...DOCUMENT, policyPath: 'Second.yaml' };
+        const withSecondOnly = (hash: string, languageConfiguration = DOCUMENT.languageConfiguration!): SecurityPolicyEditor => ({
+            ...editor(hash, { ...second, languageConfiguration }),
+            policies: [{ policyPath: 'Second.yaml', document: { ...second, languageConfiguration }, assignedTests: ['de.example.StressTest'] }],
+        });
+        const recovered = () => comp.policies().find((policy) => !policy.file);
+
+        beforeEach(() => {
+            service.getPolicies.mockReturnValue(
+                of({
+                    ...editor(),
+                    policies: [...editor().policies!, { policyPath: 'Second.yaml', document: second, assignedTests: ['de.example.StressTest'] }],
+                }),
+            );
+            create(configured(), false);
+        });
+
+        it('keeps a configuration other than the committed one through a later reload', () => {
+            const changed = withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+            comp['onPolicyChange']({ ...comp.policies()[0], working: { ...changed, languageConfiguration: scanning } });
+            service.getPolicies.mockReturnValue(of(withSecondOnly('d'.repeat(40))));
+            comp['reload'](true);
+            expect(recovered()?.working?.languageConfiguration).toBe(scanning);
+
+            // Another commit conflicts and reloads the policies again; the remaining policy still uses the other configuration.
+            service.getPolicies.mockReturnValue(of(withSecondOnly('e'.repeat(40))));
+            comp['reload']();
+
+            expect(recovered()?.working?.languageConfiguration).toBe(scanning);
+        });
+
+        it('lets the committed configuration follow a later switch of dependency scanning', () => {
+            comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.apache.commons' }]) });
+            service.getPolicies.mockReturnValue(of(withSecondOnly('d'.repeat(40))));
+            comp['reload'](true);
+            expect(recovered()?.working?.languageConfiguration).toBe(DOCUMENT.languageConfiguration);
+
+            service.getPolicies.mockReturnValue(of(withSecondOnly('e'.repeat(40), scanning)));
+            comp['reload']();
+
+            expect(recovered()?.working?.languageConfiguration).toBe(scanning);
+        });
+    });
+
     it('does not switch dependency scanning while a policy is read-only', () => {
         service.getPolicies.mockReturnValue(
             of({
